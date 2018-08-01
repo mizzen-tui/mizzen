@@ -133,6 +133,8 @@ public interface Rectangle extends Position, Dimension, Movable {
 
     public static final Simple ZERO = new Simple(0, 0, -1, -1);
 
+    public static final Simple MAX_SIZE = new Simple(Short.MIN_VALUE, Short.MIN_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE);
+
     /**
      * Simple implementation of {@link Dimension}
      */

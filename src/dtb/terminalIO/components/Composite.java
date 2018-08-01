@@ -1,10 +1,11 @@
 package dtb.terminalIO.components;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 import dtb.terminalIO.ControlCode.FGBGColors;
 import dtb.terminalIO.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.ScreenLineSegment;
 import dtb.terminalIO.components.Component.AbstractComponent;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
@@ -13,12 +14,10 @@ import dtb.terminalIO.geom.Rectangle;
 public class Composite extends AbstractComponent<Composite> implements Rectangle {
 
     private SimpleBorder border;
-    //private FGBGColors   borderColors;
-    //private FGBGColors   titleColors;
     private boolean      boundsFixed = false;
     private Rectangle    bounds = Rectangle.ZERO;
     
-    private Set<BoundedComponent<?>> children = new HashSet<BoundedComponent<?>>();
+    private List<BoundedComponent<?>> children = new ArrayList<BoundedComponent<?>>();
     
     public Composite() {
         super(FGBGColors.NO_COLOR_SPECIFIED);
@@ -33,6 +32,7 @@ public class Composite extends AbstractComponent<Composite> implements Rectangle
     public Composite setBounds(int height, int width) {
         this.bounds = new Rectangle.Simple(new Dimension.Simple(height, width));
         this.boundsFixed = true;
+        rebuildBorder(this.bounds);
         return this;
     }
 
@@ -44,8 +44,8 @@ public class Composite extends AbstractComponent<Composite> implements Rectangle
     }
 
     private Rectangle calcBorderSize(Rectangle inner) {
-        Rectangle brdr = new Rectangle.Simple(inner.getCol()-1,
-                inner.getRow()-1,
+        Rectangle brdr = new Rectangle.Simple(inner.getCol(),
+                inner.getRow(),
                 inner.getHeight()+2,
                 inner.getWidth()+2);
         return brdr;
@@ -56,29 +56,28 @@ public class Composite extends AbstractComponent<Composite> implements Rectangle
     }
     
     private void fullrecalcDim(boolean includeBorder) {
-//        if (boundsFixed) {
-//            return ;
-//        }
+        
+        if (boundsFixed) {
+            return;
+        }
+
         Rectangle calculatedBounds =  Rectangle.UTIL.calcDimensionsWith(children);
         if (includeBorder) {
-            Rectangle brdr = calcBorderSize(calculatedBounds);
-            if (Rectangle.DEFAULT_COMPARATOR.compare(brdr, border)!=0) {
-                bounds = brdr;
-                rebuildBorder(bounds);
-            }
+            rebuildBorder( calcBorderSize(calculatedBounds));
+            bounds = new Rectangle.Simple(this.border);
             return ;
         }
         bounds = calculatedBounds;
     }
     
-    protected void moveChildrenDelta(Position delta) {
-        moveChildrenDelta(delta.getRow(), delta.getCol());
-    }
-    protected void moveChildrenDelta(int rowOffset, int colOffset) {
-        for (BoundedComponent<?> child : children) {
-            child.moveTo(rowOffset, colOffset);
-        }
-    }
+//    protected void moveChildrenDelta(Position delta) {
+//        moveChildrenDelta(delta.getRow(), delta.getCol());
+//    }
+//    protected void moveChildrenDelta(int rowOffset, int colOffset) {
+//        for (BoundedComponent<?> child : children) {
+//            child.moveDelta(rowOffset, colOffset);
+//        }
+//    }
     
     protected boolean hasBorder() {
         return border != null;
@@ -93,14 +92,6 @@ public class Composite extends AbstractComponent<Composite> implements Rectangle
     }
     
     public Composite setBorder(boolean hasBorder) {
-        if (hasBorder  && border!=null) return this; // no change
-        if (!hasBorder && border==null) return this; // no change
-        // change taking place
-        if (hasBorder) {
-            this.moveChildrenDelta( 1, 1);
-        } else {
-            this.moveChildrenDelta(-1,-1);
-        }
             
         if (hasBorder  && boundsFixed) {
             rebuildBorder(bounds);
@@ -109,6 +100,8 @@ public class Composite extends AbstractComponent<Composite> implements Rectangle
             if (hasBorder) {
                 this.bounds = calcBorderSize(this.bounds);
                 rebuildBorder(this.bounds);
+            } else {
+                this.border = null;
             }
         }
         return this;
@@ -133,8 +126,8 @@ public class Composite extends AbstractComponent<Composite> implements Rectangle
     }
 
     public Composite add(BoundedComponent<?> component) {
-        if (hasBorder()) component.moveDelta(1, 1);
         children.add(component);
+        fullrecalcDim();
         return this;
     }
 
@@ -162,9 +155,7 @@ public class Composite extends AbstractComponent<Composite> implements Rectangle
     public void moveTo(int row, int col) {
         Position delta = this.offsetTo(row, col);
         bounds.moveDelta(delta.getRow(), delta.getCol());
-        moveChildrenDelta(delta);
         fullrecalcDim();
-        //throw new IllegalStateException("Not sure if I will implement -  probably");
         
     }
 
@@ -178,9 +169,26 @@ public class Composite extends AbstractComponent<Composite> implements Rectangle
     @Override
     protected void draw(FGBGColors color, IScreenLineSegmentsBuffer segments) {
         // loop thru children and draw
+
+        Position offset = Position.ZERO;
+        if (this.hasBorder()) {
+            offset = offset.offsetTo(1, 1);
+        }
         
         for (BoundedComponent<?> child : children) {
-            segments.merge(child.getSegmentsBuffer());
+
+            if (boundsFixed) {
+                ScreenLineSegment.UTIL.addSegmentsWithOffsetBounded(offset,
+                                                                    bounds,
+                                                                    segments.getSegments(),
+                                                                    child.getSegmentsBuffer().getSegments());
+            } else {
+                ScreenLineSegment.UTIL.addSegmentsWithOffsetUnBounded(offset, 
+                                                                      segments.getSegments(),
+                                                                      child.getSegmentsBuffer().getSegments());
+            }
+            
+           // segments.merge(child.getSegmentsBuffer());
         }
         
         drawBorderIfNeeded(segments);

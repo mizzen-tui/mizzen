@@ -335,6 +335,7 @@ public interface ScreenLineSegment extends Rectangle {
                 // to - need to test
             }
         }
+        // MAX_SIZE
 
         public static void addSegmentWithOffsetBounded(Position offset, Rectangle bounds,
                 Collection<ScreenLineSegment> ts, ScreenLineSegment sc) {
@@ -360,6 +361,13 @@ public interface ScreenLineSegment extends Rectangle {
             }
         }
 
+        // 
+        public static void addSegmentsWithOffsetUnBounded(Position offset,
+                                                          Collection<ScreenLineSegment> destination, 
+                                                          Collection<ScreenLineSegment> segmentsToAdd) {
+            addSegmentsWithOffsetBounded(offset, Rectangle.MAX_SIZE, destination, segmentsToAdd);
+        }
+        
         public static ScreenLineSegment getAtCol(TreeSet<ScreenLineSegment> ts, int row, int col) {
             ScreenLineSegment srchKey = blankScreenObject(FGBGColors.DEFAULT, ' ', row, col, Integer.MIN_VALUE, 1);
             ScreenLineSegment siblingGreater = ts.ceiling(srchKey);

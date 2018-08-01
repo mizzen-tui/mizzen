@@ -12,6 +12,14 @@ public class HorizontalLine extends BoundedComponent<HorizontalLine> {
         super(color, pos, new Dimension.Simple(1, len));
     }
 
+    public HorizontalLine(FGBGColors color, int len) {
+        super(color, Position.ZERO, new Dimension.Simple(1, len));
+    }
+
+    public HorizontalLine(int len) {
+        super(FGBGColors.NO_COLOR_SPECIFIED, Position.ZERO, new Dimension.Simple(1, len));
+    }
+
     public HorizontalLine(FGBGColors color, int row, int col, int len) {
         super(color, new Position.Simple(row, col), new Dimension.Simple(1, len));
     }

@@ -61,9 +61,10 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>{
         this.titleColor = titleColor;
         if (title != null) {
                 title = title.trim();
-                if (title.length() > getWidth() - 2) {
-                        title = title.substring(0, getWidth() - 2);
-                }
+//                if (title.length() > getWidth() - 2) {
+//                        int rightIDX=
+//                        title = title.substring(0, getWidth() - 2);
+//                }
         }
         this.title = title;
         return this;
