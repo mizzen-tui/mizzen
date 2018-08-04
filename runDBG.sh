@@ -21,7 +21,16 @@ else
     else
         if [[ "$1" == compo* ]] ; then
 	       export CLASS_NAME=${CLASS_PKG}.CompositeTest
-	      shift
+	       shift
+	    else
+	    	if [[ "$1" == scroll* ]] ; then
+               export CLASS_NAME=${CLASS_PKG}.CompositeScrollTest
+	           shift
+	        else
+	        	if [[ -n "${1}" ]] ; then
+	        	     export CLASS_NAME=$1
+	            fi 
+	        fi
         fi    
 	fi	
 fi

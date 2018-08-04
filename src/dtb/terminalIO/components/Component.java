@@ -47,13 +47,9 @@ public interface Component<T extends Component<?>> extends IScreenLineSegmentsBu
                 draw(color, segments);
             }
         }
-int debug=0;
+
         public void clear() {
             segments.clear();
-            if (this instanceof Composite) {
-                debug=1;
-            }
-            
             fillPolicy.fillEmptyIfConfigured();
             this.hasDrawn = false;
         }

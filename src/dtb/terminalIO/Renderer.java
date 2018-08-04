@@ -3,6 +3,8 @@ package dtb.terminalIO;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import dtb.terminalIO.ControlCode.CursorDown;
+
 public interface Renderer {
 
     public void render(TerminalContext ctx);
@@ -89,12 +91,25 @@ public interface Renderer {
             render(sctx);
             return "RendererBuffer \n"+sctx.toString();
         }
-
-        
         
     }
 
-    public static TextRenderer CR = new TextRenderer("\n");
+    public static Renderer CR = new Renderer() {
+
+        TextRenderer cooked_CR = new TextRenderer("\n");
+        Renderer raw_CR = new RendererBuffer().append(ControlCode.CURSOR_LEFT ).append( new CursorDown(1));
+        
+        @Override
+        public void render(TerminalContext ctx) {
+            if (ctx.isRaw()) {
+                raw_CR.render(ctx);
+            } else {
+                cooked_CR.render(ctx);
+            }
+        }
+        
+    };
+    
 
     public static TextRenderer LF = new TextRenderer("\r");
 

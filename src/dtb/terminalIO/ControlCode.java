@@ -271,6 +271,10 @@ public abstract class ControlCode implements Renderer {
     public static final ControlCode ERASE_UP            = new BaseTextControlCode(escape_CHR + "[1J");
     public static final ControlCode ERASE_SCREEN        = new BaseTextControlCode(escape_CHR + "[2J");
 
+    public static final String CURSOR_FAR_LEFT_STR         = escape_CHR + "[G"; 
+    public static final ControlCode CURSOR_LEFT         = new BaseTextControlCode(escape_CHR + "[G");
+    
+    
     protected static class CursorMovementWithCount extends BaseTextControlCode {
 
         public CursorMovementWithCount(int count, String suffixChar) {
@@ -278,7 +282,7 @@ public abstract class ControlCode implements Renderer {
         }
 
     }
-
+    
     public static class CursorUp extends CursorMovementWithCount {
         public CursorUp(int nLines) {
             super(nLines, "A");

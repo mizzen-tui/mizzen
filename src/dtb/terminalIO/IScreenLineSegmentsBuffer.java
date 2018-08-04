@@ -27,6 +27,8 @@ public interface IScreenLineSegmentsBuffer extends Rectangle , Iterable<ScreenLi
 
 	public abstract String getCharAt(int row, int col);
 
+	void setCharAt(int row, int col, char ch, FGBGColors color);
+	
 	public abstract boolean removeRow(int row);
 
 	public abstract boolean removeRect(Rectangle r);
@@ -96,7 +98,7 @@ public interface IScreenLineSegmentsBuffer extends Rectangle , Iterable<ScreenLi
 	public default void fillRectWithChar(FGBGColors color, char fillChar) {
 		fillRectWithChar(color, fillChar, this);
 	}
-	
+
 	
 	
 

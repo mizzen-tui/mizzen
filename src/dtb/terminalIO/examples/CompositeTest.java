@@ -1,21 +1,28 @@
 package dtb.terminalIO.examples;
 
+import java.io.IOException;
+
 import dtb.terminalIO.Canvas;
 import dtb.terminalIO.Colors;
 import dtb.terminalIO.ControlCode.FGBGColors;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.HorizontalLine;
 import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.util.Stty;
 
 public class CompositeTest {
     
     static         int rowLIMIT=28;
-
     
-    public static void main(String[] args) {
+    
+    public static Canvas master_canvas = null;
+    
+    public static void main(String[] args) throws IOException {
         // TODO Auto-generated method stub
 
-        Canvas master_canvas = TestsCommon.getMasterCanvasForTesting(TestsCommon.getTerminalScreenForTesting(args));
+        //Stty.setRaw();
+        
+        master_canvas = TestsCommon.getMasterCanvasForTesting(TestsCommon.getTerminalScreenForTesting(args));
 
 
         build_bounded_pre(master_canvas);
@@ -31,11 +38,22 @@ public class CompositeTest {
         master_canvas.t(0, 3, String.valueOf(text2));
         master_canvas.t(1, 3, String.valueOf(text3));
         
+        statusMsg("[STATUS goes here]");
                         
         master_canvas.refresh();
 
+        //Stty.setCooked();
+        
+        
     }
 
+    public static void statusMsg(String msg) {
+        String msgFormatted = String.format("%-60s", msg);
+        // System.err.println(msgFormatted);
+        master_canvas.t(35, 3, msgFormatted);
+        master_canvas.refresh();
+    }
+    
     public static Composite build_bounded_pre(Canvas master_canvas) {
         Composite textC = new Composite()
                                 .setBounds(5, 15 )
@@ -84,7 +102,6 @@ public class CompositeTest {
         master_canvas.addComponent(2, 75, new HorizontalLine(new FGBGColors(Colors.BGre),20));
         master_canvas.addComponent(3, 75, text3);
         
-        master_canvas.setEmptyChar('.');
         return text3;
     }
 

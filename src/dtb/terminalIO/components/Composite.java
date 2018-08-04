@@ -131,6 +131,18 @@ public class Composite extends AbstractComponent<Composite> implements Rectangle
         return this;
     }
 
+    public Composite add(Position offset, BoundedComponent<?> component) {
+        component.moveDelta(offset.getRow(), offset.getCol());
+        add(component);
+        return this;
+    }
+
+    public Composite add(int offsetRow, int offsetCol, BoundedComponent<?> component) {
+        component.moveDelta(offsetRow, offsetCol);
+        add(component);
+        return this;
+    }
+
     @Override
     public int getCol() {
         return bounds.getCol();
@@ -159,6 +171,17 @@ public class Composite extends AbstractComponent<Composite> implements Rectangle
         
     }
 
+    public void clear() {
+        super.clear();
+//        segments.clear();
+//        fillPolicy.fillEmptyIfConfigured();
+//        this.hasDrawn = false;
+        for (BoundedComponent<?> child : children) {
+            child.clear();
+        }
+    }
+    
+    
     protected void drawBorderIfNeeded(IScreenLineSegmentsBuffer segments) {
         if (hasBorder()) {
             segments.merge(this.border.getSegmentsBuffer());

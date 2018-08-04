@@ -9,6 +9,14 @@ public interface TerminalContext {
     boolean isColorEnabled();
 
     void write(String s);
+    
+    default boolean  isRaw() {
+        return false;
+    }
+    
+    default boolean isCooked() {
+        return true;
+    }
 
     public static abstract class AbstractTerminalContext implements TerminalContext {
 

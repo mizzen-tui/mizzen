@@ -381,6 +381,38 @@ public interface ScreenLineSegment extends Rectangle {
             return null;
         }
 
+        public static String getCharAt(TreeSet<ScreenLineSegment> ts, int row, int col) {
+            ScreenLineSegment sc = getAtCol(ts, row, col);
+            if (sc == null)
+                return null;
+            int offset = col - sc.getCol();
+            return sc.getText().substring(offset, offset + 1);
+        }
+        
+        public static void setCharAt(TreeSet<ScreenLineSegment> ts, int row, int col, char ch, FGBGColors color) {
+            ScreenLineSegment sc = getAtCol(ts,row, col);
+            if (1+1==3 || sc == null || !sc.getColors().equals(color) || !(sc instanceof SegmentImpl) ) {
+                ScreenLineSegment new_sc = new SegmentImpl(color,row, col, sc!=null?sc.getId()+1:1,ch+"");
+                addTo(ts,new_sc);
+                return;
+            }
+            // at this point we have an sc that is an SegmentImpl
+            int offset = col - sc.getCol();
+            String oldText = sc.getText();
+            
+            String left   = ( (offset>0)? oldText.substring(0,offset)  : "" );
+            String right  = ((offset< oldText.length())? oldText.substring(offset+1, oldText.length()) : "");
+
+            
+            String newText = left   
+                              + String.valueOf(ch)  
+                              + right;
+            
+            ((SegmentImpl)sc).setText(newText);
+        }
+
+        
+        
         public static Collection<ScreenLineSegment> split_on_overlap(Rectangle top, ScreenLineSegment under) {
             if (!top.overlapsWith(under)) {
                 return Collections.singleton(under);
@@ -520,6 +552,14 @@ public interface ScreenLineSegment extends Rectangle {
             super(color, position);
             this.id = id;
             this.simpleText = simpleText;
+        }
+
+        public Object setText(String newText) {
+            return this.simpleText = newText;
+        }
+
+        public SegmentImpl(FGBGColors color, int row, int col, int id, String simpleText) {
+            this(color, new Position.Simple(row,col),id, simpleText);
         }
 
         @Override

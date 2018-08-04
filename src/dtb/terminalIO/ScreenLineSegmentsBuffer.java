@@ -108,15 +108,16 @@ public class ScreenLineSegmentsBuffer implements Rectangle, IScreenLineSegmentsB
 
     @Override
     public String getCharAt(int row, int col) {
-        ScreenLineSegment sc = getAtCol(row, col);
-        if (sc == null)
-            return null;
-        int offset = col - sc.getCol();
-        return sc.getText().substring(offset, offset + 1);
+        return ScreenLineSegment.UTIL.getCharAt(segments, row, col);
     }
 
+    @Override
+    public void setCharAt(int row, int col, char ch, FGBGColors color) {
+        ScreenLineSegment.UTIL.setCharAt(segments, row, col, ch, color);
+    }
+    
     public boolean removeSegment(ScreenLineSegment sc) {
-        boolean result = this.segments.remove(sc);
+        boolean result = this.segments.remove(sc); 
         fullrecalcDim();
         return result;
     }

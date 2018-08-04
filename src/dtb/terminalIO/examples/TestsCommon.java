@@ -8,6 +8,8 @@ import java.net.UnknownHostException;
 
 import dtb.terminalIO.Canvas;
 import dtb.terminalIO.TerminalScreen;
+import dtb.terminalIO.geom.Dimension;
+import dtb.terminalIO.util.TerminalDimensions;
 
 public class TestsCommon {
 	
@@ -18,8 +20,14 @@ public class TestsCommon {
 	}
 	
 	public static Canvas getMasterCanvasForTesting(TerminalScreen screen) {
+	        Dimension size = null;
+	        try {
+	        size = TerminalDimensions.create();
+	        } catch (Exception e) {
+	            size = new Dimension.Simple(35, 150);
+	        }
 		Canvas master_canvas = new Canvas(screen);
-		master_canvas.setSize(35, 150);  // todo: detect term size
+		master_canvas.setSize(size.getHeight()-1, size.getWidth()-1);  // todo: detect term size
 		return master_canvas;
 	}
 
@@ -30,9 +38,7 @@ public class TestsCommon {
 			super(out);
 			this.socket = socket;
 		}
-		
 	}
-	
 	
 	//static Socket socket;
 	
@@ -75,5 +81,14 @@ public class TestsCommon {
 		return  getNetCatStream();
 	}
 	
+	
+        public static void sleep(int m) {
+            try {
+                    Thread.sleep(m);
+            } catch (InterruptedException e) {
+                    // TODO Auto-generated catch block
+
+            }
+    }
 	
 }
