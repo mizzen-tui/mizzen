@@ -1,7 +1,10 @@
 package dtb.terminalIO.events;
 
+import java.util.StringJoiner;
+
 import dtb.terminalIO.events.Keys.KeyEvent;
 import dtb.terminalIO.events.Keys.KeyStroke;
+import dtb.terminalIO.events.Keys.KeyStrokeFindResult;
 
 public class InputCharsEventParser {
 
@@ -12,13 +15,38 @@ public class InputCharsEventParser {
     private int  parse_STATE               = STATE_START;
 
     private long last_ESC_PRESSED_TIME = Integer.MAX_VALUE;
-    private char last_CHAR_PRESSED         = 0;  // TODO: needed?
 
+    public class InputCharsDEBUGEvent extends TerminalEvent<String> {
+	private static final long serialVersionUID = 1L;
+
+	public InputCharsDEBUGEvent(char[] buffer, int readIn) {
+	    super(InputCharsEventParser.this, TYPE.DEBUG, null);
+	    StringBuffer sb = new StringBuffer();
+	    StringJoiner sj = new StringJoiner(",");
+	    for (int i=0;i<readIn; i++) {
+		sj.add(((int)buffer[i])+"");
+	    }
+	    sb.append("Chars read in:  new KeySequence(" + sj.toString()+")     ");
+	    setEventData(sb.toString());
+	}
+    }
+    
+    
     public void parseInput(char[] buffer, int readIn, EventBus eventBus) {
-        for (int i = 0; i < readIn; i++) {
-            int ch = buffer[i];
+	
+	eventBus.addEvent( new InputCharsDEBUGEvent(buffer, readIn)  );
+	
+	KeyStrokeFindResult result = Keys.getKeyStrokeFromChars(buffer, readIn);
+	
+	if (result.foundKeyStroke != null) {
+	    eventBus.addEvent( new Keys.KeyEvent(this, result.foundKeyStroke) );
+	}
+	
+        for (int i = 0; i < result.remainingBuffer.length; i++) {
+            int ch = result.remainingBuffer[i];
             processChar((char) ch, eventBus);
         }
+        handleESC_ifNeeded(eventBus);
     }
 
     private void handleESC_ifNeeded(EventBus eventBus) {
@@ -77,7 +105,7 @@ public class InputCharsEventParser {
                 }
                 
                 //  assume ALT-keystroke
-                eventBus.addEvent( new KeyEvent(this, new KeyStroke(ch , true) ));
+                eventBus.addEvent( new KeyEvent(this, new KeyStroke(ch , "ALT-"+ch, true) ));
                 
                 parse_STATE = STATE_START;
                 
@@ -112,11 +140,13 @@ public class InputCharsEventParser {
                 return;
                 
             default :
-                
                 break;
-                
         }
+    }
 
+    public void idle(EventBus eventBus ) {
+	handleESC_ifNeeded(eventBus);
+	
     }
 
 }

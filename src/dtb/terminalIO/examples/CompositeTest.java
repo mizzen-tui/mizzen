@@ -54,6 +54,14 @@ public class CompositeTest {
         master_canvas.refresh();
     }
     
+    public static void statusMsg2(String msg) {
+        String msgFormatted = String.format("%-60s", msg);
+        // System.err.println(msgFormatted);
+        master_canvas.t(33, 3, msgFormatted);
+        master_canvas.refresh();
+    }
+    
+    
     public static Composite build_bounded_pre(Canvas master_canvas) {
         Composite textC = new Composite()
                                 .setBounds(5, 15 )
@@ -128,4 +136,5 @@ public class CompositeTest {
         master_canvas.addComponent(3, 35, text2);
         return text2;
     }
+
 }

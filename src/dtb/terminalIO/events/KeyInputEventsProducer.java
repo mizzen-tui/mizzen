@@ -73,6 +73,8 @@ public class KeyInputEventsProducer implements Runnable {
                         handleReaderInput(buffer, readIn);
                     }
 
+                } else {
+                    idle();
                 }
 
             } catch (Exception e) {
@@ -93,11 +95,16 @@ public class KeyInputEventsProducer implements Runnable {
 
     }
 
+    private void idle() {
+	readerParser.idle(eventBus);
+	
+    }
+
     private void handleReaderInput(char[] buffer, int readIn) {
         readerParser.parseInput(buffer, readIn, eventBus);
     }
 
-    public static void main(String[] args) throws InterruptedException, IOException {
+    public static void mainE(String[] args) throws InterruptedException, IOException {
 
         try {
             
@@ -122,7 +129,7 @@ public class KeyInputEventsProducer implements Runnable {
         }
     }
 
-    public static void mainOLD(String[] args) throws InterruptedException, IOException {
+    public static void main(String[] args) throws InterruptedException, IOException {
 
         EventBus eventBus = new EventBus();
         try {
@@ -140,21 +147,45 @@ public class KeyInputEventsProducer implements Runnable {
 
                 eventBus.addEventHandler(new ConditionalEventHandler() {
 
+		    @Override
+		    public void handle(TerminalEvent<?> te) {
+                        CompositeTest.statusMsg2(String.valueOf(te.getEventData()));
+		    }
+
+		    @Override
+		    public EventHandler canHandle(TerminalEvent<?> te) {
+                        if (te.type.equals(TYPE.DEBUG))
+                            return this;
+                        return null;
+		    }
+                    
+                });
+                
+                
+                eventBus.addEventHandler(new ConditionalEventHandler() {
+
                     @Override
                     public void handle(TerminalEvent<?> te) {
 
                         Keys.KeyEvent ke = (Keys.KeyEvent) te;
 
+                        // eventBus.stopConsuming();
+
                         if (ke.isKeyStroke(Keys.ESC_KEYSTROKE)) {
-                            CompositeTest.statusMsg("ESC hit. Quitting..");
+                            CompositeTest.statusMsg(ke.getKeyName() + " hit. Quitting..");
                             eventBus.stopConsuming();
                             return;
                         }
-                        if (ke.isKeyStroke(Keys.A_KEYSTROKE)) {
-                            CompositeTest.statusMsg("A hit. Quitting..");
+                        if (1+1==3 && ke.isKeyStroke(Keys.CTRL_C_KEYSTROKE)) {
+                            CompositeTest.statusMsg(ke.getKeyName() + " hit. Quitting.." + Keys.CTRL_C_KEYSTROKE.name);
                             eventBus.stopConsuming();
                             return;
                         }
+//                        if (ke.isKeyStroke(Keys.A_KEYSTROKE)) {
+//                            CompositeTest.statusMsg("A hit. Quitting..");
+//                            eventBus.stopConsuming();
+//                            return;
+//                        }
 
                         CompositeTest.statusMsg(String.valueOf(ke.getEventData()));
                     }

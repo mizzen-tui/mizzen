@@ -9,7 +9,8 @@ public class TerminalEvent<T> extends EventObject {
     public static enum TYPE {
         KEYPRESS,
         DRAW,
-        EXCEPTION
+        EXCEPTION,
+        DEBUG
     }
     
     TYPE type;
@@ -27,6 +28,10 @@ public class TerminalEvent<T> extends EventObject {
 
     public T getEventData() {
         return eventData;
+    }
+    
+    protected void setEventData(T eventData) {
+	this.eventData = eventData;
     }
 
 
