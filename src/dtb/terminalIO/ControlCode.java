@@ -2,6 +2,8 @@ package dtb.terminalIO;
 
 import java.util.StringJoiner;
 
+import dtb.terminalIO.ControlCode.FGBGColors.HasRowChange;
+
 public abstract class ControlCode implements Renderer {
 
     public ControlCode() {
@@ -33,7 +35,8 @@ public abstract class ControlCode implements Renderer {
         }
 
         protected void doRender(TerminalContext ctx) {
-                ctx.write(this.getControlCode());
+                //ctx.write(this.getControlCode());
+                ctx.write(this);
         }
     }
     
@@ -254,7 +257,10 @@ public abstract class ControlCode implements Renderer {
         public static interface Provider {
             FGBGColors getColor();
         }
-
+        
+        public interface HasRowChange {
+            int deltaRow();
+        }
     }
 
     public static final String      escape_CHR          = "\u001B";
@@ -275,24 +281,41 @@ public abstract class ControlCode implements Renderer {
     public static final ControlCode CURSOR_LEFT         = new BaseTextControlCode(escape_CHR + "[G");
     
     
-    protected static class CursorMovementWithCount extends BaseTextControlCode {
+    protected static class CursorMovementWithCount extends BaseTextControlCode{
 
+	protected int count;
+	
         public CursorMovementWithCount(int count, String suffixChar) {
             super(escape_CHR + "[" + count + suffixChar);
+            this.count = count;
+        }
+        
+        protected int getCount() {
+            return count;
         }
 
     }
     
-    public static class CursorUp extends CursorMovementWithCount {
+    public static class CursorUp extends CursorMovementWithCount implements HasRowChange  {
         public CursorUp(int nLines) {
             super(nLines, "A");
         }
+
+	@Override
+	public int deltaRow() {
+	    return - getCount();
+	}
     }
 
-    public static class CursorDown extends CursorMovementWithCount {
+    public static class CursorDown extends CursorMovementWithCount  implements HasRowChange   {
         public CursorDown(int nLines) {
             super(nLines, "B");
         }
+
+	@Override
+	public int deltaRow() {
+	    return getCount();
+	}
     }
 
     public static class CursorForward extends CursorMovementWithCount {
@@ -307,7 +330,7 @@ public abstract class ControlCode implements Renderer {
         }
     }
 
-    public static class CursorUpAndClearLines implements Renderer {
+    public static class CursorUpAndClearLines implements Renderer, HasRowChange  {
         int nLines;
 
         public CursorUpAndClearLines(int nLines) {
@@ -329,6 +352,11 @@ public abstract class ControlCode implements Renderer {
             rb.append(new CursorUp(nLines));
             rb.render(ctx);
         }
+
+	@Override
+	public int deltaRow() {
+	    return - nLines;
+	}
 
     }
 }

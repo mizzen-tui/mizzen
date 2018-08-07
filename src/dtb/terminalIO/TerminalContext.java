@@ -1,5 +1,7 @@
 package dtb.terminalIO;
 
+import dtb.terminalIO.ControlCode.BaseTextControlCode;
+
 public interface TerminalContext {
 
     boolean isControlCodesEnabled();
@@ -9,14 +11,14 @@ public interface TerminalContext {
     boolean isColorEnabled();
 
     void write(String s);
-    
-    default boolean  isRaw() {
-        return false;
+
+    default void write(BaseTextControlCode cc) {
+	write(cc.getControlCode());
     }
     
-    default boolean isCooked() {
-        return true;
-    }
+    boolean  isRaw();
+    
+    boolean isCooked();
 
     public static abstract class AbstractTerminalContext implements TerminalContext {
 
@@ -66,6 +68,21 @@ public interface TerminalContext {
             this.delegate.write(s);
         }
 
+        @Override
+        public void write(BaseTextControlCode cc) {
+            this.delegate.write(cc);
+        }
+
+	@Override
+	public boolean isRaw() {
+	    return this.delegate.isRaw();
+	}
+
+	@Override
+	public boolean isCooked() {
+	    return this.delegate.isCooked();
+	}
+
     }
 
     public static class StringContext extends AbstractTerminalContext {
@@ -85,6 +102,15 @@ public interface TerminalContext {
             return sb.toString();
         }
 
+	@Override
+	public boolean isRaw() {
+	    return false;
+	}
+
+	@Override
+	public boolean isCooked() {
+	    return true;
+	}
     };
 
     public static TerminalContext DEFAULT = new AbstractTerminalContext() {
@@ -92,6 +118,16 @@ public interface TerminalContext {
         public void write(String s) {
             System.out.println(s);
         }
+
+	@Override
+	public boolean isRaw() {
+	    return false;
+	}
+
+	@Override
+	public boolean isCooked() {
+	    return true;
+	}
 
     };
 

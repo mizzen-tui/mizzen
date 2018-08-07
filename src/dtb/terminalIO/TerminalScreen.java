@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 
 import dtb.terminalIO.CLIEmitter.PrintStreamEmitter;
+import dtb.terminalIO.ControlCode.BaseTextControlCode;
 import dtb.terminalIO.Renderer.RendererBuffer;
 import dtb.terminalIO.Renderer.TextRenderer;
 import dtb.terminalIO.util.ExecUtil;
@@ -79,6 +80,14 @@ public class TerminalScreen implements TerminalContext {
         out.print(s);
     }
 
+    @Override
+    public void write(BaseTextControlCode cc) {
+	out.outputRenderer(cc);
+	//write(cc.getControlCode());
+    }
+    
+    
+    
     public TerminalScreen add(Renderer r) {
         if (refreshed) {
             out.clearLastTrackedLines(false);
@@ -108,6 +117,10 @@ public class TerminalScreen implements TerminalContext {
         out.clearLastTrackedLines(true);
         refreshed = true;
         return this;
+    }
+    
+    public LineTrackingCLIEmmitter getEmitter() {
+	return this.out;
     }
 
 }
