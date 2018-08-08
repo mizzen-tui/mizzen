@@ -28,9 +28,6 @@ public class CompositeScrollTest {
                         
         master_canvas.refresh();
         
-        
-        
-        
 
     }
     

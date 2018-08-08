@@ -19,8 +19,12 @@ public class Composite extends AbstractComponent<Composite> implements Rectangle
     
     private List<BoundedComponent<?>> children = new ArrayList<BoundedComponent<?>>();
     
+    public Composite(FGBGColors color) {
+        super(color);
+    }
+
     public Composite() {
-        super(FGBGColors.NO_COLOR_SPECIFIED);
+        this(FGBGColors.NO_COLOR_SPECIFIED);
     }
     
     public Composite setBounds(int row, int col, int height, int width) {

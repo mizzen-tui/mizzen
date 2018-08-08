@@ -7,7 +7,6 @@ import dtb.terminalIO.CLIEmitter.PrintStreamEmitter;
 import dtb.terminalIO.ControlCode.BaseTextControlCode;
 import dtb.terminalIO.Renderer.RendererBuffer;
 import dtb.terminalIO.Renderer.TextRenderer;
-import dtb.terminalIO.util.ExecUtil;
 import dtb.terminalIO.util.Stty;
 
 public class TerminalScreen implements TerminalContext {

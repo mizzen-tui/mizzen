@@ -41,7 +41,6 @@ public class LineTrackingCLIEmmitter implements CLIEmitter {
 	if (nextOutputIncsLineCounter) {
 	    nextOutputIncsLineCounter = false;
 	    lineCounter++;
-	    // ctx.write(DEBUGCTR());
 	}
 	ctx.write(line);
     }
@@ -51,10 +50,7 @@ public class LineTrackingCLIEmmitter implements CLIEmitter {
     }
 
     protected void CR() {
-	outputStr(" : "+lineCounter);
 	output(ControlCode.ERASE_END_OF_LINE);
-	//Renderer.CR
-	//outputStr("\n");
 	output(Renderer.CR);
 	nextOutputIncsLineCounter = true;
     }
