@@ -3,19 +3,22 @@ package dtb.terminalIO.components.chart;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import dtb.terminalIO.Canvas;
+import dtb.terminalIO.Colors;
+import dtb.terminalIO.ControlCode;
 import dtb.terminalIO.ControlCode.FGBGColors;
 import dtb.terminalIO.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.TerminalScreen;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.RectangleComponent;
+import dtb.terminalIO.examples.TestsCommon;
 import dtb.terminalIO.geom.Dimension;
 
 public class LineChart extends Composite {
@@ -67,6 +70,7 @@ public class LineChart extends Composite {
     List<Double> data;
     double scale ;        // data span per cell on y-axis
     int axisWidth;
+    FGBGColors plotColor = FGBGColors.NO_COLOR_SPECIFIED;
     
     Plotter plotter;
 
@@ -106,6 +110,15 @@ public class LineChart extends Composite {
         return this;
     }
     
+    public void clearData() {
+        this.data.clear();
+        bottomValue = Double.MAX_VALUE;
+        topValue = Double.MIN_VALUE;
+        scale = 0;
+    }
+
+    
+    
     void renderBraille() {
          Function<Double, int[]> getPos = (d) -> {
              int cnt4 = (int) Math.round((d - this.bottomValue) / (this.scale/4)  + 0.5);
@@ -123,23 +136,29 @@ public class LineChart extends Composite {
              if (plot0[0] == plot1[0]) { // same braille cell
                  int y = this.plotter.getHeight() - plot0[0] + yOffset ;
                  int x = 1 + i;
-                 plotter.addPlot(y, x, braillePatterns.get(new int[] {plot0[1], plot1[1]}).charAt(0));
+                 plotter.addPlot(y, x, braillePatterns.get(new int[] {plot0[1], plot1[1]}).charAt(0), plotColor);
              } else {
                  int y = this.plotter.getHeight() - plot0[0] + yOffset ;
                  int x = 1 + i;
-                 plotter.addPlot(y, x, lSingleBraille[plot0[1]] );
+                 plotter.addPlot(y, x, lSingleBraille[plot0[1]], plotColor );
                  
                  y = this.plotter.getHeight() - plot1[0] + yOffset ;
                  x = 1 + i;
-                 plotter.addPlot(y, x, rSingleBraille[plot1[1]] );
+                 plotter.addPlot(y, x, rSingleBraille[plot1[1]], plotColor );
              }
          }
     }
     
     @Override
     protected void draw(FGBGColors color, IScreenLineSegmentsBuffer segments) {
+        this.plotter.clearPlots();
         renderBraille();
         super.draw(color, segments);
+    }
+    
+    public LineChart setPlotColor(FGBGColors plotColor) {
+        this.plotColor = plotColor;
+        return this;
     }
     
     public static void main(String[] args) {
@@ -150,9 +169,12 @@ public class LineChart extends Composite {
         
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         TerminalScreen screen = new TerminalScreen();
-        screen.setPrintStream( new PrintStream( outputStream ));
-        screen.setControlCodesEnabled(false);
+        // screen.setPrintStream( new PrintStream( outputStream ));
+        //screen.setControlCodesEnabled(false);
         
+        screen.add(ControlCode.HIDE_CURSOR);
+        screen.refresh();
+
         Canvas master_canvas = new Canvas(screen);
         master_canvas.setEmptyChar(' ');
         
@@ -163,25 +185,36 @@ public class LineChart extends Composite {
 
         LineChart lc = new LineChart(20, 50);
         lc.setBorder(true);
+        lc.setPlotColor( new FGBGColors(Colors.BIYel));
+
         
-        for (int i=1 ; i<220; i++) {
-           double d = Math.sin(((float) i) / 5);
-//           System.out.println(d);
-           lc.addData(d);
+        Consumer<Integer> dataProducer = (j) -> {
+            lc.clearData();
+            lc.clear();
+            for (int i=j ; i<(220+j); i++) {
+                double d = Math.sin(((float) i) / 5);
+                //System.out.println(d);
+                lc.addData(d);
+                d = Math.cos(((float) i) / 5);
+               // lc.addData(d);
+             }
+            master_canvas.addComponent(2,15, lc);
+            master_canvas.t(1,1,"j = "+j+"   ");
+            master_canvas.refresh();
+        };
+        
+        for (int j=10; j<10000; j++) {
+           dataProducer.accept(j);
+           TestsCommon.sleep(100);
         }
         
+//        master_canvas.addComponent(2,15, lc);
         
-//        lc.plotter.addPlot(6, 1);
-//        lc.plotter.addPlot(5, 2);
-//        lc.plotter.addPlot(4, 3);
-//        lc.plotter.addPlot(5, 4);
-//        lc.plotter.addPlot(6, 5);
-        
-        master_canvas.addComponent(2,15, lc);
-        
+        screen.add(ControlCode.SHOW_CURSOR);
+        screen.refresh();
         master_canvas.refresh();
 
-        System.out.println(  outputStream.toString() );
+        // System.out.println(  outputStream.toString() );
     }
 
 

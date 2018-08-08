@@ -277,6 +277,11 @@ public abstract class ControlCode implements Renderer {
     public static final ControlCode ERASE_UP            = new BaseTextControlCode(escape_CHR + "[1J");
     public static final ControlCode ERASE_SCREEN        = new BaseTextControlCode(escape_CHR + "[2J");
 
+    // \033[?25l")
+    public static final ControlCode HIDE_CURSOR        = new BaseTextControlCode(escape_CHR + "[?25l");
+    public static final ControlCode SHOW_CURSOR        = new BaseTextControlCode(escape_CHR + "[?25h");
+    
+    
     public static final String CURSOR_FAR_LEFT_STR         = escape_CHR + "[G"; 
     public static final ControlCode CURSOR_LEFT         = new BaseTextControlCode(escape_CHR + "[G");
     
