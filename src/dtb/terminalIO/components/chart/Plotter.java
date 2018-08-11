@@ -3,6 +3,7 @@ package dtb.terminalIO.components.chart;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import dtb.terminalIO.Colors;
 import dtb.terminalIO.ControlCode.FGBGColors;
 import dtb.terminalIO.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.components.BoundedComponent;
@@ -30,6 +31,10 @@ public class Plotter extends BoundedComponent<Plotter> {
     }
 
     public Plotter addPlot(int row, int col, char plotChar, FGBGColors color) {
+        if ( ! this.containsPosition(new Position.Simple(row,col))) {
+            //throw new IllegalArgumentException(String.format("Bad plot!  row %d %d not in range %s", row, col, String.valueOf(this)));
+            color = new FGBGColors(Colors.IRed);
+        }
         plots.add( new Plot(row, col, plotChar, color) );
         return this;
     }

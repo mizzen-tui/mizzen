@@ -33,6 +33,14 @@ public interface Position {
         return new Position.Simple(row-this.getRow(), col-this.getCol());
     }
 
+    public default Position offsetAdd(int row, int col) {
+        return new Position.Simple(row + this.getRow(), col + this.getCol());
+    }
+
+    public default Position offsetAdd(Position offsetToAdd) {
+        return new Position.Simple(offsetToAdd.getRow() + this.getRow(), offsetToAdd.getCol() + this.getCol());
+    }
+
     public static final Position ZERO = new Simple(0, 0);
 
     /**

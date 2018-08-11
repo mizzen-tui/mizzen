@@ -43,6 +43,7 @@ public interface Rectangle extends Position, Dimension, Movable {
             return false;
         if (pos.getCol() > this.getRightMostCol())
             return false;
+        int botomRow = this.getBottomMostRow();
         if (pos.getRow() > this.getBottomMostRow())
             return false;
         return true;
@@ -212,6 +213,10 @@ public interface Rectangle extends Position, Dimension, Movable {
 
         public Delegate(Rectangle rectangle) {
             super();
+            this.rectangle = rectangle;
+        }
+
+        public void setRectangle(Rectangle rectangle) {
             this.rectangle = rectangle;
         }
 
