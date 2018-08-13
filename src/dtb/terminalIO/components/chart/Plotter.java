@@ -11,13 +11,12 @@ import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 
 public class Plotter extends BoundedComponent<Plotter> {
-    // todo: 1) addPlot should reject (either silently or noisily) and plots
+    // todo: 1) addPlot should reject (either silently or noisily) any plots
     //          outside of the bounds
     //       2) add draw line - using algorithm - maybe not in this class - but something that controls this class
     //       3) draw box
     //       4  draw circle
 
-    
     char defaultPlotChar = '*';
     
     Collection<Plotter.Plot> plots = new ArrayList<Plotter.Plot>();
@@ -76,6 +75,5 @@ public class Plotter extends BoundedComponent<Plotter> {
         }
         
     }
-    
     
 }

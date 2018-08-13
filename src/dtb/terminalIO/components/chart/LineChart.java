@@ -176,7 +176,6 @@ public class LineChart extends Composite {
             }
             l += w + this.axisXLabelGap;
         }
-
     }
 
     private void calcLabelY() {
@@ -206,7 +205,6 @@ public class LineChart extends Composite {
                 this.dataLabels[i] = i + "";
             }
         }
-
         
         Rectangle inner = getInnerRectangle();
         this.axisHeight = inner.getHeight() - 2;
@@ -217,7 +215,6 @@ public class LineChart extends Composite {
         Rectangle newPlotterSize = new Rectangle.Simple(plotter.getRow(), plotter.getCol(), axisHeight, axisWidth-1);
         plotter.setRectangle(newPlotterSize);
         this.moveChildTo(new Position.Simple(0,this.labelYSpace+1),  plotter);
-
     }
     
     private void plotAxes(FGBGColors color, IScreenLineSegmentsBuffer segments) {
@@ -248,8 +245,7 @@ public class LineChart extends Composite {
             int lenStr = labelY[i].length();
             segments.add( new SegmentImpl(color, origY -i*(this.axisYLabelGap+1), this.labelYSpace - lenStr +1, 1, labelY[i]) );
         }
-        
-        
+
     }
 
     @Override
