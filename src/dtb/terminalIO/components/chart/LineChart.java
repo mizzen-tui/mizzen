@@ -22,6 +22,7 @@ import dtb.terminalIO.examples.TestsCommon;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.util.StringUtils;
 
 public class LineChart extends Composite {
 
@@ -73,7 +74,7 @@ public class LineChart extends Composite {
     int             axisHeight;
     int             axisYLabelGap  = 1;
     int             axisXLabelGap  = 2;
-    String[]        dataLabels;
+    List<String>    dataLabels;
     String[]        labelY;
     FGBGColors      plotColor      = FGBGColors.NO_COLOR_SPECIFIED;
 
@@ -85,6 +86,7 @@ public class LineChart extends Composite {
     public LineChart(FGBGColors color, Dimension d) {
         super(color);
         data = new ArrayList<Double>();
+        dataLabels = new ArrayList<String>();
         this.plotter = new Plotter(color, new Dimension.Simple(d.getHeight() - 3, d.getWidth() - 3));
         this.add(this.plotter);
     }
@@ -104,8 +106,15 @@ public class LineChart extends Composite {
         this(FGBGColors.NO_COLOR_SPECIFIED, new Dimension.Simple(height, width));
     }
 
-    public LineChart addData(double d) {
+    public LineChart addData(double d, String label) {
         data.add(d);
+        int size = data.size();
+        if (label != null) {
+            while (this.dataLabels.size() + 1 < size ) {
+                this.dataLabels.add(null);
+            }
+            this.dataLabels.add(label);
+        }
         if (bottomValue > d) {
             bottomValue = d;
         }
@@ -115,8 +124,13 @@ public class LineChart extends Composite {
         return this;
     }
 
+    public LineChart addData(double d) {
+        return addData(d, null);
+    }
+
     public void clearData() {
         this.data.clear();
+        this.dataLabels.clear();
         bottomValue = Double.MAX_VALUE;
         topValue = Double.MIN_VALUE;
         scale = 0;
@@ -165,17 +179,20 @@ public class LineChart extends Composite {
 
     private void calcLabelX() {
         int l = 0;
-        int dataLabelsLen = this.dataLabels.length;
+        String _labelX = "";
+        String gap = StringUtils.repeat(' ', this.axisXLabelGap);
+        int dataLabelsLen = this.dataLabels.size();
         for (int i = 0; i < dataLabelsLen && l < this.axisWidth ; i++ ) {
             // assume braille mode
             if (2*l >= dataLabelsLen ) break;
-            String s = this.dataLabels[2*l];
+            String s = this.dataLabels.get(2*l);
             int w = s.length();
             if (l+w <= this.axisWidth) {
-                this.labelX = this.labelX + s; 
+                _labelX = _labelX + s + gap; 
             }
             l += w + this.axisXLabelGap;
         }
+        this.labelX = _labelX;
     }
 
     private void calcLabelY() {
@@ -197,15 +214,15 @@ public class LineChart extends Composite {
 
     private void calcLayout() {
         // set data labels if not provided
-        if (this.dataLabels == null || this.dataLabels.length == 0 || this.autoLabels) {
+        if (this.dataLabels == null || this.dataLabels.size() == 0 || this.autoLabels) {
             this.autoLabels = true;
             int dataLen = this.data.size();
-            this.dataLabels = new String[dataLen];
+            this.dataLabels = new ArrayList<String>(dataLen);
             for (int i = 0; i < dataLen; i++) {
-                this.dataLabels[i] = i + "";
+                this.dataLabels.add( i + "");
             }
         }
-        
+
         Rectangle inner = getInnerRectangle();
         this.axisHeight = inner.getHeight() - 2;
         calcLabelY();
@@ -215,6 +232,7 @@ public class LineChart extends Composite {
         Rectangle newPlotterSize = new Rectangle.Simple(plotter.getRow(), plotter.getCol(), axisHeight, axisWidth-1);
         plotter.setRectangle(newPlotterSize);
         this.moveChildTo(new Position.Simple(0,this.labelYSpace+1),  plotter);
+
     }
     
     private void plotAxes(FGBGColors color, IScreenLineSegmentsBuffer segments) {
@@ -234,18 +252,15 @@ public class LineChart extends Composite {
             segments.add( new SegmentImpl(color, i, origX, 1, VDASH+"") );
         }
         
-//        this.plotter.addPlot(0, 0,'@');
-//        this.plotter.addPlot(0, 1,'*');
-//        this.plotter.addPlot(1, 1,'+');
-//        this.plotter.addPlot(1, 2,'-');
-        
-        //this.plotter.addPlot(5, this.plotter.getRightMostCol()+10,'X');
 
         for (int i=0; i<labelY.length; i++) {
             int lenStr = labelY[i].length();
             segments.add( new SegmentImpl(color, origY -i*(this.axisYLabelGap+1), this.labelYSpace - lenStr +1, 1, labelY[i]) );
         }
-
+        
+        segments.add( new SegmentImpl(color, origY + 1, origX, 1, this.labelX ));
+        
+        
     }
 
     @Override
@@ -263,10 +278,6 @@ public class LineChart extends Composite {
     }
 
     public static void main(String[] args) {
-        // for (int i=0; i<4; i++) {
-        // System.out.println(i + " " + lSingleBraille[i]);
-        // System.out.println(i + " " + rSingleBraille[i]);
-        // }
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         TerminalScreen screen = new TerminalScreen();
@@ -295,7 +306,7 @@ public class LineChart extends Composite {
             for (int i = j; i < (220 + j); i++) {
                 double d = Math.sin(((float) i) / 5) * 10;
                 // System.out.println(d);
-                lc.addData(d);
+                lc.addData(d, i+"");
                 d = Math.cos(((float) i) / 5)*3;
                 lc.addData(d);
             }
