@@ -291,15 +291,25 @@ public class LineChart extends Composite {
         master_canvas.setEmptyChar(' ');
 //        master_canvas.setEmptyColor(new FGBGColors(Colors.Bla));
 
-        master_canvas.setSize(35, 80);
+        master_canvas.setSize(30, 130);
 
         master_canvas.addComponent(2, 4, new RectangleComponent(FGBGColors.DEFAULT, 5, 10));
         master_canvas.addComponent(4, 8, new RectangleComponent(FGBGColors.DEFAULT, 5, 15));
 
-        LineChart lc = new LineChart(30, 60);
+        LineChart lc = new LineChart(20, 60);
         lc.setBorder(true);
         lc.setPlotColor(new FGBGColors(Colors.BIYel));
 
+        BarChart bc = new BarChart(15, 50);
+        bc.setBorder(true);
+        //bc.setEmptyChar('.');
+       // bc.setPlotColor(new FGBGColors(Colors.BIYel));
+        bc.setTitle("| Import Percentages |");
+
+        double[] bc_DATA = new double[]{10.0,5.0,13.0,4.0, 6.0, 5.0, 6.0,7.0, 8.0};
+        String[] bc_DATALabels = new String[]{"Lumber","Metal","Fish","Beef", "Lamb", "Liquor", "Milk", "Butter", "Cherries"};
+        
+        
         Consumer<Integer> dataProducer = (j) -> {
             lc.clearData();
             lc.clear();
@@ -310,13 +320,26 @@ public class LineChart extends Composite {
                 d = Math.cos(((float) i) / 5)*3;
                 lc.addData(d);
             }
-            master_canvas.addComponent(2, 15, lc);
+            
+            bc.clearData();
+            bc.clear();
+            
+            for (int i = 0; i < bc_DATA.length  ; i++) {
+        	double d = Math.random()*20;
+        	
+                bc.addData(d, bc_DATALabels[i]);
+            }
+            master_canvas.addComponent(2, 15, bc);
+            
+            
+            
+            master_canvas.addComponent(5, 65, lc);
             master_canvas.t(31, 1, "j = " + j + "   ");
             master_canvas.refresh();
             master_canvas.t(lc.bottomValue + "  " + lc.topValue + "    ");
         };
 
-        for (int j = 10; j < 200; j++) {
+        for (int j = 10; j < 10000; j++) {
             dataProducer.accept(j);
             TestsCommon.sleep(250);
         }
