@@ -11,6 +11,10 @@ import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 
+
+/**
+ * A component that has a defined fixed rectangular size.
+ */
 public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Rectangle.Delegate implements Component<T>, FillOnClearPolicy.Provider {
 
     private IScreenLineSegmentsBuffer segments   = new ScreenLineSegmentsBuffer() {

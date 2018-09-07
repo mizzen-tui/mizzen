@@ -4,6 +4,9 @@ import java.io.IOException;
 
 import dtb.terminalIO.geom.Dimension;
 
+/**
+ * Returns screen dimensions
+ */
 public class TerminalDimensions implements Dimension {
 
     private int height;

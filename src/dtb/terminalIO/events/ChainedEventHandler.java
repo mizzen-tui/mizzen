@@ -19,6 +19,18 @@ public class ChainedEventHandler implements EventHandler {
         private Predicate<TerminalEvent<?>> canHandlePredicate;
         private EventHandler             handler;
 
+        protected EventHandler getHandler() {
+            return this.handler;
+        }
+        
+        protected Predicate<TerminalEvent<?>> getCanHandlePredicate() {
+            return this.canHandlePredicate;
+        }
+ 
+        protected void setCanHandlePredicate(Predicate<TerminalEvent<?>> canHandlePredicate) {
+            this.canHandlePredicate = canHandlePredicate;
+        }
+        
         @Override
         public void handle(TerminalEvent<?> te) {
             handler.handle(te);
@@ -27,7 +39,7 @@ public class ChainedEventHandler implements EventHandler {
         @Override
         public EventHandler canHandle(TerminalEvent<?> te) {
             if (canHandlePredicate.test(te)) {
-                return handler;
+                return this;
             }
             return null;
         }
@@ -49,6 +61,15 @@ public class ChainedEventHandler implements EventHandler {
         if (!eventHandlers.contains(eventHandler)) {
             eventHandlers.add(eventHandler);
         }
+        return this;
+    }
+    
+    public ChainedEventHandler remove(ConditionalEventHandler eventHandler) {
+        if (eventHandlers.contains(eventHandler)) {
+            eventHandlers.remove(eventHandler);
+        }
+        
+        System.out.println("Removed!");
         return this;
     }
 

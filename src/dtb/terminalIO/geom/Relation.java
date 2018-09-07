@@ -2,6 +2,16 @@ package dtb.terminalIO.geom;
 
 import java.util.function.BiPredicate;
 
+/**
+ * Utility class to represent relationship  between things ( ie rectangles)
+ * 
+ * A relationship can be be r1 is left of r2
+ * 
+ *   or ..
+ *   
+ * r1 is above r2  
+ *   
+ */
 public class Relation<T, U extends T, V extends T> {
 	protected T r1;
 	protected T r2;
@@ -35,6 +45,10 @@ public class Relation<T, U extends T, V extends T> {
 		return String.format("%s=[%s] %s=[%d]", r1Label, String.valueOf(r1),r2Label,String.valueOf(r2));
 	}
 
+	/**
+	 * A relationship that determines if object 'left' is left of object 'right' and if not
+	 * then to a swap so that 'right' is referred to as left and former left is referred to as right
+	 */
 	public static class LeftRight<T> extends Relation<T,T,T> {
 
 		public LeftRight(T left, T right, BiPredicate<T,T> pred) {
@@ -52,6 +66,10 @@ public class Relation<T, U extends T, V extends T> {
 		public String toString() { return asString("left", "right"); }
 	}
 
+	/**
+	 * A relationship that determines if object 'over' is on top of object 'under' and if not
+	 * then to a swap so that 'top' is referred to as under and former under is referred to as top
+	 */
 	public static class OverUnder<T> extends Relation<T,T,T> {
 
 		public OverUnder(T over, T under, BiPredicate<T,T> pred) {

@@ -4,6 +4,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+/**
+ * Utilities to exec external processes (usually via bash or sh)
+ */
 public class ExecUtil {
 
     

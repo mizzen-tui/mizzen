@@ -6,6 +6,9 @@ import dtb.terminalIO.ScreenLineSegment;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 
+/*
+ * A component that draws a horizontal line
+ */
 public class HorizontalLine extends BoundedComponent<HorizontalLine> {
 
     public HorizontalLine(FGBGColors color, Position pos, int len) {

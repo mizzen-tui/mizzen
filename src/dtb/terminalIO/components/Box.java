@@ -2,6 +2,11 @@ package dtb.terminalIO.components;
 
 import dtb.terminalIO.ControlCode.FGBGColors;
 
+/**
+ * A RectangleComponent that renders a Box ( equal length sides)
+ * @author ubuntu
+ *
+ */
 public class Box extends RectangleComponent {
 
     public Box(FGBGColors color, int length) {

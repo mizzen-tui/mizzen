@@ -18,12 +18,16 @@ import dtb.terminalIO.ScreenLineSegment.SegmentImpl;
 import dtb.terminalIO.TerminalScreen;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.RectangleComponent;
+import dtb.terminalIO.components.plot.Plotter;
 import dtb.terminalIO.examples.TestsCommon;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.util.StringUtils;
 
+/**
+ * A Component that renders a line chart given charting numerical data and charfting labels
+ */
 public class LineChart extends Composite {
 
     static final char         VDASH                = '┊';
@@ -260,7 +264,6 @@ public class LineChart extends Composite {
         
         segments.add( new SegmentImpl(color, origY + 1, origX, 1, this.labelX ));
         
-        
     }
 
     @Override
@@ -330,8 +333,6 @@ public class LineChart extends Composite {
                 bc.addData(d, bc_DATALabels[i]);
             }
             master_canvas.addComponent(2, 15, bc);
-            
-            
             
             master_canvas.addComponent(5, 65, lc);
             master_canvas.t(31, 1, "j = " + j + "   ");

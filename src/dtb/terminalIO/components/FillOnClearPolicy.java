@@ -4,6 +4,9 @@ import dtb.terminalIO.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.ControlCode.FGBGColors;
 import dtb.terminalIO.geom.Rectangle;
 
+/**
+ *  Used by many components to decide how to perform a clear (erase) of its LineSegments buffer 
+ */
 public interface FillOnClearPolicy {
 
     char getEmptyChar();

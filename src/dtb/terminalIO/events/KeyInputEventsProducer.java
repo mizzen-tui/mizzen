@@ -51,7 +51,7 @@ public class KeyInputEventsProducer implements Runnable {
         eventBus.stopConsuming();
     }
 
-    protected boolean isActive() {
+    public boolean isActive() {
         return eventBus.isActive();
     }
 
@@ -74,7 +74,11 @@ public class KeyInputEventsProducer implements Runnable {
                     }
 
                 } else {
-                    idle();
+                    boolean idleHandled = idle();
+                    if (!idleHandled) {
+                	// no pending keyboard keys handled - lets generate a timerEvent
+                	eventBus.addEvent(new OnIdleEvent(this));
+                    }
                 }
 
             } catch (Exception e) {
@@ -95,9 +99,8 @@ public class KeyInputEventsProducer implements Runnable {
 
     }
 
-    private void idle() {
-	readerParser.idle(eventBus);
-	
+    private boolean idle() {
+	return readerParser.idle(eventBus);
     }
 
     private void handleReaderInput(char[] buffer, int readIn) {

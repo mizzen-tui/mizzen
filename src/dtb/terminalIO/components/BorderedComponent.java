@@ -9,6 +9,10 @@ import dtb.terminalIO.geom.Rectangle;
 
 // todo dropshadow component
 
+/**
+ * A Component that draws a border around itself and then has an inner BoundedComponent to
+ * render its contents
+ */
 public class BorderedComponent extends AbstractComponent<BorderedComponent> implements Rectangle {
 
     private SimpleBorder        border;

@@ -8,6 +8,10 @@ import dtb.terminalIO.ScreenLineSegment.UTIL.SegmentsFromStringResult;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 
+/**
+ * A Component that renders a piece of text.  CR's in the text will will be respected and will
+ * cause a multi-line component to be rendered.
+ */
 public class TextComponent extends BoundedComponent<TextComponent> {
     private String text;
     

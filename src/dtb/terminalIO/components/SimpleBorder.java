@@ -6,6 +6,12 @@ import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 
+/**
+ * A component that draws a border with an optional title
+ * 
+ * Used by other components to draw borders around themselves
+ *
+ */
 public class SimpleBorder extends BoundedComponent<SimpleBorder>{
 
     private RectangleComponent border;

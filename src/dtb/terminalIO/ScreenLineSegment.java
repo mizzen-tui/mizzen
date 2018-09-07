@@ -140,10 +140,8 @@ public interface ScreenLineSegment extends Rectangle {
         public int compare(ScreenLineSegment so1, ScreenLineSegment so2) {
             if (so1 == so2)
                 return 0;
-            int cmp = Integer.compare(so1.getRow(), so2.getRow());
-            if (cmp != 0)
-                return cmp;
-            cmp = Integer.compare(so1.getCol(), so2.getCol());
+            
+            int cmp = Position.UTIL.POS_COMPARE.compare(so1, so2);
             if (cmp != 0)
                 return cmp;
             if (so1.overlapsWith(so2)) {
@@ -162,6 +160,7 @@ public interface ScreenLineSegment extends Rectangle {
 
         static ScreenLineSegment.SegmentComparator SO_COMPARE = new SegmentComparator();
 
+        // used?
         public static void assert_no_Overlap(List<ScreenLineSegment> scs) {
             int len = scs.size();
             for (int i = 0; i < len - 1; i++) {

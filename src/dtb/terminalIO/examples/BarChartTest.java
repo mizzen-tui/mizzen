@@ -10,8 +10,8 @@ import dtb.terminalIO.ControlCode.FGBGColors;
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.TextComponent;
-import dtb.terminalIO.components.chart.Plotter;
-import dtb.terminalIO.components.chart.Plotter.Plot;
+import dtb.terminalIO.components.plot.Plotter;
+import dtb.terminalIO.components.plot.Plotter.Plot;
 import dtb.terminalIO.geom.Dimension;
 
 public class BarChartTest {

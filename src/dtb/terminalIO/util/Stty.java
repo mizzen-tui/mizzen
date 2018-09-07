@@ -4,6 +4,11 @@ import java.io.IOException;
 
 import dtb.terminalIO.geom.Dimension;
 
+/**
+ * Some terminal IO screen utility functions that use the linux stty 
+ * utlity.
+ * 
+ */
 public class Stty {
     
     static boolean         rawSet      = false;

@@ -6,6 +6,9 @@ import java.util.Map;
 import dtb.terminalIO.ControlCode.BgColor;
 import dtb.terminalIO.ControlCode.FgColor;
 
+/**
+ * Encapsulates ANSI Color ControlCodes
+ */
 public class Colors {
 
 	

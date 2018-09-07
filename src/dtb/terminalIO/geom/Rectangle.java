@@ -14,6 +14,22 @@ import dtb.terminalIO.geom.Relation.OverUnder;
  */
 public interface Rectangle extends Position, Dimension, Movable {
 
+    public default Position getPostion_TopLeft() {
+	return this;
+    }
+
+    public default Position getPostion_TopRight() {
+	return new Position.Simple(this.getRow(), this.getRightMostCol());
+    }
+
+    public default Position getPostion_BottomLeft() {
+	return new Position.Simple(this.getBottomMostRow(), this.getRow());
+    }
+
+    public default Position getPostion_BottomRight() {
+	return new Position.Simple(this.getBottomMostRow(), this.getRightMostCol());
+    }
+    
     public default int getRightMostCol() {
         int col = getCol();
         int rightMost = col + getWidth() - 1;
@@ -43,7 +59,7 @@ public interface Rectangle extends Position, Dimension, Movable {
             return false;
         if (pos.getCol() > this.getRightMostCol())
             return false;
-        int botomRow = this.getBottomMostRow();
+        //int botomRow = this.getBottomMostRow();
         if (pos.getRow() > this.getBottomMostRow())
             return false;
         return true;

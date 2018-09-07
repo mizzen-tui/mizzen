@@ -5,6 +5,9 @@ import dtb.terminalIO.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.ScreenLineSegment;
 import dtb.terminalIO.geom.Rectangle;
 
+/**
+ * A Component that draws one ScreenLineSegment
+ */
 public class SegmentComponent extends Component.AbstractComponent<SegmentComponent> {
     
     ScreenLineSegment scs;

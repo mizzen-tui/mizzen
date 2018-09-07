@@ -49,7 +49,8 @@ public class InputCharsEventParser {
         handleESC_ifNeeded(eventBus);
     }
 
-    private void handleESC_ifNeeded(EventBus eventBus) {
+    // returns true if ESC key handled
+    private boolean handleESC_ifNeeded(EventBus eventBus) {
         
         if (parse_STATE == STATE_ESCAPE) {
             long now = System.currentTimeMillis();
@@ -57,8 +58,10 @@ public class InputCharsEventParser {
             if (elapsedSinceEscapePressed > 250) {
                 eventBus.addEvent( new Keys.KeyEvent(this, Keys.ESC_KEYSTROKE) );
                 parse_STATE = STATE_START;
+                return true;
             }
         }
+        return false;
     }
 
     private void processChar(char ch, EventBus eventBus) {
@@ -144,8 +147,8 @@ public class InputCharsEventParser {
         }
     }
 
-    public void idle(EventBus eventBus ) {
-	handleESC_ifNeeded(eventBus);
+    public boolean idle(EventBus eventBus ) {
+	return handleESC_ifNeeded(eventBus);
 	
     }
 

@@ -74,6 +74,9 @@ public abstract class ControlCode implements Renderer {
         }
     }
 
+    /**
+     * Foreground Color
+     */
     public static class FgColor extends Color {
         
         boolean bold = false;
@@ -125,7 +128,10 @@ public abstract class ControlCode implements Renderer {
         }
         
     }
-
+    
+    /*
+     * Background color
+     */
     public static class BgColor extends Color {
 
         public BgColor(int colorCode) {
@@ -145,7 +151,9 @@ public abstract class ControlCode implements Renderer {
         }
     }
 
-    // encapsulate foreground and background colors together
+    /**
+     *  encapsulate foreground and background colors together
+     */
     public static class FGBGColors implements Renderer {
 
         // public static final FGBGColors DEFAULT = new

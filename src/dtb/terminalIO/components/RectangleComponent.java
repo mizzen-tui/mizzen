@@ -6,6 +6,9 @@ import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 
+/**
+ * A Component that draws a rectangle
+ */
 public class RectangleComponent extends BoundedComponent<RectangleComponent> {
 
     public RectangleComponent(FGBGColors color, int height, int width) {

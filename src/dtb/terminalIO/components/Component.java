@@ -5,6 +5,20 @@ import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.ScreenLineSegmentsBuffer;
 
+
+/**
+ * A component is a "something" that maintains its own  IScreenLineSegmentsBuffer.
+ * It knows how to draw itself into its IScreenLineSegmentsBuffer 
+ * 
+ * 
+ * 
+ * 
+ * TODO:  Need to clean up the inheritance hierarchy of Components.. seems like 
+ * 2 parallel heirarchies  - ( AbstractComponent & BoundedComponent)  
+ * 
+ * @author dbalme
+ *
+ */
 public interface Component<T extends Component<?>> extends IScreenLineSegmentsBuffer.Provider , FGBGColors.Provider {
 
     T setColor(FGBGColors drawingcolor);

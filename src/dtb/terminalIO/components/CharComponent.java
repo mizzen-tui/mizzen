@@ -7,6 +7,9 @@ import dtb.terminalIO.ScreenLineSegment.SegmentImpl;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 
+/**
+ * A Component that renders one character.
+ */
 public class CharComponent extends BoundedComponent<TextComponent> {
     char ch;
     

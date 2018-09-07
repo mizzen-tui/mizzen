@@ -8,6 +8,9 @@ import dtb.terminalIO.ScreenLineSegment.SegmentImpl;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 
+/**
+ * A Component that draws a vertical line
+ */
 public class VerticalLine extends BoundedComponent<VerticalLine> {
 
     public VerticalLine(FGBGColors color, Position pos, int len) {

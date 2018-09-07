@@ -5,6 +5,7 @@ import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 
+// used?
 public class LayeredCanvasBackend implements CanvasBackend, Rectangle {
 
     private Canvas baseCanvas;

@@ -42,7 +42,6 @@ public class EventBus {
 
     public void stopConsuming() {
         stopConsuming.set(true);
-        System.err.println("stop requested..");
     }
 
     public boolean isActive() {
@@ -68,6 +67,12 @@ public class EventBus {
         return this;
     }
 
+    public EventBus remove(ConditionalEventHandler eventHandler) {
+	handler.remove(eventHandler);
+        return this;
+    }
+    
+    
     public EventBus addEventHandler(Predicate<TerminalEvent<?>> canHandlePredicate, EventHandler eventHandler) {
         handler.addEventHandler(canHandlePredicate, eventHandler);
         return this;
