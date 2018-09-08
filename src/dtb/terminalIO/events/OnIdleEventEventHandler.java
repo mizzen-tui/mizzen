@@ -41,9 +41,6 @@ public class OnIdleEventEventHandler extends ConditionalEventHandlerImpl {
 
 	@Override
 	public void handle(TerminalEvent<?> te) {
-	    
-	    System.out.println(">>>>>GOiii HERE!!!");
-	    
 	    getHandler().handle(te);
 	    this.eventBus.remove(this);
 	}

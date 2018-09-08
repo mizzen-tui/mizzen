@@ -40,5 +40,5 @@ public class Circle implements Shape {
 	new CirclePlotter().draw(this.getX(), this.getY(), this.getRadius(), pointPlotter);
     }
     
-
+    
 }

@@ -47,6 +47,10 @@ public interface Position {
         return new Position.Simple(offsetToAdd.getRow() + this.getRow(), offsetToAdd.getCol() + this.getCol());
     }
 
+    public default Position negate() {
+        return new Position.Simple(this.getRow()*-1, this.getCol()*-1);
+    }
+
     public static final Position ZERO = new Simple(0, 0);
 
     /**

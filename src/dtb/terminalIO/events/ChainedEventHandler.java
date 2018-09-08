@@ -69,7 +69,6 @@ public class ChainedEventHandler implements EventHandler {
             eventHandlers.remove(eventHandler);
         }
         
-        System.out.println("Removed!");
         return this;
     }
 

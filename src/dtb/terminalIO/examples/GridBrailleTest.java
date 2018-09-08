@@ -9,9 +9,13 @@ import dtb.terminalIO.ControlCode.FGBGColors;
 import dtb.terminalIO.TerminalScreen;
 import dtb.terminalIO.components.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.PointPlotter;
+import dtb.terminalIO.components.plot.TransformPointPlotter;
+import dtb.terminalIO.components.plot.XYTranslate;
 import dtb.terminalIO.components.plot.shape.Circle;
+import dtb.terminalIO.components.plot.shape.CirclePlotter.CircleClockwise_SORT;
 import dtb.terminalIO.components.plot.shape.CompositeShape;
 import dtb.terminalIO.components.plot.shape.RectangleShape;
+import dtb.terminalIO.components.plot.shape.ShapeWithTransform;
 import dtb.terminalIO.components.plot.shape.Triangle;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
@@ -21,43 +25,12 @@ import dtb.terminalIO.events.Keys;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.geom.Dimension;
+import dtb.terminalIO.geom.Position;
+import dtb.terminalIO.geom.PositionTransform.RotateAroundFixedPoint;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.util.Stty;
 
 public class GridBrailleTest {
-
-    static class XYTranslate extends PointPlotter.Delegate {
-	int yDelta;
-	int xDelta;
-
-	public XYTranslate(PointPlotter pointPlotter, int xDelta, int yDelta) {
-	    super(pointPlotter);
-	    this.xDelta = xDelta;
-	    this.yDelta = yDelta;
-	}
-
-	@Override
-	public void plot(int x, int y) {
-	    super.plot(x + this.xDelta, y + this.yDelta);
-	}
-
-	public void setyDelta(int yDelta) {
-	    this.yDelta = yDelta;
-	}
-
-	public void setxDelta(int xDelta) {
-	    this.xDelta = xDelta;
-	}
-
-	public int getyDelta() {
-	    return yDelta;
-	}
-
-	public int getxDelta() {
-	    return xDelta;
-	}
-
-    }
 
     public static void main(String[] args) {
 
@@ -69,8 +42,6 @@ public class GridBrailleTest {
 	    eventBus.stopConsuming();
 	    return;
 	}
-
-	// TODO Auto-generated method stub
 
 	TerminalScreen screen = TestsCommon.getTerminalScreenForTesting(args);
 
@@ -91,14 +62,27 @@ public class GridBrailleTest {
 
 	CompositeShape shapes = new CompositeShape();
 
-	shapes.addShape(new RectangleShape(new Rectangle.Simple(30, 30, 20, 20)));
+	XYTranslate rectangle1PointPlotter = new XYTranslate(null, 0, 0);
 
-	shapes.addShape(new Triangle(0, 0, 30, 100, 65, 50));
+	shapes.addShape(new ShapeWithTransform(new RectangleShape(new Rectangle.Simple(30, 30, 20, 20)),rectangle1PointPlotter));
+
+	Position fixedPoint = new Position.Simple(30, 50);
+	
+	RotateAroundFixedPoint rectangle2Rotator = new RotateAroundFixedPoint(0, fixedPoint);
+	
+	TransformPointPlotter rectangle2PointPlotter = new TransformPointPlotter(null, rectangle2Rotator);
+
+	shapes.addShape(new ShapeWithTransform(new RectangleShape(new Rectangle.Simple(30, 30, 20, 20)), rectangle2PointPlotter));
+	
+	XYTranslate trianglePointPlotter = new XYTranslate(null, 0, 0);
+	
+	shapes.addShape( new ShapeWithTransform(new Triangle(0, 0, 30, 100, 65, 50),trianglePointPlotter));
 
 	shapes.addShape(new Circle(0, 0, 30));
 
 	shapes.addShape(new Circle(50, 50, 30));
-
+	
+	
 	final Runnable drawIt = new Runnable() {
 
 	    @Override
@@ -171,6 +155,7 @@ public class GridBrailleTest {
 		}
 	    }, eventBus));
 
+	    // redraw the grid every 100 millisecs
 	    eventBus.addEventHandler(new OnIdleEventEventHandler.RepeatingInterval(100, new EventHandler() {
 		@Override
 		public void handle(TerminalEvent<?> te) {
@@ -179,10 +164,60 @@ public class GridBrailleTest {
 		}
 	    }));
 
+	    // move the triangle
+	    eventBus.addEventHandler(new OnIdleEventEventHandler.RepeatingInterval(100, new EventHandler() {
+		
+		int x =0;
+		int xIncr = 1;
+		@Override
+		public void handle(TerminalEvent<?> te) {
+		    
+		    if (x<=-20) {
+			xIncr = 1;
+		    } else {
+			if (x>=20) {
+			    xIncr = -1;
+			}
+		    }
+		    x += xIncr;
+
+		    trianglePointPlotter.setxDelta(x);
+
+		}
+	    }));
+
+	    
+	    eventBus.addEventHandler(new OnIdleEventEventHandler.RepeatingInterval(100, new EventHandler() {
+		
+		PointPlotter.PointPlotterList  plots = new PointPlotter.PointPlotterList();
+		@Override
+		public void handle(TerminalEvent<?> te) {
+		    
+		    if (plots.size() == 0) {
+			Circle c = new Circle(0,0, 20);
+			c.draw(plots);
+			plots.sort(new CircleClockwise_SORT(0,0));
+		    }
+		    
+		    Position curPos = plots.getPlots().get(0);
+		    
+		    plots.getPlots().remove(0);
+		    rectangle1PointPlotter.setxDelta(curPos.getCol());
+		    rectangle1PointPlotter.setyDelta(curPos.getRow());
+
+		    // --- 
+		    int newTheta = (rectangle2Rotator.getTheta() + 1)  % 360;
+		    
+		    rectangle2Rotator.setTheta( newTheta );
+		    
+		    
+		}
+	    }));
+
 	    eventBus.addEventHandler(new OnIdleEventEventHandler.OneTimeAfterInterval(new EventHandler() {
 		@Override
 		public void handle(TerminalEvent<?> te) {
-		    System.out.println("DELAYED HELLO ONCE!!!");
+		    //System.out.println("DELAYED HELLO ONCE!!!");
 
 		}
 	    }, 2000, eventBus));
@@ -200,6 +235,8 @@ public class GridBrailleTest {
 		    } catch (IOException e) {
 			e.printStackTrace();
 		    }
+		    // next refresh() is necessary to get cursor to be below rendered canvas
+		    master_canvas.refresh();
 		    return;
 		}
 
