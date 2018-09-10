@@ -105,7 +105,6 @@ public class Keys {
 	}
 
 	private KeyStroke() {
-
 	}
 
 	public KeyStroke(int[] keys, String name) {
@@ -129,6 +128,14 @@ public class Keys {
 	public KeyStroke(int key, String name, boolean altPressed) {
 	    this(key, name);
 	    this.altPressed = altPressed;
+	}
+
+	public String getName() {
+	    return name;
+	}
+
+	public void setName(String name) {
+	    this.name = name;
 	}
 
 	@Override

@@ -13,28 +13,30 @@ import dtb.terminalIO.geom.Rectangle;
  * A Component that draws a border around itself and then has an inner BoundedComponent to
  * render its contents
  */
-public class BorderedComponent extends AbstractComponent<BorderedComponent> implements Rectangle {
+public class BorderedComponent extends BoundedComponent<BorderedComponent> implements Rectangle {
 
     private SimpleBorder        border;
     private BoundedComponent<?> component;
 
     public BorderedComponent(FGBGColors color, BoundedComponent<?> component) {
-        super(color);
+        super(color, Rectangle.ZERO);
         this.component = component;
         component.moveDelta(1,1);
         Position.Simple p = new Position.Simple(component);
         p.moveDelta(-1, -1);
-        this.border = new SimpleBorder(color, p, new Dimension.Simple(component.getHeight() + 2, component.getWidth() + 2));
-        //this.border.setColor(new FGBGColors(Colors.Bla, Colors.On_IWhi));
+        Rectangle bounds = new Rectangle.Simple(p, new Dimension.Simple(component.getHeight() + 2, component.getWidth() + 2));
+        this.border = new SimpleBorder(color, bounds);
+        this.setRectangle( bounds );
     }
 
     public BorderedComponent(BoundedComponent<?> component) {
         this(component.getColor(), component);
     }
 
-    public void setEmptyChar(char emptyChar) {
-        super.setEmptyChar(emptyChar);
+    public BorderedComponent setEmptyChar(char emptyChar) {
+	BorderedComponent result = super.setEmptyChar(emptyChar);
         border.setEmptyChar(emptyChar);
+        return result;
     }
     
     @Override

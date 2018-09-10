@@ -25,5 +25,4 @@ public class LinePlotter {
         	plot.plot(x, y);
             }
     }
-    
 }

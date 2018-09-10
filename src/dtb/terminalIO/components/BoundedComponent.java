@@ -154,10 +154,13 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
             this(new Rectangle.Simple(0, 0, height, width));
         }
 
-        @Override
+        public DONOTHING(dtb.terminalIO.geom.Position position, Dimension dimension) {
+            this(new Rectangle.Simple(position, dimension));
+	}
+
+	@Override
         protected void draw(FGBGColors color, IScreenLineSegmentsBuffer segments) {
             // do nothing
-            int x = 1;
         }
     }
 
