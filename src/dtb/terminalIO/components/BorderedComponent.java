@@ -17,13 +17,15 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent> imple
 
     private SimpleBorder        border;
     private BoundedComponent<?> component;
+    private Position            componentPosition;
 
     public BorderedComponent(FGBGColors color, BoundedComponent<?> component) {
         super(color, Rectangle.ZERO);
         this.component = component;
-        component.moveDelta(1,1);
+        this.componentPosition = new Position.Simple(1,1);
+        //component.moveDelta(1,1);
         Position.Simple p = new Position.Simple(component);
-        p.moveDelta(-1, -1);
+        //p.moveDelta(-1, -1);
         Rectangle bounds = new Rectangle.Simple(p, new Dimension.Simple(component.getHeight() + 2, component.getWidth() + 2));
         this.border = new SimpleBorder(color, bounds);
         this.setRectangle( bounds );
@@ -73,7 +75,7 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent> imple
 
     @Override
     protected void draw(FGBGColors color, IScreenLineSegmentsBuffer segments) {
-        segments.merge(this.component.getSegmentsBuffer());
+        segments.mergeAt(componentPosition.getRow(), componentPosition.getCol(), this.component.getSegmentsBuffer());
         segments.merge(this.border.getSegmentsBuffer());
     }
 

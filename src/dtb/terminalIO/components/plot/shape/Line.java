@@ -3,6 +3,12 @@ package dtb.terminalIO.components.plot.shape;
 import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.geom.Position;
 
+/**
+ * Defines a line between two points.
+ * 
+ * Uses a LinePlotter to draw itself.
+ *
+ */
 public class Line implements Shape {
 
     int x1;

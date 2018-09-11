@@ -10,7 +10,7 @@ import dtb.terminalIO.geom.PositionTransform;
  * <p/>
  * 
  * This is useful when you want to translate or rotate x,y coordinates
- * when performing plots of x,y coordinates.
+ * when performing plots of said x,y coordinates.
  * 
  */
 public class TransformPointPlotter extends PointPlotter.Delegate {

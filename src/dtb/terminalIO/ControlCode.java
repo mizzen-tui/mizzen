@@ -99,6 +99,10 @@ public abstract class ControlCode implements Renderer {
             return new FgColor(colorCode, true, italic, underline);
         }
         
+        public FgColor removeBold() {
+            return new FgColor(colorCode, false, italic, underline);
+        }
+        
         public FgColor asItalic() {
             return new FgColor(colorCode, bold, true, underline);
         }
@@ -181,6 +185,14 @@ public abstract class ControlCode implements Renderer {
             super();
             this.bgc = bgc;
             this.fgc = null;
+        }
+
+        public FGBGColors bold() {
+            return new FGBGColors(fgc.asBold(), bgc);
+        }
+
+        public FGBGColors removebold() {
+            return new FGBGColors(fgc.removeBold(), bgc);
         }
 
         public BgColor getBgc() {

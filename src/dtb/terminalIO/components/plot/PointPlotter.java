@@ -7,6 +7,7 @@ import java.util.List;
 
 import dtb.terminalIO.geom.Position;
 
+
 public interface PointPlotter {
     
     void plot(int x, int y);

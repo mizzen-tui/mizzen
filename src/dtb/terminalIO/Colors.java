@@ -7,7 +7,7 @@ import dtb.terminalIO.ControlCode.BgColor;
 import dtb.terminalIO.ControlCode.FgColor;
 
 /**
- * Encapsulates ANSI Color ControlCodes
+ * Encapsulates some common ANSI Color ControlCodes
  */
 public class Colors {
 

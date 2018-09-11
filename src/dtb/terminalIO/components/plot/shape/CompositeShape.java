@@ -5,6 +5,10 @@ import java.util.Collection;
 
 import dtb.terminalIO.components.plot.PointPlotter;
 
+/**
+ * A shape that contains multiple shapes
+ *
+ */
 public class CompositeShape implements Shape {
 
     Collection<Shape> shapes = new ArrayList<Shape>();

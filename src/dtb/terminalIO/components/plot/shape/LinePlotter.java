@@ -2,6 +2,9 @@ package dtb.terminalIO.components.plot.shape;
 
 import dtb.terminalIO.components.plot.PointPlotter;
 
+/**
+ * Draws a line between 2 points
+ */
 public class LinePlotter {
     
     public void draw(int x1, int y1, int x2, int y2, PointPlotter plot) {

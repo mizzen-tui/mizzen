@@ -2,6 +2,10 @@ package dtb.terminalIO.components.plot.shape;
 
 import dtb.terminalIO.components.plot.PointPlotter;
 
+/**
+ * Doesn't work yet.
+ *
+ */
 public class EllipsePlotter {
 
     public void draw(int x, int y, int width, int height, PointPlotter plot) {

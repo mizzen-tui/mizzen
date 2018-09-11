@@ -8,6 +8,9 @@ import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+/**
+ * Encapsulates keyboard keys 
+ */
 public class Keys {
 
     public static char ESC = 27;

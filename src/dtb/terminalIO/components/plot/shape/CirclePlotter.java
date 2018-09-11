@@ -5,6 +5,10 @@ import java.util.Comparator;
 import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.geom.Position;
 
+/**
+ * Draws a circle
+ *
+ */
 public class CirclePlotter {
     
     public void draw(int x, int y, int radius, PointPlotter plot) {

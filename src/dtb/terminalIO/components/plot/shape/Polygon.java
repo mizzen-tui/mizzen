@@ -6,6 +6,10 @@ import java.util.List;
 import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.geom.Position;
 
+/**
+ * Given a set of points (defined in Position objects),
+ * This draws a shape that is a set of connected lines.
+ */
 public class Polygon implements Shape {
     
     List<Position> points = new ArrayList<Position>();

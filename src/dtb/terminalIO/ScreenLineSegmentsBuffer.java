@@ -89,6 +89,15 @@ public class ScreenLineSegmentsBuffer implements Rectangle, IScreenLineSegmentsB
         fullrecalcDim();
     }
 
+    @Override
+    public void mergeAt(int row, int col, IScreenLineSegmentsBuffer segmentsBuffer) {
+        Position position = new Position.Simple(row, col);
+        ScreenLineSegment.UTIL.addSegmentsWithOffsetUnBounded( position,
+                                                               this.getSegments(), 
+                                                               segmentsBuffer.getSegments());
+    }
+    
+    
     public Iterator<ScreenLineSegment> iterator() {
         return segments.iterator();
     }
@@ -296,5 +305,6 @@ public class ScreenLineSegmentsBuffer implements Rectangle, IScreenLineSegmentsB
     public void fillRectWithChar(FGBGColors color, char fillChar, Rectangle bounds) {
         ScreenLineSegment.UTIL.fillRectWithChar(color, fillChar, bounds, getSegments());
     }
+
 
 }

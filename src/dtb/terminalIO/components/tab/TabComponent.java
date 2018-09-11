@@ -39,10 +39,13 @@ public class TabComponent extends BoundedComponent<TabComponent>{
 
     @Override
     protected void draw(FGBGColors color, IScreenLineSegmentsBuffer segments) {
-        HorizontalLine topLine = makeChildComponent(()->new HorizontalLine(color, getRow(), getCol()+1, getWidth() - 2));
+        FGBGColors tabColor = active ? this.getColor().bold() : this.getColor();
 
-        VerticalLine vLeft = makeChildComponent(()->new VerticalLine(color, this.getRow()+1, this.getCol(), getHeight()-2));
-        VerticalLine vRight = makeChildComponent(()->new VerticalLine(color, this.getRow()+1, this.getRightMostCol(), getHeight()-2));
+        HorizontalLine topLine = makeChildComponent(()->new HorizontalLine(tabColor, getRow(), getCol()+1, getWidth() - 2));
+
+        VerticalLine vLeft = makeChildComponent(()->new VerticalLine(tabColor, this.getRow()+1, this.getCol(), getHeight()-2));
+        VerticalLine vRight = makeChildComponent(()->new VerticalLine(tabColor, this.getRow()+1, this.getRightMostCol(), getHeight()-2));
+        
         
         // verticals!
         segments.merge(topLine.getSegmentsBuffer());
@@ -50,17 +53,19 @@ public class TabComponent extends BoundedComponent<TabComponent>{
         segments.merge(vRight.getSegmentsBuffer());
 
         if (!active) {
-           HorizontalLine bottomLine = makeChildComponent(()->new HorizontalLine(color, getBottomMostRow(), getCol()+1, getWidth() - 2));
+           HorizontalLine bottomLine = makeChildComponent(()->new HorizontalLine(tabColor, getBottomMostRow(), getCol()+1, getWidth() - 2));
            segments.merge(bottomLine.getSegmentsBuffer());
         }
         
-        TextComponent tc = new TextComponent(this.getColor(), 1,2 ,this.tabText);
+        
+        
+        TextComponent tc = new TextComponent(tabColor, 1,2 ,this.tabText);
         segments.merge(tc.getSegmentsBuffer());
         
-        segments.merge(makeChildComponent(()->new CharComponent(color, this.getRow(), this.getCol(),this.getBlockChars().getTOP_LEFT())).getSegmentsBuffer());
-        segments.merge(makeChildComponent(()->new CharComponent(color, this.getRow(), this.getRightMostCol(),this.getBlockChars().getTOP_RIGHT())).getSegmentsBuffer());
-        segments.merge(makeChildComponent(()->new CharComponent(color, this.getBottomMostRow(), this.getCol(),active?this.getBlockChars().getBOTTOM_RIGHT():this.getBlockChars().getHORIZONTAL_UP())).getSegmentsBuffer());
-        segments.merge(makeChildComponent(()->new CharComponent(color, this.getBottomMostRow(), this.getRightMostCol(),active?this.getBlockChars().getBOTTOM_LEFT():this.getBlockChars().getHORIZONTAL_UP())).getSegmentsBuffer());
+        segments.merge(makeChildComponent(()->new CharComponent(tabColor, this.getRow(), this.getCol(),this.getBlockChars().getTOP_LEFT())).getSegmentsBuffer());
+        segments.merge(makeChildComponent(()->new CharComponent(tabColor, this.getRow(), this.getRightMostCol(),this.getBlockChars().getTOP_RIGHT())).getSegmentsBuffer());
+        segments.merge(makeChildComponent(()->new CharComponent(tabColor, this.getBottomMostRow(), this.getCol(),active?this.getBlockChars().getBOTTOM_RIGHT():this.getBlockChars().getHORIZONTAL_UP())).getSegmentsBuffer());
+        segments.merge(makeChildComponent(()->new CharComponent(tabColor, this.getBottomMostRow(), this.getRightMostCol(),active?this.getBlockChars().getBOTTOM_LEFT():this.getBlockChars().getHORIZONTAL_UP())).getSegmentsBuffer());
     }
 
     public boolean isActive() {
@@ -79,20 +84,6 @@ public class TabComponent extends BoundedComponent<TabComponent>{
 	Rectangle new_rect = new Rectangle.Simple( new Position.Simple(this.getRow(), this.getCol()), new Dimension.Simple(3, tabText.length()+4));
 	this.setRectangle( new_rect );
         this.tabText = tabText;
-    }
-
-    public static void main(String args[]) {
-
-        Canvas master_canvas = TestsCommon.getMasterCanvasForTesting(TestsCommon.getTerminalScreenForTesting(args));
-
-        TabComponent tb1 = new TabComponent(new FGBGColors(Colors.BWhi), "Test Tab1", true);
-
-        TabComponent tb2 = new TabComponent(new FGBGColors(Colors.Whi), "Test XX Tab2", false);
-
-        master_canvas.addComponent(tb1);
-        master_canvas.addComponent(new Position.Simple(0,tb1.getRightMostCol()+1), tb2);
-
-        master_canvas.refresh();
     }
     
 

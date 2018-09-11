@@ -99,6 +99,8 @@ public interface IScreenLineSegmentsBuffer extends Rectangle , Iterable<ScreenLi
 		fillRectWithChar(color, fillChar, this);
 	}
 
+    public abstract void mergeAt(int row, int col, IScreenLineSegmentsBuffer segmentsBuffer);
+
 	
 	
 
