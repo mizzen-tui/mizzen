@@ -41,7 +41,7 @@ public class TabPanelTest {
             Canvas master_canvas = TestsCommon.getMasterCanvasForTesting(TestsCommon.getTerminalScreenForTesting(args));
             master_canvas.setEmptyChar(' ');
 
-            TabPanel tb = new TabPanel(FGBGColors.DEFAULT, eventBus, new Dimension.Simple(master_canvas.getHeight()-6, master_canvas.getWidth()-10));
+            TabPanel tb = new TabPanel(FGBGColors.DEFAULT, new FGBGColors(Colors.Blu).bold(), eventBus, new Dimension.Simple(master_canvas.getHeight()-6, master_canvas.getWidth()-10));
             tb.setBorder(false);
 
             tb.addTab(new TabAction(Keys.F5_KEYSTROKE, "Hello World") {
@@ -68,7 +68,7 @@ public class TabPanelTest {
                     TextComponent tc = new TextComponent(tabCtx.getColor(), "  Disney has its own world!");
                     count++;
                     tabCtx.getSegmentsBuffer().merge(tc.getSegmentsBuffer());
-                    master_canvas.t(master_canvas.getHeight() - 2, 0, "F2_KEYSTROKE = " + count + "  ");
+                   // master_canvas.t(master_canvas.getHeight() - 2, 0, "F2_KEYSTROKE = " + count + "  ");
 
                 }
 
@@ -245,7 +245,7 @@ public class TabPanelTest {
                     master_canvas.getSegmentsBuffer().removeRect(tb);
                     master_canvas.addComponent(tb);
                     int count = counter.incrementAndGet();
-                    master_canvas.t(master_canvas.getHeight() - 1, 0, "counter = " + count + "   ");
+                    master_canvas.t(master_canvas.getHeight() - 2, 0, "IDLE task invoke counter = " + count + "   ");
                     master_canvas.refresh();
                 }
             }));

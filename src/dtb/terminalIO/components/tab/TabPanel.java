@@ -1,34 +1,21 @@
 package dtb.terminalIO.components.tab;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import dtb.terminalIO.Canvas;
-import dtb.terminalIO.Colors;
 import dtb.terminalIO.ControlCode.FGBGColors;
 import dtb.terminalIO.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.Composite;
-import dtb.terminalIO.components.TextComponent;
-import dtb.terminalIO.components.chart.BarChart;
-import dtb.terminalIO.components.chart.LineChart;
-import dtb.terminalIO.events.ChainedEventHandler.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.KeyInputEventHandler;
-import dtb.terminalIO.events.KeyInputEventsProducer;
-import dtb.terminalIO.events.Keys;
 import dtb.terminalIO.events.Keys.KeyStroke;
-import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.TerminalEvent;
-import dtb.terminalIO.examples.TestsCommon;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
-import dtb.terminalIO.util.Stty;
 
 public class TabPanel extends Composite {
 
@@ -42,6 +29,9 @@ public class TabPanel extends Composite {
 
     private BorderedComponent    workAreaBorder;
     private TabWorkAreaComponent workArea;
+    
+    FGBGColors textActiveTabColor = FGBGColors.DEFAULT.bold();
+
 
     class TabWorkAreaComponent extends BoundedComponent<TabWorkAreaComponent> {
 
@@ -74,6 +64,15 @@ public class TabPanel extends Composite {
         workArea = new TabWorkAreaComponent(Position.ZERO, bounds);
         workAreaBorder = new BorderedComponent(color, workArea);
         this.add(new Position.Simple(2,0),workAreaBorder);
+    }
+
+    public TabPanel(FGBGColors color, FGBGColors textActiveTabColor, EventBus eventBus, Dimension bounds) {
+        super(color);
+        this.eventBus = eventBus;
+        workArea = new TabWorkAreaComponent(Position.ZERO, bounds);
+        workAreaBorder = new BorderedComponent(color, workArea);
+        this.add(new Position.Simple(2,0),workAreaBorder);
+        this.textActiveTabColor = textActiveTabColor;
     }
 
     TabAction findTabActionByHotKey(KeyStroke hotKey) {
@@ -110,6 +109,11 @@ public class TabPanel extends Composite {
             tabAction.getTabComponent().setTabText(hotKey.getName() + " - " + tabAction.getTabComponent().getTabText());
         }
 
+        if (this.textActiveTabColor != null && !this.textActiveTabColor.equals(tabAction.getTextActiveTabColor())) {
+            // hmm... I wonder if this will cause grief down the road ..
+            tabAction.setTextActiveTabColor( this.textActiveTabColor );
+        }
+        
         tabActions.add(tabAction);
 
         this.add(offsetRow, offsetCol, tabAction.getTabComponent());
@@ -226,6 +230,7 @@ public class TabPanel extends Composite {
             this.tabText = tabText;
             this.tabComponent = new TabComponent(FGBGColors.DEFAULT, tabText, false);
         }
+        
 
         public void activate(TabContext tabContext) {
             getTabComponent().setActive(true);
@@ -244,7 +249,16 @@ public class TabPanel extends Composite {
             return hotKey;
         }
 
-        abstract public void drawOnActive(TabContext tabContext);
+        public FGBGColors getTextActiveTabColor() {
+	    return tabComponent.getTextActiveTabColor();
+	}
+
+	public void setTextActiveTabColor(FGBGColors textActiveTabColor) {
+	    this.tabComponent.setTextActiveTabColor(textActiveTabColor);
+	}
+
+
+	abstract public void drawOnActive(TabContext tabContext);
 
         abstract public void drawOnUnActive(TabContext tabContext);
 

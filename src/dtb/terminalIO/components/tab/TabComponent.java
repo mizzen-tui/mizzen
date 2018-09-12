@@ -1,7 +1,5 @@
 package dtb.terminalIO.components.tab;
 
-import dtb.terminalIO.Canvas;
-import dtb.terminalIO.Colors;
 import dtb.terminalIO.ControlCode.FGBGColors;
 import dtb.terminalIO.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.components.BoundedComponent;
@@ -9,7 +7,6 @@ import dtb.terminalIO.components.CharComponent;
 import dtb.terminalIO.components.HorizontalLine;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.VerticalLine;
-import dtb.terminalIO.examples.TestsCommon;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
@@ -23,18 +20,27 @@ public class TabComponent extends BoundedComponent<TabComponent>{
     
     boolean active = false;
     String tabText;
+    FGBGColors textActiveTabColor;
     
     
     public TabComponent(FGBGColors color, String tabText, boolean active) {
 	super(color, new Dimension.Simple(3, tabText.length()+4));
 	this.active = active;
 	this.tabText = tabText;
+	this.textActiveTabColor = color.bold();
     }
 
     public TabComponent(FGBGColors color, Position position, String tabText, boolean active) {
 	super(color, position, new Dimension.Simple(3, tabText.length()+4));
 	this.active = active;
 	this.tabText = tabText;
+    }
+
+    public TabComponent(FGBGColors color, FGBGColors textActiveTabColor, Position position, String tabText, boolean active) {
+	super(color, position, new Dimension.Simple(3, tabText.length()+4));
+	this.active = active;
+	this.tabText = tabText;
+	this.textActiveTabColor = textActiveTabColor;
     }
 
     @Override
@@ -59,7 +65,7 @@ public class TabComponent extends BoundedComponent<TabComponent>{
         
         
         
-        TextComponent tc = new TextComponent(tabColor, 1,2 ,this.tabText);
+        TextComponent tc = new TextComponent( active ? textActiveTabColor : tabColor , 1,2 ,this.tabText);
         segments.merge(tc.getSegmentsBuffer());
         
         segments.merge(makeChildComponent(()->new CharComponent(tabColor, this.getRow(), this.getCol(),this.getBlockChars().getTOP_LEFT())).getSegmentsBuffer());
@@ -84,6 +90,14 @@ public class TabComponent extends BoundedComponent<TabComponent>{
 	Rectangle new_rect = new Rectangle.Simple( new Position.Simple(this.getRow(), this.getCol()), new Dimension.Simple(3, tabText.length()+4));
 	this.setRectangle( new_rect );
         this.tabText = tabText;
+    }
+
+    public FGBGColors getTextActiveTabColor() {
+        return textActiveTabColor;
+    }
+
+    public void setTextActiveTabColor(FGBGColors textActiveTabColor) {
+        this.textActiveTabColor = textActiveTabColor;
     }
     
 

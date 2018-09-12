@@ -4,7 +4,7 @@ clear
 cd $(dirname $0)
 
 CLASS_PKG=dtb.terminalIO.examples
-CLASS_NAME=${CLASS_PKG}.BootStrapTests
+CLASS_NAME=${CLASS_PKG}.TabPanelTest
 JAVA_OPTIONS="-cp ./bin/"
 if [[ "$1" == "DEBUG" ]] ; then
    JAVA_OPTIONS="-Xdebug -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=localhost:8000 $JAVA_OPTIONS"
