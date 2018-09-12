@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import dtb.terminalIO.Canvas;
 import dtb.terminalIO.Colors;
+import dtb.terminalIO.ControlCode;
 import dtb.terminalIO.ControlCode.FGBGColors;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.chart.BarChart;
@@ -48,7 +49,9 @@ public class TabPanelTest {
 
                 @Override
                 public void drawOnActive(TabContext tabCtx) {
-                    TextComponent tc = new TextComponent(tabCtx.getColor(),"Hello there!");
+                    String sRED = new FGBGColors(Colors.BRed).asString();
+                    //  ControlCode.RCol.asString()
+                    TextComponent tc = new TextComponent(tabCtx.getColor(),"Hello there! "+sRED+"What's going on?" +" And what else?");
                     tabCtx.getSegmentsBuffer().mergeAt(1,1,tc.getSegmentsBuffer());
                 }
 

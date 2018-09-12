@@ -3,6 +3,8 @@ package dtb.terminalIO.geom;
 import java.util.Arrays;
 import java.util.Comparator;
 
+import dtb.terminalIO.ControlCode;
+
 public interface Dimension {
 
 	public int getWidth();
@@ -69,6 +71,8 @@ public interface Dimension {
 	    public static Dimension stringToDimension(String s) {
 	        
 	        if (s==null || s.length()==0) return ZERO;
+	        
+	        s = ControlCode.removeColorCodes(s);
 	        
 	        String[] lines = s.split("\n");
 	        

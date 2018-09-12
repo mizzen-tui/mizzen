@@ -4,10 +4,17 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import dtb.terminalIO.ControlCode.CursorDown;
+import dtb.terminalIO.TerminalContext.StringContext;
 
 public interface Renderer {
 
     public void render(TerminalContext ctx);
+    
+    public default String asString() {
+            StringContext sCTX = new StringContext();
+            this.render(sCTX);
+            return sCTX.toString();
+    }
 
     public static class TextRenderer implements Renderer {
 

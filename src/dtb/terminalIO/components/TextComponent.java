@@ -1,5 +1,6 @@
 package dtb.terminalIO.components;
 
+import dtb.terminalIO.ControlCode;
 import dtb.terminalIO.ControlCode.FGBGColors;
 import dtb.terminalIO.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.ScreenLineSegment;
@@ -14,12 +15,17 @@ import dtb.terminalIO.geom.Rectangle;
  */
 public class TextComponent extends BoundedComponent<TextComponent> {
     private String text;
+    private boolean hasColorCodes = false;
     
     public TextComponent(FGBGColors color, String text) {
-        super(color, Dimension.UTIL.stringToDimension(text));
-        this.text = text;
+        super(color, calcDimentionOfText(text));
+        this.setText(text);
     }
 
+    static private Dimension calcDimentionOfText(String text) {
+	return Dimension.UTIL.stringToDimension(text);
+    }
+    
     public TextComponent(String text) {
         this(FGBGColors.NO_COLOR_SPECIFIED, text);
     }
@@ -54,6 +60,7 @@ public class TextComponent extends BoundedComponent<TextComponent> {
 
     public void setText(String text) {
         this.text = text;
+        this.hasColorCodes = ControlCode.hasColorCodes(text);
     }
 
     @Override

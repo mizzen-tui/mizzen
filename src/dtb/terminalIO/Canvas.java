@@ -274,10 +274,10 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
             if (scsColor == null) {
                 scsColor = this.getTextColor();
             } else {
-                int x = 0;
-                if (scs.getCol() == 54 || scs.getCol() == 51) {
-                    x = 2;
-                }
+//                int x = 0;
+//                if (scs.getCol() == 54 || scs.getCol() == 51) {
+//                    x = 2;
+//                }
                 scsColor = scsColor.mergeWith(this.getTextColor());
             }
             // recreate with new color
