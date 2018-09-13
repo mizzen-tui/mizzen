@@ -6,7 +6,12 @@ import java.io.InputStream;
 import java.util.List;
 
 import dtb.terminalIO.ControlCode;
+import dtb.terminalIO.ControlCode.Color;
 import dtb.terminalIO.ControlCode.ColorParseSegment;
+import dtb.terminalIO.ScreenLineSegment.UTIL.SegmentsFromStringResult;
+import dtb.terminalIO.geom.Position;
+import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.ScreenLineSegment;
 
 public class ReadSampleFiles {
     
@@ -32,10 +37,25 @@ public class ReadSampleFiles {
     public static void main(String args[]) throws Exception {
 //	System.out.println( readSampleFile("acme-white-200.txt", false ));
         String text = readSampleFile("acme-white-200.txt", false );
+        //System.out.println(text);
         long start = System.currentTimeMillis();
         List<ColorParseSegment> result = ControlCode.parseColors( text );
         long elapsed = System.currentTimeMillis() - start;
         System.out.println(result.size() + "    elapsed " + elapsed);
+        
+        
+        start = System.currentTimeMillis();
+        
+        SegmentsFromStringResult r = ScreenLineSegment.UTIL.textSegmentsFromStringWithEmbeddedColor(text, 0,0, new Rectangle.Simple(0,0,100,300));
+
+        elapsed = System.currentTimeMillis() - start;
+        System.out.println(r.size() + "    elapsed " + elapsed);
+        
+        
+        
+//        for ( ColorParseSegment r : result) {
+//            System.out.println(r);   
+//        }
     }
 
 }

@@ -11,7 +11,9 @@ import java.util.stream.Collectors;
 
 import dtb.terminalIO.Canvas.AbstractSegment;
 import dtb.terminalIO.ControlCode.Color;
+import dtb.terminalIO.ControlCode.ColorColorSegmentBuilder;
 import dtb.terminalIO.ControlCode.FGBGColors;
+import dtb.terminalIO.ScreenLineSegment.SegmentImpl;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.Relation.LeftRight;
@@ -500,6 +502,12 @@ public interface ScreenLineSegment extends Rectangle {
             }
         }
 
+        @FunctionalInterface
+        public static interface CreateSegmentWithColor {
+            ScreenLineSegment create(Color color, Position position, String simpleText);
+        }
+        
+        
         public static SegmentsFromStringResult textSegmentsFromString(String multiLineString, int offSetRow,
                 int offSetCol, Rectangle boundingRectangle,
                 BiFunction<Position, String, ScreenLineSegment> createSegment) {
@@ -542,6 +550,75 @@ public interface ScreenLineSegment extends Rectangle {
             return textSegmentsFromString(s, offSetCol, offSetCol, boundingRectangle,
                     (p, txt) -> new SegmentImpl(FGBGColors.NO_COLOR_SPECIFIED, p, -1, txt));
         }
+        
+        private static int clipStrWithEmbeddedColors(final Collection<ScreenLineSegment> ts, String colorCodedStr, int width, Position offset, CreateSegmentWithColor createSegment) {
+            int[] curlength = new int[]{0};
+            
+            ControlCode.parseColorsAndBuildResult(colorCodedStr, new ColorColorSegmentBuilder() {
+		@Override
+		public boolean newColorSegment(Color color, String simpleText) {
+		    if (simpleText==null) {
+			simpleText="";
+		    }
+		    boolean continueParsing=true;
+		    if (curlength[0] + simpleText.length()>width) {
+			simpleText = clip(simpleText, width - curlength[0]);
+			continueParsing = false;
+		    }
+		    
+		    ScreenLineSegment segment = createSegment.create(color, offset.offsetAdd(0, curlength[0]), simpleText);
+		    curlength[0] += simpleText.length();
+		    
+		    ts.add(segment);
+		    
+		    return continueParsing;
+		}
+            });
+            return curlength[0];
+        }
+
+        
+        public static SegmentsFromStringResult textSegmentsFromStringWithEmbeddedColor(String multiLineString, int offSetRow,
+                int offSetCol, Rectangle boundingRectangle,CreateSegmentWithColor createSegment) {
+
+            TreeSet<ScreenLineSegment> ts = makeCollection(null); // empty
+            if (multiLineString == null || multiLineString.length() == 0) {
+                return new SegmentsFromStringResult(ts);
+            }
+            Position.Simple position = new Position.Simple(offSetRow + boundingRectangle.getRow(),
+                    offSetCol + boundingRectangle.getCol());
+            Rectangle boundAndClipped = Rectangle.Clipped.fromPosition(position, boundingRectangle);
+            if (boundAndClipped == null) {
+                return new SegmentsFromStringResult(ts);
+            }
+            String lines[] = multiLineString.split("\n");
+            lines[0] = clip(lines[0], boundAndClipped.getWidth());
+            if (lines[0]!=null && lines[0].length()>0) {
+        	clipStrWithEmbeddedColors(ts, lines[0], boundAndClipped.getWidth(), position, createSegment);
+            }
+            int lineLimit = Math.min(lines.length, boundAndClipped.getHeight());
+            int originalWidth = boundingRectangle.getWidth();
+            for (int i = 1; i < lineLimit; i++) {
+                position.moveTo(position.getRow() + 1, boundingRectangle.getCol()); // notice that we effectively carriage return
+                                                                                    // to start of next line (moveTo)
+                                                                  // and now we use width of original rectangle for subsequent
+                                                                  // clippings
+                if (lines[i]!=null && lines[i].length()>0) {
+                    clipStrWithEmbeddedColors(ts, lines[i],originalWidth, position, createSegment);
+                }
+            }
+            if (ts.size() == 0) return new SegmentsFromStringResult(position, ts);
+            ScreenLineSegment lastSegment =  ts.last();
+            return new SegmentsFromStringResult(new Position.Simple(lastSegment.getBottomMostRow(), lastSegment.getRightMostCol()), ts);
+        }
+        
+        public static SegmentsFromStringResult textSegmentsFromStringWithEmbeddedColor(String s, int offSetRow, int offSetCol,
+                Rectangle boundingRectangle) {
+            return textSegmentsFromStringWithEmbeddedColor(s, offSetCol, offSetCol, boundingRectangle,
+        	    (color, p, txt) -> new SegmentImpl( color != null ? color : FGBGColors.NO_COLOR_SPECIFIED, p, -1, txt));
+        }
+        
+
     }
 
     static class SegmentImpl extends AbstractSegment {

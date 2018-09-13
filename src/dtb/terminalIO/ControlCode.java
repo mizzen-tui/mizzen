@@ -1,6 +1,7 @@
 package dtb.terminalIO;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.StringJoiner;
 import java.util.regex.Matcher;
@@ -93,6 +94,20 @@ public abstract class ControlCode implements Renderer {
         
     }
     
+    public static class ColorFromCodes extends Color {
+
+        int[] codes;
+        
+        public ColorFromCodes(int[] codes) {
+            this.codes = codes;
+        }
+        
+        @Override
+        protected int[] buildControlCodes() {
+            return codes;
+        }
+        
+    }
     
     public static class ColorFromString extends Color {
 
@@ -114,6 +129,7 @@ public abstract class ControlCode implements Renderer {
         }
         
     }
+
 
     public static abstract class SimpleColor extends Color {
         int colorCode = 0;
@@ -498,28 +514,48 @@ public abstract class ControlCode implements Renderer {
             this.simpleText = simpleText;
         }
         
+        public int length() {
+            return this.simpleText!=null?this.simpleText.length():0;
+        }
+	@Override
+	public String toString() {
+	    return "ColorParseSegment {color=" + color + ", simpleText=" + simpleText + "}";
+	}
+    }
+
+    public static final int PARSE_TEXT=1;
+    public static final int PARSE_COLOR_START=2;
+    public static final int PARSE_COLOR_CODE=3;
+    public static final int PARSE_COLOR_END=4;
+
+    
+    public static interface ColorColorSegmentBuilder {
+	boolean newColorSegment(Color color, String simpleText);
     }
     
-    public static List<ColorParseSegment> parseColors(String colorCodedStr) {
-        List<ColorParseSegment> result = new ArrayList<ColorParseSegment>();
+    public static void parseColorsAndBuildResult(String colorCodedStr, ColorColorSegmentBuilder colorColorSegmentBuilder) {
         
-        int PARSE_TEXT=1;
-        int PARSE_COLOR=2;
         int PARSE_STATE=PARSE_TEXT;
+        int codesBuffer[] = new int[50];
+        int codesBufferLen=0;
         
-        StringBuffer sb = new StringBuffer();
+        StringBuffer sb = new StringBuffer(50);
+        sb.setLength(0);
         String simpleText = null;
         Color color = null;
         int colorCodedStrLength = colorCodedStr.length();
         for (int i=0; i<colorCodedStrLength; i++) {
             
             char ch = colorCodedStr.charAt(i);
-            if (PARSE_STATE == PARSE_TEXT) {
-                
+            
+            switch (PARSE_STATE) {
+	    case PARSE_TEXT:
                 if (ch == '\u001B') {
                     simpleText = sb.toString();
-                    result.add( new  ColorParseSegment(color, simpleText) ); 
-                    PARSE_STATE = PARSE_COLOR;
+                    boolean continueParsing = colorColorSegmentBuilder.newColorSegment(color, simpleText);
+                    if (!continueParsing) return;
+                    //result.add( new  ColorParseSegment(color, simpleText) ); 
+                    PARSE_STATE = PARSE_COLOR_START;
                     simpleText = null;
                     color = null; 
                     sb = new StringBuffer();
@@ -527,29 +563,138 @@ public abstract class ControlCode implements Renderer {
                 } else {
                     sb.append(ch);
                 }
-                
-            } else { // PARSE_STATE == PARSE_COLOR
-                if (ch == '[' || Character.isDigit(ch) || ch == ';') {
-                    sb.append(ch);
-                } else if (ch == 'm') {
-                    sb.append(ch);
-                    // TODO:  parse in-house much faster!!
-                    color = Color.fromStr(sb.toString());
-                    //color = new FGBGColors(Colors.BBla);
-                    PARSE_STATE = PARSE_TEXT;
-                    sb = new StringBuffer();
-                } else {  // we were never parsing a color object in the first place!
-                    PARSE_STATE = PARSE_TEXT;
+		break;
+
+	    case PARSE_COLOR_START:
+                if (ch == '[') {
+                    break;  // ignore
+                } else {
+                    if (Character.isDigit(ch)) {
+                	PARSE_STATE = PARSE_COLOR_CODE;
+                	codesBufferLen=0;
+                	sb = new StringBuffer();
+                    } else {
+                        PARSE_STATE = PARSE_TEXT;
+                    }
                     sb.append(ch);
                 }
-            }
+		break;
+
+	    case PARSE_COLOR_CODE:
+                if (ch == ';' || ch == 'm') {
+                    String num = sb.toString();
+                    sb.append(ch);
+                    if (num.length()==0) {
+                	PARSE_STATE = PARSE_TEXT;
+                	break;
+                    }
+                    int code=Integer.parseInt(num);
+                    codesBuffer[codesBufferLen] = code;
+                    codesBufferLen++;
+                    sb = new StringBuffer();
+                    if (ch == 'm' || codesBufferLen >= codesBuffer.length) {
+                	PARSE_STATE = PARSE_COLOR_END;
+                    }
+                } else {
+                    sb.append(ch);
+                    if (! Character.isDigit(ch)) {
+                	PARSE_STATE = PARSE_TEXT;
+                    }
+                }
+		break;
+
+	    case PARSE_COLOR_END:
+		int[] codes = new int[codesBufferLen];
+		System.arraycopy(codesBuffer, 0, codes, 0, codesBufferLen);
+		color = new ColorFromCodes(codes);
+		PARSE_STATE = PARSE_TEXT;
+		sb.append(ch);
+		break;
+
+	    default:
+		throw new IllegalStateException("Should not get here!");
+	    }
         }
-        if (sb.length()>0) {
-            result.add( new  ColorParseSegment(color, simpleText) ); 
-        }
+        
+      if (sb.length()>0) {
+	  colorColorSegmentBuilder.newColorSegment(color, sb.toString());
+      }
+        
+            
+            
+            
+//            if (PARSE_STATE == PARSE_TEXT) {
+//                
+//                if (ch == '\u001B') {
+//                    simpleText = sb.toString();
+//                    result.add( new  ColorParseSegment(color, simpleText) ); 
+//                    PARSE_STATE = PARSE_COLOR_START;
+//                    simpleText = null;
+//                    color = null; 
+//                    sb = new StringBuffer();
+//                    sb.append(ch);
+//                } else {
+//                    sb.append(ch);
+//                }
+//                
+//            } if (PARSE_STATE == PARSE_COLOR_START) {
+//                if (ch == '[') {
+//                    sb.append(ch);
+//                } else {
+//                    if (Character.isDigit(ch)) {
+//                	PARSE_STATE = PARSE_COLOR_CODE;
+//                	codesBufferLen=0;
+//                	sb = new StringBuffer();
+//                    } else {
+//                        PARSE_STATE = PARSE_TEXT;
+//                    }
+//                    sb.append(ch);
+//                }
+//                
+//        	void
+//            } else { // PARSE_STATE == PARSE_COLOR
+//                if (ch == '[' || Character.isDigit(ch) || ch == ';') {
+//                    sb.append(ch);
+//                } else if (ch == 'm') {
+//                    sb.append(ch);
+//                    // TODO:  parse in-house much faster!!
+//                    color = Color.fromStr(sb.toString());
+//                    //color = new FGBGColors(Colors.BBla);
+//                    PARSE_STATE = PARSE_TEXT;
+//                    sb = new StringBuffer();
+//                } else {  // we were never parsing a color object in the first place!
+//                    PARSE_STATE = PARSE_TEXT;
+//                    sb.append(ch);
+//                }
+//            }
+//        }
+//        if (sb.length()>0) {
+//            result.add( new  ColorParseSegment(color, sb.toString()) ); 
+//        }
+        
+//        return result;
+         
+    }
+    public static List<ColorParseSegment> parseColors(String colorCodedStr) {
+        final List<ColorParseSegment> result = new ArrayList<ColorParseSegment>();
+        
+        parseColorsAndBuildResult(colorCodedStr, new ColorColorSegmentBuilder() {
+	    @Override
+	    public boolean newColorSegment(Color color, String simpleText) {
+		result.add(new ColorParseSegment(color, simpleText));
+		return true; // true means keep parsing
+	    }
+        });
         
         return result;
-        
+
+    }
+    
+    public static void main(String[] args) {
+	
+	List<ColorParseSegment> result = parseColors("Hello there "+escape_PREFIX+"1;2;3;5m What is going on?"+escape_PREFIX+"45;12;3;1;232mGeorge of the Jungle");
+	
+	System.out.println("Hello world!  " + result.size()+"\n\n");
     }
 
 }
