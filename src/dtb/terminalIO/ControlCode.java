@@ -1,11 +1,12 @@
 package dtb.terminalIO;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.StringJoiner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import dtb.terminalIO.ControlCode.FGBGColors.HasRowChange;
-import dtb.terminalIO.TerminalContext.StringContext;
 
 public abstract class ControlCode implements Renderer {
 
@@ -85,7 +86,32 @@ public abstract class ControlCode implements Renderer {
         public Color bold() {
             return this; // should makes this better
         }
+
+        public static Color fromStr(String colorStr) {
+            return new ColorFromString(colorStr);
+        }
         
+    }
+    
+    
+    public static class ColorFromString extends Color {
+
+        int[] codes;
+        
+        public ColorFromString(String colorStr) {
+            colorStr = colorStr.replace(escape_PREFIX,"");
+            colorStr = colorStr.replace("m","");
+            String[] codesStr = colorStr.split(";");
+            codes = new int[codesStr.length];
+            for (int i = 0; i< codes.length; i++) {
+                codes[i] = Integer.parseInt(codesStr[i]);
+            }
+        }
+        
+        @Override
+        protected int[] buildControlCodes() {
+            return codes;
+        }
         
     }
 
@@ -461,6 +487,69 @@ public abstract class ControlCode implements Renderer {
         matcher.appendTail(sb);
 
         return sb.toString();
+    }
+    
+    public static class ColorParseSegment {
+        Color color;
+        String simpleText;
+        public ColorParseSegment(Color color, String simpleText) {
+            super();
+            this.color = color;
+            this.simpleText = simpleText;
+        }
+        
+    }
+    
+    public static List<ColorParseSegment> parseColors(String colorCodedStr) {
+        List<ColorParseSegment> result = new ArrayList<ColorParseSegment>();
+        
+        int PARSE_TEXT=1;
+        int PARSE_COLOR=2;
+        int PARSE_STATE=PARSE_TEXT;
+        
+        StringBuffer sb = new StringBuffer();
+        String simpleText = null;
+        Color color = null;
+        int colorCodedStrLength = colorCodedStr.length();
+        for (int i=0; i<colorCodedStrLength; i++) {
+            
+            char ch = colorCodedStr.charAt(i);
+            if (PARSE_STATE == PARSE_TEXT) {
+                
+                if (ch == '\u001B') {
+                    simpleText = sb.toString();
+                    result.add( new  ColorParseSegment(color, simpleText) ); 
+                    PARSE_STATE = PARSE_COLOR;
+                    simpleText = null;
+                    color = null; 
+                    sb = new StringBuffer();
+                    sb.append(ch);
+                } else {
+                    sb.append(ch);
+                }
+                
+            } else { // PARSE_STATE == PARSE_COLOR
+                if (ch == '[' || Character.isDigit(ch) || ch == ';') {
+                    sb.append(ch);
+                } else if (ch == 'm') {
+                    sb.append(ch);
+                    // TODO:  parse in-house much faster!!
+                    color = Color.fromStr(sb.toString());
+                    //color = new FGBGColors(Colors.BBla);
+                    PARSE_STATE = PARSE_TEXT;
+                    sb = new StringBuffer();
+                } else {  // we were never parsing a color object in the first place!
+                    PARSE_STATE = PARSE_TEXT;
+                    sb.append(ch);
+                }
+            }
+        }
+        if (sb.length()>0) {
+            result.add( new  ColorParseSegment(color, simpleText) ); 
+        }
+        
+        return result;
+        
     }
 
 }

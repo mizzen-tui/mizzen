@@ -3,8 +3,10 @@ package dtb.terminalIO.examples.sampledata;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 import dtb.terminalIO.ControlCode;
+import dtb.terminalIO.ControlCode.ColorParseSegment;
 
 public class ReadSampleFiles {
     
@@ -28,7 +30,12 @@ public class ReadSampleFiles {
     }
     
     public static void main(String args[]) throws Exception {
-	System.out.println( readSampleFile("acme-white-200.txt", false ));
+//	System.out.println( readSampleFile("acme-white-200.txt", false ));
+        String text = readSampleFile("acme-white-200.txt", false );
+        long start = System.currentTimeMillis();
+        List<ColorParseSegment> result = ControlCode.parseColors( text );
+        long elapsed = System.currentTimeMillis() - start;
+        System.out.println(result.size() + "    elapsed " + elapsed);
     }
 
 }
