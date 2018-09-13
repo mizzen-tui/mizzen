@@ -1,6 +1,6 @@
 package dtb.terminalIO.components;
 
-import dtb.terminalIO.ControlCode.FGBGColors;
+import dtb.terminalIO.ControlCode.Color;
 import dtb.terminalIO.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.ScreenLineSegment;
 import dtb.terminalIO.geom.Rectangle;
@@ -18,7 +18,7 @@ public class SegmentComponent extends Component.AbstractComponent<SegmentCompone
     }
 
     @Override
-    protected void draw(FGBGColors color, IScreenLineSegmentsBuffer segments) {
+    protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
         segments.add(this.scs);
     }
     

@@ -1,7 +1,8 @@
 package dtb.terminalIO.components;
 
-import dtb.terminalIO.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.ControlCode.Color;
 import dtb.terminalIO.ControlCode.FGBGColors;
+import dtb.terminalIO.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.geom.Rectangle;
 
 /**
@@ -21,11 +22,11 @@ public interface FillOnClearPolicy {
 
     boolean isFillOnClear();
 
-    FGBGColors getEmptyColor();
+    Color getEmptyColor();
 
     void setEmptyChar(char emptyChar);
 
-    void setEmptyColor(FGBGColors emptyColor);
+    void setEmptyColor(Color emptyColor);
 
     void setFillOnClear(boolean fillOnClear);
     
@@ -38,10 +39,10 @@ public interface FillOnClearPolicy {
 
         private boolean          fillOnClear      = true;
         private char             emptyChar        = ' ';
-        private FGBGColors       emptyColor       = FGBGColors.NO_COLOR_SPECIFIED;
+        private Color            emptyColor       = FGBGColors.NO_COLOR_SPECIFIED;
         private static final int EMPTY_SEGMENT_ID = -1234;
         
-        private FGBGColors.Provider parentColorProvider;
+        private Color.Provider parentColorProvider;
 
         protected AbstractImpl(FGBGColors.Provider parentColorProvider) {
             this.parentColorProvider = parentColorProvider;
@@ -56,7 +57,7 @@ public interface FillOnClearPolicy {
             this.emptyChar = emptyChar;
         }
         
-        public FGBGColors getParentColor() {
+        public Color getParentColor() {
             if (parentColorProvider == null || parentColorProvider.getColor() == null) {
                 return FGBGColors.NO_COLOR_SPECIFIED;
             }
@@ -64,11 +65,11 @@ public interface FillOnClearPolicy {
         }
 
         @Override
-        public FGBGColors getEmptyColor() {
+        public Color getEmptyColor() {
             return emptyColor.mergeWith(getParentColor());
         }
 
-        public void setEmptyColor(FGBGColors emptyColor) {
+        public void setEmptyColor(Color emptyColor) {
             this.emptyColor = emptyColor==null? FGBGColors.NO_COLOR_SPECIFIED : emptyColor;
         }
 
@@ -89,7 +90,7 @@ public interface FillOnClearPolicy {
 
         @Override
         public void fillWithEmptyChar() {
-            FGBGColors emptyColor = getEmptyColor();
+            Color emptyColor = getEmptyColor();
             char emptyChar = getEmptyChar();
             Rectangle bounds = this.getRectangleForClearAndFill();
             this.getSegmentsBuffer().fillRectWithChar(emptyColor, emptyChar, bounds);

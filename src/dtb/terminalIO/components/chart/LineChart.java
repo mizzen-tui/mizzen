@@ -12,6 +12,7 @@ import java.util.function.Function;
 import dtb.terminalIO.Canvas;
 import dtb.terminalIO.Colors;
 import dtb.terminalIO.ControlCode;
+import dtb.terminalIO.ControlCode.Color;
 import dtb.terminalIO.ControlCode.FGBGColors;
 import dtb.terminalIO.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.ScreenLineSegment.SegmentImpl;
@@ -80,14 +81,14 @@ public class LineChart extends Composite {
     int             axisXLabelGap  = 2;
     List<String>    dataLabels;
     String[]        labelY;
-    FGBGColors      plotColor      = FGBGColors.NO_COLOR_SPECIFIED;
+    Color           plotColor      = FGBGColors.NO_COLOR_SPECIFIED;
 
     Plotter         plotter;
     private int     labelYSpace;
     private boolean autoLabels;
     private String labelX;
 
-    public LineChart(FGBGColors color, Dimension d) {
+    public LineChart(Color color, Dimension d) {
         super(color);
         data = new ArrayList<Double>();
         dataLabels = new ArrayList<String>();
@@ -95,14 +96,14 @@ public class LineChart extends Composite {
         this.add(this.plotter);
     }
 
-    public LineChart(FGBGColors color, Dimension dim, double[] data) {
+    public LineChart(Color color, Dimension dim, double[] data) {
         this(color, dim);
         for (double d : data) {
             addData(d);
         }
     }
 
-    public LineChart(FGBGColors color, int height, int width) {
+    public LineChart(Color color, int height, int width) {
         this(color, new Dimension.Simple(height, width));
     }
 
@@ -239,7 +240,7 @@ public class LineChart extends Composite {
 
     }
     
-    private void plotAxes(FGBGColors color, IScreenLineSegmentsBuffer segments) {
+    private void plotAxes(Color color, IScreenLineSegmentsBuffer segments) {
         Rectangle inner = getInnerRectangle();
         int origY = inner.getHeight() -1;
         int origX = inner.getCol() + this.labelYSpace;
@@ -267,7 +268,7 @@ public class LineChart extends Composite {
     }
 
     @Override
-    protected void draw(FGBGColors color, IScreenLineSegmentsBuffer segments) {
+    protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
         this.plotter.clearPlots();
         calcLayout();
         plotAxes(color, segments);
@@ -275,7 +276,7 @@ public class LineChart extends Composite {
         super.draw(color, segments);
     }
 
-    public LineChart setPlotColor(FGBGColors plotColor) {
+    public LineChart setPlotColor(Color plotColor) {
         this.plotColor = plotColor;
         return this;
     }

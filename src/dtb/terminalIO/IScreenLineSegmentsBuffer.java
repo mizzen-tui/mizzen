@@ -3,7 +3,7 @@ package dtb.terminalIO;
 import java.util.Collection;
 import java.util.Iterator;
 
-import dtb.terminalIO.ControlCode.FGBGColors;
+import dtb.terminalIO.ControlCode.Color;
 import dtb.terminalIO.geom.Rectangle;
 
 /**
@@ -27,7 +27,7 @@ public interface IScreenLineSegmentsBuffer extends Rectangle , Iterable<ScreenLi
 
 	public abstract String getCharAt(int row, int col);
 
-	void setCharAt(int row, int col, char ch, FGBGColors color);
+	void setCharAt(int row, int col, char ch, Color color);
 	
 	public abstract boolean removeRow(int row);
 
@@ -93,9 +93,9 @@ public interface IScreenLineSegmentsBuffer extends Rectangle , Iterable<ScreenLi
 	 */
 	public abstract void removeRectangles(Collection<? extends Rectangle> rectangles);
 	
-	public abstract void fillRectWithChar(FGBGColors color, char fillChar,  Rectangle bounds);	
+	public abstract void fillRectWithChar(Color color, char fillChar,  Rectangle bounds);	
 	
-	public default void fillRectWithChar(FGBGColors color, char fillChar) {
+	public default void fillRectWithChar(Color color, char fillChar) {
 		fillRectWithChar(color, fillChar, this);
 	}
 

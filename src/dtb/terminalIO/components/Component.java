@@ -1,9 +1,10 @@
 package dtb.terminalIO.components;
 
+import dtb.terminalIO.ControlCode.Color;
 import dtb.terminalIO.ControlCode.FGBGColors;
-import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.ScreenLineSegmentsBuffer;
+import dtb.terminalIO.geom.Rectangle;
 
 
 /**
@@ -21,7 +22,7 @@ import dtb.terminalIO.ScreenLineSegmentsBuffer;
  */
 public interface Component<T extends Component<?>> extends IScreenLineSegmentsBuffer.Provider , FGBGColors.Provider {
 
-    T setColor(FGBGColors drawingcolor);
+    T setColor(Color drawingcolor);
     
     void clear();
 
@@ -29,7 +30,7 @@ public interface Component<T extends Component<?>> extends IScreenLineSegmentsBu
 
         private IScreenLineSegmentsBuffer segments   = new ScreenLineSegmentsBuffer();
 
-        private FGBGColors                color      = FGBGColors.DEFAULT;
+        private Color                     color      = FGBGColors.DEFAULT;
 
         BlockChars                        blockChars = BlockChars.DEFAULT;
 
@@ -48,7 +49,7 @@ public interface Component<T extends Component<?>> extends IScreenLineSegmentsBu
 
                                                      };
 
-        protected AbstractComponent(FGBGColors color) {
+        protected AbstractComponent(Color color) {
             this.color = color == null? FGBGColors.NO_COLOR_SPECIFIED : color ;
         }
 
@@ -68,7 +69,7 @@ public interface Component<T extends Component<?>> extends IScreenLineSegmentsBu
             this.hasDrawn = false;
         }
 
-        protected abstract void draw(FGBGColors color, IScreenLineSegmentsBuffer segments);
+        protected abstract void draw(Color color, IScreenLineSegmentsBuffer segments);
 
         protected IScreenLineSegmentsBuffer buildBuffer() {
             return new ScreenLineSegmentsBuffer();
@@ -84,12 +85,12 @@ public interface Component<T extends Component<?>> extends IScreenLineSegmentsBu
         }
 
         @Override
-        public T setColor(FGBGColors drawingcolor) {
+        public T setColor(Color drawingcolor) {
             this.color = drawingcolor == null ? FGBGColors.NO_COLOR_SPECIFIED : drawingcolor;
             return (T) this;
         }
 
-        public FGBGColors getColor() {
+        public Color getColor() {
             return color;
         }
         @Override

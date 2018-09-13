@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
-import dtb.terminalIO.ControlCode.FGBGColors;
+import dtb.terminalIO.ControlCode.Color;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 
@@ -121,7 +121,7 @@ public class ScreenLineSegmentsBuffer implements Rectangle, IScreenLineSegmentsB
     }
 
     @Override
-    public void setCharAt(int row, int col, char ch, FGBGColors color) {
+    public void setCharAt(int row, int col, char ch, Color color) {
         ScreenLineSegment.UTIL.setCharAt(segments, row, col, ch, color);
     }
     
@@ -302,7 +302,7 @@ public class ScreenLineSegmentsBuffer implements Rectangle, IScreenLineSegmentsB
     }
 
     @Override
-    public void fillRectWithChar(FGBGColors color, char fillChar, Rectangle bounds) {
+    public void fillRectWithChar(Color color, char fillChar, Rectangle bounds) {
         ScreenLineSegment.UTIL.fillRectWithChar(color, fillChar, bounds, getSegments());
     }
 

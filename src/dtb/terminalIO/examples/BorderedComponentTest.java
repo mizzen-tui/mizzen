@@ -2,13 +2,12 @@ package dtb.terminalIO.examples;
 
 import dtb.terminalIO.Canvas;
 import dtb.terminalIO.Colors;
-import dtb.terminalIO.IScreenLineSegmentsBuffer;
-import dtb.terminalIO.ScreenLineSegment;
+import dtb.terminalIO.ControlCode.Color;
 import dtb.terminalIO.ControlCode.FGBGColors;
+import dtb.terminalIO.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.RectangleComponent;
-import dtb.terminalIO.components.SegmentComponent;
 
 public class BorderedComponentTest {
 
@@ -26,7 +25,7 @@ public class BorderedComponentTest {
         
         RectangleComponent r1 = new RectangleComponent(new FGBGColors(Colors.Yel),10, 30) {
             @Override
-            protected void draw(FGBGColors color, IScreenLineSegmentsBuffer segments) {
+            protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
                 count[0] ++;
                 super.draw(color, segments);
                 count[1] ++;

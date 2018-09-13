@@ -1,6 +1,7 @@
 package dtb.terminalIO.components;
 
 import dtb.terminalIO.ControlCode;
+import dtb.terminalIO.ControlCode.Color;
 import dtb.terminalIO.ControlCode.FGBGColors;
 import dtb.terminalIO.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.ScreenLineSegment;
@@ -17,7 +18,7 @@ public class TextComponent extends BoundedComponent<TextComponent> {
     private String text;
     private boolean hasColorCodes = false;
     
-    public TextComponent(FGBGColors color, String text) {
+    public TextComponent(Color color, String text) {
         super(color, calcDimentionOfText(text));
         this.setText(text);
     }
@@ -31,22 +32,22 @@ public class TextComponent extends BoundedComponent<TextComponent> {
     }
 
     
-    public TextComponent(FGBGColors color, int row, int col, String text) {
+    public TextComponent(Color color, int row, int col, String text) {
         super(color, new Rectangle.Simple(row, col, Dimension.UTIL.stringToDimension(text)));
         this.text = text;
     }
 
-    public TextComponent(FGBGColors color, Dimension d, String text) {
+    public TextComponent(Color color, Dimension d, String text) {
         super(color,new Rectangle.Simple(d));
         this.text = text;
     }
 
-    public TextComponent(FGBGColors color, Dimension d) {
+    public TextComponent(Color color, Dimension d) {
         super(color,new Rectangle.Simple(d));
     }
 
     @Override
-    public void draw(FGBGColors color, IScreenLineSegmentsBuffer segments) {
+    public void draw(Color color, IScreenLineSegmentsBuffer segments) {
         SegmentsFromStringResult result = ScreenLineSegment.UTIL.textSegmentsFromString(this.text, 0, 0, this, 
         	                                                                        (p,s)->new SegmentImpl(color, p, -1, s));
         if (result.size()!=0) {

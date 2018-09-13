@@ -3,6 +3,7 @@ package dtb.terminalIO.components;
 import java.util.Collection;
 import java.util.function.Supplier;
 
+import dtb.terminalIO.ControlCode.Color;
 import dtb.terminalIO.ControlCode.FGBGColors;
 import dtb.terminalIO.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.ScreenLineSegment;
@@ -25,7 +26,7 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
                                                  };
 
     boolean                           hasDrawn   = false;
-    FGBGColors                        color      = FGBGColors.DEFAULT;
+    Color                             color      = FGBGColors.DEFAULT;
     BlockChars                        blockChars = BlockChars.DEFAULT;
 
     FillOnClearPolicy    fillPolicy = new FillOnClearPolicy.AbstractImpl(this) {
@@ -42,17 +43,17 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
 
                                                  };
 
-    public BoundedComponent(FGBGColors color, Rectangle r) {
+    public BoundedComponent(Color color, Rectangle r) {
         super(new Rectangle.Simple(r));
         this.setColor(color);
     }
 
-    public BoundedComponent(FGBGColors color, Position p, Dimension d) {
+    public BoundedComponent(Color color, Position p, Dimension d) {
         super(new Rectangle.Simple(p, d));
         this.color = color;
     }
 
-    public BoundedComponent(FGBGColors color, Dimension d) {
+    public BoundedComponent(Color color, Dimension d) {
         super(new Rectangle.Simple(d));
         setColor(color);
     }
@@ -71,7 +72,7 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
         }
     }
 
-    protected abstract void draw(FGBGColors color, IScreenLineSegmentsBuffer segments);
+    protected abstract void draw(Color color, IScreenLineSegmentsBuffer segments);
 
     @Override
     public IScreenLineSegmentsBuffer getSegmentsBuffer() {
@@ -80,7 +81,7 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
     }
 
     @Override
-    public T setColor(FGBGColors drawingcolor) {
+    public T setColor(Color drawingcolor) {
         this.color = drawingcolor == null ? FGBGColors.NO_COLOR_SPECIFIED : drawingcolor;
         return (T) this;
     }
@@ -94,7 +95,7 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
         return (T) this;
     }
 
-    public FGBGColors getColor() {
+    public Color getColor() {
         return color;
     }
 
@@ -112,7 +113,7 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
         return (T) this;
     }
 
-    public T setEmptyColor(FGBGColors emptyColor) {
+    public T setEmptyColor(Color emptyColor) {
         this.fillPolicy.setEmptyColor(emptyColor);
         return (T) this;
     }
@@ -159,7 +160,7 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
 	}
 
 	@Override
-        protected void draw(FGBGColors color, IScreenLineSegmentsBuffer segments) {
+        protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
             // do nothing
         }
     }

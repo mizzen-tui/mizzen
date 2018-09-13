@@ -1,6 +1,6 @@
 package dtb.terminalIO.components.tab;
 
-import dtb.terminalIO.ControlCode.FGBGColors;
+import dtb.terminalIO.ControlCode.Color;
 import dtb.terminalIO.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.CharComponent;
@@ -20,23 +20,23 @@ public class TabComponent extends BoundedComponent<TabComponent>{
     
     boolean active = false;
     String tabText;
-    FGBGColors textActiveTabColor;
+    Color  textActiveTabColor;
     
     
-    public TabComponent(FGBGColors color, String tabText, boolean active) {
+    public TabComponent(Color color, String tabText, boolean active) {
 	super(color, new Dimension.Simple(3, tabText.length()+4));
 	this.active = active;
 	this.tabText = tabText;
 	this.textActiveTabColor = color.bold();
     }
 
-    public TabComponent(FGBGColors color, Position position, String tabText, boolean active) {
+    public TabComponent(Color color, Position position, String tabText, boolean active) {
 	super(color, position, new Dimension.Simple(3, tabText.length()+4));
 	this.active = active;
 	this.tabText = tabText;
     }
 
-    public TabComponent(FGBGColors color, FGBGColors textActiveTabColor, Position position, String tabText, boolean active) {
+    public TabComponent(Color color, Color textActiveTabColor, Position position, String tabText, boolean active) {
 	super(color, position, new Dimension.Simple(3, tabText.length()+4));
 	this.active = active;
 	this.tabText = tabText;
@@ -44,8 +44,8 @@ public class TabComponent extends BoundedComponent<TabComponent>{
     }
 
     @Override
-    protected void draw(FGBGColors color, IScreenLineSegmentsBuffer segments) {
-        FGBGColors tabColor = active ? this.getColor().bold() : this.getColor();
+    protected void draw(Color colorcolor, IScreenLineSegmentsBuffer segments) {
+        Color tabColor = active ? this.getColor().bold() : this.getColor();
 
         HorizontalLine topLine = makeChildComponent(()->new HorizontalLine(tabColor, getRow(), getCol()+1, getWidth() - 2));
 
@@ -92,11 +92,11 @@ public class TabComponent extends BoundedComponent<TabComponent>{
         this.tabText = tabText;
     }
 
-    public FGBGColors getTextActiveTabColor() {
+    public Color getTextActiveTabColor() {
         return textActiveTabColor;
     }
 
-    public void setTextActiveTabColor(FGBGColors textActiveTabColor) {
+    public void setTextActiveTabColor(Color colortextActiveTabColor) {
         this.textActiveTabColor = textActiveTabColor;
     }
     

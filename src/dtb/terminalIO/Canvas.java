@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import dtb.terminalIO.ControlCode.BgColor;
+import dtb.terminalIO.ControlCode.Color;
 import dtb.terminalIO.ControlCode.FGBGColors;
 import dtb.terminalIO.ControlCode.FgColor;
 import dtb.terminalIO.ScreenLineSegment.SegmentImpl;
@@ -18,7 +19,7 @@ import dtb.terminalIO.geom.Rectangle;
 public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
 
     private CanvasBackend    backend;
-    private FGBGColors       color;                                // current foregound/background color
+    private Color            color;                                // current foregound/background color
     private CursorPos        cursorPos        = new CursorPos();
 
     private int              height;
@@ -170,7 +171,7 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
             int newLen = this.getWidth() - newCol;
             txt = sc.getText().substring(newLen);
         }
-        FGBGColors curColor = this.getTextColor();
+        Color curColor = this.getTextColor();
         if (!sc.getColors().equals(curColor)) {
             this.setTextColor(sc.getColors().mergeWith(curColor));
         }
@@ -269,7 +270,7 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
 
     private void mergeColorsAndwriteSegmentToBackEnd(ScreenLineSegment scs) {
         // check modify color if necessary
-        FGBGColors scsColor = scs.getColors();
+        Color scsColor = scs.getColors();
         if (scsColor == null || scsColor.isMergeable()) {
             if (scsColor == null) {
                 scsColor = this.getTextColor();
@@ -296,11 +297,11 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
         return this;
     }
 
-    public FGBGColors getTextColor() {
+    public Color getTextColor() {
         return this.color;
     }
 
-    public Canvas setTextColor(FGBGColors color) {
+    public Canvas setTextColor(Color color) {
         this.color = color;
         return this;
     }
@@ -314,23 +315,23 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
         return this;
     }
 
-    public ScreenLineSegment createScreenObject(FGBGColors color, Position cursorPos, String simpleText) {
+    public ScreenLineSegment createScreenObject(Color color, Position cursorPos, String simpleText) {
         sc_current_id++;
         SegmentImpl so = new SegmentImpl(color, cursorPos, sc_current_id, simpleText);
         return so;
     }
 
     static abstract class AbstractSegment implements ScreenLineSegment {
-        FGBGColors color;
+        Color color;
         Position   cursorPos;
 
-        public AbstractSegment(FGBGColors color, Position cursorPos) {
+        public AbstractSegment(Color color, Position cursorPos) {
             super();
             this.color = color;
             this.cursorPos = new Position.Simple(cursorPos); // very important to make a copy
         }
 
-        public FGBGColors getColor() {
+        public Color getColor() {
             return color;
         }
 
@@ -358,7 +359,7 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
         }
 
         @Override
-        public FGBGColors getColors() {
+        public Color getColors() {
             return color;
         }
 

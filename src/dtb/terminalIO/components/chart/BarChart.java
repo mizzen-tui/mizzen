@@ -1,7 +1,6 @@
 package dtb.terminalIO.components.chart;
 
 import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -10,6 +9,7 @@ import dtb.terminalIO.Canvas;
 import dtb.terminalIO.Colors;
 import dtb.terminalIO.ControlCode;
 import dtb.terminalIO.ControlCode.BgColor;
+import dtb.terminalIO.ControlCode.Color;
 import dtb.terminalIO.ControlCode.FGBGColors;
 import dtb.terminalIO.ControlCode.FgColor;
 import dtb.terminalIO.IScreenLineSegmentsBuffer;
@@ -30,7 +30,7 @@ public class BarChart extends Composite {
     private List<Double> data;
     private List<String> dataLabels;
     private String[] labelY;
-    private FGBGColors plotColor = FGBGColors.NO_COLOR_SPECIFIED;
+    private Color plotColor = FGBGColors.NO_COLOR_SPECIFIED;
 
     private int labelYSpace;
     private boolean autoLabels;
@@ -43,10 +43,10 @@ public class BarChart extends Composite {
     private double scale;
     private char cellChar = ' ';
     private BgColor barCOLOR;
-    private FGBGColors labelCOLOR;
+    private Color labelCOLOR;
     private FgColor dataCOLOR;
 
-    public BarChart(FGBGColors color, Dimension d) {
+    public BarChart(Color color, Dimension d) {
 	super(color);
 	setBounds(d.getHeight(), d.getWidth());
 	data = new ArrayList<Double>();
@@ -61,7 +61,7 @@ public class BarChart extends Composite {
 	// this.add(this.plotter);
     }
 
-    public BarChart(FGBGColors color, Dimension dim, double[] data) {
+    public BarChart(Color color, Dimension dim, double[] data) {
 	this(color, dim);
 	for (double d : data) {
 	    addData(d);
@@ -88,7 +88,7 @@ public class BarChart extends Composite {
 	return this;
     }
 
-    public BarChart(FGBGColors color, int height, int width) {
+    public BarChart(Color color, int height, int width) {
 	this(color, new Dimension.Simple(height, width));
     }
 
@@ -109,7 +109,7 @@ public class BarChart extends Composite {
 	scale = 0;
     }
 
-    public BarChart setPlotColor(FGBGColors fgbgColors) {
+    public BarChart setPlotColor(Color fgbgColors) {
 	// throw new IllegalStateException("Not implemented yet!");
 	return this;
     }
@@ -129,7 +129,7 @@ public class BarChart extends Composite {
 
     }
 
-    private void renderBars(FGBGColors color, IScreenLineSegmentsBuffer segments) {
+    private void renderBars(Color color, IScreenLineSegmentsBuffer segments) {
 
 	Rectangle inner = getInnerRectangle();
 
@@ -138,7 +138,7 @@ public class BarChart extends Composite {
 
 	int bottomRow = inner.getBottomMostRow();
 
-	FGBGColors c = new FGBGColors(this.barCOLOR);
+	Color c = new FGBGColors(this.barCOLOR);
 
 	// render the bars
 	for (int i = 0; i < this.numBar && i < dataLen; i++) {
@@ -184,7 +184,7 @@ public class BarChart extends Composite {
     }
 
     @Override
-    protected void draw(FGBGColors color, IScreenLineSegmentsBuffer segments) {
+    protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
 	// this.plotter.clearPlots();
 	calcLayout();
 	// plotAxes(color, segments);

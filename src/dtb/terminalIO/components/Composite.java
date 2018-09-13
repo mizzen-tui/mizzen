@@ -3,6 +3,7 @@ package dtb.terminalIO.components;
 import java.util.ArrayList;
 import java.util.List;
 
+import dtb.terminalIO.ControlCode.Color;
 import dtb.terminalIO.ControlCode.FGBGColors;
 import dtb.terminalIO.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.ScreenLineSegment;
@@ -65,7 +66,7 @@ public class Composite extends AbstractComponent<Composite> implements Rectangle
 
     private List<ComponentWithOffset> children = new ArrayList<ComponentWithOffset>();
 
-    public Composite(FGBGColors color) {
+    public Composite(Color color) {
 	super(color);
     }
 
@@ -132,8 +133,8 @@ public class Composite extends AbstractComponent<Composite> implements Rectangle
     }
 
     protected void rebuildBorder(Rectangle borderSize) {
-	FGBGColors tColor = border != null ? border.getTitleColor() : this.getColor();
-	FGBGColors bColor = border != null ? border.getColor() : this.getColor();
+	Color tColor = border != null ? border.getTitleColor() : this.getColor();
+	Color bColor = border != null ? border.getColor() : this.getColor();
 	String title = border != null ? border.getTitle() : null;
 	this.border = new SimpleBorder(bColor, borderSize);
 	this.border.setTitle(tColor, title);
@@ -155,13 +156,13 @@ public class Composite extends AbstractComponent<Composite> implements Rectangle
 	return this;
     }
 
-    public Composite setBorderColor(FGBGColors borderColors) {
+    public Composite setBorderColor(Color borderColors) {
 	setBorder(true);
 	this.border.setColor(borderColors);
 	return this;
     }
 
-    public Composite setTitle(FGBGColors titleColors, String title) {
+    public Composite setTitle(Color titleColors, String title) {
 	setBorder(true);
 	this.border.setTitle(titleColors, title);
 	return this;
@@ -248,7 +249,7 @@ public class Composite extends AbstractComponent<Composite> implements Rectangle
     }
 
     @Override
-    protected void draw(FGBGColors color, IScreenLineSegmentsBuffer segments) {
+    protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
 	// loop thru children and draw
 
 	Position offset = Position.ZERO;

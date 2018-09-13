@@ -1,5 +1,6 @@
 package dtb.terminalIO.components;
 
+import dtb.terminalIO.ControlCode.Color;
 import dtb.terminalIO.ControlCode.FGBGColors;
 import dtb.terminalIO.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.geom.Dimension;
@@ -16,21 +17,21 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>{
 
     private RectangleComponent border;
     private String title = null;
-    private FGBGColors titleColor;
+    private Color titleColor;
 
-    public SimpleBorder(FGBGColors color, Rectangle rect) {
+    public SimpleBorder(Color color, Rectangle rect) {
         super(color, rect);
         this.border = new RectangleComponent(color, rect);
         setFillOnClear(false);
     }
 
-    public SimpleBorder(FGBGColors color, Position position, Dimension d) {
+    public SimpleBorder(Color color, Position position, Dimension d) {
         super(color, position, d);
         this.border = new RectangleComponent(color, position ,d);
         setFillOnClear(false);
     }
 
-    public SimpleBorder(FGBGColors color, Dimension d) {
+    public SimpleBorder(Color color, Dimension d) {
         super(color, d);
         this.border = new RectangleComponent(color, Position.ZERO ,d);
         setFillOnClear(false);
@@ -45,7 +46,7 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>{
    
     
     @Override
-    protected void draw(FGBGColors color, IScreenLineSegmentsBuffer segments) {
+    protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
         segments.merge(this.border.getSegmentsBuffer());
         if (this.getTitle() != null) {
                 segments.merge(makeChildComponent(()->new TextComponent(titleColor, getRow(), getCol() + 1, getTitle())).getSegmentsBuffer());
@@ -56,12 +57,12 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>{
         return title;
     }
     
-    public FGBGColors getTitleColor() {
-        FGBGColors tColor = titleColor != null ? titleColor : getColor();
+    public Color getTitleColor() {
+        Color tColor = titleColor != null ? titleColor : getColor();
         return tColor;
     }
 
-    public SimpleBorder setTitle(FGBGColors titleColor, String title) {
+    public SimpleBorder setTitle(Color titleColor, String title) {
         titleColor = titleColor != null ? titleColor : getColor();
         titleColor = titleColor.mergeWith(getColor());
         this.titleColor = titleColor;

@@ -3,6 +3,7 @@ package dtb.terminalIO.components.plot;
 import java.util.TreeSet;
 
 import dtb.terminalIO.Colors;
+import dtb.terminalIO.ControlCode.Color;
 import dtb.terminalIO.ControlCode.FGBGColors;
 import dtb.terminalIO.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.components.BoundedComponent;
@@ -23,15 +24,15 @@ public class Plotter extends BoundedComponent<Plotter> {
     
     TreeSet<Plotter.Plot> plots = new TreeSet<Plotter.Plot>(Position.UTIL.POS_COMPARE);
     
-    public Plotter(FGBGColors color, Dimension d) {
+    public Plotter(Color color, Dimension d) {
         super(color, d);
     }
 
-    public Plotter(FGBGColors color, int row, int height) {
+    public Plotter(Color color, int row, int height) {
         this(color, new Dimension.Simple(row, height));
     }
 
-    public Plotter addPlot(int row, int col, char plotChar, FGBGColors color) {
+    public Plotter addPlot(int row, int col, char plotChar, Color color) {
         if ( ! this.containsPosition(new Position.Simple(row,col))) {
             //throw new IllegalArgumentException(String.format("Bad plot!  row %d %d not in range %s", row, col, String.valueOf(this)));
             color = new FGBGColors(Colors.IRed);
@@ -49,7 +50,7 @@ public class Plotter extends BoundedComponent<Plotter> {
     }
     
     @Override
-    protected void draw(FGBGColors color, IScreenLineSegmentsBuffer segments) {
+    protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
         
         for (Plotter.Plot plot : plots) {
             segments.setCharAt(plot.pos.getRow(), plot.pos.getCol(), plot.plotChar, plot.plotColor);
@@ -81,15 +82,15 @@ public class Plotter extends BoundedComponent<Plotter> {
     public static class Plot implements Position {
         Position pos;
         char plotChar;
-        FGBGColors plotColor;
-        public Plot(Position pos, char plotChar, FGBGColors plotColor) {
+        Color plotColor;
+        public Plot(Position pos, char plotChar, Color plotColor) {
             super();
             this.pos = pos;
             this.plotChar = plotChar;
             this.plotColor = plotColor;
         }
         
-        public Plot(int row, int col, char plotChar, FGBGColors plotColor) {
+        public Plot(int row, int col, char plotChar, Color plotColor) {
             this(new Position.Simple(row, col), plotChar, plotColor);
         }
 

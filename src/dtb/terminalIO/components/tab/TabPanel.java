@@ -3,6 +3,7 @@ package dtb.terminalIO.components.tab;
 import java.util.ArrayList;
 import java.util.List;
 
+import dtb.terminalIO.ControlCode.Color;
 import dtb.terminalIO.ControlCode.FGBGColors;
 import dtb.terminalIO.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.components.BorderedComponent;
@@ -30,7 +31,7 @@ public class TabPanel extends Composite {
     private BorderedComponent    workAreaBorder;
     private TabWorkAreaComponent workArea;
     
-    FGBGColors textActiveTabColor = FGBGColors.DEFAULT.bold();
+    Color textActiveTabColor = FGBGColors.DEFAULT.bold();
 
 
     class TabWorkAreaComponent extends BoundedComponent<TabWorkAreaComponent> {
@@ -48,7 +49,7 @@ public class TabPanel extends Composite {
         }
 
         @Override
-        protected void draw(FGBGColors color, IScreenLineSegmentsBuffer segments) {
+        protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
 
             if (TabPanel.this.active_tabAction != null) {
 
@@ -58,7 +59,7 @@ public class TabPanel extends Composite {
         }
     }
 
-    public TabPanel(FGBGColors color, EventBus eventBus, Dimension bounds) {
+    public TabPanel(Color color, EventBus eventBus, Dimension bounds) {
         super(color);
         this.eventBus = eventBus;
         workArea = new TabWorkAreaComponent(Position.ZERO, bounds);
@@ -66,7 +67,7 @@ public class TabPanel extends Composite {
         this.add(new Position.Simple(2,0),workAreaBorder);
     }
 
-    public TabPanel(FGBGColors color, FGBGColors textActiveTabColor, EventBus eventBus, Dimension bounds) {
+    public TabPanel(Color color, Color textActiveTabColor, EventBus eventBus, Dimension bounds) {
         super(color);
         this.eventBus = eventBus;
         workArea = new TabWorkAreaComponent(Position.ZERO, bounds);
@@ -147,7 +148,7 @@ public class TabPanel extends Composite {
             }
 
             @Override
-            public FGBGColors getColor() {
+            public Color getColor() {
                 return TabPanel.this.getColor();
             }
 
@@ -207,7 +208,7 @@ public class TabPanel extends Composite {
 
         EventBus getEventBus();
 
-        FGBGColors getColor();
+        Color getColor();
 
         Rectangle getBounds();
 
@@ -249,11 +250,11 @@ public class TabPanel extends Composite {
             return hotKey;
         }
 
-        public FGBGColors getTextActiveTabColor() {
+        public Color getTextActiveTabColor() {
 	    return tabComponent.getTextActiveTabColor();
 	}
 
-	public void setTextActiveTabColor(FGBGColors textActiveTabColor) {
+	public void setTextActiveTabColor(Color textActiveTabColor) {
 	    this.tabComponent.setTextActiveTabColor(textActiveTabColor);
 	}
 

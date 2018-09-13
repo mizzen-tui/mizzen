@@ -10,6 +10,7 @@ import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import dtb.terminalIO.Canvas.AbstractSegment;
+import dtb.terminalIO.ControlCode.Color;
 import dtb.terminalIO.ControlCode.FGBGColors;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
@@ -26,7 +27,7 @@ public interface ScreenLineSegment extends Rectangle {
 
     public abstract String getText();
 
-    public abstract FGBGColors getColors();
+    public abstract Color getColors();
 
     public abstract int getLength();
 
@@ -204,7 +205,7 @@ public interface ScreenLineSegment extends Rectangle {
             return ts;
         }
 
-        public static ScreenLineSegment blankScreenObject(FGBGColors color, char emptyChar, int row, int col, int id,
+        public static ScreenLineSegment blankScreenObject(Color color, char emptyChar, int row, int col, int id,
                 int width) {
             
             if (emptyChar == 'Z') {
@@ -243,7 +244,7 @@ public interface ScreenLineSegment extends Rectangle {
         //
         // [left][gap][right]
         //
-        public static ScreenLineSegment gapFrom(ScreenLineSegment so1, ScreenLineSegment so2, FGBGColors color,
+        public static ScreenLineSegment gapFrom(ScreenLineSegment so1, ScreenLineSegment so2, Color color,
                 char emptyChar) {
             if (so1.overlapsWith(so2))
                 return null;
@@ -260,7 +261,7 @@ public interface ScreenLineSegment extends Rectangle {
                     len);
         }
 
-        public static Collection<ScreenLineSegment> createBlankSegments(FGBGColors color, char emptyChar,
+        public static Collection<ScreenLineSegment> createBlankSegments(Color color, char emptyChar,
                 Rectangle bounds) {
             Collection<ScreenLineSegment> ts = makeCollection(null);
             int maxRow = bounds.getBottomMostRow();
@@ -273,7 +274,7 @@ public interface ScreenLineSegment extends Rectangle {
             return ts;
         }
 
-        public static void fillRectWithChar(FGBGColors color, char fillChar, Rectangle bounds,
+        public static void fillRectWithChar(Color color, char fillChar, Rectangle bounds,
                 Collection<ScreenLineSegment> destination) {
             int maxRow = bounds.getBottomMostRow();
             int col = bounds.getCol();
@@ -388,7 +389,7 @@ public interface ScreenLineSegment extends Rectangle {
             return sc.getText().substring(offset, offset + 1);
         }
         
-        public static void setCharAt(TreeSet<ScreenLineSegment> ts, int row, int col, char ch, FGBGColors color) {
+        public static void setCharAt(TreeSet<ScreenLineSegment> ts, int row, int col, char ch, Color color) {
             ScreenLineSegment sc = getAtCol(ts,row, col);
             if (1+1==3 || sc == null || !sc.getColors().equals(color) || !(sc instanceof SegmentImpl) ) {
                 ScreenLineSegment new_sc = new SegmentImpl(color,row, col, sc!=null?sc.getId()+1:1,ch+"");
@@ -547,7 +548,7 @@ public interface ScreenLineSegment extends Rectangle {
         int    id;
         String simpleText;
 
-        public SegmentImpl(FGBGColors color, Position position, int id, String simpleText) {
+        public SegmentImpl(Color color, Position position, int id, String simpleText) {
             super(color, position);
             this.id = id;
             this.simpleText = simpleText;
@@ -557,7 +558,7 @@ public interface ScreenLineSegment extends Rectangle {
             return this.simpleText = newText;
         }
 
-        public SegmentImpl(FGBGColors color, int row, int col, int id, String simpleText) {
+        public SegmentImpl(Color color, int row, int col, int id, String simpleText) {
             this(color, new Position.Simple(row,col),id, simpleText);
         }
 

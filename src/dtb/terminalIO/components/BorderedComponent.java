@@ -1,8 +1,8 @@
 package dtb.terminalIO.components;
 
+import dtb.terminalIO.ControlCode.Color;
 import dtb.terminalIO.ControlCode.FGBGColors;
 import dtb.terminalIO.IScreenLineSegmentsBuffer;
-import dtb.terminalIO.components.Component.AbstractComponent;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
@@ -19,7 +19,7 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent> imple
     private BoundedComponent<?> component;
     private Position            componentPosition;
 
-    public BorderedComponent(FGBGColors color, BoundedComponent<?> component) {
+    public BorderedComponent(Color color, BoundedComponent<?> component) {
         super(color, Rectangle.ZERO);
         this.component = component;
         this.componentPosition = new Position.Simple(1,1);
@@ -74,7 +74,7 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent> imple
     }
 
     @Override
-    protected void draw(FGBGColors color, IScreenLineSegmentsBuffer segments) {
+    protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
         segments.mergeAt(componentPosition.getRow(), componentPosition.getCol(), this.component.getSegmentsBuffer());
         segments.merge(this.border.getSegmentsBuffer());
     }
