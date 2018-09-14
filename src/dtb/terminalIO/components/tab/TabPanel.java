@@ -6,9 +6,11 @@ import java.util.List;
 import dtb.terminalIO.ControlCode.Color;
 import dtb.terminalIO.ControlCode.FGBGColors;
 import dtb.terminalIO.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.components.BlockChars;
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.Composite;
+import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.events.ChainedEventHandler.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
@@ -35,6 +37,8 @@ public class TabPanel extends Composite {
     private TabWorkAreaComponent workArea;
     
     Color textActiveTabColor = FGBGColors.DEFAULT.bold();
+    
+    private String prevNextHelp = "";
 
 
     class TabWorkAreaComponent extends BoundedComponent<TabWorkAreaComponent> {
@@ -105,21 +109,42 @@ public class TabPanel extends Composite {
             return;
         }
         
-        KeyInputEventHandler hotKeyEventHandler = new KeyInputEventHandler(Keys.TAB_KEYSTROKE, new EventHandler() {
-            @Override
-            public void handle(TerminalEvent<?> te) {
-                selectNextAsActive();
-            }
-        });
-        getTabContext().getEventBus().addEventHandler(hotKeyEventHandler);
+        BlockChars blockChars = workAreaBorder.getBlockChars();
+        String prevArrow = " <- ";
+        String nextArrow = " -> ";
 
-        hotKeyEventHandler = new KeyInputEventHandler(Keys.SHIFT_TAB_KEYSTROKE, new EventHandler() {
+        
+        KeyInputEventHandler hotKeyEventHandler = new KeyInputEventHandler(Keys.SHIFT_TAB_KEYSTROKE, new EventHandler() {
             @Override
             public void handle(TerminalEvent<?> te) {
                 selectPrevAsActive();
             }
         });
         getTabContext().getEventBus().addEventHandler(hotKeyEventHandler);
+
+        this.prevNextHelp = blockChars.getVERTICAL_LEFT()+" " + Keys.SHIFT_TAB_KEYSTROKE.getName() +prevArrow;
+        
+        hotKeyEventHandler = new KeyInputEventHandler(Keys.TAB_KEYSTROKE, new EventHandler() {
+            @Override
+            public void handle(TerminalEvent<?> te) {
+                selectNextAsActive();
+            }
+        });
+        getTabContext().getEventBus().addEventHandler(hotKeyEventHandler);
+        
+        this.prevNextHelp +=  blockChars.getVERTICAL_RIGHT()+ ""
+                             +blockChars.getHORIZONTAL_LINE()+""
+                             +blockChars.getHORIZONTAL_LINE()+""
+                             +blockChars.getHORIZONTAL_LINE()+""
+                             +blockChars.getVERTICAL_LEFT()+""
+        	             +" "+ Keys.TAB_KEYSTROKE.getName() + nextArrow + blockChars.getVERTICAL_RIGHT();
+        
+        int prevNextHelpLen = this.prevNextHelp.length();  
+        
+        TextComponent tcHelp = new TextComponent(workAreaBorder.getColor(),prevNextHelp);
+        
+        this.add(new Position.Simple(2,0).offsetAdd(workAreaBorder).offsetAdd(workAreaBorder.getBottomMostRow(),workAreaBorder.getRightMostCol()-prevNextHelpLen-2),tcHelp);
+
     
     }
 
@@ -187,7 +212,7 @@ public class TabPanel extends Composite {
 
             @Override
             public Rectangle getBounds() {
-                return TabPanel.this.getRectangleForClearAndFill();
+                return TabPanel.this.workArea;
             }
 
             @Override

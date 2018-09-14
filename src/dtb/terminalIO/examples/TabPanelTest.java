@@ -30,7 +30,6 @@ import dtb.terminalIO.util.Stty;
 
 public class TabPanelTest {
  
-    
     public static void main(String args[]) throws Exception {
 
         EventBus eventBus = new EventBus();
@@ -45,6 +44,11 @@ public class TabPanelTest {
             Canvas master_canvas = TestsCommon.getMasterCanvasForTesting(TestsCommon.getTerminalScreenForTesting(args));
             master_canvas.setEmptyChar(' ');
 
+            Dimension d_80 = acmeLOGOfileDimension(80);
+            Dimension d_100 = acmeLOGOfileDimension(100);
+            Dimension d_150 = acmeLOGOfileDimension(150);
+            Dimension d_200 = acmeLOGOfileDimension(200);
+            
             TabPanel tb = new TabPanel(FGBGColors.DEFAULT, new FGBGColors(Colors.Blu).bold(), eventBus, new Dimension.Simple(master_canvas.getHeight()-6, master_canvas.getWidth()-10));
             tb.setBorder(false);
 
@@ -52,10 +56,19 @@ public class TabPanelTest {
 
                 @Override
                 public void drawOnActive(TabContext tabCtx) {
-                    String fileName = "acme-white-80.txt";
+                    
+                    int fileID = 80;
+                    if (tabCtx.getBounds().contains(d_200)) {
+                	fileID=200;
+                    } else if (tabCtx.getBounds().contains(d_150)) {
+                	fileID=150;
+                    }else if (tabCtx.getBounds().contains(d_100)) {
+                	fileID=100;
+                    }
+                    
                     String imgText;
                     try {
-                        imgText = ReadSampleFiles.readSampleFile(fileName, false);
+                        imgText = acmeLOGO(fileID);
                     } catch (IOException e) {
                         imgText = "Failed to read file.  Exception "+e;
                     }
@@ -77,7 +90,6 @@ public class TabPanelTest {
 
                 int count = 0;
 
-                @Override
                 public void drawOnActive(TabContext tabCtx) {
                     String sRED = new FGBGColors(Colors.BRed).asString();
                     String sBLUE = new FGBGColors(Colors.BBlu).asString();
@@ -237,7 +249,6 @@ public class TabPanelTest {
 
                 }
 
-                @Override
                 public void drawOnUnActive(TabContext tabCtx) {
 
                     if (lineChartUpdater != null) {
@@ -285,6 +296,19 @@ public class TabPanelTest {
             // eventBus.stopConsuming();
             // Stty.setCooked();
         }
+    }
+    
+    static private String acmeLOGOFileName(int sizeInName) {
+	String fileName = "acme-white-"+sizeInName+".txt";
+	return fileName;
+    }
+
+    static private Dimension acmeLOGOfileDimension(int sizeInName)  throws IOException {
+	return Dimension.UTIL.stringToDimension( ReadSampleFiles.readSampleFile(acmeLOGOFileName(sizeInName), true) );
+    }
+    
+    static private String acmeLOGO(int sizeInName)  throws IOException {
+	return ReadSampleFiles.readSampleFile(acmeLOGOFileName(sizeInName), false);
     }
     
     
