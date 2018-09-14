@@ -592,7 +592,7 @@ public interface ScreenLineSegment extends Rectangle {
                 return new SegmentsFromStringResult(ts);
             }
             String lines[] = multiLineString.split("\n");
-            lines[0] = clip(lines[0], boundAndClipped.getWidth());
+            //lines[0] = clip(lines[0], boundAndClipped.getWidth());
             if (lines[0]!=null && lines[0].length()>0) {
         	clipStrWithEmbeddedColors(ts, lines[0], boundAndClipped.getWidth(), position, createSegment);
             }

@@ -24,7 +24,6 @@ public class CompositeTest {
         
         master_canvas = TestsCommon.getMasterCanvasForTesting(TestsCommon.getTerminalScreenForTesting(args));
 
-
         build_bounded_pre(master_canvas);
         
         build_bounded_post(master_canvas);

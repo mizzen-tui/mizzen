@@ -6,12 +6,10 @@ import java.io.InputStream;
 import java.util.List;
 
 import dtb.terminalIO.ControlCode;
-import dtb.terminalIO.ControlCode.Color;
 import dtb.terminalIO.ControlCode.ColorParseSegment;
-import dtb.terminalIO.ScreenLineSegment.UTIL.SegmentsFromStringResult;
-import dtb.terminalIO.geom.Position;
-import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.ScreenLineSegment;
+import dtb.terminalIO.ScreenLineSegment.UTIL.SegmentsFromStringResult;
+import dtb.terminalIO.geom.Rectangle;
 
 public class ReadSampleFiles {
     

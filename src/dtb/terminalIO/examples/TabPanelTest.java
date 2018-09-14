@@ -7,6 +7,7 @@ import dtb.terminalIO.Canvas;
 import dtb.terminalIO.Colors;
 import dtb.terminalIO.ControlCode;
 import dtb.terminalIO.ControlCode.FGBGColors;
+import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.chart.BarChart;
 import dtb.terminalIO.components.chart.LineChart;
@@ -21,7 +22,9 @@ import dtb.terminalIO.events.KeyInputEventsProducer;
 import dtb.terminalIO.events.Keys;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.examples.sampledata.ReadSampleFiles;
 import dtb.terminalIO.geom.Dimension;
+import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.util.Stty;
 
@@ -45,14 +48,22 @@ public class TabPanelTest {
             TabPanel tb = new TabPanel(FGBGColors.DEFAULT, new FGBGColors(Colors.Blu).bold(), eventBus, new Dimension.Simple(master_canvas.getHeight()-6, master_canvas.getWidth()-10));
             tb.setBorder(false);
 
-            tb.addTab(new TabAction(Keys.F5_KEYSTROKE, "Hello World") {
+            tb.addTab(new TabAction(Keys.F5_KEYSTROKE, "Acme Demo") {
 
                 @Override
                 public void drawOnActive(TabContext tabCtx) {
-                    String sRED = new FGBGColors(Colors.BRed).asString();
-                    //  ControlCode.RCol.asString()
-                    TextComponent tc = new TextComponent(tabCtx.getColor(),"Hello there! "+sRED+"What's going on?" +" And what else?");
-                    tabCtx.getSegmentsBuffer().mergeAt(1,1,tc.getSegmentsBuffer());
+                    String fileName = "acme-white-80.txt";
+                    String imgText;
+                    try {
+                        imgText = ReadSampleFiles.readSampleFile(fileName, false);
+                    } catch (IOException e) {
+                        imgText = "Failed to read file.  Exception "+e;
+                    }
+
+                    TextComponent tc = new TextComponent(tabCtx.getColor(),imgText);
+                    BorderedComponent imageWithBorder = new BorderedComponent(tc);
+                    Position pos = tabCtx.getBounds().centered(imageWithBorder, Position.ZERO);
+                    tabCtx.getSegmentsBuffer().mergeAt(pos,imageWithBorder.getSegmentsBuffer());
                 }
 
                 @Override
@@ -68,10 +79,12 @@ public class TabPanelTest {
 
                 @Override
                 public void drawOnActive(TabContext tabCtx) {
-                    TextComponent tc = new TextComponent(tabCtx.getColor(), "  Disney has its own world!");
+                    String sRED = new FGBGColors(Colors.BRed).asString();
+                    String sBLUE = new FGBGColors(Colors.BBlu).asString();
+                    String sRCOL = ControlCode.RCol.asString();
+                    TextComponent tc = new TextComponent(tabCtx.getColor(), sRED+"  Disney " + sBLUE + "has its own" + sRCOL + " world!");
                     count++;
-                    tabCtx.getSegmentsBuffer().merge(tc.getSegmentsBuffer());
-                   // master_canvas.t(master_canvas.getHeight() - 2, 0, "F2_KEYSTROKE = " + count + "  ");
+                    tabCtx.getSegmentsBuffer().mergeAt(tabCtx.getBounds().centered(tc, Position.ZERO),tc.getSegmentsBuffer());
 
                 }
 
@@ -112,7 +125,7 @@ public class TabPanelTest {
                                 bc.addData(d, bc_DATALabels[i]);
                             }
 
-                            tabCtx.getSegmentsBuffer().mergeAt(2,2, bc.getSegmentsBuffer());
+                            tabCtx.getSegmentsBuffer().mergeAt(tabCtx.getBounds().centered(bc, Position.ZERO), bc.getSegmentsBuffer());
 
                         }
                     });
@@ -191,7 +204,7 @@ public class TabPanelTest {
                             
                             j++;
 
-                            tabCtx.getSegmentsBuffer().mergeAt(2,2, lc.getSegmentsBuffer());
+                            tabCtx.getSegmentsBuffer().mergeAt(tabCtx.getBounds().centered(lc, Position.ZERO), lc.getSegmentsBuffer());
 
                         }
                     });

@@ -160,7 +160,6 @@ public class GridBrailleTest {
 		@Override
 		public void handle(TerminalEvent<?> te) {
 		    drawIt.run();
-
 		}
 	    }));
 

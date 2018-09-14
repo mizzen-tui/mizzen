@@ -21,8 +21,6 @@ public class BorderedComponentTest {
 
         int[] count = new int[] {0,0};
         
-        
-        
         RectangleComponent r1 = new RectangleComponent(new FGBGColors(Colors.Yel),10, 30) {
             @Override
             protected void draw(Color color, IScreenLineSegmentsBuffer segments) {

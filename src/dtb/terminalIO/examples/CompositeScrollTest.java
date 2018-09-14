@@ -6,7 +6,6 @@ import dtb.terminalIO.components.Composite;
 public class CompositeScrollTest {
     
     public static void main(String[] args) {
-        // TODO Auto-generated method stub
 
         Canvas master_canvas = TestsCommon.getMasterCanvasForTesting(TestsCommon.getTerminalScreenForTesting(args));
         master_canvas.setEmptyChar(' ');

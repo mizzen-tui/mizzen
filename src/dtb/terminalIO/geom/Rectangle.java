@@ -77,6 +77,17 @@ public interface Rectangle extends Position, Dimension, Movable {
         return true;
     }
 
+    public default Position centered(Dimension d, Position defaultPos) {
+         if (!contains(d)) {
+             return defaultPos;
+         }
+         return new Position.Simple( (this.getHeight() - d.getHeight() )/2, (this.getWidth() - d.getWidth()) /2 );
+    }
+    
+    public default Position centered(Dimension d) {
+        return centered(d, null);
+   }
+    
     /**
      * Does rectangle contain row
      */

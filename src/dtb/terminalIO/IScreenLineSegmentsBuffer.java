@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Iterator;
 
 import dtb.terminalIO.ControlCode.Color;
+import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 
 /**
@@ -19,7 +20,13 @@ public interface IScreenLineSegmentsBuffer extends Rectangle , Iterable<ScreenLi
 
 	public abstract void merge(IScreenLineSegmentsBuffer other);
 
-	public abstract void merge(Collection<ScreenLineSegment> segments);
+	public abstract void mergeAt(int row, int col, IScreenLineSegmentsBuffer segmentsBuffer);
+
+        public default void mergeAt(Position position, IScreenLineSegmentsBuffer segmentsBuffer) {
+            mergeAt(position.getRow(), position.getCol(), segmentsBuffer);
+        }
+
+        public abstract void merge(Collection<ScreenLineSegment> segments);
 
 	public abstract ScreenLineSegment getAtCol(int row, int col);
 
@@ -99,7 +106,6 @@ public interface IScreenLineSegmentsBuffer extends Rectangle , Iterable<ScreenLi
 		fillRectWithChar(color, fillChar, this);
 	}
 
-    public abstract void mergeAt(int row, int col, IScreenLineSegmentsBuffer segmentsBuffer);
 
 	
 	
