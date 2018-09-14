@@ -259,6 +259,8 @@ public class Keys {
     public static KeyStroke ENTER_KEYSTROKE = createAndStoreNewKeyStroke(13, "ENTER");
     public static KeyStroke TAB_KEYSTROKE = createAndStoreNewKeyStroke('\t', "TAB");
 
+    public static KeyStroke SHIFT_TAB_KEYSTROKE = createAndStoreNewKeyStroke(new int[] {27, 91, 90}, "SHIFT-TAB");
+    
     public static KeyStroke ALT_ESC_KEYSTROKE = createAndStoreNewKeyStroke(ESC, "ALT-ESC", true);
     public static KeyStroke ALT_ENTER_KEYSTROKE = createAndStoreNewKeyStroke(13, "ALT-ENTER", true);
     public static KeyStroke ALT_TAB_KEYSTROKE = createAndStoreNewKeyStroke('\t', "ALT-TAB", true);

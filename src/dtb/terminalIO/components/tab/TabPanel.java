@@ -9,9 +9,11 @@ import dtb.terminalIO.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.Composite;
+import dtb.terminalIO.events.ChainedEventHandler.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.KeyInputEventHandler;
+import dtb.terminalIO.events.Keys;
 import dtb.terminalIO.events.Keys.KeyStroke;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.geom.Dimension;
@@ -20,7 +22,8 @@ import dtb.terminalIO.geom.Rectangle;
 
 public class TabPanel extends Composite {
 
-    List<TabAction>              tabActions       = new ArrayList<TabAction>();
+    List<TabAction>              tabActions                = new ArrayList<TabAction>();
+    List<ConditionalEventHandler> registeredEventHandlers  = new ArrayList<ConditionalEventHandler>();
 
     TabAction                    active_tabAction = null;
 
@@ -95,6 +98,30 @@ public class TabPanel extends Composite {
 
     int offsetRow = 0;
     int offsetCol = 1;
+    
+    private void addPrevNextEventHandlerIfNeeded() {
+        if (registeredEventHandlers.size()>0) {
+            // assume added because list not empty
+            return;
+        }
+        
+        KeyInputEventHandler hotKeyEventHandler = new KeyInputEventHandler(Keys.TAB_KEYSTROKE, new EventHandler() {
+            @Override
+            public void handle(TerminalEvent<?> te) {
+                selectNextAsActive();
+            }
+        });
+        getTabContext().getEventBus().addEventHandler(hotKeyEventHandler);
+
+        hotKeyEventHandler = new KeyInputEventHandler(Keys.SHIFT_TAB_KEYSTROKE, new EventHandler() {
+            @Override
+            public void handle(TerminalEvent<?> te) {
+                selectPrevAsActive();
+            }
+        });
+        getTabContext().getEventBus().addEventHandler(hotKeyEventHandler);
+    
+    }
 
     public void addTab(final TabAction tabAction) {
 
@@ -115,6 +142,8 @@ public class TabPanel extends Composite {
             tabAction.setTextActiveTabColor( this.textActiveTabColor );
         }
         
+        addPrevNextEventHandlerIfNeeded();
+        
         tabActions.add(tabAction);
 
         this.add(offsetRow, offsetCol, tabAction.getTabComponent());
@@ -129,7 +158,11 @@ public class TabPanel extends Composite {
             }
         });
         getTabContext().getEventBus().addEventHandler(hotKeyEventHandler);
-        // todo: Do I need a way to remove this eventHandler ? -- deal with this
+        
+        // eventHandlers so that we can later remove on clean up
+        registeredEventHandlers.add(hotKeyEventHandler);
+        
+        // todo: Do I need a way to remove this eventHandler per tabAction ? -- deal with this
         // if tab becomes disabled, or removed, or tab-panel is destroyed
 
     }
@@ -203,6 +236,32 @@ public class TabPanel extends Composite {
     public void selectAsActive(KeyStroke hotKey) {
         selectAsActive(findTabActionByHotKey(hotKey));
     }
+
+    public void selectNextAsActive() {
+        selectAsActive(getNextTab(active_tabAction));
+    }
+    
+    public void selectPrevAsActive() {
+        selectAsActive(getPrevTab(active_tabAction));
+    }
+    
+    protected TabAction getNextTab(TabAction tabAction) {
+        if (tabAction == null) {
+            return tabActions.size()>0? tabActions.get(0) : null;
+        }
+        int idx = tabActions.indexOf(tabAction);
+        return idx >= tabActions.size()-1 ? tabActions.get(0) : tabActions.get(idx+1); 
+    }
+
+    protected TabAction getPrevTab(TabAction tabAction) {
+        if (tabAction == null) {
+            return tabActions.size()>0? tabActions.get(tabActions.size()-1) : null;
+        }
+        int idx = tabActions.indexOf(tabAction);
+        return idx <= 0 ? tabActions.get(tabActions.size()-1) : tabActions.get(idx-1); 
+    }
+    
+    
 
     public static interface TabContext {
 
