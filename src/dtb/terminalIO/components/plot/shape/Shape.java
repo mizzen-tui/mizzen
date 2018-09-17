@@ -6,7 +6,6 @@ public interface Shape {
     
     public void draw(PointPlotter pointPlotter);
     
-    
     public static class Delegate implements Shape {
 	
 	Shape shape;
@@ -31,5 +30,4 @@ public interface Shape {
 	
     }
     
-
 }

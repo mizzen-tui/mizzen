@@ -36,6 +36,9 @@ public interface PointPlotter {
 
     }
     
+    /**
+     * A list contains plots ( a plot = a Position object)
+     */
     public static class PointPlotterList implements PointPlotter {
 	
 	List<Position> plots;

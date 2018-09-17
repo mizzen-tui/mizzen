@@ -34,7 +34,14 @@ public interface PositionTransform {
 	public Position transform(Position position) {
 	    return f_transform.transform(g_transform.transform(position));
 	}
-	
+
+	public PositionTransform getF_transform() {
+	    return f_transform;
+	}
+
+	public PositionTransform getG_transform() {
+	    return g_transform;
+	}
     }
     
     public static class Translate implements PositionTransform {
@@ -124,7 +131,6 @@ public interface PositionTransform {
 	}
 	
 	private void makeTransform() {
-	    
 	    // This transform will translate position relative to origin,
 	    // then perform the rotate and then translate back to fixed point
 	    positionTransform = new FofG(new Translate(fixedPoint),

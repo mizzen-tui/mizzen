@@ -144,9 +144,7 @@ public class TabPanelTest {
                 }
 
                 ConditionalEventHandler barChartUpdater;
-
                 int                     count = 0;
-
                 void terminate() {
                     try {
                         Stty.setCooked();

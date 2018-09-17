@@ -223,6 +223,8 @@ public class Keys {
 	return createAndStoreNewKeyStroke(new int[] { key }, name);
     }
     
+    // define some commonly known keys
+    
     public static final KeyStroke F1_KEYSTROKE = createAndStoreNewKeyStroke(new int[] { 27,79,80 }, "F1");
     public static final KeyStroke F2_KEYSTROKE = createAndStoreNewKeyStroke(new int[] { 27,79,81 }, "F2");
     public static final KeyStroke F3_KEYSTROKE = createAndStoreNewKeyStroke(new int[] { 27,79,82 }, "F3");

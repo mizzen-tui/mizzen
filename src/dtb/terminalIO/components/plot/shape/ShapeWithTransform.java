@@ -4,7 +4,7 @@ import dtb.terminalIO.components.plot.PointPlotter;
 
 public class ShapeWithTransform extends Shape.Delegate {
 
-    PointPlotter.Delegate pointPlotter;
+    private PointPlotter.Delegate pointPlotter;
 
     public ShapeWithTransform(Shape shape, PointPlotter.Delegate pointPlotter) {
 	super(shape);
