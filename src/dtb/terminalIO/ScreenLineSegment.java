@@ -621,7 +621,7 @@ public interface ScreenLineSegment extends Rectangle {
 
     }
 
-    static class SegmentImpl extends AbstractSegment {
+    public static class SegmentImpl extends AbstractSegment {
         int    id;
         String simpleText;
 

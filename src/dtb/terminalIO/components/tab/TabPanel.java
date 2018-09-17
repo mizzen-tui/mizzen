@@ -288,15 +288,13 @@ public class TabPanel extends Composite {
     
     
 
-    public static interface TabContext {
+    public static interface TabContext extends IScreenLineSegmentsBuffer.Provider {
 
         EventBus getEventBus();
 
         Color getColor();
 
         Rectangle getBounds();
-
-        IScreenLineSegmentsBuffer getSegmentsBuffer();
 
         void clearForRedraw();
 

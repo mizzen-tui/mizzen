@@ -34,7 +34,7 @@ public class Composite extends AbstractComponent<Composite> implements Rectangle
 	public ComponentWithOffset(BoundedComponent<?> component) {
 	    this(Position.ZERO, component);
 	}
-
+	
 	@Override
 	public int getCol() {
 	    return bounds.getCol();
@@ -72,6 +72,20 @@ public class Composite extends AbstractComponent<Composite> implements Rectangle
 
     public Composite() {
 	this(FGBGColors.NO_COLOR_SPECIFIED);
+    }
+    
+    @SuppressWarnings("rawtypes")
+    public BoundedComponent asBounded() {
+	
+	return new BoundedComponent(this.getColor(), Composite.this) {
+
+	    @Override
+	    protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
+		Composite.this.draw(color, segments);
+	    }
+	    
+	};
+	
     }
 
     public Composite setBounds(int row, int col, int height, int width) {
@@ -241,6 +255,14 @@ public class Composite extends AbstractComponent<Composite> implements Rectangle
 	    child.component.clear();
 	}
     }
+    
+    public void markAsDirty() {
+	super.markAsDirty();
+	for (ComponentWithOffset child : children) {
+	    child.component.markAsDirty();
+	}
+    }
+    
 
     protected void drawBorderIfNeeded(IScreenLineSegmentsBuffer segments) {
 	if (hasBorder()) {

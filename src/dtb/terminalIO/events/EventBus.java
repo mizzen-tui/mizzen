@@ -11,18 +11,20 @@ import dtb.terminalIO.events.TerminalEvent.TYPE;
 
 public class EventBus {
 
+    private static final int EVENT_Q_CAPACITY = 5;
+    
     private ChainedEventHandler handler = ChainedEventHandler.useChainOfResponsibilityStrategy();
 
     private ChainedEventHandler idleEventsHandler;
 
-    private BlockingQueue<TerminalEvent<?>> queue = new ArrayBlockingQueue<TerminalEvent<?>>(100);
+    
+    private BlockingQueue<TerminalEvent<?>> queue = new ArrayBlockingQueue<TerminalEvent<?>>(EVENT_Q_CAPACITY);
 
     private AtomicBoolean stopConsuming = new AtomicBoolean(false);
 
     private Runnable consumerTask;
 
     public EventBus() {
-
 	consumerTask = new Runnable() {
 	    @Override
 	    public void run() {
@@ -55,7 +57,9 @@ public class EventBus {
     }
 
     public EventBus addEvent(TerminalEvent<?> te) {
-	queue.add(te);
+	if (queue.size()<EVENT_Q_CAPACITY) {  // todo:  make configurable - or block?
+	   queue.add(te);
+	}
 	return this;
     }
 
@@ -104,7 +108,8 @@ public class EventBus {
     }
 
     public EventBus addEventHandler(ConditionalEventHandler eventHandler) {
-	if (eventHandler instanceof OnIdleEventEventHandler) {
+	if (eventHandler instanceof OnIdleEventEventHandler) {	 
+
 	    addIdleEventHandler((OnIdleEventEventHandler) eventHandler);
 	    return this;
 	}
@@ -126,4 +131,14 @@ public class EventBus {
 	return this;
     }
 
+    public String statsAsStr() {
+	StringBuffer sb = new StringBuffer();
+	sb.append("Event Bus : size=");
+	sb.append(this.queue.size());
+	sb.append("  idleEventsHandler " + (idleEventsHandler==null? "empty" : idleEventsHandler.statsAsStr()));
+	sb.append("  handler " + handler.statsAsStr()); 
+	return sb.toString();
+    }
+    
+    
 }

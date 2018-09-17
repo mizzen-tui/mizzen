@@ -7,7 +7,9 @@ import dtb.terminalIO.components.plot.PointPlotter;
 
 /**
  * A shape that contains multiple shapes
- *
+ * 
+ * The draw method will draw all 
+ * 
  */
 public class CompositeShape implements Shape {
 

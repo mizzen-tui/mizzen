@@ -8,10 +8,13 @@ import java.util.List;
 import dtb.terminalIO.Canvas;
 import dtb.terminalIO.Colors;
 import dtb.terminalIO.ControlCode;
-import dtb.terminalIO.ScreenLineSegment;
+import dtb.terminalIO.ControlCode.Color;
 import dtb.terminalIO.ControlCode.FGBGColors;
 import dtb.terminalIO.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.TerminalScreen;
+import dtb.terminalIO.components.BoundedComponent;
+import dtb.terminalIO.components.Composite;
+import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.PathPlotter.CirclePathPlotter;
 import dtb.terminalIO.components.plot.TransformPointPlotter;
@@ -138,20 +141,69 @@ public class GridBrailleTest {
 	    eventHandlers.add(eventHandler);
 	}
 
+	public void addAllEventHandlers(EventBus eventBus) {
+	    for (ConditionalEventHandler e : eventHandlers) {
+		eventBus.addEventHandler(e);
+	    }
+	}
+	
 	void removeAllEventHandlers(EventBus eventBus) {
 	    for (ConditionalEventHandler e : eventHandlers) {
 		eventBus.remove(e);
 	    }
 	}
 	
+	public void renderPreUPdate() {
+	    // do nothing
+	}
+
 	public void flushOutput() {
 	    // do nothing
 	}
 
 	public void setUpDemo(EventBus eventBus, Rectangle bounds, IScreenLineSegmentsBuffer.Provider segmentsBufferProvider) {
 
-	    BrailleGrid grid = new BrailleGrid(FGBGColors.DEFAULT, new Dimension.Simple(30, 60));
+	    Composite brailleComponent = new Composite();
+	    brailleComponent.setBounds( bounds.getHeight() - 4, bounds.getWidth() - 4 );
+	    brailleComponent.setBorder(false);
+	    
+	    Color textCOLOR = FGBGColors.DEFAULT;
+	    Color textColorBOLD = textCOLOR.bold();
+	    
+	    TextComponent tcBrailleChars = new TextComponent(textCOLOR,
+		    textColorBOLD.asString()+"Braille Character set : " + textCOLOR.asString() +
+		    "⠀⠁⠂⠃⠄⠅⠆⠇⠈⠉⠊⠋⠌⠍⠎⠏⠐⠑⠒⠓⠔⠕⠖⠗⠘⠙⠚⠛⠜⠝⠞⠟⠠⠡⠢⠣⠤⠥⠦⠧⠨⠩⠪⠫⠬⠭⠮⠯⠰⠱⠲⠳⠴⠵⠶⠷⠸⠹⠺⠻⠼⠽⠾⠿"
+		    );
+	    
+	    TextComponent tc = new TextComponent(textCOLOR,
+		      "This is a demonstration of \n"
+		    + "using the special braille\n"
+		    + "character set to plot points\n"
+		    + "in a standard linux terminal.\n"
+		    + "\n"
+		    + "\n"
+		    + "In this example we are\n"
+		    + "plotting boxes, circles and triangles.\n"
+		    + "\n"
+		    + "We transform (move/rotate) their positions\n"
+		    + "using simple trigonometry\n"
+		    + "\n"
+		    + "A more practical Acme use-case for\n"
+		    + "this plotting technique would be to\n"
+		    + "to build terminal-based charts for\n"
+		    + "monitoring values stored in the OLT-MGR\n"
+		    + "and rendered via CLIApp.java"
+		    );
+	    
+	    
+	    brailleComponent.add(tcBrailleChars);
+	    brailleComponent.add(2,0, tc);
+	    
+	    
+	    BrailleGrid grid = new BrailleGrid(FGBGColors.DEFAULT, new Dimension.Simple(brailleComponent.getHeight() - 4, brailleComponent.getWidth() - 4 - tc.getWidth()));
 	    grid.setPlotColor(new FGBGColors(Colors.Yel));
+	    
+	    brailleComponent.add (new Position.Simple(2, tc.getWidth()+2),   grid.asBounded());
 
 	    XYTranslate pointPlotter = new XYTranslate(grid.asPointPlotter(), 0, 0);
 
@@ -185,23 +237,22 @@ public class GridBrailleTest {
 
 		@Override
 		public void run() {
+		    
+		    renderPreUPdate();
 
+		    brailleComponent.markAsDirty();
+		    //tc.setText("here is some text");
 		    grid.clear();
 		    grid.clearPlots();
 
 		    shapes.draw(pointPlotter);
 
-		    grid.setTitle("[  Braille Characters demo  ]");
+		    //grid.setTitle("[  Braille Characters demo  ]");
 
-		    segmentsBufferProvider.getSegmentsBuffer().removeRect(grid);
-		    // master_canvas.t(1, 2, status[0]);
+		    segmentsBufferProvider.getSegmentsBuffer().removeRect(brailleComponent);
 
-		    ScreenLineSegment.UTIL.addSegmentsWithOffsetBounded(new Position.Simple(5, 10), bounds,
-			    segmentsBufferProvider.getSegmentsBuffer().getSegments(), grid.getSegmentsBuffer()
-				    .getSegments());
-
-		    // how to refresh?
-		    // master_canvas.refresh();
+		    segmentsBufferProvider.getSegmentsBuffer().mergeAt(2, 2, brailleComponent.getSegmentsBuffer());
+		    
 		    flushOutput();
 		}
 	    };
@@ -269,7 +320,7 @@ public class GridBrailleTest {
 		public void handle(TerminalEvent<?> te) {
 		    pointPlotter.setyDelta(pointPlotter.getyDelta() - 1);
 		    drawIt.run();
-
+		    
 		}
 	    }));
 

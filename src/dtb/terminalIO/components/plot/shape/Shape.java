@@ -2,8 +2,16 @@ package dtb.terminalIO.components.plot.shape;
 
 import dtb.terminalIO.components.plot.PointPlotter;
 
+/**
+ * An object (shape) that can draw itself
+ */
 public interface Shape {
     
+    /**
+     * Draw the shape given a pointPlotter
+     * 
+     * @param pointPlotter
+     */
     public void draw(PointPlotter pointPlotter);
     
     public static class Delegate implements Shape {

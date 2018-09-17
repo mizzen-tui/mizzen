@@ -68,6 +68,7 @@ public class TextComponent extends BoundedComponent<TextComponent> {
     public void setText(String text) {
         this.text = text;
         this.hasColorCodes = ControlCode.hasColorCodes(text);
+        this.clear();
     }
 
     @Override

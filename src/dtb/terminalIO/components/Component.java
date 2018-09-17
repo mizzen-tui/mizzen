@@ -62,6 +62,10 @@ public interface Component<T extends Component<?>> extends IScreenLineSegmentsBu
                 draw(color, segments);
             }
         }
+        
+        public void markAsDirty() {
+            this.hasDrawn = false;
+        }
 
         public void clear() {
             segments.clear();

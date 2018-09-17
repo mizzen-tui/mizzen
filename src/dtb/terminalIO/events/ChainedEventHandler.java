@@ -164,5 +164,9 @@ public class ChainedEventHandler implements EventHandler {
 	    }
 	}
     };
+    
+    public String statsAsStr() {
+	return "ChainedEventHandler[eventHandlers size = "+ eventHandlers.size()+"]";
+    }
 
 }

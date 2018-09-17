@@ -51,5 +51,11 @@ public class TerminalEvent<T> extends EventObject {
 	this.eventData = eventData;
     }
 
+    @Override
+    public String toString() {
+	return "TerminalEvent [type=" + type + ", eventData=" + eventData + "]";
+    }
+
+    
 
 }

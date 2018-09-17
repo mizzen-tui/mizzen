@@ -64,6 +64,10 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
         this.hasDrawn = false;
     }
 
+    public void markAsDirty() {
+        this.hasDrawn = false;
+    }
+    
     protected void drawIfNeeded() {
         if (!hasDrawn) {
             clear();

@@ -31,14 +31,7 @@ public class BrailleGrid extends Composite {
 	    return ;  
 	}
 	Position plotterCharacterPosition = BrailleUtils.gridPosToComponentPosition(gridPosition);
-//	if (gridPosition.getRow()<0) {
-//	    System.out.println("Hmmmmmm!!!\n" + gridPosition.toString() 
-//		    + "\n   " + plotterCharacterPosition.toString()
-//		    + "\n   " + this.plotter.toString()
-//		    + "\n   " + this.gridRectangle.toString()
-//		    +"\n"
-//		    );
-//	}
+
 	Plot plotAtPos = plotter.getPlotAt(plotterCharacterPosition.getRow(), plotterCharacterPosition.getCol());
 	char theCHAR = plotAtPos == null ? 0 : plotAtPos.getPlotChar();
 	theCHAR = BrailleUtils.setBraillePixel(theCHAR, gridPosition);
