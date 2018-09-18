@@ -97,6 +97,14 @@ public class ScreenLineSegmentsBuffer implements Rectangle, IScreenLineSegmentsB
                                                                segmentsBuffer.getSegments());
     }
     
+    @Override
+    public void mergeAtBounded(int row, int col, Rectangle bounds, IScreenLineSegmentsBuffer segmentsBuffer) {
+        Position position = new Position.Simple(row, col);  
+        ScreenLineSegment.UTIL.addSegmentsWithOffsetBounded( position, bounds,
+                                                               this.getSegments(), 
+                                                               segmentsBuffer.getSegments());
+    }
+    
     
     public Iterator<ScreenLineSegment> iterator() {
         return segments.iterator();

@@ -171,16 +171,23 @@ public class GridBrailleTest {
 	    Color textColorBOLD = textCOLOR.bold();
 	    
 	    TextComponent tcBrailleChars = new TextComponent(textCOLOR,
-		    textColorBOLD.asString()+"Braille Character set : " + textCOLOR.asString() +
-		    "⠀⠁⠂⠃⠄⠅⠆⠇⠈⠉⠊⠋⠌⠍⠎⠏⠐⠑⠒⠓⠔⠕⠖⠗⠘⠙⠚⠛⠜⠝⠞⠟⠠⠡⠢⠣⠤⠥⠦⠧⠨⠩⠪⠫⠬⠭⠮⠯⠰⠱⠲⠳⠴⠵⠶⠷⠸⠹⠺⠻⠼⠽⠾⠿"
+		    textColorBOLD.asString()+"Braille Character set : " + 
+		    Colors.ICya.asBold().asString() + "⠀⠁⠂⠃⠄⠅⠆⠇⠈⠉⠊⠋⠌⠍⠎⠏⠐⠑⠒⠓⠔⠕⠖⠗⠘⠙⠚⠛⠜⠝⠞⠟⠠⠡⠢⠣⠤⠥⠦⠧⠨⠩⠪⠫⠬⠭⠮⠯⠰⠱⠲⠳⠴⠵⠶⠷⠸⠹⠺⠻⠼⠽⠾⠿" +
+		    textCOLOR.asString()
 		    );
 	    
 	    TextComponent tc = new TextComponent(textCOLOR,
-		      "This is a demonstration of \n"
+		      "This is a demonstration \n"
 		    + "using the special braille\n"
 		    + "character set to plot points\n"
 		    + "in a standard linux terminal.\n"
 		    + "\n"
+		    + "This idea is that we map the normal\n"
+		    + "terminal row columns combined with the\n"
+		    + "2 x 8 dots of the braille character set\n"
+		    + "to come up with a plottable coordinate system.\n"
+		    + "\n"
+		    + "      "+Colors.IYel.asBold().asString()+"    .........."+textCOLOR.asString()+"\n"
 		    + "\n"
 		    + "In this example we are\n"
 		    + "plotting boxes, circles and triangles.\n"

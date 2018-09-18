@@ -83,7 +83,7 @@ public class TabPanelTest {
 		    TextComponent tc = new TextComponent(tabCtx.getColor(), imgText);
 		    BorderedComponent imageWithBorder = new BorderedComponent(tc);
 		    Position pos = tabCtx.getBounds().centered(imageWithBorder, Position.ZERO);
-		    tabCtx.getSegmentsBuffer().mergeAt(pos, imageWithBorder.getSegmentsBuffer());
+		    tabCtx.getSegmentsBuffer().mergeAtBounded(pos, tabCtx.getBounds(), imageWithBorder.getSegmentsBuffer());
 		}
 
 		@Override
@@ -293,9 +293,14 @@ public class TabPanelTest {
 		    master_canvas.getSegmentsBuffer().removeRect(tb);
 		    master_canvas.addComponent(tb);
 		    int count = counter.incrementAndGet();
-		    master_canvas.t(master_canvas.getHeight() - 3, 0, "IDLE task invoke counter = " + count + "   ");
-
-		    master_canvas.t(master_canvas.getHeight() - 2, 0, eventBus.statsAsStr() + "      ");
+		    
+		    BorderedComponent debugWindow = new BorderedComponent(Colors.IGre,
+		                                                          new TextComponent(Colors.Yel,
+		                                                                            "IDLE task invoke counter = " + count + "   \n"
+		                                                                            + eventBus.statsAsStr() + "      "));
+		    debugWindow.setTitle(new FGBGColors(Colors.BYel,Colors.On_Gre), "DEBUG");
+		    master_canvas.addComponent(master_canvas.getHeight() - 5, 0, debugWindow);
+		    
 		    master_canvas.refresh();
 		}
 	    }));

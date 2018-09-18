@@ -106,6 +106,11 @@ public interface IScreenLineSegmentsBuffer extends Rectangle , Iterable<ScreenLi
 		fillRectWithChar(color, fillChar, this);
 	}
 
+    void mergeAtBounded(int row, int col, Rectangle bounds, IScreenLineSegmentsBuffer segmentsBuffer);
+
+    default void mergeAtBounded(Position pos, Rectangle bounds, IScreenLineSegmentsBuffer segmentsBuffer) {
+        mergeAtBounded(pos.getRow(), pos.getCol(), bounds, segmentsBuffer);
+    }
 
 	
 	
