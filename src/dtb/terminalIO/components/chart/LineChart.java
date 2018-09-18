@@ -19,7 +19,7 @@ import dtb.terminalIO.ScreenLineSegment.SegmentImpl;
 import dtb.terminalIO.TerminalScreen;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.RectangleComponent;
-import dtb.terminalIO.components.plot.Plotter;
+import dtb.terminalIO.components.braille.BrailleGrid;
 import dtb.terminalIO.examples.TestsCommon;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
@@ -83,7 +83,8 @@ public class LineChart extends Composite {
     String[]        labelY;
     Color           plotColor      = FGBGColors.NO_COLOR_SPECIFIED;
 
-    Plotter         plotter;
+    //Plotter         plotter;
+    BrailleGrid     grid;
     private int     labelYSpace;
     private boolean autoLabels;
     private String labelX;
@@ -92,8 +93,8 @@ public class LineChart extends Composite {
         super(color);
         data = new ArrayList<Double>();
         dataLabels = new ArrayList<String>();
-        this.plotter = new Plotter(color, new Dimension.Simple(d.getHeight() - 3, d.getWidth() - 3));
-        this.add(this.plotter);
+        this.grid = new BrailleGrid(color, new Dimension.Simple(d.getHeight() - 3, d.getWidth() - 3));
+        this.add(this.grid.asBounded());
     }
 
     public LineChart(Color color, Dimension dim, double[] data) {
@@ -142,33 +143,44 @@ public class LineChart extends Composite {
     }
 
     void renderBraille() {
-        Function<Double, int[]> getPos = (d) -> {
-            int cnt4 = (int) Math.round((d - this.bottomValue) / (this.scale / 4) + 0.5);
-            return new int[] { cnt4 / 4, cnt4 % 4 };
-        };
+//        Function<Double, int[]> getPos = (d) -> {
+//            int cnt4 = (int) Math.round((d - this.bottomValue) / (this.scale / 4) + 0.5);
+//            return new int[] { cnt4 / 4, cnt4 % 4 };
+//        };
 
         int dataLen = this.data.size();
 
-        int yOffset = -1;
+//        int yOffset = -1;
+//        // plot points
+//        for (int i = 0; 2 * i + 1 < dataLen && i < this.axisWidth; i++) {
+//            int[] plot0 = getPos.apply(this.data.get(2 * i));
+//            int[] plot1 = getPos.apply(this.data.get(2 * i + 1));
+//
+//            if (plot0[0] == plot1[0]) { // same braille cell
+//                int y = this.plotter.getHeight() - plot0[0] + yOffset;
+//                int x = i;
+//                plotter.addPlot(y, x, braillePatterns.get(new int[] { plot0[1], plot1[1] }).charAt(0), plotColor);
+//            } else {
+//                int y = this.plotter.getHeight() - plot0[0] + yOffset;
+//                int x = i;
+//                plotter.addPlot(y, x, lSingleBraille[plot0[1]], plotColor);
+//
+//                y = this.plotter.getHeight() - plot1[0] + yOffset;
+//                x = i;
+//                plotter.addPlot(y, x, rSingleBraille[plot1[1]], plotColor);
+//            }
+//        }
+        
+        int gridLimitWidth = this.grid.getGridRectangle().getWidth();
+        
         // plot points
-        for (int i = 0; 2 * i + 1 < dataLen && i < this.axisWidth; i++) {
-            int[] plot0 = getPos.apply(this.data.get(2 * i));
-            int[] plot1 = getPos.apply(this.data.get(2 * i + 1));
-
-            if (plot0[0] == plot1[0]) { // same braille cell
-                int y = this.plotter.getHeight() - plot0[0] + yOffset;
-                int x = i;
-                plotter.addPlot(y, x, braillePatterns.get(new int[] { plot0[1], plot1[1] }).charAt(0), plotColor);
-            } else {
-                int y = this.plotter.getHeight() - plot0[0] + yOffset;
-                int x = i;
-                plotter.addPlot(y, x, lSingleBraille[plot0[1]], plotColor);
-
-                y = this.plotter.getHeight() - plot1[0] + yOffset;
-                x = i;
-                plotter.addPlot(y, x, rSingleBraille[plot1[1]], plotColor);
-            }
+        for (int i = 0; i < dataLen && i < gridLimitWidth; i++) {
+            int y = (int) Math.round((this.data.get(i) - this.bottomValue) / this.scale  + 0.5);
+            this.grid.plotPosition(y, i);
         }
+        
+        
+        
     }
 
     static private String shortenFloatVal(double x) {
@@ -202,7 +214,6 @@ public class LineChart extends Composite {
 
     private void calcLabelY() {
         double span = this.topValue - this.bottomValue;
-        this.scale = span / (double) (this.axisHeight -1);
         int n = (this.axisHeight) / (this.axisYLabelGap+1) + 1;
         //n = this.axisHeight;
         this.labelY = new String[n];
@@ -233,11 +244,14 @@ public class LineChart extends Composite {
         calcLabelY();
         this.axisWidth = inner.getWidth() -  this.labelYSpace;
         calcLabelX();
-        plotter.setEmptyChar(' ');
-        Rectangle newPlotterSize = new Rectangle.Simple(plotter.getRow(), plotter.getCol(), axisHeight, axisWidth-1);
-        plotter.setRectangle(newPlotterSize);
-        this.moveChildTo(new Position.Simple(0,this.labelYSpace+1),  plotter);
-
+        grid.setEmptyChar('X');
+        Rectangle newPlotterSize = new Rectangle.Simple(grid.getRow(), grid.getCol(), axisHeight, axisWidth-1);
+        grid.setBounds(newPlotterSize);
+        grid.setBorder(false);
+        this.moveChildTo(new Position.Simple(0,this.labelYSpace+1),  grid.asBounded());
+        int gridPlotHeight = this.grid.getGridRectangle().getHeight();
+        double span = this.topValue - this.bottomValue;
+        this.scale = span / (double) (gridPlotHeight);
     }
     
     private void plotAxes(Color color, IScreenLineSegmentsBuffer segments) {
@@ -246,9 +260,12 @@ public class LineChart extends Composite {
         int origX = inner.getCol() + this.labelYSpace;
         
         StringBuffer sb = new StringBuffer();
+
         for (int i=0; i<axisWidth-1; i++) {
             sb.append(HDASH);
         }
+        
+        System.out.println(ORIGIN+sb.toString());
         
         segments.add( new SegmentImpl(color, origY, origX, 1, ORIGIN+sb.toString()) );
 
@@ -269,7 +286,7 @@ public class LineChart extends Composite {
 
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
-        this.plotter.clearPlots();
+        this.grid.clearPlots();
         calcLayout();
         plotAxes(color, segments);
         renderBraille();
@@ -278,6 +295,7 @@ public class LineChart extends Composite {
 
     public LineChart setPlotColor(Color plotColor) {
         this.plotColor = plotColor;
+        this.grid.setColor(plotColor);
         return this;
     }
 

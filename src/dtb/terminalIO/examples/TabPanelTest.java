@@ -300,7 +300,7 @@ public class TabPanelTest {
 		                                                                            + eventBus.statsAsStr() + "      \n"
 		                                                                            + "Text segments on screen: " + master_canvas.segmentsSize() + "  "));
 		    debugWindow.setTitle(new FGBGColors(Colors.BYel,Colors.On_Gre), "DEBUG");
-		    master_canvas.addComponent(master_canvas.getHeight() - 5, 0, debugWindow);
+		    master_canvas.addComponent(master_canvas.getHeight() - 6, 0, debugWindow);
 		    
 		    master_canvas.refresh();
 		}

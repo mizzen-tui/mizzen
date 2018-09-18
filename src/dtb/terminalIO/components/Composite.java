@@ -75,22 +75,36 @@ public class Composite extends AbstractComponent<Composite> implements Rectangle
     }
     
     @SuppressWarnings("rawtypes")
+    BoundedComponent boundedVersionOfMe = null;
+    
+    @SuppressWarnings("rawtypes")
     public BoundedComponent asBounded() {
 	
-	return new BoundedComponent(this.getColor(), Composite.this) {
+	if (boundedVersionOfMe == null) {
+	    boundedVersionOfMe = new BoundedComponent(this.getColor(), new Rectangle.Delegate(Composite.this)) {
 
-	    @Override
-	    protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
-		Composite.this.draw(color, segments);
-	    }
-	    
-	};
+		    @Override
+		    protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
+			Composite.this.draw(color, segments);
+		    }
+		    
+		};
+	}
 	
+	return 	boundedVersionOfMe;
+    }
+
+    public Composite setBounds(Rectangle bounds) {
+	this.bounds = bounds;
+	this.boundsFixed = true;
+	rebuildBorder(this.bounds);
+	return this;
     }
 
     public Composite setBounds(int row, int col, int height, int width) {
 	this.bounds = new Rectangle.Simple(row, col, height, width);
 	this.boundsFixed = true;
+	rebuildBorder(this.bounds);
 	return this;
     }
 

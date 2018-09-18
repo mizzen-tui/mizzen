@@ -1,10 +1,11 @@
 package dtb.terminalIO.components.braille;
 
+import dtb.terminalIO.ControlCode.Color;
 import dtb.terminalIO.ControlCode.FGBGColors;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.plot.Plotter;
-import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.components.plot.Plotter.Plot;
+import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.components.plot.shape.LinePlotter;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
@@ -15,11 +16,20 @@ public class BrailleGrid extends Composite {
     Plotter plotter;
     Rectangle gridRectangle;
 
-    public BrailleGrid(FGBGColors color, Dimension d) {
+    public BrailleGrid(Color color, Dimension d) {
 	super(color);
 	this.plotter = new Plotter(color, new Dimension.Simple(d.getHeight(), d.getWidth()));
 	this.add(plotter);
 	gridRectangle = BrailleUtils.componentRectangleToGridRectangle(plotter);
+    }
+
+    public void setEmptyChar(char emptyChar) {
+        super.setEmptyChar(emptyChar);
+        this.plotter.setEmptyChar(emptyChar);
+    }
+    
+    public Rectangle getGridRectangle() {
+	return this.gridRectangle;
     }
 
     Position gridPosToComponentPosition(Position gridPosition) {
