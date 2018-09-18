@@ -297,7 +297,8 @@ public class TabPanelTest {
 		    BorderedComponent debugWindow = new BorderedComponent(Colors.IGre,
 		                                                          new TextComponent(Colors.Yel,
 		                                                                            "IDLE task invoke counter = " + count + "   \n"
-		                                                                            + eventBus.statsAsStr() + "      "));
+		                                                                            + eventBus.statsAsStr() + "      \n"
+		                                                                            + "Text segments on screen: " + master_canvas.segmentsSize() + "  "));
 		    debugWindow.setTitle(new FGBGColors(Colors.BYel,Colors.On_Gre), "DEBUG");
 		    master_canvas.addComponent(master_canvas.getHeight() - 5, 0, debugWindow);
 		    

@@ -194,6 +194,10 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
     public void addComponent(Component<?> component) {
         addComponent(Position.ZERO, component);
     }
+    
+    public int segmentsSize() {
+        return getSegmentsBuffer().getSegments().size();
+    }
 
     public Canvas refresh() {
 
