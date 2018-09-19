@@ -232,14 +232,14 @@ public class GridBrailleTest {
 
 	    PositionTransform.FofG trianglePositionTransform = new PositionTransform.FofG(new RotateAroundFixedPoint(0,
 		    fixedPoint), new PositionTransform.Translate(0, 0));
-	    shapes.addShape(new ShapeWithTransform(new Triangle(0, 0, 30, 100, 65, 50), new TransformPointPlotter(null,
+	    shapes.addShape(new ShapeWithTransform(new Triangle(0, 0, 30, 100, 65, 50, Colors.ICya), new TransformPointPlotter(null,
 		    trianglePositionTransform)));
 
 	    XYTranslate circle1PointPlotter = new XYTranslate(null, 0, 0);
 	    shapes.addShape(new ShapeWithTransform(new Circle(0, 0, 30), circle1PointPlotter));
 
 	    XYTranslate circle2PointPlotter = new XYTranslate(null, 0, 0);
-	    shapes.addShape(new ShapeWithTransform(new Circle(50, 50, 30), circle2PointPlotter));
+	    shapes.addShape(new ShapeWithTransform(new Circle(50, 50, 30, Colors.IRed), circle2PointPlotter));
 	    final Runnable drawIt = new Runnable() {
 
 		@Override

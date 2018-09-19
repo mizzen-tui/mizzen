@@ -8,7 +8,6 @@ import dtb.terminalIO.ControlCode.FGBGColors;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.HorizontalLine;
 import dtb.terminalIO.components.TextComponent;
-import dtb.terminalIO.util.Stty;
 
 public class CompositeTest {
     

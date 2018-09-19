@@ -111,6 +111,14 @@ public class Plotter extends BoundedComponent<Plotter> {
 	public void setPlotChar(char theCHAR) {
 	    this.plotChar = theCHAR;
 	}
+
+	public Color getPlotColor() {
+	    return plotColor;
+	}
+
+	public void setPlotColor(Color plotColor) {
+	    this.plotColor = plotColor;
+	}
         
     }
     

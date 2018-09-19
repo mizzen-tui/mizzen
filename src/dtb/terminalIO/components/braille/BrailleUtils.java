@@ -18,13 +18,18 @@ public class BrailleUtils {
 	                                             { 0x04, 0x20 }, 
 	                                             { 0x40, 0x80 } };
     static char brailleCharOffset = 0x2800;
-
-    static char setBraillePixel(char curBrailleChar, Position pos) {
+    static char brailleCharLast = (char) (brailleCharOffset + 255);
+    
+    public static char setBraillePixel(char curBrailleChar, Position pos) {
 	return setBraillePixel(curBrailleChar, pos.getRow(), pos.getCol());
     }
+    
+    public static boolean isBrailleChar(char brailleChar) {
+	return brailleChar >= brailleCharOffset && brailleChar <= brailleCharLast;
+    }
 
-    static char setBraillePixel(char curBrailleChar, int rowOffset, int colOffset) {
-	if (curBrailleChar == 0) {
+    public static char setBraillePixel(char curBrailleChar, int rowOffset, int colOffset) {
+	if (!isBrailleChar(curBrailleChar)) {
 	    curBrailleChar = brailleCharOffset;
 	}
 	if (rowOffset <0) throw new IllegalArgumentException("rowOffset<0 ["+ rowOffset+","+colOffset+"]");
@@ -82,10 +87,11 @@ public class BrailleUtils {
     }
     
 
-    static char unsetBraillePixel(char curBrailleChar, Position pos) {
+    public static char unsetBraillePixel(char curBrailleChar, Position pos) {
 	return unsetBraillePixel(curBrailleChar, pos.getRow(), pos.getCol());
     }
-    static char unsetBraillePixel(char curBrailleChar, int rowOffset, int colOffset) {
+    
+    public static char unsetBraillePixel(char curBrailleChar, int rowOffset, int colOffset) {
 	if (curBrailleChar == 0) {
 	    curBrailleChar = brailleCharOffset;
 	    return curBrailleChar;
@@ -93,7 +99,7 @@ public class BrailleUtils {
 	return curBrailleChar &= ~braillePixelMap[rowOffset % 4][colOffset % 2];
     }
 
-    static Comparator<int[]> brailleKeyComparator = new Comparator<int[]>() {
+    public static Comparator<int[]> brailleKeyComparator = new Comparator<int[]>() {
 	@Override
 	public int compare(int[] o1, int[] o2) {
 	    int cmp = Integer.compare(o1[0], o2[0]);

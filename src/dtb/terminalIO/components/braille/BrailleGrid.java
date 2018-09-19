@@ -1,7 +1,6 @@
 package dtb.terminalIO.components.braille;
 
 import dtb.terminalIO.ControlCode.Color;
-import dtb.terminalIO.ControlCode.FGBGColors;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.plot.Plotter;
 import dtb.terminalIO.components.plot.Plotter.Plot;
@@ -36,7 +35,7 @@ public class BrailleGrid extends Composite {
 	return new Position.Simple(gridPosition.getRow() / 4, gridPosition.getCol() / 2);
     }
 
-    public void plotPosition(Position gridPosition) {
+    public void plotPosition(Position gridPosition, Color plotColor) {
 	if ( ! this.gridRectangle.containsPosition(gridPosition)) {
 	    return ;  
 	}
@@ -47,13 +46,23 @@ public class BrailleGrid extends Composite {
 	theCHAR = BrailleUtils.setBraillePixel(theCHAR, gridPosition);
 	if (plotAtPos != null) {
 	    plotAtPos.setPlotChar(theCHAR);
+	    plotAtPos.setPlotColor(plotColor);
 	} else {
-	    this.plotter.addPlot(plotterCharacterPosition.getRow(), plotterCharacterPosition.getCol(), theCHAR);
+	    this.plotter.addPlot(plotterCharacterPosition.getRow(), plotterCharacterPosition.getCol(), theCHAR, plotColor);
 	}
     }
+    
+    public void plotPosition(Position gridPosition) {
+	plotPosition(gridPosition, this.plotter.getColor());
+    }
+
 
     public void plotPosition(int row, int col) {
 	plotPosition(new Position.Simple(row, col));
+    }
+
+    public void plotPosition(int row, int col, Color plotColor) {
+	plotPosition(new Position.Simple(row, col), plotColor);
     }
 
     public void unplotPosition(Position gridPosition) {
@@ -78,6 +87,14 @@ public class BrailleGrid extends Composite {
 	    public void plot(int x, int y) {
 		plotPosition(y, x);
 	    }
+
+	    @Override
+	    public Color setColor(Color color) {
+		Color prevColor = BrailleGrid.this.getPlotColor();
+		BrailleGrid.this.setPlotColor(color);
+		return prevColor;
+	    }
+
 	};
 	return plot;
     }
@@ -86,9 +103,12 @@ public class BrailleGrid extends Composite {
 	new LinePlotter().draw(x1, y1, x2, y2, asPointPlotter());
     }
 
+    public Color getPlotColor() {
+	return this.plotter.getColor();
+    }
+
     public void setPlotColor(Color color) {
 	this.plotter.setColor(color);
-	
     }
 
     public void clearPlots() {
