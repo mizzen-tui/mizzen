@@ -12,15 +12,13 @@ import dtb.terminalIO.geom.Rectangle;
  * It knows how to draw itself into its IScreenLineSegmentsBuffer 
  * 
  * 
- * 
- * 
  * TODO:  Need to clean up the inheritance hierarchy of Components.. seems like 
  * 2 parallel heirarchies  - ( AbstractComponent & BoundedComponent)  
  * 
  * @author dbalme
  *
  */
-public interface Component<T extends Component<?>> extends IScreenLineSegmentsBuffer.Provider , FGBGColors.Provider {
+public interface Component<T extends Component<?>> extends IScreenLineSegmentsBuffer.Provider , FGBGColors.Provider, Rectangle {
 
     T setColor(Color drawingcolor);
     
@@ -136,5 +134,7 @@ public interface Component<T extends Component<?>> extends IScreenLineSegmentsBu
         abstract protected Rectangle getRectangleForClearAndFill();
 
     }
+
+    void markAsDirty();
 
 }

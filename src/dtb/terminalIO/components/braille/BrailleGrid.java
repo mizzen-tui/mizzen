@@ -86,8 +86,8 @@ public class BrailleGrid extends Composite {
 	new LinePlotter().draw(x1, y1, x2, y2, asPointPlotter());
     }
 
-    public void setPlotColor(FGBGColors fgbgColors) {
-	this.plotter.setColor(fgbgColors);
+    public void setPlotColor(Color color) {
+	this.plotter.setColor(color);
 	
     }
 

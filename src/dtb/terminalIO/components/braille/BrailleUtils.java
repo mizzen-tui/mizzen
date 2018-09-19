@@ -62,15 +62,6 @@ public class BrailleUtils {
 	            return super.getHeight()*4;
 	        }
 
-//	        @Override
-//	        public void moveTo(int row, int col) {
-//	            getRectangle().moveTo(row, col);
-//	        }
-//
-//	        @Override
-//	        public void moveDelta(int rowOffset, int colOffset) {
-//	            getRectangle().moveDelta(rowOffset, colOffset);
-//	        }
 	};
     }
     

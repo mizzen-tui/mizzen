@@ -25,6 +25,31 @@ public class SegmentComponent extends Component.AbstractComponent<SegmentCompone
     @Override
     protected Rectangle getRectangleForClearAndFill() {
         return this.scs;
+    }
+
+    @Override
+    public int getCol() {
+        return this.scs.getCol();
+    }
+
+    @Override
+    public int getRow() {
+        return this.scs.getRow();
+    }
+
+    @Override
+    public int getWidth() {
+        return this.scs.getWidth();
+    }
+
+    @Override
+    public int getHeight() {
+        return this.scs.getHeight();
+    }
+
+    @Override
+    public void moveTo(int row, int col) {
+        this.scs.moveTo(row, col);
     } 
 
     

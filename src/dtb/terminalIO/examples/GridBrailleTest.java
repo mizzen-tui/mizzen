@@ -210,7 +210,7 @@ public class GridBrailleTest {
 	    BrailleGrid grid = new BrailleGrid(FGBGColors.DEFAULT, new Dimension.Simple(brailleComponent.getHeight() - 4, brailleComponent.getWidth() - 4 - tc.getWidth()));
 	    grid.setPlotColor(new FGBGColors(Colors.Yel));
 	    
-	    brailleComponent.add (new Position.Simple(2, tc.getWidth()+2),   grid.asBounded());
+	    brailleComponent.add (new Position.Simple(2, tc.getWidth()+2),   grid);
 
 	    XYTranslate pointPlotter = new XYTranslate(grid.asPointPlotter(), 0, 0);
 

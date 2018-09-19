@@ -20,10 +20,10 @@ public class Composite extends AbstractComponent<Composite> implements Rectangle
 
     private static class ComponentWithOffset implements Rectangle {
 	Position offset;
-	BoundedComponent<?> component;
+	Component<?> component;
 	Rectangle bounds;
 
-	public ComponentWithOffset(Position offset, BoundedComponent<?> component) {
+	public ComponentWithOffset(Position offset, Component<?> component) {
 	    super();
 	    this.offset = offset;
 	    this.component = component;
@@ -31,7 +31,7 @@ public class Composite extends AbstractComponent<Composite> implements Rectangle
 		    + component.getCol(), component.getHeight(), component.getWidth());
 	}
 
-	public ComponentWithOffset(BoundedComponent<?> component) {
+	public ComponentWithOffset(Component<?> component) {
 	    this(Position.ZERO, component);
 	}
 	
@@ -74,26 +74,6 @@ public class Composite extends AbstractComponent<Composite> implements Rectangle
 	this(FGBGColors.NO_COLOR_SPECIFIED);
     }
     
-    @SuppressWarnings("rawtypes")
-    BoundedComponent boundedVersionOfMe = null;
-    
-    @SuppressWarnings("rawtypes")
-    public BoundedComponent asBounded() {
-	
-	if (boundedVersionOfMe == null) {
-	    boundedVersionOfMe = new BoundedComponent(this.getColor(), new Rectangle.Delegate(Composite.this)) {
-
-		    @Override
-		    protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
-			Composite.this.draw(color, segments);
-		    }
-		    
-		};
-	}
-	
-	return 	boundedVersionOfMe;
-    }
-
     public Composite setBounds(Rectangle bounds) {
 	this.bounds = bounds;
 	this.boundsFixed = true;
@@ -202,13 +182,13 @@ public class Composite extends AbstractComponent<Composite> implements Rectangle
 	return this;
     }
 
-    public Composite add(BoundedComponent<?> component) {
+    public Composite add(Component<?> component) {
 	children.add(new ComponentWithOffset(component));
 	fullrecalcDim();
 	return this;
     }
 
-    private ComponentWithOffset findChild(BoundedComponent<?> component) {
+    private ComponentWithOffset findChild(Component<?> component) {
 	for (ComponentWithOffset child : children) {
 	    if (component == child.component) {
 		return child;
@@ -217,7 +197,7 @@ public class Composite extends AbstractComponent<Composite> implements Rectangle
 	return null;
     }
 
-    public Composite moveChildTo(Position offset, BoundedComponent<?> component) {
+    public Composite moveChildTo(Position offset, Component<?> component) {
 	ComponentWithOffset found = findChild(component);
 	if (found == null)
 	    throw new IllegalArgumentException("component is not a child of composite");
@@ -225,13 +205,13 @@ public class Composite extends AbstractComponent<Composite> implements Rectangle
 	return this;
     }
 
-    public Composite add(Position offset, BoundedComponent<?> component) {
+    public Composite add(Position offset, Component<?> component) {
 	children.add(new ComponentWithOffset(offset, component));
 	fullrecalcDim();
 	return this;
     }
 
-    public Composite add(int offsetRow, int offsetCol, BoundedComponent<?> component) {
+    public Composite add(int offsetRow, int offsetCol, Component<?> component) {
 	return add(new Position.Simple(offsetRow, offsetCol), component);
     }
 

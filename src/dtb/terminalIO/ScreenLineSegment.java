@@ -21,7 +21,7 @@ import dtb.terminalIO.geom.Relation.LeftRight;
 //
 //  A Screen line segment is a Rectangle[row,col,height,width] that always have a height of one.. 
 //  .. and width the length of its text
-//     it has color attribute that dictates color to render the text
+//     it has color attribute that dictates default color to render the text
 //
 public interface ScreenLineSegment extends Rectangle {
 
