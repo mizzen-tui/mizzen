@@ -3,7 +3,9 @@ package dtb.terminalIO.components.chart;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import dtb.terminalIO.Canvas;
@@ -45,7 +47,7 @@ public class LineChart extends Composite {
 
     double          topValue;
     double          bottomValue;
-    List<Double>    data;
+    List<ChartData> data;
     double          scale;                                                  // data span per cell on y-axis
     int             axisWidth;
     int             axisHeight;
@@ -54,15 +56,40 @@ public class LineChart extends Composite {
     List<String>    dataLabels;
     String[]        labelY;
     Color           plotColor      = FGBGColors.NO_COLOR_SPECIFIED;
+    Map<String, Series> nameToSeriesMap = new HashMap<String, Series>();
 
     BrailleGrid     grid;
     private int     labelYSpace;
     private boolean autoLabels;
-    private String labelX;
+    private String  labelX;
+    
+    private Series DEFAULT_series = new Series(null,null);
 
+    public static class Series {
+	public String name;
+	public Color color;
+	public Series(String name, Color color) {
+	    super();
+	    this.name = name;
+	    this.color = color;
+	}
+	
+    }
+    
+    public static class ChartData {
+	public Series series;
+	public ChartData(Series series, Double value) {
+	    super();
+	    this.series = series;
+	    this.value = value;
+	}
+	public Double value;
+    }
+    
+    
     public LineChart(Color color, Dimension d) {
         super(color);
-        data = new ArrayList<Double>();
+        data = new ArrayList<ChartData>();
         dataLabels = new ArrayList<String>();
         this.grid = new BrailleGrid(color, new Dimension.Simple(d.getHeight() - 3, d.getWidth() - 3));
         this.add(this.grid);
@@ -83,8 +110,23 @@ public class LineChart extends Composite {
         this(FGBGColors.NO_COLOR_SPECIFIED, new Dimension.Simple(height, width));
     }
 
-    public LineChart addData(double d, String label) {
-        data.add(d);
+    private Series nameToSeries(String seriesName) {
+	if (seriesName == null) {
+	    return DEFAULT_series;
+	}
+	Series series = nameToSeriesMap.get(seriesName);
+	if (series == null) { // create
+	    series = new Series(seriesName, this.plotColor);
+	    nameToSeriesMap.put(seriesName, series);
+	}
+	return series;
+    }
+    
+    public LineChart addData(String seriesName, double d, String label) {
+	
+	Series series = nameToSeries(seriesName);
+	
+        data.add(new ChartData(series, d));
         int size = data.size();
         if (label != null) {
             while (this.dataLabels.size() + 1 < size ) {
@@ -102,7 +144,11 @@ public class LineChart extends Composite {
     }
 
     public LineChart addData(double d) {
-        return addData(d, null);
+        return addData(null, d, null);
+    }
+
+    public LineChart addData(double d, String label) {
+        return addData(null, d, label);
     }
 
     public void clearData() {
@@ -124,26 +170,11 @@ public class LineChart extends Composite {
         ConnectedPoints graphedLine = new ConnectedPoints(false);
         
         for (int i = 0; i < dataLen && i < gridLimitWidth; i++) {
-            int y = (int) Math.round((this.data.get(i) - this.bottomValue) / this.scale  + 0.5);
+            int y = (int) Math.round((this.data.get(i).value - this.bottomValue) / this.scale  + 0.5);
             graphedLine.addPoint(i, y);
-            //this.grid.plotPosition(y, i);
         }
         
         graphedLine.draw(grid.asPointPlotter());
-        
-        
-//        grid.plotPosition(this.grid.getGridRectangle().getHeight() / 2, this.grid.getGridRectangle().getWidth()/2, Colors.IBlu);
-//
-//        RectangleShape rect = new RectangleShape(this.grid.getGridRectangle(), Colors.IGre);
-//        rect.draw(grid.asPointPlotter());
-//
-//        grid.plotPosition(10, this.grid.getGridRectangle().getRightMostCol(), Colors.Red);
-//        grid.plotPosition(10, 0, Colors.Red);
-//        grid.plotPosition(10, 1, Colors.Red);
-//        grid.plotPosition(10, 2, Colors.Red);
-//        grid.plotPosition(10, 3, Colors.Red);
-//
-//        grid.plotPosition(this.grid.getGridRectangle().getHeight(), this.grid.getGridRectangle().getWidth(), Colors.IRed);
         
     }
 

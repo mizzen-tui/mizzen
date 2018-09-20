@@ -12,7 +12,6 @@ import dtb.terminalIO.ControlCode.Color;
 import dtb.terminalIO.ControlCode.FGBGColors;
 import dtb.terminalIO.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.TerminalScreen;
-import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.braille.BrailleGrid;
