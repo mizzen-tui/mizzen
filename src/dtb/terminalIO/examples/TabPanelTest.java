@@ -187,7 +187,7 @@ public class TabPanelTest {
 
 		    LineChart lc = new LineChart(drawingArea.getHeight() - 4, drawingArea.getWidth() - 4);
 		    lc.setBorder(true);
-		    lc.setPlotColor(new FGBGColors(Colors.BIYel));
+		    lc.setPlotColor(new FGBGColors(Colors.IYel));
 		    // lc.setTitle("Sin/Cos");
 
 		    return lc;
@@ -206,12 +206,12 @@ public class TabPanelTest {
 			    lc.clear();
 			    tabCtx.clearForRedraw();
 
-			    for (int i = j; i < (220 + j); i++) {
+			    for (int i = j; i < (420 + j); i++) {
 				double d = Math.sin(((float) i) / 5) * 10;
 				// System.out.println(d);
 				lc.addData(d, i + "");
-				d = Math.cos(((float) i) / 5) * 3;
-				lc.addData(d);
+//				d = Math.cos(((float) i) / 5) * 3;
+//				lc.addData(d);
 			    }
 
 			    j++;
@@ -312,6 +312,8 @@ public class TabPanelTest {
 		    eventBus.stopConsuming();
 		    screen.add(ControlCode.SHOW_CURSOR);
 		    screen.refresh();
+		    master_canvas.refresh();
+		    System.out.println("Exited application\n");
 		    
 		    try {
 			Stty.setCooked();

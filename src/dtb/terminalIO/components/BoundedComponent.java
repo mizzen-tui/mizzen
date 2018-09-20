@@ -52,11 +52,18 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
         super(new Rectangle.Simple(p, d));
         this.color = color;
     }
+    
 
     public BoundedComponent(Color color, Dimension d) {
         super(new Rectangle.Simple(d));
         setColor(color);
     }
+
+    public void resize(Dimension d) {
+        setRectangle(new Rectangle.Simple(d));
+        
+    }
+
 
     public void clear() {
         segments.clear();

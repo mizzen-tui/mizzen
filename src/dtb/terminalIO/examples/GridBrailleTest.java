@@ -182,7 +182,7 @@ public class GridBrailleTest {
 		    + "character set to plot points\n"
 		    + "in a standard linux terminal.\n"
 		    + "\n"
-		    + "This idea is that we map the normal\n"
+		    + "The idea is that we map the normal\n"
 		    + "terminal row columns combined with the\n"
 		    + "2 x 8 dots of the braille character set\n"
 		    + "to come up with a plottable coordinate system.\n"
@@ -218,7 +218,7 @@ public class GridBrailleTest {
 
 	    XYTranslate rectangle1PointPlotter = new XYTranslate(null, 0, 0);
 
-	    shapes.addShape(new ShapeWithTransform(new RectangleShape(new Rectangle.Simple(30, 30, 20, 20)),
+	    shapes.addShape(new ShapeWithTransform(new RectangleShape(new Rectangle.Simple(30, 30, 20, 20), Colors.IBlu),
 		    rectangle1PointPlotter));
 
 	    Position fixedPoint = new Position.Simple(30, 50);
@@ -227,7 +227,7 @@ public class GridBrailleTest {
 
 	    TransformPointPlotter rectangle2PointPlotter = new TransformPointPlotter(null, rectangle2Rotator);
 
-	    shapes.addShape(new ShapeWithTransform(new RectangleShape(new Rectangle.Simple(30, 30, 20, 20)),
+	    shapes.addShape(new ShapeWithTransform(new RectangleShape(new Rectangle.Simple(30, 30, 20, 20), Colors.IGre),
 		    rectangle2PointPlotter));
 
 	    PositionTransform.FofG trianglePositionTransform = new PositionTransform.FofG(new RotateAroundFixedPoint(0,
@@ -248,14 +248,12 @@ public class GridBrailleTest {
 		    renderPreUPdate();
 
 		    brailleComponent.markAsDirty();
-		    //tc.setText("here is some text");
+
 		    grid.clear();
 		    grid.clearPlots();
 
 		    shapes.draw(pointPlotter);
-
-		    //grid.setTitle("[  Braille Characters demo  ]");
-
+		    
 		    segmentsBufferProvider.getSegmentsBuffer().removeRect(brailleComponent);
 
 		    segmentsBufferProvider.getSegmentsBuffer().mergeAt(2, 2, brailleComponent.getSegmentsBuffer());

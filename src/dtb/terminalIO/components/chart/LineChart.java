@@ -17,7 +17,7 @@ import dtb.terminalIO.TerminalScreen;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.RectangleComponent;
 import dtb.terminalIO.components.braille.BrailleGrid;
-import dtb.terminalIO.components.plot.shape.RectangleShape;
+import dtb.terminalIO.components.plot.shape.ConnectedPoints;
 import dtb.terminalIO.examples.TestsCommon;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
@@ -120,32 +120,30 @@ public class LineChart extends Composite {
         int gridLimitWidth = this.grid.getGridRectangle().getWidth();
         
         // plot points
+        
+        ConnectedPoints graphedLine = new ConnectedPoints(false);
+        
         for (int i = 0; i < dataLen && i < gridLimitWidth; i++) {
             int y = (int) Math.round((this.data.get(i) - this.bottomValue) / this.scale  + 0.5);
-            this.grid.plotPosition(y, i);
+            graphedLine.addPoint(i, y);
+            //this.grid.plotPosition(y, i);
         }
         
+        graphedLine.draw(grid.asPointPlotter());
         
-        grid.setPlotColor(Colors.IBlu);
-        grid.plotPosition(this.grid.getGridRectangle().getHeight() / 2, this.grid.getGridRectangle().getWidth()/2);
-
-        grid.setPlotColor(Colors.IGre);
         
-        RectangleShape rect = new RectangleShape(this.grid.getGridRectangle());
-        rect.draw(grid.asPointPlotter());
-
-//        
-        grid.plotPosition(10, this.grid.getGridRectangle().getWidth()-15);
+//        grid.plotPosition(this.grid.getGridRectangle().getHeight() / 2, this.grid.getGridRectangle().getWidth()/2, Colors.IBlu);
 //
-//        grid.setPlotColor(Colors.IGre);
-//        grid.plotPosition(this.grid.getGridRectangle().getHeight(), 0);
-
-        grid.setPlotColor(Colors.IRed);
-        grid.plotPosition(this.grid.getGridRectangle().getHeight(), this.grid.getGridRectangle().getWidth());
-
-        
-        grid.setPlotColor(Colors.IYel);
-        
+//        RectangleShape rect = new RectangleShape(this.grid.getGridRectangle(), Colors.IGre);
+//        rect.draw(grid.asPointPlotter());
+//
+//        grid.plotPosition(10, this.grid.getGridRectangle().getRightMostCol(), Colors.Red);
+//        grid.plotPosition(10, 0, Colors.Red);
+//        grid.plotPosition(10, 1, Colors.Red);
+//        grid.plotPosition(10, 2, Colors.Red);
+//        grid.plotPosition(10, 3, Colors.Red);
+//
+//        grid.plotPosition(this.grid.getGridRectangle().getHeight(), this.grid.getGridRectangle().getWidth(), Colors.IRed);
         
     }
 
@@ -211,8 +209,7 @@ public class LineChart extends Composite {
         this.axisWidth = inner.getWidth() -  this.labelYSpace;
         calcLabelX();
         grid.setEmptyChar(' ');
-        Rectangle newPlotterSize = new Rectangle.Simple(grid.getRow(), grid.getCol(), axisHeight, axisWidth-1);
-        grid.setBounds(newPlotterSize);
+        grid.resize(new Dimension.Simple(axisHeight, axisWidth-1));
         grid.setBorder(false);
         this.moveChildTo(new Position.Simple(0,this.labelYSpace+1),  grid);
         int gridPlotHeight = this.grid.getGridRectangle().getHeight();
