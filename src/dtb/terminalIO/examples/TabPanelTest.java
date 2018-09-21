@@ -188,6 +188,7 @@ public class TabPanelTest {
 		    LineChart lc = new LineChart(drawingArea.getHeight() - 4, drawingArea.getWidth() - 4);
 		    lc.setBorder(true);
 		    lc.setPlotColor(new FGBGColors(Colors.IYel));
+		    lc.setSeriesColor("cos", Colors.Blu);
 		    // lc.setTitle("Sin/Cos");
 
 		    return lc;
@@ -205,12 +206,16 @@ public class TabPanelTest {
 			    lc.clearData();
 			    lc.clear();
 			    tabCtx.clearForRedraw();
+			    
+			    lc.setSeriesColor("cos", Colors.IBlu);
 
 			    for (int i = j; i < (420 + j); i++) {
 				double d = Math.sin(((float) i) / 5) * 10;
 				// System.out.println(d);
-				lc.addData(d, i + "");
-//				d = Math.cos(((float) i) / 5) * 3;
+				lc.addData("sine", d, i + "");
+				d = Math.cos(((float) i) / 5) * 3;
+				lc.addData("cos", d, i + "");
+				
 //				lc.addData(d);
 			    }
 
