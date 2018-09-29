@@ -4,6 +4,54 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.function.Predicate;
 
+/**
+ * 
+ * A ChainedEventHandler maintains a list of EventHandler objects - and more specifically
+ * a list of ConditionalEventHandler objects.
+ * 
+ * <p/>
+ * 
+ * This object is an eventhandler itself - but it delegates the handling of an event to one 
+ * or all of its internal eventHandlers.
+ * 
+ * <p/>
+ * 
+ * This objects operates in 2 behaviour styles when delegating to its internal eventHandlers 
+ * 
+ * <p/>
+ *
+ * <pre>
+ * 1) Handle-All
+ *      - when an event comes in 
+ *         - loop thru all internal eventHandlers and
+ *           tell each event to handler the event
+ *             -- good example :  Idle (Timer) events are handled 
+ *                                this way by the EventBus
+ *                                
+ *    to instantiate this type of behaviour:
+ *         eH = ChainedEventHandler.useHandleAllStrategy()
+ *      
+ * 
+ * 1) Chain-of-Responsibility
+ *      - when an event comes in 
+ *         - find the first internal eventhandler that says it can
+ *           handle the event then give the event only to it.
+ *             -- good example :  KeyStroke events are handled 
+ *                                this way by the EventBus
+ *                                
+ *           NEEDS IMPROVEMENT :  Need to have a concept of
+ *                                a focus Manager - either here or
+ *                                                  somewhere else
+ *                                this becomes increasingly important
+ *                                as the UI becomes more complex with
+ *                                multiple components wanting the keyboard                     
+ *                                
+ *    to instantiate this type of behaviour:
+ *         eH = ChainedEventHandler.useChainOfResponsibilityStrategy()
+ *      
+ * </pre>     
+ *      
+ */
 public class ChainedEventHandler implements EventHandler {
 
     private Collection<ConditionalEventHandler> eventHandlers = new ArrayList<>();

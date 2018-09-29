@@ -3,6 +3,17 @@ package dtb.terminalIO.events;
 import java.util.EventObject;
 import java.util.function.Predicate;
 
+/**
+ * A TerminalEvent is an object that captures 
+ * some event ( usually ) a keystroke (or a timer 'idle') event.
+ * 
+ * Data related to the event is attached to the event object.
+ * 
+ * The Event gets sent to an EventBus which distributes the event
+ * to the EventHandler(s) that can handle the event.
+ * 
+ * @param <T>
+ */
 public class TerminalEvent<T> extends EventObject {
 
     private static final long serialVersionUID = -8117805332275225370L;
@@ -10,6 +21,7 @@ public class TerminalEvent<T> extends EventObject {
     public static enum TYPE {
         KEYPRESS,
         TIMER,
+        RESIZE,
         EXCEPTION,
         DEBUG
     }

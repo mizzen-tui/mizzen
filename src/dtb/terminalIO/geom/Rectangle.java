@@ -217,12 +217,40 @@ public interface Rectangle extends Position, Dimension, Movable {
         }
 
         public Rectangle mergeAndExpandDimensionsWithMySelf(Rectangle other) {
-            setRow(Math.min(this.getRow(), other.getRow()));
+            
+            int thisRow        = this.getRow();
+            int thisCol        = this.getCol();
+            int thisBottomRow  = this.getBottomMostRow();
+            int thisRightCol   = this.getRightMostCol();
+            
+            int otherRow       = other.getRow();
+            int otherCol       = other.getCol();
+            int otherBottomRow = other.getBottomMostRow();
+            int otherRightCol  = other.getRightMostCol();
+            
+            // get new corners
+            int newRow       = Math.min(thisRow, otherRow);
+            int newCol       = Math.min(thisCol, otherCol);
+            int newBottomRow = Math.max(thisBottomRow, otherBottomRow);
+            int newRightCol  = Math.max(thisRightCol, otherRightCol);
 
-            setCol(Math.min(this.getCol(), other.getCol()));
-
-            setHeight(Math.max(this.getBottomMostRow(), other.getBottomMostRow()) - getRow() + 1);
-            setWidth(Math.max(this.getRightMostCol(), other.getRightMostCol()) - getCol() + 1);
+            // calc new dimensions
+            int newHeight = newBottomRow - newRow + 1;
+            int newWidth  = newRightCol - newCol  + 1;
+            
+            // now set
+            setRow(newRow);
+            setCol(newCol);
+            setHeight(newHeight);
+            setWidth(newWidth);
+            
+//            
+//            setRow(Math.min(this.getRow(), other.getRow()));
+//
+//            setCol(Math.min(this.getCol(), other.getCol()));
+//
+//            setHeight(Math.max(this.getBottomMostRow(), other.getBottomMostRow()) - getRow() + 1);
+//            setWidth(Math.max(this.getRightMostCol(), other.getRightMostCol()) - getCol() + 1);
 
             return this;
         }

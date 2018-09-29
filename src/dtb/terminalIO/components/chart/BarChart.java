@@ -208,8 +208,8 @@ public class BarChart extends Composite {
 
 	master_canvas.setSize(25, 100);
 
-	master_canvas.addComponent(2, 4, new RectangleComponent(FGBGColors.DEFAULT, 5, 10));
-	master_canvas.addComponent(4, 8, new RectangleComponent(FGBGColors.DEFAULT, 5, 15));
+	master_canvas.addComponentSegments(2, 4, new RectangleComponent(FGBGColors.DEFAULT, 5, 10));
+	master_canvas.addComponentSegments(4, 8, new RectangleComponent(FGBGColors.DEFAULT, 5, 15));
 
 	BarChart bc = new BarChart(20, 75);
 	bc.setBorder(true);
@@ -234,7 +234,7 @@ public class BarChart extends Composite {
 
 		bc.addData(d, bc_DATALabels[i]);
 	    }
-	    master_canvas.addComponent(2, 15, bc);
+	    master_canvas.addComponentSegments(2, 15, bc);
 	    master_canvas.t(bc.getBottomMostRow() + 3, 1, "j = " + j + "   ");
 	    master_canvas.refresh();
 	    master_canvas.t("  " + bc.topValue + "    ");

@@ -9,15 +9,35 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 
 import dtb.terminalIO.events.ChainedEventHandler.ConditionalEventHandler;
+import dtb.terminalIO.events.Keys.KeyStroke;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
 import dtb.terminalIO.examples.CompositeTest;
 import dtb.terminalIO.util.Stty;
 
+/**
+ * Warning - once you instantiate this object, you are creating and 
+ * running a new Thread.  So use this sparingly. 
+ * 
+ * Usually only one of these objects per application.
+ * 
+ * <p/>
+ * 
+ * This object reads input (usually from stdin) and then converts
+ * the input to the appropriate event (usually a keystroke event).
+ * This event is enqueued onto an eventBus for later handling.  Any keyStroke handlers
+ * can then process the keystroke.
+ * 
+ * <p/>
+ * 
+ * If there is no input generated within a time-interval (usually 50 ms) then
+ * a timerEvent is generated and enqueued onto the eventBus.  Any Idle event handlers
+ * in the EventBus can subsequently process the timerevent. 
+ * 
+ */
 public class KeyInputEventsProducer implements Runnable {
 
     private InputStream   inputStream;
     private EventBus      eventBus;
-    private boolean       rawMode      = false;
     private Reader        input;
     Thread                readThread;
     InputCharsEventParser readerParser = new InputCharsEventParser();
@@ -28,7 +48,6 @@ public class KeyInputEventsProducer implements Runnable {
             inputStream = new FileInputStream(FileDescriptor.in);
             try {
                 Stty.setRaw();
-                rawMode = true;
             } catch (IOException e) {
                 System.err.println("Failed to go into raw mode!");
                 inputStream = System.in;
@@ -105,116 +124,6 @@ public class KeyInputEventsProducer implements Runnable {
 
     private void handleReaderInput(char[] buffer, int readIn) {
         readerParser.parseInput(buffer, readIn, eventBus);
-    }
-
-    public static void mainE(String[] args) throws InterruptedException, IOException {
-
-        try {
-            
-            Stty.setRaw();
-
-            CompositeTest.main(args);
-            for (int i = 0; i < 100; i++) {
-
-                CompositeTest.statusMsg("i = " + i);
-
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    // Ignoring intentionally
-                }
-
-            }
-        } finally {
-            
-            Stty.setCooked();
-
-        }
-    }
-
-    public static void main(String[] args) throws InterruptedException, IOException {
-
-        EventBus eventBus = new EventBus();
-        try {
-            KeyInputEventsProducer keyInputEventsProducer = null;
-            try {
-                keyInputEventsProducer = new KeyInputEventsProducer(eventBus);
-            } catch (Exception e) {
-                eventBus.stopConsuming();
-                return;
-            }
-
-            if (keyInputEventsProducer.readThread.isAlive()) {
-
-                CompositeTest.main(args);
-
-                eventBus.addEventHandler(new ConditionalEventHandler() {
-
-		    @Override
-		    public void handle(TerminalEvent<?> te) {
-                        CompositeTest.statusMsg2(String.valueOf(te.getEventData()));
-		    }
-
-		    @Override
-		    public EventHandler canHandle(TerminalEvent<?> te) {
-                        if (te.type.equals(TYPE.DEBUG))
-                            return this;
-                        return null;
-		    }
-                    
-                });
-                
-                
-                eventBus.addEventHandler(new ConditionalEventHandler() {
-
-                    @Override
-                    public void handle(TerminalEvent<?> te) {
-
-                        Keys.KeyEvent ke = (Keys.KeyEvent) te;
-
-                        // eventBus.stopConsuming();
-
-                        if (ke.isKeyStroke(Keys.ESC_KEYSTROKE)) {
-                            CompositeTest.statusMsg(ke.getKeyName() + " hit. Quitting..");
-                            eventBus.stopConsuming();
-                            return;
-                        }
-                        if (1+1==3 && ke.isKeyStroke(Keys.CTRL_C_KEYSTROKE)) {
-                            CompositeTest.statusMsg(ke.getKeyName() + " hit. Quitting.." + Keys.CTRL_C_KEYSTROKE.name);
-                            eventBus.stopConsuming();
-                            return;
-                        }
-//                        if (ke.isKeyStroke(Keys.A_KEYSTROKE)) {
-//                            CompositeTest.statusMsg("A hit. Quitting..");
-//                            eventBus.stopConsuming();
-//                            return;
-//                        }
-
-                        CompositeTest.statusMsg(String.valueOf(ke.getEventData()));
-                    }
-
-                    @Override
-                    public EventHandler canHandle(TerminalEvent<?> te) {
-                        if (te.type.equals(TYPE.KEYPRESS))
-                            return this;
-                        return null;
-                    }
-                });
-
-                keyInputEventsProducer.readThread.join();
-                eventBus.stopConsuming();
-            } else {
-                eventBus.stopConsuming();
-            }
-
-            Stty.setCooked();
-
-        } catch (Exception e) {
-            eventBus.stopConsuming();
-            Stty.setCooked();
-            System.out.println("");
-            e.printStackTrace();
-        }
     }
 
 }

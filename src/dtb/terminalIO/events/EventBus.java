@@ -9,13 +9,64 @@ import java.util.function.Predicate;
 import dtb.terminalIO.events.ChainedEventHandler.ConditionalEventHandler;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
 
+/**
+ * Warning:  This object will spawn a new thread in its constructor.
+ * 
+ * <p/>
+ * 
+ * Use this object very sparingly..  Usually only one per application.
+ * 
+ * <p/>
+ * 
+ * Very simple minded EventBus.
+ * 
+ * <p/>
+ * 
+ * The eventBus 'consumes' {@link TerminalEvent} objects.
+ * 
+ * <p/>
+ * 
+ * Usually TerminalEvent objects are generated for every Keystroke that has
+ * been pressed by the user.  See {@link KeyInputEventsProducer}.
+ * 
+ * <p/>
+ * 
+ * Events can also be generated for ( see {@link TerminalEvent} )
+ *         KEYPRESS,
+ *         TIMER,
+ *         EXCEPTION,
+ *         DEBUG
+ *
+ * 
+ * <p/>
+ * 
+ * This object maintains two {@link ChainedEventHandler} 'chains'.    
+ * 
+ * <p/>
+ * 
+ * One handler chain is used for idle events.  When an idle event is generated
+ * the event is passed to all idle event handlers and then each can decide to perform
+ * it operation based on elapsed time since last invoked.
+ * 
+ * <p/>
+ * 
+ * The other 'main' handler is used to handle all other events ( usually KeyStroke events).
+ * 
+ * <p/>
+ * 
+ * This chained handler works in a Chain-of-Responsibility style of handling.
+ * The first eventHandler that can handle the event (usually a KeyStroke) is the eventHandler
+ * that handles the event.   See {@link ChainedEventHandler} for more details on how it works.
+ * 
+ */
 public class EventBus {
 
-    private static final int EVENT_Q_CAPACITY = 5;
+    private static final int EVENT_Q_CAPACITY = 5;  // number picked out of my hat!
+                                                    //  -- increase as needed
     
     private ChainedEventHandler handler = ChainedEventHandler.useChainOfResponsibilityStrategy();
 
-    private ChainedEventHandler idleEventsHandler;
+    private ChainedEventHandler idleEventsHandler;  // we build this in lazy fashion on purpose
 
     
     private BlockingQueue<TerminalEvent<?>> queue = new ArrayBlockingQueue<TerminalEvent<?>>(EVENT_Q_CAPACITY);
@@ -34,8 +85,10 @@ public class EventBus {
 			if (te != null) {
 			    handler.handle(te);
 			}
-		    } catch (InterruptedException e) {
+		    } catch (Exception e) {
 			handler.handle(new TerminalEvent<Exception>(EventBus.this, TerminalEvent.TYPE.EXCEPTION, e));
+			// hmm...  should I really be looping after an exception.. or should I terminate..
+			//         for now .. letting the application make the decision.
 		    }
 		}
 	    }

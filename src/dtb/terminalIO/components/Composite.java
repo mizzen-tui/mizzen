@@ -61,7 +61,6 @@ public class Composite extends AbstractComponent<Composite> implements Rectangle
 	    this.bounds = new Rectangle.Simple(offset.getRow() + component.getRow(), offset.getCol()
 		    + component.getCol(), component.getHeight(), component.getWidth());
 	}
-
     }
 
     private List<ComponentWithOffset> children = new ArrayList<ComponentWithOffset>();
@@ -88,11 +87,15 @@ public class Composite extends AbstractComponent<Composite> implements Rectangle
 	return this;
     }
 
-    public Composite setBounds(int height, int width) {
-	this.bounds = new Rectangle.Simple(new Dimension.Simple(height, width));
+    public Composite setBounds(Dimension d) {
+	this.bounds = new Rectangle.Simple(d);
 	this.boundsFixed = true;
 	rebuildBorder(this.bounds);
 	return this;
+    }
+
+    public Composite setBounds(int height, int width) {
+        return setBounds(new Dimension.Simple(height, width));
     }
 
     // todo: not sure what this method means -- what do i

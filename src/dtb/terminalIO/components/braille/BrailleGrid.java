@@ -39,6 +39,21 @@ public class BrailleGrid extends Composite {
 	return new Position.Simple(gridPosition.getRow() / 4, gridPosition.getCol() / 2);
     }
 
+    public void plotPosition(Position gridPosition, Color plotColor, char theCHAR) {
+        if ( ! this.gridRectangle.containsPosition(gridPosition)) {
+            return ;  
+        }
+        Position plotterCharacterPosition = BrailleUtils.gridPosToComponentPosition(gridPosition);
+
+        Plot plotAtPos = plotter.getPlotAt(plotterCharacterPosition.getRow(), plotterCharacterPosition.getCol());
+        if (plotAtPos != null) {
+            plotAtPos.setPlotChar(theCHAR);
+            plotAtPos.setPlotColor(plotColor);
+        } else {
+            this.plotter.addPlot(plotterCharacterPosition.getRow(), plotterCharacterPosition.getCol(), theCHAR, plotColor);
+        }
+    }
+    
     public void plotPosition(Position gridPosition, Color plotColor) {
 	if ( ! this.gridRectangle.containsPosition(gridPosition)) {
 	    return ;  
@@ -67,6 +82,10 @@ public class BrailleGrid extends Composite {
 
     public void plotPosition(int row, int col, Color plotColor) {
 	plotPosition(new Position.Simple(row, col), plotColor);
+    }
+
+    public void plotPosition(int row, int col, Color plotColor, char theCHAR) {
+        plotPosition(new Position.Simple(row, col), plotColor, theCHAR);
     }
 
     public void unplotPosition(Position gridPosition) {

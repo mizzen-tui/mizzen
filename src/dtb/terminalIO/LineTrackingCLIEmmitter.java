@@ -24,6 +24,8 @@ public class LineTrackingCLIEmmitter implements CLIEmitter {
     public void outputRenderer(BaseTextControlCode cc) {
 	if (cc instanceof HasRowChange) {
 	    lineCounter += ((HasRowChange)cc).deltaRow();
+	    outputStr(cc.getControlCode(), false);
+	    return;
 	}
 	outputStr(cc.getControlCode());
     }
@@ -37,17 +39,27 @@ public class LineTrackingCLIEmmitter implements CLIEmitter {
 	r.render(this.ctx);
     }
 
-    protected void outputStr(String line) {
+    protected void outputStr(String line, boolean incLineCounter) {
 	if (nextOutputIncsLineCounter) {
 	    nextOutputIncsLineCounter = false;
-	    lineCounter++;
+	    if (incLineCounter)
+	        lineCounter++;
 	}
 	ctx.write(line);
     }
 
-    String DEBUGCTR() {
+    protected void outputStr(String line) {
+        outputStr(line, true);
+    }
+
+    public String DEBUGCTR() {
 	return String.format("[%4d]: ", lineCounter);
     }
+    
+    public int getLineCounter() {
+        return this.lineCounter;
+    }
+    
 
     protected void CR() {
 	output(ControlCode.ERASE_END_OF_LINE);
@@ -60,6 +72,7 @@ public class LineTrackingCLIEmmitter implements CLIEmitter {
 	nextOutputIncsLineCounter = true;
     }
 
+    // used?
     public void moveUpToLastKnownTopRow() {
 	if (lineCounter < 1) {
 	    resetLineCounter();
@@ -84,9 +97,9 @@ public class LineTrackingCLIEmmitter implements CLIEmitter {
 	    output(ControlCode.ERASE_LINE); // erase current line
 	if (lineCounter > 1) {
 	    if (erasePreviousContent)
-		output(new ControlCode.CursorUpAndClearLines(lineCounter));
+		output(new ControlCode.CursorUpAndClearLines(lineCounter - 1));
 	    else
-		output(new ControlCode.CursorUp(lineCounter));
+		output(new ControlCode.CursorUp(lineCounter - 1));
 	}
 	resetLineCounter();
     }

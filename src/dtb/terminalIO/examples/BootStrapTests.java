@@ -46,9 +46,9 @@ public class BootStrapTests {
         BorderedComponent brdr2 = new BorderedComponent(txt2).setTitle("XX");
         brdr2.setEmptyChar('^');
 
-        master_canvas.addComponent(5, 80, brdr2);
+        master_canvas.addComponentSegments(5, 80, brdr2);
 
-        master_canvas.addComponent(5, 30, new BorderedComponent(new TextComponent(new FGBGColors(Colors.BICya, Colors.On_IYel), "Hello World!")));
+        master_canvas.addComponentSegments(5, 30, new BorderedComponent(new TextComponent(new FGBGColors(Colors.BICya, Colors.On_IYel), "Hello World!")));
 
         master_canvas.t(0, 50, "[0,50: Will this render?]");
         master_canvas.t(1, 3, "Here is where I must go.\n-------------------------------------");
@@ -58,12 +58,12 @@ public class BootStrapTests {
         master_canvas.t(2, 90, "[2,90]");
         master_canvas.t(3, 50, "[3,50: Will this render?]");
         master_canvas.t(9, 20, "Box?");
-        master_canvas.addComponent(10, 20, componentBox1);
-        master_canvas.addComponent(11, 90, componentBox2);
+        master_canvas.addComponentSegments(10, 20, componentBox1);
+        master_canvas.addComponentSegments(11, 90, componentBox2);
 
-        master_canvas.addComponent(10, 60, new SimpleBorder(null, new Dimension.Simple(10, 10)).setTitle("Here we go!"));
+        master_canvas.addComponentSegments(10, 60, new SimpleBorder(null, new Dimension.Simple(10, 10)).setTitle("Here we go!"));
 
-        master_canvas.addComponent(5, 30, new BorderedComponent(new TextComponent(new FGBGColors(Colors.BICya, Colors.On_IYel), "Hello World!")));
+        master_canvas.addComponentSegments(5, 30, new BorderedComponent(new TextComponent(new FGBGColors(Colors.BICya, Colors.On_IYel), "Hello World!")));
 
         master_canvas.setEmptyChar('~');
 
@@ -100,7 +100,7 @@ public class BootStrapTests {
                 };
                 Rectangle r = new Rectangle.Simple(movableBackend, canvas);
                 BorderedComponent c = makeBorder.apply("moved canvas", r);
-                master_canvas.addComponent(Position.ZERO, c);
+                master_canvas.addComponentSegments(Position.ZERO, c);
 
                 BorderedComponent c2 = makeBorder.apply("canvas", canvas.asRectangle());
                 /*

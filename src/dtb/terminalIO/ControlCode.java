@@ -608,6 +608,17 @@ public abstract class ControlCode implements Renderer {
 		System.arraycopy(codesBuffer, 0, codes, 0, codesBufferLen);
 		color = new ColorFromCodes(codes);
 		PARSE_STATE = PARSE_TEXT;
+                
+		if (ch == '\u001B') { // this can happen if we have color codes back to back.
+                    simpleText = sb.toString();
+                    boolean continueParsing = colorColorSegmentBuilder.newColorSegment(color, "");
+                    if (!continueParsing) return;
+                    PARSE_STATE = PARSE_COLOR_START;
+                    simpleText = null;
+                    color = null; 
+                    sb = new StringBuffer();
+                }
+		
 		sb.append(ch);
 		break;
 

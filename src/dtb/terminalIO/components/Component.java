@@ -68,7 +68,7 @@ public interface Component<T extends Component<?>> extends IScreenLineSegmentsBu
         public void clear() {
             segments.clear();
             fillPolicy.fillEmptyIfConfigured();
-            this.hasDrawn = false;
+            markAsDirty();
         }
 
         protected abstract void draw(Color color, IScreenLineSegmentsBuffer segments);

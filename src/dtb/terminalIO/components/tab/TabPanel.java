@@ -192,7 +192,7 @@ public class TabPanel extends Composite {
 
     }
 
-    void clearForRedraw() {
+    public void clearForRedraw() {
         clear(); // doing a clear on tabPanel -- forces a redraw -- I know.. awkward
         workArea.clear();
     }

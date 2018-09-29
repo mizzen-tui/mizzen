@@ -69,7 +69,7 @@ public class CompositeTest {
                                                              "but my - what nice hooters she\n"+
                                                              "had..  very yummy\n"
                                                              + "What can be done?"));
-        master_canvas.addComponent(4, 112, textC);
+        master_canvas.addComponentSegments(4, 112, textC);
         return textC;
     }
         
@@ -86,7 +86,7 @@ public class CompositeTest {
                                     .setBounds(6, 20 );
         
         
-        master_canvas.addComponent(10, 112, textC);
+        master_canvas.addComponentSegments(10, 112, textC);
         return textC;
     }
 
@@ -105,8 +105,8 @@ public class CompositeTest {
                text3.t(r,r, (r )+"-");
         }
         
-        master_canvas.addComponent(2, 75, new HorizontalLine(new FGBGColors(Colors.BGre),20));
-        master_canvas.addComponent(3, 75, text3);
+        master_canvas.addComponentSegments(2, 75, new HorizontalLine(new FGBGColors(Colors.BGre),20));
+        master_canvas.addComponentSegments(3, 75, text3);
         
         return text3;
     }
@@ -130,8 +130,8 @@ public class CompositeTest {
         
        // master_canvas.addComponent(2, 30, textC);
         
-        master_canvas.addComponent(2, 35, new HorizontalLine(new FGBGColors(Colors.BGre),20));
-        master_canvas.addComponent(3, 35, text2);
+        master_canvas.addComponentSegments(2, 35, new HorizontalLine(new FGBGColors(Colors.BGre),20));
+        master_canvas.addComponentSegments(3, 35, text2);
         return text2;
     }
 

@@ -45,7 +45,7 @@ public class BorderedComponentTest {
         sbDEBUG.append("canvas emptycolor = ").append(master_canvas.getEmptyColor()).append("\n");
         
         
-        master_canvas.addComponent(5, 50, componentBox2);
+        master_canvas.addComponentSegments(5, 50, componentBox2);
 
         
         master_canvas.refresh();

@@ -2,9 +2,12 @@ package dtb.terminalIO.components.chart;
 
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 import java.util.function.Consumer;
 
 import dtb.terminalIO.Canvas;
@@ -12,70 +15,66 @@ import dtb.terminalIO.Colors;
 import dtb.terminalIO.ControlCode;
 import dtb.terminalIO.ControlCode.Color;
 import dtb.terminalIO.ControlCode.FGBGColors;
+import dtb.terminalIO.ControlCode.FgColor;
 import dtb.terminalIO.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.ScreenLineSegment.SegmentImpl;
 import dtb.terminalIO.TerminalScreen;
+import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.RectangleComponent;
+import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.components.plot.shape.ConnectedPoints;
+import dtb.terminalIO.components.plot.shape.Polygon;
+import dtb.terminalIO.components.plot.shape.RectangleShape;
 import dtb.terminalIO.examples.TestsCommon;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.util.StringUtils;
 
 /**
  * A Component that renders a line chart given charting numerical data and
- * charfting labels
+ * charting labels
  */
 public class LineChart extends Composite {
 
-    static final char        VDASH                = '┊';
-    static final char        HDASH                = '┈';
-    static final char        ORIGIN               = '└';
+    static final char   VDASH           = '┊';
+    static final char   HDASH           = '┈';
+    static final char   ORIGIN          = '└';
 
-//    static Comparator<int[]> brailleKeyComparator = new Comparator<int[]>() {
-//                                                      @Override
-//                                                      public int compare(int[] o1, int[] o2) {
-//                                                          int cmp = Integer.compare(o1[0], o2[0]);
-//                                                          if (cmp != 0)
-//                                                              return cmp;
-//                                                          return Integer.compare(o1[1], o2[1]);
-//                                                      }
-//                                                  };
+    double              y_topValue;
+    double              y_bottomValue;
+    double              x_leftValue;
+    double              x_rightValue;
+    TreeSet<ChartData>  all_data;
+    double              y_scale;
+    double              x_scale;
+    int                 axisWidth;
+    int                 axisHeight;
+    int                 axisYLabelGap   = 1;
+    int                 axisXLabelGap   = 2;
+    String[]            labelY;
+    Color               plotColor       = FGBGColors.NO_COLOR_SPECIFIED;
+    Map<String, Series> nameToSeriesMap = new HashMap<String, Series>();
 
-    double                   y_topValue;
-    double                   y_bottomValue;
-    double                   x_leftValue;
-    double                   x_rightValue;
-    //List<ChartData>          data;
-    double                   y_scale;  
-    double                   x_scale;  
-    int                      axisWidth;
-    int                      axisHeight;
-    int                      axisYLabelGap        = 1;
-    int                      axisXLabelGap        = 2;
-    String[]                 labelY;
-    Color                    plotColor            = FGBGColors.NO_COLOR_SPECIFIED;
-    Map<String, Series>      nameToSeriesMap      = new HashMap<String, Series>();
+    BrailleGrid         grid;
+    private int         labelYSpace;
+    private boolean     autoLabels;
+    private String      labelX;
 
-    BrailleGrid              grid;
-    private int              labelYSpace;
-    private boolean          autoLabels;
-    private String           labelX;
-
-    private Series           DEFAULT_series       = new Series(null, null);
+    private Series      DEFAULT_series  = new Series(null, null);
 
     public static class Series {
-        public String name;
-        public Color  color;
-        public int    count = 0;
+        public String   name;
+        public Color    color;
+        public int      count = 0;
         List<ChartData> data;
-        double                   y_topValue;
-        double                   y_bottomValue;
-        double                   x_leftValue;
-        double                   x_rightValue;
+        double          y_topValue;
+        double          y_bottomValue;
+        double          x_leftValue;
+        double          x_rightValue;
 
         public Series(String name, Color color) {
             super();
@@ -84,11 +83,13 @@ public class LineChart extends Composite {
             this.count = 0;
             data = new ArrayList<ChartData>();
             this.y_topValue = Double.MIN_VALUE;
-            this.y_bottomValue = Double.MAX_VALUE;;
+            this.y_bottomValue = Double.MAX_VALUE;
+            ;
             this.x_rightValue = Double.MIN_VALUE;
-            this.x_leftValue = Double.MAX_VALUE;;
+            this.x_leftValue = Double.MAX_VALUE;
+            ;
         }
-        
+
         public void addData(ChartData cData) {
             if (cData.x == null) {
                 if (this.data.size() == 0) {
@@ -97,18 +98,18 @@ public class LineChart extends Composite {
                     cData.x = this.x_rightValue + 1;
                 }
             }
-            
+
             this.data.add(cData);
-            
+
             if (this.y_bottomValue > cData.y) {
                 this.y_bottomValue = cData.y;
             }
             if (this.y_topValue < cData.y) {
                 this.y_topValue = cData.y;
             }
-            
+
             if (this.x_leftValue > cData.x) {
-                this.x_leftValue = cData.y;
+                this.x_leftValue = cData.x;
             }
             if (this.x_rightValue < cData.x) {
                 this.x_rightValue = cData.x;
@@ -143,14 +144,21 @@ public class LineChart extends Composite {
             this(series, y, null, label);
         }
 
+        public static Comparator<ChartData> COMPARATOR_BY_XPOS = new Comparator<ChartData>() {
+            @Override
+            public int compare(ChartData o1, ChartData o2) {
+                // warning! not testing for null!! might cause me grief in the future
+                return Double.compare(o1.x, o2.x);
+            }
+        };
     }
 
     public LineChart(Color color, Dimension d) {
         super(color);
-       // data = new ArrayList<ChartData>();
-        //dataLabels = new ArrayList<String>();
+        this.setBounds(d);
         this.grid = new BrailleGrid(color, new Dimension.Simple(d.getHeight() - 3, d.getWidth() - 3));
         this.add(this.grid);
+        this.all_data = new TreeSet<ChartData>(ChartData.COMPARATOR_BY_XPOS);
     }
 
     public LineChart(Color color, Dimension dim, double[] data) {
@@ -185,41 +193,74 @@ public class LineChart extends Composite {
         series.color = seriesColor;
         return this;
     }
-    
-    
+
+    boolean gridBoundsFixed = false;
+
+    public void setGridBounds(double y_bottomValue, double x_leftValue, double y_topValue, double x_rightValue) {
+        if (y_topValue < y_bottomValue)
+            throw new IllegalArgumentException("assertion (y_topValue >= y_bottomValue) failed");
+        if (x_rightValue < x_leftValue)
+            throw new IllegalArgumentException("assertion (x_rightValue >= x_leftValue) failed");
+
+        this.y_topValue = y_topValue;
+        this.y_bottomValue = y_bottomValue;
+        this.x_rightValue = x_rightValue;
+        this.x_leftValue = x_leftValue;
+
+        gridBoundsFixed = true;
+
+    }
+
     public LineChart addData(String seriesName, double y, Double x, String label) {
 
         Series series = nameToSeries(seriesName);
-        
-        series.addData(new ChartData(series, y, x, label));
-//        int size = data.size();
-//        if (label != null) {
-//            while (series.dataLabels.size() + 1 < size) {
-//                this.dataLabels.add(null);
-//            }
-//            this.dataLabels.add(label);
-//        }
-        if (y_bottomValue > series.y_bottomValue) {
-            y_bottomValue = series.y_bottomValue;
-        }
-        if (y_topValue < series.y_topValue) {
-            y_topValue = series.y_topValue;
-        }
-        
-        if (this.x_leftValue > series.x_leftValue) {
-            this.x_leftValue = series.x_leftValue;
-        }
-        if (this.x_rightValue < series.x_rightValue) {
-            this.x_rightValue = series.x_rightValue;
+
+        ChartData chartData = new ChartData(series, y, x, label);
+
+        series.addData(chartData);
+
+        this.all_data.add(chartData);
+
+        if (!gridBoundsFixed) {
+            if (y_bottomValue > series.y_bottomValue) {
+                y_bottomValue = series.y_bottomValue;
+            }
+            if (y_topValue < series.y_topValue) {
+                y_topValue = series.y_topValue;
+            }
+
+            if (this.x_leftValue > series.x_leftValue) {
+                this.x_leftValue = series.x_leftValue;
+            }
+            if (this.x_rightValue < series.x_rightValue) {
+                this.x_rightValue = series.x_rightValue;
+            }
         }
         return this;
     }
-    
+
+    String stats() {
+        String s = String.format(
+                " y_bottomValue = %6.2f   y_scale       = %6.2f \n" 
+              + " y_topValue    = %5.2f   x_scale       = %6.2f \n"
+              + " x_leftValue   = %6.2f   grid height   = %6d  %3d \n" 
+              + " x_rightValue  = %5.2f   grid width    = %6d  %3d \n"
+              + " calc(y_top)   = %6d   calc(x_right) = %6d\n"
+              + " calc(y_bot)   = %6d   calc(x_left)  = %6d",
+                y_bottomValue, y_scale, y_topValue, x_scale, x_leftValue, getGridRectangle().getHeight(), this.grid.getHeight(), x_rightValue,
+                getGridRectangle().getWidth(), this.grid.getWidth(), 
+                translate_to_y_plotValue(y_topValue), 
+                translate_to_x_plotValue(x_rightValue),
+                translate_to_y_plotValue(y_bottomValue), 
+                translate_to_x_plotValue(x_leftValue)
+                );
+        return s;
+    }
+
     @SuppressWarnings("null")
     public LineChart addData(String seriesName, double y, String label) {
         return addData(seriesName, y, null, label);
     }
-
 
     public LineChart addData(double d) {
         return addData(null, d, null);
@@ -231,6 +272,7 @@ public class LineChart extends Composite {
 
     public void clearData() {
 
+        this.all_data.clear();
         DEFAULT_series = new Series(null, null);
         nameToSeriesMap.clear();
 
@@ -240,7 +282,7 @@ public class LineChart extends Composite {
 
         x_leftValue = Double.MAX_VALUE;
         x_rightValue = Double.MIN_VALUE;
-        
+
         x_scale = 0;
 
     }
@@ -253,41 +295,49 @@ public class LineChart extends Composite {
         }
 
         int gridLimitWidth = this.grid.getGridRectangle().getWidth();
-        
+
         Color prevColor = null;
-        PointPlotter pp =  grid.asPointPlotter();
+        PointPlotter pp = grid.asPointPlotter();
 
         // set color
         if (series.color != null) {
             prevColor = pp.setColor(series.color);
         }
-        
+
         // plot points
 
         ConnectedPoints graphedLine = new ConnectedPoints(false);
 
         for (int i = 0; i < dataLen && i < gridLimitWidth; i++) {
-            int y = (int) Math.round((series.data.get(i).y - this.y_bottomValue) / this.y_scale + 0.5);
-            graphedLine.addPoint(i, y);
+            int y = translate_to_y_plotValue(series.data.get(i).y);
+            int x = translate_to_x_plotValue(series.data.get(i).x);
+            graphedLine.addPoint(x, y);
         }
 
         graphedLine.draw(pp);
+
+        // todo:  should make the following optional - driven by series config
+//        for (int i = 0; i < dataLen && i < gridLimitWidth; i++) {
+//            int y = translate_to_y_plotValue(series.data.get(i).y);
+//            int x = translate_to_x_plotValue(series.data.get(i).x);
+//            this.grid.plotPosition(new Position.Simple(y, x), Colors.IYel, '*');
+//        }
 
         // unset color
         if (series.color != null) {
             prevColor = pp.setColor(prevColor);
         }
-        
-        
+
     }
 
     void renderBraille() {
-        
+
         renderBraille(DEFAULT_series);
-        
+
         for (Series series : nameToSeriesMap.values()) {
-            renderBraille(series);   
+            renderBraille(series);
         }
+
 
     }
 
@@ -303,22 +353,30 @@ public class LineChart extends Composite {
     }
 
     private void calcLabelX() {
-//        int l = 0;
-//        String _labelX = "";
-//        String gap = StringUtils.repeat(' ', this.axisXLabelGap);
-//        int dataLabelsLen = this.dataLabels.size();
-//        for (int i = 0; i < dataLabelsLen && l < this.axisWidth; i++) {
-//            // assume braille mode
-//            if (2 * l >= dataLabelsLen)
-//                break;
-//            String s = this.dataLabels.get(2 * l);
-//            int w = s.length();
-//            if (l + w <= this.axisWidth) {
-//                _labelX = _labelX + s + gap;
-//            }
-//            l += w + this.axisXLabelGap;
-//        }
-        this.labelX = ""; // _labelX;
+        int l = 0;
+        String _labelX = "";
+        String gap = StringUtils.repeat(' ', this.axisXLabelGap);
+        int dataLabelsLen = this.all_data.size();
+        Iterator<ChartData> i_all_data = all_data.iterator();
+        for (int i = 0; i < dataLabelsLen && l < this.axisWidth; i++) {
+            // assume braille mode
+            if (2 * l >= dataLabelsLen)
+                break;
+
+            String s = i_all_data.next().label;
+            if (i_all_data.hasNext())
+                i_all_data.next();
+            int w = s.length();
+            if (l + w <= this.axisWidth) {
+                _labelX = _labelX + s + gap;
+            }
+            l += w + this.axisXLabelGap;
+        }
+        this.labelX = _labelX;
+    }
+
+    public Rectangle getGridRectangle() {
+        return this.grid.getGridRectangle();
     }
 
     private void calcLabelY() {
@@ -339,14 +397,15 @@ public class LineChart extends Composite {
 
     private void calcLayout() {
         // set data labels if not provided
-//        if (this.dataLabels == null || this.dataLabels.size() == 0 || this.autoLabels) {
-//            this.autoLabels = true;
-//            int dataLen = this.data.size();
-//            this.dataLabels = new ArrayList<String>(dataLen);
-//            for (int i = 0; i < dataLen; i++) {
-//                this.dataLabels.add(i + "");
-//            }
-//        }
+        // if (this.dataLabels == null || this.dataLabels.size() == 0 ||
+        // this.autoLabels) {
+        // this.autoLabels = true;
+        // int dataLen = this.data.size();
+        // this.dataLabels = new ArrayList<String>(dataLen);
+        // for (int i = 0; i < dataLen; i++) {
+        // this.dataLabels.add(i + "");
+        // }
+        // }
 
         Rectangle inner = getInnerRectangle();
         this.axisHeight = inner.getHeight() - 2;
@@ -357,12 +416,28 @@ public class LineChart extends Composite {
         grid.resize(new Dimension.Simple(axisHeight, axisWidth - 1));
         grid.setBorder(false);
         this.moveChildTo(new Position.Simple(0, this.labelYSpace + 1), grid);
-        int gridPlotHeight = this.grid.getGridRectangle().getHeight();
-        double span = this.y_topValue - this.y_bottomValue;
-        this.y_scale = span / (double) (gridPlotHeight);
 
+        int gridPlotHeight = this.grid.getGridRectangle().getHeight();
+        double y_span = this.y_topValue - this.y_bottomValue;
+        this.y_scale = y_span / (double) (gridPlotHeight - 1);
+
+        int gridPlotWidth = this.grid.getGridRectangle().getWidth();
+        double x_span = this.x_rightValue - this.x_leftValue;
+        this.x_scale = x_span / (double) (gridPlotWidth - 1);
     }
 
+    int translate_to_y_plotValue(double yvalue) {
+        int y = (this.grid.getGridRectangle().getHeight()-1) - (int) Math.round(((yvalue - this.y_bottomValue) / this.y_scale) ) ;
+        return y;
+    }
+
+    int translate_to_x_plotValue(double xvalue) {
+        int x = (int) Math.round(((xvalue - this.x_leftValue) / this.x_scale) );
+        return x;
+    }
+
+    
+    
     private void plotAxes(Color color, IScreenLineSegmentsBuffer segments) {
         Rectangle inner = getInnerRectangle();
         int origY = inner.getHeight() - 1;
@@ -390,12 +465,25 @@ public class LineChart extends Composite {
 
     }
 
+    BorderedComponent info = null;
+    TextComponent     tc   = null;
+
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
         this.grid.clearPlots();
         calcLayout();
         plotAxes(color, segments);
         renderBraille();
+
+        /*
+        if (info == null) {
+            tc = new TextComponent(stats());
+            info = new BorderedComponent(tc);
+            this.add(10, 10, info);
+        }
+
+        tc.setText(stats());
+*/
         super.draw(color, segments);
     }
 
@@ -421,8 +509,8 @@ public class LineChart extends Composite {
 
         master_canvas.setSize(30, 130);
 
-        master_canvas.addComponent(2, 4, new RectangleComponent(FGBGColors.DEFAULT, 5, 10));
-        master_canvas.addComponent(4, 8, new RectangleComponent(FGBGColors.DEFAULT, 5, 15));
+        master_canvas.addComponentSegments(2, 4, new RectangleComponent(FGBGColors.DEFAULT, 5, 10));
+        master_canvas.addComponentSegments(4, 8, new RectangleComponent(FGBGColors.DEFAULT, 5, 15));
 
         LineChart lc = new LineChart(20, 60);
         lc.setBorder(true);
@@ -456,9 +544,9 @@ public class LineChart extends Composite {
 
                 bc.addData(d, bc_DATALabels[i]);
             }
-            master_canvas.addComponent(2, 15, bc);
+            master_canvas.addComponentSegments(2, 15, bc);
 
-            master_canvas.addComponent(5, 65, lc);
+            master_canvas.addComponentSegments(5, 65, lc);
             master_canvas.t(31, 1, "j = " + j + "   ");
             master_canvas.refresh();
             master_canvas.t(lc.y_bottomValue + "  " + lc.y_topValue + "    ");

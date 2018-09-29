@@ -41,9 +41,9 @@ public class BarChartTest {
                                              "The Rain in Spain stays \n" + 
                                              "mainly on the plain!"));
         
-        master_canvas.addComponent(2, 30, textC);
+        master_canvas.addComponentSegments(2, 30, textC);
         
-        master_canvas.addComponent(7, 35, text2);
+        master_canvas.addComponentSegments(7, 35, text2);
 
         Composite box = new Composite().setPosition(5, 40).add(new BoundedComponent.DONOTHING(10,20)).setBorder(true);
         
@@ -57,9 +57,9 @@ public class BarChartTest {
         Composite box2 = new Composite()
                           .setPosition(10, 45).add(plotter).setBorder(true);
 
-        master_canvas.addComponent(0, 0, box);
+        master_canvas.addComponentSegments(0, 0, box);
 
-        master_canvas.addComponent(5, 5, box2);
+        master_canvas.addComponentSegments(5, 5, box2);
 
         master_canvas.refresh();
 
@@ -69,7 +69,7 @@ public class BarChartTest {
                     doRandomPlots(plotter, plotter);
                     //plotter.clear();
                     box2.clear();
-                    master_canvas.addComponent(5, 5, box2);
+                    master_canvas.addComponentSegments(5, 5, box2);
                     master_canvas.refresh();
                     TestsCommon.sleep(50);
                 }

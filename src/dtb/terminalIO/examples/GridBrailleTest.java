@@ -32,6 +32,7 @@ import dtb.terminalIO.events.KeyInputEventsProducer;
 import dtb.terminalIO.events.Keys;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.examples.Demo.SimpleDemo;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.PositionTransform;
@@ -43,6 +44,7 @@ import dtb.terminalIO.util.Stty;
 public class GridBrailleTest {
 
     // an eventhandler that is used to move points around a circle
+    // this would work well as a handler for an idle event
     static class CirclePathEventHandler implements EventHandler {
 	CirclePathPlotter circlePath;
 
@@ -131,34 +133,7 @@ public class GridBrailleTest {
 
     }
 
-    public static class BrailleDemo {
-
-	List<ConditionalEventHandler> eventHandlers = new ArrayList<ConditionalEventHandler>();
-
-	void addAndRememberEventHandler(EventBus eventBus, ConditionalEventHandler eventHandler) {
-	    eventBus.addEventHandler(eventHandler);
-	    eventHandlers.add(eventHandler);
-	}
-
-	public void addAllEventHandlers(EventBus eventBus) {
-	    for (ConditionalEventHandler e : eventHandlers) {
-		eventBus.addEventHandler(e);
-	    }
-	}
-	
-	void removeAllEventHandlers(EventBus eventBus) {
-	    for (ConditionalEventHandler e : eventHandlers) {
-		eventBus.remove(e);
-	    }
-	}
-	
-	public void renderPreUPdate() {
-	    // do nothing
-	}
-
-	public void flushOutput() {
-	    // do nothing
-	}
+    public static class BrailleDemo extends SimpleDemo {
 
 	public void setUpDemo(EventBus eventBus, Rectangle bounds, IScreenLineSegmentsBuffer.Provider segmentsBufferProvider) {
 
@@ -355,12 +330,6 @@ public class GridBrailleTest {
 
 		}
 	    }));
-	}
-
-	public void tearDownDemo(EventBus eventBus) {
-
-	    removeAllEventHandlers(eventBus);
-
 	}
     }
 

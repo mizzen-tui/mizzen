@@ -58,7 +58,7 @@ public class ColoredTextTest {
 
 	    image.clear();
 	    imageWithBorder.clear();
-	    master_canvas.addComponent(2,2,imageWithBorder);
+	    master_canvas.addComponentSegments(2,2,imageWithBorder);
 
 	    master_canvas.refresh();
 	    

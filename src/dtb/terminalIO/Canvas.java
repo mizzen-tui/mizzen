@@ -179,11 +179,11 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
         this.setTextColor(curColor);
     }
 
-    public void addComponent(int rowOffset, int colOffset, Component<?> component) {
-        addComponent(new Position.Simple(rowOffset, colOffset), component);
+    public void addComponentSegments(int rowOffset, int colOffset, Component<?> component) {
+        addComponentSegments(new Position.Simple(rowOffset, colOffset), component);
     }
 
-    public void addComponent(Position offset, Component<?> component) {
+    public void addComponentSegments(Position offset, Component<?> component) {
         Rectangle bounds = this.asRectangle();
 
         ScreenLineSegment.UTIL.addSegmentsWithOffsetBounded(offset, bounds, 
@@ -191,8 +191,8 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
                                                            component.getSegmentsBuffer().getSegments());
     }
 
-    public void addComponent(Component<?> component) {
-        addComponent(Position.ZERO, component);
+    public void addComponentSegments(Component<?> component) {
+        addComponentSegments(Position.ZERO, component);
     }
     
     public int segmentsSize() {

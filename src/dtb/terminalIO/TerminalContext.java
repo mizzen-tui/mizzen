@@ -88,9 +88,16 @@ public interface TerminalContext {
     public static class StringContext extends AbstractTerminalContext {
 
         public StringBuffer sb;
+        public boolean isRAW = false;
 
         public StringContext() {
             sb = new StringBuffer();
+            isRAW=false;
+        }
+
+        public StringContext(boolean isRAW) {
+            sb = new StringBuffer();
+            this.isRAW=isRAW;
         }
 
         @Override
@@ -104,12 +111,12 @@ public interface TerminalContext {
 
 	@Override
 	public boolean isRaw() {
-	    return false;
+	    return this.isRAW;
 	}
 
 	@Override
 	public boolean isCooked() {
-	    return true;
+	    return !this.isRAW;
 	}
     };
 

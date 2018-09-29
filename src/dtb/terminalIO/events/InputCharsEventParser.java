@@ -6,12 +6,23 @@ import dtb.terminalIO.events.Keys.KeyEvent;
 import dtb.terminalIO.events.Keys.KeyStroke;
 import dtb.terminalIO.events.Keys.KeyStrokeFindResult;
 
+/**
+ * A helper class used primarily by KeyInputEventsProducer.
+ * 
+ * Its job is to process a char[] buffer of characters (presumably read in from stdin)
+ * and converts this into a KeyStroke object which then gets enqueued into an EventBus
+ * to be later handled by the application. 
+ * 
+ * Main entry point method is:  {@link #parseInput(char[], int, EventBus)}
+ *  
+ */
 public class InputCharsEventParser {
 
     private static final int  STATE_START               = 1;
     private static final int  STATE_ESCAPE_INTERMEDIATE = 2;
     private static final int  STATE_ESCAPE              = 3;
 
+    
     private int  parse_STATE               = STATE_START;
 
     private long last_ESC_PRESSED_TIME = Integer.MAX_VALUE;
@@ -31,7 +42,12 @@ public class InputCharsEventParser {
 	}
     }
     
-    
+    /**
+     * read in
+     * @param buffer
+     * @param readIn
+     * @param eventBus
+     */
     public void parseInput(char[] buffer, int readIn, EventBus eventBus) {
 	
 	eventBus.addEvent( new InputCharsDEBUGEvent(buffer, readIn)  );
