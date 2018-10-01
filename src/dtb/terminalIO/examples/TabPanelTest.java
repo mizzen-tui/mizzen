@@ -21,6 +21,8 @@ import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.KeyInputEventHandler;
 import dtb.terminalIO.events.KeyInputEventsProducer;
 import dtb.terminalIO.events.Keys;
+import dtb.terminalIO.events.OnResizeEventHandler;
+import dtb.terminalIO.events.TerminalResizePoller;
 import dtb.terminalIO.events.Keys.KeyStroke;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.TerminalEvent;
@@ -47,6 +49,11 @@ public class TabPanelTest {
 
         TabAction getTabAction(KeyStroke hotKey, String tabText) {
             return new TabAction(hotKey, tabText) {
+        	
+                public void resize(TabContext tabContext) {
+                    demo.resize(tabContext.getBounds());
+                }
+
                 @Override
                 public void drawOnActive(TabContext tabContext) {
 
@@ -91,14 +98,12 @@ public class TabPanelTest {
             Dimension d_200 = acmeLOGOfileDimension(200);
 
             TabPanel tb = new TabPanel(FGBGColors.DEFAULT, new FGBGColors(Colors.Blu).bold(), eventBus,
-                    new Dimension.Simple(master_canvas.getHeight() - 10, master_canvas.getWidth() - 10));
+                                       new Dimension.Simple(master_canvas.getHeight() - 10, master_canvas.getWidth() - 10));
             tb.setBorder(false);
 
             tb.addTab(new TabAction(Keys.F5_KEYSTROKE, "Acme Demo") {
 
-                @Override
-                public void drawOnActive(TabContext tabCtx) {
-
+                public void resize(TabContext tabCtx) {
                     int fileID = 80;
                     if (tabCtx.getBounds().contains(d_200)) {
                         fileID = 200;
@@ -119,6 +124,12 @@ public class TabPanelTest {
                     BorderedComponent imageWithBorder = new BorderedComponent(tc);
                     Position pos = tabCtx.getBounds().centered(imageWithBorder, Position.ZERO);
                     tabCtx.getSegmentsBuffer().mergeAtBounded(pos, tabCtx.getBounds(), imageWithBorder.getSegmentsBuffer());
+                }
+
+                @Override
+                public void drawOnActive(TabContext tabCtx) {
+                    
+                    resize(tabCtx);
                 }
 
                 @Override
@@ -161,6 +172,7 @@ public class TabPanelTest {
                     return bc;
 
                 }
+                
 
                 double[] bc_DATA       = new double[] { 10.0, 5.0, 13.0, 4.0, 6.0, 5.0, 6.0, 7.0, 8.0 };
                 String[] bc_DATALabels = new String[] { "Lumber", "Metal", "Fish", "Beef", "Lamb", "Liquor", "Milk", "Butter", "Cherries" };
@@ -187,6 +199,13 @@ public class TabPanelTest {
                 }
 
                 ConditionalEventHandler barChartUpdater;
+                BarChart bc;
+                
+                public void resize(TabContext tabCtx) {
+                    if (bc != null)
+                       bc.resize(tabCtx.getBounds());
+                }
+
 
                 @Override
                 public void drawOnActive(TabContext tabCtx) {
@@ -194,7 +213,7 @@ public class TabPanelTest {
                     if (barChartUpdater != null)
                         return;
 
-                    BarChart bc = buildBarChart(tabCtx.getDrawingArea());
+                    bc = buildBarChart(tabCtx.getDrawingArea());
 
                     barChartUpdater = buildBarChartUpdaterTask(bc, tabCtx);
 
@@ -260,6 +279,20 @@ public class TabPanelTest {
                 }
             }));
 
+            
+	    TerminalResizePoller.setup(eventBus);
+
+	    eventBus.addEventHandler(new OnResizeEventHandler() {
+		@Override
+		public void handleResize(Dimension size) {
+		    master_canvas.setSize(size.getHeight() - 1, size.getWidth() - 1); 
+		    master_canvas.clearCanvas();
+		    tb.resize(new Dimension.Simple(master_canvas.getHeight() - 10, master_canvas.getWidth() - 10));
+		    
+		}
+	    });
+            
+            
             EventHandler terminate = new EventHandler() {
                 @Override
                 public void handle(TerminalEvent<?> te) {
@@ -280,7 +313,6 @@ public class TabPanelTest {
                     if (te.getType().equals(TYPE.EXCEPTION)) {
                         System.out.println("\n");
                         ((Exception) te.getEventData()).printStackTrace();
-
                     }
                 }
             };

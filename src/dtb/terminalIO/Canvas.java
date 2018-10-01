@@ -250,7 +250,7 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
     private void outputRow(List<ScreenLineSegment> scsOnSameRow) {
         int rowWidth = ScreenLineSegment.UTIL.totalWidth(scsOnSameRow);
         if (rowWidth > this.width)
-            throw new IllegalStateException("big width!");
+            throw new IllegalStateException(String.format("big width! %d (rowWidth)> %d (canvas width)",rowWidth,this.width));
         int row = -1;
 
         int lastRightMostPlus1 = 0;

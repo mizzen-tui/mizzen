@@ -7,6 +7,7 @@ import dtb.terminalIO.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.IScreenLineSegmentsBuffer.Provider;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.ChainedEventHandler.ConditionalEventHandler;
+import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 
 public interface Demo {
@@ -20,6 +21,8 @@ public interface Demo {
     void setUpDemo(EventBus eventBus, Rectangle bounds, IScreenLineSegmentsBuffer.Provider segmentsBufferProvider);
 
     void tearDownDemo(EventBus eventBus);
+
+    void resize(Dimension size);
     
     
     public static abstract class SimpleDemo implements Demo {
@@ -60,5 +63,7 @@ public interface Demo {
         }
         
     }
+
+
 
 }

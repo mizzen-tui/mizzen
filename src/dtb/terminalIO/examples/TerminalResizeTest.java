@@ -12,20 +12,20 @@ import dtb.terminalIO.components.Box;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.RectangleComponent;
 import dtb.terminalIO.components.TextComponent;
-import dtb.terminalIO.events.ChainedEventHandler.ConditionalEventHandlerImpl;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.KeyInputEventHandler;
 import dtb.terminalIO.events.KeyInputEventsProducer;
 import dtb.terminalIO.events.Keys;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
+import dtb.terminalIO.events.OnResizeEventHandler;
 import dtb.terminalIO.events.TerminalEvent;
-import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
+import dtb.terminalIO.events.TerminalResizePoller;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.util.Stty;
 import dtb.terminalIO.util.TerminalDimensions;
 
-public class WindowResizeTest {
+public class TerminalResizeTest {
     
     public static void main(String[] args) throws IOException {
         // TODO Auto-generated method stub
@@ -87,7 +87,7 @@ public class WindowResizeTest {
             eventBus.stopConsuming();
             return;
         }
-        
+
         EventHandler terminate = new EventHandler() {
 
             @Override
@@ -132,69 +132,14 @@ public class WindowResizeTest {
                 
             }}) );
         
-
-        eventBus.addEventHandler( new OnIdleEventEventHandler.RepeatingInterval(1000, new EventHandler() {
-
-            Dimension lastSize = Dimension.ZERO;
-
-            long lastChange = 0;
-            
+        TerminalResizePoller.setup(eventBus); 
+        
+        eventBus.addEventHandler( new OnResizeEventHandler() {
             @Override
-            public void handle(TerminalEvent<?> te) {
-                TerminalDimensions size = TerminalDimensions.create();
-                
-                if (lastSize.isSameDimension(size)) {
-                    return ;
-                }
-                long now = System.currentTimeMillis();
-                long elapsed = now - lastChange;
-
-//                if (elapsed < 2000) {
-//                    return;
-//                }
-                
-                // screen.clear();
-
-                eventBus.addEvent( new TerminalEvent<Dimension>(this, TerminalEvent.TYPE.RESIZE, size) );
-                
-                lastChange = now;
-                
-                lastSize = size;
-
-            }}) );
-        
-        
-        class ResizeEventEventHandler extends ConditionalEventHandlerImpl {
-
-            public ResizeEventEventHandler(EventHandler handler) {
-                super(new IS_Event_TYPE(TerminalEvent.TYPE.RESIZE), handler);
-            }
-            
-        }
-        
-        
-        eventBus.addEventHandler( new ResizeEventEventHandler(new EventHandler() {
-
-            int counter = 0;
-
-            
-            @Override
-            public void handle(TerminalEvent<?> te) {
-                
-                Dimension size = (Dimension) te.getEventData();
-
+            public void handleResize(Dimension size) {
                 resizer.accept(size);
-                
             }
-            
-        }));
-        
-        
-        
-        
-        
+        });
     }
-        
-    
 
 }

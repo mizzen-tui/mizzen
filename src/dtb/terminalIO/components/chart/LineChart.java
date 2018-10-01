@@ -161,6 +161,12 @@ public class LineChart extends Composite {
         this.all_data = new TreeSet<ChartData>(ChartData.COMPARATOR_BY_XPOS);
     }
 
+    public void resize(Dimension d) {
+	super.resize(d);
+	this.grid.resize(new Dimension.Simple(d.getHeight() - 3, d.getWidth() - 3));
+    }
+    
+    
     public LineChart(Color color, Dimension dim, double[] data) {
         this(color, dim);
         for (double d : data) {

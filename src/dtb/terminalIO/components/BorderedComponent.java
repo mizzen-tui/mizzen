@@ -34,6 +34,13 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent> imple
     public BorderedComponent(BoundedComponent<?> component) {
         this(component.getColor(), component);
     }
+    
+    public void resize(Dimension d) {
+        super.resize(d);
+        this.border.resize(d);
+        this.component.resize(new Dimension.Simple(d.getHeight()-2, d.getWidth()-2));
+    }
+
 
     public BorderedComponent setEmptyChar(char emptyChar) {
 	BorderedComponent result = super.setEmptyChar(emptyChar);

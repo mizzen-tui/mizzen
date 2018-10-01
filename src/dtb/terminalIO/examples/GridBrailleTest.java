@@ -1,9 +1,7 @@
 package dtb.terminalIO.examples;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
 
 import dtb.terminalIO.Canvas;
 import dtb.terminalIO.Colors;
@@ -24,14 +22,18 @@ import dtb.terminalIO.components.plot.shape.CompositeShape;
 import dtb.terminalIO.components.plot.shape.RectangleShape;
 import dtb.terminalIO.components.plot.shape.ShapeWithTransform;
 import dtb.terminalIO.components.plot.shape.Triangle;
-import dtb.terminalIO.events.ChainedEventHandler.ConditionalEventHandler;
+import dtb.terminalIO.events.ChainedEventHandler.ConditionalEventHandlerImpl;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.KeyInputEventHandler;
 import dtb.terminalIO.events.KeyInputEventsProducer;
 import dtb.terminalIO.events.Keys;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
+import dtb.terminalIO.events.OnResizeEventHandler;
 import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
+import dtb.terminalIO.events.TerminalEvent.TYPE;
+import dtb.terminalIO.events.TerminalResizePoller;
 import dtb.terminalIO.examples.Demo.SimpleDemo;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
@@ -78,6 +80,53 @@ public class GridBrailleTest {
 
     public static void main(String[] args) {
 
+	String _style = "MAX";
+	if (args != null && args.length > 0 && args[0].equalsIgnoreCase("small")) {
+	    _style = "SMALL";
+	}
+	if (args != null && args.length > 0 && args[0].equalsIgnoreCase("medium")) {
+	    _style = "MEDIUM";
+	}
+	if (args != null && args.length > 0 && args[0].equalsIgnoreCase("tiny")) {
+	    _style = "TINY";
+	}
+	String style = _style;
+
+	TerminalScreen screen = TestsCommon.getTerminalScreenForTesting(args);
+
+	Canvas master_canvas = TestsCommon.getMasterCanvasForTesting(screen);
+	master_canvas.setEmptyChar(' ');
+
+	BrailleDemo brailleDemo = new BrailleDemo() {
+	    public void flushOutput() {
+		master_canvas.t(0, 0, "Braille Characters used for plotting.  MODE :" + style + "  ");
+		master_canvas.refresh();
+	    }
+	};
+
+	Rectangle bounds = null;
+	if ("SMALL".equalsIgnoreCase(style)) {
+	    bounds = new Rectangle.Simple(0, 0, Math.min(20, master_canvas.getHeight()), Math.min(100,
+		    master_canvas.getWidth()));
+	} else if ("MEDIUM".equalsIgnoreCase(style)) {
+	    bounds = new Rectangle.Simple(0, 0, Math.min(25, master_canvas.getHeight()), Math.min(100,
+		    master_canvas.getWidth()));
+	} else if ("TINY".equalsIgnoreCase(style)) {
+	    bounds = new Rectangle.Simple(0, 0, Math.min(15, master_canvas.getHeight()), Math.min(60,
+		    master_canvas.getWidth()));
+	} else {
+	    bounds = new Rectangle.Simple(master_canvas);
+	}
+
+	master_canvas.setSize(bounds.getHeight(), bounds.getWidth());
+
+	screen.add(ControlCode.HIDE_CURSOR);
+	// screen.refresh();
+	// master_canvas.t("  Braille Characters used for plotting");
+	master_canvas.t(" ");
+
+	master_canvas.refresh();
+
 	EventBus eventBus = new EventBus();
 	KeyInputEventsProducer keyInputEventsProducer = null;
 	try {
@@ -87,104 +136,111 @@ public class GridBrailleTest {
 	    return;
 	}
 
-	TerminalScreen screen = TestsCommon.getTerminalScreenForTesting(args);
+	master_canvas.t("Braille Characters used for plotting");
+	master_canvas.refresh();
 
-	Canvas master_canvas = TestsCommon.getMasterCanvasForTesting(screen);
-	master_canvas.setEmptyChar(' ');
+	brailleDemo.setUpDemo(eventBus, bounds, master_canvas);
 
-	screen.add(ControlCode.HIDE_CURSOR);
-	screen.refresh();
+	EventHandler terminate = new EventHandler() {
 
-	master_canvas.t("  Braille Characters used for plotting");
+	    @Override
+	    public void handle(TerminalEvent<?> te) {
+		eventBus.stopConsuming();
+		screen.add(ControlCode.SHOW_CURSOR);
+		screen.refresh();
 
-	BrailleDemo brailleDemo = new BrailleDemo() {
-		public void flushOutput() {
-		    master_canvas.refresh();
+		try {
+		    Stty.setCooked();
+		} catch (IOException e) {
+		    e.printStackTrace();
 		}
-	};
-	
-	brailleDemo.setUpDemo(eventBus, new Rectangle.Simple(master_canvas), master_canvas);
-	
 
-	    EventHandler terminate = new EventHandler() {
-
-		@Override
-		public void handle(TerminalEvent<?> te) {
-		    eventBus.stopConsuming();
-		    screen.add(ControlCode.SHOW_CURSOR);
-		    screen.refresh();
-
-		    try {
-			Stty.setCooked();
-		    } catch (IOException e) {
-			e.printStackTrace();
-		    }
+		if (te.getType().equals(TYPE.EXCEPTION)) {
+		    System.out.println("\n");
+		    ((Exception) te.getEventData()).printStackTrace();
+		} else {
 		    // next refresh() is necessary to get cursor to be below
 		    // rendered canvas
 		    master_canvas.refresh();
-		    return;
 		}
-	    };
+		return;
+	    }
+	};
 
-	    eventBus.addEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
+	eventBus.addEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
+	eventBus.addEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
+	eventBus.addEventHandler(new ConditionalEventHandlerImpl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
 
-	    eventBus.addEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
+	if (style.equals("MAX")) {
+	    TerminalResizePoller.setup(eventBus);
 
-
+	    eventBus.addEventHandler(new OnResizeEventHandler() {
+		@Override
+		public void handleResize(Dimension size) {
+		    master_canvas.setSize(size.getHeight() - 1, size.getWidth() - 1); 
+		    master_canvas.clearCanvas();
+		    brailleDemo.resize(master_canvas);
+		}
+	    });
+	}
     }
 
     public static class BrailleDemo extends SimpleDemo {
 
-	public void setUpDemo(EventBus eventBus, Rectangle bounds, IScreenLineSegmentsBuffer.Provider segmentsBufferProvider) {
+	Composite brailleComponent;
+	BrailleGrid grid;
+	TextComponent tc;
+	Runnable drawIt;
 
-	    Composite brailleComponent = new Composite();
-	    brailleComponent.setBounds( bounds.getHeight() - 4, bounds.getWidth() - 4 );
-	    brailleComponent.setBorder(false);
+	public void resize(Dimension size) {
+	    brailleComponent.setBounds(size.getHeight() - 4, size.getWidth() - 4);
+
+	    Dimension textHelpDim = Dimension.UTIL.stringToDimension(tc.getText());
+
+	    tc.resize(new Dimension.Simple(Math.min(textHelpDim.getHeight(), size.getHeight() - 4), Math.min(
+		    textHelpDim.getWidth(), size.getWidth() / 2)));
+
+	    grid.resize(new Dimension.Simple(brailleComponent.getHeight() - 4, brailleComponent.getWidth() - 4
+		    - tc.getWidth()));
+
+	    brailleComponent.moveChildTo(new Position.Simple(2, tc.getWidth() + 2), grid);
 	    
+	}
+
+	public void setUpDemo(EventBus eventBus, Rectangle bounds,
+		IScreenLineSegmentsBuffer.Provider segmentsBufferProvider) {
+
+	    brailleComponent = new Composite();
+	    brailleComponent.setBounds(bounds.getHeight() - 4, bounds.getWidth() - 4);
+	    brailleComponent.setBorder(true);
+
 	    Color textCOLOR = FGBGColors.DEFAULT;
 	    Color textColorBOLD = textCOLOR.bold();
-	    
-	    TextComponent tcBrailleChars = new TextComponent(textCOLOR,
-		    textColorBOLD.asString()+"Braille Character set : " + 
-		    Colors.ICya.asBold().asString() + "⠀⠁⠂⠃⠄⠅⠆⠇⠈⠉⠊⠋⠌⠍⠎⠏⠐⠑⠒⠓⠔⠕⠖⠗⠘⠙⠚⠛⠜⠝⠞⠟⠠⠡⠢⠣⠤⠥⠦⠧⠨⠩⠪⠫⠬⠭⠮⠯⠰⠱⠲⠳⠴⠵⠶⠷⠸⠹⠺⠻⠼⠽⠾⠿" +
-		    textCOLOR.asString()
-		    );
-	    
-	    TextComponent tc = new TextComponent(textCOLOR,
-		      "This is a demonstration \n"
-		    + "using the special braille\n"
-		    + "character set to plot points\n"
-		    + "in a standard linux terminal.\n"
-		    + "\n"
-		    + "The idea is that we map the normal\n"
-		    + "terminal row columns combined with the\n"
-		    + "2 x 8 dots of the braille character set\n"
-		    + "to come up with a plottable coordinate system.\n"
-		    + "\n"
-		    + "      "+Colors.IYel.asBold().asString()+"    .........."+textCOLOR.asString()+"\n"
-		    + "\n"
-		    + "In this example we are\n"
-		    + "plotting boxes, circles and triangles.\n"
-		    + "\n"
-		    + "We transform (move/rotate) their positions\n"
-		    + "using simple trigonometry\n"
-		    + "\n"
-		    + "A more practical Acme use-case for\n"
-		    + "this plotting technique would be to\n"
-		    + "to build terminal-based charts for\n"
-		    + "monitoring values stored in the OLT-MGR\n"
-		    + "and rendered via CLIApp.java"
-		    );
-	    
-	    
+
+	    TextComponent tcBrailleChars = new TextComponent(textCOLOR, textColorBOLD.asString()
+		    + "Braille Character set : " + Colors.ICya.asBold().asString()
+		    + "⠀⠁⠂⠃⠄⠅⠆⠇⠈⠉⠊⠋⠌⠍⠎⠏⠐⠑⠒⠓⠔⠕⠖⠗⠘⠙⠚⠛⠜⠝⠞⠟⠠⠡⠢⠣⠤⠥⠦⠧⠨⠩⠪⠫⠬⠭⠮⠯⠰⠱⠲⠳⠴⠵⠶⠷⠸⠹⠺⠻⠼⠽⠾⠿" + textCOLOR.asString());
+
+	    tc = new TextComponent(textCOLOR, "This is a demonstration \n" + 
+	                                      "using the special braille\n"
+		    + "character set to plot points\n" + "in a standard linux terminal.\n" + "\n"
+		    + "The idea is that we map the normal\n" + "terminal row columns combined with the\n"
+		    + "2 x 8 dots of the braille character set\n" + "to come up with a plottable coordinate system.\n"
+		    + "\n" + "      " + Colors.IYel.asBold().asString() + "    .........." + textCOLOR.asString()
+		    + "\n" + "\n" + "In this example we are\n" + "plotting boxes, circles and triangles.\n" + "\n"
+		    + "We transform (move/rotate) their positions\n" + "using simple trigonometry\n" + "\n"
+		    + "A more practical Acme use-case for\n" + "this plotting technique would be to\n"
+		    + "to build terminal-based charts for\n" + "monitoring values stored in the OLT-MGR\n"
+		    + "and rendered via CLIApp.java");
+
 	    brailleComponent.add(tcBrailleChars);
-	    brailleComponent.add(2,0, tc);
-	    
-	    
-	    BrailleGrid grid = new BrailleGrid(FGBGColors.DEFAULT, new Dimension.Simple(brailleComponent.getHeight() - 4, brailleComponent.getWidth() - 4 - tc.getWidth()));
+	    brailleComponent.add(2, 0, tc);
+
+	    grid = new BrailleGrid(FGBGColors.DEFAULT, new Dimension.Simple(brailleComponent.getHeight() - 4,
+		    brailleComponent.getWidth() - 4 - tc.getWidth()));
 	    grid.setPlotColor(new FGBGColors(Colors.Yel));
-	    
-	    brailleComponent.add (new Position.Simple(2, tc.getWidth()+2),   grid);
+
+	    brailleComponent.add(new Position.Simple(2, tc.getWidth() + 2), grid);
 
 	    XYTranslate pointPlotter = new XYTranslate(grid.asPointPlotter(), 0, 0);
 
@@ -192,8 +248,8 @@ public class GridBrailleTest {
 
 	    XYTranslate rectangle1PointPlotter = new XYTranslate(null, 0, 0);
 
-	    shapes.addShape(new ShapeWithTransform(new RectangleShape(new Rectangle.Simple(30, 30, 20, 20), Colors.IBlu),
-		    rectangle1PointPlotter));
+	    shapes.addShape(new ShapeWithTransform(
+		    new RectangleShape(new Rectangle.Simple(30, 30, 20, 20), Colors.IBlu), rectangle1PointPlotter));
 
 	    Position fixedPoint = new Position.Simple(30, 50);
 
@@ -201,24 +257,24 @@ public class GridBrailleTest {
 
 	    TransformPointPlotter rectangle2PointPlotter = new TransformPointPlotter(null, rectangle2Rotator);
 
-	    shapes.addShape(new ShapeWithTransform(new RectangleShape(new Rectangle.Simple(30, 30, 20, 20), Colors.IGre),
-		    rectangle2PointPlotter));
+	    shapes.addShape(new ShapeWithTransform(
+		    new RectangleShape(new Rectangle.Simple(30, 30, 20, 20), Colors.IGre), rectangle2PointPlotter));
 
 	    PositionTransform.FofG trianglePositionTransform = new PositionTransform.FofG(new RotateAroundFixedPoint(0,
 		    fixedPoint), new PositionTransform.Translate(0, 0));
-	    shapes.addShape(new ShapeWithTransform(new Triangle(0, 0, 30, 100, 65, 50, Colors.ICya), new TransformPointPlotter(null,
-		    trianglePositionTransform)));
+	    shapes.addShape(new ShapeWithTransform(new Triangle(0, 0, 30, 100, 65, 50, Colors.ICya),
+		    new TransformPointPlotter(null, trianglePositionTransform)));
 
 	    XYTranslate circle1PointPlotter = new XYTranslate(null, 0, 0);
 	    shapes.addShape(new ShapeWithTransform(new Circle(0, 0, 30), circle1PointPlotter));
 
 	    XYTranslate circle2PointPlotter = new XYTranslate(null, 0, 0);
 	    shapes.addShape(new ShapeWithTransform(new Circle(50, 50, 30, Colors.IRed), circle2PointPlotter));
-	    final Runnable drawIt = new Runnable() {
+	    drawIt = new Runnable() {
 
 		@Override
 		public void run() {
-		    
+
 		    renderPreUPdate();
 
 		    brailleComponent.markAsDirty();
@@ -227,11 +283,11 @@ public class GridBrailleTest {
 		    grid.clearPlots();
 
 		    shapes.draw(pointPlotter);
-		    
+
 		    segmentsBufferProvider.getSegmentsBuffer().removeRect(brailleComponent);
 
 		    segmentsBufferProvider.getSegmentsBuffer().mergeAt(2, 2, brailleComponent.getSegmentsBuffer());
-		    
+
 		    flushOutput();
 		}
 	    };
@@ -252,7 +308,6 @@ public class GridBrailleTest {
 
 		@Override
 		public void handle(TerminalEvent<?> te) {
-
 		    if (x <= -20) {
 			xIncr = 1;
 		    } else {
@@ -299,17 +354,14 @@ public class GridBrailleTest {
 		public void handle(TerminalEvent<?> te) {
 		    pointPlotter.setyDelta(pointPlotter.getyDelta() - 1);
 		    drawIt.run();
-		    
 		}
 	    }));
 
 	    addAndRememberEventHandler(eventBus, new KeyInputEventHandler(Keys.DOWN_KEYSTROKE, new EventHandler() {
-
 		@Override
 		public void handle(TerminalEvent<?> te) {
 		    pointPlotter.setyDelta(pointPlotter.getyDelta() + 1);
 		    drawIt.run();
-
 		}
 	    }));
 
@@ -322,12 +374,10 @@ public class GridBrailleTest {
 	    }));
 
 	    addAndRememberEventHandler(eventBus, new KeyInputEventHandler(Keys.RIGHT_KEYSTROKE, new EventHandler() {
-
 		@Override
 		public void handle(TerminalEvent<?> te) {
 		    pointPlotter.setxDelta(pointPlotter.getxDelta() + 1);
 		    drawIt.run();
-
 		}
 	    }));
 	}

@@ -57,11 +57,8 @@ public class TabPanel extends Composite {
 
         @Override
         protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
-
             if (TabPanel.this.active_tabAction != null) {
-
                 TabPanel.this.active_tabAction.drawOnActive(TabPanel.this.getTabContext());
-
             }
         }
     }
@@ -83,6 +80,17 @@ public class TabPanel extends Composite {
         this.textActiveTabColor = textActiveTabColor;
     }
 
+    public void resize(Dimension size) {
+	super.resize(size);
+	workArea.resize(size);
+	
+	TabAction ta = getActiveTabAction();
+	if (ta != null) {
+	    ta.resize(getTabContext());
+	}
+    }
+    
+    
     TabAction findTabActionByHotKey(KeyStroke hotKey) {
         for (TabAction ta : tabActions) {
             if (hotKey.equals(ta.getHotKey())) {
@@ -120,6 +128,7 @@ public class TabPanel extends Composite {
                 selectPrevAsActive();
             }
         });
+
         getTabContext().getEventBus().addEventHandler(hotKeyEventHandler);
 
         this.prevNextHelp = blockChars.getVERTICAL_LEFT()+" " + Keys.SHIFT_TAB_KEYSTROKE.getName() +prevArrow;
@@ -145,7 +154,6 @@ public class TabPanel extends Composite {
         
         this.add(new Position.Simple(2,0).offsetAdd(workAreaBorder).offsetAdd(workAreaBorder.getBottomMostRow(),workAreaBorder.getRightMostCol()-prevNextHelpLen-2),tcHelp);
 
-    
     }
 
     public void addTab(final TabAction tabAction) {
@@ -315,7 +323,10 @@ public class TabPanel extends Composite {
         }
         
 
-        public void activate(TabContext tabContext) {
+        abstract public void resize(TabContext tabContext);
+
+
+	public void activate(TabContext tabContext) {
             getTabComponent().setActive(true);
         }
 
@@ -340,12 +351,10 @@ public class TabPanel extends Composite {
 	    this.tabComponent.setTextActiveTabColor(textActiveTabColor);
 	}
 
-
 	abstract public void drawOnActive(TabContext tabContext);
 
         abstract public void drawOnUnActive(TabContext tabContext);
 
     }
-
 
 }

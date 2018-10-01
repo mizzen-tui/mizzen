@@ -98,6 +98,11 @@ public class Composite extends AbstractComponent<Composite> implements Rectangle
         return setBounds(new Dimension.Simple(height, width));
     }
 
+    public void resize(Dimension size) {
+	setBounds(size);
+    }
+    
+    
     // todo: not sure what this method means -- what do i
     public Composite setPosition(int i, int j) {
 	this.bounds.moveTo(i, j);

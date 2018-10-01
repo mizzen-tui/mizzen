@@ -36,7 +36,8 @@ else
 	           shift
 	        else
 	        	if [[ -n "${1}" ]] ; then
-	        	     export CLASS_NAME=$1
+	        	    export CLASS_NAME=$1
+	        	    shift
 	            fi 
 	        fi
         fi    

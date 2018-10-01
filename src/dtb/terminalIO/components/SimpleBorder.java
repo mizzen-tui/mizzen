@@ -43,6 +43,10 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>{
         return this;
     }
     
+    public void resize(Dimension d) {
+	super.resize(d);
+	this.border.resize(d);
+    }
    
     
     @Override
