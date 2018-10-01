@@ -19,15 +19,17 @@ public class TerminalResizePoller {
     
     private static boolean setup = false;
     
-    public static void setup(EventBus eventBus) {
-	setup(eventBus, POLLING_CHECK_RESIZED_INTERVAL);
+    public static void startPollingForTerminalResize(EventBus eventBus) {
+	startPollingForTerminalResize(eventBus, POLLING_CHECK_RESIZED_INTERVAL);
     }
     
-    public static void setup(EventBus eventBus, int pollingInterval) {
+    public static void startPollingForTerminalResize(EventBus eventBus, int pollingInterval) {
 	
-	if (setup) return;
+	if (setup) return;  
 	setup = true;
 	
+	// uses an OnIdleEventEventHandler to watch for Terminal resizes .. if a resize is detected,
+	// it fires off TerminalEvent.TYPE.RESIZE events that other handlers can then deal with.
         eventBus.addEventHandler( new OnIdleEventEventHandler.RepeatingInterval(pollingInterval, new EventHandler() {
 
             Dimension lastSize = Dimension.ZERO;

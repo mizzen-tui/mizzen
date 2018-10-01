@@ -36,14 +36,14 @@ public class TerminalResizeTest {
 
         Canvas master_canvas = TestsCommon.getMasterCanvasForTesting(screen);
         
-        master_canvas.setEmptyChar('.');
+        master_canvas.setEmptyChar(' ');
 
         FGBGColors drawingcolor = new FGBGColors(Colors.IYel, null);
 
         
-        Component componentBox1 = new Box(drawingcolor, 10);
+        Box componentBox1 = new Box(drawingcolor, 10);
 
-        Component componentBox2 = new RectangleComponent(new FGBGColors(Colors.IRed, null), 10, 20);
+        RectangleComponent componentBox2 = new RectangleComponent(new FGBGColors(Colors.IRed, null), 10, 20);
         
         TextComponent stats = new TextComponent("Size = : " + new Dimension.Simple(master_canvas).toString()+
                                                 "\n                              "+
@@ -54,6 +54,10 @@ public class TerminalResizeTest {
         Consumer<Dimension> resizer = (size) -> {
             master_canvas.clearCanvas();
           //  master_canvas.refresh();
+            
+            componentBox1.resize(new Dimension.Simple(size.getHeight()/5,size.getHeight()/5));
+            
+            componentBox2.resize(new Dimension.Simple(size.getHeight()/4,size.getHeight()/4));
             
             master_canvas.setSize(Math.min(size.getHeight(),30) , size.getWidth() ); // todo: detect term size
             master_canvas.addComponentSegments(master_canvas.getHeight() / 3, master_canvas.getWidth() / 3,  componentBox1);
@@ -121,6 +125,8 @@ public class TerminalResizeTest {
             
             @Override
             public void handle(TerminalEvent<?> te) {
+        	
+        	//if (idleCount > -1) return;
                 
                 idleCounter.setText("IDLE COUNT : "+idleCount+"    ");
                 
@@ -132,7 +138,7 @@ public class TerminalResizeTest {
                 
             }}) );
         
-        TerminalResizePoller.setup(eventBus); 
+        TerminalResizePoller.startPollingForTerminalResize(eventBus); 
         
         eventBus.addEventHandler( new OnResizeEventHandler() {
             @Override

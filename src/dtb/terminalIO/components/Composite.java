@@ -92,7 +92,7 @@ public class Composite extends AbstractComponent<Composite> implements Rectangle
 	this.boundsFixed = true;
 	rebuildBorder(this.bounds);
 	return this;
-    }
+    } 
 
     public Composite setBounds(int height, int width) {
         return setBounds(new Dimension.Simple(height, width));

@@ -316,7 +316,7 @@ public class LineChartTest {
 	eventBus.addEventHandler(new ConditionalEventHandlerImpl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
 
 	if (style.equals("MAX")) {
-	    TerminalResizePoller.setup(eventBus);
+	    TerminalResizePoller.startPollingForTerminalResize(eventBus);
 
 	    eventBus.addEventHandler(new OnResizeEventHandler() {
 		@Override

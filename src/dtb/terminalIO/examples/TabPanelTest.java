@@ -280,7 +280,7 @@ public class TabPanelTest {
             }));
 
             
-	    TerminalResizePoller.setup(eventBus);
+	    TerminalResizePoller.startPollingForTerminalResize(eventBus);
 
 	    eventBus.addEventHandler(new OnResizeEventHandler() {
 		@Override
