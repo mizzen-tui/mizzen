@@ -20,6 +20,7 @@ import dtb.terminalIO.events.KeyInputEventHandler;
 import dtb.terminalIO.events.KeyInputEventsProducer;
 import dtb.terminalIO.events.Keys;
 import dtb.terminalIO.events.OnResizeEventHandler;
+import dtb.terminalIO.events.TerminalResizeDetection;
 import dtb.terminalIO.events.TerminalResizePoller;
 import dtb.terminalIO.events.ChainedEventHandler.ConditionalEventHandlerImpl;
 import dtb.terminalIO.events.Keys.KeyStroke;
@@ -316,7 +317,7 @@ public class LineChartTest {
 	eventBus.addEventHandler(new ConditionalEventHandlerImpl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
 
 	if (style.equals("MAX")) {
-	    TerminalResizePoller.startPollingForTerminalResize(eventBus);
+	    TerminalResizeDetection.initiate(eventBus);
 
 	    eventBus.addEventHandler(new OnResizeEventHandler() {
 		@Override

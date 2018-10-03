@@ -20,6 +20,7 @@ import dtb.terminalIO.events.Keys;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.OnResizeEventHandler;
 import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.TerminalResizeDetection;
 import dtb.terminalIO.events.TerminalResizePoller;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.util.Stty;
@@ -138,7 +139,7 @@ public class TerminalResizeTest {
                 
             }}) );
         
-        TerminalResizePoller.startPollingForTerminalResize(eventBus); 
+        TerminalResizeDetection.initiate(eventBus);
         
         eventBus.addEventHandler( new OnResizeEventHandler() {
             @Override

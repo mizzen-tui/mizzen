@@ -33,7 +33,7 @@ import dtb.terminalIO.events.OnResizeEventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
-import dtb.terminalIO.events.TerminalResizePoller;
+import dtb.terminalIO.events.TerminalResizeDetection;
 import dtb.terminalIO.examples.Demo.SimpleDemo;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
@@ -172,7 +172,7 @@ public class GridBrailleTest {
 	eventBus.addEventHandler(new ConditionalEventHandlerImpl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
 
 	if (style.equals("MAX")) {
-	    TerminalResizePoller.startPollingForTerminalResize(eventBus);
+	    TerminalResizeDetection.initiate(eventBus);
 
 	    eventBus.addEventHandler(new OnResizeEventHandler() {
 		@Override

@@ -22,6 +22,7 @@ import dtb.terminalIO.events.KeyInputEventHandler;
 import dtb.terminalIO.events.KeyInputEventsProducer;
 import dtb.terminalIO.events.Keys;
 import dtb.terminalIO.events.OnResizeEventHandler;
+import dtb.terminalIO.events.TerminalResizeDetection;
 import dtb.terminalIO.events.TerminalResizePoller;
 import dtb.terminalIO.events.Keys.KeyStroke;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
@@ -280,7 +281,7 @@ public class TabPanelTest {
             }));
 
             
-	    TerminalResizePoller.startPollingForTerminalResize(eventBus);
+            TerminalResizeDetection.initiate(eventBus);
 
 	    eventBus.addEventHandler(new OnResizeEventHandler() {
 		@Override
