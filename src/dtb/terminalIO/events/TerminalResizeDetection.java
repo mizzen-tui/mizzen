@@ -1,20 +1,23 @@
 package dtb.terminalIO.events;
 
-import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
+import dtb.terminalIO.TerminalScreen;
+
 public class TerminalResizeDetection {
     
-    public static void initiate(EventBus eventBus) {
+    public static void initiate(TerminalScreen screen, EventBus eventBus) {
 	
+	TerminalResizePoller.startPollingForTerminalResize(screen, eventBus);
 	
+	registerTerminalResizeListener(new TerminalResizeEventGenerator(screen, eventBus), 
+	                               ()->TerminalResizePoller.startPollingForTerminalResize(screen, eventBus));
 	
-	TerminalResizePoller.startPollingForTerminalResize(eventBus);
     }
     
-    static  void registerTerminalResizeListener(final Runnable onResize) throws IOException {
+    static  void registerTerminalResizeListener(final Runnable onResize, Runnable fallback )  {
         try {
             Class<?> signalClass = Class.forName("sun.misc.Signal");
             for(Method m : signalClass.getDeclaredMethods()) {
@@ -35,6 +38,11 @@ public class TerminalResizeDetection {
         catch(Throwable ignore) {
             // We're probably running on a non-Sun JVM and there's no way to catch signals without resorting to native
             // code integration
+            
+            System.err.println("Using fallback method to register terminal resize listener");
+            
+            fallback.run();
+            
         }
     }
     

@@ -68,7 +68,6 @@ public class EventBus {
 
     private ChainedEventHandler idleEventsHandler;  // we build this in lazy fashion on purpose
 
-    
     private BlockingQueue<TerminalEvent<?>> queue = new ArrayBlockingQueue<TerminalEvent<?>>(EVENT_Q_CAPACITY);
 
     private AtomicBoolean stopConsuming = new AtomicBoolean(false);
@@ -121,7 +120,11 @@ public class EventBus {
 	return addEvent(te);
     }
 
+    private ConditionalEventHandler master_idlEventHandler = null;
+    private boolean idleEventsSuppressed = false;
+    
     public EventBus addIdleEventHandler(OnIdleEventEventHandler onIdleEventHandler) {
+        if (idleEventsSuppressed) return this;
 	if (this.idleEventsHandler == null) {
 	    synchronized (this) {
 		if (this.idleEventsHandler == null) {
@@ -130,27 +133,58 @@ public class EventBus {
 
 		    // now build a handler on the main eventbus to dispatch to the 
 		    // the newly built idleEventsHandler
-		    this.addEventHandler(new ConditionalEventHandler() {
-
-			@Override
-			public void handle(TerminalEvent<?> te) {
-			    EventBus.this.idleEventsHandler.handle(te);
-			}
-
-			@Override
-			public EventHandler canHandle(TerminalEvent<?> te) {
-			    if (te.getType().equals(TerminalEvent.TYPE.TIMER)) {
-				return this;
-			    }
-			    return null;
-			}
-		    });
+		    // this.addEventHandler(master_idlEventHandler);
+		    
+		    enableIdleEvents();
+		    
 		}
 	    }
 	}
 	this.idleEventsHandler.addEventHandler(onIdleEventHandler);
 	return this;
     }
+    
+    public void enableIdleEvents() {
+        
+        if (master_idlEventHandler != null) return;
+        
+        disableIdleEvents();
+        
+        master_idlEventHandler = new ConditionalEventHandler() {
+
+            @Override
+            public void handle(TerminalEvent<?> te) {
+                EventBus.this.idleEventsHandler.handle(te);
+            }
+
+            @Override
+            public EventHandler canHandle(TerminalEvent<?> te) {
+                if (te.getType().equals(TerminalEvent.TYPE.TIMER)) {
+                    return this;
+                }
+                return null;
+            }
+        };
+        
+        this.addEventHandler(master_idlEventHandler);
+        idleEventsSuppressed = false;
+        
+    }
+    
+    public void disableIdleEvents() {
+        
+        idleEventsSuppressed = true;
+
+        if (master_idlEventHandler == null) return;
+        
+        this.remove(master_idlEventHandler);
+        
+        master_idlEventHandler = null;
+                
+    }
+    
+    
+    
 
     public EventBus removeIdleEventHandler(OnIdleEventEventHandler onIdleEventHandler) {
 	if (this.idleEventsHandler == null) {

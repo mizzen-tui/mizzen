@@ -2,7 +2,7 @@ package dtb.terminalIO;
 
 import dtb.terminalIO.Canvas.CanvasBackend;
 
-public class ScreenCanvasBackend implements CanvasBackend{
+public class ScreenCanvasBackend implements CanvasBackend {
 	
 	TerminalScreen screen;
 
@@ -10,6 +10,7 @@ public class ScreenCanvasBackend implements CanvasBackend{
 		super();
 		this.screen = screen;
 	}
+	
 	@Override
 	public void writeToBackend(ScreenLineSegment sc) {
 		screen.add(sc.getColors());

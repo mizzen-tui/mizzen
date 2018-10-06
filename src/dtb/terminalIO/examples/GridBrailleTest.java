@@ -172,14 +172,16 @@ public class GridBrailleTest {
 	eventBus.addEventHandler(new ConditionalEventHandlerImpl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
 
 	if (style.equals("MAX")) {
-	    TerminalResizeDetection.initiate(eventBus);
+	    TerminalResizeDetection.initiate(screen, eventBus);
 
 	    eventBus.addEventHandler(new OnResizeEventHandler() {
 		@Override
 		public void handleResize(Dimension size) {
 		    master_canvas.setSize(size.getHeight() - 1, size.getWidth() - 1); 
-		    master_canvas.clearCanvas();
+		    //master_canvas.clearCanvas();
+		    //master_canvas.refresh();
 		    brailleDemo.resize(master_canvas);
+		    eventBus.enableIdleEvents();
 		}
 	    });
 	}

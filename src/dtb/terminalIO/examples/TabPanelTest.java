@@ -21,14 +21,13 @@ import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.KeyInputEventHandler;
 import dtb.terminalIO.events.KeyInputEventsProducer;
 import dtb.terminalIO.events.Keys;
-import dtb.terminalIO.events.OnResizeEventHandler;
-import dtb.terminalIO.events.TerminalResizeDetection;
-import dtb.terminalIO.events.TerminalResizePoller;
 import dtb.terminalIO.events.Keys.KeyStroke;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
+import dtb.terminalIO.events.OnResizeEventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
+import dtb.terminalIO.events.TerminalResizeDetection;
 import dtb.terminalIO.examples.GridBrailleTest.BrailleDemo;
 import dtb.terminalIO.examples.LineChartTest.LineChartDemo;
 import dtb.terminalIO.examples.sampledata.ReadSampleFiles;
@@ -281,7 +280,7 @@ public class TabPanelTest {
             }));
 
             
-            TerminalResizeDetection.initiate(eventBus);
+            TerminalResizeDetection.initiate(screen, eventBus);
 
 	    eventBus.addEventHandler(new OnResizeEventHandler() {
 		@Override

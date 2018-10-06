@@ -317,14 +317,16 @@ public class LineChartTest {
 	eventBus.addEventHandler(new ConditionalEventHandlerImpl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
 
 	if (style.equals("MAX")) {
-	    TerminalResizeDetection.initiate(eventBus);
+	    TerminalResizeDetection.initiate(screen, eventBus);
 
 	    eventBus.addEventHandler(new OnResizeEventHandler() {
 		@Override
 		public void handleResize(Dimension size) {
 		    master_canvas.setSize(size.getHeight() - 1, size.getWidth() - 1);
 		    master_canvas.clearCanvas();
-		    lineChartDemo.resize(master_canvas);
+	            master_canvas.refresh();
+		    //lineChartDemo.resize(master_canvas);
+		    //eventBus.enableIdleEvents();
 		}
 	    });
 	}
