@@ -164,8 +164,9 @@ public class LineChart extends Composite {
     public void resize(Dimension d) {
 	super.resize(d);
 	this.grid.resize(new Dimension.Simple(d.getHeight() - 3, d.getWidth() - 3));
+        this.clearData();
+        this.clear();
     }
-    
     
     public LineChart(Color color, Dimension dim, double[] data) {
         this(color, dim);
@@ -178,8 +179,12 @@ public class LineChart extends Composite {
         this(color, new Dimension.Simple(height, width));
     }
 
+    public LineChart(Dimension d) {
+        this(FGBGColors.NO_COLOR_SPECIFIED, d);
+    }
+
     public LineChart(int height, int width) {
-        this(FGBGColors.NO_COLOR_SPECIFIED, new Dimension.Simple(height, width));
+        this(new Dimension.Simple(height, width));
     }
 
     private Series nameToSeries(String seriesName) {
@@ -214,7 +219,6 @@ public class LineChart extends Composite {
         this.x_leftValue = x_leftValue;
 
         gridBoundsFixed = true;
-
     }
 
     public LineChart addData(String seriesName, double y, Double x, String label) {
@@ -245,6 +249,7 @@ public class LineChart extends Composite {
         return this;
     }
 
+    // for debugging ..
     String stats() {
         String s = String.format(
                 " y_bottomValue = %6.2f   y_scale       = %6.2f \n" 
@@ -263,7 +268,6 @@ public class LineChart extends Composite {
         return s;
     }
 
-    @SuppressWarnings("null")
     public LineChart addData(String seriesName, double y, String label) {
         return addData(seriesName, y, null, label);
     }

@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import dtb.terminalIO.Canvas;
 import dtb.terminalIO.Colors;
 import dtb.terminalIO.ControlCode;
+import dtb.terminalIO.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.ControlCode.FGBGColors;
 import dtb.terminalIO.TerminalScreen;
 import dtb.terminalIO.components.BorderedComponent;
@@ -50,8 +51,8 @@ public class TabPanelTest {
         TabAction getTabAction(KeyStroke hotKey, String tabText) {
             return new TabAction(hotKey, tabText) {
         	
-                public void resize(TabContext tabContext) {
-                    demo.resize(tabContext.getBounds());
+                public void resize(TabContext tabContext, IScreenLineSegmentsBuffer.Provider segmentsBufferProvider) {
+                    demo.resize(tabContext.getBounds(), tabContext);
                 }
 
                 @Override
@@ -103,7 +104,7 @@ public class TabPanelTest {
 
             tb.addTab(new TabAction(Keys.F5_KEYSTROKE, "Acme Demo") {
 
-                public void resize(TabContext tabCtx) {
+                public void resize(TabContext tabCtx, IScreenLineSegmentsBuffer.Provider segmentsBufferProvider) {
                     int fileID = 80;
                     if (tabCtx.getBounds().contains(d_200)) {
                         fileID = 200;
@@ -129,7 +130,7 @@ public class TabPanelTest {
                 @Override
                 public void drawOnActive(TabContext tabCtx) {
                     
-                    resize(tabCtx);
+                    resize(tabCtx, tabCtx);
                 }
 
                 @Override
@@ -201,7 +202,7 @@ public class TabPanelTest {
                 ConditionalEventHandler barChartUpdater;
                 BarChart bc;
                 
-                public void resize(TabContext tabCtx) {
+                public void resize(TabContext tabCtx, IScreenLineSegmentsBuffer.Provider segmentsBufferProvider) {
                     if (bc != null)
                        bc.resize(tabCtx.getBounds());
                 }

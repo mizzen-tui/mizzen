@@ -8,28 +8,26 @@ import java.util.function.Consumer;
 import dtb.terminalIO.Canvas;
 import dtb.terminalIO.Colors;
 import dtb.terminalIO.ControlCode;
-import dtb.terminalIO.TerminalScreen;
 import dtb.terminalIO.ControlCode.Color;
 import dtb.terminalIO.ControlCode.FGBGColors;
 import dtb.terminalIO.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.TerminalScreen;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.chart.LineChart;
+import dtb.terminalIO.events.ChainedEventHandler.ConditionalEventHandlerImpl;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.KeyInputEventHandler;
 import dtb.terminalIO.events.KeyInputEventsProducer;
 import dtb.terminalIO.events.Keys;
-import dtb.terminalIO.events.OnResizeEventHandler;
-import dtb.terminalIO.events.TerminalResizeDetection;
-import dtb.terminalIO.events.TerminalResizePoller;
-import dtb.terminalIO.events.ChainedEventHandler.ConditionalEventHandlerImpl;
 import dtb.terminalIO.events.Keys.KeyStroke;
+import dtb.terminalIO.events.OnIdleEventEventHandler;
+import dtb.terminalIO.events.OnResizeEventHandler;
+import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
-import dtb.terminalIO.events.OnIdleEventEventHandler;
-import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.TerminalResizeDetection;
 import dtb.terminalIO.examples.Demo.SimpleDemo;
-import dtb.terminalIO.examples.GridBrailleTest.BrailleDemo;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
@@ -41,26 +39,45 @@ public class LineChartTest {
 
 	LineChart lc;
 	TextComponent menuOoptions;
+	
+	Runnable doRenderLineChart = null;
 
 	@Override
-	public void resize(Dimension size) {
+	public void resize(Dimension size, IScreenLineSegmentsBuffer.Provider segmentsBufferProvider) {
+	    
+//            Position lc_Pos = bounds.centered(lineChartDemo.lc, Position.ZERO);
+//            Rectangle rectToRemove = new Rectangle.Simple(lineChartDemo.lc);
+//            rectToRemove.moveDelta(lc_Pos.getRow(), lc_Pos.getCol());
+//            master_canvas.getSegmentsBuffer().removeRect(rectToRemove);
+            
 
-	    lc.resize(new Dimension.Simple(size.getHeight() - 5, size.getWidth() - 4));
-	    menuOoptions.resize(new Dimension.Simple(1, size.getWidth() - 4));
+	    
+	    Dimension lc_bounds = calc_lc_bounds(size);
+	    lc.resize(lc_bounds);
+	    menuOoptions.resize(new Dimension.Simple(1, lc_bounds.getWidth()));
+	    
+	    if (doRenderLineChart != null) {
+		doRenderLineChart.run();
+	    }
 	}
 
+	private Dimension calc_lc_bounds(Dimension containingDimension) {
+	    return new Dimension.Simple(containingDimension.getHeight() - 5, containingDimension.getWidth() - 4);
+	}
+	 
 	@Override
 	public void setUpDemo(EventBus eventBus, Rectangle bounds,
 		IScreenLineSegmentsBuffer.Provider segmentsBufferProvider) {
 
-	    lc = new LineChart(bounds.getHeight() - 5, bounds.getWidth() - 4);
+	    Dimension lc_bounds = calc_lc_bounds(bounds);
+	    
+	    lc = new LineChart(lc_bounds);
 	    lc.setBorder(true);
 	    lc.setPlotColor(new FGBGColors(Colors.IYel));
 	    lc.setSeriesColor("cos", Colors.Blu);
 	    lc.setTitle(" Line Chart Demo's ");
 
-	    menuOoptions = new TextComponent(FGBGColors.NO_COLOR_SPECIFIED, new Dimension.Simple(1,
-		    bounds.getWidth() - 4), "");
+	    menuOoptions = new TextComponent(FGBGColors.NO_COLOR_SPECIFIED, new Dimension.Simple(1, lc_bounds.getWidth()), "");
 
 	    class SeriesDemo {
 
@@ -93,8 +110,6 @@ public class LineChartTest {
 	    }
 
 	    List<SeriesDemo> seriesDemos = new ArrayList<SeriesDemo>();
-
-	    // Keys.A_KEYSTROKE
 
 	    seriesDemos.add(new SeriesDemo(new KeyStroke('1'), "sine", Colors.Yel, true, new Consumer<Integer>() {
 		@Override
@@ -217,13 +232,24 @@ public class LineChartTest {
 			}
 		    });
 
+	    idleHandler.handle(null);
 	    addAndRememberEventHandler(eventBus, idleHandler);
+	    
+	    doRenderLineChart = new Runnable() {
+		@Override
+		public void run() {
+		    idleHandler.handle(null);
+		    
+		}
+	    };
+	    
+	    doRenderLineChart.run();
 
 	}
 
     }
 
-    public static void main(String[] args) {
+    private static void bootDemo(String[] args) throws Exception {
 
 	String _style = "MAX";
 	if (args != null && args.length > 0 && args[0].equalsIgnoreCase("small")) {
@@ -240,7 +266,7 @@ public class LineChartTest {
 	TerminalScreen screen = TestsCommon.getTerminalScreenForTesting(args);
 
 	Canvas master_canvas = TestsCommon.getMasterCanvasForTesting(screen);
-	master_canvas.setEmptyChar(' ');
+	//master_canvas.setEmptyChar(' ');
 
 	LineChartDemo lineChartDemo = new LineChartDemo() {
 	    public void flushOutput() {
@@ -250,19 +276,7 @@ public class LineChartTest {
 	    }
 	};
 
-	Rectangle bounds = null;
-	if ("SMALL".equalsIgnoreCase(style)) {
-	    bounds = new Rectangle.Simple(0, 0, Math.min(20, master_canvas.getHeight()), Math.min(100,
-		    master_canvas.getWidth()));
-	} else if ("MEDIUM".equalsIgnoreCase(style)) {
-	    bounds = new Rectangle.Simple(0, 0, Math.min(25, master_canvas.getHeight()), Math.min(100,
-		    master_canvas.getWidth()));
-	} else if ("TINY".equalsIgnoreCase(style)) {
-	    bounds = new Rectangle.Simple(0, 0, Math.min(15, master_canvas.getHeight()), Math.min(60,
-		    master_canvas.getWidth()));
-	} else {
-	    bounds = new Rectangle.Simple(master_canvas);
-	}
+	Rectangle bounds = makeBoundsFromStyle(style, master_canvas);
 
 	master_canvas.setSize(bounds.getHeight(), bounds.getWidth());
 
@@ -322,15 +336,101 @@ public class LineChartTest {
 	    eventBus.addEventHandler(new OnResizeEventHandler() {
 		@Override
 		public void handleResize(Dimension size) {
+		    master_canvas.clearCanvas();
+	            master_canvas.refresh();
 		    master_canvas.setSize(size.getHeight() - 1, size.getWidth() - 1);
 		    master_canvas.clearCanvas();
 	            master_canvas.refresh();
-		    //lineChartDemo.resize(master_canvas);
-		    //eventBus.enableIdleEvents();
+		    lineChartDemo.resize(master_canvas, master_canvas);
+		    eventBus.enableIdleEvents();
 		}
 	    });
+	    
+	    // Set styles
+	    Consumer<String> resizeChartOnStyle = (styleOnHotKey) -> {
+	            Rectangle newBpunds = makeBoundsFromStyle(styleOnHotKey, master_canvas);
+	            
+	            Position lc_Pos = bounds.centered(lineChartDemo.lc, Position.ZERO);
+	            Rectangle rectToRemove = new Rectangle.Simple(lineChartDemo.lc);
+	            rectToRemove.moveDelta(lc_Pos.getRow(), lc_Pos.getCol());
+	            master_canvas.getSegmentsBuffer().removeRect(rectToRemove);
+	            
+	           // master_canvas.clearCanvas();
+	            lineChartDemo.resize(newBpunds, master_canvas);
+	    };
+	    
+	    eventBus.addEventHandler( new KeyInputEventHandler(new KeyStroke('s'), new EventHandler() {
+	        @Override
+	        public void handle(TerminalEvent<?> te) {
+	            resizeChartOnStyle.accept("SMALL");
+	        }
+	    }) );
+	    
+	    eventBus.addEventHandler( new KeyInputEventHandler(new KeyStroke('S'), new EventHandler() {
+	        @Override
+	        public void handle(TerminalEvent<?> te) {
+	            resizeChartOnStyle.accept("SMALL");
+	        }
+	    }) );
+	    
+	    eventBus.addEventHandler( new KeyInputEventHandler(new KeyStroke('m'), new EventHandler() {
+	        @Override
+	        public void handle(TerminalEvent<?> te) {
+	            resizeChartOnStyle.accept("MEDIUM");
+	        }
+	    }) );
+	    
+	    eventBus.addEventHandler( new KeyInputEventHandler(new KeyStroke('m'), new EventHandler() {
+	        @Override
+	        public void handle(TerminalEvent<?> te) {
+	            resizeChartOnStyle.accept("MEDIUM");
+	        }
+	    }) );
+	    
+	    eventBus.addEventHandler( new KeyInputEventHandler(new KeyStroke('t'), new EventHandler() {
+	        @Override
+	        public void handle(TerminalEvent<?> te) {
+	            resizeChartOnStyle.accept("TINY");
+	        }
+	    }) );
+	    
+	    eventBus.addEventHandler( new KeyInputEventHandler(new KeyStroke('T'), new EventHandler() {
+	        @Override
+	        public void handle(TerminalEvent<?> te) {
+	            resizeChartOnStyle.accept("TINY");
+	        }
+	    }) );
 	}
 
     }
 
+    private static Rectangle makeBoundsFromStyle(String style, Canvas master_canvas) {
+	Rectangle bounds = null;
+	if ("SMALL".equalsIgnoreCase(style)) {
+	    bounds = new Rectangle.Simple(0, 0, Math.min(20, master_canvas.getHeight()), Math.min(100,
+		    master_canvas.getWidth()));
+	} else if ("MEDIUM".equalsIgnoreCase(style)) {
+	    bounds = new Rectangle.Simple(0, 0, Math.min(25, master_canvas.getHeight()), Math.min(100,
+		    master_canvas.getWidth()));
+	} else if ("TINY".equalsIgnoreCase(style)) {
+	    bounds = new Rectangle.Simple(0, 0, Math.min(15, master_canvas.getHeight()), Math.min(60,
+		    master_canvas.getWidth()));
+	} else {
+	    bounds = new Rectangle.Simple(master_canvas);
+	}
+	return bounds;
+    }
+    
+    public static void main(String[] args) throws Exception {
+	try {
+	    bootDemo(args);
+	} catch (Exception e) {
+	    Stty.setCooked();
+	    e.printStackTrace();
+	    System.exit(1);
+	}
+    }
+
+
 }
+

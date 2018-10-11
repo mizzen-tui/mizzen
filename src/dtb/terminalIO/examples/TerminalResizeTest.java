@@ -139,7 +139,7 @@ public class TerminalResizeTest {
                 
             }}) );
         
-        TerminalResizeDetection.initiate(eventBus);
+        TerminalResizeDetection.initiate(screen, eventBus);
         
         eventBus.addEventHandler( new OnResizeEventHandler() {
             @Override

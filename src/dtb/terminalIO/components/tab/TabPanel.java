@@ -86,7 +86,7 @@ public class TabPanel extends Composite {
 	
 	TabAction ta = getActiveTabAction();
 	if (ta != null) {
-	    ta.resize(getTabContext());
+	    ta.resize(getTabContext(), getTabContext());
 	}
     }
     
@@ -323,7 +323,7 @@ public class TabPanel extends Composite {
         }
         
 
-        abstract public void resize(TabContext tabContext);
+        abstract public void resize(TabContext tabContext, IScreenLineSegmentsBuffer.Provider segmentsBufferProvider);
 
 
 	public void activate(TabContext tabContext) {

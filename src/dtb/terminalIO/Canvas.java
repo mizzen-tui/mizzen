@@ -372,7 +372,5 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
             // TODO: this.getCursorPos().moveTo(row, col);
             throw new IllegalStateException("No implemented yet!");
         }
-
     }
-
 }

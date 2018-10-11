@@ -22,7 +22,7 @@ public interface Demo {
 
     void tearDownDemo(EventBus eventBus);
 
-    void resize(Dimension size);
+    void resize(Dimension size, IScreenLineSegmentsBuffer.Provider segmentsBufferProvider);
     
     
     public static abstract class SimpleDemo implements Demo {
