@@ -5,7 +5,8 @@ cd $(dirname $0)
 
 CLASS_PKG=dtb.terminalIO.examples
 CLASS_NAME=${CLASS_PKG}.TabPanelTest
-JAVA_OPTIONS="-cp ./target/dtbTerminalIO-0.0.1-SNAPSHOT.jar"
+#JAVA_OPTIONS="-cp ./target/dtbTerminalIO-0.0.1-SNAPSHOT.jar"
+JAVA_OPTIONS="-cp ./target/classes"
 
 if [[ "$1" == "NOCLEAR" ]] ; then
    shift
