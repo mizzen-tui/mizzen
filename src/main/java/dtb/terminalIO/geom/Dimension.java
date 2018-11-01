@@ -5,6 +5,9 @@ import java.util.Comparator;
 
 import dtb.terminalIO.ControlCode;
 
+/**
+ * Encapsulate Height and width
+ */
 public interface Dimension {
 
     public int getWidth();

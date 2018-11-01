@@ -21,7 +21,7 @@ public abstract class OnResizeEventHandler implements ConditionalEventHandler {
     @Override
     final public void handle(TerminalEvent<?> te) {
         
-        Dimension size = (Dimension) te.getEventData();
+      Dimension size = (Dimension) te.getEventData();
 
       handleResize(size);
         

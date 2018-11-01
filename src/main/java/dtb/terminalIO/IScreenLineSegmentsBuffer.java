@@ -9,6 +9,9 @@ import dtb.terminalIO.geom.Rectangle;
 
 /**
  * Container for {@link ScreenLineSegment} objects
+ * 
+ * 
+ * 
  */
 public interface IScreenLineSegmentsBuffer extends Rectangle , Iterable<ScreenLineSegment>{
 

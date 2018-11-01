@@ -18,11 +18,17 @@ import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.Relation.LeftRight;
 
-//
-//  A Screen line segment is a Rectangle[row,col,height,width] that always have a height of one.. 
-//  .. and width the length of its text
-//     it has color attribute that dictates default color to render the text
-//
+/**
+ *   This object is the fundamental building block for all text objects that can be rendered
+ *   on the terminal.
+ * 
+ *   <p/>
+ * 
+ *   A Screen line segment is a Rectangle[row,col,height,width] that always have a height of one
+ *   and width the length of its text
+ *   it has color attribute that dictates default color to render the text in.
+ *   
+ */
 public interface ScreenLineSegment extends Rectangle {
 
     public abstract int getId();

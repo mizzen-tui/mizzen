@@ -48,6 +48,7 @@ public class Relation<T, U extends T, V extends T> {
 	/**
 	 * A relationship that determines if object 'left' is left of object 'right' and if not
 	 * then to a swap so that 'right' is referred to as left and former left is referred to as right
+	 * Say that 10 times!
 	 */
 	public static class LeftRight<T> extends Relation<T,T,T> {
 
