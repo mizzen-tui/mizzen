@@ -19,10 +19,14 @@ public class Stty {
         // String output = executeWithBash("echo `tput cols` `tput lines`");
         // parse output which is the form "cols lines"
         String[] data_split = output.split(" ");
+        try {
         int _lines = Integer.parseInt(data_split[0].trim());
         int _cols = Integer.parseInt(data_split[1].trim());
 
         return new Dimension.Simple(_lines, _cols);
+        } catch (NumberFormatException nfe) {
+            throw new IllegalStateException("Error in Stty.terminalSize():  Could not parse lines/columns information when shelling out to stty.  Is this running in a linux environment?");
+        }
 
     }
     
