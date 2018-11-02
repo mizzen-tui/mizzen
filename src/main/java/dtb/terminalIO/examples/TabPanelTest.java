@@ -77,16 +77,12 @@ public class TabPanelTest {
     }
 
     public static void main(String args[]) throws Exception {
-
-        EventBus eventBus = new EventBus();
-        try {
-            new KeyInputEventsProducer(eventBus);
-        } catch (Exception e) {
-            eventBus.stopConsuming();
-            return;
-        }
+	
+	final EventBus eventBus = new EventBus();
 
         try {
+            //eventBus = new EventBus();
+
             TerminalScreen screen = TestsCommon.getTerminalScreenForTesting(args);
             Canvas master_canvas = TestsCommon.getMasterCanvasForTesting(screen);
             master_canvas.setEmptyChar(' ');
@@ -326,8 +322,21 @@ public class TabPanelTest {
             eventBus.addEventHandler(new ConditionalEventHandlerImpl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
 
             master_canvas.refresh();
+            
+            try {
+                new KeyInputEventsProducer(eventBus);
+            } catch (Exception e) {
+                eventBus.stopConsuming();
+                return;
+            }
+           
+        } catch (Exception e1) {
+            eventBus.stopConsuming();
+            Stty.setCooked();
+            e1.printStackTrace();
+            
         } finally {
-            // eventBus.stopConsuming();
+            //eventBus.stopConsuming();
             // Stty.setCooked();
         }
     }

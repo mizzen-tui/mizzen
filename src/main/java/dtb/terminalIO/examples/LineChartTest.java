@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import javax.swing.SwingUtilities;
+
 import dtb.terminalIO.Canvas;
 import dtb.terminalIO.Colors;
 import dtb.terminalIO.ControlCode;
@@ -168,8 +170,16 @@ public class LineChartTest {
 
 			int j = 0;
 
+			Object lock = new Object();
+			
 			@Override
 			public void handle(TerminalEvent<?> te) {
+			    synchronized (lock) {
+			      __handle(te);
+			    } 
+			}
+			
+			private void __handle(TerminalEvent<?> te) {
 
 			    renderPreUPdate();
 
@@ -232,18 +242,24 @@ public class LineChartTest {
 			}
 		    });
 
-	    idleHandler.handle(null);
+	    // idleHandler.handle(null);
 	    addAndRememberEventHandler(eventBus, idleHandler);
 	    
 	    doRenderLineChart = new Runnable() {
+		
+		Object lock = new Object();
+		
 		@Override
 		public void run() {
-		    idleHandler.handle(null);
+		    synchronized (lock) {
+		        idleHandler.handle(null);
+		    }
 		    
 		}
 	    };
 	    
 	    doRenderLineChart.run();
+
 
 	}
 

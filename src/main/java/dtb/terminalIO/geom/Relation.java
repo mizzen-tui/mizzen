@@ -70,6 +70,12 @@ public class Relation<T, U extends T, V extends T> {
 	/**
 	 * A relationship that determines if object 'over' is on top of object 'under' and if not
 	 * then to a swap so that 'top' is referred to as under and former under is referred to as top
+	 * 
+	 * D'oh ..
+	 * 
+	 * .. Here's another tongue twister ..
+	 *     Silly Sally sold sea shells at the seashore..  Say that 10 times!
+	 * 
 	 */
 	public static class OverUnder<T> extends Relation<T,T,T> {
 
