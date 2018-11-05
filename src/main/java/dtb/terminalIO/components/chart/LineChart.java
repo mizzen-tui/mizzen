@@ -66,6 +66,10 @@ public class LineChart extends Composite {
 
     private Series      DEFAULT_series  = new Series(null, null);
 
+    /**
+     * A series is a list of data points to plot.
+     * A chart can have multiple series that it can plot
+     */
     public static class Series {
         public String   name;
         public Color    color;
@@ -84,10 +88,8 @@ public class LineChart extends Composite {
             data = new ArrayList<ChartData>();
             this.y_topValue = Double.MIN_VALUE;
             this.y_bottomValue = Double.MAX_VALUE;
-            ;
             this.x_rightValue = Double.MIN_VALUE;
             this.x_leftValue = Double.MAX_VALUE;
-            ;
         }
 
         public void addData(ChartData cData) {
@@ -118,8 +120,11 @@ public class LineChart extends Composite {
 
     }
 
+    /**
+     * A ChartData object represents a plottable point
+     */
     public static class ChartData {
-        public Series series;
+        public Series series; // points back to its series
         public Double y;
         public Double x;
         public String label;
@@ -153,17 +158,21 @@ public class LineChart extends Composite {
         };
     }
 
+    private static Dimension __brailleGridSizeFromLineChartSize(Dimension lineChartSize) {
+	return new Dimension.Simple(lineChartSize.getHeight() - 3, lineChartSize.getWidth() - 3);
+    }
+    
     public LineChart(Color color, Dimension d) {
         super(color);
         this.setBounds(d);
-        this.grid = new BrailleGrid(color, new Dimension.Simple(d.getHeight() - 3, d.getWidth() - 3));
+        this.grid = new BrailleGrid(color, __brailleGridSizeFromLineChartSize(d));
         this.add(this.grid);
         this.all_data = new TreeSet<ChartData>(ChartData.COMPARATOR_BY_XPOS);
     }
 
     public void resize(Dimension d) {
 	super.resize(d);
-	this.grid.resize(new Dimension.Simple(d.getHeight() - 3, d.getWidth() - 3));
+	this.grid.resize(__brailleGridSizeFromLineChartSize(d));
         this.clearData();
         this.clear();
     }

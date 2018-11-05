@@ -5,8 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-import javax.swing.SwingUtilities;
-
 import dtb.terminalIO.Canvas;
 import dtb.terminalIO.Colors;
 import dtb.terminalIO.ControlCode;
@@ -34,16 +32,21 @@ import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.util.Stty;
+import dtb.terminalIO.util.TerminalDimensions;
 
 public class LineChartTest {
 
-    public static class LineChartDemo extends SimpleDemo {
+
+      public static class LineChartDemo extends SimpleDemo {
 
 	LineChart lc;
 	TextComponent menuOoptions;
 	
 	Runnable doRenderLineChart = null;
 
+	public boolean pauseOnIdle = false;
+	
+	
 	@Override
 	public void resize(Dimension size, IScreenLineSegmentsBuffer.Provider segmentsBufferProvider) {
 	    
@@ -100,13 +103,11 @@ public class LineChartTest {
 
 		    if (onKeyStroke != null) {
 			addAndRememberEventHandler(eventBus, new KeyInputEventHandler(onKeyStroke, new EventHandler() {
-
 			    @Override
 			    public void handle(TerminalEvent<?> te) {
 				SeriesDemo.this.enabled = !SeriesDemo.this.enabled;
 			    }
 			}));
-
 		    }
 		}
 	    }
@@ -175,6 +176,9 @@ public class LineChartTest {
 			@Override
 			public void handle(TerminalEvent<?> te) {
 			    synchronized (lock) {
+			     if (pauseOnIdle) {
+				 return;
+			     }
 			      __handle(te);
 			    } 
 			}
@@ -264,10 +268,119 @@ public class LineChartTest {
 	}
 
     }
+    
+    private static void bootDemoManualResize(String[] args) throws Exception {
+	//System.out.println("Hello world");
+	
+	
+	TerminalScreen screen = TestsCommon.getTerminalScreenForTesting(args);
+
+	Canvas master_canvas = TestsCommon.getMasterCanvasForTesting(screen);
+	//master_canvas.setEmptyChar(' ');
+
+	LineChartDemo lineChartDemo = new LineChartDemo() {
+	    public void flushOutput() {
+		// master_canvas.t(0,0,"Braille Characters used for plotting.  MODE :"
+		// + style + "  ");
+		master_canvas.refresh();
+	    }
+	};
+
+	screen.add(ControlCode.HIDE_CURSOR);
+	// screen.refresh();
+	// master_canvas.t("  Braille Characters used for plotting");
+	master_canvas.t(" ");
+
+	master_canvas.refresh();
+
+	EventBus eventBus = new EventBus();
+	KeyInputEventsProducer keyInputEventsProducer = null;
+	try {
+	    keyInputEventsProducer = new KeyInputEventsProducer(eventBus);
+	} catch (Exception e) {
+	    eventBus.stopConsuming();
+	    return;
+	}
+
+	master_canvas.t("Braille Characters used for plotting");
+	master_canvas.refresh();
+	
+	lineChartDemo.setUpDemo(eventBus, new Rectangle.Simple(master_canvas), master_canvas);
+
+	EventHandler terminate = new EventHandler() {
+
+	    @Override
+	    public void handle(TerminalEvent<?> te) {
+		eventBus.stopConsuming();
+		screen.add(ControlCode.SHOW_CURSOR);
+		screen.refresh();
+
+		try {
+		    Stty.setCooked();
+		} catch (IOException e) {
+		    e.printStackTrace();
+		}
+		if (te.getType().equals(TYPE.EXCEPTION)) {
+		    System.out.println("\n");
+		    ((Exception) te.getEventData()).printStackTrace();
+		} else {
+		    // next refresh() is necessary to get cursor to be below
+		    // rendered canvas
+		    master_canvas.refresh();
+		}
+		return;
+	    }
+	};
+	
+	eventBus.addEventHandler(new KeyInputEventHandler(Keys.CTRL_A_KEYSTROKE, (e)-> {
+	                  lineChartDemo.pauseOnIdle  = !lineChartDemo.pauseOnIdle;
+	                  //System.out.println("idle = " + lineChartDemo.pauseOnIdle);
+	                  //terminate.handle(e);
+	                  })) ;
+
+	eventBus.addEventHandler(new KeyInputEventHandler(Keys.CTRL_R_KEYSTROKE, (e)-> {
+            TerminalDimensions size = TerminalDimensions.create();
+	    master_canvas.clearCanvas();
+            master_canvas.refresh();
+	    master_canvas.setSize(size.getHeight() - 1, size.getWidth() - 1);
+	    master_canvas.clearCanvas();
+            master_canvas.refresh();
+	    lineChartDemo.resize(master_canvas, master_canvas);
+
+            // master_canvas.t(10,10,"TEST 123");
+            
+//	    master_canvas.refresh();
+//
+//	    master_canvas.t(10,10,"TEST ABC");
+	    
+//	    master_canvas.refresh();
+	    lineChartDemo.flushOutput();
+
+
+            // System.out.println("idle = " + lineChartDemo.pauseOnIdle);
+            //terminate.handle(e);
+        })) ;
+
+	
+	// eventBus.addEventHandler(new KeyInputEventHandler(Keys.CTRL_A_KEYSTROKE, (e)-> )) ;
+
+	eventBus.addEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
+	eventBus.addEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
+	eventBus.addEventHandler(new ConditionalEventHandlerImpl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
+    
+    
+    }
 
     private static void bootDemo(String[] args) throws Exception {
 
 	String _style = "MAX";
+
+	if (args != null && args.length > 0 && args[0].equalsIgnoreCase("manual")) {
+	    bootDemoManualResize(args);
+	    return;
+	}
+	
+	
 	if (args != null && args.length > 0 && args[0].equalsIgnoreCase("small")) {
 	    _style = "SMALL";
 	}

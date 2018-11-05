@@ -57,6 +57,10 @@ public interface Renderer {
                 return false;
             return true;
         }
+        
+        public String toString() {
+            return getAsString();
+        }
     }
 
     public static class RendererBuffer implements Renderer {

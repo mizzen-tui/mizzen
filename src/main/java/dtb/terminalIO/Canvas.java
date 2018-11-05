@@ -103,7 +103,7 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
 
     private void segmentsClear() {
         segmentsBuffer.clear();
-        sc_current_id = 0;
+        sc_current_id = 1;
     }
 
     public Canvas clearCanvas() {
@@ -203,6 +203,7 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
 
         if (segmentsBuffer.isEmpty()) {
             outputBlankLines(0, this.height);
+            backend.refresh();
             return this;
         }
 
