@@ -80,6 +80,8 @@ public class EventBus {
 	    public void run() {
 		while (isActive()) {
 		    try {
+			// poll for an event with a short blocking timeout so that 
+			// we can loop and test (isActive()) to see if we need to terminate
 			TerminalEvent<?> te = queue.poll(1, TimeUnit.SECONDS);
 			if (te != null) {
 			    handler.handle(te);

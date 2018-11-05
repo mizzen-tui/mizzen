@@ -4,14 +4,18 @@ import dtb.terminalIO.TerminalScreen;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.util.TerminalDimensions;
 
+/**
+ * A utility class that inspects the current terminal size
+ * and if it has changed since last checked it will
+ * raise and enqueue a resize event onto the EventBus.
+ *
+ */
 public class TerminalResizeEventGenerator implements Runnable {
 
-    Dimension lastSize = Dimension.ZERO;
-
-    long lastChange = 0;
-    
-    TerminalScreen screen;
-    EventBus eventBus;
+    private Dimension lastSize = Dimension.ZERO;
+    private long lastChange = 0;
+    private TerminalScreen screen;
+    private EventBus eventBus;
     
     public TerminalResizeEventGenerator(TerminalScreen screen, EventBus eventBus) {
         super();
@@ -43,8 +47,7 @@ public class TerminalResizeEventGenerator implements Runnable {
         
         lastSize = size;
     }
-    
-    
+
     public EventHandler asEventHandler() {
         return new EventHandler() {
             @Override
@@ -52,7 +55,5 @@ public class TerminalResizeEventGenerator implements Runnable {
                 TerminalResizeEventGenerator.this.run();
             }
         };
-    }
-    
-    
+    } 
 }

@@ -10,11 +10,19 @@ public class TerminalResizeDetection {
     
     public static void initiate(TerminalScreen screen, EventBus eventBus) {
 	
+	// Use the idle events to poll for terminal resize
+	
 	TerminalResizePoller.startPollingForTerminalResize(screen, eventBus);
+	
+	// also ..
+	
+	// Use the Terminal resize Signaling to detect terminal resize 
 	
 	registerTerminalResizeListener(new TerminalResizeEventGenerator(screen, eventBus), 
 	                               ()->TerminalResizePoller.startPollingForTerminalResize(screen, eventBus));
 	
+	// Have not yet decided if its wise to be doing both.. Because detection would be on 2 differnt threads I think?
+	// todo: need to figure that out
     }
     
     static  void registerTerminalResizeListener(final Runnable onResize, Runnable fallback )  {
@@ -41,9 +49,7 @@ public class TerminalResizeDetection {
             
             System.err.println("Using fallback method to register terminal resize listener");
             
-            fallback.run();
-            
+            fallback.run();       
         }
     }
-    
 }

@@ -31,9 +31,7 @@ public class TerminalResizePoller {
 	// it fires off TerminalEvent.TYPE.RESIZE events that other handlers can then deal with.
 
         eventBus.addEventHandler( new OnIdleEventEventHandler.RepeatingInterval(pollingInterval, 
-                                                                                new TerminalResizeEventGenerator(screen, eventBus).asEventHandler()));
-	
+                                                                                new TerminalResizeEventGenerator(screen, eventBus).asEventHandler()));	
     }
-        
 
 }
