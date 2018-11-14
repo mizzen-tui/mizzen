@@ -37,19 +37,19 @@ public class TerminalDimensions implements Dimension {
 
         // try to get terminal dimensions from env vars setup by clish action
         // script
-        String sCols = getEnv("TERMINAL_WIDTH", null);
-        if (sCols != null)
-        {
-            String sLines = getEnv("TERMINAL_HEIGHT", null);
-            if (sLines != null)
-            {
-                int _cols = Integer.parseInt(sCols);
-                int _lines = Integer.parseInt(sLines);
-                return new TerminalDimensions(_lines, _cols);
-            }
-        }
-
-        // try to get dimensions by shelling out to os and asking
+//        String sCols = getEnv("TERMINAL_WIDTH", null);
+//        if (sCols != null)
+//        {
+//            String sLines = getEnv("TERMINAL_HEIGHT", null);
+//            if (sLines != null)
+//            {
+//                int _cols = Integer.parseInt(sCols);
+//                int _lines = Integer.parseInt(sLines);
+//                return new TerminalDimensions(_lines, _cols);
+//            }
+//        }
+//
+//        // try to get dimensions by shelling out to os and asking
 
         // set to default - useful when we cannot extract from o/s
         int cols = 105;

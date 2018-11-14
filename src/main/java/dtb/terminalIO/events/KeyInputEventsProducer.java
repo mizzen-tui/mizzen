@@ -100,8 +100,18 @@ public class KeyInputEventsProducer implements Runnable {
                     }
                 }
 
-            } catch (Exception e) {
-                eventBus.addEvent(KeyInputEventsProducer.this, TYPE.EXCEPTION, e);
+            } catch (Throwable e) {  // Warning .. dangerous to catch Throwable (I know) - but I have 
+                                     //            signal other threads (in EventBus) of the situation
+                Exception e1 = null;
+                if (!(e instanceof Exception)) {
+                    e1 = new Exception(e);
+                } else {
+                    e1 = (Exception) e;
+                }
+                eventBus.addEvent(KeyInputEventsProducer.this, TYPE.EXCEPTION, e1);
+                if (!(e instanceof Exception)) { // if not an Exception - then probably an Error - so better to get the hell out
+                    throw new RuntimeException(e);
+                }
             }
 
             try {

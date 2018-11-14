@@ -9,7 +9,6 @@ import java.util.TreeSet;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
-import dtb.terminalIO.Canvas.AbstractSegment;
 import dtb.terminalIO.ControlCode.Color;
 import dtb.terminalIO.ControlCode.ColorColorSegmentBuilder;
 import dtb.terminalIO.ControlCode.FGBGColors;
@@ -215,6 +214,8 @@ public interface ScreenLineSegment extends Rectangle {
 
         public static ScreenLineSegment blankScreenObject(Color color, char emptyChar, int row, int col, int id,
                 int width) {
+            
+            if (width < 0) throw new IllegalArgumentException("width="+width);
             
             if (emptyChar == 'Z') {
                 throw new IllegalStateException("!!!!");

@@ -13,7 +13,7 @@ public class TerminalScreen implements TerminalContext {
 
     boolean                 refreshed   = false;
 
-    TerminalContext         ctx         = TerminalContext.DEFAULT;
+    TerminalContext         ctx        = TerminalContext.DEFAULT;
 
     CLIEmitter              baseEmitter = CLIEmitter.DEFAULT;
 

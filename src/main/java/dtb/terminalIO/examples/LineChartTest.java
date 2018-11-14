@@ -482,9 +482,11 @@ public class LineChartTest {
 	            Position lc_Pos = bounds.centered(lineChartDemo.lc, Position.ZERO);
 	            Rectangle rectToRemove = new Rectangle.Simple(lineChartDemo.lc);
 	            rectToRemove.moveDelta(lc_Pos.getRow(), lc_Pos.getCol());
+	            
 	            master_canvas.getSegmentsBuffer().removeRect(rectToRemove);
 	            
-	           // master_canvas.clearCanvas();
+	            
+	            master_canvas.clearCanvas();
 	            lineChartDemo.resize(newBpunds, master_canvas);
 	    };
 	    

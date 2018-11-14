@@ -68,7 +68,7 @@ public class ScreenLineSegmentsBuffer implements Rectangle, IScreenLineSegmentsB
 
     @Override
     public int getWidth() {
-        return this.getWidth();
+        return this.preCalulatedRectangle.getWidth();
     }
 
     @Override

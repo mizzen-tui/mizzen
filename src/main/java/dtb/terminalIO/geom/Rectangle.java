@@ -130,7 +130,7 @@ public interface Rectangle extends Position, Dimension, Movable {
 
     /**
      * TODO: This method is not well designed/implemented .. need to rethink it -
-     * dont use until this is done
+     * dont use until this is done - then erase this comment -- I forget what the issue is!  :-)
      * 
      * @return
      */
@@ -159,7 +159,7 @@ public interface Rectangle extends Position, Dimension, Movable {
         return Rectangle.UTIL.hasOverlap(this, other);
     }
 
-    public static final Simple ZERO = new Simple(0, 0, -1, -1);
+    public static final Simple ZERO = new Simple(0, 0, 0, 0);
 
     public static final Simple MAX_SIZE = new Simple(Short.MIN_VALUE, Short.MIN_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE);
 

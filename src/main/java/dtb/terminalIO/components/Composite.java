@@ -76,21 +76,21 @@ public class Composite extends AbstractComponent<Composite> implements Rectangle
     public Composite setBounds(Rectangle bounds) {
 	this.bounds = bounds;
 	this.boundsFixed = true;
-	rebuildBorder(this.bounds);
+	if (this.border != null) rebuildBorder(this.bounds);
 	return this;
     }
 
     public Composite setBounds(int row, int col, int height, int width) {
 	this.bounds = new Rectangle.Simple(row, col, height, width);
 	this.boundsFixed = true;
-	rebuildBorder(this.bounds);
+	if (this.border != null) rebuildBorder(this.bounds);
 	return this;
     }
 
     public Composite setBounds(Dimension d) {
 	this.bounds = new Rectangle.Simple(d);
 	this.boundsFixed = true;
-	rebuildBorder(this.bounds);
+	if (this.border != null) rebuildBorder(this.bounds);
 	return this;
     } 
 

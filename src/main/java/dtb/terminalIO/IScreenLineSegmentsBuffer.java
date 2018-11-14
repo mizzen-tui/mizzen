@@ -115,7 +115,142 @@ public interface IScreenLineSegmentsBuffer extends Rectangle , Iterable<ScreenLi
         mergeAtBounded(pos.getRow(), pos.getCol(), bounds, segmentsBuffer);
     }
 
-	
+    
+    
+    public static class Delegate implements IScreenLineSegmentsBuffer {
+        
+        
+        private IScreenLineSegmentsBuffer delegate;
+
+        public Delegate(IScreenLineSegmentsBuffer delegate) {
+            this.delegate = delegate;
+        }
+        
+        public IScreenLineSegmentsBuffer getDelegate() {
+            return delegate;
+        }
+
+        public void setDelegate(IScreenLineSegmentsBuffer delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public int getCol() {
+            return delegate.getCol();
+        }
+
+        @Override
+        public int getRow() {
+            return delegate.getRow();
+        }
+
+        @Override
+        public int getWidth() {
+            return delegate.getWidth();
+        }
+
+        @Override
+        public int getHeight() {
+            return delegate.getHeight();
+        }
+
+        @Override
+        public void moveTo(int row, int col) {
+            delegate.moveTo(row, col);
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return delegate.isEmpty();
+        }
+
+        @Override
+        public void clear() {
+            delegate.clear();
+        }
+
+        @Override
+        public void add(ScreenLineSegment sc) {
+            delegate.add(sc);
+        }
+
+        @Override
+        public void merge(IScreenLineSegmentsBuffer other) {
+            delegate.merge(other);
+        }
+
+        @Override
+        public void mergeAt(int row, int col, IScreenLineSegmentsBuffer segmentsBuffer) {
+            delegate.mergeAt(row, col, segmentsBuffer);
+        }
+
+        @Override
+        public void merge(Collection<ScreenLineSegment> segments) {
+            delegate.merge(segments);
+        }
+
+        @Override
+        public ScreenLineSegment getAtCol(int row, int col) {
+            return delegate.getAtCol(row, col);
+        }
+
+        @Override
+        public String getTextAt(int row, int col) {
+            return delegate.getTextAt(row, col);
+        }
+
+        @Override
+        public String getCharAt(int row, int col) {
+            return delegate.getCharAt(row, col);
+        }
+
+        @Override
+        public void setCharAt(int row, int col, char ch, Color color) {
+            delegate.setCharAt(row, col, ch, color);
+        }
+
+        @Override
+        public boolean removeRow(int row) {
+            return delegate.removeRow(row);
+        }
+
+        @Override
+        public boolean removeRect(Rectangle r) {
+            return delegate.removeRect(r);
+        }
+
+        @Override
+        public Iterator<ScreenLineSegment> iterator() {
+            return delegate.iterator();
+        }
+
+        @Override
+        public Collection<ScreenLineSegment> getSegments() {
+            return delegate.getSegments();
+        }
+
+        @Override
+        public boolean removeSegments(Collection<ScreenLineSegment> scs) {
+            return delegate.removeSegments(scs);
+        }
+
+        @Override
+        public void removeRectangles(Collection<? extends Rectangle> rectangles) {
+            delegate.removeRectangles(rectangles);
+        }
+
+        @Override
+        public void fillRectWithChar(Color color, char fillChar, Rectangle bounds) {
+            delegate.fillRectWithChar(color, fillChar, bounds);
+        }
+
+        @Override
+        public void mergeAtBounded(int row, int col, Rectangle bounds, IScreenLineSegmentsBuffer segmentsBuffer) {
+            delegate.mergeAtBounded(row, col, bounds, segmentsBuffer);
+            
+        }
+        
+    }
 	
 
 }

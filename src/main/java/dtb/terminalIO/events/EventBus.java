@@ -46,7 +46,7 @@ import dtb.terminalIO.events.TerminalEvent.TYPE;
  * 
  * One handler chain is used for idle events.  When an idle event is generated
  * the event is passed to all idle event handlers and then each can decide to perform
- * it operation based on elapsed time since last invoked.
+ * it's operation based on elapsed time since last invoked.
  * 
  * <p/>
  * 
@@ -61,17 +61,33 @@ import dtb.terminalIO.events.TerminalEvent.TYPE;
  */
 public class EventBus {
 
-    private static final int EVENT_Q_CAPACITY = 5;  // number picked out of my hat!
-                                                    //  -- increase as needed
+    private static final int EVENT_Q_CAPACITY = 10;  // number picked out of my hat!
+                                                     //  -- increase as needed
     
-    private ChainedEventHandler handler = ChainedEventHandler.useChainOfResponsibilityStrategy();
+    // main events handler chain
+    private ChainedEventHandler eventsHandlerChain = ChainedEventHandler.useChainOfResponsibilityStrategy();
 
-    private ChainedEventHandler idleEventsHandler;  // we build this in lazy fashion on purpose
+    // idle events processed on a separate chain
+    private ChainedEventHandler idleEventsHandlerChain = null;  // we build this in lazy fashion on purpose
+    
+    // When idleEventsHandler is created we need to bridge the main event handler (eventsHandlerChain) 
+    // with the the idleEventsHandler (idleEventsHandlerChain).  
+    // We do that by creating a single Idle event handler (master_idlEventHandlerBRIDGE) that
+    // is injected into the main handler.
+    // master_idlEventHandlerBRIDGE will forward all idle events to idleEventsHandlerChain
+    private ConditionalEventHandler master_idlEventHandlerBRIDGE = null;
+    
+    // idle events processing can be turned on and off - this was introduced when 
+    // processing terminal resize events
+    private boolean idleEventsSuppressed = false;
 
+    // the single Queue in which all events are placed
     private BlockingQueue<TerminalEvent<?>> queue = new ArrayBlockingQueue<TerminalEvent<?>>(EVENT_Q_CAPACITY);
 
+    // when set to true, the EventBus thread will terminate
     private AtomicBoolean stopConsuming = new AtomicBoolean(false);
 
+    // The task used to consume enqueued events
     private Runnable consumerTask;
 
     public EventBus() {
@@ -84,10 +100,10 @@ public class EventBus {
 			// we can loop and test (isActive()) to see if we need to terminate
 			TerminalEvent<?> te = queue.poll(1, TimeUnit.SECONDS);
 			if (te != null) {
-			    handler.handle(te);
+			    eventsHandlerChain.handle(te);
 			}
 		    } catch (Exception e) {
-			handler.handle(new TerminalEvent<Exception>(EventBus.this, TerminalEvent.TYPE.EXCEPTION, e));
+			eventsHandlerChain.handle(new TerminalEvent<Exception>(EventBus.this, TerminalEvent.TYPE.EXCEPTION, e));
 			// hmm...  should I really be looping after an exception.. or should I terminate..
 			//         for now .. letting the application make the decision.
 		    }
@@ -122,41 +138,40 @@ public class EventBus {
 	return addEvent(te);
     }
 
-    private ConditionalEventHandler master_idlEventHandler = null;
-    private boolean idleEventsSuppressed = false;
     
     public EventBus addIdleEventHandler(OnIdleEventEventHandler onIdleEventHandler) {
+        
         if (idleEventsSuppressed) return this;
-	if (this.idleEventsHandler == null) {
+        
+	if (this.idleEventsHandlerChain == null) {
 	    synchronized (this) {
-		if (this.idleEventsHandler == null) {
+		if (this.idleEventsHandlerChain == null && !idleEventsSuppressed) {
 		    // build a handler for all idle events
-		    this.idleEventsHandler = ChainedEventHandler.useHandleAllStrategy();
+		    this.idleEventsHandlerChain = ChainedEventHandler.useHandleAllStrategy();
 
 		    // now build a handler on the main eventbus to dispatch to the 
 		    // the newly built idleEventsHandler
 		    // this.addEventHandler(master_idlEventHandler);
 		    
 		    enableIdleEvents();
-		    
 		}
 	    }
 	}
-	this.idleEventsHandler.addEventHandler(onIdleEventHandler);
+	this.idleEventsHandlerChain.addEventHandler(onIdleEventHandler);
 	return this;
     }
     
-    public void enableIdleEvents() {
+    synchronized public void enableIdleEvents() {
         
-        if (master_idlEventHandler != null) return;
+        if (master_idlEventHandlerBRIDGE != null) return;
         
         disableIdleEvents();
         
-        master_idlEventHandler = new ConditionalEventHandler() {
+        master_idlEventHandlerBRIDGE = new ConditionalEventHandler() {
 
             @Override
             public void handle(TerminalEvent<?> te) {
-                EventBus.this.idleEventsHandler.handle(te);
+                EventBus.this.idleEventsHandlerChain.handle(te);
             }
 
             @Override
@@ -168,20 +183,20 @@ public class EventBus {
             }
         };
         
-        this.addEventHandler(master_idlEventHandler);
+        this.addEventHandler(master_idlEventHandlerBRIDGE);
         idleEventsSuppressed = false;
         
     }
     
-    public void disableIdleEvents() {
+    public synchronized void disableIdleEvents() {
         
         idleEventsSuppressed = true;
 
-        if (master_idlEventHandler == null) return;
+        if (master_idlEventHandlerBRIDGE == null) return;
         
-        this.remove(master_idlEventHandler);
+        this.remove(master_idlEventHandlerBRIDGE);
         
-        master_idlEventHandler = null;
+        master_idlEventHandlerBRIDGE = null;
                 
     }
     
@@ -189,10 +204,10 @@ public class EventBus {
     
 
     public EventBus removeIdleEventHandler(OnIdleEventEventHandler onIdleEventHandler) {
-	if (this.idleEventsHandler == null) {
+	if (this.idleEventsHandlerChain == null) {
 	    return this;
 	}
-	this.idleEventsHandler.remove(onIdleEventHandler);
+	this.idleEventsHandlerChain.remove(onIdleEventHandler);
 	return this;
     }
 
@@ -202,7 +217,8 @@ public class EventBus {
 	    addIdleEventHandler((OnIdleEventEventHandler) eventHandler);
 	    return this;
 	}
-	handler.addEventHandler(eventHandler);
+	// add non idleEventHandler
+	eventsHandlerChain.addEventHandler(eventHandler);
 	return this;
     }
 
@@ -211,12 +227,7 @@ public class EventBus {
 	    removeIdleEventHandler((OnIdleEventEventHandler) eventHandler);
 	    return this;
 	}
-	handler.remove(eventHandler);
-	return this;
-    }
-
-    public EventBus addEventHandler(Predicate<TerminalEvent<?>> canHandlePredicate, EventHandler eventHandler) {
-	handler.addEventHandler(canHandlePredicate, eventHandler);
+	eventsHandlerChain.remove(eventHandler);
 	return this;
     }
 
@@ -224,8 +235,8 @@ public class EventBus {
 	StringBuffer sb = new StringBuffer();
 	sb.append("Event Bus : size=");
 	sb.append(this.queue.size());
-	sb.append("  idleEventsHandler " + (idleEventsHandler==null? "empty" : idleEventsHandler.statsAsStr()));
-	sb.append("  handler " + handler.statsAsStr()); 
+	sb.append("  idleEventsHandler " + (idleEventsHandlerChain==null? "empty" : idleEventsHandlerChain.statsAsStr()));
+	sb.append("  handler " + eventsHandlerChain.statsAsStr()); 
 	return sb.toString();
     }
     

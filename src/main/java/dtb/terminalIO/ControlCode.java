@@ -266,7 +266,7 @@ public abstract class ControlCode implements Renderer {
         }
 
         public FGBGColors bold() {
-            return new FGBGColors(fgc.asBold(), bgc);
+            return new FGBGColors((fgc==null?(new FgColor(0)):fgc).asBold(), bgc);
         }
 
         public FGBGColors removebold() {

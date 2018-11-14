@@ -18,12 +18,7 @@ import dtb.terminalIO.geom.Rectangle;
  */
 public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Rectangle.Delegate implements Component<T>, FillOnClearPolicy.Provider {
 
-    private IScreenLineSegmentsBuffer segments   = new ScreenLineSegmentsBuffer() {
-                                                     protected void doAdd(Collection<ScreenLineSegment> segments, ScreenLineSegment sc) {
-                                                         // add to segments buffer (collection)
-                                                         ScreenLineSegment.UTIL.addSegmentBounded(BoundedComponent.this.getRectangle(), segments, sc);
-                                                     }
-                                                 };
+    protected IScreenLineSegmentsBuffer segments   = createSegmentsBuffer();
 
     boolean                           hasDrawn   = false;
     Color                             color      = FGBGColors.DEFAULT;
@@ -42,6 +37,16 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
                                                      }
 
                                                  };
+                                                 
+    protected IScreenLineSegmentsBuffer createSegmentsBuffer() {
+        IScreenLineSegmentsBuffer segmentsBuffer   = new ScreenLineSegmentsBuffer() {
+            protected void doAdd(Collection<ScreenLineSegment> segments, ScreenLineSegment sc) {
+                // add to segments buffer (collection)
+                ScreenLineSegment.UTIL.addSegmentBounded(BoundedComponent.this.getRectangle(), segments, sc);
+            }
+        };
+        return segmentsBuffer;
+    }
 
     public BoundedComponent(Color color, Rectangle r) {
         super(new Rectangle.Simple(r));

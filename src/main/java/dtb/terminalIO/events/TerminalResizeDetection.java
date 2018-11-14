@@ -12,7 +12,7 @@ public class TerminalResizeDetection {
 	
 	// Use the idle events to poll for terminal resize
 	
-	TerminalResizePoller.startPollingForTerminalResize(screen, eventBus);
+	// TerminalResizePoller.startPollingForTerminalResize(screen, eventBus);
 	
 	// also ..
 	

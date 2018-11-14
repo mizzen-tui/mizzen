@@ -82,8 +82,11 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
     }
 
     public Canvas setSize(int height, int width) {
-        this.height = height;
-        this.width = width;
+        synchronized(this) {
+           this.height = height;
+           this.width = width;
+           meAsARectangle = null;
+        }
         // todo - if already rendered -- should reflect by changing buffer and by
         // re-rendering on backend
         return this;
@@ -324,54 +327,5 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
         sc_current_id++;
         SegmentImpl so = new SegmentImpl(color, cursorPos, sc_current_id, simpleText);
         return so;
-    }
-
-    static abstract class AbstractSegment implements ScreenLineSegment {
-        Color color;
-        Position   cursorPos;
-
-        public AbstractSegment(Color color, Position cursorPos) {
-            super();
-            this.color = color;
-            this.cursorPos = new Position.Simple(cursorPos); // very important to make a copy
-        }
-
-        public Color getColor() {
-            return color;
-        }
-
-        public Position getCursorPos() {
-            return cursorPos;
-        }
-
-        @Override
-        public int getLength() {
-            return this.getText().length();
-        }
-
-        @Override
-        public int getRow() {
-            return getCursorPos().getRow();
-        }
-
-        @Override
-        public int getCol() {
-            return getCursorPos().getCol();
-        }
-
-        public String toString() {
-            return String.format("(row=%d,lcol=%d,rcol=%d,[id=%d]):%s", getRow(), getCol(), getRightMostCol(), getId(), getText());
-        }
-
-        @Override
-        public Color getColors() {
-            return color;
-        }
-
-        @Override
-        public void moveTo(int row, int col) {
-            // TODO: this.getCursorPos().moveTo(row, col);
-            throw new IllegalStateException("No implemented yet!");
-        }
     }
 }
