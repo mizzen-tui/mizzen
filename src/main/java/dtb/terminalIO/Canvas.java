@@ -87,7 +87,7 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
            this.width = width;
            meAsARectangle = null;
         }
-        // todo - if already rendered -- should reflect by changing buffer and by
+        // TODO - if already rendered -- should reflect by changing buffer and by
         // re-rendering on backend
         return this;
     }

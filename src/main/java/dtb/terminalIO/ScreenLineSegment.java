@@ -558,7 +558,10 @@ public interface ScreenLineSegment extends Rectangle {
                     (p, txt) -> new SegmentImpl(FGBGColors.NO_COLOR_SPECIFIED, p, -1, txt));
         }
         
-        private static int clipStrWithEmbeddedColors(final Collection<ScreenLineSegment> ts, String colorCodedStr, int width, Position offset, CreateSegmentWithColor createSegment) {
+        private static int clipStrWithEmbeddedColors(final Collection<ScreenLineSegment> ts, 
+        	                                     String colorCodedStr, int width, 
+        	                                     Position offset, 
+        	                                     CreateSegmentWithColor createSegment) {
             int[] curlength = new int[]{0};
             
             ControlCode.parseColorsAndBuildResult(colorCodedStr, new ColorColorSegmentBuilder() {
@@ -608,8 +611,8 @@ public interface ScreenLineSegment extends Rectangle {
             for (int i = 1; i < lineLimit; i++) {
                 position.moveTo(position.getRow() + 1, boundingRectangle.getCol()); // notice that we effectively carriage return
                                                                                     // to start of next line (moveTo)
-                                                                  // and now we use width of original rectangle for subsequent
-                                                                  // clippings
+                                                                                    // and now we use width of original rectangle for subsequent
+                                                                                    // clippings
                 if (lines[i]!=null && lines[i].length()>0) {
                     clipStrWithEmbeddedColors(ts, lines[i],originalWidth, position, createSegment);
                 }
