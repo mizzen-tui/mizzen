@@ -52,7 +52,7 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
         setEmptyChar(emptyChar);
     }
 
-    static interface CanvasBackend {
+    public static interface CanvasBackend {
         void writeToBackend(ScreenLineSegment sc);
 
         void signal_eol();
@@ -61,6 +61,26 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
 
         void cr();
     }
+    
+    public static class NullCanvasBackEnd implements CanvasBackend {
+
+        @Override
+        public void writeToBackend(ScreenLineSegment sc) {
+        }
+
+        @Override
+        public void signal_eol() {
+        }
+
+        @Override
+        public void refresh() {
+        }
+
+        @Override
+        public void cr() {
+        }
+    }
+    
 
     IScreenLineSegmentsBuffer segmentsBuffer = new ScreenLineSegmentsBuffer();
 
@@ -154,7 +174,24 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
             return this;
         }
         segmentsBuffer.merge(result.ts);
-        moveToCursor(result.pos);
+        moveToCursor(result.pos.offsetAdd(0, 1));
+        return this;
+    }
+
+    public Canvas addTextHandleColors(String s) {
+        boolean hasColorCodes = ControlCode.hasColorCodes(s);
+        if (! hasColorCodes) {
+            return t(s);
+        }
+        
+        SegmentsFromStringResult result = ScreenLineSegment.UTIL.textSegmentsFromStringWithEmbeddedColor(s, cursorPos.getRow(), cursorPos.getCol(), this.asRectangle(),
+                (strColor, p, txt) -> new SegmentImpl( strColor != null ? strColor : color, p, -1, txt));
+
+        if (result.size() == 0) {
+            return this;
+        }
+        segmentsBuffer.merge(result.ts);
+        moveToCursor(result.pos.offsetAdd(0, 1));
         return this;
     }
 

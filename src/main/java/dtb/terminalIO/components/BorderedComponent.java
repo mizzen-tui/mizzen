@@ -13,13 +13,14 @@ import dtb.terminalIO.geom.Rectangle;
  * A Component that draws a border around itself and then has an inner BoundedComponent to
  * render its contents
  */
-public class BorderedComponent extends BoundedComponent<BorderedComponent> implements Rectangle {
+public class BorderedComponent extends BoundedComponent<BorderedComponent> 
+        implements Rectangle, HasTitleAndBorder<BorderedComponent>, CanResize {
 
     private SimpleBorder        border;
-    private BoundedComponent<?> component;
+    private Component<?> component;
     private Position            componentPosition;
 
-    public BorderedComponent(Color color, BoundedComponent<?> component) {
+    public BorderedComponent(Color color, Component<?> component) {
         super(color, Rectangle.ZERO);
         this.component = component;
         this.componentPosition = new Position.Simple(1,1);
@@ -31,14 +32,26 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent> imple
         this.setRectangle( bounds );
     }
 
-    public BorderedComponent(BoundedComponent<?> component) {
+    public BorderedComponent(Component<?> component) {
         this(component.getColor(), component);
     }
+    
+    public Component<?>  getComponent() {
+        return this.component;
+    }
+
+    public void markAsDirty() {
+        super.markAsDirty();
+        this.component.markAsDirty();
+        this.border.markAsDirty();
+    }
+    
     
     public void resize(Dimension d) {
         super.resize(d);
         this.border.resize(d);
-        this.component.resize(new Dimension.Simple(d.getHeight()-2, d.getWidth()-2));
+        if ( this.component instanceof CanResize)
+           ((CanResize)this.component).resize(new Dimension.Simple(d.getHeight()-2, d.getWidth()-2));
     }
 
 
@@ -102,6 +115,25 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent> imple
 
     @Override
     protected Rectangle getRectangleForClearAndFill() {
+        return this;
+    }
+
+    @Override
+    public BorderedComponent setBorder(boolean hasBorder) {
+        if (!hasBorder) 
+            throw new IllegalStateException("Cannnot turn off border");
+        return this;
+    }
+
+    @Override
+    public BorderedComponent setBorderColor(Color borderColors) {
+        this.border.setBorderColor(borderColors);
+        return this;
+    }
+
+    @Override
+    public BorderedComponent setTitle(Color titleColors, String title) {
+        this.border.setTitle(titleColors, title);
         return this;
     }
 

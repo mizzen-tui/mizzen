@@ -10,7 +10,19 @@ import dtb.terminalIO.geom.Rectangle;
 /**
  * Container for {@link ScreenLineSegment} objects
  * 
+ * <p/>
  * 
+ * This is the primary container for managing a collection of ScreenLineSegments.
+ * 
+ * <p/>
+ * 
+ * All more complex objects like the Canvas or any of the Component objects
+ * will have a ScreenLineSegment objects encapsulated in this IScreenLineSegmentsBuffer.
+ * 
+ * <p/>
+ * 
+ * Most major operations on collections of ScreenLineSegments will happen through this
+ * interface.
  * 
  */
 public interface IScreenLineSegmentsBuffer extends Rectangle , Iterable<ScreenLineSegment>{

@@ -28,6 +28,7 @@ import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.KeyInputEventHandler;
 import dtb.terminalIO.events.KeyInputEventsProducer;
 import dtb.terminalIO.events.Keys;
+import dtb.terminalIO.events.Keys.KeyStroke;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.OnResizeEventHandler;
 import dtb.terminalIO.events.TerminalEvent;
@@ -351,7 +352,7 @@ public class GridBrailleTest {
 		}
 	    }));
 
-	    addAndRememberEventHandler(eventBus, new KeyInputEventHandler(Keys.UP_KEYSTROKE, new EventHandler() {
+	    addAndRememberEventHandler(eventBus, new KeyInputEventHandler(KEY_MOVE_UP, new EventHandler() {
 
 		@Override
 		public void handle(TerminalEvent<?> te) {
@@ -360,7 +361,7 @@ public class GridBrailleTest {
 		}
 	    }));
 
-	    addAndRememberEventHandler(eventBus, new KeyInputEventHandler(Keys.DOWN_KEYSTROKE, new EventHandler() {
+	    addAndRememberEventHandler(eventBus, new KeyInputEventHandler(KEY_MOVE_DOWN, new EventHandler() {
 		@Override
 		public void handle(TerminalEvent<?> te) {
 		    pointPlotter.setyDelta(pointPlotter.getyDelta() + 1);
@@ -368,7 +369,7 @@ public class GridBrailleTest {
 		}
 	    }));
 
-	    addAndRememberEventHandler(eventBus, new KeyInputEventHandler(Keys.LEFT_KEYSTROKE, new EventHandler() {
+	    addAndRememberEventHandler(eventBus, new KeyInputEventHandler(KEY_MOVE_LEFT, new EventHandler() {
 		@Override
 		public void handle(TerminalEvent<?> te) {
 		    pointPlotter.setxDelta(pointPlotter.getxDelta() - 1);
@@ -376,7 +377,7 @@ public class GridBrailleTest {
 		}
 	    }));
 
-	    addAndRememberEventHandler(eventBus, new KeyInputEventHandler(Keys.RIGHT_KEYSTROKE, new EventHandler() {
+	    addAndRememberEventHandler(eventBus, new KeyInputEventHandler(KEY_MOVE_RIGHT, new EventHandler() {
 		@Override
 		public void handle(TerminalEvent<?> te) {
 		    pointPlotter.setxDelta(pointPlotter.getxDelta() + 1);
@@ -384,6 +385,27 @@ public class GridBrailleTest {
 		}
 	    }));
 	}
+	
+	private KeyStroke KEY_MOVE_UP    = Keys.UP_KEYSTROKE;
+	private KeyStroke KEY_MOVE_DOWN  = Keys.DOWN_KEYSTROKE;
+	private KeyStroke KEY_MOVE_LEFT  = Keys.LEFT_KEYSTROKE;
+	private KeyStroke KEY_MOVE_RIGHT = Keys.RIGHT_KEYSTROKE;
+	
+	public void setupMpvementKeys(KeyStroke KEY_MOVE_UP, 
+	                              KeyStroke KEY_MOVE_DOWN,
+	                              KeyStroke KEY_MOVE_LEFT,
+	                              KeyStroke KEY_MOVE_RIGHT) {
+	    this.KEY_MOVE_UP = KEY_MOVE_UP;
+	    this.KEY_MOVE_DOWN = KEY_MOVE_DOWN;
+	    this.KEY_MOVE_LEFT = KEY_MOVE_LEFT;
+	    this.KEY_MOVE_RIGHT = KEY_MOVE_RIGHT;
+	}
+	
+	
+	    
     }
+    
+    
+    
 
 }

@@ -12,25 +12,31 @@ import dtb.terminalIO.ControlCode.Color;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 
+/**
+ * This is the primary (and default) implementation of  IScreenLineSegmentsBuffer.
+ * 
+ */
 public class ScreenLineSegmentsBuffer implements Rectangle, IScreenLineSegmentsBuffer {
 
     private TreeSet<ScreenLineSegment> segments              = ScreenLineSegment.UTIL.makeCollection(null);
 
-    private Rectangle                  preCalulatedRectangle = Rectangle.ZERO;
+    protected boolean                    recalcNeeded = true;
+    protected Rectangle                  preCalulatedRectangle = Rectangle.ZERO;
 
     @Override
     public boolean isEmpty() {
         return segments == null || segments.isEmpty();
     }
 
-    private void fullrecalcDim() {
+    synchronized protected void fullrecalcDim() {
         preCalulatedRectangle = Rectangle.UTIL.calcDimensionsWith(segments);
+        recalcNeeded = false;
     }
 
     @Override
     public void clear() {
         segments.clear();
-        fullrecalcDim();
+        recalcNeeded = true;
     }
 
     protected void doAdd(Collection<ScreenLineSegment> segments, ScreenLineSegment sc) {
@@ -47,8 +53,7 @@ public class ScreenLineSegmentsBuffer implements Rectangle, IScreenLineSegmentsB
         // add to buffer
 
         doAdd(segments, sc);
-        // update rectangle information
-        preCalulatedRectangle.mergeAndExpandDimensionsWith(sc);
+        recalcNeeded = true;
     }
 
     @Override
@@ -78,7 +83,7 @@ public class ScreenLineSegmentsBuffer implements Rectangle, IScreenLineSegmentsB
         for (ScreenLineSegment sc : other) {
             this.doAdd(segments, sc);
         }
-        fullrecalcDim();
+        recalcNeeded = true;
     }
 
     @Override
@@ -86,7 +91,7 @@ public class ScreenLineSegmentsBuffer implements Rectangle, IScreenLineSegmentsB
         for (ScreenLineSegment sc : other_segments) {
             this.doAdd(segments, sc);
         }
-        fullrecalcDim();
+        recalcNeeded = true;
     }
 
     @Override
@@ -135,7 +140,7 @@ public class ScreenLineSegmentsBuffer implements Rectangle, IScreenLineSegmentsB
     
     public boolean removeSegment(ScreenLineSegment sc) {
         boolean result = this.segments.remove(sc); 
-        fullrecalcDim();
+        recalcNeeded = true;
         return result;
     }
 
@@ -146,7 +151,7 @@ public class ScreenLineSegmentsBuffer implements Rectangle, IScreenLineSegmentsB
             result = result || currResult;
         }
         if (result)
-            fullrecalcDim();
+            recalcNeeded = true;
         return result;
     }
 
@@ -164,6 +169,7 @@ public class ScreenLineSegmentsBuffer implements Rectangle, IScreenLineSegmentsB
 
     public void removeRectangles(Collection<? extends Rectangle> rectangles) {
         ScreenLineSegment.UTIL.removeRectangles(segments, rectangles);
+        recalcNeeded = true;
     }
 
     @Override
@@ -176,7 +182,7 @@ public class ScreenLineSegmentsBuffer implements Rectangle, IScreenLineSegmentsB
         for (ScreenLineSegment sc : segments) {
             sc.moveDelta(rowOffset, colOffset);
         }
-        fullrecalcDim();
+        recalcNeeded = true;
     }
     
     @Override
@@ -189,15 +195,15 @@ public class ScreenLineSegmentsBuffer implements Rectangle, IScreenLineSegmentsB
     }
 
     public Rectangle getPreCalulatedRectangle() {
+        if (recalcNeeded) {
+            fullrecalcDim();
+        }
         return preCalulatedRectangle;
-    }
-
-    public void setPreCalulatedRectangle(Rectangle preCalulatedRectangle) {
-        this.preCalulatedRectangle = preCalulatedRectangle;
     }
 
     public void setSegments(TreeSet<ScreenLineSegment> segments) {
         this.segments = segments;
+        recalcNeeded = true;
     }
 
     public static class Layer extends Rectangle.Delegate {

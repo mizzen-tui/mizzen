@@ -4,6 +4,7 @@ import dtb.terminalIO.ControlCode.Color;
 import dtb.terminalIO.ControlCode.FGBGColors;
 import dtb.terminalIO.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.ScreenLineSegmentsBuffer;
+import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 
 
@@ -136,5 +137,6 @@ public interface Component<T extends Component<?>> extends IScreenLineSegmentsBu
     }
 
     void markAsDirty();
+    
 
 }

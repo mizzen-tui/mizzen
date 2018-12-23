@@ -2,6 +2,7 @@ package dtb.terminalIO.components;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import dtb.terminalIO.ControlCode.Color;
 import dtb.terminalIO.ControlCode.FGBGColors;
@@ -12,7 +13,8 @@ import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 
-public class Composite extends AbstractComponent<Composite> implements Rectangle {
+public class Composite extends AbstractComponent<Composite> 
+      implements Rectangle, HasTitleAndBorder<Composite>, CanResize  {
 
     private SimpleBorder border;
     private boolean boundsFixed = false;
@@ -26,13 +28,17 @@ public class Composite extends AbstractComponent<Composite> implements Rectangle
 	public ComponentWithOffset(Position offset, Component<?> component) {
 	    super();
 	    this.offset = offset;
-	    this.component = component;
-	    this.bounds = new Rectangle.Simple(offset.getRow() + component.getRow(), offset.getCol()
-		    + component.getCol(), component.getHeight(), component.getWidth());
+	    this.setComponent(component);
 	}
 
 	public ComponentWithOffset(Component<?> component) {
 	    this(Position.ZERO, component);
+	}
+	
+	public void setComponent(Component<?> component) {
+            this.component = component;
+            this.bounds = new Rectangle.Simple(offset.getRow() + component.getRow(), offset.getCol()
+                    + component.getCol(), component.getHeight(), component.getWidth());
 	}
 	
 	@Override
@@ -174,7 +180,7 @@ public class Composite extends AbstractComponent<Composite> implements Rectangle
 
     public Composite setBorderColor(Color borderColors) {
 	setBorder(true);
-	this.border.setColor(borderColors);
+	this.border.setBorderColor(borderColors);
 	return this;
     }
 
@@ -196,7 +202,7 @@ public class Composite extends AbstractComponent<Composite> implements Rectangle
 	return this;
     }
 
-    private ComponentWithOffset findChild(Component<?> component) {
+    protected ComponentWithOffset findChild(Component<?> component) {
 	for (ComponentWithOffset child : children) {
 	    if (component == child.component) {
 		return child;
@@ -205,6 +211,21 @@ public class Composite extends AbstractComponent<Composite> implements Rectangle
 	return null;
     }
 
+    public Composite replace(Component<?> c1, Component<?> c2) {
+        ComponentWithOffset child = findChild(c1);
+        if (child == null) {
+            throw new IllegalArgumentException("Could not find component to replace!");
+        }
+        if (findChild(c2) != null) {
+            throw new IllegalArgumentException("Could not replace component with a component that already exists as a child in composite!");
+        }
+        child.setComponent(c2);
+        fullrecalcDim();
+        return this;
+        
+                
+        
+    }
     public Composite moveChildTo(Position offset, Component<?> component) {
 	ComponentWithOffset found = findChild(component);
 	if (found == null)
@@ -221,6 +242,36 @@ public class Composite extends AbstractComponent<Composite> implements Rectangle
 
     public Composite add(int offsetRow, int offsetCol, Component<?> component) {
 	return add(new Position.Simple(offsetRow, offsetCol), component);
+    }
+
+    public Composite append( Component<?> component) {
+        
+        if (children.size() ==0) {
+            return add(component);
+        }
+        
+        boolean hasBorder = hasBorder();
+        
+        ComponentWithOffset cp = this.children.stream().max(Position.UTIL.POS_COMPARE).get();
+        int rightMost = cp.getRightMostCol();
+        if (component.getWidth()+rightMost < this.bounds.getWidth()+(hasBorder?-2:0)) {
+            return this.add(cp.getRow(), rightMost+1, component);
+        }
+
+        Rectangle calculatedBounds = Rectangle.UTIL.calcDimensionsWith(children);
+        
+        int bottomMost = calculatedBounds.getBottomMostRow();
+        return this.add(bottomMost+1, 0, component);
+        
+//        
+//        int offsetRow = 0;
+//        int offsetCol = calculatedBounds.getRightMostCol();
+//        if (component.getWidth() + calculatedBounds.getWidth() > this.bounds.getWidth()+(hasBorder?-2:0)) {
+//            offsetRow++;
+//        } else {
+//            offsetCol = calculatedBounds.getWidth();
+//        }
+//        return add(offsetRow, offsetCol, component); 
     }
 
     @Override

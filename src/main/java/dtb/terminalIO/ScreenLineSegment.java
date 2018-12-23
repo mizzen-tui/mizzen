@@ -155,7 +155,7 @@ public interface ScreenLineSegment extends Rectangle {
             if (so1.overlapsWith(so2)) {
                 // NOTE: reverse sort on id ! 
                 // This way higher ids appear first (implies newer) and these
-                // will then be on top
+                // will then be on top (TODO:  I have yet to take advantage of this feature)
                 cmp = Integer.compare(so2.getId(), so1.getId()); 
             }
             if (cmp != 0)
@@ -204,6 +204,12 @@ public interface ScreenLineSegment extends Rectangle {
             return sorted;
         }
 
+        /**
+         * We make the collection of ScreenLineSegment's a TreeSet such that it naturally sorts
+         * itself by row/col in order that when we traverse the collection we visit
+         * elements (ScreenLineSegment) from topLeft (0,0) to bottom right (height,width)
+         * order.
+         */
         public static TreeSet<ScreenLineSegment> makeCollection(Collection<ScreenLineSegment> scs) {
             TreeSet<ScreenLineSegment> ts = new TreeSet<ScreenLineSegment>(SO_COMPARE);
             if (scs != null && scs.size() > 0) {

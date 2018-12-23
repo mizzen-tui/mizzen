@@ -16,20 +16,30 @@ import dtb.terminalIO.geom.Rectangle;
 public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate {
 
     private IScreenLineSegmentsBuffer sourceSegments;
-    //private ScreenLineSegmentsBuffer  viewSegments;
 
     private Position                  offsetIntoSource;
     private Dimension                 maxsize;
 
     public ScreenLineSegmentsView(IScreenLineSegmentsBuffer sourceSegments, Position offsetIntoSource, Dimension maxsize) {
-        super(new ScreenLineSegmentsBuffer());
+        super(new ClippedSegmentsBuffer());
+        ((ClippedSegmentsBuffer)this.getDelegate()).segmentsView = this;
         this.sourceSegments = sourceSegments;
-        //this.viewSegments = (ScreenLineSegmentsBuffer) this.getDelegate();
         this.offsetIntoSource = new Position.Simple(offsetIntoSource);
         this.maxsize = new Dimension.Simple(maxsize);
+        ((ClippedSegmentsBuffer)this.getDelegate()).fullrecalcDim();
         popuateViewFromSource();
     }
 
+    // create a ScreenLineSegmentsBuffer with a custom fullrecalcDim() method 
+    private static class ClippedSegmentsBuffer extends ScreenLineSegmentsBuffer {
+        ScreenLineSegmentsView segmentsView;
+        
+        synchronized protected void fullrecalcDim() {
+            this.preCalulatedRectangle = segmentsView.rectangeFromOffsetAndDimension();
+            this.recalcNeeded = false;
+        }
+    }
+    
     Rectangle rectangeFromOffsetAndDimension() {
         return new Rectangle.Simple(offsetIntoSource, maxsize);
     }
@@ -39,15 +49,32 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate {
         return offsetIntoSource;
     }
 
+    public void markAsDirty() {
+        segmentsUpToDate = false;
+    }
+    
     public void setOffsetIntoSource(Position offsetIntoSource) {
         this.offsetIntoSource = offsetIntoSource;
         segmentsUpToDate = false;
     }
 
+    boolean foundBALME = false;
+    String sTest;
+    String sSourceTest;
+    
     private void popuateViewFromSource() {
         this.clear();
         Rectangle bounds = rectangeFromOffsetAndDimension();
         for (ScreenLineSegment sourceSegment : this.sourceSegments.getSegments()) {
+            if (sourceSegment.getText().contains("BALME")) {
+                foundBALME = true;
+                ScreenLineSegmentView test = new ScreenLineSegmentView(sourceSegment);
+                sTest = test.getText();
+                sSourceTest = sourceSegment.getText();
+                sTest = test.getText();
+            } else {
+                foundBALME = false;
+            }
             if (Rectangle.UTIL.hasOverlap(bounds, sourceSegment)) {
                 this.add(new ScreenLineSegmentView(sourceSegment));
             }
@@ -137,19 +164,29 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate {
 
         @Override
         public String getText() {
+            // ech!!  and double-ech.. All of these checks make me see
+            //                         a code smell..  When I get some time I 
+            //                         need to simplify
             int start = 0;
             int src_col = sourceSegment.getCol();
             int offset_col = ScreenLineSegmentsView.this.offsetIntoSource.getCol();
             if (offset_col > src_col) {
                 start = offset_col - src_col;
             }
-            int src_width = sourceSegment.getWidth();
-            int col = getCol();
-            if (col + (src_width - start) > maxsize.getWidth()) {
-                int endOffset = maxsize.getWidth() - getCol();
-                return sourceSegment.getText().substring(start, endOffset);
+            int rightCol = sourceSegment.getRightMostCol(); // - ScreenLineSegmentsView.this.offsetIntoSource.getCol();
+            int viewerRightCol = ScreenLineSegmentsView.this.getRightMostCol();
+            String sourceText = sourceSegment.getText();
+            if (rightCol > sourceText.length()) {
+                rightCol = sourceText.length();
+            } else {
+                if (rightCol > viewerRightCol  + offset_col ) {
+                    rightCol = viewerRightCol + offset_col;
+                }
+                rightCol +=1; // +1 to include rightmost char
             }
-            return sourceSegment.getText().substring(start);
+            if (start<0 || start>rightCol) return "";
+            String clippedText = sourceSegment.getText().substring(start, rightCol  );
+            return clippedText;
         }
 
         @Override

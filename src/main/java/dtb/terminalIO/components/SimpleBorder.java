@@ -13,7 +13,7 @@ import dtb.terminalIO.geom.Rectangle;
  * Used by other components to draw borders around themselves
  *
  */
-public class SimpleBorder extends BoundedComponent<SimpleBorder>{
+public class SimpleBorder extends BoundedComponent<SimpleBorder> implements HasTitleAndBorder<SimpleBorder>  {
 
     private RectangleComponent border;
     private String title = null;
@@ -70,13 +70,13 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>{
         titleColor = titleColor != null ? titleColor : getColor();
         titleColor = titleColor.mergeWith(getColor());
         this.titleColor = titleColor;
-        if (title != null) {
-                title = title.trim();
-//                if (title.length() > getWidth() - 2) {
-//                        int rightIDX=
-//                        title = title.substring(0, getWidth() - 2);
-//                }
-        }
+//        if (title != null) {  <-- breaks color codes in title - because it appears trim remove control-codes as well as whitespace!!!!!
+//                title = title.trim();
+////                if (title.length() > getWidth() - 2) {
+////                        int rightIDX=
+////                        title = title.substring(0, getWidth() - 2);
+////                }
+//        }
         this.title = title;
         return this;
     }
@@ -84,6 +84,19 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>{
     public SimpleBorder setTitle(String title) {
         return setTitle(null, title);
 }
+
+    @Override
+    public SimpleBorder setBorder(boolean hasBorder) {
+        if (!hasBorder) 
+            throw new IllegalStateException("Cannnot turn off border");
+        return this;
+    }
+
+    @Override
+    public SimpleBorder setBorderColor(Color borderColors) {
+        border.setColor(borderColors);
+        return this;
+    }
     
 
 }

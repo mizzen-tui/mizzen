@@ -1,50 +1,44 @@
 package dtb.terminalIO.examples;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import dtb.terminalIO.Canvas;
 import dtb.terminalIO.Colors;
 import dtb.terminalIO.ControlCode;
-import dtb.terminalIO.ControlCode.Color;
-import dtb.terminalIO.IScreenLineSegmentsBuffer;
-import dtb.terminalIO.ScreenLineSegment;
-import dtb.terminalIO.ScreenLineSegmentsBuffer;
-import dtb.terminalIO.ScreenLineSegmentsView;
 import dtb.terminalIO.ScrollableComponent;
 import dtb.terminalIO.ScrollableComponent.WindowViewComponent;
 import dtb.terminalIO.TerminalScreen;
 import dtb.terminalIO.components.BoundedComponent;
+import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.events.ChainedEventHandler.ConditionalEventHandlerImpl;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.KeyInputEventHandler;
 import dtb.terminalIO.events.KeyInputEventsProducer;
 import dtb.terminalIO.events.Keys;
 import dtb.terminalIO.events.TerminalEvent;
-import dtb.terminalIO.events.ChainedEventHandler.ConditionalEventHandlerImpl;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
+import dtb.terminalIO.examples.GridBrailleTest.BrailleDemo;
+import dtb.terminalIO.examples.sampledata.ReadSampleFiles;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.util.StringUtils;
 import dtb.terminalIO.util.Stty;
 
 public class ScrollableComponentTest {
 
     
-    public static boolean testWindowViewer(String[] args) { 
+    public static String DEBUG = "TEST";
+    
+    public static boolean testWindowViewer(String[] args) throws IOException { 
 
         TerminalScreen screen = TestsCommon.getTerminalScreenForTesting(args);
 
-        screen.add(ControlCode.HIDE_CURSOR);
-        screen.refresh();
-
         Canvas master_canvas = TestsCommon.getMasterCanvasForTesting(TestsCommon.getTerminalScreenForTesting(args));
         master_canvas.setEmptyChar(' ');
-
-        //screen.setControlCodesEnabled(false);
-
 
         TextComponent srcOfText = new TextComponent(
                 "T'was Brillig and the slithy toth\n" + 
@@ -54,8 +48,15 @@ public class ScrollableComponentTest {
                 "Oh Frabjious joy!\n" + 
                 "Calloo callay\n" + 
                 "Basterdized Lewis Carroll");
+        
+        
+        String text = ReadSampleFiles.readSampleFile("LoremIpsumLarge.txt");
+        
+        text = StringUtils.wrap(text, master_canvas.getWidth()*2);
+        
+        srcOfText = new TextComponent(text);
 
-        Dimension sizeOfWindow = new Dimension.Simple(10, 35);
+        Dimension sizeOfWindow = new Dimension.Simple(master_canvas.getHeight()-10, master_canvas.getWidth()-10);
         Position offsetOnCanvas = new Position.Simple(1, 1);
         Position viewOffset = new Position.Simple(0, 0);
 
@@ -65,6 +66,11 @@ public class ScrollableComponentTest {
 
         viewComp1.setViewOffset(viewOffset.getRow(), viewOffset.getCol());
 
+        screen.add(ControlCode.HIDE_CURSOR);
+        screen.refresh();
+
+
+        
         //viewComp2.setViewOffset(viewOffset.getRow(), viewOffset.getCol());
 
         Runnable updateCanvas = new Runnable() {
@@ -74,6 +80,11 @@ public class ScrollableComponentTest {
                 master_canvas.clearCanvas();
                 master_canvas.addComponentSegments(offsetOnCanvas, viewComp1);
                 // master_canvas.addComponentSegments(offsetOnCanvas.offsetAdd(0, sizeOfWindow.getWidth() + 5), viewComp2);
+                
+                
+                master_canvas.t(master_canvas.getHeight()-7,1, String.valueOf(viewComp1.getOffsetIntoSource()) + "                    ");
+                master_canvas.t(master_canvas.getHeight()-6,1, String.valueOf(DEBUG) + "                         ");
+                
                 master_canvas.refresh();
             }
             
@@ -90,6 +101,98 @@ public class ScrollableComponentTest {
             return false;
         }
         
+        setUpTerminateHandler(screen, master_canvas, eventBus);
+        
+        viewComp1.addStandardNavigationKeyInputEventHandlers(eventBus, updateCanvas);
+        
+        return true;
+
+    }
+
+    public static boolean testScrollingGridBrailleTest(String[] args) throws IOException { 
+
+        TerminalScreen screen = TestsCommon.getTerminalScreenForTesting(args);
+
+        Canvas master_canvas = TestsCommon.getMasterCanvasForTesting(TestsCommon.getTerminalScreenForTesting(args));
+        master_canvas.setEmptyChar(' ');
+
+        
+
+        Dimension sizeOfWindow = new Dimension.Simple(master_canvas.getHeight()-20, master_canvas.getWidth()-15);
+        Position offsetOnCanvas = new Position.Simple(1, 1);
+        Position viewOffset = new Position.Simple(0, 0);
+
+        Composite sourceComponent = new Composite();
+        sourceComponent.setBounds(new Dimension.Simple(master_canvas));
+        
+        ScrollableComponent viewComp1 = new ScrollableComponent(Colors.Gre, sizeOfWindow, sourceComponent);
+
+        viewComp1.setViewOffset(viewOffset.getRow(), viewOffset.getCol());
+
+        screen.add(ControlCode.HIDE_CURSOR);
+        screen.refresh();
+
+
+        
+        //viewComp2.setViewOffset(viewOffset.getRow(), viewOffset.getCol());
+
+        int counter[] = new int[] {0};
+        
+        Runnable updateCanvas = new Runnable() {
+
+            @Override
+            public void run() {
+                master_canvas.clearCanvas();
+                master_canvas.addComponentSegments(offsetOnCanvas, viewComp1);
+                // master_canvas.addComponentSegments(offsetOnCanvas.offsetAdd(0, sizeOfWindow.getWidth() + 5), viewComp2);
+                
+                
+                counter[0]++;
+                
+                master_canvas.t(master_canvas.getHeight()-7,1, String.valueOf(viewComp1.getOffsetIntoSource()) + "                    ");
+                master_canvas.t(master_canvas.getHeight()-6,1, "Counter: "+counter[0]+"   ");
+                
+                master_canvas.refresh();
+            }
+            
+        };
+
+        updateCanvas.run();
+        
+        
+        EventBus eventBus = new EventBus();
+        try {
+            new KeyInputEventsProducer(eventBus);
+        } catch (Exception e) {
+            eventBus.stopConsuming();
+            return false;
+        }
+        
+        setUpTerminateHandler(screen, master_canvas, eventBus);
+        
+        viewComp1.addStandardNavigationKeyInputEventHandlers(eventBus, updateCanvas);
+        
+        BrailleDemo brailleDemo = new BrailleDemo() {
+            public void flushOutput() {
+                viewComp1.markAsDirty();
+                updateCanvas.run();
+                //master_canvas.refresh();
+            }
+        };
+        
+        brailleDemo.setupMpvementKeys(Keys.CTRL_T_KEYSTROKE, 
+                                      Keys.CTRL_V_KEYSTROKE, 
+                                      Keys.CTRL_F_KEYSTROKE, 
+                                      Keys.CTRL_G_KEYSTROKE);
+        
+        brailleDemo.setUpDemo(eventBus, sourceComponent, sourceComponent);
+        
+        return true;
+
+    }
+
+    
+    private static void setUpTerminateHandler(TerminalScreen screen, Canvas master_canvas, EventBus eventBus) {
         EventHandler terminate = new EventHandler() {
 
             @Override
@@ -118,47 +221,14 @@ public class ScrollableComponentTest {
         eventBus.addEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
         eventBus.addEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
         eventBus.addEventHandler(new ConditionalEventHandlerImpl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
-        
-                
-        eventBus.addEventHandler(new KeyInputEventHandler(Keys.UP_KEYSTROKE, new EventHandler() {
-            @Override
-            public void handle(TerminalEvent<?> te) {
-                viewComp1.up(1);
-                updateCanvas.run();
-            }
-        }));
-        
-        eventBus.addEventHandler(new KeyInputEventHandler(Keys.DOWN_KEYSTROKE, new EventHandler() {
-            @Override
-            public void handle(TerminalEvent<?> te) {
-                viewComp1.down(1);
-                updateCanvas.run();
-            }
-        }));
-        
-        eventBus.addEventHandler(new KeyInputEventHandler(Keys.LEFT_KEYSTROKE, new EventHandler() {
-            @Override
-            public void handle(TerminalEvent<?> te) {
-                viewComp1.left(1);
-                updateCanvas.run();
-            }
-        }));
-        
-        eventBus.addEventHandler(new KeyInputEventHandler(Keys.RIGHT_KEYSTROKE, new EventHandler() {
-            @Override
-            public void handle(TerminalEvent<?> te) {
-                viewComp1.right(1);
-                updateCanvas.run();
-            }
-        }));
-        
-        return true;
-
     }
+    
+    
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
 
-        testWindowViewer(args);
+        //testWindowViewer(args);
+        testScrollingGridBrailleTest(args);
 //            return;
 //
 //        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();

@@ -1,0 +1,296 @@
+package dtb.terminalIO.server;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.util.HashMap;
+import java.util.Map;
+
+import dtb.terminalIO.Canvas;
+import dtb.terminalIO.ControlCode.Color;
+import dtb.terminalIO.ControlCode.FGBGColors;
+import dtb.terminalIO.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.TerminalScreen;
+import dtb.terminalIO.components.BorderedComponent;
+import dtb.terminalIO.components.BoundedComponent;
+import dtb.terminalIO.components.CanvasComponent;
+import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.Composite;
+import dtb.terminalIO.components.HasTitleAndBorder;
+import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.geom.Dimension;
+import dtb.terminalIO.geom.Position;
+import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.util.TerminalDimensions;
+
+public class DrawingBoardImpl implements DrawingBoard {
+
+    private Canvas canvas;
+    private TerminalScreen screen;
+    private CompositeWithNamedComponents components;
+    private boolean autoRefresh = true;
+    
+    static class CompositeWithNamedComponents<T extends Composite> implements Component<T>, Rectangle {
+
+        Composite componentManager;
+        Map<String,Component<?>> nameComponentMap;
+        
+        protected CompositeWithNamedComponents(Color color) {
+            componentManager = new Composite(color);
+            nameComponentMap = new HashMap<String,Component<?>>();
+        }
+
+        protected CompositeWithNamedComponents() {
+            this(FGBGColors.NO_COLOR_SPECIFIED);
+        }
+        
+        protected Component<?> getNamedComponent(String name) {
+            Component<?> component = nameComponentMap.get(name);
+            if (component == null) {
+                throw new IllegalArgumentException("Component named "+name+" not found");
+            }
+            return component;
+        }
+
+        public void add(String name, Component<?> component) {
+            componentManager.add(component);
+            nameComponentMap.put(name, component);
+        }
+        
+        public void add(String name, Position offset,  Component<?> component) {
+            componentManager.add(offset, component);
+            nameComponentMap.put(name, component);
+        }
+        
+        @Override
+        public int getCol() {
+            return componentManager.getCol();
+        }
+
+        @Override
+        public int getRow() {
+            return componentManager.getRow();
+        }
+
+        @Override
+        public int getWidth() {
+            return componentManager.getWidth();
+        }
+
+        @Override
+        public int getHeight() {
+            return componentManager.getHeight();
+        }
+
+        @Override
+        public void moveTo(int row, int col) {
+            componentManager.moveTo(row, col);
+        }
+
+        @Override
+        public IScreenLineSegmentsBuffer getSegmentsBuffer() {
+            return componentManager.getSegmentsBuffer();
+        }
+
+        @Override
+        public Color getColor() {
+            return componentManager.getColor();
+        }
+
+        @Override
+        public void clear() {
+            componentManager.clear();
+            
+        }
+
+        @Override
+        public void markAsDirty() {
+            componentManager.markAsDirty();
+        }
+
+        @Override
+        public T setColor(Color drawingcolor) {
+            return (T) componentManager.setColor(drawingcolor);
+        }
+
+        public void replace(String name, Component<?> c1, Component<?> c2) {
+            // TODO Auto-generated method stub
+            if (this.nameComponentMap.get(name) != c1) {
+                throw new IllegalArgumentException("replace(): name does not match component");
+            }
+            this.componentManager.replace(c1, c2);
+            this.nameComponentMap.put(name, c2);
+        }
+        
+    }
+    
+    public DrawingBoardImpl() {
+        init(System.out);
+    }
+    
+    void init(PrintStream output) {
+        this.screen = new TerminalScreen();
+        screen.setPrintStream(output);
+        Dimension size = null;
+        size = TerminalDimensions.create();
+        this.canvas = new Canvas(screen);
+        this.canvas.setEmptyChar(' ');
+        this.canvas.setSize(size.getHeight() - 1, size.getWidth() - 1);
+        this.components = new CompositeWithNamedComponents();
+    }
+    
+    public void refresh() {
+        this.components.markAsDirty();
+        this.canvas.clearCanvas();
+        this.canvas.addComponentSegments(components);
+        this.canvas.refresh();
+    }
+    
+    void autoRefresh() {
+        if (autoRefresh) {
+            refresh();
+        }
+    }
+    
+    
+    @Override
+    public void component(String name, Position pos, Dimension d) {
+        TextComponent component = new TextComponent(FGBGColors.NO_COLOR_SPECIFIED, d, "");
+        this.components.add(name, pos, component);
+        autoRefresh();
+    }
+    
+    @Override
+    public void component(String name, Position pos, Dimension dim, boolean hasBorder) {
+        if (!hasBorder) {
+            component(name, pos, dim);
+            return;
+        }
+        CanvasComponent childComponent = new CanvasComponent(dim);
+        BorderedComponent c = new BorderedComponent(FGBGColors.NO_COLOR_SPECIFIED, childComponent);
+        c.resize(dim);
+        this.components.add(name, pos, c);
+        autoRefresh();
+    }
+
+    @Override
+    public void component(String name, Position pos, Dimension dim, String title) {
+        Composite c = new Composite();
+        c.setBounds(dim);
+        c.setTitle(title);
+        this.components.add(name, pos, c);
+        autoRefresh();
+    }
+
+    @Override
+    public void title(String name, String title) {
+        Component<?> c = this.components.getNamedComponent(name);
+        if (c instanceof HasTitleAndBorder<?>) {
+            ((HasTitleAndBorder<?>) c).setTitle(title);
+        } else {
+            if (c instanceof BoundedComponent) {
+                BorderedComponent bc = new BorderedComponent((BoundedComponent<?>)c);
+                bc.setTitle(title);
+                this.components.replace(name, c, bc);
+            } else  {
+                Composite composite = new Composite(c.getColor());
+                composite.add(c);
+                composite.setTitle(title);
+                this.components.replace(name, c, composite);
+            }
+        }
+        autoRefresh();
+    }
+
+    @Override
+    public void textAt(String name, String position) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    
+    @Override
+    public void appendText(String name, String text) {
+        appendText(name, this.components.getNamedComponent(name), text);
+        autoRefresh();
+    }
+    
+    public void componentClear(String name) {
+        Component c = this.components.getNamedComponent(name);
+        if (c instanceof TextComponent) {
+            TextComponent tc = (TextComponent) c;
+            tc.clear();
+            autoRefresh();
+
+            return;
+        }
+        if (c instanceof Composite) {
+            c.clear();  // should I remove children - I would think yes!
+            autoRefresh();
+            return;
+        }
+        if (c instanceof BorderedComponent) {
+            Component<?> child_c = ((BorderedComponent)c).getComponent();
+            child_c.clear();
+            autoRefresh();
+            return;
+        }
+        if (c instanceof CanvasComponent) {
+            ((CanvasComponent)c).clear();
+            autoRefresh();
+            return;
+        }
+    }
+    
+    protected void appendText(String name, Component<?> c, String text) {
+        if (c instanceof TextComponent) {
+            TextComponent tc = (TextComponent) c;
+            String tc_text = tc.getText();
+            tc.setText(tc_text + text);
+            return;
+        }
+        if (c instanceof Composite) {
+            ((Composite)c).append(new TextComponent(text));
+            return;
+        }
+        if (c instanceof BorderedComponent) {
+            Component<?> child_c = ((BorderedComponent)c).getComponent();
+            appendText(name, child_c, text);
+            return;
+        }
+        if (c instanceof CanvasComponent) {
+            ((CanvasComponent)c).addTextHandleColors(text);
+            return;
+        }
+    }
+    
+
+    @Override
+    public void pipeTextFromCommand(String name, String[] cmd) throws IOException {
+        String newLine = System.getProperty("line.separator");
+//        appendText(name, newLine + "Executing : "+commandText);
+//        String[] cmd = commandText.split(" ");
+//        cmd = new String[] {"/bin/bash","-c","ls -l"};
+        ProcessBuilder pb = new ProcessBuilder(cmd);
+        Process process = pb.start();
+
+        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        String line = null;
+        while ( (line = reader.readLine()) != null) {
+           appendText(name, newLine + line);
+        }        
+    }
+
+    @Override
+    public void clear() {
+        this.components.clear();
+        autoRefresh();
+    }
+
+    @Override
+    public void setAutoRefresh(boolean autoRefresh) {
+        this.autoRefresh = autoRefresh;
+    }
+
+}
