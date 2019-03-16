@@ -1,9 +1,9 @@
 package dtb.terminalIO.components;
 
-import dtb.terminalIO.ControlCode.Color;
-import dtb.terminalIO.ControlCode.FGBGColors;
-import dtb.terminalIO.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 
 /**
  *  Used by many components to decide how to perform a clear (erase) of its LineSegments buffer 

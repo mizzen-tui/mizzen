@@ -1,15 +1,15 @@
 package dtb.terminalIO.components.tab;
 
-import dtb.terminalIO.ControlCode.Color;
-import dtb.terminalIO.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.CharComponent;
 import dtb.terminalIO.components.HorizontalLine;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.VerticalLine;
+import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 
 public class TabComponent extends BoundedComponent<TabComponent>{
 

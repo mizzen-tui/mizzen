@@ -1,0 +1,36 @@
+package dtb.terminalIO.events.keyboard;
+
+import dtb.terminalIO.events.TerminalEvent;
+
+/**
+ * 
+ * Encapsulates an event where a key has been presssed ( A {@link KeyStroke} ).
+ * 
+ * @author david
+ *
+ */
+public class KeyEvent extends TerminalEvent<KeyStroke> {
+
+    private static final long serialVersionUID = -6657532777213840024L;
+
+    public KeyEvent(Object source, KeyStroke eventData) {
+        super(source, TYPE.KEYPRESS, eventData);
+    }
+
+    public boolean isKeyStroke(KeyStroke keyStroke) {
+        return getKeyStroke().equals(keyStroke);
+    }
+
+    public String getKeyName() {
+        return getEventData().name;
+    }
+    
+    public KeyStroke getKeyStroke() {
+        return this.getEventData();
+    }
+    
+    public char getChar() {
+        return getKeyStroke().getChar();
+    }
+
+}

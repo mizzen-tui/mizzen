@@ -1,16 +1,17 @@
 package dtb.terminalIO.components;
 
-import dtb.terminalIO.ControlCode.Color;
-import dtb.terminalIO.ControlCode.FGBGColors;
-import dtb.terminalIO.IScreenLineSegmentsBuffer;
-import dtb.terminalIO.ScreenLineSegmentsBuffer;
-import dtb.terminalIO.geom.Dimension;
+import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.textsegments.ScreenLineSegmentsBuffer;
 
 
 /**
- * A component is a "something" that maintains its own  IScreenLineSegmentsBuffer.
+ * A component is "something" that maintains its own  {@link IScreenLineSegmentsBuffer}.
  * It knows how to draw itself into its IScreenLineSegmentsBuffer 
+ * 
+ * <p/>
  * 
  * 
  * TODO:  Need to clean up the inheritance hierarchy of Components.. seems like 
@@ -24,7 +25,11 @@ public interface Component<T extends Component<?>> extends IScreenLineSegmentsBu
     T setColor(Color drawingcolor);
     
     void clear();
+    
+    boolean isDirty();
 
+    void markAsDirty();
+    
     public static abstract class AbstractComponent<T extends AbstractComponent<?>> implements Component<T> {
 
         private IScreenLineSegmentsBuffer segments   = new ScreenLineSegmentsBuffer();
@@ -60,6 +65,10 @@ public interface Component<T extends Component<?>> extends IScreenLineSegmentsBu
                 hasDrawn = true;
                 draw(color, segments);
             }
+        }
+        
+        public boolean isDirty() {
+            return !this.hasDrawn;
         }
         
         public void markAsDirty() {
@@ -136,7 +145,23 @@ public interface Component<T extends Component<?>> extends IScreenLineSegmentsBu
 
     }
 
-    void markAsDirty();
-    
+    public static class UTIL {
+        
+        public static boolean isDirty(Component<?> ... c) {
+            
+            if (c == null || c.length==0) {
+                return false;
+            }
+            
+            for (Component<?> child : c) {
+                if (child.isDirty()) {
+                    return true;
+                }
+            }
+            
+            return false;
+            
+        }
+    }
 
 }

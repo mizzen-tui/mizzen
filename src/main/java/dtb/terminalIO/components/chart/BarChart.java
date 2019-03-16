@@ -5,21 +5,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-import dtb.terminalIO.Canvas;
-import dtb.terminalIO.Colors;
-import dtb.terminalIO.ControlCode;
-import dtb.terminalIO.ControlCode.BgColor;
-import dtb.terminalIO.ControlCode.Color;
-import dtb.terminalIO.ControlCode.FGBGColors;
-import dtb.terminalIO.ControlCode.FgColor;
-import dtb.terminalIO.IScreenLineSegmentsBuffer;
-import dtb.terminalIO.ScreenLineSegment.SegmentImpl;
-import dtb.terminalIO.TerminalScreen;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.RectangleComponent;
+import dtb.terminalIO.controlcodes.Colors;
+import dtb.terminalIO.controlcodes.ControlCode;
+import dtb.terminalIO.controlcodes.ControlCode.BgColor;
+import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.controlcodes.ControlCode.FgColor;
+import dtb.terminalIO.core.Canvas;
+import dtb.terminalIO.core.TerminalScreen;
 import dtb.terminalIO.examples.TestsCommon;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.textsegments.ScreenLineSegment.SegmentImpl;
 import dtb.terminalIO.util.StringUtils;
 
 /**

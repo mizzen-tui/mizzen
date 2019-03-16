@@ -2,16 +2,16 @@ package dtb.terminalIO.examples;
 
 import java.io.IOException;
 
-import dtb.terminalIO.Canvas;
-import dtb.terminalIO.ControlCode.Color;
-import dtb.terminalIO.IScreenLineSegmentsBuffer;
-import dtb.terminalIO.ScreenLineSegment;
-import dtb.terminalIO.ScreenLineSegment.UTIL.SegmentsFromStringResult;
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.BoundedComponent;
+import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.examples.sampledata.ReadSampleFiles;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.textsegments.ScreenLineSegment;
+import dtb.terminalIO.textsegments.ScreenLineSegment.UTIL.SegmentsFromStringResult;
 
 public class ColoredTextTest {
 

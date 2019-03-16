@@ -1,13 +1,13 @@
 package dtb.terminalIO.examples;
 
-import dtb.terminalIO.Canvas;
-import dtb.terminalIO.Colors;
-import dtb.terminalIO.ControlCode.Color;
-import dtb.terminalIO.ControlCode.FGBGColors;
-import dtb.terminalIO.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.RectangleComponent;
+import dtb.terminalIO.controlcodes.Colors;
+import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.core.Canvas;
+import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 
 public class BorderedComponentTest {
 

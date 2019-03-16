@@ -10,15 +10,6 @@ import java.util.Map;
 import java.util.TreeSet;
 import java.util.function.Consumer;
 
-import dtb.terminalIO.Canvas;
-import dtb.terminalIO.Colors;
-import dtb.terminalIO.ControlCode;
-import dtb.terminalIO.ControlCode.Color;
-import dtb.terminalIO.ControlCode.FGBGColors;
-import dtb.terminalIO.ControlCode.FgColor;
-import dtb.terminalIO.IScreenLineSegmentsBuffer;
-import dtb.terminalIO.ScreenLineSegment.SegmentImpl;
-import dtb.terminalIO.TerminalScreen;
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.RectangleComponent;
@@ -26,12 +17,18 @@ import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.components.plot.shape.ConnectedPoints;
-import dtb.terminalIO.components.plot.shape.Polygon;
-import dtb.terminalIO.components.plot.shape.RectangleShape;
+import dtb.terminalIO.controlcodes.Colors;
+import dtb.terminalIO.controlcodes.ControlCode;
+import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.core.Canvas;
+import dtb.terminalIO.core.TerminalScreen;
 import dtb.terminalIO.examples.TestsCommon;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.textsegments.ScreenLineSegment.SegmentImpl;
 import dtb.terminalIO.util.StringUtils;
 
 /**
@@ -149,6 +146,9 @@ public class LineChart extends Composite {
             this(series, y, null, label);
         }
 
+        /**
+         * Sort by X position
+         */
         public static Comparator<ChartData> COMPARATOR_BY_XPOS = new Comparator<ChartData>() {
             @Override
             public int compare(ChartData o1, ChartData o2) {
@@ -172,6 +172,7 @@ public class LineChart extends Composite {
 
     public void resize(Dimension d) {
 	super.resize(d);
+//Logging.info("LineChart.resize():" + d);
 	this.grid.resize(__brailleGridSizeFromLineChartSize(d));
         this.clearData();
         this.clear();
@@ -394,6 +395,9 @@ public class LineChart extends Composite {
         this.labelX = _labelX;
     }
 
+    /**
+     * Rectangle for the grid - translated for braille points
+     */
     public Rectangle getGridRectangle() {
         return this.grid.getGridRectangle();
     }

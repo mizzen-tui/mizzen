@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import dtb.terminalIO.ControlCode.Color;
+import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.geom.Position;
 
 

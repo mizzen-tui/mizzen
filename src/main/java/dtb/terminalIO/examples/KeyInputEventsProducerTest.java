@@ -1,15 +1,22 @@
 package dtb.terminalIO.examples;
 
 import java.io.IOException;
+import java.util.function.Consumer;
 
-import dtb.terminalIO.events.ChainedEventHandler.ConditionalEventHandler;
+import dtb.terminalIO.controlcodes.ControlCode;
+import dtb.terminalIO.core.Canvas;
+import dtb.terminalIO.core.TerminalScreen;
+import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
-import dtb.terminalIO.events.KeyInputEventsProducer;
-import dtb.terminalIO.events.Keys;
-import dtb.terminalIO.events.Keys.KeyStroke;
 import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
+import dtb.terminalIO.events.keyboard.KeyEvent;
+import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
+import dtb.terminalIO.events.keyboard.KeyInputEventsProducer;
+import dtb.terminalIO.events.keyboard.KeyStroke;
+import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.util.Stty;
 
 /**
@@ -29,6 +36,32 @@ public class KeyInputEventsProducerTest {
     
     public static void main(String[] args) throws InterruptedException, IOException {
 
+        
+        TerminalScreen screen = TestsCommon.getTerminalScreenForTesting(args);
+
+        Canvas master_canvas = new Canvas(screen);
+        master_canvas.setSize(10, 79);
+        master_canvas.setEmptyChar(' ');
+
+        Consumer<String> status1Displayer = (msg) -> {
+            String msgFormatted = String.format("%-60s", msg);
+            // System.err.println(msgFormatted);
+            master_canvas.t(master_canvas.getHeight()-5 , 3, msgFormatted+"    ");
+            master_canvas.refresh();
+        };
+        
+        Consumer<String> status1Displayer2 = (msg) -> {
+            String msgFormatted = String.format("%-60s", msg);
+            // System.err.println(msgFormatted);
+            master_canvas.t(master_canvas.getHeight()-7 , 3, msgFormatted+"    ");
+            master_canvas.refresh();
+        };
+        
+        
+        master_canvas.t(1,1, "Keyboard Tester ");
+        
+        master_canvas.refresh();
+        
         EventBus eventBus = new EventBus();
         try {
             KeyInputEventsProducer keyInputEventsProducer = null;
@@ -41,13 +74,11 @@ public class KeyInputEventsProducerTest {
 
             if (keyInputEventsProducer.isActive()) {
 
-                CompositeTest.main(args);
-
                 eventBus.addEventHandler(new ConditionalEventHandler() {
 
                     @Override
                     public void handle(TerminalEvent<?> te) {
-                        CompositeTest.statusMsg2(String.valueOf(te.getEventData()));
+                        status1Displayer2.accept(String.valueOf(te.getEventData()));
                     }
 
                     @Override
@@ -60,12 +91,43 @@ public class KeyInputEventsProducerTest {
                 });
                 
                 
+                EventHandler terminate = new EventHandler() {
+
+                    @Override
+                    public void handle(TerminalEvent<?> te) {
+                        eventBus.stopConsuming();
+                        screen.add(ControlCode.SHOW_CURSOR);
+                        screen.refresh();
+
+                        try {
+                            Stty.setCooked();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
+                        if (te.getType().equals(TYPE.EXCEPTION)) {
+                            System.out.println("\n");
+                            ((Exception) te.getEventData()).printStackTrace();
+                        } else {
+                            // next refresh() is necessary to get cursor to be below
+                            // rendered canvas
+                            master_canvas.refresh();
+                        }
+                        return;
+                    }
+                };
+                
+                eventBus.addEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
+                eventBus.addEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
+                eventBus.addEventHandler(new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
+                
+                
                 eventBus.addEventHandler(new ConditionalEventHandler() {
 
                     @Override
                     public void handle(TerminalEvent<?> te) {
 
-                        Keys.KeyEvent ke = (Keys.KeyEvent) te;
+                        KeyEvent ke = (KeyEvent) te;
 
                         // eventBus.stopConsuming();
 
@@ -73,39 +135,29 @@ public class KeyInputEventsProducerTest {
                         KeyStroke A2_key = new KeyStroke('A');
                         
                         if (A_key.equals(A2_key)) {
-                            CompositeTest.statusMsg("A = A2");
+                            status1Displayer.accept("A = A2");
                         }
                         
                         if (A2_key.equals(A_key)) {
-                            CompositeTest.statusMsg("A2 = A");
+                            status1Displayer.accept("A2 = A");
                         }
                         
                         if (ke.isKeyStroke(A_key)) {
-                            CompositeTest.statusMsg("A KEY HIT!!!");
+                            status1Displayer.accept("A KEY HIT!!!");
                         }
                         
                         if (ke.isKeyStroke(Keys.ESC_KEYSTROKE)) {
-                            CompositeTest.statusMsg(ke.getKeyName() + " hit. Quitting..");
-                            eventBus.stopConsuming();
-                            try {
-                                Stty.setCooked();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
+                            status1Displayer.accept(ke.getKeyName() + " hit. Quitting..");
+                            terminate.handle(ke);
                             return;
                         }
                         if (1+1==3 && ke.isKeyStroke(Keys.CTRL_C_KEYSTROKE)) {
-                            CompositeTest.statusMsg(ke.getKeyName() + " hit. Quitting.." + Keys.CTRL_C_KEYSTROKE.getName());
-                            eventBus.stopConsuming();
+                            status1Displayer.accept(ke.getKeyName() + " hit. Quitting.." + Keys.CTRL_C_KEYSTROKE.getName());
+                            terminate.handle(ke);
                             return;
                         }
-//                        if (ke.isKeyStroke(Keys.A_KEYSTROKE)) {
-//                            CompositeTest.statusMsg("A hit. Quitting..");
-//                            eventBus.stopConsuming();
-//                            return;
-//                        }
 
-                        CompositeTest.statusMsg(String.valueOf(ke.getEventData()));
+                        status1Displayer.accept(String.valueOf(ke.getEventData()));
                     }
 
                     @Override

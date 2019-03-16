@@ -4,12 +4,13 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.TreeMap;
 
-import dtb.terminalIO.ControlCode.FGBGColors;
-import dtb.terminalIO.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.components.plot.Plotter;
+import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.util.MapChars;
 
 public class BrailleUtils {
 
@@ -17,8 +18,8 @@ public class BrailleUtils {
 	                                             { 0x02, 0x10 }, 
 	                                             { 0x04, 0x20 }, 
 	                                             { 0x40, 0x80 } };
-    static char brailleCharOffset = 0x2800;
-    static char brailleCharLast = (char) (brailleCharOffset + 255);
+    public static char brailleCharOffset = 0x2800;
+    public static char brailleCharLast = (char) (brailleCharOffset + 255);
     
     public static char setBraillePixel(char curBrailleChar, Position pos) {
 	return setBraillePixel(curBrailleChar, pos.getRow(), pos.getCol());
@@ -45,6 +46,10 @@ public class BrailleUtils {
 	return new Dimension.Simple(componentDimension.getHeight()*4, componentDimension.getWidth()*2 );
     }
 
+    /**
+     * A grid rectangle in relation to a component rectangle is 
+     * 2 * (times) wider and 4 * taller..  This is because a grid char is 2x4 . 
+     */
     public static Rectangle componentRectangleToGridRectangle(final Rectangle componentRectangle) {
 	return new Rectangle.Delegate(componentRectangle){
 	        @Override
@@ -66,7 +71,6 @@ public class BrailleUtils {
 	        public int getHeight() {
 	            return super.getHeight()*4;
 	        }
-
 	};
     }
     
@@ -138,5 +142,555 @@ public class BrailleUtils {
     public static void plot(Plotter plot, int row, int col) {
 
     }
+    
+    private static MapChars BRAILLE_TO_ASCII = null;
 
+    public synchronized static MapChars getBrailleToAsciiMapChars() {
+        if (BRAILLE_TO_ASCII != null) {
+            return BRAILLE_TO_ASCII;
+        }
+        
+
+        BRAILLE_TO_ASCII = new MapChars() {
+            public void map(char key, char value) {
+              //  if (value == '*') {
+              //      value = '+';
+              //  }
+                // value = 'x';
+                super.map(key, value);
+            }
+            
+        };
+        
+        BRAILLE_TO_ASCII.map(new char[] {
+                                            '⠀' , ' ' ,
+                            
+                                            '⠁' , '`' ,
+                            
+                                            '⠂' , '`' ,
+                            
+                                            '⠃' , ':' ,
+                            
+                                            '⠄' , '.' ,
+                            
+                                            '⠅' , ':' ,
+                            
+                                            '⠆' , ';' ,
+                            
+                                            '⠇' , '|' ,
+                            
+                                            '⠈' , '\'' ,
+                            
+                                            '⠉' , '-' ,
+                            
+                                            '⠊' , '/' ,
+                            
+                                            '⠋' , '+' ,
+                            
+                                            '⠌' , '/' ,
+                            
+                                            '⠍' , '+' ,
+                            
+                                            '⠎' , '+' ,
+                            
+                                            '⠏' , '[' ,
+                            
+                                            '⠐' , '.' ,
+                            
+                                            '⠑' , '\\' ,
+                            
+                                            '⠒' , '-' ,
+                            
+                                            '⠓' , '*' ,
+                            
+                                            '⠔' , '/' ,
+                            
+                                            '⠕' , '>' ,
+                            
+                                            '⠖' , 'r' ,
+                            
+                                            '⠗' , '+' ,
+                            
+                                            '⠘' , ':' ,
+                            
+                                            '⠙' , '+' ,
+                            
+                                            '⠚' , '+' ,
+                            
+                                            '⠛' , '"' ,
+                            
+                                            '⠜' , ')' ,
+                            
+                                            '⠝' , '?' ,
+                            
+                                            '⠞' , '/' ,
+                            
+                                            '⠟' , 'P' ,
+                            
+                                            '⠠' , '.' ,
+                            
+                                            '⠡' , '\\' ,
+                            
+                                            '⠢' , '\\' ,
+                            
+                                            '⠣' , '\\' ,
+                            
+                                            '⠤' , '-' ,
+                            
+                                            '⠥' , 'l' ,
+                            
+                                            '⠦' , 'c' ,
+                            
+                                            '⠧' , 'L' ,
+                            
+                                            '⠨' , ':' ,
+                            
+                                            '⠩' , 't' ,
+                            
+                                            '⠪' , '<' ,
+                            
+                                            '⠫' , '*' ,
+                            
+                                            '⠬' , '*' ,
+                            
+                                            '⠭' , ':' ,
+                            
+                                            '⠮' , 'd' ,
+                            
+                                            '⠯' , 'E' ,
+                            
+                                            '⠰' , ':' ,
+                            
+                                            '⠱' , ':' ,
+                            
+                                            '⠲' , '+' ,
+                            
+                                            '⠳' , '\\' ,
+                            
+                                            '⠴' , ';' ,
+                            
+                                            '⠵' , '>' ,
+                            
+                                            '⠶' , 'o' ,
+                            
+                                            '⠷' , '6' ,
+                            
+                                            '⠸' , ':' ,
+                            
+                                            '⠹' , '7' ,
+                            
+                                            '⠺' , '+' ,
+                            
+                                            '⠻' , '9' ,
+                            
+                                            '⠼' , '+' ,
+                            
+                                            '⠽' , ']' ,
+                            
+                                            '⠾' , '#' ,
+                            
+                                            '⠿' , '#' ,
+                            
+                                            '⡀' , '.' ,
+                            
+                                            '⡁' , ':' ,
+                            
+                                            '⡂' , ':' ,
+                            
+                                            '⡃' , ';' ,
+                            
+                                            '⡄' , ':' ,
+                            
+                                            '⡅' , ':' ,
+                            
+                                            '⡆' , '|' ,
+                            
+                                            '⡇' , '|' ,
+                            
+                                            '⡈' , '/' ,
+                            
+                                            '⡉' , '7' ,
+                            
+                                            '⡊' , '{' ,
+                            
+                                            '⡋' , '[' ,
+                            
+                                            '⡌' , '(' ,
+                            
+                                            '⡍' , '[' ,
+                            
+                                            '⡎' , ':' ,
+                            
+                                            '⡏' , '|' ,
+                            
+                                            '⡐' , '/' ,
+                            
+                                            '⡑' , '>' ,
+                            
+                                            '⡒' , '+' ,
+                            
+                                            '⡓' , '+' ,
+                            
+                                            '⡔' , 'c' ,
+                            
+                                            '⡕' , 'P' ,
+                            
+                                            '⡖' , '+' ,
+                            
+                                            '⡗' , '+' ,
+                            
+                                            '⡘' , '?' ,
+                            
+                                            '⡙' , '?' ,
+                            
+                                            '⡚' , '/' ,
+                            
+                                            '⡛' , '?' ,
+                            
+                                            '⡜' , '/' ,
+                            
+                                            '⡝' , 'P' ,
+                            
+                                            '⡞' , 'Y' ,
+                            
+                                            '⡟' , 'P' ,
+                            
+                                            '⡠' , '/' ,
+                            
+                                            '⡡' , '/' ,
+                            
+                                            '⡢' , '>' ,
+                            
+                                            '⡣' , ';' ,
+                            
+                                            '⡤' , '+' ,
+                            
+                                            '⡥' , '+' ,
+                            
+                                            '⡦' , '+' ,
+                            
+                                            '⡧' , '+' ,
+                            
+                                            '⡨' , '/' ,
+                            
+                                            '⡩' , '7' ,
+                            
+                                            '⡪' , 'S' ,
+                            
+                                            '⡫' , '5' ,
+                            
+                                            '⡬' , '+' ,
+                            
+                                            '⡭' , 'P' ,
+                            
+                                            '⡮' , 'P' ,
+                            
+                                            '⡯' , 'P' ,
+                            
+                                            '⡰' , '/' ,
+                            
+                                            '⡱' , ')' ,
+                            
+                                            '⡲' , '>' ,
+                            
+                                            '⡳' , '5' ,
+                            
+                                            '⡴' , '/' ,
+                            
+                                            '⡵' , '*' ,
+                            
+                                            '⡶' , 'p' ,
+                            
+                                            '⡷' , 'b' ,
+                            
+                                            '⡸' , '*' ,
+                            
+                                            '⡹' , '*' ,
+                            
+                                            '⡺' , 'y' ,
+                            
+                                            '⡻' , 'g' ,
+                            
+                                            '⡼' , 'j' ,
+                            
+                                            '⡽' , '?' ,
+                            
+                                            '⡾' , '/' ,
+                            
+                                            '⡿' , '#' ,
+                            
+                                            '⢀' , '.' ,
+                            
+                                            '⢁' , ':' ,
+                            
+                                            '⢂' , ':' ,
+                            
+                                            '⢃' , ';' ,
+                            
+                                            '⢄' , '\\' ,
+                            
+                                            '⢅' , 'e' ,
+                            
+                                            '⢆' , 'L' ,
+                            
+                                            '⢇' , '|' ,
+                            
+                                            '⢈' , ':' ,
+                            
+                                            '⢉' , '7' ,
+                            
+                                            '⢊' , '(' ,
+                            
+                                            '⢋' , '0' ,
+                            
+                                            '⢌' , '<' ,
+                            
+                                            '⢍' , '3' ,
+                            
+                                            '⢎' , 'C' ,
+                            
+                                            '⢏' , 'Q' ,
+                            
+                                            '⢐' , ':' ,
+                            
+                                            '⢑' , '}' ,
+                            
+                                            '⢒' , '-' ,
+                            
+                                            '⢓' , '\\' ,
+                            
+                                            '⢔' , '<' ,
+                            
+                                            '⢕' , 'd' ,
+                            
+                                            '⢖' , 'c' ,
+                            
+                                            '⢗' , 'b' ,
+                            
+                                            '⢘' , '|' ,
+                            
+                                            '⢙' , '7' ,
+                            
+                                            '⢚' , '*' ,
+                            
+                                            '⢛' , '9' ,
+                            
+                                            '⢜' , 'q' ,
+                            
+                                            '⢝' , '2' ,
+                            
+                                            '⢞' , '(' ,
+                            
+                                            '⢟' , 'P' ,
+                            
+                                            '⢠' , ':' ,
+                            
+                                            '⢡' , ';' ,
+                            
+                                            '⢢' , ';' ,
+                            
+                                            '⢣' , '\\' ,
+                            
+                                            '⢤' , '+' ,
+                            
+                                            '⢥' , '\\' ,
+                            
+                                            '⢦' , '\\' ,
+                            
+                                            '⢧' , '\\' ,
+                            
+                                            '⢨' , '|' ,
+                            
+                                            '⢩' , '7' ,
+                            
+                                            '⢪' , '9' ,
+                            
+                                            '⢫' , '9' ,
+                            
+                                            '⢬' , '4' ,
+                            
+                                            '⢭' , '9' ,
+                            
+                                            '⢮' , '4' ,
+                            
+                                            '⢯' , '{' ,
+                            
+                                            '⢰' , '|' ,
+                            
+                                            '⢱' , '|' ,
+                            
+                                            '⢲' , '*' ,
+                            
+                                            '⢳' , '*' ,
+                            
+                                            '⢴' , '*' ,
+                            
+                                            '⢵' , '*' ,
+                            
+                                            '⢶' , '*' ,
+                            
+                                            '⢷' , '*' ,
+                            
+                                            '⢸' , '*' ,
+                            
+                                            '⢹' , 'T' ,
+                            
+                                            '⢺' , 't' ,
+                            
+                                            '⢻' , '?' ,
+                            
+                                            '⢼' , '4' ,
+                            
+                                            '⢽' , 't' ,
+                            
+                                            '⢾' , '*' ,
+                            
+                                            '⢿' , '@' ,
+                            
+                                            '⣀' , '_' ,
+                            
+                                            '⣁' , '_' ,
+                            
+                                            '⣂' , 'c' ,
+                            
+                                            '⣃' , 'l' ,
+                            
+                                            '⣄' , 'c' ,
+                            
+                                            '⣅' , 'L' ,
+                            
+                                            '⣆' , 'l' ,
+                            
+                                            '⣇' , 'L' ,
+                            
+                                            '⣈' , '_' ,
+                            
+                                            '⣉' , ']' ,
+                            
+                                            '⣊' , '<' ,
+                            
+                                            '⣋' , '*' ,
+                            
+                                            '⣌' , '*' ,
+                            
+                                            '⣍' , '*' ,
+                            
+                                            '⣎' , '[' ,
+                            
+                                            '⣏' , '[' ,
+                            
+                                            '⣐' , '>' ,
+                            
+                                            '⣑' , '*' ,
+                            
+                                            '⣒' , '*' ,
+                            
+                                            '⣓' , 'b' ,
+                            
+                                            '⣔' , 'c' ,
+                            
+                                            '⣕' , 'c' ,
+                            
+                                            '⣖' , 'c' ,
+                            
+                                            '⣗' , 't' ,
+                            
+                                            '⣘' , '*' ,
+                            
+                                            '⣙' , '*' ,
+                            
+                                            '⣚' , '*' ,
+                            
+                                            '⣛' , '*' ,
+                            
+                                            '⣜' , '*' ,
+                            
+                                            '⣝' , '*' ,
+                            
+                                            '⣞' , '*' ,
+                            
+                                            '⣟' , '*' ,
+                            
+                                            '⣠' , '*' ,
+                            
+                                            '⣡' , '*' ,
+                            
+                                            '⣢' , '*' ,
+                            
+                                            '⣣' , '*' ,
+                            
+                                            '⣤' , '*' ,
+                            
+                                            '⣥' , '*' ,
+                            
+                                            '⣦' , '*' ,
+                            
+                                            '⣧' , '*' ,
+                            
+                                            '⣨' , '*' ,
+                            
+                                            '⣩' , '5' ,
+                            
+                                            '⣪' , '5' ,
+                            
+                                            '⣫' , '5' ,
+                            
+                                            '⣬' , 'd' ,
+                            
+                                            '⣭' , 'A' ,
+                            
+                                            '⣮' , '6' ,
+                            
+                                            '⣯' , '5' ,
+                            
+                                            '⣰' , '>' ,
+                            
+                                            '⣱' , ')' ,
+                            
+                                            '⣲' , ';' ,
+                            
+                                            '⣳' , 'S' ,
+                            
+                                            '⣴' , 'd' ,
+                            
+                                            '⣵' , '*' ,
+                            
+                                            '⣶' , '*' ,
+                            
+                                            '⣷' , '*' ,
+                            
+                                            '⣸' , '*' ,
+                            
+                                            '⣹' , ']' ,
+                            
+                                            '⣺' , '*' ,
+                            
+                                            '⣻' , '9' ,
+                            
+                                            '⣼' , 'd' ,
+                            
+                                            '⣽' , '#' ,
+                            
+                                            '⣾' , '#' ,
+                            
+                                            '⣿' , '#' 
+        });
+        
+        
+        return BRAILLE_TO_ASCII;
+    }
+
+
+    
+    public static void main(String[] args) {
+        System.out.println("Hello there");
+        
+        for (char ch = brailleCharOffset; ch<=brailleCharLast; ch++  ) {
+            
+            
+            System.out.println( "                                          '" + ch + "' , '*' ,\n" );
+        }
+        
+    }
+    
 }

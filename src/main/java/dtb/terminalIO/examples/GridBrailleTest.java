@@ -3,13 +3,7 @@ package dtb.terminalIO.examples;
 import java.io.IOException;
 import java.util.Comparator;
 
-import dtb.terminalIO.Canvas;
-import dtb.terminalIO.Colors;
-import dtb.terminalIO.ControlCode;
-import dtb.terminalIO.ControlCode.Color;
-import dtb.terminalIO.ControlCode.FGBGColors;
-import dtb.terminalIO.IScreenLineSegmentsBuffer;
-import dtb.terminalIO.TerminalScreen;
+import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.braille.BrailleGrid;
@@ -22,19 +16,26 @@ import dtb.terminalIO.components.plot.shape.CompositeShape;
 import dtb.terminalIO.components.plot.shape.RectangleShape;
 import dtb.terminalIO.components.plot.shape.ShapeWithTransform;
 import dtb.terminalIO.components.plot.shape.Triangle;
-import dtb.terminalIO.events.ChainedEventHandler.ConditionalEventHandlerImpl;
+import dtb.terminalIO.controlcodes.Colors;
+import dtb.terminalIO.controlcodes.ControlCode;
+import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.core.Canvas;
+import dtb.terminalIO.core.TerminalScreen;
+import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
-import dtb.terminalIO.events.KeyInputEventHandler;
-import dtb.terminalIO.events.KeyInputEventsProducer;
-import dtb.terminalIO.events.Keys;
-import dtb.terminalIO.events.Keys.KeyStroke;
+import dtb.terminalIO.events.EventHandlerContainer;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.OnResizeEventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
-import dtb.terminalIO.events.TerminalResizeDetection;
+import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
+import dtb.terminalIO.events.keyboard.KeyInputEventsProducer;
+import dtb.terminalIO.events.keyboard.KeyStroke;
+import dtb.terminalIO.events.keyboard.Keys;
+import dtb.terminalIO.events.resize.TerminalResizeDetection;
 import dtb.terminalIO.examples.Demo.SimpleDemo;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
@@ -42,6 +43,7 @@ import dtb.terminalIO.geom.PositionTransform;
 import dtb.terminalIO.geom.PositionTransform.RotateAroundFixedPoint;
 import dtb.terminalIO.geom.PositionTransform.Translate;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.Stty;
 
 public class GridBrailleTest {
@@ -94,7 +96,7 @@ public class GridBrailleTest {
 	String style = _style;
 
 	TerminalScreen screen = TestsCommon.getTerminalScreenForTesting(args);
-
+	
 	Canvas master_canvas = TestsCommon.getMasterCanvasForTesting(screen);
 	master_canvas.setEmptyChar(' ');
 
@@ -137,6 +139,8 @@ public class GridBrailleTest {
 	    return;
 	}
 
+	TestsCommon.addNoGraphicsToggleEvent(eventBus, screen);
+	
 	master_canvas.t("Braille Characters used for plotting");
 	master_canvas.refresh();
 
@@ -170,7 +174,7 @@ public class GridBrailleTest {
 
 	eventBus.addEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
 	eventBus.addEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
-	eventBus.addEventHandler(new ConditionalEventHandlerImpl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
+	eventBus.addEventHandler(new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
 
 	if (style.equals("MAX")) {
 	    TerminalResizeDetection.initiate(screen, eventBus);
@@ -178,7 +182,7 @@ public class GridBrailleTest {
 	    eventBus.addEventHandler(new OnResizeEventHandler() {
 		@Override
 		public void handleResize(Dimension size) {
-		    master_canvas.setSize(size.getHeight() - 1, size.getWidth() - 1); 
+		    master_canvas.setSize(size.getHeight() , size.getWidth() ); 
 		    master_canvas.clearCanvas();
 		    //master_canvas.refresh();
 		    brailleDemo.resize(master_canvas, master_canvas);
@@ -211,8 +215,14 @@ public class GridBrailleTest {
 	    
 	}
 
-	public void setUpDemo(EventBus eventBus, Rectangle bounds,
-		IScreenLineSegmentsBuffer.Provider segmentsBufferProvider) {
+	
+	public Component getBrailleComponent() {
+	    return brailleComponent;
+	}
+	
+	public void setUpDemo(EventHandlerContainer eventBus, 
+	                      Rectangle bounds,
+		              IScreenLineSegmentsBuffer.Provider segmentsBufferProvider) {
 
 	    brailleComponent = new Composite();
 	    brailleComponent.setBounds(bounds.getHeight() - 4, bounds.getWidth() - 4);
@@ -283,15 +293,21 @@ public class GridBrailleTest {
 
 		    brailleComponent.markAsDirty();
 
-		    grid.clear();
+		    grid.clear(); // clears and marks as dirty
 		    grid.clearPlots();
 
+
+		    // draw the shapes into the pointPlotter ( into the grid )
 		    shapes.draw(pointPlotter);
 
-		    segmentsBufferProvider.getSegmentsBuffer().removeRect(brailleComponent);
-
-		    segmentsBufferProvider.getSegmentsBuffer().mergeAt(2, 2, brailleComponent.getSegmentsBuffer());
-
+		    if (segmentsBufferProvider != null) {
+        		    // remove / erase rectangle where grid will be copied into
+        		    segmentsBufferProvider.getSegmentsBuffer().removeRect(brailleComponent);
+        
+        		    // copy grid contents into segmentsBufferProvider ( the parent component)
+        		    segmentsBufferProvider.getSegmentsBuffer().mergeAt(2, 2, brailleComponent.getSegmentsBuffer());
+		    }
+		    // 
 		    flushOutput();
 		}
 	    };

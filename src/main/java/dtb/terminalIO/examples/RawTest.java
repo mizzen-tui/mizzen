@@ -2,10 +2,10 @@ package dtb.terminalIO.examples;
 
 import java.io.IOException;
 
-import dtb.terminalIO.Canvas;
-import dtb.terminalIO.ControlCode;
-import dtb.terminalIO.Renderer.TextRenderer;
-import dtb.terminalIO.TerminalScreen;
+import dtb.terminalIO.controlcodes.ControlCode;
+import dtb.terminalIO.controlcodes.Renderer.TextRenderer;
+import dtb.terminalIO.core.Canvas;
+import dtb.terminalIO.core.TerminalScreen;
 import dtb.terminalIO.util.Stty;
 
 public class RawTest {

@@ -2,9 +2,7 @@ package dtb.terminalIO.events;
 
 import java.util.function.Predicate;
 
-import dtb.terminalIO.events.ChainedEventHandler.ConditionalEventHandlerImpl;
-
-public class OnIdleEventEventHandler extends ConditionalEventHandlerImpl {
+public class OnIdleEventEventHandler extends ConditionalEventHandler.Impl {
 
     public OnIdleEventEventHandler(Predicate<TerminalEvent<?>> canHandlePredicate, EventHandler handler) {
 	super(canHandlePredicate, handler);
@@ -29,10 +27,10 @@ public class OnIdleEventEventHandler extends ConditionalEventHandlerImpl {
 
 	EventBus eventBus;
 
-	public OneTime(EventHandler handler, EventBus eventBus) {
-	    super(handler);
-	    this.eventBus = eventBus;
-	}
+        public OneTime(EventHandler handler, EventBus eventBus) {
+            super(handler);
+            this.eventBus = eventBus;
+        }
 
 	public OneTime(Predicate<TerminalEvent<?>> canHandlePredicate, EventHandler handler, EventBus eventBus) {
 	    super(canHandlePredicate, handler);
@@ -84,7 +82,10 @@ public class OnIdleEventEventHandler extends ConditionalEventHandlerImpl {
 
 	@Override
 	public void handle(TerminalEvent<?> te) {
+	    // First we handle the event
 	    super.handle(te);
+	    // Second we build a new Interval predicate specifying when to
+	    // run next
 	    this.setCanHandlePredicate(  new IntervalPredicate(interval)  );
 	}
 	

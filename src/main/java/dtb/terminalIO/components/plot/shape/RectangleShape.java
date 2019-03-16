@@ -1,7 +1,7 @@
 package dtb.terminalIO.components.plot.shape;
 
-import dtb.terminalIO.ControlCode.Color;
 import dtb.terminalIO.components.plot.PointPlotter;
+import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.geom.Rectangle;
 
 public class RectangleShape implements Shape {

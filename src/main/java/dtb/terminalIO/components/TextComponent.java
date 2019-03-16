@@ -1,18 +1,34 @@
 package dtb.terminalIO.components;
 
-import dtb.terminalIO.ControlCode;
-import dtb.terminalIO.ControlCode.Color;
-import dtb.terminalIO.ControlCode.FGBGColors;
-import dtb.terminalIO.IScreenLineSegmentsBuffer;
-import dtb.terminalIO.ScreenLineSegment;
-import dtb.terminalIO.ScreenLineSegment.SegmentImpl;
-import dtb.terminalIO.ScreenLineSegment.UTIL.SegmentsFromStringResult;
+import dtb.terminalIO.controlcodes.ControlCode;
+import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.textsegments.ScreenLineSegment;
+import dtb.terminalIO.textsegments.ScreenLineSegment.SegmentImpl;
+import dtb.terminalIO.textsegments.ScreenLineSegment.UTIL.SegmentsFromStringResult;
 
 /**
- * A Component that renders a piece of text.  CR's in the text will will be respected and will
+ * A Component that renders a piece of text (a string).  
+ * 
+ * <p/>
+ * 
+ * CR's ('\n') in the text will will be respected and will
  * cause a multi-line component to be rendered.
+ * 
+ * <p/>
+ *   
+ * If the text has any recognized Color codes embedded in it,
+ * these will be parsed and broken down internally into
+ * the appropriate ScreenLineSegment objects.
+ * 
+ * <p/>
+ *   
+ * Translation .. the colors will be preserved.
+ * 
+ * 
  */
 public class TextComponent extends BoundedComponent<TextComponent> {
     private String text;
@@ -57,7 +73,7 @@ public class TextComponent extends BoundedComponent<TextComponent> {
         	                                                   (p,s)->new SegmentImpl(color, p, -1, s));
         }
         if (result.size()!=0) {
-            segments.merge(result.ts);
+            segments.clearAndMerge(result.ts);
         }
     }
 
@@ -65,10 +81,16 @@ public class TextComponent extends BoundedComponent<TextComponent> {
         return text;
     }
 
+    public void setTextAndResize(String text) {
+        this.resize(Dimension.UTIL.stringToDimension(text));
+        this.setText(text);
+    }
+
     public void setText(String text) {
         this.text = text;
         this.hasColorCodes = ControlCode.hasColorCodes(text);
         this.clear();
+        this.markAsDirty();
     }
 
     @Override

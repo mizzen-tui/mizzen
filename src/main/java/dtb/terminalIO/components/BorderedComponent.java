@@ -1,11 +1,11 @@
 package dtb.terminalIO.components;
 
-import dtb.terminalIO.ControlCode.Color;
-import dtb.terminalIO.ControlCode.FGBGColors;
-import dtb.terminalIO.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 
 // todo dropshadow component
 
@@ -16,10 +16,11 @@ import dtb.terminalIO.geom.Rectangle;
 public class BorderedComponent extends BoundedComponent<BorderedComponent> 
         implements Rectangle, HasTitleAndBorder<BorderedComponent>, CanResize {
 
-    private SimpleBorder        border;
-    private Component<?> component;
-    private Position            componentPosition;
-
+    private SimpleBorder      border;
+    private Component<?>      component;
+    private Position          componentPosition;
+    private boolean           showBorder;
+    
     public BorderedComponent(Color color, Component<?> component) {
         super(color, Rectangle.ZERO);
         this.component = component;
@@ -29,6 +30,7 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
         //p.moveDelta(-1, -1);
         Rectangle bounds = new Rectangle.Simple(p, new Dimension.Simple(component.getHeight() + 2, component.getWidth() + 2));
         this.border = new SimpleBorder(color, bounds);
+        showBorder = true;
         this.setRectangle( bounds );
     }
 
@@ -40,6 +42,22 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
         return this.component;
     }
 
+    public void setShowBorder(boolean showBorder) {
+        this.showBorder = showBorder;
+        this.markAsDirty();
+    }
+    
+    
+    public boolean visibleBorder() {
+        return this.showBorder;
+    }
+    
+    public boolean isDirty() {
+        return super.isDirty() ||
+               this.component.isDirty() ||
+               this.border.isDirty();
+    }
+    
     public void markAsDirty() {
         super.markAsDirty();
         this.component.markAsDirty();
@@ -96,7 +114,9 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
         segments.mergeAt(componentPosition.getRow(), componentPosition.getCol(), this.component.getSegmentsBuffer());
-        segments.merge(this.border.getSegmentsBuffer());
+        if (showBorder) {
+           segments.merge(this.border.getSegmentsBuffer());
+        }
     }
 
     public String getTitle() {
@@ -131,10 +151,29 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
         return this;
     }
 
+    public Color getBorderColor() {
+        return border.getBorderColor();
+    }
+
     @Override
     public BorderedComponent setTitle(Color titleColors, String title) {
         this.border.setTitle(titleColors, title);
         return this;
     }
 
+    @Override
+    public void hilite() {
+        border.hilite();
+        if ( this.component instanceof Hiliter)
+            ((Hiliter)this.component).hilite();
+    }
+
+    @Override
+    public void unHilite() {
+        border.unHilite();
+        if ( this.component instanceof Hiliter)
+            ((Hiliter)this.component).unHilite();
+    }
+
+    
 }

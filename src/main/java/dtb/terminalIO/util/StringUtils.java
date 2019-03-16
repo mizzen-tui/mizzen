@@ -7,9 +7,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import dtb.terminalIO.Colors;
-import dtb.terminalIO.ControlCode;
-
 public class StringUtils {
 
     public static String repeat(char ch, int count) {
@@ -116,7 +113,7 @@ public class StringUtils {
             return null;
         }
 	if (str.indexOf('\n')==-1) return __wrap(str, wrapLength, newLineStr, wrapLongWords);
-	return Arrays.stream(str.split("\n")).map( s -> __wrap(s, wrapLength, newLineStr, wrapLongWords)).collect(Collectors.joining("\n"));
+	return Arrays.stream(str.split("\n",-1)).map( s -> __wrap(s, wrapLength, newLineStr, wrapLongWords)).collect(Collectors.joining("\n"));
     }
     public static String __wrap(String str, int wrapLength, String newLineStr, boolean wrapLongWords) {
         if (str == null) {
@@ -352,7 +349,23 @@ public class StringUtils {
         
     }
     
-    
+    public static String injectSpaces(String s) {
+        if (s == null || s.length()==0) {
+            return s;
+        }
+        
+        StringBuffer sb = new StringBuffer(s.length()*2+30);
+        
+        int len = s.length();
+        
+        for (int i=0; i<len; i++) {
+            char ch = s.charAt(i);
+            sb.append(ch);
+            sb.append( ch == '\n' ? '\n' : ' ' );
+        }
+        return sb.toString();
+        
+    }
     
     
     

@@ -3,14 +3,14 @@ package dtb.terminalIO.components;
 import java.util.Collection;
 import java.util.function.Supplier;
 
-import dtb.terminalIO.ControlCode.Color;
-import dtb.terminalIO.ControlCode.FGBGColors;
-import dtb.terminalIO.IScreenLineSegmentsBuffer;
-import dtb.terminalIO.ScreenLineSegment;
-import dtb.terminalIO.ScreenLineSegmentsBuffer;
+import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.textsegments.ScreenLineSegment;
+import dtb.terminalIO.textsegments.ScreenLineSegmentsBuffer;
 
 
 /**
@@ -66,7 +66,7 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
     }
 
     public void resize(Dimension d) {
-        setRectangle(new Rectangle.Simple(d));
+        setRectangle(new Rectangle.Simple(this.getPostion_TopLeft(), d));
         markAsDirty();
     }
 
@@ -76,19 +76,24 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
         fillPolicy.fillEmptyIfConfigured();
         this.hasDrawn = false;
     }
-
+    
+    public boolean isDirty() {
+        return !this.hasDrawn;
+    }
+    
+    
     public void markAsDirty() {
         this.hasDrawn = false;
     }
     
     protected void drawIfNeeded() {
-        if (!hasDrawn) {
+        if (isDirty()) {
             clear();
             hasDrawn = true;
-            draw(color, segments);
+            draw(getColor(), segments);
         }
     }
-
+    
     protected abstract void draw(Color color, IScreenLineSegmentsBuffer segments);
 
     @Override

@@ -6,18 +6,88 @@ import java.io.PrintStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
-import dtb.terminalIO.Canvas;
-import dtb.terminalIO.TerminalScreen;
+import dtb.terminalIO.components.BlockChars;
+import dtb.terminalIO.components.braille.BrailleUtils;
+import dtb.terminalIO.core.Canvas;
+import dtb.terminalIO.core.TerminalScreen;
+import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
+import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
+import dtb.terminalIO.util.MapChars;
 import dtb.terminalIO.util.TerminalDimensions;
 
 public class TestsCommon {
 
+    
+    private static boolean isNOGRAPHICS(String[] args) {
+        if (args == null || args.length == 0) {
+            return false;
+        }
+        for (int i=0; i<args.length; i++) {
+            if ("NOGRAPHICS".equalsIgnoreCase(args[i])) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
     public static TerminalScreen getTerminalScreenForTesting(String[] args) {
+        if (isNOGRAPHICS(args)) {
+            return getNoGraphicsTerminalScreenForTesting(args);
+        }
+        return __getTerminalScreenForTesting(args);
+    }
+
+    private static TerminalScreen __getTerminalScreenForTesting(String[] args) {
         TerminalScreen screen = new TerminalScreen();
         screen.setPrintStream(getOutputStream(args));
         return screen;
     }
+    
+    public static MapChars buildNOGraphicsMapChar() {
+        MapChars mapChars = new MapChars();
+        mapChars.mapAll(BlockChars.UTIL.getNICE_TO_BASIC()  );
+        mapChars.mapAll(BrailleUtils.getBrailleToAsciiMapChars());
+        mapChars.map('┈','~');
+        mapChars.map('┊','!');
+        mapChars.map('░','#');
+        return mapChars;
+    }
+
+    public static TerminalScreen getNoGraphicsTerminalScreenForTesting(String[] args) {
+        TerminalScreen screen = __getTerminalScreenForTesting(args);
+        setNoGraphicsOnTerminal(screen);
+        return screen;
+    }
+
+    static boolean mappedChars_toggle = false; 
+    
+    public static TerminalScreen setNoGraphicsOnTerminal(TerminalScreen screen) {
+        screen.setMappedCharacters( buildNOGraphicsMapChar() );
+        mappedChars_toggle = true;
+        return screen;
+    }
+    
+    public static void addNoGraphicsToggleEvent(EventBus eventBus, TerminalScreen screen) {
+        eventBus.addEventHandler( new KeyInputEventHandler(Keys.CTRL_X_KEYSTROKE,
+                                    new EventHandler() {
+                                        @Override
+                                        public void handle(TerminalEvent<?> te) {
+                                            if (!mappedChars_toggle) {
+                                                setNoGraphicsOnTerminal(screen);
+                                            } else {
+                                                screen.removeMappedChars();
+                                                mappedChars_toggle = false;
+                                            }
+                                        }
+                                    }
+                                   ) );
+    }
+    
+    
 
     public static Canvas getMasterCanvasForTesting(TerminalScreen screen) {
         Dimension size = null;

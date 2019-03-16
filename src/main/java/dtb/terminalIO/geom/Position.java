@@ -4,8 +4,6 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.TreeSet;
 
-import dtb.terminalIO.ScreenLineSegment;
-import dtb.terminalIO.ControlCode.FGBGColors;
 import dtb.terminalIO.geom.Relation.LeftRight;
 import dtb.terminalIO.geom.Relation.OverUnder;
 

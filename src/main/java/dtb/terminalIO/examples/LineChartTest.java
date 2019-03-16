@@ -5,32 +5,35 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-import dtb.terminalIO.Canvas;
-import dtb.terminalIO.Colors;
-import dtb.terminalIO.ControlCode;
-import dtb.terminalIO.ControlCode.Color;
-import dtb.terminalIO.ControlCode.FGBGColors;
-import dtb.terminalIO.IScreenLineSegmentsBuffer;
-import dtb.terminalIO.TerminalScreen;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.chart.LineChart;
-import dtb.terminalIO.events.ChainedEventHandler.ConditionalEventHandlerImpl;
+import dtb.terminalIO.controlcodes.Colors;
+import dtb.terminalIO.controlcodes.ControlCode;
+import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.core.Canvas;
+import dtb.terminalIO.core.TerminalScreen;
+import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
-import dtb.terminalIO.events.KeyInputEventHandler;
-import dtb.terminalIO.events.KeyInputEventsProducer;
-import dtb.terminalIO.events.Keys;
-import dtb.terminalIO.events.Keys.KeyStroke;
+import dtb.terminalIO.events.EventHandlerContainer;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.OnResizeEventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
-import dtb.terminalIO.events.TerminalResizeDetection;
+import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
+import dtb.terminalIO.events.keyboard.KeyInputEventsProducer;
+import dtb.terminalIO.events.keyboard.KeyStroke;
+import dtb.terminalIO.events.keyboard.Keys;
+import dtb.terminalIO.events.resize.TerminalResizeDetection;
+import dtb.terminalIO.events.resize.TerminalResizeEventGenerator;
 import dtb.terminalIO.examples.Demo.SimpleDemo;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.Stty;
 import dtb.terminalIO.util.TerminalDimensions;
 
@@ -71,7 +74,7 @@ public class LineChartTest {
 	}
 	 
 	@Override
-	public void setUpDemo(EventBus eventBus, Rectangle bounds,
+	public void setUpDemo(EventHandlerContainer eventBus, Rectangle bounds,
 		IScreenLineSegmentsBuffer.Provider segmentsBufferProvider) {
 
 	    Dimension lc_bounds = calc_lc_bounds(bounds);
@@ -82,7 +85,8 @@ public class LineChartTest {
 	    lc.setSeriesColor("cos", Colors.Blu);
 	    lc.setTitle(" Line Chart Demo's ");
 
-	    menuOoptions = new TextComponent(FGBGColors.NO_COLOR_SPECIFIED, new Dimension.Simple(1, lc_bounds.getWidth()), "");
+	    menuOoptions = new TextComponent(FGBGColors.NO_COLOR_SPECIFIED, new Dimension.Simple(1, lc_bounds.getWidth()), " ");
+	    menuOoptions.setEmptyChar('*');
 
 	    class SeriesDemo {
 
@@ -227,22 +231,34 @@ public class LineChartTest {
 				}
 
 			    }
+			    
+			    menuText.append("ZITNFUEL");
 
 			    menuOoptions.setText(menuText.toString());
 
-			    Position lc_Pos = bounds.centered(lc, Position.ZERO);
+			    
+			    if (segmentsBufferProvider != null) {
+        
+	                            // Position lc_Pos = bounds.centered(lc, Position.ZERO);
+                                    Position lc_Pos = new Position.Simple(1,1);
 
-			    segmentsBufferProvider.getSegmentsBuffer().mergeAt(lc_Pos, lc.getSegmentsBuffer());
-
-			    segmentsBufferProvider.getSegmentsBuffer().mergeAt(lc_Pos.offsetAdd(lc.getHeight() + 1, 0),
-				    menuOoptions.getSegmentsBuffer());
-
+	                            segmentsBufferProvider.getSegmentsBuffer().mergeAt(lc_Pos, lc.getSegmentsBuffer());
+        
+	                            
+	                            if (segmentsBufferProvider instanceof Rectangle) {
+                			    segmentsBufferProvider.getSegmentsBuffer().mergeAtBounded(lc_Pos.offsetAdd(lc.getHeight() + 1, 0),
+                			                                                              (Rectangle)segmentsBufferProvider,
+                		                                                                      menuOoptions.getSegmentsBuffer());
+	                            } else {
+                                             segmentsBufferProvider.getSegmentsBuffer().mergeAt(lc_Pos.offsetAdd(lc.getHeight() + 1, 0),
+                                                                                                menuOoptions.getSegmentsBuffer());
+	                            }
+        
+			    }
 			    // refresh/flush segments to output
 
 			    flushOutput();
-
 			    j++;
-
 			}
 		    });
 
@@ -263,8 +279,6 @@ public class LineChartTest {
 	    };
 	    
 	    doRenderLineChart.run();
-
-
 	}
 
     }
@@ -332,6 +346,8 @@ public class LineChartTest {
 	    }
 	};
 	
+	
+	
 	eventBus.addEventHandler(new KeyInputEventHandler(Keys.CTRL_A_KEYSTROKE, (e)-> {
 	                  lineChartDemo.pauseOnIdle  = !lineChartDemo.pauseOnIdle;
 	                  //System.out.println("idle = " + lineChartDemo.pauseOnIdle);
@@ -366,8 +382,10 @@ public class LineChartTest {
 
 	eventBus.addEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
 	eventBus.addEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
-	eventBus.addEventHandler(new ConditionalEventHandlerImpl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
+	eventBus.addEventHandler(new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
     
+	TestsCommon.addNoGraphicsToggleEvent(eventBus, screen);
+	
     
     }
 
@@ -455,23 +473,37 @@ public class LineChartTest {
 	    }
 	};
 
+	TestsCommon.addNoGraphicsToggleEvent(eventBus, screen);
+	
 	eventBus.addEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
 	eventBus.addEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
-	eventBus.addEventHandler(new ConditionalEventHandlerImpl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
+	eventBus.addEventHandler(new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
 
+        eventBus.addEventHandler(new KeyInputEventHandler(Keys.CTRL_R_KEYSTROKE, new EventHandler() {
+            @Override
+            public void handle(TerminalEvent<?> te) {
+                master_canvas.clearCanvas();
+                master_canvas.refresh();
+                new TerminalResizeEventGenerator(screen, eventBus).run();
+            }}));
+	
+	
+	
 	if (style.equals("MAX")) {
 	    TerminalResizeDetection.initiate(screen, eventBus);
 
 	    eventBus.addEventHandler(new OnResizeEventHandler() {
 		@Override
 		public void handleResize(Dimension size) {
+		    Logging.info( "DEMO: resize "  + size );
 		    master_canvas.clearCanvas();
 	            master_canvas.refresh();
-		    master_canvas.setSize(size.getHeight() - 1, size.getWidth() - 1);
+	            
+		    master_canvas.setSize(size.getHeight() , size.getWidth());
 		    master_canvas.clearCanvas();
 	            master_canvas.refresh();
 		    lineChartDemo.resize(master_canvas, master_canvas);
-		    eventBus.enableIdleEvents();
+
 		}
 	    });
 	    

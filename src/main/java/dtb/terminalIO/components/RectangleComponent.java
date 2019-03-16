@@ -1,16 +1,18 @@
 package dtb.terminalIO.components;
 
-import dtb.terminalIO.ControlCode.Color;
-import dtb.terminalIO.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 
 /**
  * A Component that draws a rectangle
  */
-public class RectangleComponent extends BoundedComponent<RectangleComponent> {
+public class RectangleComponent extends BoundedComponent<RectangleComponent> implements Hiliter {
 
+    private boolean hilited = false;
+    
     public RectangleComponent(Color color, int height, int width) {
         super(color, new Dimension.Simple(height, width));
     }
@@ -43,6 +45,28 @@ public class RectangleComponent extends BoundedComponent<RectangleComponent> {
         segments.merge(makeChildComponent(()->new CharComponent(color, this.getBottomMostRow(), this.getCol(),this.getBlockChars().getBOTTOM_LEFT())).getSegmentsBuffer());
         segments.merge(makeChildComponent(()->new CharComponent(color, this.getBottomMostRow(), this.getRightMostCol(),this.getBlockChars().getBOTTOM_RIGHT())).getSegmentsBuffer());
         
+    }
+
+    @Override
+    public Color getColor() {
+        Color color = super.getColor();
+        return this.hilited ? /*Colors.IYel  */ color.bold() : color; 
+    }
+    
+    @Override
+    public void hilite() {
+        if ( ! this.hilited) {
+            markAsDirty();
+        }
+        this.hilited = true;
+    }
+
+    @Override
+    public void unHilite() {
+        if (this.hilited) {
+            markAsDirty();
+        }
+        this.hilited = false;
     }
 
 }

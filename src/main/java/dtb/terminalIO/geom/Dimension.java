@@ -3,7 +3,7 @@ package dtb.terminalIO.geom;
 import java.util.Arrays;
 import java.util.Comparator;
 
-import dtb.terminalIO.ControlCode;
+import dtb.terminalIO.controlcodes.ControlCode;
 
 /**
  * Encapsulate Height and width
@@ -61,7 +61,7 @@ public interface Dimension {
 
         @Override
         public String toString() {
-            return "Simple [width=" + width + ", height=" + height + "]";
+            return "Dimension [width=" + width + ", height=" + height + "]";
         }
 
     }
@@ -79,7 +79,7 @@ public interface Dimension {
 
             s = ControlCode.removeColorCodes(s);
 
-            String[] lines = s.split("\n");
+            String[] lines = s.split("\n",-1);
 
             int height = lines.length;
             int width = Arrays.stream(lines).max(Comparator.comparing(String::length)).get().length();
@@ -89,4 +89,19 @@ public interface Dimension {
 
     }
 
+      // TODO: move this to a unit test
+    public static void main(String[] args) {
+        
+        System.out.println("Hello World");
+        
+        System.out.println("len = " + "1\n\2\n3".split("\n").length);
+        
+        System.out.println("len = " + "1\n\2\n3\n\n".split("\n").length);
+        
+        System.out.println("len = " + "1\n\2\n3\n\n".split("\n",-1).length);
+
+        System.out.println("len = " + "1\n\2\n\n3".split("\n",-1).length);
+        
+    }
+    
 }

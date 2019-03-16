@@ -1,5 +1,7 @@
 package dtb.terminalIO.components;
 
+import dtb.terminalIO.util.MapChars;
+
 /**
  * Encapsulates block drawing characters
  */
@@ -61,7 +63,7 @@ public interface BlockChars {
 
     public char[] blockChars();
 
-    public  boolean isBlockChar(char ch);
+    public boolean isBlockChar(char ch);
 
     public default char toBlockChar(int blockCharIDX) {
         if (blockCharIDX < MIN || blockCharIDX > MAX)
@@ -90,11 +92,11 @@ public interface BlockChars {
         }
 
         public boolean isBlockChar(char ch) {
-            
-            if (ch<minBlockCharValue || ch>maxBlockCharValue) {
+
+            if (ch < minBlockCharValue || ch > maxBlockCharValue) {
                 return false;
             }
-            
+
             char[] blockChars = blockChars();
 
             for (int i = MIN; i < MAX; i++) {
@@ -271,5 +273,30 @@ public interface BlockChars {
     public static final BlockChars NICE    = new Nice();
 
     public static final BlockChars DEFAULT = NICE;
+
+    public static class UTIL {
+
+        private static MapChars NICE_TO_BASIC = null;
+
+        public synchronized static MapChars getNICE_TO_BASIC() {
+
+            if (NICE_TO_BASIC != null) {
+                return NICE_TO_BASIC;
+            }
+
+            NICE_TO_BASIC = new MapChars();
+
+            char[] nice_blockChars = NICE.blockChars();
+            char[] basic_blockChars = BASIC.blockChars();
+            
+            for (int i = 0; i < nice_blockChars.length ; i++) {
+                NICE_TO_BASIC.map(nice_blockChars[i],basic_blockChars[i]);
+            }
+
+            return NICE_TO_BASIC;
+
+        }
+
+    }
 
 }

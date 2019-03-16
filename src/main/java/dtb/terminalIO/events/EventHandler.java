@@ -1,5 +1,11 @@
 package dtb.terminalIO.events;
 
+/**
+ * Handles (processes) {@link TerminalEvent}'s
+ * 
+ * @author david
+ *
+ */
 @FunctionalInterface
 public interface EventHandler {
     
@@ -10,5 +16,6 @@ public interface EventHandler {
         public void handle(TerminalEvent<?> te) {
         }
     };
+ 
     
 }

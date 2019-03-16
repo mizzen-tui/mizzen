@@ -4,9 +4,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 
-import dtb.terminalIO.LineTrackingCLIEmmitter;
-import dtb.terminalIO.TerminalContext.StringContext;
-import dtb.terminalIO.TerminalScreen;
+import dtb.terminalIO.core.LineTrackingCLIEmmitter;
+import dtb.terminalIO.core.TerminalScreen;
+import dtb.terminalIO.controlcodes.ControlCodeContext.StringContext;
 import dtb.terminalIO.geom.Dimension;
 
 public class LineTrackingCLIEmmitterTest {
@@ -14,7 +14,11 @@ public class LineTrackingCLIEmmitterTest {
     public static void main(String args[]) throws UnsupportedEncodingException {
         
         
-        LineTrackingCLIEmmitter lt = new LineTrackingCLIEmmitter(new StringContext());
+        StringContext sc = new StringContext();
+        
+        sc.setControlCodesEnabled(false);
+        
+        LineTrackingCLIEmmitter lt = new LineTrackingCLIEmmitter(sc);
         
         assertEQ(lt.getLineCounter(),0);
         
@@ -24,12 +28,15 @@ public class LineTrackingCLIEmmitterTest {
         
         assertEQ(lt.getLineCounter(),Dimension.UTIL.stringToDimension(testStr).getHeight());
         
+        System.out.println(sc.toString());
+        
         
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (PrintStream ps = new PrintStream(baos, true, "UTF-8")) {
             
             TerminalScreen screen = new TerminalScreen();
             screen.setPrintStream(ps);
+            screen.setControlCodesEnabled(false);
             
             lt = screen.getEmitter();
             
@@ -47,6 +54,8 @@ public class LineTrackingCLIEmmitterTest {
             
             assertEQ(lt.getLineCounter(),0);
             
+           System.out.println( new String(baos.toByteArray() ) );
+            
             
         }
         
@@ -61,6 +70,7 @@ public class LineTrackingCLIEmmitterTest {
         lt.print(testStr);
         
         assertEQ(lt.getLineCounter(),Dimension.UTIL.stringToDimension(testStr).getHeight());
+        
         
         
     }

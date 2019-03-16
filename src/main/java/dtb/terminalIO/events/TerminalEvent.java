@@ -7,12 +7,16 @@ import java.util.function.Predicate;
  * A TerminalEvent is an object that captures 
  * some event ( usually ) a keystroke (or a timer 'idle') event.
  * 
+ * <p/>
+ * 
  * Data related to the event is attached to the event object.
  * 
- * The Event gets sent to an EventBus which distributes the event
- * to the EventHandler(s) that can handle the event.
+ * <p/>
  * 
- * @param <T>
+ * The Event gets sent to an {@link EventBus} which distributes the event
+ * to the {@link EventHandler}(s) that can handle the event.
+ * 
+ * @param <T> type of data attached to event, ie a KeyStroke
  */
 public class TerminalEvent<T> extends EventObject {
 
@@ -21,6 +25,8 @@ public class TerminalEvent<T> extends EventObject {
     public static enum TYPE {
         KEYPRESS,
         TIMER,
+        REQUEST_SHOW_CURSOR,
+        REQUEST_HIDE_CURSOR,
         RESIZE,
         EXCEPTION,
         DEBUG

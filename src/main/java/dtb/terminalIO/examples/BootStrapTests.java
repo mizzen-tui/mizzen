@@ -2,11 +2,6 @@ package dtb.terminalIO.examples;
 
 import java.util.function.BiFunction;
 
-import dtb.terminalIO.Canvas;
-import dtb.terminalIO.Colors;
-import dtb.terminalIO.ControlCode.FGBGColors;
-import dtb.terminalIO.LayeredCanvasBackend;
-import dtb.terminalIO.TerminalScreen;
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.Box;
@@ -14,6 +9,11 @@ import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.RectangleComponent;
 import dtb.terminalIO.components.SimpleBorder;
 import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.controlcodes.Colors;
+import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.core.Canvas;
+import dtb.terminalIO.core.LayeredCanvasBackend;
+import dtb.terminalIO.core.TerminalScreen;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;

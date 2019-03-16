@@ -1,27 +1,78 @@
-package dtb.terminalIO.server;
+package dtb.terminalIO.examples.server;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
-import dtb.terminalIO.Colors;
-import dtb.terminalIO.ControlCode;
+import dtb.terminalIO.controlcodes.Colors;
+import dtb.terminalIO.controlcodes.ControlCode;
+import dtb.terminalIO.events.ConditionalEventHandler;
+import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
+import dtb.terminalIO.events.TerminalEvent.TYPE;
+import dtb.terminalIO.events.keyboard.KeyInputEventsProducer;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.util.StringUtils;
+import dtb.terminalIO.util.Stty;
 
 public class DrawingBoardDispatch {
 
     DrawingBoard drawingBoard;
+    
+    EventBus eventBus;
+    
+    Runnable terminateTask;
+    
+    public DrawingBoardDispatch(EventBus eventBus) {
+        drawingBoard = new DrawingBoardImpl(eventBus);
+        this.eventBus = eventBus;
+        
+        
+        terminateTask = new Runnable() {
+            
+            @Override
+            public void run() {
+                eventBus.stopConsuming();
+                drawingBoard.refresh();
 
-    public DrawingBoardDispatch() {
-        drawingBoard = new DrawingBoardImpl();
+                try {
+                    Stty.setCooked();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        
+        EventHandler terminateEventHandler = new EventHandler() {
+
+            @Override
+            public void handle(TerminalEvent<?> te) {
+                
+                terminateTask.run();
+
+                if (te.getType().equals(TYPE.EXCEPTION)) {
+                    System.out.println("\n");
+                    ((Exception) te.getEventData()).printStackTrace();
+                } else {
+                    // next refresh() is necessary to get cursor to be below
+                    // rendered canvas
+                    drawingBoard.refresh();
+                }
+                return;
+            }
+        };
+        
+        eventBus.addEventHandler(new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), terminateEventHandler));
+        
+        
     }
 
     static int DISPATCH_CONTINUE=1;
@@ -118,7 +169,7 @@ public class DrawingBoardDispatch {
     
     public static void test1(String[] args) throws Exception {
 
-        DrawingBoardDispatch dispatch = new DrawingBoardDispatch();
+        DrawingBoardDispatch dispatch = new DrawingBoardDispatch(new EventBus());
         
         StringBuffer sb = new StringBuffer();
         
@@ -189,7 +240,7 @@ public class DrawingBoardDispatch {
         // System.out.println("Hello world");
         int i = 10;
 
-        DrawingBoardDispatch dispatch = new DrawingBoardDispatch();
+        DrawingBoardDispatch dispatch = new DrawingBoardDispatch(new EventBus());
 
         dispatch.dispatch(new String[] { "clear" });
 
@@ -311,6 +362,12 @@ public class DrawingBoardDispatch {
         return DISPATCH_CONTINUE;
     }
     
+    // TODO:   This should be enqueing to a QUEUE  ...
+    //         also break the parse from the dispatch logic
+    //         and have a separate thread for all GUI activities
+    //         this allows separate (piped /spawnded) tasks from
+    //         processing input and enqueu renderig changes to the queue
+    //         similat to an SwingUtils invokerLater .. idea.
     
     public void readFromNamedPipe(String pipeName) throws IOException {
         File pipeFile = new File(pipeName);
@@ -332,6 +389,11 @@ public class DrawingBoardDispatch {
                 continue;
             }
         }
+        cleanupTasks();
+    }
+    
+    public void cleanupTasks() {
+        terminateTask.run();
     }
     
 
@@ -339,7 +401,9 @@ public class DrawingBoardDispatch {
         //System.out.println("HELLOW WORLD!!!!!!!!!!!");
         if (args!=null && args.length == 2 && args[0].equalsIgnoreCase("PIPE")) {
             //System.out.println("Reading from pipe "+args[1]);
-            new DrawingBoardDispatch().readFromNamedPipe(args[1]);
+            EventBus eventBus = new EventBus();
+            new KeyInputEventsProducer(eventBus);
+            new DrawingBoardDispatch(eventBus).readFromNamedPipe(args[1]);
         } else {
             test1(args);
         }

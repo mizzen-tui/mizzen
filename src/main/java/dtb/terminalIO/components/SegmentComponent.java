@@ -1,12 +1,12 @@
 package dtb.terminalIO.components;
 
-import dtb.terminalIO.ControlCode.Color;
-import dtb.terminalIO.IScreenLineSegmentsBuffer;
-import dtb.terminalIO.ScreenLineSegment;
+import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.textsegments.ScreenLineSegment;
 
 /**
- * A Component that draws one ScreenLineSegment
+ * A Component that draws one ScreenLineSegment (text with a color and position)
  */
 public class SegmentComponent extends Component.AbstractComponent<SegmentComponent> {
     

@@ -1,11 +1,11 @@
 package dtb.terminalIO.components;
 
-import dtb.terminalIO.ControlCode.Color;
-import dtb.terminalIO.IScreenLineSegmentsBuffer;
-import dtb.terminalIO.ScreenLineSegment;
-import dtb.terminalIO.ScreenLineSegment.SegmentImpl;
+import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.textsegments.ScreenLineSegment;
+import dtb.terminalIO.textsegments.ScreenLineSegment.SegmentImpl;
 
 /**
  * A Component that renders one character.

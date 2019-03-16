@@ -3,14 +3,20 @@ package dtb.terminalIO.events;
 import java.util.Comparator;
 import java.util.TreeSet;
 
-import dtb.terminalIO.events.ChainedEventHandler.ConditionalEventHandler;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
+import dtb.terminalIO.events.keyboard.KeyEvent;
+import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
+import dtb.terminalIO.events.keyboard.KeyStroke;
+import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Position;
 
 public class FocusManager {
 
     TreeSet<Focusable> eventConsumers;
     Focusable current;
+    
+    KeyStroke prevKeyStroke = Keys.UP_KEYSTROKE;
+    KeyStroke nextKeyStroke = Keys.DOWN_KEYSTROKE;
     
     public static interface Focusable extends EventHandler {
 
@@ -22,6 +28,37 @@ public class FocusManager {
 
     }
     
+    public static class FocusableDelegate implements Focusable {
+
+        Focusable delegate ;
+        public FocusableDelegate(Focusable delegate) {
+            super();
+            this.delegate = delegate;
+        }
+
+        @Override
+        public void handle(TerminalEvent<?> te) {
+            delegate.handle(te);
+        }
+
+        @Override
+        public boolean hasFocus() {
+            return delegate.hasFocus();
+        }
+
+        @Override
+        public void setFocus(boolean focus) {
+            delegate.setFocus(focus);
+        }
+
+        @Override
+        public Position getPosition() {
+            return delegate.getPosition();
+        }
+        
+    }
+    
+    
     public static class FocusableComparator implements Comparator<Focusable> {
         @Override
         public int compare(Focusable f1, Focusable f2) {
@@ -32,39 +69,66 @@ public class FocusManager {
     }
     
     public FocusManager() {
-	eventConsumers = new TreeSet<Focusable>(new FocusableComparator());
+        eventConsumers = new TreeSet<Focusable>(new FocusableComparator());
+    }
+
+    public FocusManager(KeyStroke prevKeyStroke, KeyStroke nextKeyStroke) {
+	this();
+	this.prevKeyStroke = prevKeyStroke;
+        this.nextKeyStroke = nextKeyStroke;
+    }
+    
+    public FocusManager(KeyStroke nextKeyStroke) {
+        this(null, nextKeyStroke);
     }
     
     Focusable getCurrent() {
-	if (current == null) {
-	    this.current = eventConsumers.first();
+	if (current == null && eventConsumers.size()>0) {
+	    setCurrent(eventConsumers.first());
 	}
 	return this.current;
     }
     
     void setCurrent(Focusable focusable) {
+        Focusable oldCurrent = this.current;
 	this.current = focusable;
+	if (oldCurrent != null) {
+	   oldCurrent.setFocus(false);
+	}
+        if ( this.current != null) {	
+            this.current.setFocus(true);
+        }
     }
     
     public Focusable getPrev() {
-	return eventConsumers.lower(getCurrent());
+        // todo: make it so that it rotates when it gets to the end
+        Focusable f = eventConsumers.lower(getCurrent());
+        if (f == null) {
+            f = eventConsumers.last();
+        }
+        return f;
     }
 
     public Focusable getNext() {
-	return eventConsumers.higher(getCurrent());
+        // todo: make it so that it rotates when it gets to the end
+        Focusable f = eventConsumers.higher(getCurrent());
+        if (f == null) {
+            f = eventConsumers.first();
+        }
+        return f;
     }
     
 
     public ConditionalEventHandler asEventHandler() {
 	return new KeyInputEventHandler(new IS_Event_TYPE(TerminalEvent.TYPE.KEYPRESS), (te) -> {
-	    Keys.KeyEvent ke = (Keys.KeyEvent) te;
+	    KeyEvent ke = (KeyEvent) te;
 	    
-	    if (ke.isKeyStroke(Keys.SHIFT_TAB_KEYSTROKE)) {
+	    if (prevKeyStroke != null && ke.isKeyStroke(prevKeyStroke)) {
 		Focusable prev = getPrev();
 		if (prev != null) {
 		    setCurrent(prev);
 		}
-	    } else if (ke.isKeyStroke(Keys.TAB_KEYSTROKE)) {
+	    } else if (nextKeyStroke != null && ke.isKeyStroke(nextKeyStroke)) {
 		Focusable next = getNext();
 		if (next != null) {
 		    setCurrent(next);
@@ -80,6 +144,60 @@ public class FocusManager {
 
     public void addFocusable(Focusable focusable) {
 	eventConsumers.add(focusable);
+	if (eventConsumers.size() == 1) {
+	    setCurrent(focusable);
+	}
+    }
+    
+    public void addFocusableAtPosition(Focusable focusable, Position pos) {
+        
+        Focusable focusableAtPosition =  new FocusableDelegate(focusable) {
+            @Override
+            public Position getPosition() {
+                return pos;
+            }
+        };
+        addFocusable(focusableAtPosition);
+    }
+    
+
+    public Focusable asFocusable() {
+        return new Focusable() {
+
+            ConditionalEventHandler event_handler = asEventHandler();
+            
+            boolean hasFocus = false;
+            
+            @Override
+            public void handle(TerminalEvent<?> te) {
+                event_handler.handle(te);
+            }
+
+            @Override
+            public boolean hasFocus() {
+                return hasFocus;
+            }
+
+            @Override
+            public void setFocus(boolean focus) {
+                getCurrent().setFocus(focus);
+                hasFocus = focus;
+            }
+
+            @Override
+            public Position getPosition() {
+                Position curPos = Position.ZERO;
+                if (eventConsumers.size() > 0) {
+                    curPos = eventConsumers.first().getPosition();
+                }
+                return curPos;
+            }
+            
+            public String toString() {
+                return "FocusManager.Focusable " + eventConsumers.size() + " pos = " + getPosition() ;
+            }
+            
+        };
     }
 
 }

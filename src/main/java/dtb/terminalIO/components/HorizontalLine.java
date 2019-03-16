@@ -1,38 +1,53 @@
 package dtb.terminalIO.components;
 
-import dtb.terminalIO.ControlCode.Color;
-import dtb.terminalIO.ControlCode.FGBGColors;
-import dtb.terminalIO.IScreenLineSegmentsBuffer;
-import dtb.terminalIO.ScreenLineSegment;
+import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
+import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.textsegments.ScreenLineSegment;
 
 /*
  * A component that draws a horizontal line
  */
 public class HorizontalLine extends BoundedComponent<HorizontalLine> {
 
+    private char horizontalLineChar;
+    
     public HorizontalLine(Color color, Position pos, int len) {
         super(color, pos, new Dimension.Simple(1, len));
+        this.setHorizontalLineChar( this.getBlockChars().getHORIZONTAL_LINE());
     }
 
     public HorizontalLine(Color color, int len) {
         super(color, Position.ZERO, new Dimension.Simple(1, len));
+        this.setHorizontalLineChar( this.getBlockChars().getHORIZONTAL_LINE());
     }
 
     public HorizontalLine(int len) {
         super(FGBGColors.NO_COLOR_SPECIFIED, Position.ZERO, new Dimension.Simple(1, len));
+        this.setHorizontalLineChar( this.getBlockChars().getHORIZONTAL_LINE());
     }
 
     public HorizontalLine(Color color, int row, int col, int len) {
         super(color, new Position.Simple(row, col), new Dimension.Simple(1, len));
+        this.setHorizontalLineChar( this.getBlockChars().getHORIZONTAL_LINE());
+    }
+
+    public char getHorizontalLineChar() {
+        return horizontalLineChar;
+    }
+
+    public HorizontalLine setHorizontalLineChar(char horizontalLineChar) {
+        this.horizontalLineChar = horizontalLineChar;
+        return this;
     }
 
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
         segments.clear();
         if (getWidth() > 0) {
-    	  ScreenLineSegment line = ScreenLineSegment.UTIL.blankScreenObject(color, this.getBlockChars().getHORIZONTAL_LINE(), getRow(), getCol(), -1, getWidth());
+    	  ScreenLineSegment line = ScreenLineSegment.UTIL.blankScreenObject(color, this.horizontalLineChar, getRow(), getCol(), -1, getWidth());
     	  segments.add(line);
         }
     }

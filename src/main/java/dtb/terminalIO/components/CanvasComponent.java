@@ -1,12 +1,12 @@
 package dtb.terminalIO.components;
 
-import dtb.terminalIO.Canvas;
-import dtb.terminalIO.Canvas.CanvasBackend;
-import dtb.terminalIO.Canvas.NullCanvasBackEnd;
-import dtb.terminalIO.ControlCode.Color;
-import dtb.terminalIO.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.core.Canvas;
+import dtb.terminalIO.core.CanvasBackend;
+import dtb.terminalIO.core.CanvasBackend.NullCanvasBackEnd;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
+import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 
 /**
  * A component that wraps an internal canvas.
@@ -19,7 +19,7 @@ public class CanvasComponent implements Component<CanvasComponent>, CanResize {
     CanvasBackend backend;
     
     public CanvasComponent() {
-        this.backend = new NullCanvasBackEnd();
+        this.backend = new CanvasBackend.NullCanvasBackEnd();
         this.canvas = new Canvas(this.backend);
         this.pos = Position.ZERO;
     }
@@ -138,5 +138,10 @@ public class CanvasComponent implements Component<CanvasComponent>, CanResize {
     public void markAsDirty() {
         // do nothing for now - this might have to change
     }
+    
+    public boolean isDirty() {
+        return false; // todo: need to fix!!
+    }
+    
 
 }

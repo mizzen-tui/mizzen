@@ -1,14 +1,15 @@
 package dtb.terminalIO.components;
 
-import dtb.terminalIO.ControlCode.Color;
-import dtb.terminalIO.ControlCode.FGBGColors;
-import dtb.terminalIO.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 
 /**
  * A component that draws a border with an optional title
+ * 
+ * <p/>
  * 
  * Used by other components to draw borders around themselves
  *
@@ -18,6 +19,7 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder> implements HasT
     private RectangleComponent border;
     private String title = null;
     private Color titleColor;
+    private boolean hilited = false;
 
     public SimpleBorder(Color color, Rectangle rect) {
         super(color, rect);
@@ -53,7 +55,7 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder> implements HasT
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
         segments.merge(this.border.getSegmentsBuffer());
         if (this.getTitle() != null) {
-                segments.merge(makeChildComponent(()->new TextComponent(titleColor, getRow(), getCol() + 1, getTitle())).getSegmentsBuffer());
+                segments.merge(makeChildComponent(()->new TextComponent(getTitleColor(), getRow(), getCol() + 1, getTitle())).getSegmentsBuffer());
         }
     }
 
@@ -63,6 +65,9 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder> implements HasT
     
     public Color getTitleColor() {
         Color tColor = titleColor != null ? titleColor : getColor();
+        if (hilited ) {
+            tColor = tColor.bold();
+        }
         return tColor;
     }
 
@@ -98,5 +103,26 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder> implements HasT
         return this;
     }
     
+    public Color getBorderColor() {
+        return border.getColor();
+    }
+
+    @Override
+    public void hilite() {
+        if (!this.hilited) {
+            markAsDirty();
+        }
+        this.border.hilite();
+        this.hilited = true;
+    }
+
+    @Override
+    public void unHilite() {
+        if (this.hilited) {
+            markAsDirty();
+        }
+        this.border.unHilite();
+        this.hilited = false;
+    }
 
 }

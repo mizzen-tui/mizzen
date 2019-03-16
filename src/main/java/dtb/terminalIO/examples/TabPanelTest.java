@@ -3,38 +3,37 @@ package dtb.terminalIO.examples;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import dtb.terminalIO.Canvas;
-import dtb.terminalIO.Colors;
-import dtb.terminalIO.ControlCode;
-import dtb.terminalIO.IScreenLineSegmentsBuffer;
-import dtb.terminalIO.ControlCode.FGBGColors;
-import dtb.terminalIO.TerminalScreen;
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.chart.BarChart;
 import dtb.terminalIO.components.tab.TabPanel;
 import dtb.terminalIO.components.tab.TabPanel.TabAction;
 import dtb.terminalIO.components.tab.TabPanel.TabContext;
-import dtb.terminalIO.events.ChainedEventHandler.ConditionalEventHandler;
-import dtb.terminalIO.events.ChainedEventHandler.ConditionalEventHandlerImpl;
+import dtb.terminalIO.controlcodes.Colors;
+import dtb.terminalIO.controlcodes.ControlCode;
+import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.core.Canvas;
+import dtb.terminalIO.core.TerminalScreen;
+import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
-import dtb.terminalIO.events.KeyInputEventHandler;
-import dtb.terminalIO.events.KeyInputEventsProducer;
-import dtb.terminalIO.events.Keys;
-import dtb.terminalIO.events.Keys.KeyStroke;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.OnResizeEventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
-import dtb.terminalIO.events.TerminalResizeDetection;
+import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
+import dtb.terminalIO.events.keyboard.KeyInputEventsProducer;
+import dtb.terminalIO.events.keyboard.KeyStroke;
+import dtb.terminalIO.events.keyboard.Keys;
+import dtb.terminalIO.events.resize.TerminalResizeDetection;
 import dtb.terminalIO.examples.GridBrailleTest.BrailleDemo;
 import dtb.terminalIO.examples.LineChartTest.LineChartDemo;
 import dtb.terminalIO.examples.sampledata.ReadSampleFiles;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.Stty;
 
 public class TabPanelTest {
@@ -94,6 +93,8 @@ public class TabPanelTest {
             Dimension d_150 = acmeLOGOfileDimension(150);
             Dimension d_200 = acmeLOGOfileDimension(200);
 
+            TestsCommon.addNoGraphicsToggleEvent(eventBus, screen);
+            
             TabPanel tb = new TabPanel(FGBGColors.DEFAULT, new FGBGColors(Colors.Blu).bold(), eventBus,
                                        new Dimension.Simple(master_canvas.getHeight() - 10, master_canvas.getWidth() - 10));
             tb.setBorder(false);
@@ -190,7 +191,6 @@ public class TabPanelTest {
                             }
 
                             tabCtx.getSegmentsBuffer().mergeAt(tabCtx.getBounds().centered(bc, Position.ZERO), bc.getSegmentsBuffer());
-
                         }
                     });
                 }
@@ -319,7 +319,7 @@ public class TabPanelTest {
 
             eventBus.addEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
             eventBus.addEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
-            eventBus.addEventHandler(new ConditionalEventHandlerImpl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
+            eventBus.addEventHandler(new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
 
             master_canvas.refresh();
             

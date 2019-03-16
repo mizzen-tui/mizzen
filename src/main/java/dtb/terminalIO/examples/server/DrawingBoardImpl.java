@@ -1,4 +1,4 @@
-package dtb.terminalIO.server;
+package dtb.terminalIO.examples.server;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -7,11 +7,6 @@ import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
 
-import dtb.terminalIO.Canvas;
-import dtb.terminalIO.ControlCode.Color;
-import dtb.terminalIO.ControlCode.FGBGColors;
-import dtb.terminalIO.IScreenLineSegmentsBuffer;
-import dtb.terminalIO.TerminalScreen;
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.CanvasComponent;
@@ -19,9 +14,17 @@ import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.HasTitleAndBorder;
 import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.core.Canvas;
+import dtb.terminalIO.core.TerminalScreen;
+import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.TerminalDimensions;
 
 public class DrawingBoardImpl implements DrawingBoard {
@@ -30,6 +33,8 @@ public class DrawingBoardImpl implements DrawingBoard {
     private TerminalScreen screen;
     private CompositeWithNamedComponents components;
     private boolean autoRefresh = true;
+    private EventBus eventBus;
+
     
     static class CompositeWithNamedComponents<T extends Composite> implements Component<T>, Rectangle {
 
@@ -104,6 +109,11 @@ public class DrawingBoardImpl implements DrawingBoard {
             
         }
 
+        public boolean isDirty() {
+            return componentManager.isDirty();
+        }
+        
+        
         @Override
         public void markAsDirty() {
             componentManager.markAsDirty();
@@ -125,7 +135,8 @@ public class DrawingBoardImpl implements DrawingBoard {
         
     }
     
-    public DrawingBoardImpl() {
+    public DrawingBoardImpl(EventBus eventBus) {
+        this.eventBus = eventBus;
         init(System.out);
     }
     
@@ -217,16 +228,20 @@ public class DrawingBoardImpl implements DrawingBoard {
     }
     
     public void componentClear(String name) {
+        
+        Logging.info("componentClear "+ name);
+        
         Component c = this.components.getNamedComponent(name);
         if (c instanceof TextComponent) {
             TextComponent tc = (TextComponent) c;
             tc.clear();
             autoRefresh();
-
+            Logging.info("TextComponent "+ name);
             return;
         }
         if (c instanceof Composite) {
-            c.clear();  // should I remove children - I would think yes!
+            ((Composite) c).clearAndRemoveAllChildren();
+            Logging.info("clearAndRemoveAllChildren()" + name);
             autoRefresh();
             return;
         }
@@ -234,11 +249,14 @@ public class DrawingBoardImpl implements DrawingBoard {
             Component<?> child_c = ((BorderedComponent)c).getComponent();
             child_c.clear();
             autoRefresh();
+            Logging.info("BorderedComponent "+ name + " child class = " + child_c.getClass().getSimpleName());
+
             return;
         }
         if (c instanceof CanvasComponent) {
             ((CanvasComponent)c).clear();
             autoRefresh();
+            Logging.info("CanvasComponent "+ name);
             return;
         }
     }
@@ -272,14 +290,40 @@ public class DrawingBoardImpl implements DrawingBoard {
 //        appendText(name, newLine + "Executing : "+commandText);
 //        String[] cmd = commandText.split(" ");
 //        cmd = new String[] {"/bin/bash","-c","ls -l"};
-        ProcessBuilder pb = new ProcessBuilder(cmd);
-        Process process = pb.start();
+        
+        new Thread(new Runnable() {
+            
+            @Override
+            public void run() {
+                try {
+                ProcessBuilder pb = new ProcessBuilder(cmd);
+                Process process = pb.start();
 
-        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        String line = null;
-        while ( (line = reader.readLine()) != null) {
-           appendText(name, newLine + line);
-        }        
+                BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                //String line = null;
+                
+                reader.lines().forEach( (line) -> { System.out.println("OUTSIDE " + line); new OnIdleEventEventHandler.OneTime((e)-> {System.out.println("INSIDE " + line);appendText(name, newLine + line);}, eventBus);}  );
+                
+//                
+//                while ( (line = reader.readLine()) != null) {
+//                   eventBus.addEventHandler(  new OnIdleEventEventHandler.OneTime((e)-> appendText(name, newLine + e.getEventData()), eventBus) );
+//                   //appendText(name, newLine + line);
+//                }
+                } catch (IOException e) {
+                    System.out.println(e); // toodo:  throw exception on eventbus - need access to eventbus
+                }
+            }
+        }).start();
+        
+//        
+//        ProcessBuilder pb = new ProcessBuilder(cmd);
+//        Process process = pb.start();
+//
+//        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+//        String line = null;
+//        while ( (line = reader.readLine()) != null) {
+//           appendText(name, newLine + line);
+//        }        
     }
 
     @Override

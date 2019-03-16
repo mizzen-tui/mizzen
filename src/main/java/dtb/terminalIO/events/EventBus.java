@@ -4,10 +4,9 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Predicate;
 
-import dtb.terminalIO.events.ChainedEventHandler.ConditionalEventHandler;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
+import dtb.terminalIO.events.keyboard.KeyInputEventsProducer;
 
 /**
  * Warning:  This object will spawn a new thread in its constructor.
@@ -29,7 +28,7 @@ import dtb.terminalIO.events.TerminalEvent.TYPE;
  * Usually TerminalEvent objects are generated for every Keystroke that has
  * been pressed by the user.  See {@link KeyInputEventsProducer}.
  * 
- * <p/>
+ * <pre>
  * 
  * Events can also be generated for ( see {@link TerminalEvent} )
  *         KEYPRESS,
@@ -38,7 +37,7 @@ import dtb.terminalIO.events.TerminalEvent.TYPE;
  *         DEBUG
  *
  * 
- * <p/>
+ * </pre>
  * 
  * This object maintains two {@link ChainedEventHandler} 'chains'.    
  * 
@@ -59,9 +58,9 @@ import dtb.terminalIO.events.TerminalEvent.TYPE;
  * that handles the event.   See {@link ChainedEventHandler} for more details on how it works.
  * 
  */
-public class EventBus {
+public class EventBus implements EventHandlerContainer {
 
-    private static final int EVENT_Q_CAPACITY = 10;  // number picked out of my hat!
+    private static final int EVENT_Q_CAPACITY = 20;  // number picked out of my hat!
                                                      //  -- increase as needed
     
     // main events handler chain
@@ -90,6 +89,13 @@ public class EventBus {
     // The task used to consume enqueued events
     private Runnable consumerTask;
 
+    
+    /* For autonumbering eventBus threads. */
+    private static int threadInitNumber;
+    private static synchronized int nextThreadNum() {
+        return threadInitNumber++;
+    }
+    
     public EventBus() {
 	consumerTask = new Runnable() {
 	    @Override
@@ -111,7 +117,7 @@ public class EventBus {
 	    }
 	};
 
-	new Thread(consumerTask).start();
+	new Thread(consumerTask,"EventBus-Thread-"+nextThreadNum()).start();
     }
 
     public void stopConsuming() {
@@ -126,9 +132,11 @@ public class EventBus {
 	return queue.isEmpty();
     }
 
+    // TODO: If queue is full event wont get enqueue.. I dont tell caller - isn't that a bad design?
     public EventBus addEvent(TerminalEvent<?> te) {
 	if (queue.size()<EVENT_Q_CAPACITY) {  // todo:  make configurable - or block?
 	   queue.add(te);
+	   
 	}
 	return this;
     }
@@ -171,6 +179,9 @@ public class EventBus {
 
             @Override
             public void handle(TerminalEvent<?> te) {
+                if (EventBus.this.idleEventsHandlerChain == null) { // means not handlers
+                    return ;
+                }
                 EventBus.this.idleEventsHandlerChain.handle(te);
             }
 
@@ -194,6 +205,9 @@ public class EventBus {
 
         if (master_idlEventHandlerBRIDGE == null) return;
         
+        // The way to suppress idle events is to 
+        // remove the master_idlEventHandlerBRIDGE handler from
+        // eventBus
         this.remove(master_idlEventHandlerBRIDGE);
         
         master_idlEventHandlerBRIDGE = null;

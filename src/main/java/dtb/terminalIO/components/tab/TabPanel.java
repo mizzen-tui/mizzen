@@ -3,24 +3,24 @@ package dtb.terminalIO.components.tab;
 import java.util.ArrayList;
 import java.util.List;
 
-import dtb.terminalIO.ControlCode.Color;
-import dtb.terminalIO.ControlCode.FGBGColors;
-import dtb.terminalIO.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.components.BlockChars;
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.TextComponent;
-import dtb.terminalIO.events.ChainedEventHandler.ConditionalEventHandler;
+import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
+import dtb.terminalIO.events.keyboard.KeyStroke;
+import dtb.terminalIO.events.keyboard.Keys;
+import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
-import dtb.terminalIO.events.KeyInputEventHandler;
-import dtb.terminalIO.events.Keys;
-import dtb.terminalIO.events.Keys.KeyStroke;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 
 public class TabPanel extends Composite {
 

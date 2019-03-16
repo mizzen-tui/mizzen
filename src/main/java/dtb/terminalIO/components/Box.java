@@ -1,6 +1,6 @@
 package dtb.terminalIO.components;
 
-import dtb.terminalIO.ControlCode.FGBGColors;
+import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 
 /**
  * A RectangleComponent that renders a Box ( equal length sides)

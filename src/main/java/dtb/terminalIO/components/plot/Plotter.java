@@ -2,13 +2,13 @@ package dtb.terminalIO.components.plot;
 
 import java.util.TreeSet;
 
-import dtb.terminalIO.Colors;
-import dtb.terminalIO.ControlCode.Color;
-import dtb.terminalIO.ControlCode.FGBGColors;
-import dtb.terminalIO.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.components.BoundedComponent;
+import dtb.terminalIO.controlcodes.Colors;
+import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
+import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 
 /**
  * A component that can plot a series of dots ..  Useful sub-component for charting components

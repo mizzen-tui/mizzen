@@ -1,8 +1,8 @@
 package dtb.terminalIO.components;
 
-import dtb.terminalIO.ControlCode.Color;
+import dtb.terminalIO.controlcodes.ControlCode.Color;
 
-public interface HasTitleAndBorder<T extends Component<?>> {
+public interface HasTitleAndBorder<T extends Component<?>> extends Hiliter {
     
     public T setBorder(boolean hasBorder);
     

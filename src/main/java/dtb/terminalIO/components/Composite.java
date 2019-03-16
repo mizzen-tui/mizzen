@@ -2,16 +2,15 @@ package dtb.terminalIO.components;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
-import dtb.terminalIO.ControlCode.Color;
-import dtb.terminalIO.ControlCode.FGBGColors;
-import dtb.terminalIO.IScreenLineSegmentsBuffer;
-import dtb.terminalIO.ScreenLineSegment;
 import dtb.terminalIO.components.Component.AbstractComponent;
+import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.textsegments.ScreenLineSegment;
 
 public class Composite extends AbstractComponent<Composite> 
       implements Rectangle, HasTitleAndBorder<Composite>, CanResize  {
@@ -197,15 +196,30 @@ public class Composite extends AbstractComponent<Composite>
     }
 
     public Composite add(Component<?> component) {
+        ComponentWithOffset child = findChild(component);
+        if (child != null) {
+            throw new IllegalArgumentException("Component add failure:  Duplicate !");
+        }
 	children.add(new ComponentWithOffset(component));
 	fullrecalcDim();
 	return this;
     }
+    
+    public Composite remove(Component<?> component) {
+        ComponentWithOffset child = findChild(component);
+        if (child == null) {
+            throw new IllegalArgumentException("Could not find component to remove!");
+        }
+        children.remove(child);
+        fullrecalcDim();
+        return this;
+    }
+    
 
     protected ComponentWithOffset findChild(Component<?> component) {
 	for (ComponentWithOffset child : children) {
 	    if (component == child.component) {
-		return child;
+	        return child;
 	    }
 	}
 	return null;
@@ -309,8 +323,34 @@ public class Composite extends AbstractComponent<Composite>
 	}
     }
     
+    public void clearAndRemoveAllChildren() {
+        
+        List<ComponentWithOffset> copiedChildren = new ArrayList<ComponentWithOffset>(this.children);
+        
+        for (ComponentWithOffset child : copiedChildren) {
+            this.remove( child.component);
+        }
+        
+        this.clear();
+    }
+
+
+    public boolean isDirty() {
+        if (super.isDirty()) {
+            return true;
+        }
+        for (ComponentWithOffset child : children) {
+            if (child.component.isDirty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    
     public void markAsDirty() {
 	super.markAsDirty();
+	// Why mark the children dirty - not necessary is it?
 	for (ComponentWithOffset child : children) {
 	    child.component.markAsDirty();
 	}
@@ -371,6 +411,21 @@ public class Composite extends AbstractComponent<Composite>
     public Composite t(String text) {
 	this.add(new TextComponent(getColor(), text));
 	return this;
+    }
+
+    @Override
+    public void hilite() {
+        if (hasBorder()) {
+            this.border.hilite();
+        }
+    }
+
+    @Override
+    public void unHilite() {
+        if (hasBorder()) {
+            this.border.unHilite();
+        }
+        
     }
 
 }

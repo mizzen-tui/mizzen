@@ -1,7 +1,7 @@
 package dtb.terminalIO.examples;
 
-import dtb.terminalIO.Canvas;
 import dtb.terminalIO.components.Composite;
+import dtb.terminalIO.core.Canvas;
 
 public class CompositeScrollTest {
     

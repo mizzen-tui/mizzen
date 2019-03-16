@@ -1,4 +1,4 @@
-package dtb.terminalIO.server;
+package dtb.terminalIO.examples.server;
 
 import java.io.IOException;
 

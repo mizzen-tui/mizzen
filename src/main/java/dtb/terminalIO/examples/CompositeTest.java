@@ -2,12 +2,12 @@ package dtb.terminalIO.examples;
 
 import java.io.IOException;
 
-import dtb.terminalIO.Canvas;
-import dtb.terminalIO.Colors;
-import dtb.terminalIO.ControlCode.FGBGColors;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.HorizontalLine;
 import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.controlcodes.Colors;
+import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.core.Canvas;
 
 public class CompositeTest {
     
@@ -48,14 +48,14 @@ public class CompositeTest {
     public static void statusMsg(String msg) {
         String msgFormatted = String.format("%-60s", msg);
         // System.err.println(msgFormatted);
-        master_canvas.t(35, 3, msgFormatted);
+        master_canvas.t(master_canvas.getHeight()-5 , 3, msgFormatted+"    ");
         master_canvas.refresh();
     }
     
     public static void statusMsg2(String msg) {
         String msgFormatted = String.format("%-60s", msg);
         // System.err.println(msgFormatted);
-        master_canvas.t(33, 3, msgFormatted);
+        master_canvas.t(master_canvas.getHeight()-7, 3, msgFormatted+"    ");
         master_canvas.refresh();
     }
     

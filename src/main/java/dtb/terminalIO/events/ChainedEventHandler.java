@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.function.Predicate;
 
+import dtb.terminalIO.events.keyboard.KeyEvent;
+import dtb.terminalIO.events.keyboard.Keys;
+
 /**
  * 
  * A ChainedEventHandler maintains a list of EventHandler objects - and more specifically
@@ -47,12 +50,12 @@ import java.util.function.Predicate;
  *                                multiple components wanting the keyboard                     
  *                                
  *    to instantiate this type of behaviour:
- *         eH = ChainedEventHandler.useChainOfResponsibilityStrategy()
+ *         eH = {@link ChainedEventHandler#useChainOfResponsibilityStrategy()}
  *      
  * </pre>     
  *      
  */
-public class ChainedEventHandler implements EventHandler {
+public class ChainedEventHandler implements EventHandler, EventHandlerContainer {
 
     private Collection<ConditionalEventHandler> eventHandlers = new ArrayList<>();
 
@@ -66,55 +69,42 @@ public class ChainedEventHandler implements EventHandler {
 
     private EventHandler notfound_event_handler = EventHandler.NULL_HANDLER;
 
-    public static interface ConditionalEventHandler extends EventHandler {
-	public EventHandler canHandle(TerminalEvent<?> te);
-    }
-
-    public static class ConditionalEventHandlerImpl implements ConditionalEventHandler {
-
-	private Predicate<TerminalEvent<?>> canHandlePredicate;
-	private EventHandler handler;
-
-	protected EventHandler getHandler() {
-	    return this.handler;
-	}
-
-	protected Predicate<TerminalEvent<?>> getCanHandlePredicate() {
-	    return this.canHandlePredicate;
-	}
-
-	protected void setCanHandlePredicate(Predicate<TerminalEvent<?>> canHandlePredicate) {
-	    this.canHandlePredicate = canHandlePredicate;
-	}
-
-	@Override
-	public void handle(TerminalEvent<?> te) {
-	    handler.handle(te);
-	}
-
-	@Override
-	public EventHandler canHandle(TerminalEvent<?> te) {
-	    if (canHandlePredicate.test(te)) {
-		return this;
-	    }
-	    return null;
-	}
-
-	public ConditionalEventHandlerImpl(Predicate<TerminalEvent<?>> canHandlePredicate, EventHandler handler) {
-	    this.canHandlePredicate = canHandlePredicate;
-	    this.handler = handler;
-	}
-    }
-
     private ChainedEventHandler() {
 	handleEventStrategy = chainOfResponsibilityHandler;
     }
 
+    private boolean isChainOfResponsibility() {
+        return handleEventStrategy == chainOfResponsibilityHandler;
+    }
+    
+    
+    /**
+     * Builds a ChainedEventHandler that delegates incoming events
+     * to its child event handlers in a Child-of_Responsibility style.
+     * 
+     * <p/>
+     * 
+     *    - Meaning that:  it passes the incoming event only to the first 
+     *      child handler that claims it can handle the event.
+     * 
+     * <p/>
+     * 
+     * Useful for processing KeyEvents.
+     *  
+     * @return ChainedEventHandler
+     */
     public static ChainedEventHandler useChainOfResponsibilityStrategy() {
 	ChainedEventHandler chainedEventHandler = new ChainedEventHandler();
 	return chainedEventHandler;
     }
 
+    /**
+     * Builds a ChainedEventHandler that delegates incoming events
+     * to all its child event handlers that say they can handle
+     * the event.  Useful for processing OnIdleEvents
+     *  
+     * @return ChainedEventHandler
+     */
     public static ChainedEventHandler useHandleAllStrategy() {
 	ChainedEventHandler chainedEventHandler = new ChainedEventHandler();
 	chainedEventHandler.handleEventStrategy = chainedEventHandler.handleAllHandler;
@@ -127,29 +117,41 @@ public class ChainedEventHandler implements EventHandler {
 
     public ChainedEventHandler addEventHandler(ConditionalEventHandler eventHandler) {
 	if (!eventHandlers.contains(eventHandler)) {
-	    addList.add(eventHandler);
-	    //eventHandlers.add(eventHandler);
+	    synchronized (addList) {
+	        if (! addList.contains(eventHandler)) {
+	            addList.add(eventHandler);
+	        }
+            }
 	}
 	return this;
     }
 
     public ChainedEventHandler remove(ConditionalEventHandler eventHandler) {
 	if (eventHandlers.contains(eventHandler)) {
-	    removeList.add(eventHandler);
+	    synchronized (removeList) {
+                if (removeList.contains(eventHandler)) {
+                    removeList.add(eventHandler);
+                }
+            }
 	}
 	return this;
     }
 
     public ChainedEventHandler addEventHandler(Predicate<TerminalEvent<?>> canHandlePredicate, EventHandler eventHandler) {
-	return addEventHandler(new ConditionalEventHandlerImpl(canHandlePredicate, eventHandler));
+	return addEventHandler(new ConditionalEventHandler.Impl(canHandlePredicate, eventHandler));
     }
 
     @Override
     public void handle(TerminalEvent<?> te) {
+        // while events are 'in-play' (being handled) we cannot add
+        // or remove events - so do it now - before we handle in-coming event
 	adjustEventHandlerListIfNeeded();
-
+	
+        // at this point event is "in-play"  (being handled)
 	this.handleEventStrategy.handle(te);
 	
+        // while events are 'in-play' (being handled) we cannot add
+        // or remove events - so do it now - after we handled in-coming event
 	adjustEventHandlerListIfNeeded();
     }
     
@@ -212,6 +214,40 @@ public class ChainedEventHandler implements EventHandler {
 	    }
 	}
     };
+    
+    
+    public ConditionalEventHandler asConditionalEventHandler() {
+        
+        // make sure our current handler list is up to date
+        // hmmm .. will I need to do this in the test() function below?  Could be expensive to do that.. 
+        this.adjustEventHandlerListIfNeeded();
+        
+        ConditionalEventHandler eventHandler = new ConditionalEventHandler.Impl(new Predicate<TerminalEvent<?>>() {
+
+            @Override
+            public boolean test(TerminalEvent<?> te) {
+                
+                adjustEventHandlerListIfNeeded(); 
+                
+                if (isChainOfResponsibility()) {
+                   return ChainedEventHandler.this.findRequestHandler(te) != null;
+                }
+                // handle all strategy -- so return true if we have at least one handler
+                return eventHandlers.size()>0;
+            }
+            
+        }, new EventHandler() {
+            @Override
+            public void handle(TerminalEvent<?> te) {
+                // not happy that I am doing another findRequestHandler() 
+                // - once in test() and then again here
+                ChainedEventHandler.this.handle(te);
+            }
+            
+        });
+        
+        return eventHandler;
+    }
     
     public String statsAsStr() {
 	return "ChainedEventHandler[eventHandlers size = "+ eventHandlers.size()+"]";
