@@ -103,7 +103,9 @@ public class KeyInputEventsProducer implements Runnable {
                     boolean idleHandled = idle();
                     if (!idleHandled) {
                 	// no pending keyboard keys handled - lets generate a timerEvent
-                	eventBus.addEvent(new OnIdleEvent(this));
+                        if (eventBus.isEmptyQueue()) {
+                	    eventBus.addEvent(new OnIdleEvent(this));
+                        }
                     }
                 }
 
