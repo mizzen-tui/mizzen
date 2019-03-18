@@ -1,5 +1,6 @@
 package dtb.terminalIO.components;
 
+import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.geom.Rectangle;
@@ -42,9 +43,9 @@ public interface FillOnClearPolicy {
         private Color            emptyColor       = FGBGColors.NO_COLOR_SPECIFIED;
         private static final int EMPTY_SEGMENT_ID = -1234;
         
-        private Color.Provider parentColorProvider;
+        private ControlCode.ColorProvider parentColorProvider;
 
-        protected AbstractImpl(FGBGColors.Provider parentColorProvider) {
+        protected AbstractImpl(ControlCode.ColorProvider parentColorProvider) {
             this.parentColorProvider = parentColorProvider;
         }
         

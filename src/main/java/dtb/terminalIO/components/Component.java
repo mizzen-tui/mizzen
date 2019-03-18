@@ -1,5 +1,6 @@
 package dtb.terminalIO.components;
 
+import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.geom.Rectangle;
@@ -20,7 +21,7 @@ import dtb.terminalIO.textsegments.ScreenLineSegmentsBuffer;
  * @author dbalme
  *
  */
-public interface Component<T extends Component<?>> extends IScreenLineSegmentsBuffer.Provider , FGBGColors.Provider, Rectangle {
+public interface Component<T extends Component<?>> extends IScreenLineSegmentsBuffer.Provider , ControlCode.ColorProvider, Rectangle {
 
     T setColor(Color drawingcolor);
     
@@ -99,6 +100,7 @@ public interface Component<T extends Component<?>> extends IScreenLineSegmentsBu
         @Override
         public T setColor(Color drawingcolor) {
             this.color = drawingcolor == null ? FGBGColors.NO_COLOR_SPECIFIED : drawingcolor;
+            this.markAsDirty();
             return (T) this;
         }
 

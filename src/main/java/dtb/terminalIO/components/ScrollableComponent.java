@@ -6,7 +6,7 @@ import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
-import dtb.terminalIO.events.FocusManager.Focusable;
+import dtb.terminalIO.events.Focusable;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
@@ -190,11 +190,13 @@ public class ScrollableComponent extends Composite implements CanResize, Focusab
         
         public void markAsDirty() {
             super.markAsDirty();
-            if (viewSource instanceof Component) {
+            if (viewSource != null && viewSource instanceof Component) {
                 
                 ((Component) viewSource).markAsDirty();
             }
-            segmentsViewBuffer.markAsDirty();
+            if (segmentsViewBuffer != null) {
+                segmentsViewBuffer.markAsDirty();
+            }
         }
         
         @Override

@@ -1,6 +1,5 @@
 package dtb.terminalIO.events;
 
-import java.util.Comparator;
 import java.util.TreeSet;
 
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
@@ -18,58 +17,8 @@ public class FocusManager {
     KeyStroke prevKeyStroke = Keys.UP_KEYSTROKE;
     KeyStroke nextKeyStroke = Keys.DOWN_KEYSTROKE;
     
-    public static interface Focusable extends EventHandler {
-
-	boolean hasFocus();
-
-	void setFocus(boolean focus);
-
-	Position getPosition();
-
-    }
-    
-    public static class FocusableDelegate implements Focusable {
-
-        Focusable delegate ;
-        public FocusableDelegate(Focusable delegate) {
-            super();
-            this.delegate = delegate;
-        }
-
-        @Override
-        public void handle(TerminalEvent<?> te) {
-            delegate.handle(te);
-        }
-
-        @Override
-        public boolean hasFocus() {
-            return delegate.hasFocus();
-        }
-
-        @Override
-        public void setFocus(boolean focus) {
-            delegate.setFocus(focus);
-        }
-
-        @Override
-        public Position getPosition() {
-            return delegate.getPosition();
-        }
-        
-    }
-    
-    
-    public static class FocusableComparator implements Comparator<Focusable> {
-        @Override
-        public int compare(Focusable f1, Focusable f2) {
-            if (f1 == f2)
-                return 0;
-            return Position.UTIL.POS_COMPARE.compare(f1.getPosition(), f2.getPosition());
-        }
-    }
-    
     public FocusManager() {
-        eventConsumers = new TreeSet<Focusable>(new FocusableComparator());
+        eventConsumers = new TreeSet<Focusable>(new Focusable.FocusableComparator());
     }
 
     public FocusManager(KeyStroke prevKeyStroke, KeyStroke nextKeyStroke) {
@@ -151,7 +100,7 @@ public class FocusManager {
     
     public void addFocusableAtPosition(Focusable focusable, Position pos) {
         
-        Focusable focusableAtPosition =  new FocusableDelegate(focusable) {
+        Focusable focusableAtPosition =  new Focusable.FocusableDelegate(focusable) {
             @Override
             public Position getPosition() {
                 return pos;

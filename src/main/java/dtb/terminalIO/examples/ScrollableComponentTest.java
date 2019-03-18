@@ -36,6 +36,7 @@ import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.util.ExecUtil;
+import dtb.terminalIO.util.StringUtils;
 import dtb.terminalIO.util.Stty;
 
 public class ScrollableComponentTest {
@@ -82,6 +83,7 @@ public class ScrollableComponentTest {
                         readFileThread = new Thread(()->{
                             try {
                                 largeText =  ReadSampleFiles.readSampleFile(bigFile);  
+                                largeText =  StringUtils.wrap(largeText, size.getWidth()*2);
                                 srcOfText.setTextAndResize(largeText);
                                 viewComp1.updateCanvas();
                             } catch (IOException e) {

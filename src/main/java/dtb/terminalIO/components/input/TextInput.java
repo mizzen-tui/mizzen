@@ -1,12 +1,16 @@
 package dtb.terminalIO.components.input;
 
+import java.util.function.Supplier;
+
 import dtb.terminalIO.components.BoundedComponent;
+import dtb.terminalIO.components.ColorHiliter;
+import dtb.terminalIO.components.FocusSetterToHiliteAction;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
-import dtb.terminalIO.events.FocusManager.Focusable;
+import dtb.terminalIO.events.Focusable;
 import dtb.terminalIO.events.RequestHideCursorEvent;
 import dtb.terminalIO.events.RequestShowCursorEvent;
 import dtb.terminalIO.events.TerminalEvent;
@@ -18,7 +22,7 @@ import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 
-public class TextInput extends BoundedComponent<TextInput> {
+public class TextInput extends BoundedComponent<TextInput> implements HasValue<String>{
 
     private TextComponent textRenderer;
     private StringBuffer buffer;
@@ -88,6 +92,11 @@ public class TextInput extends BoundedComponent<TextInput> {
     public String getText() {
         return this.buffer.toString();
     }
+    
+    public String getValue() {
+        return this.getText();
+    }
+    
 
     public void appendText(String text) {
         int maxWidth = this.getWidth();
@@ -114,13 +123,13 @@ public class TextInput extends BoundedComponent<TextInput> {
     }
     
     // needs lots 'o work!  get on it
-    private void addCharAtCaret(char ch) {
+    private boolean addCharAtCaret(char ch) {
         String currentText = getText();
         if (modeOverite) {
-            
+            return false;
         } else { // insert mode
             if (  currentText.length() >= maxTextWidth) {
-                return ;
+                return false;
             }
             if (caret.getCol() == 0) {                            // []ABCDE
                currentText = ch + currentText;
@@ -133,16 +142,17 @@ public class TextInput extends BoundedComponent<TextInput> {
             }
             caretOffsetAdd(0,1);
             this.__setText(currentText);
+            return true;
         }
     }
 
-    private void deleteCharBeforeCaret() {
+    private boolean deleteCharBeforeCaret() {
         String currentText = getText();
         if (modeOverite) {
-            
+            return false;
         } else { // insert mode
             if (caret.getCol() == 0) {                            // []ABCDE
-               return ;
+               return false;
             } else if (caret.getCol() < currentText.length())  {  // ABC[]DE
                currentText = currentText.substring(0, caret.getCol()-1) +
                              currentText.substring(caret.getCol());
@@ -153,13 +163,14 @@ public class TextInput extends BoundedComponent<TextInput> {
                 caretOffsetAdd(0,-1);
             }
             this.__setText(currentText);
+            return true;
         }
     }
 
-    private void deleteCharAtCaret() {
+    private boolean deleteCharAtCaret() {
         String currentText = getText();
         if (modeOverite) { 
-            
+            return false;
         } else { // insert mode
                int textlen = currentText.length();
                if (caret.getCol() < textlen ) {
@@ -169,11 +180,19 @@ public class TextInput extends BoundedComponent<TextInput> {
                       currentText = currentText.substring(0, caret.getCol())+ currentText.substring(caret.getCol()+1);
                    }
                    this.__setText(currentText);
+                   return true;
                }
         }
+        return false;
     }
 
-    public KeyInputEventHandler asEventHandler() {
+    private void raiseEventOnChanged(EventBus eventBus, Supplier<Boolean> changeTextAction ) {
+        if (changeTextAction.get()) {
+            eventBus.addEvent(  new HasValue.ValueChangedEvent<>(this) );
+        }
+    }
+    
+    public KeyInputEventHandler asEventHandler(EventBus eventBus) {
 
 	EventHandler handler = new EventHandler() {
 	    @Override
@@ -182,12 +201,12 @@ public class TextInput extends BoundedComponent<TextInput> {
 
 		// check for control keys
 		if (ke.isKeyStroke(Keys.BACKSPACE_KEYSTROKE)) {
-		    deleteCharBeforeCaret();
+		    raiseEventOnChanged(eventBus, ()->deleteCharBeforeCaret());
 		    return ;
 		}
 
                 if (ke.isKeyStroke(Keys.DELETE_KEYSTROKE)) {
-                    deleteCharAtCaret();
+                    raiseEventOnChanged(eventBus, ()->deleteCharAtCaret());
                     return ;
                 }
 
@@ -216,7 +235,7 @@ public class TextInput extends BoundedComponent<TextInput> {
                     char ch = ke.getChar();
                     
                     // TODO - I know I will need some checks on ch - but this for now 
-                    addCharAtCaret(ch);
+                    raiseEventOnChanged(eventBus, ()->addCharAtCaret(ch));
                     
                 }
                 
@@ -232,59 +251,47 @@ public class TextInput extends BoundedComponent<TextInput> {
 
     }
 
-    public Focusable asFocusable(Position position, final EventBus eventbus) {
-	return new Focusable() {
-	    
-	    boolean hasFocus = false;
-	    
-	    Color unhilitedColor = TextInput.this.getColor();
-	    Color hilitedColor = TextInput.this.getColor().bold();
-	    
-	    KeyInputEventHandler keyEventHandler = TextInput.this.asEventHandler();
 
-	    @Override
-	    public void handle(TerminalEvent<?> te) {
-	        keyEventHandler.handle(te);
-	        requestShowCursor();  // todo:  This might be expensive to showcursor even if key is ignored
-	    }
-	    
-	    private void requestShowCursor() {
-                // todo - need manage a textinput caret (pos) -- not just append
-	        
-	        // calc where cursor should be relative to text component + its caret position
-	        
-	        Position cursorPos = new Position.Simple(getPosition()).offsetAdd(caret);
+    public Focusable asFocusable(Position position, final EventBus eventBus) {
+        
+        return new AsFocusable(this, position, eventBus) {
 
-	        eventbus.addEvent(  new  RequestShowCursorEvent(TextInput.this, cursorPos ) );
-	    }
-
-            private void requestHideCursor() {
-                eventbus.addEvent(  new  RequestHideCursorEvent(TextInput.this) );
+            KeyInputEventHandler keyEventHandler = TextInput.this.asEventHandler(eventBus);
+            
+            @Override
+            public void handle(TerminalEvent<?> te) {
+                keyEventHandler.handle(te);
+                requestShowCursor();  // todo:  This might be expensive to showcursor even if key is ignored
             }
 
-	    @Override
-	    public boolean hasFocus() {
-		return hasFocus;
-	    }
+            @Override
+            public void setFocus(boolean focus) {
+                super.setFocus(focus);
+                if (focus) {
+                    requestShowCursor();
+                } else {
+                    requestHideCursor();
+                }
+                this.hasFocus = focus;
+                new FocusSetterToHiliteAction().hiliteAction(this, colorHiliter);
+                this.component.setColor( colorHiliter.asColor() );
+            }
+            
+            
+            private void requestShowCursor() {
+                // todo - need manage a textinput caret (pos) -- not just append
+                
+                // calc where cursor should be relative to text component + its caret position
+                
+                Position cursorPos = new Position.Simple(getPosition()).offsetAdd(caret);
 
-	    @Override
-	    public void setFocus(boolean focus) {
-		this.hasFocus = focus;
-		if (focus) {
-		   requestShowCursor();
-		   TextInput.this.setColor(  hilitedColor );
-		} else {
-		    requestHideCursor(); 
-		    TextInput.this.setColor(  unhilitedColor );
-		}
-	    }
+                eventBus.addEvent(  new  RequestShowCursorEvent(TextInput.this, cursorPos ) );
+            }
 
-	    @Override
-	    public Position getPosition() {
-		return position;
-	    }
-
-	};
+            private void requestHideCursor() {
+                eventBus.addEvent(  new  RequestHideCursorEvent(TextInput.this) );
+            }
+        };
+        
     }
-
 }

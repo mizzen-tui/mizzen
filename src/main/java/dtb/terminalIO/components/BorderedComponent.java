@@ -60,8 +60,10 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
     
     public void markAsDirty() {
         super.markAsDirty();
-        this.component.markAsDirty();
-        this.border.markAsDirty();
+        
+        if (this.component != null) this.component.markAsDirty();
+        
+        if (this.border != null) this.border.markAsDirty();
     }
     
     

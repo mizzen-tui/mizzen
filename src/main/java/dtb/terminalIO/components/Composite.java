@@ -413,14 +413,12 @@ public class Composite extends AbstractComponent<Composite>
 	return this;
     }
 
-    @Override
     public void hilite() {
         if (hasBorder()) {
             this.border.hilite();
         }
     }
 
-    @Override
     public void unHilite() {
         if (hasBorder()) {
             this.border.unHilite();

@@ -4,16 +4,17 @@ import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
-import dtb.terminalIO.events.FocusManager.Focusable;
+import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.Focusable;
+import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.keyboard.KeyEvent;
 import dtb.terminalIO.events.keyboard.Keys;
-import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.StringUtils;
 
-public class CheckBoxInput extends BoundedComponent<CheckBoxInput> {
+public class CheckBoxInput extends BoundedComponent<CheckBoxInput> implements HasValue<Boolean> {
 
     private TextComponent textRenderer;
     
@@ -33,7 +34,7 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput> {
     }
     
     
-    public boolean getValue() {
+    public Boolean getValue() {
         return value;
     }
     
@@ -86,50 +87,20 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput> {
     }
     
     
-    public Focusable asFocusable(Position position) {
-        return new Focusable() {
-            
-            boolean hasFocus = false;
-            
-            Color unhilitedColor = CheckBoxInput.this.getColor();
-            Color hilitedColor = CheckBoxInput.this.getColor().bold();
+    public Focusable asFocusable(Position position, EventBus eventBus) {
+        
+        return new AsFocusable(this, position, eventBus) {
 
             @Override
             public void handle(TerminalEvent<?> te) {
                 KeyEvent ke = (KeyEvent) te; // TODO:  In the future, this cast might not be valid
                 
-                
                 if (ke.isKeyStroke( Keys.ENTER_KEYSTROKE )  || ke.isKeyStroke(Keys.SPACE_KEYSTROKE)) {
                     CheckBoxInput.this.setValue(  !  CheckBoxInput.this.getValue()  );  // toggle the value
+                    eventBus.addEvent(  new HasValue.ValueChangedEvent<>(CheckBoxInput.this) );
                 }
-                
             }
             
-//            private void requestShowCursor() {
-//                // todo - need manage a textinput caret (pos) -- not just append
-//                eventbus.addEvent(  new  RequestShowCursorEvent(TextInput.this, new Position.Simple(getPosition()).offsetAdd(0, TextInput.this.getText().length())) );
-//            }
-
-            @Override
-            public boolean hasFocus() {
-                return hasFocus;
-            }
-
-            @Override
-            public void setFocus(boolean focus) {
-                this.hasFocus = focus;
-                if (focus) {
-                    CheckBoxInput.this.setColor(hilitedColor);
-                } else {
-                    CheckBoxInput.this.setColor(unhilitedColor);
-                }
-            }
-
-            @Override
-            public Position getPosition() {
-                return position;
-            }
-
         };
     }
     

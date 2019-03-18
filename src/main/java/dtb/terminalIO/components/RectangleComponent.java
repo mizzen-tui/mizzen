@@ -12,17 +12,25 @@ import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 public class RectangleComponent extends BoundedComponent<RectangleComponent> implements Hiliter {
 
     private boolean hilited = false;
+    private ColorHiliter colorHiliter;
     
     public RectangleComponent(Color color, int height, int width) {
         super(color, new Dimension.Simple(height, width));
+        this.colorHiliter = makeColorHiliter();
     }
 
     public RectangleComponent(Color color, Position p, Dimension d) {
         super(color, p, d);
+        this.colorHiliter = makeColorHiliter();
     }
 
     public RectangleComponent(Color color, Rectangle r) {
         super(color, r, r);
+        this.colorHiliter = makeColorHiliter();
+    }
+    
+    private ColorHiliter makeColorHiliter() {
+        return new ColorHiliter(super.getColor());
     }
     
     @Override
@@ -49,8 +57,7 @@ public class RectangleComponent extends BoundedComponent<RectangleComponent> imp
 
     @Override
     public Color getColor() {
-        Color color = super.getColor();
-        return this.hilited ? /*Colors.IYel  */ color.bold() : color; 
+        return colorHiliter.asColor();
     }
     
     @Override
@@ -58,6 +65,7 @@ public class RectangleComponent extends BoundedComponent<RectangleComponent> imp
         if ( ! this.hilited) {
             markAsDirty();
         }
+        colorHiliter.hilite();
         this.hilited = true;
     }
 
@@ -66,6 +74,7 @@ public class RectangleComponent extends BoundedComponent<RectangleComponent> imp
         if (this.hilited) {
             markAsDirty();
         }
+        colorHiliter.unHilite();
         this.hilited = false;
     }
 

@@ -55,13 +55,30 @@ public abstract class ControlCode implements Renderer {
         }
     }
 
+    
+
     /**
      * A {@link ControlCode} that encapsulates a Color
      */
-    public static abstract class Color extends ControlCode {
+    public static abstract class Color extends ControlCode implements ColorProvider {
 
         abstract protected int[] buildControlCodes();
+        
+        ColorTransform boldTransform = ColorTransform.NULL_colorTransform;
+        
+        public Color setBoldTransform(ColorTransform boldTransform ) {
+            this.boldTransform = boldTransform;
+            return this;
+        }
 
+        public ColorTransform getBoldTransform() {
+            return this.boldTransform;
+        }
+        
+        public Color getColor() {
+            return this;
+        }
+        
         public Color mergeWith(Color other) {
             return this; // TODO:  fix!
         }
@@ -85,10 +102,6 @@ public abstract class ControlCode implements Renderer {
             }
         }
         
-        public static interface Provider {
-            Color getColor();
-        }
-        
         public FGBGColors newFrom(FgColor fgcNew) {
             throw new IllegalStateException("not implemented! only works for FGBGColors object");
         }
@@ -98,7 +111,7 @@ public abstract class ControlCode implements Renderer {
         }
 
         public Color bold() {
-            return this; // should makes this better
+            return getBoldTransform().transform(this);
         }
 
         public static Color fromStr(String colorStr) {
@@ -172,6 +185,7 @@ public abstract class ControlCode implements Renderer {
 
         public FgColor(int colorCode) {
             super(colorCode);
+            this.setBoldTransform((color)->asBold());
         }
 
         public FgColor(int colorCode, boolean bold, boolean italic, boolean underline) {
@@ -179,17 +193,13 @@ public abstract class ControlCode implements Renderer {
             this.bold = bold;
             this.italic = italic;
             this.underline = underline;
+            this.setBoldTransform((color)->asBold());
         }
 
         public FgColor asBold() {
             return new FgColor(colorCode, true, italic, underline);
         }
         
-        public Color bold() {
-            return asBold();
-        }
-
-
         public FgColor removeBold() {
             return new FgColor(colorCode, false, italic, underline);
         }
@@ -269,23 +279,31 @@ public abstract class ControlCode implements Renderer {
             super();
             this.bgc = bgc;
             this.fgc = fgc;
+            this.setBoldTransform((color)->asBold());
         }
 
         public FGBGColors(FgColor fgc) {
             super();
             this.bgc = null;
             this.fgc = fgc;
+            this.setBoldTransform((color)->asBold());
         }
 
         public FGBGColors(BgColor bgc) {
             super();
             this.bgc = bgc;
             this.fgc = null;
+            this.setBoldTransform((color)->asBold());
         }
 
-        public FGBGColors bold() {
+        
+        public FGBGColors asBold() {
             return new FGBGColors((fgc==null?(new FgColor(0)):fgc).asBold(), bgc);
         }
+        
+//        public FGBGColors bold() {
+//            return new FGBGColors((fgc==null?(new FgColor(0)):fgc).asBold(), bgc);
+//        }
 
         public FGBGColors removebold() {
             return new FGBGColors(fgc.removeBold(), bgc);
@@ -558,6 +576,11 @@ public abstract class ControlCode implements Renderer {
 	boolean newColorSegment(Color color, String simpleText);
     }
     
+    @FunctionalInterface
+    public static interface ColorProvider {
+        Color getColor();
+    }
+
     public static void parseColorsAndBuildResult(String colorCodedStr, ColorColorSegmentBuilder colorColorSegmentBuilder) {
         
         int PARSE_STATE=PARSE_TEXT;

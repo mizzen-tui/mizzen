@@ -105,6 +105,7 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
     @Override
     public T setColor(Color drawingcolor) {
         this.color = drawingcolor == null ? FGBGColors.NO_COLOR_SPECIFIED : drawingcolor;
+        this.markAsDirty();
         return (T) this;
     }
 

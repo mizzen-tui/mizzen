@@ -27,6 +27,7 @@ public class TerminalEvent<T> extends EventObject {
         TIMER,
         REQUEST_SHOW_CURSOR,
         REQUEST_HIDE_CURSOR,
+        VALUE_CHANGED,
         RESIZE,
         EXCEPTION,
         DEBUG

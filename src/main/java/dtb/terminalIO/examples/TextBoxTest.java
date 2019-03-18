@@ -3,8 +3,13 @@ package dtb.terminalIO.examples;
 import java.io.IOException;
 
 import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.components.input.Button;
+import dtb.terminalIO.components.input.ButtonBar;
 import dtb.terminalIO.components.input.CheckBoxInput;
+import dtb.terminalIO.components.input.HasValue;
 import dtb.terminalIO.components.input.TextInput;
+import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.TerminalScreen;
@@ -32,8 +37,6 @@ public class TextBoxTest {
         
         screen.setRaw();
         
-        master_canvas.setEmptyChar('.');
-        
         master_canvas.t("Some text");
         
         TextInput ti = new TextInput(10);
@@ -60,21 +63,38 @@ public class TextBoxTest {
         cb_1.setValue(false);
         Position p_5 = new Position.Simple(10,10);
         
+        Button b_1 = new Button("Press Me", true);
+        Position p_6 = new Position.Simple(12,10);
+        
+        Button b_2 = new Button("Press Too");
+        Position p_7 = new Position.Simple(13,10);
+        
+        
+        ButtonBar  bBar = new ButtonBar(Colors.BBlu);
+
+        
+        
+        TextComponent eventDisplayer = new TextComponent("                                       ");
+        
         Runnable renderComponents = () -> {
             
-            if ( ! Component.UTIL.isDirty(ti, ti_2, cb_1, ti_3, ti_4)) {
+            if ( ! Component.UTIL.isDirty(ti, ti_2, cb_1, ti_3, ti_4, b_1, b_2, eventDisplayer)) {
                 return ;
             }
             
+            master_canvas.clearCanvas();
             
             master_canvas.addComponentSegments(p_1,ti);
             master_canvas.addComponentSegments(p_2,ti_2);
             master_canvas.addComponentSegments(p_5,cb_1);
+            master_canvas.addComponentSegments(p_6,b_1);
+            master_canvas.addComponentSegments(p_7,b_2);
             
             
             master_canvas.addComponentSegments(p_3,ti_3);
             master_canvas.addComponentSegments(p_4,ti_4);
             
+            master_canvas.addComponentSegments(master_canvas.getHeight()-2, 2, eventDisplayer);
             
             master_canvas.refresh();
             
@@ -112,7 +132,8 @@ public class TextBoxTest {
                 return;
             }
         };
-
+        
+        
         eventBus.addEventHandler(master_canvas.asShowCursorEventHandler());
         eventBus.addEventHandler(master_canvas.asHideCursorEventHandler());
 
@@ -131,10 +152,12 @@ public class TextBoxTest {
 
         focusManager1.addFocusable(ti.asFocusable(p_1, eventBus));
         focusManager1.addFocusable(ti_2.asFocusable(p_2, eventBus));
-        focusManager1.addFocusable(cb_1.asFocusable(p_5));
+        focusManager1.addFocusable(cb_1.asFocusable(p_5, eventBus));
+        focusManager1.addFocusable(b_1.asFocusable(p_6, eventBus));
+        focusManager1.addFocusable(b_2.asFocusable(p_7, eventBus));
         
         focusManager2.addFocusable(ti_3.asFocusable(p_3, eventBus));
-        focusManager2.addFocusable(ti_4.asFocusable(p_4, eventBus));
+        focusManager2.addFocusable(ti_4.asFocusable(p_4, eventBus)); 
         
 
         focusManager.addFocusable(focusManager1.asFocusable());
@@ -154,6 +177,43 @@ public class TextBoxTest {
                                           renderComponents.run();                       
                                      }));
         
+        
+        eventBus.addEventHandler( new HasValue.OnValueChangedEventHandler<String>(ti) {
+
+            @Override
+            public void valueChanged(HasValue<String> source) {
+                String newValue = source.getValue();
+                eventDisplayer.setText(newValue);
+                renderComponents.run();
+            }
+            
+        });
+        
+        eventBus.addEventHandler( new HasValue.OnValueChangedEventHandler<Boolean>(b_1) {
+
+            @Override
+            public void valueChanged(HasValue<Boolean> source) {
+                Boolean newValue = source.getValue();
+                eventDisplayer.setText("(1) Pressed = "+newValue);
+                renderComponents.run();
+            }
+            
+        });
+        
+        
+        eventBus.addEventHandler( new HasValue.OnValueChangedEventHandler<Boolean>(b_2) {
+
+            @Override
+            public void valueChanged(HasValue<Boolean> source) {
+                Boolean newValue = source.getValue();
+                eventDisplayer.setText("(2) Pressed = "+newValue);
+                renderComponents.run();
+            }
+            
+        });
+        
+        
+
         screen.add(ControlCode.SHOW_CURSOR);
         
     }

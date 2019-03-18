@@ -50,7 +50,7 @@ import dtb.terminalIO.events.keyboard.KeyInputEventsProducer;
  * <p/>
  * 
  * The other 'main' handler is used to handle all other events ( usually KeyStroke events).
- * 
+ *  
  * <p/>
  * 
  * This chained handler works in a Chain-of-Responsibility style of handling.
