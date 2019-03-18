@@ -18,7 +18,10 @@ public class KeyEvent extends TerminalEvent<KeyStroke> {
     }
 
     public boolean isKeyStroke(KeyStroke keyStroke) {
-        return getKeyStroke().equals(keyStroke);
+	if (getKeyStroke().equals(keyStroke)) {
+	    return true;
+	}
+        return false;
     }
 
     public String getKeyName() {

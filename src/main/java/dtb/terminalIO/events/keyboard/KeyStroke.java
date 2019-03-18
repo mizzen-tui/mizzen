@@ -1,5 +1,7 @@
 package dtb.terminalIO.events.keyboard;
 
+import java.util.Arrays;
+
 /**
  * Encapsulates a key that has been pressed.
  * 
@@ -88,47 +90,46 @@ public class KeyStroke {
 
     @Override
     public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + (altPressed ? 1231 : 1237);
-        result = prime * result + (ctrl ? 1231 : 1237);
-        result = prime * result + funcKey;
-        result = prime * result + ((keys == null) ? 0 : keys.hashCode());
-        //result = prime * result + ((name == null) ? 0 : name.hashCode());
-        return result;
+	final int prime = 31;
+	int result = 1;
+	result = prime * result + (altPressed ? 1231 : 1237);
+	result = prime * result + (ctrl ? 1231 : 1237);
+	result = prime * result + funcKey;
+	result = prime * result + Arrays.hashCode(keys);
+	result = prime * result + ((name == null) ? 0 : name.hashCode());
+	return result;
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        KeyStroke other = (KeyStroke) obj;
-        if (altPressed != other.altPressed)
-            return false;
-        if (ctrl != other.ctrl)
-            return false;
-        if (funcKey != other.funcKey)
-            return false;
-        if (keys == null) {
-            if (other.keys != null)
-                return false;
-        } else if (!keys.equals(other.keys))
-            return false;
-        if (name == null) {
-            if (other.name != null)
-                return false;
-        } /*else if (!name.equals(other.name))
-            return false; */
-        return true;
+	if (this == obj)
+	    return true;
+	if (obj == null)
+	    return false;
+	if (getClass() != obj.getClass())
+	    return false;
+	KeyStroke other = (KeyStroke) obj;
+	if (altPressed != other.altPressed)
+	    return false;
+	if (ctrl != other.ctrl)
+	    return false;
+	if (funcKey != other.funcKey)
+	    return false;
+	if (!Arrays.equals(keys, other.keys))
+	    return false;
+	if (name == null) {
+	    if (other.name != null)
+		return false;
+	} else if (!name.equals(other.name))
+	    return false;
+	return true;
     }
 
     @Override
     public String toString() {
-        return "KeyStroke [name=" + name + " altPressed=" + altPressed + ", key(s)=" + keys + ", funcKey=" + funcKey + "]";
+	return "KeyStroke [altPressed=" + altPressed + ", ctrl=" + ctrl + ", keys=" + Arrays.toString(keys)
+		+ ", funcKey=" + funcKey + ", name=" + name + "]";
     }
+
 
 }

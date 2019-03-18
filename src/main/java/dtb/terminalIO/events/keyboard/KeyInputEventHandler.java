@@ -39,6 +39,14 @@ public class KeyInputEventHandler extends ConditionalEventHandler.Impl {
             }
 	    return false;
 	}
+
+	@Override
+	public String toString() {
+	    return "KeyStrokePredicate [onKeyStroke=" + onKeyStroke + "]";
+	}
+	
+	
+	
     }
     
     
@@ -56,6 +64,11 @@ public class KeyInputEventHandler extends ConditionalEventHandler.Impl {
 	    return super.canHandle(te);
 	}
 	return null;
+    }
+
+    @Override
+    public String toString() {
+	return  super.toString().replace("Impl","KeyInputEventHandler");
     }
 
 }

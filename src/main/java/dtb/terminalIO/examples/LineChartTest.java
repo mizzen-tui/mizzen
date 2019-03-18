@@ -232,8 +232,6 @@ public class LineChartTest {
 
 			    }
 			    
-			    menuText.append("ZITNFUEL");
-
 			    menuOoptions.setText(menuText.toString());
 
 			    
@@ -413,7 +411,7 @@ public class LineChartTest {
 	TerminalScreen screen = TestsCommon.getTerminalScreenForTesting(args);
 
 	Canvas master_canvas = TestsCommon.getMasterCanvasForTesting(screen);
-	//master_canvas.setEmptyChar(' ');
+	master_canvas.setEmptyChar(' ');
 
 	LineChartDemo lineChartDemo = new LineChartDemo() {
 	    public void flushOutput() {

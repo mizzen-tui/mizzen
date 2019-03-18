@@ -48,6 +48,13 @@ public interface ConditionalEventHandler extends EventHandler {
             this.canHandlePredicate = canHandlePredicate;
             this.handler = handler;
         }
+
+	@Override
+	public String toString() {
+	    return "Impl [canHandlePredicate=" + canHandlePredicate + ", handler=" + handler + "]";
+	}
+        
+        
     }
     
     public static class Delegate implements ConditionalEventHandler {
