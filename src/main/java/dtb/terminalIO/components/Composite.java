@@ -96,6 +96,7 @@ public class Composite extends AbstractComponent<Composite>
 	this.bounds = new Rectangle.Simple(d);
 	this.boundsFixed = true;
 	if (this.border != null) rebuildBorder(this.bounds);
+	markAsDirty();
 	return this;
     } 
 

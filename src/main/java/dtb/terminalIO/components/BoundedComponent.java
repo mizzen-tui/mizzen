@@ -74,7 +74,7 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
     public void clear() {
         segments.clear();
         fillPolicy.fillEmptyIfConfigured();
-        this.hasDrawn = false;
+        markAsDirty();
     }
     
     public boolean isDirty() {

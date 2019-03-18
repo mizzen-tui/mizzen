@@ -561,6 +561,23 @@ public class LineChartTest {
 	            resizeChartOnStyle.accept("TINY");
 	        }
 	    }) );
+
+	    eventBus.addEventHandler( new KeyInputEventHandler(new KeyStroke('l'), new EventHandler() {
+	        @Override
+	        public void handle(TerminalEvent<?> te) {
+	            resizeChartOnStyle.accept("LARGE");
+	        }
+	    }) );
+	    
+	    eventBus.addEventHandler( new KeyInputEventHandler(new KeyStroke('L'), new EventHandler() {
+	        @Override
+	        public void handle(TerminalEvent<?> te) {
+	            resizeChartOnStyle.accept("LARGE");
+	        }
+	    }) );
+	    
+	
+	
 	}
 
     }
