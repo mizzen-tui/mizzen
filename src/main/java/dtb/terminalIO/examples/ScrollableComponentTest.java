@@ -458,9 +458,9 @@ public class ScrollableComponentTest {
         
         FocusManager focusManager = new FocusManager(Keys.TAB_KEYSTROKE);
         
-        focusManager.addFocusable(viewComp1 );
+        focusManager.addFocusable(viewComp1, eventBus );
 
-        focusManager.addFocusable(brailleViewComp2 );
+        focusManager.addFocusable(brailleViewComp2, eventBus );
         
         TestsCommon.addNoGraphicsToggleEvent(eventBus, screen);
         

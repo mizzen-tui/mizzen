@@ -197,7 +197,6 @@ public class ChainedEventHandler implements EventHandler, EventHandlerContainer 
 	    }
 	    targetHandler.handle(te);
 	}
-
     };
 
     EventHandler handleAllHandler = new EventHandler() {

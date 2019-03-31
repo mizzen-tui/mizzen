@@ -151,18 +151,18 @@ public class TextBoxTest {
         FocusManager focusManager1 = new FocusManager();
         FocusManager focusManager2 = new FocusManager();
 
-        focusManager1.addFocusable(ti.asFocusable(p_1, eventBus));
-        focusManager1.addFocusable(ti_2.asFocusable(p_2, eventBus));
-        focusManager1.addFocusable(cb_1.asFocusable(eventBus));
-        focusManager1.addFocusable(b_1.asFocusable(eventBus));
-        focusManager1.addFocusable(b_2.asFocusable(eventBus));
+        focusManager1.addFocusable(ti.asFocusable(p_1), eventBus);
+        focusManager1.addFocusable(ti_2.asFocusable(p_2), eventBus);
+        focusManager1.addFocusable(cb_1.asFocusable(), eventBus);
+        focusManager1.addFocusable(b_1.asFocusable(), eventBus);
+        focusManager1.addFocusable(b_2.asFocusable(), eventBus);
         
-        focusManager2.addFocusable(ti_3.asFocusable(p_3, eventBus));
-        focusManager2.addFocusable(ti_4.asFocusable(p_4, eventBus)); 
+        focusManager2.addFocusable(ti_3.asFocusable(p_3), eventBus);
+        focusManager2.addFocusable(ti_4.asFocusable(p_4), eventBus); 
         
 
-        focusManager.addFocusable(focusManager1.asFocusable());
-        focusManager.addFocusable(focusManager2.asFocusable());
+        focusManager.addFocusable(focusManager1.asFocusable(), eventBus);
+        focusManager.addFocusable(focusManager2.asFocusable(), eventBus);
 
         
         eventBus.addEventHandler(focusManager.asEventHandler());

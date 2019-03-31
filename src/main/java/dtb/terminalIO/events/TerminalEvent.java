@@ -35,6 +35,7 @@ public class TerminalEvent<T> extends EventObject {
     
     TYPE type;
     T eventData;
+    transient EventBus eventBus;
     
     public static class IS_Event_TYPE implements Predicate<TerminalEvent<?>> {
 
@@ -51,11 +52,15 @@ public class TerminalEvent<T> extends EventObject {
 	
     }
     
-
-    public TerminalEvent(Object source, TYPE type, T eventData) {
+    public TerminalEvent(Object source, TYPE type, T eventData, EventBus eventBus) {
         super(source);
         this.type = type;
         this.eventData = eventData;
+        this.eventBus = eventBus;
+    }
+    
+    public TerminalEvent(Object source, TYPE type, T eventData) {
+        this(source, type, eventData, null);
     }
 
     public TYPE getType() {
@@ -73,6 +78,14 @@ public class TerminalEvent<T> extends EventObject {
     @Override
     public String toString() {
 	return "TerminalEvent [type=" + type + ", eventData=" + eventData + "]";
+    }
+
+    public void setEventBus(EventBus eventBus) {
+        this.eventBus = eventBus;
+    }
+    
+    public EventBus getEventBus() {
+        return eventBus;
     }
 
     

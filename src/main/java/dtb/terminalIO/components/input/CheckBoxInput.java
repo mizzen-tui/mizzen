@@ -111,9 +111,9 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput> implements Ha
     }
     
     
-    public Focusable asFocusable(EventBus eventBus) {
+    public Focusable asFocusable() {
         
-        return new AsFocusable(this, eventBus) {
+        return new AsFocusable(this) {
 
             @Override
             public void handle(TerminalEvent<?> te) {
@@ -121,7 +121,7 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput> implements Ha
                 
                 if (ke.isKeyStroke( Keys.ENTER_KEYSTROKE )  || ke.isKeyStroke(Keys.SPACE_KEYSTROKE)) {
                     CheckBoxInput.this.setValue(  !  CheckBoxInput.this.getValue()  );  // toggle the value
-                    eventBus.addEvent(  new HasValue.ValueChangedEvent<>(CheckBoxInput.this) );
+                    te.getEventBus().addEvent(  new HasValue.ValueChangedEvent<>(CheckBoxInput.this) );
                 }
             }
 

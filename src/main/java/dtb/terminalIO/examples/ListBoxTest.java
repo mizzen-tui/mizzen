@@ -177,8 +177,8 @@ public class ListBoxTest {
        TestsCommon.addNoGraphicsToggleEvent(eventBus, screen, renderComponents);
        
        FocusManager fm = new FocusManager(Keys.LEFT_KEYSTROKE, Keys.RIGHT_KEYSTROKE).setOnFocusChanged((f)->renderComponents.run());
-       fm.addFocusable( lb1.asFocusable(eventBus)  );
-       fm.addFocusable( lb2.asFocusable(eventBus)  );
+       fm.addFocusable( lb1.asFocusable() , eventBus );
+       fm.addFocusable( lb2.asFocusable(), eventBus  );
        
        
        eventBus.addEventHandler(fm.asEventHandler());

@@ -109,7 +109,9 @@ public class EventBus implements EventHandlerContainer {
 			// we can loop and test (isActive()) to see if we need to terminate
 			TerminalEvent<?> te = queue.poll(1, TimeUnit.SECONDS);
 			if (te != null) {
+			    te.setEventBus(EventBus.this);
 			    eventsHandlerChain.handle(te);
+			    te.setEventBus(null);
 			}
 		    } catch (Exception e) {
 			eventsHandlerChain.handle(new TerminalEvent<Exception>(EventBus.this, TerminalEvent.TYPE.EXCEPTION, e));

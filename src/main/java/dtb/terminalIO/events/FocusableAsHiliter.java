@@ -6,6 +6,7 @@ import dtb.terminalIO.components.Hiliter;
 public class FocusableAsHiliter implements HasHiliter {
     
     Focusable focusable;
+    EventBus eventBus;
     
     public Hiliter getHiliter() {
         if (focusable instanceof Hiliter) {
@@ -20,12 +21,12 @@ public class FocusableAsHiliter implements HasHiliter {
             
             @Override
             public void unHilite() {
-                FocusableAsHiliter.this.focusable.setFocus(false);
+                FocusableAsHiliter.this.focusable.setFocus(false, eventBus);
             }
             
             @Override
             public void hilite() {
-                FocusableAsHiliter.this.focusable.setFocus(true);
+                FocusableAsHiliter.this.focusable.setFocus(true, eventBus);
             }
         };
     }

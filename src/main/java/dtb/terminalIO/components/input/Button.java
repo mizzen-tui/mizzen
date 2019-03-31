@@ -129,22 +129,22 @@ public class Button extends Composite implements HasValue<Boolean>, AsFocusable.
     }
 
     
-    public Focusable asFocusable(EventBus eventBus) {
+    public Focusable asFocusable() {
         
         ChainedEventHandler chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
         
-        chainedHandler.addEventHandler(new KeyInputEventHandler(Keys.ENTER_KEYSTROKE,(te)->buttonPressed(eventBus))); 
+        chainedHandler.addEventHandler(new KeyInputEventHandler(Keys.ENTER_KEYSTROKE,(te)->buttonPressed(te.getEventBus()))); 
 
         if (getHotKey() != null) {
-            chainedHandler.addEventHandler(new KeyInputEventHandler(getHotKey(),(te)->buttonPressed(eventBus)));
+            chainedHandler.addEventHandler(new KeyInputEventHandler(getHotKey(),(te)->buttonPressed(te.getEventBus())));
         }
 
         
-        return new AsFocusable.Simple(this, eventBus, chainedHandler.asConditionalEventHandler()) {
+        return new AsFocusable.Simple(this, chainedHandler.asConditionalEventHandler()) {
  
             @Override
-            public void setFocus(boolean focus) {
-                super.setFocus(focus);
+            public void setFocus(boolean focus, EventBus eventBus) {
+                super.setFocus(focus, eventBus);
                 renderedText.setText(getTextForRendering(focus));
             }
             

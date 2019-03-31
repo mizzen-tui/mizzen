@@ -404,7 +404,7 @@ public class ScrollableComponent extends Composite implements CanResize, Focusab
     }
 
     @Override
-    public void setFocus(boolean focus) {
+    public void setFocus(boolean focus, EventBus eventBus) {
         hasFocus = focus;
         if (hasFocus) {
             this.hilite();

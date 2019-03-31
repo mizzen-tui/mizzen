@@ -438,30 +438,30 @@ public class ListBox<T> extends Composite  implements HasValue<T>, AsFocusable.T
     }
 
 
-    public Focusable asFocusable(EventBus eventBus) {
+    public Focusable asFocusable() {
         
         ChainedEventHandler chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
         
         chainedHandler.addEventHandler(new KeyInputEventHandler(this.keystrokePrevious, 
                 (te)->  {
                             if (setSelectedPrev()) {
-                                eventBus.addEvent(  new HasValue.ValueChangedEvent<>(ListBox.this) );
+                                te.getEventBus().addEvent(  new HasValue.ValueChangedEvent<>(ListBox.this) );
                             }
                         }));
         
         chainedHandler.addEventHandler(new KeyInputEventHandler(this.keystrokeNext, 
                 (te)->  {
                             if (setSelectedNext()) {
-                                eventBus.addEvent(  new HasValue.ValueChangedEvent<>(ListBox.this) );
+                                te.getEventBus().addEvent(  new HasValue.ValueChangedEvent<>(ListBox.this) );
                             }
                         }));
         
-        return new AsFocusable.Simple(this, eventBus, chainedHandler.asConditionalEventHandler()) {
+        return new AsFocusable.Simple(this, chainedHandler.asConditionalEventHandler()) {
 
             
             @Override
-            public void setFocus(boolean focus) {
-                super.setFocus(focus);
+            public void setFocus(boolean focus, EventBus eventBus) {
+                super.setFocus(focus, eventBus);
                 
                 if (focus) {
                     int curSelected = getSelectedIndex();

@@ -12,20 +12,17 @@ import dtb.terminalIO.events.TerminalEvent;
 abstract class AsFocusable  implements Focusable {
      
     public static interface ToFocusable {
-        Focusable asFocusable(EventBus eventBus);
+        Focusable asFocusable();
     }
     
     Component<?> component;
-    
-    EventBus eventBus;
     
     boolean hasFocus = false;
     
     ColorHiliter colorHiliter;
     
-    public AsFocusable(Component<?> component, EventBus eventBus) {
+    public AsFocusable(Component<?> component) {
         this.component = component;
-        this.eventBus = eventBus;
         colorHiliter =  new ColorHiliter(this.component.getColor());
     }
     
@@ -35,7 +32,7 @@ abstract class AsFocusable  implements Focusable {
     }
 
     @Override
-    public void setFocus(boolean focus) {
+    public void setFocus(boolean focus, EventBus eventBus) {
         this.hasFocus = focus;
         new FocusSetterToHiliteAction().hiliteAction(this, colorHiliter);
         this.component.setColor( colorHiliter.asColor() );
@@ -45,8 +42,8 @@ abstract class AsFocusable  implements Focusable {
         
         private ConditionalEventHandler eventHandler;
 
-        public Simple(Component<?> component, EventBus eventBus, ConditionalEventHandler eventHandler) {
-            super(component, eventBus);
+        public Simple(Component<?> component, ConditionalEventHandler eventHandler) {
+            super(component);
             this.eventHandler = eventHandler;
         }
         

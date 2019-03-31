@@ -208,15 +208,15 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
         }
     }
 
-    public KeyInputEventHandler asEventHandler(EventBus eventBus) {
+    public KeyInputEventHandler asEventHandler() {
 
         ChainedEventHandler chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
 
         chainedHandler.addEventHandler(
-                new KeyInputEventHandler(Keys.BACKSPACE_KEYSTROKE, (te) -> raiseEventOnChanged(eventBus, () -> deleteCharBeforeCaret())));
+                new KeyInputEventHandler(Keys.BACKSPACE_KEYSTROKE, (te) -> raiseEventOnChanged(te.getEventBus(), () -> deleteCharBeforeCaret())));
 
         chainedHandler
-                .addEventHandler(new KeyInputEventHandler(Keys.DELETE_KEYSTROKE, (te) -> raiseEventOnChanged(eventBus, () -> deleteCharAtCaret())));
+                .addEventHandler(new KeyInputEventHandler(Keys.DELETE_KEYSTROKE, (te) -> raiseEventOnChanged(te.getEventBus(), () -> deleteCharAtCaret())));
 
         chainedHandler.addEventHandler(new KeyInputEventHandler(Keys.LEFT_KEYSTROKE, (te) -> {
             if (caret.getCol() > 0) {
@@ -253,7 +253,7 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
             char ch = ke.getChar();
 
             // TODO - I know I will need some checks on ch - but this for now
-            raiseEventOnChanged(eventBus, () -> addCharAtCaret(ch));
+            raiseEventOnChanged(te.getEventBus(), () -> addCharAtCaret(ch));
 
             return;
         }));
@@ -264,32 +264,32 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
 
     }
 
-    public Focusable asFocusable(Position position, final EventBus eventBus) {
+    public Focusable asFocusable(Position position) {
 
-        return new AsFocusable(this, eventBus) {
+        return new AsFocusable(this) {
 
-            KeyInputEventHandler keyEventHandler = TextInput.this.asEventHandler(eventBus);
+            KeyInputEventHandler keyEventHandler = TextInput.this.asEventHandler();
 
             @Override
             public void handle(TerminalEvent<?> te) {
                 keyEventHandler.handle(te);
-                requestShowCursor(); // todo: This might be expensive to showcursor even if key is ignored
+                requestShowCursor(te.getEventBus()); // todo: This might be expensive to showcursor even if key is ignored
             }
 
             @Override
-            public void setFocus(boolean focus) {
-                super.setFocus(focus);
+            public void setFocus(boolean focus, EventBus eventBus) {
+                super.setFocus(focus, eventBus);
                 if (focus) {
-                    requestShowCursor();
+                    requestShowCursor(eventBus);
                 } else {
-                    requestHideCursor();
+                    requestHideCursor(eventBus);
                 }
                 this.hasFocus = focus;
                 new FocusSetterToHiliteAction().hiliteAction(this, colorHiliter);
                 this.component.setColor(colorHiliter.asColor());
             }
 
-            private void requestShowCursor() {
+            private void requestShowCursor(EventBus eventBus) {
                 // todo - need manage a textinput caret (pos) -- not just append
 
                 // calc where cursor should be relative to text component + its caret position
@@ -299,7 +299,7 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
                 eventBus.addEvent(new RequestShowCursorEvent(TextInput.this, cursorPos));
             }
 
-            private void requestHideCursor() {
+            private void requestHideCursor(EventBus eventBus) {
                 eventBus.addEvent(new RequestHideCursorEvent(TextInput.this));
             }
 

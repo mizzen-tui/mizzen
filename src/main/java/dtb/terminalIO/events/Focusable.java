@@ -5,7 +5,7 @@ public interface Focusable extends ConditionalEventHandler {
 
     boolean hasFocus();
 
-    void setFocus(boolean focus);
+    void setFocus(boolean focus, EventBus eventBus);
 
     // Position getPosition();
     
@@ -34,8 +34,8 @@ public interface Focusable extends ConditionalEventHandler {
         }
     
         @Override
-        public void setFocus(boolean focus) {
-            delegate.setFocus(focus);
+        public void setFocus(boolean focus, EventBus eventBus) {
+            delegate.setFocus(focus, eventBus);
         }
     
 //        @Override
