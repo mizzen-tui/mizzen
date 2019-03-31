@@ -20,9 +20,6 @@ public class ColorHiliter implements Hiliter {
     }
     
     public Color getColor() {
-        if (getColorToHilite() instanceof Hiliter) {
-             return getColorToHilite().getColor();
-        }
         if (hilited) {
            return colorHilitedTransform.transform(getColorToHilite().getColor());
         }
@@ -31,9 +28,6 @@ public class ColorHiliter implements Hiliter {
     
     @Override
     public void hilite() {
-        if (getColorToHilite() instanceof Hiliter) {
-            ((Hiliter) getColorToHilite()).hilite();;
-       }
         this.hilited = true;
     }
 

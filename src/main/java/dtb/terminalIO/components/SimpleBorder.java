@@ -1,10 +1,14 @@
 package dtb.terminalIO.components;
 
+import java.util.Collection;
+import java.util.Collections;
+
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.traverse.HasChildren;
 
 /**
  * A component that draws a border with an optional title
@@ -14,7 +18,7 @@ import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
  * Used by other components to draw borders around themselves
  *
  */
-public class SimpleBorder extends BoundedComponent<SimpleBorder> implements HasTitleAndBorder<SimpleBorder>  {
+public class SimpleBorder extends BoundedComponent<SimpleBorder> implements HasTitleAndBorder<SimpleBorder> , HasChildren<Component<?>> {
 
     private RectangleComponent border;
     private String title = null;
@@ -24,6 +28,7 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder> implements HasT
     public SimpleBorder(Color color, Rectangle rect) {
         super(color, rect);
         this.border = new RectangleComponent(color, rect);
+        this.border.setParentContainer(this);
         setFillOnClear(false);
     }
 
@@ -123,6 +128,11 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder> implements HasT
         }
         this.border.unHilite();
         this.hilited = false;
+    }
+
+    @Override
+    public Collection<? extends Component<?>> getChildren() {
+        return Collections.singleton(this.border);
     }
 
 }

@@ -1,11 +1,15 @@
 package dtb.terminalIO.components;
 
+import java.util.Collection;
+import java.util.Collections;
+
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.traverse.HasChildren;
 
 // todo dropshadow component
 
@@ -14,28 +18,47 @@ import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
  * render its contents
  */
 public class BorderedComponent extends BoundedComponent<BorderedComponent> 
-        implements Rectangle, HasTitleAndBorder<BorderedComponent>, CanResize {
+        implements Rectangle, HasTitleAndBorder<BorderedComponent>, CanResize, HasChildren<Component<?>> {
 
     private SimpleBorder      border;
     private Component<?>      component;
     private Position          componentPosition;
     private boolean           showBorder;
     
-    public BorderedComponent(Color color, Component<?> component) {
-        super(color, Rectangle.ZERO);
+    public BorderedComponent(Color color, Component<?> component,  Component<? extends HasChildren<Component<?>>> parentContainer) {
+        super(color, Rectangle.ZERO, parentContainer);
         this.component = component;
+        this.component.setParentContainer(this);
         this.componentPosition = new Position.Simple(1,1);
         //component.moveDelta(1,1);
         Position.Simple p = new Position.Simple(component);
         //p.moveDelta(-1, -1);
         Rectangle bounds = new Rectangle.Simple(p, new Dimension.Simple(component.getHeight() + 2, component.getWidth() + 2));
         this.border = new SimpleBorder(color, bounds);
+        this.border.setParentContainer(this);
         showBorder = true;
         this.setRectangle( bounds );
     }
+    
+    public BorderedComponent(Color color, Component<?> component) {
+        this(color, component, null);
+    }
+
+    public BorderedComponent(Component<?> component, Component<? extends HasChildren<Component<?>>> parentContainer) {
+        this(component.getColor(), component, parentContainer);
+    }
+    
 
     public BorderedComponent(Component<?> component) {
-        this(component.getColor(), component);
+        this(component, null);
+    }
+    
+    public BorderedComponent(String text, Component<? extends HasChildren<Component<?>>> parentContainer) {
+        this(new TextComponent(text), parentContainer);
+    }
+
+    public BorderedComponent(String text) {
+        this(text, null);
     }
     
     public Component<?>  getComponent() {
@@ -175,6 +198,12 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
         border.unHilite();
         if ( this.component instanceof Hiliter)
             ((Hiliter)this.component).unHilite();
+    }
+
+    @Override
+    public Collection<? extends Component<?>> getChildren() {
+        // TODO:  do I need to include the border as a component - maybe yes ( see how it is used in the dirty method)
+        return Collections.singleton( this.component );
     }
 
     

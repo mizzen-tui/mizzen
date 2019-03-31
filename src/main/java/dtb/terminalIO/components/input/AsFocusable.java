@@ -3,16 +3,19 @@ package dtb.terminalIO.components.input;
 import dtb.terminalIO.components.ColorHiliter;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.FocusSetterToHiliteAction;
+import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.Focusable;
 import dtb.terminalIO.events.TerminalEvent;
-import dtb.terminalIO.geom.Position;
 
 abstract class AsFocusable  implements Focusable {
      
-    Component<?> component;
+    public static interface ToFocusable {
+        Focusable asFocusable(EventBus eventBus);
+    }
     
-    Position position;
+    Component<?> component;
     
     EventBus eventBus;
     
@@ -20,9 +23,8 @@ abstract class AsFocusable  implements Focusable {
     
     ColorHiliter colorHiliter;
     
-    AsFocusable(Component<?> component, Position position, EventBus eventBus) {
+    public AsFocusable(Component<?> component, EventBus eventBus) {
         this.component = component;
-        this.position = position;
         this.eventBus = eventBus;
         colorHiliter =  new ColorHiliter(this.component.getColor());
     }
@@ -39,13 +41,27 @@ abstract class AsFocusable  implements Focusable {
         this.component.setColor( colorHiliter.asColor() );
     }
 
-    @Override
-    public Position getPosition() {
-        return position;
+    public static class Simple extends AsFocusable {
+        
+        private ConditionalEventHandler eventHandler;
+
+        public Simple(Component<?> component, EventBus eventBus, ConditionalEventHandler eventHandler) {
+            super(component, eventBus);
+            this.eventHandler = eventHandler;
+        }
+        
+        @Override
+        public void handle(TerminalEvent<?> te) {
+            eventHandler.handle(te);
+        }
+
+        @Override
+        public EventHandler canHandle(TerminalEvent<?> te) {
+            return eventHandler.canHandle(te);
+        }
+
+        
     }
-
-
-    @Override
-    abstract public void handle(TerminalEvent<?> te);
+    
 
 }

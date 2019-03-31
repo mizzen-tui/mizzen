@@ -13,10 +13,10 @@ public class Logging {
         appendText(msg);
     }
     
-    private static void appendText(String msg) {
+    private static void appendTextGOOD(String msg) {
         // do nothing
     }
-    private static void appendTextOLD(String msg) {
+    private static void appendText(String msg) {
         
         try {
             // todo:  FIX THIS!!

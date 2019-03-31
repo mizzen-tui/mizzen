@@ -65,6 +65,7 @@ public abstract class ControlCode implements Renderer {
         abstract protected int[] buildControlCodes();
         
         ColorTransform boldTransform = ColorTransform.NULL_colorTransform;
+        ColorTransform invertTransform = ColorTransform.NULL_colorTransform;
         
         public Color setBoldTransform(ColorTransform boldTransform ) {
             this.boldTransform = boldTransform;
@@ -75,6 +76,15 @@ public abstract class ControlCode implements Renderer {
             return this.boldTransform;
         }
         
+        public ColorTransform getInvertTransform() {
+            return invertTransform;
+        }
+
+        public Color setInvertTransform(ColorTransform invertTransform) {
+            this.invertTransform = invertTransform;
+            return this;
+        }
+
         public Color getColor() {
             return this;
         }
@@ -112,6 +122,10 @@ public abstract class ControlCode implements Renderer {
 
         public Color bold() {
             return getBoldTransform().transform(this);
+        }
+
+        public Color invert() {
+            return getInvertTransform().transform(this);
         }
 
         public static Color fromStr(String colorStr) {
@@ -195,6 +209,12 @@ public abstract class ControlCode implements Renderer {
             this.underline = underline;
             this.setBoldTransform((color)->asBold());
         }
+        
+        public FgColor setInvertTransform(ColorTransform invertTransform) {
+            super.setInvertTransform(invertTransform);
+            return this;
+        }
+
 
         public FgColor asBold() {
             return new FgColor(colorCode, true, italic, underline);
@@ -247,6 +267,11 @@ public abstract class ControlCode implements Renderer {
             super(colorCode);
         }
 
+        public BgColor setInvertTransform(ColorTransform invertTransform) {
+            super.setInvertTransform(invertTransform);
+            return this;
+        }
+        
         @Override
         protected int[] buildControlCodes() {
             return new int[] { this.getColorCode() };
@@ -294,12 +319,20 @@ public abstract class ControlCode implements Renderer {
             this.bgc = bgc;
             this.fgc = null;
             this.setBoldTransform((color)->asBold());
+//            this.setInvertTransform( (color) -> new  FGBGColors((FgColor)bgc==null?null: bgc.invert()) , ((BgColor)fgc==null?null:fgc.invert())) );
         }
 
         
         public FGBGColors asBold() {
             return new FGBGColors((fgc==null?(new FgColor(0)):fgc).asBold(), bgc);
         }
+        
+        
+        public Color setInvertTransform(ColorTransform invertTransform) {
+            this.invertTransform = invertTransform;
+            return this;
+        }
+        
         
 //        public FGBGColors bold() {
 //            return new FGBGColors((fgc==null?(new FgColor(0)):fgc).asBold(), bgc);

@@ -40,20 +40,20 @@ public class KeyInputEventsProducerTest {
         TerminalScreen screen = TestsCommon.getTerminalScreenForTesting(args);
 
         Canvas master_canvas = new Canvas(screen);
-        master_canvas.setSize(10, 79);
+        master_canvas.setSize(10, 110);
         master_canvas.setEmptyChar(' ');
 
         Consumer<String> status1Displayer = (msg) -> {
-            String msgFormatted = String.format("%-60s", msg);
+            String msgFormatted = String.format("[  %-60s  ]", msg);
             // System.err.println(msgFormatted);
-            master_canvas.t(master_canvas.getHeight()-5 , 3, msgFormatted+"    ");
+            master_canvas.t(master_canvas.getHeight()-5 , 3, msgFormatted+"                  ");
             master_canvas.refresh();
         };
         
         Consumer<String> status1Displayer2 = (msg) -> {
-            String msgFormatted = String.format("%-60s", msg);
+            String msgFormatted = String.format("[  %-100s  ]", msg);
             // System.err.println(msgFormatted);
-            master_canvas.t(master_canvas.getHeight()-7 , 3, msgFormatted+"    ");
+            master_canvas.t(master_canvas.getHeight()-7 , 3, msgFormatted+"                   ");
             master_canvas.refresh();
         };
         

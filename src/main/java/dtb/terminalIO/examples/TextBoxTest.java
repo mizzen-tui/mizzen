@@ -3,9 +3,10 @@ package dtb.terminalIO.examples;
 import java.io.IOException;
 
 import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.Composite;
+import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.input.Button;
-import dtb.terminalIO.components.input.ButtonBar;
 import dtb.terminalIO.components.input.CheckBoxInput;
 import dtb.terminalIO.components.input.HasValue;
 import dtb.terminalIO.components.input.TextInput;
@@ -70,7 +71,7 @@ public class TextBoxTest {
         Position p_7 = new Position.Simple(13,10);
         
         
-        ButtonBar  bBar = new ButtonBar(Colors.BBlu);
+        Composite  bBar = new HorizontalPanel(Colors.BBlu);
 
         
         
@@ -152,9 +153,9 @@ public class TextBoxTest {
 
         focusManager1.addFocusable(ti.asFocusable(p_1, eventBus));
         focusManager1.addFocusable(ti_2.asFocusable(p_2, eventBus));
-        focusManager1.addFocusable(cb_1.asFocusable(p_5, eventBus));
-        focusManager1.addFocusable(b_1.asFocusable(p_6, eventBus));
-        focusManager1.addFocusable(b_2.asFocusable(p_7, eventBus));
+        focusManager1.addFocusable(cb_1.asFocusable(eventBus));
+        focusManager1.addFocusable(b_1.asFocusable(eventBus));
+        focusManager1.addFocusable(b_2.asFocusable(eventBus));
         
         focusManager2.addFocusable(ti_3.asFocusable(p_3, eventBus));
         focusManager2.addFocusable(ti_4.asFocusable(p_4, eventBus)); 

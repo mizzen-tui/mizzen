@@ -6,13 +6,26 @@ import java.util.function.Predicate;
  * An {@link EventHandler} that processes an event only if 
  * the incoming {@link TerminalEvent} can be handled by this
  * EventHandler. 
- * 
- * @author david
  *
  */
 public interface ConditionalEventHandler extends EventHandler {
     
+    public static interface AsAConditionalEventHandler {
+        ConditionalEventHandler asEventHandler();
+    }
+    
     public EventHandler canHandle(TerminalEvent<?> te);
+    
+    public default Predicate<TerminalEvent<?>>  asPredicate() {
+        return new Predicate<TerminalEvent<?>>() {
+
+            @Override
+            public boolean test(TerminalEvent<?> te) {
+                return ConditionalEventHandler.this.canHandle(te) != null;
+            }
+        };
+    }
+    
     
     class Impl implements ConditionalEventHandler {
     

@@ -80,6 +80,7 @@ public class TabComponent extends BoundedComponent<TabComponent>{
 
     public void setActive(boolean active) {
         this.active = active;
+        this.markAsDirty();
     }
 
     public String getTabText() {
@@ -90,6 +91,7 @@ public class TabComponent extends BoundedComponent<TabComponent>{
 	Rectangle new_rect = new Rectangle.Simple( new Position.Simple(this.getRow(), this.getCol()), new Dimension.Simple(3, tabText.length()+4));
 	this.setRectangle( new_rect );
         this.tabText = tabText;
+        this.markAsDirty();
     }
 
     public Color getTextActiveTabColor() {

@@ -7,6 +7,7 @@ import dtb.terminalIO.core.CanvasBackend.NullCanvasBackEnd;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.traverse.HasChildren;
 
 /**
  * A component that wraps an internal canvas.
@@ -17,6 +18,7 @@ public class CanvasComponent implements Component<CanvasComponent>, CanResize {
     Position pos;
     
     CanvasBackend backend;
+    private Component<? extends HasChildren<Component<?>>> parentContainer;
     
     public CanvasComponent() {
         this.backend = new CanvasBackend.NullCanvasBackEnd();
@@ -28,7 +30,16 @@ public class CanvasComponent implements Component<CanvasComponent>, CanResize {
         this();
         this.resize(d);
     }
-            
+
+    @Override
+    public void setParentContainer(Component<? extends HasChildren<Component<?>>> parentContainer) {
+        this.parentContainer = parentContainer;
+    }
+    
+    public Component<? extends HasChildren<Component<?>>> getParentContainer() {
+        return this.parentContainer;
+    }
+    
     public void setSize(int height, int width) {
         this.resize( new Dimension.Simple(height,width)  );
     }
@@ -58,7 +69,7 @@ public class CanvasComponent implements Component<CanvasComponent>, CanResize {
         this.canvas.t(row, col,s);
         return this;
     }
-    
+
     public CanvasComponent addTextHandleColors(String s) {
         this.canvas.addTextHandleColors(s);
         return this;

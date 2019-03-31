@@ -7,10 +7,17 @@ import dtb.terminalIO.geom.Relation.LeftRight;
 import dtb.terminalIO.geom.Relation.OverUnder;
 
 /**
- * Represents a rectangle which means a location (Position (row/col) ) and
- * dimension ( height/width)
+ * Represents a rectangle which means a location ({@link Position} (row/col) ) and
+ * {@link Dimension} ( height/width)
+ * 
+ * <p/>
  * 
  * Components, canvas and ScreenLineSegments are all rectangles.
+ * 
+ * <p>
+ * 
+ * See {@link Dimension} and {@link Position}
+ * 
  */
 public interface Rectangle extends Position, Dimension, Movable {
 

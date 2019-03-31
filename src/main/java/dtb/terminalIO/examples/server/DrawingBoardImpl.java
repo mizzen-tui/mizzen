@@ -24,6 +24,7 @@ import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.traverse.HasChildren;
 import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.TerminalDimensions;
 
@@ -40,6 +41,7 @@ public class DrawingBoardImpl implements DrawingBoard {
 
         Composite componentManager;
         Map<String,Component<?>> nameComponentMap;
+        private Component<? extends HasChildren<Component<?>>> parentContainer;
         
         protected CompositeWithNamedComponents(Color color) {
             componentManager = new Composite(color);
@@ -67,6 +69,16 @@ public class DrawingBoardImpl implements DrawingBoard {
             componentManager.add(offset, component);
             nameComponentMap.put(name, component);
         }
+        
+        @Override
+        public void setParentContainer(Component<? extends HasChildren<Component<?>>> parentContainer) {
+            this.parentContainer = parentContainer;
+        }
+        
+        public Component<? extends HasChildren<Component<?>>> getParentContainer() {
+            return this.parentContainer;
+        }
+        
         
         @Override
         public int getCol() {

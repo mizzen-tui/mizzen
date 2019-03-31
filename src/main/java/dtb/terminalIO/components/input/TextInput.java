@@ -1,60 +1,64 @@
 package dtb.terminalIO.components.input;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.function.Supplier;
 
 import dtb.terminalIO.components.BoundedComponent;
-import dtb.terminalIO.components.ColorHiliter;
+import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.FocusSetterToHiliteAction;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.events.ChainedEventHandler;
+import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.Focusable;
 import dtb.terminalIO.events.RequestHideCursorEvent;
 import dtb.terminalIO.events.RequestShowCursorEvent;
 import dtb.terminalIO.events.TerminalEvent;
-import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.events.keyboard.KeyEvent;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.traverse.HasChildren;
 
-public class TextInput extends BoundedComponent<TextInput> implements HasValue<String>{
+public class TextInput extends BoundedComponent<TextInput> implements HasValue<String>, HasChildren<Component<?>> /* , AsFocusable.ToFocusable */ {
 
     private TextComponent textRenderer;
-    private StringBuffer buffer;
-    private Position viewOffset = Position.ZERO;
-    private Position caret = Position.ZERO;
-    private int maxTextWidth;
-    
-    private boolean modeOverite = false;  // true means insertMode
+    private StringBuffer  buffer;
+    private Position      viewOffset  = Position.ZERO;
+    private Position      caret       = Position.ZERO;
+    private int           maxTextWidth;
+
+    private boolean       modeOverite = false;        // true means insertMode
 
     public TextInput(Color color, int length) {
-	super(color, new Dimension.Simple(1, length));
-	init();
+        super(color, new Dimension.Simple(1, length));
+        init();
     }
 
     public TextInput(int length) {
-	this(FGBGColors.DEFAULT, length);
+        this(FGBGColors.DEFAULT, length);
     }
-
+    
     public TextInput(Color color, Dimension d) {
-	super(color, d);
-	init();
+        super(color, d);
+        init();
     }
 
     public TextInput(Color color, Position p, Dimension d) {
-	super(color, p, d);
-	init();
+        super(color, p, d);
+        init();
     }
-    
+
     @Override
     public TextInput setColor(Color drawingcolor) {
         super.setColor(drawingcolor);
-        if (this.textRenderer  != null) {
+        if (this.textRenderer != null) {
             this.textRenderer.setColor(drawingcolor);
             this.textRenderer.markAsDirty();
         }
@@ -62,15 +66,32 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
         return this;
     }
 
+    public TextInput setEmptyColor(Color emptyColor) {
+        super.setEmptyColor(emptyColor);
+        if (this.textRenderer != null) {
+            this.textRenderer.setEmptyColor(emptyColor);
+        }
+        return this;
+    }
+    
+    public TextInput setEmptyChar(char emptyChar) {
+        super.setEmptyChar(emptyChar);
+        if (this.textRenderer != null) {
+            this.textRenderer.setEmptyChar(emptyChar);
+        }
+        return this;
+    }
+
     protected void init() {
-	this.buffer = new StringBuffer();
-	this.caret = new Position.Simple(0, 0);
-	this.textRenderer = new TextComponent(this.getColor(), this.getRectangle(), this.buffer.toString());
+        this.buffer = new StringBuffer();
+        this.caret = new Position.Simple(0, 0);
+        this.setFillOnClear(true);
+        this.textRenderer = makeChildComponent( ()-> new TextComponent(TextInput.this.getColor(), TextInput.this.getRectangle(), TextInput.this.buffer.toString()));
     }
 
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
-	segments.merge(this.textRenderer.getSegmentsBuffer());
+        segments.merge(this.textRenderer.getSegmentsBuffer());
     }
 
     public void setText(String text) {
@@ -88,59 +109,55 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
         this.markAsDirty();
     }
 
-    
     public String getText() {
         return this.buffer.toString();
     }
-    
+
     public String getValue() {
         return this.getText();
     }
-    
 
     public void appendText(String text) {
         int maxWidth = this.getWidth();
-        if (this.buffer.length()>=maxWidth) {
-            return;  // might change this at later date to allow text to roll
+        if (this.buffer.length() >= maxWidth) {
+            return; // might change this at later date to allow text to roll
         }
         // this.buffer.insert()
-	this.buffer.append(text);
-	if (this.buffer.length()>maxWidth) {
-	    String str = this.buffer.toString();
-	    this.buffer = new StringBuffer().append(str.substring(0, maxWidth));
-	}
-	this.setText(this.buffer.toString());
+        this.buffer.append(text);
+        if (this.buffer.length() > maxWidth) {
+            String str = this.buffer.toString();
+            this.buffer = new StringBuffer().append(str.substring(0, maxWidth));
+        }
+        this.setText(this.buffer.toString());
     }
-    
+
     void caretOffsetAdd(Position offsetToAdd) {
-        // todo:  should check valid?  
+        // todo: should check valid?
         this.caret = this.caret.offsetAdd(offsetToAdd);
         markAsDirty();
     }
-    
+
     void caretOffsetAdd(int row, int col) {
-        caretOffsetAdd( new Position.Simple(row, col));
+        caretOffsetAdd(new Position.Simple(row, col));
     }
-    
-    // needs lots 'o work!  get on it
+
+    // needs lots 'o work! get on it
     private boolean addCharAtCaret(char ch) {
         String currentText = getText();
         if (modeOverite) {
             return false;
         } else { // insert mode
-            if (  currentText.length() >= maxTextWidth) {
+            if (currentText.length() >= maxTextWidth) {
                 return false;
             }
-            if (caret.getCol() == 0) {                            // []ABCDE
-               currentText = ch + currentText;
-            } else if (caret.getCol() < currentText.length())  {  // ABC[]DE
-               currentText = currentText.substring(0, caret.getCol()) +
-                       ch +
-                       currentText.substring(caret.getCol());
-            } else if (caret.getCol() >= currentText.length()) {  // ABCDE[] 
+            if (caret.getCol() == 0) { // []ABCDE
+                currentText = ch + currentText;
+            } else if (caret.getCol() < currentText.length()) { // ABC[]DE
+                currentText = currentText.substring(0, caret.getCol()) + ch + currentText.substring(caret.getCol());
+            } else if (caret.getCol() >= currentText.length()) { // ABCDE[]
                 currentText = currentText + ch;
             }
-            caretOffsetAdd(0,1);
+            caretOffsetAdd(0, 1);
             this.__setText(currentText);
             return true;
         }
@@ -151,16 +168,15 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
         if (modeOverite) {
             return false;
         } else { // insert mode
-            if (caret.getCol() == 0) {                            // []ABCDE
-               return false;
-            } else if (caret.getCol() < currentText.length())  {  // ABC[]DE
-               currentText = currentText.substring(0, caret.getCol()-1) +
-                             currentText.substring(caret.getCol());
-            } else if (caret.getCol() >= currentText.length()) {  // ABCDE[] 
-                currentText = currentText.substring(0, currentText.length()-1);
+            if (caret.getCol() == 0) { // []ABCDE
+                return false;
+            } else if (caret.getCol() < currentText.length()) { // ABC[]DE
+                currentText = currentText.substring(0, caret.getCol() - 1) + currentText.substring(caret.getCol());
+            } else if (caret.getCol() >= currentText.length()) { // ABCDE[]
+                currentText = currentText.substring(0, currentText.length() - 1);
             }
-            if (caret.getCol()>0) {
-                caretOffsetAdd(0,-1);
+            if (caret.getCol() > 0) {
+                caretOffsetAdd(0, -1);
             }
             this.__setText(currentText);
             return true;
@@ -169,99 +185,95 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
 
     private boolean deleteCharAtCaret() {
         String currentText = getText();
-        if (modeOverite) { 
+        if (modeOverite) {
             return false;
         } else { // insert mode
-               int textlen = currentText.length();
-               if (caret.getCol() < textlen ) {
-                   if (caret.getCol() == 0) {
-                       currentText = currentText.substring(caret.getCol()+1);
-                   } else {
-                      currentText = currentText.substring(0, caret.getCol())+ currentText.substring(caret.getCol()+1);
-                   }
-                   this.__setText(currentText);
-                   return true;
-               }
+            int textlen = currentText.length();
+            if (caret.getCol() < textlen) {
+                if (caret.getCol() == 0) {
+                    currentText = currentText.substring(caret.getCol() + 1);
+                } else {
+                    currentText = currentText.substring(0, caret.getCol()) + currentText.substring(caret.getCol() + 1);
+                }
+                this.__setText(currentText);
+                return true;
+            }
         }
         return false;
     }
 
-    private void raiseEventOnChanged(EventBus eventBus, Supplier<Boolean> changeTextAction ) {
+    private void raiseEventOnChanged(EventBus eventBus, Supplier<Boolean> changeTextAction) {
         if (changeTextAction.get()) {
-            eventBus.addEvent(  new HasValue.ValueChangedEvent<>(this) );
+            eventBus.addEvent(new HasValue.ValueChangedEvent<>(this));
         }
     }
-    
+
     public KeyInputEventHandler asEventHandler(EventBus eventBus) {
 
-	EventHandler handler = new EventHandler() {
-	    @Override
-	    public void handle(TerminalEvent<?> te) {
-		KeyEvent ke = (KeyEvent) te;
+        ChainedEventHandler chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
 
-		// check for control keys
-		if (ke.isKeyStroke(Keys.BACKSPACE_KEYSTROKE)) {
-		    raiseEventOnChanged(eventBus, ()->deleteCharBeforeCaret());
-		    return ;
-		}
+        chainedHandler.addEventHandler(
+                new KeyInputEventHandler(Keys.BACKSPACE_KEYSTROKE, (te) -> raiseEventOnChanged(eventBus, () -> deleteCharBeforeCaret())));
 
-                if (ke.isKeyStroke(Keys.DELETE_KEYSTROKE)) {
-                    raiseEventOnChanged(eventBus, ()->deleteCharAtCaret());
-                    return ;
-                }
+        chainedHandler
+                .addEventHandler(new KeyInputEventHandler(Keys.DELETE_KEYSTROKE, (te) -> raiseEventOnChanged(eventBus, () -> deleteCharAtCaret())));
 
-		if (ke.isKeyStroke(Keys.LEFT_KEYSTROKE)) {
-                    if (caret.getCol()>0) {
-                        caretOffsetAdd(0,-1);
-                    }
-                    return ;
-                }
+        chainedHandler.addEventHandler(new KeyInputEventHandler(Keys.LEFT_KEYSTROKE, (te) -> {
+            if (caret.getCol() > 0) {
+                caretOffsetAdd(0, -1);
+            }
+            return;
+        }));
 
-                if (ke.isKeyStroke(Keys.RIGHT_KEYSTROKE)) {
-                    if (caret.getCol()< getWidth() && caret.getCol()< getText().length()) {  // TODO:  This will have to be fixed when text scrolling in place
-                        caretOffsetAdd(0,1);
-                        markAsDirty();
-                    }
-                    return ;
-                }
-		
-                if (ke.getKeyStroke().getKeySequenceLength() == 1) {
-                    // then probably a simple char - so lets see if its asci
-                    // TODO:  I have discovered an problem ( try CTRL-UP ) it generates
-                    //        multiple keystroke events - which is incorrect - issue with key input parser
-                    //        dont try to handle this bug here - do it in the parser
-//                    String name = ke.getEventData().getName();
-//                    char ch = name.charAt(0);
-                    char ch = ke.getChar();
-                    
-                    // TODO - I know I will need some checks on ch - but this for now 
-                    raiseEventOnChanged(eventBus, ()->addCharAtCaret(ch));
-                    
-                }
-                
-//		// not a control key - so check for valid text input key
-//		String name = ke.getEventData().getName();
-//		if (name != null && name.length() == 1 && "abcdefghijklmnopqrstuvwxyz".contains(name)) {
-//		    addCharAtCaret(name.charAt(0));
-//		}
-	    }
-	};
+        chainedHandler.addEventHandler(new KeyInputEventHandler(Keys.RIGHT_KEYSTROKE, (te) -> {
+            if (caret.getCol() < getWidth() && caret.getCol() < getText().length()) {
+                // TODO: This will have to be fixed when text scrolling
+                // in place
+                caretOffsetAdd(0, 1);
+                markAsDirty();
+            }
+            return;
+        }));
 
-	return new KeyInputEventHandler(new IS_Event_TYPE(TerminalEvent.TYPE.KEYPRESS), handler);
+        chainedHandler.addEventHandler(new KeyInputEventHandler((te) -> {
+            KeyEvent ke = (KeyEvent) te;
+            if (ke.getKeyStroke().getKeySequenceLength() == 1) {
+                return true;
+            } else {
+                return false;
+            }
+        }, (te) -> {
+            // then probably a simple char - so lets see if its asci
+            // TODO: I have discovered an problem ( try CTRL-UP ) it generates
+            // multiple keystroke events - which is incorrect - issue with key input parser
+            // dont try to handle this bug here - do it in the parser
+            // String name = ke.getEventData().getName();
+            // char ch = name.charAt(0);
+            KeyEvent ke = (KeyEvent) te;
+            char ch = ke.getChar();
+
+            // TODO - I know I will need some checks on ch - but this for now
+            raiseEventOnChanged(eventBus, () -> addCharAtCaret(ch));
+
+            return;
+        }));
+
+        ConditionalEventHandler complexKeyHandler = chainedHandler.asConditionalEventHandler();
+        
+        return new KeyInputEventHandler(complexKeyHandler.asPredicate(), complexKeyHandler);
 
     }
 
-
     public Focusable asFocusable(Position position, final EventBus eventBus) {
-        
-        return new AsFocusable(this, position, eventBus) {
+
+        return new AsFocusable(this, eventBus) {
 
             KeyInputEventHandler keyEventHandler = TextInput.this.asEventHandler(eventBus);
-            
+
             @Override
             public void handle(TerminalEvent<?> te) {
                 keyEventHandler.handle(te);
-                requestShowCursor();  // todo:  This might be expensive to showcursor even if key is ignored
+                requestShowCursor(); // todo: This might be expensive to showcursor even if key is ignored
             }
 
             @Override
@@ -274,24 +286,37 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
                 }
                 this.hasFocus = focus;
                 new FocusSetterToHiliteAction().hiliteAction(this, colorHiliter);
-                this.component.setColor( colorHiliter.asColor() );
+                this.component.setColor(colorHiliter.asColor());
             }
-            
-            
+
             private void requestShowCursor() {
                 // todo - need manage a textinput caret (pos) -- not just append
-                
-                // calc where cursor should be relative to text component + its caret position
-                
-                Position cursorPos = new Position.Simple(getPosition()).offsetAdd(caret);
 
-                eventBus.addEvent(  new  RequestShowCursorEvent(TextInput.this, cursorPos ) );
+                // calc where cursor should be relative to text component + its caret position
+
+                Position cursorPos = new Position.Simple(position).offsetAdd(caret);
+
+                eventBus.addEvent(new RequestShowCursorEvent(TextInput.this, cursorPos));
             }
 
             private void requestHideCursor() {
-                eventBus.addEvent(  new  RequestHideCursorEvent(TextInput.this) );
+                eventBus.addEvent(new RequestHideCursorEvent(TextInput.this));
+            }
+
+            @Override
+            public EventHandler canHandle(TerminalEvent<?> te) {
+                if (keyEventHandler.canHandle(te) == null) {
+                    return null;
+                }
+                return this;
             }
         };
-        
+
     }
+
+    @Override
+    public Collection<? extends Component<?>> getChildren() {
+        return Collections.singleton(this.textRenderer);
+    }
+
 }

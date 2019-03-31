@@ -75,6 +75,8 @@ public class EventBus implements EventHandlerContainer {
     // is injected into the main handler.
     // master_idlEventHandlerBRIDGE will forward all idle events to idleEventsHandlerChain
     private ConditionalEventHandler master_idlEventHandlerBRIDGE = null;
+
+    private AtomicBoolean idleEventsEnabled = new AtomicBoolean(false);
     
     // idle events processing can be turned on and off - this was introduced when 
     // processing terminal resize events
@@ -97,6 +99,7 @@ public class EventBus implements EventHandlerContainer {
     }
     
     public EventBus() {
+        enableIdleEvents();
 	consumerTask = new Runnable() {
 	    @Override
 	    public void run() {
@@ -169,16 +172,26 @@ public class EventBus implements EventHandlerContainer {
 	return this;
     }
     
+    
+
     synchronized public void enableIdleEvents() {
         
         if (master_idlEventHandlerBRIDGE != null) return;
         
-        disableIdleEvents();
+        disableIdleEvents(); // remove  master and noop idle handlers
+        
+        idleEventsEnabled.set(true);
         
         master_idlEventHandlerBRIDGE = new ConditionalEventHandler() {
 
             @Override
             public void handle(TerminalEvent<?> te) {
+                
+                // intentionally checking this flag only in the handle event.
+                if ( ! idleEventsEnabled.get()) {
+                    return ;
+                }
+                
                 if (EventBus.this.idleEventsHandlerChain == null) { // means not handlers
                     return ;
                 }
@@ -202,6 +215,7 @@ public class EventBus implements EventHandlerContainer {
     public synchronized void disableIdleEvents() {
         
         idleEventsSuppressed = true;
+        idleEventsEnabled.set(false);
 
         if (master_idlEventHandlerBRIDGE == null) return;
         
@@ -211,12 +225,11 @@ public class EventBus implements EventHandlerContainer {
         this.remove(master_idlEventHandlerBRIDGE);
         
         master_idlEventHandlerBRIDGE = null;
+        
                 
     }
     
     
-    
-
     public EventBus removeIdleEventHandler(OnIdleEventEventHandler onIdleEventHandler) {
 	if (this.idleEventsHandlerChain == null) {
 	    return this;

@@ -6,6 +6,7 @@ import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegmentsBuffer;
+import dtb.terminalIO.traverse.HasChildren;
 
 
 /**
@@ -31,6 +32,11 @@ public interface Component<T extends Component<?>> extends IScreenLineSegmentsBu
 
     void markAsDirty();
     
+    void setParentContainer(Component<? extends HasChildren<Component<?>>> composite);
+    
+    Component<? extends HasChildren<Component<?>>> getParentContainer();
+
+    
     public static abstract class AbstractComponent<T extends AbstractComponent<?>> implements Component<T> {
 
         private IScreenLineSegmentsBuffer segments   = new ScreenLineSegmentsBuffer();
@@ -38,6 +44,8 @@ public interface Component<T extends Component<?>> extends IScreenLineSegmentsBu
         private Color                     color      = FGBGColors.DEFAULT;
 
         BlockChars                        blockChars = BlockChars.DEFAULT;
+        
+        Component<? extends HasChildren<Component<?>>> parentContainer;
 
         FillOnClearPolicy.AbstractImpl    fillPolicy = new FillOnClearPolicy.AbstractImpl(this) {
 
@@ -60,9 +68,14 @@ public interface Component<T extends Component<?>> extends IScreenLineSegmentsBu
 
         boolean hasDrawn = false;
 
+        protected void clearBeforeDraw() {
+            clear();
+        }
+
+        
         protected void drawIfNeeded() {
-            if (!hasDrawn) {
-                clear();
+            if (isDirty()) {
+                clearBeforeDraw();
                 hasDrawn = true;
                 draw(color, segments);
             }
@@ -145,6 +158,15 @@ public interface Component<T extends Component<?>> extends IScreenLineSegmentsBu
 
         abstract protected Rectangle getRectangleForClearAndFill();
 
+        @Override
+        public void setParentContainer(Component<? extends HasChildren<Component<?>>> parentContainer) {
+            this.parentContainer = parentContainer;
+        }
+        
+        public Component<? extends HasChildren<Component<?>>> getParentContainer() {
+            return this.parentContainer;
+        }
+        
     }
 
     public static class UTIL {
@@ -165,5 +187,6 @@ public interface Component<T extends Component<?>> extends IScreenLineSegmentsBu
             
         }
     }
+
 
 }

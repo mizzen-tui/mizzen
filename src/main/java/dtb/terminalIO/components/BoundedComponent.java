@@ -11,6 +11,7 @@ import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegment;
 import dtb.terminalIO.textsegments.ScreenLineSegmentsBuffer;
+import dtb.terminalIO.traverse.HasChildren;
 
 
 /**
@@ -21,23 +22,22 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
 
     protected IScreenLineSegmentsBuffer segments   = createSegmentsBuffer();
 
-    boolean                           hasDrawn   = false;
-    Color                             color      = FGBGColors.DEFAULT;
-    BlockChars                        blockChars = BlockChars.DEFAULT;
+    private boolean                     hasDrawn   = false;
+    private Color                       color      = FGBGColors.DEFAULT;
+    private BlockChars                  blockChars = BlockChars.DEFAULT;
 
-    FillOnClearPolicy    fillPolicy = new FillOnClearPolicy.AbstractImpl(this) {
-
+    private FillOnClearPolicy    fillPolicy = new FillOnClearPolicy.AbstractImpl(this) {
                                                      @Override
                                                      public Rectangle getRectangleForClearAndFill() {
                                                          return BoundedComponent.this.getRectangleForClearAndFill();
                                                      }
-
                                                      @Override
                                                      public IScreenLineSegmentsBuffer getSegmentsBuffer() {
                                                          return BoundedComponent.this.segments;
                                                      }
-
                                                  };
+
+    private Component<? extends HasChildren<Component<?>>> parentContainer;
                                                  
     protected IScreenLineSegmentsBuffer createSegmentsBuffer() {
         IScreenLineSegmentsBuffer segmentsBuffer   = new ScreenLineSegmentsBuffer() {
@@ -49,20 +49,32 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
         return segmentsBuffer;
     }
 
-    public BoundedComponent(Color color, Rectangle r) {
+    public BoundedComponent(Color color, Rectangle r, Component<? extends HasChildren<Component<?>>> parentContainer) {
         super(new Rectangle.Simple(r));
         this.setColor(color);
+        this.setParentContainer(parentContainer);
+    }
+
+    
+    public BoundedComponent(Color color, Rectangle r) {
+        this(color, r, null);
+    }
+
+    public BoundedComponent(Color color, Position p, Dimension d, Component<? extends HasChildren<Component<?>>> parentContainer) {
+        this(color, new Rectangle.Simple(p, d), parentContainer);
     }
 
     public BoundedComponent(Color color, Position p, Dimension d) {
-        super(new Rectangle.Simple(p, d));
-        this.color = color;
+        this(color, new Rectangle.Simple(p, d));
     }
     
 
+    public BoundedComponent(Color color, Dimension d, Component<? extends HasChildren<Component<?>>> parentContainer) {
+        this(color, new Rectangle.Simple(d), parentContainer);
+    }
+
     public BoundedComponent(Color color, Dimension d) {
-        super(new Rectangle.Simple(d));
-        setColor(color);
+        this(color, d, null);
     }
 
     public void resize(Dimension d) {
@@ -90,7 +102,8 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
         if (isDirty()) {
             clear();
             hasDrawn = true;
-            draw(getColor(), segments);
+            Color currentColor = getColor();
+            draw(currentColor, segments);
         }
     }
     
@@ -145,6 +158,10 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
         this.fillPolicy.setFillOnClear(fillOnClear);
         return (T) this;
     }
+    
+    public boolean isFillOnClear() {
+        return this.getFillOnClearPolicy().isFillOnClear();
+    }
 
     protected Rectangle getRectangleForClearAndFill() {
         return this;
@@ -152,13 +169,27 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
 
     
     @Override
+    public void setParentContainer(Component<? extends HasChildren<Component<?>>> parentContainer) {
+        this.parentContainer = parentContainer;
+    }
+    
+    public Component<? extends HasChildren<Component<?>>> getParentContainer() {
+        return this.parentContainer;
+    }
+    
+    
+    @Override
     public String toString() {
         return super.toString() + String.valueOf(fillPolicy.toString());
     }
     
     
+    @SuppressWarnings("unchecked")
     protected <T extends BoundedComponent<?>> T makeChildComponent(Supplier<T> createComponent) {
        T component = createComponent.get();
+       if (this instanceof HasChildren) {
+           component.setParentContainer( (Component<? extends HasChildren<Component<?>>>) this);
+       }
        component.setBlockChars(this.getBlockChars());
 
        component.getFillOnClearPolicy().setEmptyChar(this.getFillOnClearPolicy().getEmptyChar());

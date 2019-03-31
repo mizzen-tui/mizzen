@@ -10,13 +10,14 @@ import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
-import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
-import dtb.terminalIO.events.keyboard.KeyStroke;
-import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.keyboard.HasHotKey;
+import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
+import dtb.terminalIO.events.keyboard.KeyStroke;
+import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
@@ -44,7 +45,7 @@ public class TabPanel extends Composite {
     class TabWorkAreaComponent extends BoundedComponent<TabWorkAreaComponent> {
 
         TabWorkAreaComponent(Rectangle r) {
-            super(FGBGColors.NO_COLOR_SPECIFIED, r);
+            super(FGBGColors.NO_COLOR_SPECIFIED, r, TabPanel.this);
         }
 
         TabWorkAreaComponent(dtb.terminalIO.geom.Position position, Dimension dimension) {
@@ -75,7 +76,7 @@ public class TabPanel extends Composite {
         super(color);
         this.eventBus = eventBus;
         workArea = new TabWorkAreaComponent(Position.ZERO, bounds);
-        workAreaBorder = new BorderedComponent(color, workArea);
+        workAreaBorder = new BorderedComponent(color, workArea, this);
         this.add(new Position.Simple(2,0),workAreaBorder);
         this.textActiveTabColor = textActiveTabColor;
     }
@@ -86,7 +87,7 @@ public class TabPanel extends Composite {
 	
 	TabAction ta = getActiveTabAction();
 	if (ta != null) {
-	    ta.resize(getTabContext(), getTabContext());
+	    ta.resize(getTabContext());
 	}
     }
     
@@ -223,9 +224,13 @@ public class TabPanel extends Composite {
                 return TabPanel.this.workArea;
             }
 
-            @Override
             public IScreenLineSegmentsBuffer getSegmentsBuffer() {
-                return TabPanel.this.workArea.getSegmentsBuffer();
+                return new IScreenLineSegmentsBuffer.DelegateWithDirtyFlag(TabPanel.this.workArea.getSegmentsBuffer()) {
+                    @Override
+                    public void markAsDirty() {
+                        TabPanel.this.workArea.markAsDirty();
+                    }
+                };
             }
 
             @Override
@@ -296,7 +301,7 @@ public class TabPanel extends Composite {
     
     
 
-    public static interface TabContext extends IScreenLineSegmentsBuffer.Provider {
+    public static interface TabContext  extends IScreenLineSegmentsBuffer.Provider {
 
         EventBus getEventBus();
 
@@ -307,10 +312,13 @@ public class TabPanel extends Composite {
         void clearForRedraw();
 
         Rectangle getDrawingArea();
+        
+        IScreenLineSegmentsBuffer getSegmentsBuffer();
+
 
     }
 
-    public static abstract class TabAction {
+    public static abstract class TabAction implements HasHotKey {
 
         KeyStroke    hotKey;
         String       tabText;
@@ -323,7 +331,7 @@ public class TabPanel extends Composite {
         }
         
 
-        abstract public void resize(TabContext tabContext, IScreenLineSegmentsBuffer.Provider segmentsBufferProvider);
+        abstract public void resize(TabContext tabContext);
 
 
 	public void activate(TabContext tabContext) {

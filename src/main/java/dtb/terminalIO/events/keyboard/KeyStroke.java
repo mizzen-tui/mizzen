@@ -127,8 +127,8 @@ public class KeyStroke {
 
     @Override
     public String toString() {
-	return "KeyStroke [altPressed=" + altPressed + ", ctrl=" + ctrl + ", keys=" + Arrays.toString(keys)
-		+ ", funcKey=" + funcKey + ", name=" + name + "]";
+	return "KeyStroke [name =" + name + ", altPressed=" + altPressed + ", ctrl=" + ctrl + ", keys=" + Arrays.toString(keys)
+		+ ", funcKey=" + funcKey + "]";
     }
 
 

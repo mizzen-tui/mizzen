@@ -1,10 +1,15 @@
 package dtb.terminalIO.components.input;
 
+import java.util.Collection;
+import java.util.Collections;
+
 import dtb.terminalIO.components.BoundedComponent;
+import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.Focusable;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.keyboard.KeyEvent;
@@ -12,9 +17,10 @@ import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.traverse.HasChildren;
 import dtb.terminalIO.util.StringUtils;
 
-public class CheckBoxInput extends BoundedComponent<CheckBoxInput> implements HasValue<Boolean> {
+public class CheckBoxInput extends BoundedComponent<CheckBoxInput> implements HasValue<Boolean>, HasChildren<Component<?>>, AsFocusable.ToFocusable   {
 
     private TextComponent textRenderer;
     
@@ -75,6 +81,23 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput> implements Ha
         return this;
     }
     
+    
+    public CheckBoxInput setEmptyColor(Color emptyColor) {
+        super.setEmptyColor(emptyColor);
+        if (this.textRenderer != null) {
+            this.textRenderer.setEmptyColor(emptyColor);
+        }
+        return this;
+    }
+    
+    public CheckBoxInput setEmptyChar(char emptyChar) {
+        super.setEmptyChar(emptyChar);
+        if (this.textRenderer != null) {
+            this.textRenderer.setEmptyChar(emptyChar);
+        }
+        return this;
+    }
+    
 
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
@@ -84,12 +107,13 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput> implements Ha
     
     protected void init() {
         this.textRenderer = new TextComponent(this.getColor(), this.getRectangle(), buildRenderText());
+        this.textRenderer.setParentContainer(this);
     }
     
     
-    public Focusable asFocusable(Position position, EventBus eventBus) {
+    public Focusable asFocusable(EventBus eventBus) {
         
-        return new AsFocusable(this, position, eventBus) {
+        return new AsFocusable(this, eventBus) {
 
             @Override
             public void handle(TerminalEvent<?> te) {
@@ -100,8 +124,23 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput> implements Ha
                     eventBus.addEvent(  new HasValue.ValueChangedEvent<>(CheckBoxInput.this) );
                 }
             }
+
+            @Override
+            public EventHandler canHandle(TerminalEvent<?> te) {
+                KeyEvent ke = (KeyEvent) te; // TODO:  In the future, this cast might not be valid
+                
+                if (ke.isKeyStroke( Keys.ENTER_KEYSTROKE )  || ke.isKeyStroke(Keys.SPACE_KEYSTROKE)) {
+                    return this;
+                }
+                return null;
+            }
             
         };
+    }
+
+    @Override
+    public Collection<? extends Component<?>> getChildren() {
+        return Collections.singleton(this.textRenderer);
     }
     
     

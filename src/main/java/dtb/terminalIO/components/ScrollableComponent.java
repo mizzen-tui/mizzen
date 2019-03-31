@@ -1,6 +1,6 @@
 package dtb.terminalIO.components;
 
-import dtb.terminalIO.controlcodes.ControlCode;
+import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.ConditionalEventHandler;
@@ -9,6 +9,7 @@ import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.Focusable;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
+import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
@@ -18,7 +19,7 @@ import dtb.terminalIO.textsegments.ScreenLineSegmentsView;
 
 /**
  * 
- * A {@link Component} that has a view into another (child) component.
+ * A ScrollableComponent is a {@link Component} that has a view into another (child) component.
  * 
  * <p/>
  * 
@@ -37,20 +38,22 @@ import dtb.terminalIO.textsegments.ScreenLineSegmentsView;
  * being viewed from.
  * 
  */
-public class ScrollableComponent extends Composite implements CanResize, Focusable , Hiliter {
+public class ScrollableComponent extends Composite implements CanResize, Focusable , Hiliter /*, AsAConditionalEventHandler*/ {
     
     BorderedComponent   borderedComponent;
     ScrollBarVertical   vScrollBar;
     ScrollBarHorizontal hScrollBar;
     WindowViewComponent viewer;
     Component<?>        componentBeingViewed;
+    ButtonBar           footerControls;
     TextComponent       footerTextComponent;
     String              footerText;
 
     public ScrollableComponent(Color color, Dimension d, Component<?> componentBeingViewed) {
+        super(color);
         this.componentBeingViewed = componentBeingViewed;
         viewer = new WindowViewComponent(color, new Dimension.Simple(d.getHeight() - 2, d.getWidth() - 2), this.componentBeingViewed);
-        borderedComponent = new BorderedComponent(color, viewer);
+        borderedComponent = new BorderedComponent(color, viewer, this);
         
         vScrollBar = new ScrollBarVertical(color, borderedComponent.getPostion_TopRight().offsetAdd(1, 0), borderedComponent.getHeight()-2);
         vScrollBar.setOffset(Position.ZERO);
@@ -71,9 +74,9 @@ public class ScrollableComponent extends Composite implements CanResize, Focusab
     public void setShowBorder(boolean showBorder) {
         borderedComponent.setShowBorder(showBorder);
         if (showBorder) {
-            if (footerTextComponent == null) {
-                footerTextComponent = new TextComponent("");
-                this.add(footerTextComponent);
+            if (footerControls == null) {
+                footerControls = buildAndPopulateFooterPanel();
+                this.add(footerControls);
             }
             setFooterText();
             if (this.findChild(vScrollBar) == null) {
@@ -83,9 +86,9 @@ public class ScrollableComponent extends Composite implements CanResize, Focusab
                 this.add(hScrollBar);
             }
         } else {
-            if (footerTextComponent != null) {
-                this.remove(footerTextComponent);
-                this.footerTextComponent = null;
+            if (footerControls != null) {
+                this.remove(footerControls);
+                this.footerControls = null;
                 if (this.findChild(vScrollBar) != null) {
                    this.remove(vScrollBar);
                 }
@@ -101,23 +104,24 @@ public class ScrollableComponent extends Composite implements CanResize, Focusab
         return this.borderedComponent.visibleBorder();
     }
 
-    private String buildNavBarText(String userText) {
-        BlockChars blockChars = borderedComponent.getBlockChars();
-        Color borderColor = borderedComponent.getColor();
-        String divider = borderColor.asString() +blockChars.getVERTICAL_LINE() + ControlCode.RCol.asString();
-        String text = borderColor.asString() + blockChars.getVERTICAL_LEFT() +  ControlCode.RCol.asString()+
-                      ((userText==null)? "" : " " + userText + " " + divider) + 
-                      " PgUp " + 
-                      divider + 
-                      " PgDn " +
-                      divider +
-                      " ^ " + 
-                      divider +
-                      " v " + 
-                      borderColor.asString() + blockChars.getVERTICAL_RIGHT() +  ControlCode.RCol.asString();
-        return text;
-    }
     
+    private ButtonBar buildAndPopulateFooterPanel() {
+        Color borderColor = borderedComponent.getColor();
+        if (footerControls == null) {
+            footerControls = new ButtonBar(borderColor);
+            footerControls.setUpdateCanvas(()->updateCanvas());
+        }
+        footerControls.removeChildren();
+
+        addFooterButton("^",    Keys.UP_KEYSTROKE,     (te)-> ScrollableComponent.this.up(1)      );
+        addFooterButton("v",    Keys.DOWN_KEYSTROKE,   (te)-> ScrollableComponent.this.down(1)    );
+        addFooterButton("PgUp", Keys.PGUP_KEYSTROKE,   (te)-> ScrollableComponent.this.pageup()   );
+        addFooterButton("PgDn", Keys.PGDN_KEYSTROKE,   (te)-> ScrollableComponent.this.pagedown() );
+        addFooterButton("«",    Keys.LEFT_KEYSTROKE,   (te)-> ScrollableComponent.this.left(1)    );
+        addFooterButton("»",    Keys.RIGHT_KEYSTROKE,  (te)-> ScrollableComponent.this.right(1)   );
+        
+        return footerControls;
+    }
     
     public void setFooterText(String s) {
         this.footerText = s;
@@ -126,8 +130,17 @@ public class ScrollableComponent extends Composite implements CanResize, Focusab
 
     public void setFooterText() {
         if (!visibleBorder()) return;
-        String fullFooterText = buildNavBarText(footerText);
-        footerTextComponent.setTextAndResize(fullFooterText);
+       // String fullFooterText = buildNavBarText(footerText);
+        if (footerText != null) {
+            if (footerTextComponent == null) {
+                footerTextComponent = new TextComponent(getColor(),footerText);
+            } else {
+                footerTextComponent.setTextAndResize(footerText);
+            }
+        } else {
+            footerTextComponent = null;
+        }
+        buildAndPopulateFooterPanel();
         positionFooterText();
     }
     
@@ -143,14 +156,24 @@ public class ScrollableComponent extends Composite implements CanResize, Focusab
         markAsDirty();
     }
     
+    public void refreshFooter() {
+        footerControls.markAsDirty();
+        footerControls.fullrecalcDim();
+        positionFooterText();
+    }
+
+    int lastFooterWidth = -1;
+
     private void positionFooterText() {
         if (!visibleBorder()) return;
         Dimension d = this;
         // TODO: validate position - problematic when width smaller than footerText - FIXME!
-        this.moveChildTo(new Position.Simple(d.getHeight()-1, d.getWidth()-footerTextComponent.getWidth() -1), footerTextComponent);
-        int newHScrollBarWidth = (this.borderedComponent.getWidth()-2) - footerTextComponent.getWidth();
+        this.moveChildTo(new Position.Simple(d.getHeight()-1, d.getWidth()-footerControls.getWidth() -1), footerControls);
+        int newHScrollBarWidth = (this.borderedComponent.getWidth()-2) - footerControls.getWidth();
         
         this.hScrollBar.resize(new Dimension.Simple(1, newHScrollBarWidth>0?newHScrollBarWidth:0));
+        lastFooterWidth = footerControls.getWidth();
+
     }
 
     public void setViewOffset(int r, int c) {
@@ -291,7 +314,7 @@ public class ScrollableComponent extends Composite implements CanResize, Focusab
         this.chainedEventHandler.addEventHandler(eventHandler);
     }
     
-    public void addEventHandlerWithCanvasUpdate(ConditionalEventHandler eventHandler) {
+    public ConditionalEventHandler addEventHandlerWithCanvasUpdate(ConditionalEventHandler eventHandler) {
         ConditionalEventHandler handler = new ConditionalEventHandler.Delegate(eventHandler) { 
                                                         @Override
                                                         public void handle(TerminalEvent<?> te) {
@@ -300,6 +323,8 @@ public class ScrollableComponent extends Composite implements CanResize, Focusab
                                                         }
                                                     };
         addEventHandler(handler);
+        
+        return handler;
     }
     
     public void setUpdateCanvas(Runnable _updateCanvas) {
@@ -317,58 +342,26 @@ public class ScrollableComponent extends Composite implements CanResize, Focusab
         }
         
         chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
-
-        addEventHandlerWithCanvasUpdate(new KeyInputEventHandler(Keys.UP_KEYSTROKE, new EventHandler() {
+        
+        
+        chainedEventHandler.addEventHandler(new ConditionalEventHandler() {
             @Override
             public void handle(TerminalEvent<?> te) {
-                ScrollableComponent.this.up(1);
+                if (footerControls == null) {
+                    return;
+                }
+                footerControls.handle(te);
             }
-        }));
-        
-        addEventHandlerWithCanvasUpdate(new KeyInputEventHandler(Keys.CTRL_P_KEYSTROKE, new EventHandler() {
             @Override
-            public void handle(TerminalEvent<?> te) {
-                setShowBorder( ! visibleBorder()  );
-            }
-        }));
-
-        
-        
-        addEventHandlerWithCanvasUpdate(new KeyInputEventHandler(Keys.PGUP_KEYSTROKE, new EventHandler() {
-            @Override
-            public void handle(TerminalEvent<?> te) {
-                ScrollableComponent.this.pageup();
-            }
-        }));
-        
-        addEventHandlerWithCanvasUpdate(new KeyInputEventHandler(Keys.DOWN_KEYSTROKE, new EventHandler() {
-            @Override
-            public void handle(TerminalEvent<?> te) {
-                ScrollableComponent.this.down(1);
-            }
-        }));
-        
-        
-        addEventHandlerWithCanvasUpdate(new KeyInputEventHandler(Keys.PGDN_KEYSTROKE, new EventHandler() {
-            @Override
-            public void handle(TerminalEvent<?> te) {
-                ScrollableComponent.this.pagedown();
-            }
-        }));
-        
-        addEventHandlerWithCanvasUpdate(new KeyInputEventHandler(Keys.LEFT_KEYSTROKE, new EventHandler() {
-            @Override
-            public void handle(TerminalEvent<?> te) {
-                ScrollableComponent.this.left(1);
-            }
-        }));
-        
-        addEventHandlerWithCanvasUpdate(new KeyInputEventHandler(Keys.RIGHT_KEYSTROKE, new EventHandler() {
-            @Override
-            public void handle(TerminalEvent<?> te) {
-                ScrollableComponent.this.right(1);
-            }
-        }));
+            public EventHandler canHandle(TerminalEvent<?> te) {
+                if (footerControls == null) {
+                    return null;
+                }
+                if (footerControls.canHandle(te) == null) {
+                    return null;
+                }
+                return this;
+            }});
         
         conditionalEventHandler =  chainedEventHandler.asConditionalEventHandler();
         
@@ -384,6 +377,16 @@ public class ScrollableComponent extends Composite implements CanResize, Focusab
         eventBus.addEventHandler( asEventHandler() );
    }
 
+    @Override
+    public EventHandler canHandle(TerminalEvent<?> te) {
+        if (conditionalEventHandler == null) 
+        {
+            throw new IllegalStateException("Must first call asEventHandler(updateCanvas) before calling canHandle(TerminalEvent<?> te)");
+        }
+        return conditionalEventHandler.canHandle(te);
+    }
+    
+    
     @Override
     public void handle(TerminalEvent<?> te) {
         if (conditionalEventHandler == null) 
@@ -411,11 +414,6 @@ public class ScrollableComponent extends Composite implements CanResize, Focusab
     } 
 
     @Override
-    public Position getPosition() {
-        return this.getPostion_TopLeft();
-    }
-    
-    @Override
     public void hilite() {
         this.borderedComponent.hilite();
         //this.borderedComponent.setTitle("XXXXX");
@@ -433,6 +431,35 @@ public class ScrollableComponent extends Composite implements CanResize, Focusab
         hScrollBar.setColor( borderedComponent.getBorderColor()  );
         this.markAsDirty();
     }
-    
+
+    public void addFooterButton(String buttonText, KeyStroke hotKey, EventHandler handler) {
+        
+        if (footerControls == null) {
+            throw new IllegalStateException("FooterControls object is null! Cannot add button control yet!");
+        }
+        
+        footerControls.addButton(buttonText, hotKey,   handler );
+        
+    }
+
+    private void __addFooterButton(Component componentForButtonBar, KeyStroke hotKey, EventHandler handler) {
+        
+        if (footerControls == null) {
+            throw new IllegalStateException("FooterControls object is null! Cannot add button control yet!");
+        }
+        
+        footerControls.addComponent(componentForButtonBar,  hotKey, handler);
+        
+        positionFooterText();
+        
+    }
+
+    public void addFooterButton(Component componentForButtonBar, KeyStroke hotKey, EventHandler handler) {
+        
+        __addFooterButton(componentForButtonBar, hotKey, handler);
+        positionFooterText();
+        
+    }
+
     
 }

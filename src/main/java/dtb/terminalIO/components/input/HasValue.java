@@ -7,7 +7,11 @@ import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 
-
+/**
+ * A container that has a value.   It just allows for an extra level of indirection.
+ *
+ * @param <V>
+ */
 public interface HasValue<V> {
     
     V getValue();

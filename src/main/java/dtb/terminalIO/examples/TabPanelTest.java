@@ -50,8 +50,8 @@ public class TabPanelTest {
         TabAction getTabAction(KeyStroke hotKey, String tabText) {
             return new TabAction(hotKey, tabText) {
         	
-                public void resize(TabContext tabContext, IScreenLineSegmentsBuffer.Provider segmentsBufferProvider) {
-                    demo.resize(tabContext.getBounds(), tabContext);
+                public void resize(TabContext tabContext) {
+                    demo.resize(tabContext.getBounds());
                 }
 
                 @Override
@@ -101,7 +101,7 @@ public class TabPanelTest {
 
             tb.addTab(new TabAction(Keys.F5_KEYSTROKE, "Acme Demo") {
 
-                public void resize(TabContext tabCtx, IScreenLineSegmentsBuffer.Provider segmentsBufferProvider) {
+                public void resize(TabContext tabCtx) {
                     int fileID = 80;
                     if (tabCtx.getBounds().contains(d_200)) {
                         fileID = 200;
@@ -126,8 +126,7 @@ public class TabPanelTest {
 
                 @Override
                 public void drawOnActive(TabContext tabCtx) {
-                    
-                    resize(tabCtx, tabCtx);
+                    resize(tabCtx);
                 }
 
                 @Override
@@ -137,26 +136,6 @@ public class TabPanelTest {
 
             });
 
-/*            
-            tb.addTab(new TabAction(Keys.F6_KEYSTROKE, "Disney World") {
-
-                int count = 0;
-
-                public void drawOnActive(TabContext tabCtx) {
-                    String sRED = new FGBGColors(Colors.BRed).asString();
-                    String sBLUE = new FGBGColors(Colors.BBlu).asString();
-                    String sRCOL = ControlCode.RCol.asString();
-                    TextComponent tc = new TextComponent(tabCtx.getColor(), sRED + "  Disney " + sBLUE + "has its own" + sRCOL + " world!");
-                    count++;
-                    tabCtx.getSegmentsBuffer().mergeAt(tabCtx.getBounds().centered(tc, Position.ZERO), tc.getSegmentsBuffer());
-
-                }
-
-                @Override
-                public void drawOnUnActive(TabContext tabCtx) {
-                }
-            });
-*/
             tb.addTab(new TabAction(Keys.F6_KEYSTROKE, "BarChart Example") {
 
                 BarChart buildBarChart(Rectangle drawingArea) {
@@ -170,7 +149,7 @@ public class TabPanelTest {
                     return bc;
 
                 }
-                
+                 
 
                 double[] bc_DATA       = new double[] { 10.0, 5.0, 13.0, 4.0, 6.0, 5.0, 6.0, 7.0, 8.0 };
                 String[] bc_DATALabels = new String[] { "Lumber", "Metal", "Fish", "Beef", "Lamb", "Liquor", "Milk", "Butter", "Cherries" };
@@ -198,7 +177,7 @@ public class TabPanelTest {
                 ConditionalEventHandler barChartUpdater;
                 BarChart bc;
                 
-                public void resize(TabContext tabCtx, IScreenLineSegmentsBuffer.Provider segmentsBufferProvider) {
+                public void resize(TabContext tabCtx) {
                     if (bc != null)
                        bc.resize(tabCtx.getBounds());
                 }
@@ -235,9 +214,9 @@ public class TabPanelTest {
                     tb.clearForRedraw();
                 }
 
-                public void flushOutput() {
-                    // tabContext.clearForRedraw();
-                }
+//                public void flushOutput() {
+//                    // tabContext.clearForRedraw();
+//                }
             }).getTabAction(Keys.F7_KEYSTROKE, "LineChart Example"));
             
             

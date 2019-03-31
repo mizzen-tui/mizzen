@@ -5,6 +5,7 @@ import java.util.function.Predicate;
 public interface HasHiliter {
 
     Hiliter getHiliter();
+    
 
     public static class HiliterPredicate<T> implements Predicate<T>  {
 
@@ -13,6 +14,7 @@ public interface HasHiliter {
             return input instanceof HasHiliter;
         }
     }
+    
     
     
 }

@@ -7,6 +7,9 @@ import java.util.TreeSet;
 import dtb.terminalIO.geom.Relation.LeftRight;
 import dtb.terminalIO.geom.Relation.OverUnder;
 
+/**
+ * Represents a location ( row/col ) on a Canvas, or component.
+ */
 public interface Position {
 
     public int getCol(); // x

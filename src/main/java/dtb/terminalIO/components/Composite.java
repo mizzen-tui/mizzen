@@ -1,7 +1,9 @@
 package dtb.terminalIO.components;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import dtb.terminalIO.components.Component.AbstractComponent;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
@@ -11,15 +13,18 @@ import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegment;
+import dtb.terminalIO.traverse.HasChildren;
 
 public class Composite extends AbstractComponent<Composite> 
-      implements Rectangle, HasTitleAndBorder<Composite>, CanResize  {
+      implements Rectangle, HasTitleAndBorder<Composite>, CanResize, HasChildren<Component<?>>  {
 
     private SimpleBorder border;
-    private boolean boundsFixed = false;
+    protected boolean boundsFixed = false;
     private Rectangle bounds = Rectangle.ZERO;
+    private List<ComponentWithOffset> children = new ArrayList<ComponentWithOffset>();
 
-    private static class ComponentWithOffset implements Rectangle {
+
+    protected static class ComponentWithOffset implements Rectangle {
 	Position offset;
 	Component<?> component;
 	Rectangle bounds;
@@ -34,10 +39,35 @@ public class Composite extends AbstractComponent<Composite>
 	    this(Position.ZERO, component);
 	}
 	
+	protected void calcBounds() {
+	    if (this.offset == null || this.component == null) {
+	        return;
+	    }
+	    
+	    ComponentWithOffset.this.bounds = new Rectangle.Delegate(component) {
+	        @Override
+	        public int getCol() {
+	            return super.getCol()+offset.getCol();
+	        }
+
+	        @Override
+	        public int getRow() {
+	            return super.getRow()+offset.getRow();
+	        }
+	    };
+	    
+//            this.bounds = new Rectangle.Simple(offset.getRow() + component.getRow(), offset.getCol()
+//                    + component.getCol(), component.getHeight(), component.getWidth());
+	}
+	
 	public void setComponent(Component<?> component) {
             this.component = component;
-            this.bounds = new Rectangle.Simple(offset.getRow() + component.getRow(), offset.getCol()
-                    + component.getCol(), component.getHeight(), component.getWidth());
+            calcBounds();
+	}
+	
+	public void setOffset(Position offset) {
+	    this.offset = offset;
+            calcBounds();
 	}
 	
 	@Override
@@ -63,12 +93,11 @@ public class Composite extends AbstractComponent<Composite>
 	@Override
 	public void moveTo(int row, int col) {
 	    this.offset = new Position.Simple(row, col);
-	    this.bounds = new Rectangle.Simple(offset.getRow() + component.getRow(), offset.getCol()
-		    + component.getCol(), component.getHeight(), component.getWidth());
+	    calcBounds();
+//	    this.bounds = new Rectangle.Simple(offset.getRow() + component.getRow(), offset.getCol()
+//		    + component.getCol(), component.getHeight(), component.getWidth());
 	}
     }
-
-    private List<ComponentWithOffset> children = new ArrayList<ComponentWithOffset>();
 
     public Composite(Color color) {
 	super(color);
@@ -79,6 +108,11 @@ public class Composite extends AbstractComponent<Composite>
     }
     
     public Composite setBounds(Rectangle bounds) {
+        if (bounds == null) {
+            this.boundsFixed = false;
+            fullrecalcDim();
+            return this;
+        }
 	this.bounds = bounds;
 	this.boundsFixed = true;
 	if (this.border != null) rebuildBorder(this.bounds);
@@ -93,6 +127,11 @@ public class Composite extends AbstractComponent<Composite>
     }
 
     public Composite setBounds(Dimension d) {
+        if (d == null) {
+            this.boundsFixed = false;
+            fullrecalcDim();
+            return this;
+        }
 	this.bounds = new Rectangle.Simple(d);
 	this.boundsFixed = true;
 	if (this.border != null) rebuildBorder(this.bounds);
@@ -102,6 +141,11 @@ public class Composite extends AbstractComponent<Composite>
 
     public Composite setBounds(int height, int width) {
         return setBounds(new Dimension.Simple(height, width));
+    }
+
+    
+    protected List<ComponentWithOffset> getChildrenComponentsWithOffset() {
+        return children;
     }
 
     public void resize(Dimension size) {
@@ -122,7 +166,7 @@ public class Composite extends AbstractComponent<Composite>
 	return brdr;
     }
 
-    private void fullrecalcDim() {
+    protected void fullrecalcDim() {
 	fullrecalcDim(hasBorder());
     }
 
@@ -132,6 +176,13 @@ public class Composite extends AbstractComponent<Composite>
 	    return;
 	}
 
+	for ( ComponentWithOffset child : children) {
+	    if (child.component instanceof Composite) {
+	        ((Composite)child.component).fullrecalcDim();
+	    }
+	}
+	
+	
 	Rectangle calculatedBounds = Rectangle.UTIL.calcDimensionsWith(children);
 	if (includeBorder) {
 	    rebuildBorder(calcBorderSize(calculatedBounds));
@@ -159,6 +210,7 @@ public class Composite extends AbstractComponent<Composite>
 	Color bColor = border != null ? border.getColor() : this.getColor();
 	String title = border != null ? border.getTitle() : null;
 	this.border = new SimpleBorder(bColor, borderSize);
+	this.border.setParentContainer(this);
 	this.border.setTitle(tColor, title);
     }
 
@@ -196,26 +248,85 @@ public class Composite extends AbstractComponent<Composite>
 	return this;
     }
 
-    public Composite add(Component<?> component) {
+    public Composite add(Position offset, Component<?> component) {
         ComponentWithOffset child = findChild(component);
         if (child != null) {
             throw new IllegalArgumentException("Component add failure:  Duplicate !");
         }
-	children.add(new ComponentWithOffset(component));
-	fullrecalcDim();
-	return this;
+        children.add(new ComponentWithOffset(offset, component));
+        component.setParentContainer(this);
+        fullrecalcDim();
+        markAsDirty();
+        return this;
     }
+
+    public Composite add(Component<?> component) {
+        return this.add(Position.ZERO, component);
+    }
+
+    public Composite add(int offsetRow, int offsetCol, Component<?> component) {
+        return this.add(new Position.Simple(offsetRow, offsetCol), component);
+    }
+
     
     public Composite remove(Component<?> component) {
-        ComponentWithOffset child = findChild(component);
-        if (child == null) {
-            throw new IllegalArgumentException("Could not find component to remove!");
+        ComponentWithOffset child = findChildOrFail(component,"remove");
+        children.remove(child);
+        child.component.setParentContainer(null);
+        fullrecalcDim();
+        markAsDirty();
+        return this;
+    }
+
+    // layering functions
+    
+    public Composite moveUp(Component<?> component) {
+        ComponentWithOffset child = findChildOrFail(component,"moveUp");
+        int index = children.indexOf(child);
+        if (index == children.size()-1) {
+            return this;
         }
         children.remove(child);
-        fullrecalcDim();
+        children.add(index+1, child);
+        markAsDirty();
         return this;
     }
     
+    public Composite moveDown(Component<?> component) {
+        ComponentWithOffset child = findChildOrFail(component,"moveDown");
+        int index = children.indexOf(child);
+        if (index == 0) {
+            return this;
+        }
+        children.remove(child);
+        children.add(index-1, child);
+        markAsDirty();
+        return this;
+    }
+    
+    public Composite bringToFront(Component<?> component) {
+        ComponentWithOffset child = findChildOrFail(component,"bringToFront");
+        int index = children.indexOf(child);
+        if (index == children.size()-1) {
+            return this;
+        }
+        children.remove(child);
+        children.add(children.size(), child);
+        markAsDirty();
+        return this;
+    }
+
+    public Composite bringToBack(Component<?> component) {
+        ComponentWithOffset child = findChildOrFail(component,"bringToBack");
+        int index = children.indexOf(child);
+        if (index == 0) {
+            return this;
+        }
+        children.remove(child);
+        children.add(0, child);
+        markAsDirty();
+        return this;
+    }
 
     protected ComponentWithOffset findChild(Component<?> component) {
 	for (ComponentWithOffset child : children) {
@@ -226,37 +337,46 @@ public class Composite extends AbstractComponent<Composite>
 	return null;
     }
 
-    public Composite replace(Component<?> c1, Component<?> c2) {
-        ComponentWithOffset child = findChild(c1);
+    protected ComponentWithOffset findChildOrFail(Component<?> component) {
+        return findChildOrFail(component,null);
+    }
+    
+    protected ComponentWithOffset findChildOrFail(Component<?> component, String errorPrefix) {
+        ComponentWithOffset child = findChild(component);
         if (child == null) {
-            throw new IllegalArgumentException("Could not find component to replace!");
+            throw new IllegalArgumentException((errorPrefix==null?"": errorPrefix+": ")+ "Could not find component!");
         }
+        return child;
+    }
+    
+    
+    public Composite replace(Component<?> c1, Component<?> c2) {
+        ComponentWithOffset child = findChildOrFail(c1,"replace");
         if (findChild(c2) != null) {
             throw new IllegalArgumentException("Could not replace component with a component that already exists as a child in composite!");
         }
+        child.component.setParentContainer(null);
         child.setComponent(c2);
+        child.component.setParentContainer(this);
         fullrecalcDim();
+        markAsDirty();
         return this;
-        
-                
-        
     }
+    
     public Composite moveChildTo(Position offset, Component<?> component) {
-	ComponentWithOffset found = findChild(component);
-	if (found == null)
-	    throw new IllegalArgumentException("component is not a child of composite");
-	found.offset = offset;
-	return this;
+        ComponentWithOffset found = findChildOrFail(component,"moveChildTo");
+        found.offset = offset;
+        fullrecalcDim();
+        markAsDirty();
+        return this;
     }
 
-    public Composite add(Position offset, Component<?> component) {
-	children.add(new ComponentWithOffset(offset, component));
-	fullrecalcDim();
+    public Composite moveChildDelta(Position offset, Component<?> component) {
+	ComponentWithOffset found = findChildOrFail(component,"moveChildDelta");
+	found.offset = found.offset.offsetAdd(offset);
+        fullrecalcDim();
+        markAsDirty();
 	return this;
-    }
-
-    public Composite add(int offsetRow, int offsetCol, Component<?> component) {
-	return add(new Position.Simple(offsetRow, offsetCol), component);
     }
 
     public Composite append( Component<?> component) {
@@ -366,6 +486,10 @@ public class Composite extends AbstractComponent<Composite>
 
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
+        draw(color, segments, boundsFixed);
+    }
+    
+    protected void draw(Color color, IScreenLineSegmentsBuffer segments, boolean boundsFixed) {
 	// loop thru children and draw
 
 	Position offset = Position.ZERO;
@@ -424,7 +548,22 @@ public class Composite extends AbstractComponent<Composite>
         if (hasBorder()) {
             this.border.unHilite();
         }
-        
     }
+
+    public void removeChildren() {
+        for (ComponentWithOffset child : new ArrayList<ComponentWithOffset>(getChildrenComponentsWithOffset())) {
+            remove(child.component);
+        }
+    }
+
+    @Override
+    public Collection<? extends Component<?>> getChildren() {
+        return getChildrenComponentsWithOffset().stream().map(cO -> cO.component ).collect( Collectors.toList()  );
+    }
+
+    public List<? extends Component<?>> getChildrenList() {
+        return (List<? extends Component<?>>) getChildren();
+    }
+
 
 }

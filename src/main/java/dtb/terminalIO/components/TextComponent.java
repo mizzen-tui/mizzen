@@ -46,7 +46,6 @@ public class TextComponent extends BoundedComponent<TextComponent> {
     public TextComponent(String text) {
         this(FGBGColors.NO_COLOR_SPECIFIED, text);
     }
-
     
     public TextComponent(Color color, int row, int col, String text) {
         super(color, new Rectangle.Simple(row, col, Dimension.UTIL.stringToDimension(text)));
@@ -63,17 +62,35 @@ public class TextComponent extends BoundedComponent<TextComponent> {
     }
 
     @Override
+    public TextComponent setColor(Color drawingcolor) {
+        super.setColor(drawingcolor);
+        return this;
+    }
+    
+    public Color getColor() {
+        Color theColor = super.getColor();
+        return theColor;
+    }
+    
+    
+    @Override
     public void draw(Color color, IScreenLineSegmentsBuffer segments) {
         SegmentsFromStringResult result = null;
+        
         if (this.hasColorCodes) {
             result = ScreenLineSegment.UTIL.textSegmentsFromStringWithEmbeddedColor(this.text, 0, 0, this,
                     (strColor, p, txt) -> new SegmentImpl( strColor != null ? strColor : color, p, -1, txt));
-        } else {
+        }  else {
             result = ScreenLineSegment.UTIL.textSegmentsFromString(this.text, 0, 0, this, 
         	                                                   (p,s)->new SegmentImpl(color, p, -1, s));
         }
         if (result.size()!=0) {
-            segments.clearAndMerge(result.ts);
+            if ( this.isFillOnClear()) {
+                this.clear();
+                segments.merge(result.ts);
+            } else {
+                segments.clearAndMerge(result.ts);
+            }
         }
     }
 
@@ -123,7 +140,5 @@ public class TextComponent extends BoundedComponent<TextComponent> {
             return false;
         return true;
     }
-
-    
     
 }

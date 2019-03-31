@@ -2,6 +2,7 @@ package dtb.terminalIO.examples;
 
 import java.io.IOException;
 
+import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.chart.BarChart;
 import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode;
@@ -22,7 +23,6 @@ import dtb.terminalIO.events.keyboard.KeyInputEventsProducer;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.events.resize.TerminalResizeDetection;
 import dtb.terminalIO.examples.Demo.SimpleDemo;
-import dtb.terminalIO.examples.GridBrailleTest.BrailleDemo;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer.Provider;
@@ -36,7 +36,7 @@ public class BarChartTest {
         BarChart bc;
 
         @Override
-        public void resize(Dimension size, Provider segmentsBufferProvider) {
+        public void resize(Dimension size) {
              bc.resize(size);
         }
 
@@ -88,6 +88,11 @@ public class BarChartTest {
     
                         // copy grid contents into segmentsBufferProvider ( the parent component)
                         segmentsBufferProvider.getSegmentsBuffer().mergeAt(0, 0, bc.getSegmentsBuffer());
+                        
+//                        if (segmentsBufferProvider instanceof Component) {
+//                            ((Component)segmentsBufferProvider).markAsDirty();
+//                        }
+                        
                 }
                 // 
                 flushOutput();
@@ -173,7 +178,7 @@ public class BarChartTest {
                 master_canvas.setSize(size.getHeight() , size.getWidth() ); 
                 master_canvas.clearCanvas();
                 //master_canvas.refresh();
-                barChartDemo.resize(master_canvas, master_canvas);
+                barChartDemo.resize(master_canvas);
                 eventBus.enableIdleEvents();
             }
         });

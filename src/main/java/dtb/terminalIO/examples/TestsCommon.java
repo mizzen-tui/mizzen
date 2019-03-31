@@ -51,9 +51,17 @@ public class TestsCommon {
         MapChars mapChars = new MapChars();
         mapChars.mapAll(BlockChars.UTIL.getNICE_TO_BASIC()  );
         mapChars.mapAll(BrailleUtils.getBrailleToAsciiMapChars());
+        
+        
         mapChars.map('┈','~');
         mapChars.map('┊','!');
         mapChars.map('░','#');
+        mapChars.map('▫','o');
+        mapChars.map('■','*');
+        mapChars.map('◍','*');
+        mapChars.map('◌','o');
+
+        
         return mapChars;
     }
 
@@ -71,7 +79,7 @@ public class TestsCommon {
         return screen;
     }
     
-    public static void addNoGraphicsToggleEvent(EventBus eventBus, TerminalScreen screen) {
+    public static void addNoGraphicsToggleEvent(EventBus eventBus, TerminalScreen screen, Runnable updateScreen) {
         eventBus.addEventHandler( new KeyInputEventHandler(Keys.CTRL_X_KEYSTROKE,
                                     new EventHandler() {
                                         @Override
@@ -82,9 +90,16 @@ public class TestsCommon {
                                                 screen.removeMappedChars();
                                                 mappedChars_toggle = false;
                                             }
+                                            if (updateScreen != null) {
+                                                updateScreen.run();
+                                            }
                                         }
                                     }
                                    ) );
+    }
+    
+    public static void addNoGraphicsToggleEvent(EventBus eventBus, TerminalScreen screen) {
+        addNoGraphicsToggleEvent(eventBus, screen, null);
     }
     
     

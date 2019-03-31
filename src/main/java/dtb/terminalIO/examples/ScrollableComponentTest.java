@@ -7,10 +7,13 @@ import java.util.function.Supplier;
 
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
+import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.ScrollableComponent;
 import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.components.input.TextInput;
 import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode;
+import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.TerminalScreen;
 import dtb.terminalIO.events.ChainedEventHandler;
@@ -24,6 +27,7 @@ import dtb.terminalIO.events.OnResizeEventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
+import dtb.terminalIO.events.keyboard.KeyEvent;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyInputEventsProducer;
 import dtb.terminalIO.events.keyboard.Keys;
@@ -100,8 +104,6 @@ public class ScrollableComponentTest {
         
         boolean[] toggle = new boolean[] {false};
         
-        
-        
         Runnable setTextToView = new Runnable() {
             @Override
             public void run() {
@@ -120,7 +122,6 @@ public class ScrollableComponentTest {
         
         viewComp1.setUpdateCanvas(()-> {});
          
-        
         viewComp1.addEventHandlerWithCanvasUpdate(new KeyInputEventHandler(Keys.CTRL_H_KEYSTROKE, new EventHandler() {
             @Override
             public void handle(TerminalEvent<?> te) {
@@ -135,6 +136,51 @@ public class ScrollableComponentTest {
                 viewComp1.markAsDirty();
             }
         }));
+        
+        
+        class Finder extends HorizontalPanel {
+            TextComponent find;
+            TextInput  findTextInput; 
+            
+            Finder(Color color) {
+                super(color);
+                this.find = new TextComponent(Finder.this.getColor(), " " + Finder.this.getColor().bold().asString()+"^F"+Finder.this.getColor().asString()+"ind");
+                this.add(find);
+            }
+            
+            void setInFindMode(TerminalEvent<?> te) {
+                if (findTextInput == null) {
+                    findTextInput = new TextInput(Finder.this.getColor().invert(), 10);
+                    this.findTextInput.setEmptyColor(Finder.this.getColor().invert());
+                    findTextInput.setText("test");
+                    this.add(findTextInput);
+                  //  findTextInput.requestFocus();
+                } else { // temp
+                    this.remove(findTextInput);
+                    this.findTextInput = null;
+                  //  findTextInput.requestReleaseFocus();
+                }
+            }
+        };
+        
+        Finder finder = new Finder(viewComp1.getColor());
+        
+        
+        viewComp1.addFooterButton(finder, Keys.CTRL_F_KEYSTROKE, (te)->{
+            
+            finder.setInFindMode(te);
+            viewComp1.refreshFooter();
+            
+            });
+        
+        
+//        viewComp1.addEventHandlerWithCanvasUpdate(new KeyInputEventHandler(Keys.CTRL_F_KEYSTROKE, new EventHandler() {
+//            @Override
+//            public void handle(TerminalEvent<?> te) {
+//                setTextToView.run();
+//                viewComp1.markAsDirty();
+//            }
+//        }));
         
         return viewComp1;
     }
@@ -359,14 +405,16 @@ public class ScrollableComponentTest {
             
         };
         
+        class ContainerForDemo extends Composite {
+        };
         
         
-        Composite lineChartDemoContainer = new Composite();
+        Composite lineChartDemoContainer = new ContainerForDemo();
         lineChartDemoContainer.setBounds(sizeOfLineChartWindow);
         lineChartDemoContainer.setBorder(true);
         LineChartDemo lineChartDemo = new LineChartDemo();
         
-        Composite barChartDemoContainer = new Composite();
+        Composite barChartDemoContainer = new ContainerForDemo();
         barChartDemoContainer.setBounds(sizeOfBarChartWindow);
         barChartDemoContainer.setBorder(true);
         BarChartDemo barChartDemo = new BarChartDemo();
@@ -410,19 +458,14 @@ public class ScrollableComponentTest {
         
         FocusManager focusManager = new FocusManager(Keys.TAB_KEYSTROKE);
         
-        focusManager.addFocusableAtPosition(viewComp1, viewComp1OffsetOnCanvas );
+        focusManager.addFocusable(viewComp1 );
 
-        focusManager.addFocusableAtPosition(brailleViewComp2, brailleViewComp2OffsetOnCanvas );
+        focusManager.addFocusable(brailleViewComp2 );
         
-
         TestsCommon.addNoGraphicsToggleEvent(eventBus, screen);
-        
-        
         
         eventBus.addEventHandler(focusManager.asEventHandler());
 
-        
-        
         TerminalResizeDetection.initiate(screen, eventBus);
         
         eventBus.addEventHandler(new OnResizeEventHandler() {
@@ -435,13 +478,11 @@ public class ScrollableComponentTest {
 
                 lineChartDemoContainer.clear();
                 lineChartDemoContainer.resize(sizeOfLineChartWindow);
-                lineChartDemo.resize(sizeOfLineChartWindow, lineChartDemoContainer);
+                lineChartDemo.resize(sizeOfLineChartWindow);
                 
                 barChartDemoContainer.clear();
                 barChartDemoContainer.resize(sizeOfBarChartWindow);
-                barChartDemo.resize(sizeOfBarChartWindow, barChartDemoContainer);
-                
-                
+                barChartDemo.resize(sizeOfBarChartWindow);
                 
                 updateCanvas.run();
             }

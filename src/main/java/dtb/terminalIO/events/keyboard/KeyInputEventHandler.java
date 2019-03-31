@@ -45,10 +45,7 @@ public class KeyInputEventHandler extends ConditionalEventHandler.Impl {
 	    return "KeyStrokePredicate [onKeyStroke=" + onKeyStroke + "]";
 	}
 	
-	
-	
     }
-    
     
     public KeyInputEventHandler(KeyStroke onKeyStroke, EventHandler handler) {
 	super(new KeyStrokePredicate(onKeyStroke), handler);

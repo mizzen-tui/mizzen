@@ -488,8 +488,8 @@ public class LineChart extends Composite {
 
     }
 
-    BorderedComponent info = null;
-    TextComponent     tc   = null;
+    // BorderedComponent info = null;
+    //TextComponent     tc   = null;
 
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
@@ -498,15 +498,6 @@ public class LineChart extends Composite {
         plotAxes(color, segments);
         renderBraille();
 
-        /*
-        if (info == null) {
-            tc = new TextComponent(stats());
-            info = new BorderedComponent(tc);
-            this.add(10, 10, info);
-        }
-
-        tc.setText(stats());
-*/
         super.draw(color, segments);
     }
 

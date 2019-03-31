@@ -275,6 +275,104 @@ public interface IScreenLineSegmentsBuffer extends Rectangle , Iterable<ScreenLi
         }
         
     }
-	
+
+    public static abstract class DelegateWithDirtyFlag extends Delegate {
+        
+        public DelegateWithDirtyFlag(IScreenLineSegmentsBuffer delegate) {
+            super(delegate);
+        }
+        
+        public abstract void markAsDirty();
+        
+        @Override
+        public void moveTo(int row, int col) {
+            super.moveTo(row, col);
+            markAsDirty();
+        }
+
+        @Override
+        public void clear() {
+            super.clear();
+            markAsDirty();
+        }
+
+        @Override
+        public void add(ScreenLineSegment sc) {
+            super.add(sc);
+            markAsDirty();
+        }
+
+        @Override
+        public void merge(IScreenLineSegmentsBuffer other) {
+            super.merge(other);
+            markAsDirty();
+        }
+
+        @Override
+        public void mergeAt(int row, int col, IScreenLineSegmentsBuffer segmentsBuffer) {
+            super.mergeAt(row, col, segmentsBuffer);
+            markAsDirty();
+        }
+
+        @Override
+        public void merge(Collection<ScreenLineSegment> segments) {
+            super.merge(segments);
+            markAsDirty();
+        }
+
+        @Override
+        public void clearAndMerge(Collection<ScreenLineSegment> segments) {
+            super.clearAndMerge(segments);
+            markAsDirty();
+        }
+
+        @Override
+        public void setCharAt(int row, int col, char ch, Color color) {
+            super.setCharAt(row, col, ch, color);
+            markAsDirty();
+        }
+
+        @Override
+        public boolean removeRow(int row) {
+            boolean result = super.removeRow(row);
+            markAsDirty();
+            return result;
+        }
+
+        @Override
+        public boolean removeRect(Rectangle r) {
+            boolean result = super.removeRect(r);
+            markAsDirty();
+            return result;
+        }
+
+
+        @Override
+        public boolean removeSegments(Collection<ScreenLineSegment> scs) {
+            boolean result = super.removeSegments(scs);
+            markAsDirty();
+            return result;
+        }
+
+        @Override
+        public void removeRectangles(Collection<? extends Rectangle> rectangles) {
+            super.removeRectangles(rectangles);
+            markAsDirty();
+        }
+
+        @Override
+        public void fillRectWithChar(Color color, char fillChar, Rectangle bounds) {
+            super.fillRectWithChar(color, fillChar, bounds);
+            markAsDirty();
+        }
+
+        @Override
+        public void mergeAtBounded(int row, int col, Rectangle bounds, IScreenLineSegmentsBuffer segmentsBuffer) {
+            super.mergeAtBounded(row, col, bounds, segmentsBuffer);
+            markAsDirty();
+        }
+    }
+    
+    
 
 }

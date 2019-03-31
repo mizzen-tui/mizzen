@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.chart.LineChart;
 import dtb.terminalIO.controlcodes.Colors;
@@ -51,7 +52,7 @@ public class LineChartTest {
 	
 	
 	@Override
-	public void resize(Dimension size, IScreenLineSegmentsBuffer.Provider segmentsBufferProvider) {
+	public void resize(Dimension size) {
 	    
 //            Position lc_Pos = bounds.centered(lineChartDemo.lc, Position.ZERO);
 //            Rectangle rectToRemove = new Rectangle.Simple(lineChartDemo.lc);
@@ -251,6 +252,11 @@ public class LineChartTest {
                                              segmentsBufferProvider.getSegmentsBuffer().mergeAt(lc_Pos.offsetAdd(lc.getHeight() + 1, 0),
                                                                                                 menuOoptions.getSegmentsBuffer());
 	                            }
+	                            
+//	                            if (segmentsBufferProvider instanceof Component) {
+//	                                ((Component)segmentsBufferProvider).markAsDirty();
+//	                            }
+	                            
         
 			    }
 			    // refresh/flush segments to output
@@ -359,7 +365,7 @@ public class LineChartTest {
 	    master_canvas.setSize(size.getHeight() - 1, size.getWidth() - 1);
 	    master_canvas.clearCanvas();
             master_canvas.refresh();
-	    lineChartDemo.resize(master_canvas, master_canvas);
+	    lineChartDemo.resize(master_canvas);
 
             // master_canvas.t(10,10,"TEST 123");
             
@@ -500,14 +506,14 @@ public class LineChartTest {
 		    master_canvas.setSize(size.getHeight() , size.getWidth());
 		    master_canvas.clearCanvas();
 	            master_canvas.refresh();
-		    lineChartDemo.resize(master_canvas, master_canvas);
+		    lineChartDemo.resize(master_canvas);
 
 		}
 	    });
 	    
 	    // Set styles
 	    Consumer<String> resizeChartOnStyle = (styleOnHotKey) -> {
-	            Rectangle newBpunds = makeBoundsFromStyle(styleOnHotKey, master_canvas);
+	            Rectangle newBounds = makeBoundsFromStyle(styleOnHotKey, master_canvas);
 	            
 	            Position lc_Pos = bounds.centered(lineChartDemo.lc, Position.ZERO);
 	            Rectangle rectToRemove = new Rectangle.Simple(lineChartDemo.lc);
@@ -517,7 +523,7 @@ public class LineChartTest {
 	            
 	            
 	            master_canvas.clearCanvas();
-	            lineChartDemo.resize(newBpunds, master_canvas);
+	            lineChartDemo.resize(newBounds);
 	    };
 	    
 	    eventBus.addEventHandler( new KeyInputEventHandler(new KeyStroke('s'), new EventHandler() {

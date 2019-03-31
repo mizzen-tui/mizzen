@@ -185,7 +185,7 @@ public class GridBrailleTest {
 		    master_canvas.setSize(size.getHeight() , size.getWidth() ); 
 		    master_canvas.clearCanvas();
 		    //master_canvas.refresh();
-		    brailleDemo.resize(master_canvas, master_canvas);
+		    brailleDemo.resize(master_canvas);
 		    eventBus.enableIdleEvents();
 		}
 	    });
@@ -199,7 +199,7 @@ public class GridBrailleTest {
 	TextComponent tc;
 	Runnable drawIt;
 
-	public void resize(Dimension size, IScreenLineSegmentsBuffer.Provider segmentsBufferProvider) {
+	public void resize(Dimension size) {
 	    
 	    brailleComponent.setBounds(size.getHeight() - 4, size.getWidth() - 4);
 

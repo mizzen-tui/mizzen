@@ -4,9 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.function.Predicate;
 
-import dtb.terminalIO.events.keyboard.KeyEvent;
-import dtb.terminalIO.events.keyboard.Keys;
-
 /**
  * 
  * A ChainedEventHandler maintains a list of EventHandler objects - and more specifically
