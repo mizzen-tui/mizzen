@@ -13,10 +13,9 @@ import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegment;
-import dtb.terminalIO.traverse.HasChildren;
 
 public class Composite extends AbstractComponent<Composite> 
-      implements Rectangle, HasTitleAndBorder<Composite>, CanResize, HasChildren<Component<?>>  {
+      implements Rectangle, HasTitleAndBorder<Composite>, CanResize, ParentContainer  {
 
     private SimpleBorder border;
     protected boolean boundsFixed = false;
@@ -516,6 +515,17 @@ public class Composite extends AbstractComponent<Composite>
 
     }
 
+    public Position getPositionRelativeToParent(Component<?> child) {
+        if (this.hasBorder()) {
+            if (child == this.border) {
+                return Position.ZERO;
+            }
+            return findChildOrFail(child,"getPositionRelativeToParent").offset.offsetAdd(1,1);
+        }
+        return findChildOrFail(child,"getPositionRelativeToParent").offset;
+    }
+    
+    
     @Override
     protected Rectangle getRectangleForClearAndFill() {
 	return bounds;

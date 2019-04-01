@@ -37,7 +37,9 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
                                                      }
                                                  };
 
-    private Component<? extends HasChildren<Component<?>>> parentContainer;
+    private ParentContainer parentContainer;
+    
+    private Position canvasOffset;
                                                  
     protected IScreenLineSegmentsBuffer createSegmentsBuffer() {
         IScreenLineSegmentsBuffer segmentsBuffer   = new ScreenLineSegmentsBuffer() {
@@ -49,7 +51,7 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
         return segmentsBuffer;
     }
 
-    public BoundedComponent(Color color, Rectangle r, Component<? extends HasChildren<Component<?>>> parentContainer) {
+    public BoundedComponent(Color color, Rectangle r, ParentContainer parentContainer) {
         super(new Rectangle.Simple(r));
         this.setColor(color);
         this.setParentContainer(parentContainer);
@@ -57,10 +59,10 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
 
     
     public BoundedComponent(Color color, Rectangle r) {
-        this(color, r, null);
+        this(color, r, (ParentContainer)null);
     }
 
-    public BoundedComponent(Color color, Position p, Dimension d, Component<? extends HasChildren<Component<?>>> parentContainer) {
+    public BoundedComponent(Color color, Position p, Dimension d, ParentContainer parentContainer) {
         this(color, new Rectangle.Simple(p, d), parentContainer);
     }
 
@@ -69,12 +71,12 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
     }
     
 
-    public BoundedComponent(Color color, Dimension d, Component<? extends HasChildren<Component<?>>> parentContainer) {
+    public BoundedComponent(Color color, Dimension d, ParentContainer parentContainer) {
         this(color, new Rectangle.Simple(d), parentContainer);
     }
 
     public BoundedComponent(Color color, Dimension d) {
-        this(color, d, null);
+        this(color, d, (ParentContainer)null);
     }
 
     public void resize(Dimension d) {
@@ -169,11 +171,11 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
 
     
     @Override
-    public void setParentContainer(Component<? extends HasChildren<Component<?>>> parentContainer) {
+    public void setParentContainer(ParentContainer parentContainer) {
         this.parentContainer = parentContainer;
     }
     
-    public Component<? extends HasChildren<Component<?>>> getParentContainer() {
+    public ParentContainer getParentContainer() {
         return this.parentContainer;
     }
     
@@ -187,8 +189,8 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
     @SuppressWarnings("unchecked")
     protected <T extends BoundedComponent<?>> T makeChildComponent(Supplier<T> createComponent) {
        T component = createComponent.get();
-       if (this instanceof HasChildren) {
-           component.setParentContainer( (Component<? extends HasChildren<Component<?>>>) this);
+       if (this instanceof ParentContainer) {
+           component.setParentContainer( (ParentContainer) this);
        }
        component.setBlockChars(this.getBlockChars());
 
@@ -197,7 +199,16 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
        component.getFillOnClearPolicy().setFillOnClear(this.getFillOnClearPolicy().isFillOnClear());
        return component;
     }
-
+    
+    @Override
+    public Position getCanvasOffset() {
+        return this.canvasOffset;
+    }
+    
+    @Override
+    public void setCanvasOffset(Position canvasOffset) {
+        this.canvasOffset = canvasOffset;
+    }
 
     public static class DONOTHING extends BoundedComponent<DONOTHING> {
 
@@ -217,6 +228,7 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
         protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
             // do nothing
         }
+
     }
 
 }

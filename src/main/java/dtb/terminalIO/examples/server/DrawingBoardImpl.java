@@ -13,6 +13,7 @@ import dtb.terminalIO.components.CanvasComponent;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.HasTitleAndBorder;
+import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
@@ -41,7 +42,9 @@ public class DrawingBoardImpl implements DrawingBoard {
 
         Composite componentManager;
         Map<String,Component<?>> nameComponentMap;
-        private Component<? extends HasChildren<Component<?>>> parentContainer;
+        private ParentContainer parentContainer;
+        private Position canvasOffset;
+
         
         protected CompositeWithNamedComponents(Color color) {
             componentManager = new Composite(color);
@@ -71,12 +74,22 @@ public class DrawingBoardImpl implements DrawingBoard {
         }
         
         @Override
-        public void setParentContainer(Component<? extends HasChildren<Component<?>>> parentContainer) {
+        public void setParentContainer(ParentContainer parentContainer) {
             this.parentContainer = parentContainer;
         }
         
-        public Component<? extends HasChildren<Component<?>>> getParentContainer() {
+        public ParentContainer getParentContainer() {
             return this.parentContainer;
+        }
+        
+        @Override
+        public Position getCanvasOffset() {
+            return this.canvasOffset;
+        }
+        
+        @Override
+        public void setCanvasOffset(Position canvasOffset) {
+            this.canvasOffset = canvasOffset;
         }
         
         

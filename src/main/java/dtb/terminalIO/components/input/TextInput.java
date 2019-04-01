@@ -7,6 +7,7 @@ import java.util.function.Supplier;
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.FocusSetterToHiliteAction;
+import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
@@ -24,9 +25,8 @@ import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
-import dtb.terminalIO.traverse.HasChildren;
 
-public class TextInput extends BoundedComponent<TextInput> implements HasValue<String>, HasChildren<Component<?>> /* , AsFocusable.ToFocusable */ {
+public class TextInput extends BoundedComponent<TextInput> implements HasValue<String>, ParentContainer /*, Focusable */ {
 
     private TextComponent textRenderer;
     private StringBuffer  buffer;
@@ -94,6 +94,16 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
         segments.merge(this.textRenderer.getSegmentsBuffer());
     }
 
+    
+    @Override
+    public Position getPositionRelativeToParent(Component<?> child) {
+        if (child == this.textRenderer) {
+            return Position.ZERO;
+        }
+        return null;
+    }
+    
+    
     public void setText(String text) {
         if (text == null) {
             text = "";
@@ -208,7 +218,7 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
         }
     }
 
-    public KeyInputEventHandler asEventHandler() {
+    private KeyInputEventHandler asEventHandler() {
 
         ChainedEventHandler chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
 
@@ -264,8 +274,30 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
 
     }
 
+    
+    public static  Position thePOSITION;
+    
+    private void requestShowCursor(EventBus eventBus) {
+        // todo - need manage a textinput caret (pos) -- not just append
+
+        // calc where cursor should be relative to text component + its caret position
+
+        Position cursorPos = new Position.Simple(thePOSITION).offsetAdd(caret);
+
+        cursorPos = Component.UTIL.getCanvasOffsetFor(TextInput.this).offsetAdd(caret);
+        
+        eventBus.addEvent(new RequestShowCursorEvent(TextInput.this, cursorPos));
+    }
+
+    private void requestHideCursor(EventBus eventBus) {
+        eventBus.addEvent(new RequestHideCursorEvent(TextInput.this));
+    }
+    
+    
     public Focusable asFocusable(Position position) {
 
+        thePOSITION = position;
+        
         return new AsFocusable(this) {
 
             KeyInputEventHandler keyEventHandler = TextInput.this.asEventHandler();
@@ -289,19 +321,6 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
                 this.component.setColor(colorHiliter.asColor());
             }
 
-            private void requestShowCursor(EventBus eventBus) {
-                // todo - need manage a textinput caret (pos) -- not just append
-
-                // calc where cursor should be relative to text component + its caret position
-
-                Position cursorPos = new Position.Simple(position).offsetAdd(caret);
-
-                eventBus.addEvent(new RequestShowCursorEvent(TextInput.this, cursorPos));
-            }
-
-            private void requestHideCursor(EventBus eventBus) {
-                eventBus.addEvent(new RequestHideCursorEvent(TextInput.this));
-            }
 
             @Override
             public EventHandler canHandle(TerminalEvent<?> te) {

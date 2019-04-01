@@ -14,7 +14,7 @@ import dtb.terminalIO.traverse.HasChildren;
 public class CharComponent extends BoundedComponent<CharComponent> {
     char ch;
     
-    public CharComponent(Color color, char ch, Component<? extends HasChildren<Component<?>>> parentContainer) {
+    public CharComponent(Color color, char ch, ParentContainer parentContainer) {
         super(color, new Dimension.Simple(1,1), parentContainer);
         this.ch = ch;
     }
@@ -24,7 +24,7 @@ public class CharComponent extends BoundedComponent<CharComponent> {
         this.ch = ch;
     }
 
-    public CharComponent(Color color, int row, int col, char ch, Component<? extends HasChildren<Component<?>>> parentContainer) {
+    public CharComponent(Color color, int row, int col, char ch, ParentContainer parentContainer) {
         super(color, new Rectangle.Simple(row, col, 1,1), parentContainer);
         this.ch = ch;
     }

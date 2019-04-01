@@ -207,6 +207,8 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
 
     public synchronized void addComponentSegments(Position offset, Component<?> component) {
         Rectangle bounds = this.asRectangle();
+        
+        component.setCanvasOffset(offset);
 
         ScreenLineSegment.UTIL.addSegmentsWithOffsetBounded(offset, bounds, 
                                                            this.getSegmentsBuffer().getSegments(),

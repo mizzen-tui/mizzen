@@ -8,7 +8,6 @@ import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
-import dtb.terminalIO.traverse.HasChildren;
 
 /**
  * A component that draws a border with an optional title
@@ -18,7 +17,7 @@ import dtb.terminalIO.traverse.HasChildren;
  * Used by other components to draw borders around themselves
  *
  */
-public class SimpleBorder extends BoundedComponent<SimpleBorder> implements HasTitleAndBorder<SimpleBorder> , HasChildren<Component<?>> {
+public class SimpleBorder extends BoundedComponent<SimpleBorder> implements HasTitleAndBorder<SimpleBorder> , ParentContainer {
 
     private RectangleComponent border;
     private String title = null;
@@ -55,6 +54,15 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder> implements HasT
 	this.border.resize(d);
     }
    
+    
+    @Override
+    public Position getPositionRelativeToParent(Component<?> child) {
+        if (child == this.border) {
+            return Position.ZERO;
+        }
+        return null;
+    }
+    
     
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {

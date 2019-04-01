@@ -5,10 +5,10 @@ import java.util.Collections;
 
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
-import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.Focusable;
 import dtb.terminalIO.events.TerminalEvent;
@@ -17,10 +17,9 @@ import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
-import dtb.terminalIO.traverse.HasChildren;
 import dtb.terminalIO.util.StringUtils;
 
-public class CheckBoxInput extends BoundedComponent<CheckBoxInput> implements HasValue<Boolean>, HasChildren<Component<?>>, AsFocusable.ToFocusable   {
+public class CheckBoxInput extends BoundedComponent<CheckBoxInput> implements HasValue<Boolean>, ParentContainer, AsFocusable.ToFocusable   {
 
     private TextComponent textRenderer;
     
@@ -98,7 +97,15 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput> implements Ha
         return this;
     }
     
-
+    @Override
+    public Position getPositionRelativeToParent(Component<?> child) {
+        if (child == this.textRenderer) {
+            return Position.ZERO;
+        }
+        return null;
+    }
+    
+    
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
         this.textRenderer.setText(buildRenderText());

@@ -7,6 +7,7 @@ import dtb.terminalIO.components.BlockChars;
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.Composite;
+import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
@@ -45,7 +46,7 @@ public class TabPanel extends Composite {
     class TabWorkAreaComponent extends BoundedComponent<TabWorkAreaComponent> {
 
         TabWorkAreaComponent(Rectangle r) {
-            super(FGBGColors.NO_COLOR_SPECIFIED, r, TabPanel.this);
+            super(FGBGColors.NO_COLOR_SPECIFIED, r, (ParentContainer)TabPanel.this);
         }
 
         TabWorkAreaComponent(dtb.terminalIO.geom.Position position, Dimension dimension) {

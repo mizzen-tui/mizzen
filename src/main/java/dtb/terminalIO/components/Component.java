@@ -3,10 +3,10 @@ package dtb.terminalIO.components;
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegmentsBuffer;
-import dtb.terminalIO.traverse.HasChildren;
 
 
 /**
@@ -32,9 +32,9 @@ public interface Component<T extends Component<?>> extends IScreenLineSegmentsBu
 
     void markAsDirty();
     
-    void setParentContainer(Component<? extends HasChildren<Component<?>>> composite);
+    void setParentContainer(ParentContainer composite);
     
-    Component<? extends HasChildren<Component<?>>> getParentContainer();
+    ParentContainer getParentContainer();
 
     
     public static abstract class AbstractComponent<T extends AbstractComponent<?>> implements Component<T> {
@@ -45,28 +45,27 @@ public interface Component<T extends Component<?>> extends IScreenLineSegmentsBu
 
         BlockChars                        blockChars = BlockChars.DEFAULT;
         
-        Component<? extends HasChildren<Component<?>>> parentContainer;
+        ParentContainer parentContainer;
 
         FillOnClearPolicy.AbstractImpl    fillPolicy = new FillOnClearPolicy.AbstractImpl(this) {
-
                                                          @Override
                                                          public Rectangle getRectangleForClearAndFill() {
                                                              return AbstractComponent.this
                                                                      .getRectangleForClearAndFill();
                                                          }
-
                                                          @Override
                                                          public IScreenLineSegmentsBuffer getSegmentsBuffer() {
                                                              return AbstractComponent.this.segments;
                                                          }
-
                                                      };
+
+        boolean hasDrawn = false;
+
+        private Position canvasOffset;
 
         protected AbstractComponent(Color color) {
             this.color = color == null? FGBGColors.NO_COLOR_SPECIFIED : color ;
         }
-
-        boolean hasDrawn = false;
 
         protected void clearBeforeDraw() {
             clear();
@@ -156,18 +155,32 @@ public interface Component<T extends Component<?>> extends IScreenLineSegmentsBu
             this.fillPolicy.setFillOnClear(fillOnClear);
         }
 
+        @Override
+        public Position getCanvasOffset() {
+            return this.canvasOffset;
+        }
+        
+        @Override
+        public void setCanvasOffset(Position canvasOffset) {
+            this.canvasOffset = canvasOffset;
+        }
+        
+        
         abstract protected Rectangle getRectangleForClearAndFill();
 
         @Override
-        public void setParentContainer(Component<? extends HasChildren<Component<?>>> parentContainer) {
+        public void setParentContainer(ParentContainer parentContainer) {
             this.parentContainer = parentContainer;
         }
         
-        public Component<? extends HasChildren<Component<?>>> getParentContainer() {
+        public ParentContainer getParentContainer() {
             return this.parentContainer;
         }
         
     }
+
+    Position getCanvasOffset();
+    void setCanvasOffset(Position canvasOffset);
 
     public static class UTIL {
         
@@ -186,7 +199,34 @@ public interface Component<T extends Component<?>> extends IScreenLineSegmentsBu
             return false;
             
         }
+        
+        
+        public static Position getCanvasOffsetFor(Component<?> component) {
+            
+            Position canvasOffset = component.getCanvasOffset();
+            
+            if (canvasOffset != null) {
+                return  new Position.Simple(canvasOffset).offsetAdd(component.getPostion_TopLeft());
+            }
+            
+            ParentContainer parentContainer = component.getParentContainer();
+            
+            if (parentContainer != null && parentContainer instanceof Component<?>) {
+                Position parentCanvasOffset = getCanvasOffsetFor((Component<?>)parentContainer);
+                if ( parentCanvasOffset == null) {
+                    return null;
+                }
+                
+                Position newOffset = new Position.Simple(parentCanvasOffset).offsetAdd(parentContainer.getPositionRelativeToParent(component)).offsetAdd(component.getPostion_TopLeft());   
+                return newOffset;
+            }
+            
+            return null;
+        }
+        
+        
     }
+
 
 
 }

@@ -152,6 +152,11 @@ public class LineTrackingCLIEmmitter implements CLIEmitter {
 	print(s + "\n");
     }
 
+    /**
+     * moves the cursor to showCursorPosition
+     * relative to the start position of this LineTrackingCLIEmitter
+     * @param showCursorPosition
+     */
     public void showCursorAt(Position showCursorPosition) {
         int currentLineCounter = lineCounter;
         Position curPos = new Position.Simple(currentLineCounter,0); 

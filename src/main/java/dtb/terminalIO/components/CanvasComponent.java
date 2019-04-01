@@ -3,11 +3,9 @@ package dtb.terminalIO.components;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.CanvasBackend;
-import dtb.terminalIO.core.CanvasBackend.NullCanvasBackEnd;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
-import dtb.terminalIO.traverse.HasChildren;
 
 /**
  * A component that wraps an internal canvas.
@@ -18,7 +16,10 @@ public class CanvasComponent implements Component<CanvasComponent>, CanResize {
     Position pos;
     
     CanvasBackend backend;
-    private Component<? extends HasChildren<Component<?>>> parentContainer;
+    private ParentContainer parentContainer;
+    
+    private Position canvasOffset;
+    
     
     public CanvasComponent() {
         this.backend = new CanvasBackend.NullCanvasBackEnd();
@@ -32,13 +33,25 @@ public class CanvasComponent implements Component<CanvasComponent>, CanResize {
     }
 
     @Override
-    public void setParentContainer(Component<? extends HasChildren<Component<?>>> parentContainer) {
+    public void setParentContainer(ParentContainer parentContainer) {
         this.parentContainer = parentContainer;
     }
     
-    public Component<? extends HasChildren<Component<?>>> getParentContainer() {
+    public ParentContainer getParentContainer() {
         return this.parentContainer;
     }
+    
+    
+    @Override
+    public Position getCanvasOffset() {
+        return this.canvasOffset;
+    }
+    
+    @Override
+    public void setCanvasOffset(Position canvasOffset) {
+        this.canvasOffset = canvasOffset;
+    }
+    
     
     public void setSize(int height, int width) {
         this.resize( new Dimension.Simple(height,width)  );

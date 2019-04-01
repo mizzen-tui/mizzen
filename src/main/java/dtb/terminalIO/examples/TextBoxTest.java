@@ -40,6 +40,8 @@ public class TextBoxTest {
         
         master_canvas.t("Some text");
         
+        master_canvas.refresh();
+        
         TextInput ti = new TextInput(10);
         
         Position p_1 = new Position.Simple(5,10);
@@ -85,7 +87,12 @@ public class TextBoxTest {
             
             master_canvas.clearCanvas();
             
+            master_canvas.t(1,1,String.valueOf(p_1));
+            
             master_canvas.addComponentSegments(p_1,ti);
+            
+            master_canvas.t(2,1,String.valueOf(Component.UTIL.getCanvasOffsetFor(ti)) );
+            
             master_canvas.addComponentSegments(p_2,ti_2);
             master_canvas.addComponentSegments(p_5,cb_1);
             master_canvas.addComponentSegments(p_6,b_1);
@@ -212,7 +219,6 @@ public class TextBoxTest {
             }
             
         });
-        
         
 
         screen.add(ControlCode.SHOW_CURSOR);

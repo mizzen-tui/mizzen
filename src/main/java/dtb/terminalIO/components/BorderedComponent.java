@@ -9,7 +9,6 @@ import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
-import dtb.terminalIO.traverse.HasChildren;
 
 // todo dropshadow component
 
@@ -18,14 +17,14 @@ import dtb.terminalIO.traverse.HasChildren;
  * render its contents
  */
 public class BorderedComponent extends BoundedComponent<BorderedComponent> 
-        implements Rectangle, HasTitleAndBorder<BorderedComponent>, CanResize, HasChildren<Component<?>> {
+        implements Rectangle, HasTitleAndBorder<BorderedComponent>, CanResize, ParentContainer {
 
     private SimpleBorder      border;
     private Component<?>      component;
     private Position          componentPosition;
     private boolean           showBorder;
     
-    public BorderedComponent(Color color, Component<?> component,  Component<? extends HasChildren<Component<?>>> parentContainer) {
+    public BorderedComponent(Color color, Component<?> component,  ParentContainer parentContainer) {
         super(color, Rectangle.ZERO, parentContainer);
         this.component = component;
         this.component.setParentContainer(this);
@@ -40,20 +39,29 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
         this.setRectangle( bounds );
     }
     
+    @Override
+    public Position getPositionRelativeToParent(Component<?> child) {
+        if (child == this.border) {
+                return Position.ZERO;
+        }
+        return componentPosition;
+    }
+    
+    
     public BorderedComponent(Color color, Component<?> component) {
-        this(color, component, null);
+        this(color, component, (ParentContainer)null);
     }
 
-    public BorderedComponent(Component<?> component, Component<? extends HasChildren<Component<?>>> parentContainer) {
+    public BorderedComponent(Component<?> component, ParentContainer parentContainer) {
         this(component.getColor(), component, parentContainer);
     }
     
 
     public BorderedComponent(Component<?> component) {
-        this(component, null);
+        this(component, (ParentContainer)null);
     }
     
-    public BorderedComponent(String text, Component<? extends HasChildren<Component<?>>> parentContainer) {
+    public BorderedComponent(String text, ParentContainer parentContainer) {
         this(new TextComponent(text), parentContainer);
     }
 
