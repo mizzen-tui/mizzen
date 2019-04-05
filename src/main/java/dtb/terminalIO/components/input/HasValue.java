@@ -80,7 +80,7 @@ public interface HasValue<V> {
         
         @SuppressWarnings("unchecked")
         @Override
-        final public void handle(TerminalEvent<?> te) {
+        public void handle(TerminalEvent<?> te) {
             valueChanged((HasValue<V>)te.getEventData());
         }
 

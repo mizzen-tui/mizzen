@@ -38,23 +38,8 @@ public interface Focusable extends ConditionalEventHandler {
             delegate.setFocus(focus, eventBus);
         }
     
-//        @Override
-//        public Position getPosition() {
-//            return delegate.getPosition();
-//        }
-//
-        
     }
 
 
-//    class FocusableComparator implements Comparator<Focusable> {
-//        @Override
-//        public int compare(Focusable f1, Focusable f2) {
-//            if (f1 == f2)
-//                return 0;
-//            return Position.UTIL.POS_COMPARE.compare(f1.getPosition(), f2.getPosition());
-//        }
-//    }
-    
     
 }

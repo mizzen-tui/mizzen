@@ -327,7 +327,7 @@ public class DrawingBoardImpl implements DrawingBoard {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
                 //String line = null;
                 
-                reader.lines().forEach( (line) -> { System.out.println("OUTSIDE " + line); new OnIdleEventEventHandler.OneTime((e)-> {System.out.println("INSIDE " + line);appendText(name, newLine + line);}, eventBus);}  );
+                reader.lines().forEach( (line) -> { System.out.println("OUTSIDE " + line); new OnIdleEventEventHandler.OneTime((e)-> {System.out.println("INSIDE " + line);appendText(name, newLine + line);});}  );
                 
 //                
 //                while ( (line = reader.readLine()) != null) {

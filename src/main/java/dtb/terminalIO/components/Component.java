@@ -209,6 +209,8 @@ public interface Component<T extends Component<?>> extends IScreenLineSegmentsBu
                 return  new Position.Simple(canvasOffset).offsetAdd(component.getPostion_TopLeft());
             }
             
+            // we don't have an offset, so travel up component's ancestors and calculate it
+            
             ParentContainer parentContainer = component.getParentContainer();
             
             if (parentContainer != null && parentContainer instanceof Component<?>) {

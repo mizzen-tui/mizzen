@@ -18,13 +18,14 @@ import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.Focusable;
+import dtb.terminalIO.events.ToFocusable;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 
-public class ListBox<T> extends Composite  implements HasValue<T>, AsFocusable.ToFocusable {
+public class ListBox<T> extends Composite  implements HasValue<T>, ToFocusable {
     
     List<ListItem> items = new ArrayList<ListItem>();
     VerticalPanel itemsContainer;
@@ -456,7 +457,7 @@ public class ListBox<T> extends Composite  implements HasValue<T>, AsFocusable.T
                             }
                         }));
         
-        return new AsFocusable.Simple(this, chainedHandler.asConditionalEventHandler()) {
+        return new DefaultFocusableBehaviour.Simple(this, chainedHandler.asConditionalEventHandler()) {
 
             
             @Override

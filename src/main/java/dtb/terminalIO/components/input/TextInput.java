@@ -6,7 +6,6 @@ import java.util.function.Supplier;
 
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.components.FocusSetterToHiliteAction;
 import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
@@ -16,6 +15,7 @@ import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.Focusable;
+import dtb.terminalIO.events.RequestFocusEvent;
 import dtb.terminalIO.events.RequestHideCursorEvent;
 import dtb.terminalIO.events.RequestShowCursorEvent;
 import dtb.terminalIO.events.TerminalEvent;
@@ -26,13 +26,15 @@ import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 
-public class TextInput extends BoundedComponent<TextInput> implements HasValue<String>, ParentContainer /*, Focusable */ {
+public class TextInput extends BoundedComponent<TextInput> implements HasValue<String>, ParentContainer, ConditionalEventHandler , Focusable  {
 
     private TextComponent textRenderer;
     private StringBuffer  buffer;
     private Position      viewOffset  = Position.ZERO;
     private Position      caret       = Position.ZERO;
     private int           maxTextWidth;
+    ConditionalEventHandler eventHandler;
+    Focusable               focusable;
 
     private boolean       modeOverite = false;        // true means insertMode
 
@@ -151,7 +153,7 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
         caretOffsetAdd(new Position.Simple(row, col));
     }
 
-    // needs lots 'o work! get on it
+    // TODO: needs lots 'o work! Get on it!!
     private boolean addCharAtCaret(char ch) {
         String currentText = getText();
         if (modeOverite) {
@@ -218,7 +220,39 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
         }
     }
 
-    private KeyInputEventHandler asEventHandler() {
+    @Override
+    public void handle(TerminalEvent<?> te) {
+        getEventHandler().handle(te);
+        requestShowCursor(te.getEventBus());
+    }
+
+    @Override
+    public EventHandler canHandle(TerminalEvent<?> te) {
+        if (getEventHandler().canHandle(te) == null) {
+            return null;
+        }
+        return this;
+    }
+    
+    @Override
+    public void setFocus(boolean focus, EventBus eventBus) {
+        asFocusable().setFocus(focus, eventBus);
+    }
+
+    @Override
+    public boolean hasFocus() {
+        return asFocusable().hasFocus();
+    }
+    
+    
+    private ConditionalEventHandler getEventHandler() {
+        if ( this.eventHandler == null) {
+            this.eventHandler = buildEventHandler();
+        }
+        return this.eventHandler;
+    }
+    
+    private KeyInputEventHandler buildEventHandler() {
 
         ChainedEventHandler chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
 
@@ -275,16 +309,12 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
     }
 
     
-    public static  Position thePOSITION;
-    
     private void requestShowCursor(EventBus eventBus) {
         // todo - need manage a textinput caret (pos) -- not just append
 
         // calc where cursor should be relative to text component + its caret position
 
-        Position cursorPos = new Position.Simple(thePOSITION).offsetAdd(caret);
-
-        cursorPos = Component.UTIL.getCanvasOffsetFor(TextInput.this).offsetAdd(caret);
+        Position cursorPos = Component.UTIL.getCanvasOffsetFor(TextInput.this).offsetAdd(caret);
         
         eventBus.addEvent(new RequestShowCursorEvent(TextInput.this, cursorPos));
     }
@@ -294,43 +324,21 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
     }
     
     
-    public Focusable asFocusable(Position position) {
-
-        thePOSITION = position;
-        
-        return new AsFocusable(this) {
-
-            KeyInputEventHandler keyEventHandler = TextInput.this.asEventHandler();
-
-            @Override
-            public void handle(TerminalEvent<?> te) {
-                keyEventHandler.handle(te);
-                requestShowCursor(te.getEventBus()); // todo: This might be expensive to showcursor even if key is ignored
-            }
-
-            @Override
-            public void setFocus(boolean focus, EventBus eventBus) {
-                super.setFocus(focus, eventBus);
-                if (focus) {
-                    requestShowCursor(eventBus);
-                } else {
-                    requestHideCursor(eventBus);
+    private Focusable asFocusable() {
+        if (focusable == null) {
+            this.focusable = new DefaultFocusableBehaviour.Simple(this) {
+                @Override
+                public void setFocus(boolean focus, EventBus eventBus) {
+                    super.setFocus(focus, eventBus);
+                    if (focus) {
+                        requestShowCursor(eventBus);
+                    } else {
+                        requestHideCursor(eventBus);
+                    }
                 }
-                this.hasFocus = focus;
-                new FocusSetterToHiliteAction().hiliteAction(this, colorHiliter);
-                this.component.setColor(colorHiliter.asColor());
-            }
-
-
-            @Override
-            public EventHandler canHandle(TerminalEvent<?> te) {
-                if (keyEventHandler.canHandle(te) == null) {
-                    return null;
-                }
-                return this;
-            }
-        };
-
+            };
+        }
+        return focusable;
     }
 
     @Override
@@ -338,4 +346,20 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
         return Collections.singleton(this.textRenderer);
     }
 
+    public void requestFocus(TerminalEvent<?> te) {
+        te.getEventBus().addEvent( new RequestFocusEvent(this) );
+    }
+    
+    public void requestFocus(EventBus eventBus) {
+        eventBus.addEvent( new RequestFocusEvent(this) );
+    }
+
+    @Override
+    public String toString() {
+        return "TextInput [buffer=" + buffer.toString() + "]" + "[row=" + getRow() + ", lcol" + getCol() + ", rcol=" + getRightMostCol() + " width="
+                + getWidth() + ", height=" + getHeight() + "]" ;
+    }
+
+    
+    
 }

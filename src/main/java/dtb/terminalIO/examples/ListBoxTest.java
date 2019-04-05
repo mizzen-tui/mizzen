@@ -181,7 +181,7 @@ public class ListBoxTest {
        fm.addFocusable( lb2.asFocusable(), eventBus  );
        
        
-       eventBus.addEventHandler(fm.asEventHandler());
+       eventBus.addEventHandler(fm);
        
     }
     

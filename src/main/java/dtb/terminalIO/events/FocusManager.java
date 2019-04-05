@@ -1,18 +1,23 @@
 package dtb.terminalIO.events;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import dtb.terminalIO.events.ConditionalEventHandler.AsAConditionalEventHandler;
+import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.input.DefaultFocusableBehaviour;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.events.keyboard.KeyEvent;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
+import dtb.terminalIO.traverse.FindPathToTarget;
+import dtb.terminalIO.traverse.HasChildren;
+import dtb.terminalIO.traverse.Traverser;
 
-public class FocusManager implements AsAConditionalEventHandler {
+public class FocusManager implements ConditionalEventHandler, Focusable, HasChildren<Focusable> {
 
     private List<Focusable> eventConsumers;
     private Focusable current;
@@ -21,6 +26,9 @@ public class FocusManager implements AsAConditionalEventHandler {
     private KeyStroke nextKeyStroke = Keys.DOWN_KEYSTROKE;
     private Consumer<Focusable> onFocusChanged;
     
+    ConditionalEventHandler meAsEventHandler;
+    Focusable               meAsFocusable;
+
     public FocusManager() {
         eventConsumers = new ArrayList<Focusable>();
     }
@@ -91,8 +99,123 @@ public class FocusManager implements AsAConditionalEventHandler {
         return eventConsumers.get(index + 1);
     }
     
+    
 
-    public ConditionalEventHandler asEventHandler() {
+    @Override
+    public void handle(TerminalEvent<?> te) {
+        getEventHandler().handle(te);
+    }
+
+    @Override
+    public EventHandler canHandle(TerminalEvent<?> te) {
+        if (getEventHandler().canHandle(te) == null) {
+            return null;
+        }
+        return this;
+    }    
+    
+    private ConditionalEventHandler getEventHandler() {
+        if ( this.meAsEventHandler == null) {
+            this.meAsEventHandler = buildEventHandler();
+        }
+        return this.meAsEventHandler;
+    }
+    
+
+    
+    private ConditionalEventHandler buildEventHandler() {
+        
+        ChainedEventHandler chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
+        
+        chainedEventHandler.addEventHandler(buildRequestFocusEventHandler());
+        chainedEventHandler.addEventHandler(buildKeyStrokeEventHandler());
+        
+        return chainedEventHandler.asConditionalEventHandler();
+    }
+    
+    /**
+     * Traverse this object and all its child objects looking for
+     * focusTarget.  
+     * 
+     * If focusTarget found,  then it returns path (a list of objects)
+     * from this this focusManager to focusTarget
+     */
+    private List<Object> findTarget(Object focusTarget) {
+        
+        List<Object> path = new FindPathToTarget<Object>().findPath(this, focusTarget);
+        
+        return path;
+    }
+
+    /**
+     * Builds a focus event handler that looks for object within this focusManager's
+     * descendant objects
+     */
+    private ConditionalEventHandler buildRequestFocusEventHandler() {
+        
+        Predicate<TerminalEvent<?>> canHandlePredicate = new Predicate<TerminalEvent<?>>() {
+
+            IS_Event_TYPE IS_REQUEST_FOCUS = new IS_Event_TYPE(TerminalEvent.TYPE.REQUEST_FOCUS);
+            
+            @Override
+            public boolean test(TerminalEvent<?> te) {
+                if ( ! IS_REQUEST_FOCUS.test(te)) {
+                    return false;
+                }
+                RequestFocusEvent fe = (RequestFocusEvent) te;
+                
+                List<Object> result = findTarget(fe.getEventData());
+                
+                // TODO: is it possible to implement a child find?
+                if (result == null) {
+                    return false;
+                }
+                // what a waste .. I'm throwing result away
+                //  to be recalc'd in the handle - oh well.
+                return true;
+            }
+        };
+            
+        return new ConditionalEventHandler.Impl(canHandlePredicate, (te) -> {
+            RequestFocusEvent fe = (RequestFocusEvent) te;
+
+            List<Object> path = findTarget(te.getSource());
+
+            if (path == null) {
+                return;
+            }
+
+            // at this point target is within our tree
+            // time to traverse the path in order to "select" (focus) it
+
+            if (!FocusManager.this.hasFocus()) {
+                // FIXME: dont know how to deal with this scenario yet
+            }
+
+            Object last = null;
+            for (Object o : path) {
+                // if (o != this) {
+                if (o instanceof Focusable) {
+
+                    if (last != null && last instanceof FocusManager) {
+                        ((FocusManager) last).setCurrent(((Focusable) o), te.getEventBus());
+                    } else {
+                        ((Focusable) o).setFocus(true, te.getEventBus());
+                    }
+                }
+
+                last = o;
+
+                // }
+            }
+        });
+
+    }
+    
+    /**
+     * Builds a keyStroke eventHandler.
+     */
+    private ConditionalEventHandler buildKeyStrokeEventHandler() {
         
         Predicate<TerminalEvent<?>> canHandlePredicate = new Predicate<TerminalEvent<?>>() {
 
@@ -100,7 +223,7 @@ public class FocusManager implements AsAConditionalEventHandler {
             
             @Override
             public boolean test(TerminalEvent<?> te) {
-                if ( ! IS_KEYPRESS.test(te) ) {
+                if ( ! IS_KEYPRESS.test(te)) {
                     return false;
                 }
                 KeyEvent ke = (KeyEvent) te;
@@ -116,7 +239,6 @@ public class FocusManager implements AsAConditionalEventHandler {
                 }
                 return false;
             }
-            
         };
         
 	return new KeyInputEventHandler(canHandlePredicate, (te) -> {
@@ -147,41 +269,62 @@ public class FocusManager implements AsAConditionalEventHandler {
 	    setCurrent(focusable, eventBus);
 	}
     }
-    
-    public Focusable asFocusable() {
-        return new Focusable() {
 
-            ConditionalEventHandler event_handler = asEventHandler();
-            
-            boolean hasFocus = false;
-            
-            @Override
-            public EventHandler canHandle(TerminalEvent<?> te) {
-                return event_handler.canHandle(te);
-            }
-            
-            @Override
-            public void handle(TerminalEvent<?> te) {
-                event_handler.handle(te);
-            }
-
-            @Override
-            public boolean hasFocus() {
-                return hasFocus;
-            }
-
-            @Override
-            public void setFocus(boolean focus, EventBus eventBus) {
-                getCurrent(eventBus).setFocus(focus, eventBus);
-                hasFocus = focus;
-            }
-
-            
-            public String toString() {
-                return "FocusManager.Focusable " + eventConsumers.size()  ;
-            }
-
-        };
+    public void addFocusable(ToFocusable focusable, EventBus eventBus) {
+        addFocusable( focusable.asFocusable(), eventBus );
     }
+    
+    
+    private Focusable getAsFocusable() {
+        
+        if (meAsFocusable == null) {
+            
+            ConditionalEventHandler event_handler = FocusManager.this;
+            
+            meAsFocusable = new DefaultFocusableBehaviour() {
+    
+                @Override
+                public void setFocus(boolean focus, EventBus eventBus) {
+                    super.setFocus(focus, eventBus);
+                    getCurrent(eventBus).setFocus(focus, eventBus);
+                }
+                
+                @Override
+                public EventHandler canHandle(TerminalEvent<?> te) {
+                    return event_handler.canHandle(te);
+                }
+    
+                @Override
+                public void handle(TerminalEvent<?> te) {
+                    event_handler.handle(te);
+                }
+                
+            };
+        }
+        return meAsFocusable;
+        
+    }
+
+    @Override
+    public Collection<? extends Focusable> getChildren() {
+        return eventConsumers;
+    }
+
+    @Override
+    public boolean hasFocus() {
+        return getAsFocusable().hasFocus();
+    }
+
+    @Override
+    public void setFocus(boolean focus, EventBus eventBus) {
+        getAsFocusable().setFocus(focus, eventBus);
+    }
+
+    @Override
+    public String toString() {
+        return "FocusManager [eventConsumers size =" + eventConsumers.size() + "]";
+    }
+    
+    
 
 }

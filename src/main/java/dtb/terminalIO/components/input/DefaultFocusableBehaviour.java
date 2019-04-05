@@ -9,22 +9,9 @@ import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.Focusable;
 import dtb.terminalIO.events.TerminalEvent;
 
-abstract class AsFocusable  implements Focusable {
+public abstract class DefaultFocusableBehaviour  implements Focusable {
      
-    public static interface ToFocusable {
-        Focusable asFocusable();
-    }
-    
-    Component<?> component;
-    
     boolean hasFocus = false;
-    
-    ColorHiliter colorHiliter;
-    
-    public AsFocusable(Component<?> component) {
-        this.component = component;
-        colorHiliter =  new ColorHiliter(this.component.getColor());
-    }
     
     @Override
     public boolean hasFocus() {
@@ -34,17 +21,41 @@ abstract class AsFocusable  implements Focusable {
     @Override
     public void setFocus(boolean focus, EventBus eventBus) {
         this.hasFocus = focus;
-        new FocusSetterToHiliteAction().hiliteAction(this, colorHiliter);
-        this.component.setColor( colorHiliter.asColor() );
     }
+    
+    
+    public static abstract class ComponentHiliterFocusableBehaviour extends DefaultFocusableBehaviour {
+        
+        Component<?> component;
+        ColorHiliter colorHiliter;
+        
+        public ComponentHiliterFocusableBehaviour(Component<?> component) {
+            super();
+            this.component = component;
+            colorHiliter =  new ColorHiliter(this.component.getColor());
+        }
 
-    public static class Simple extends AsFocusable {
+        @Override
+        public void setFocus(boolean focus, EventBus eventBus) {
+            super.setFocus(focus, eventBus);
+            new FocusSetterToHiliteAction().hiliteAction(this, colorHiliter);
+            this.component.setColor( colorHiliter.asColor() );
+        }
+    }
+    
+
+    public static class Simple extends ComponentHiliterFocusableBehaviour {
         
         private ConditionalEventHandler eventHandler;
 
         public Simple(Component<?> component, ConditionalEventHandler eventHandler) {
             super(component);
             this.eventHandler = eventHandler;
+        }
+
+        public Simple(Component<? extends ConditionalEventHandler> component) {
+            super(component);
+            this.eventHandler = (ConditionalEventHandler) component;
         }
         
         @Override

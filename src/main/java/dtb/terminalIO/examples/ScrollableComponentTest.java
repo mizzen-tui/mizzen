@@ -154,11 +154,11 @@ public class ScrollableComponentTest {
                     this.findTextInput.setEmptyColor(Finder.this.getColor().invert());
                     findTextInput.setText("test");
                     this.add(findTextInput);
-                  //  findTextInput.requestFocus();
+                    findTextInput.requestFocus(te);
                 } else { // temp
                     this.remove(findTextInput);
                     this.findTextInput = null;
-                  //  findTextInput.requestReleaseFocus();
+                    //findTextInput.requestReleaseFocus();
                 }
             }
         };
@@ -464,7 +464,7 @@ public class ScrollableComponentTest {
         
         TestsCommon.addNoGraphicsToggleEvent(eventBus, screen);
         
-        eventBus.addEventHandler(focusManager.asEventHandler());
+        eventBus.addEventHandler(focusManager);
 
         TerminalResizeDetection.initiate(screen, eventBus);
         

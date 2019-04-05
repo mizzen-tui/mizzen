@@ -14,11 +14,14 @@ import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.TerminalScreen;
+import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.FocusManager;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
+import dtb.terminalIO.events.TerminalEvent.TYPE;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyInputEventsProducer;
 import dtb.terminalIO.events.keyboard.Keys;
@@ -64,17 +67,15 @@ public class TextBoxTest {
         
         CheckBoxInput cb_1 = new CheckBoxInput();
         cb_1.setValue(false);
-        Position p_5 = new Position.Simple(10,10);
+        Position p_5 = new Position.Simple(10,10); 
         
         Button b_1 = new Button("Press Me", true);
         Position p_6 = new Position.Simple(12,10);
         
         Button b_2 = new Button("Press Too");
         Position p_7 = new Position.Simple(13,10);
-        
-        
+                
         Composite  bBar = new HorizontalPanel(Colors.BBlu);
-
         
         
         TextComponent eventDisplayer = new TextComponent("                                       ");
@@ -121,10 +122,12 @@ public class TextBoxTest {
             return;
         }
 
-        EventHandler terminate = new EventHandler() {
+        StringBuffer logger = new StringBuffer();
 
+        Runnable stopThePresses = new Runnable() {
+            
             @Override
-            public void handle(TerminalEvent<?> te) {
+            public void run() {
                 eventBus.stopConsuming();
                 screen.add(ControlCode.SHOW_CURSOR);
                 screen.refresh();
@@ -137,7 +140,29 @@ public class TextBoxTest {
                 // next refresh() is necessary to get cursor to be below
                 // rendered canvas
                 master_canvas.refresh();
+                
+                
+                System.out.println("\n\n"+logger.toString());
+                
                 return;
+            }
+        };
+        
+        
+        EventHandler terminate = new EventHandler() {
+
+            @Override
+            public void handle(TerminalEvent<?> te) {
+                stopThePresses.run();
+                if (te.getType().equals(TYPE.EXCEPTION)) {
+                    System.out.println("\n");
+                    ((Exception) te.getEventData()).printStackTrace();
+                } else {
+                    // next refresh() is necessary to get cursor to be below
+                    // rendered canvas
+                    master_canvas.refresh();
+                }
+                
             }
         };
         
@@ -146,11 +171,8 @@ public class TextBoxTest {
         eventBus.addEventHandler(master_canvas.asHideCursorEventHandler());
 
         eventBus.addEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
-
         eventBus.addEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
-        
-        //eventBus.addEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
-        
+        eventBus.addEventHandler(new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
         
         
         FocusManager focusManager = new FocusManager(Keys.TAB_KEYSTROKE);
@@ -158,28 +180,21 @@ public class TextBoxTest {
         FocusManager focusManager1 = new FocusManager();
         FocusManager focusManager2 = new FocusManager();
 
-        focusManager1.addFocusable(ti.asFocusable(p_1), eventBus);
-        focusManager1.addFocusable(ti_2.asFocusable(p_2), eventBus);
-        focusManager1.addFocusable(cb_1.asFocusable(), eventBus);
-        focusManager1.addFocusable(b_1.asFocusable(), eventBus);
-        focusManager1.addFocusable(b_2.asFocusable(), eventBus);
+        focusManager1.addFocusable(ti, eventBus);
+        focusManager1.addFocusable(ti_2, eventBus);
+        focusManager1.addFocusable(cb_1, eventBus);
+        focusManager1.addFocusable(b_1, eventBus);
+        focusManager1.addFocusable(b_2, eventBus);
         
-        focusManager2.addFocusable(ti_3.asFocusable(p_3), eventBus);
-        focusManager2.addFocusable(ti_4.asFocusable(p_4), eventBus); 
+        focusManager2.addFocusable(ti_3, eventBus);
+        focusManager2.addFocusable(ti_4, eventBus); 
         
 
-        focusManager.addFocusable(focusManager1.asFocusable(), eventBus);
-        focusManager.addFocusable(focusManager2.asFocusable(), eventBus);
+        focusManager.addFocusable(focusManager1, eventBus);
+        focusManager.addFocusable(focusManager2, eventBus);
 
         
-        eventBus.addEventHandler(focusManager.asEventHandler());
-        
-        
-        //eventBus.addEventHandler(ti.asEventHandler());
-        
-        //eventBus.addEventHandler(ti.asEventHandler());
-
-        //eventBus.addEventHandler(ti_2.asEventHandler());
+        eventBus.addEventHandler(focusManager);
         
         eventBus.addEventHandler( new OnIdleEventEventHandler.RepeatingInterval(100, (te) -> {
                                           renderComponents.run();                       
@@ -187,35 +202,36 @@ public class TextBoxTest {
         
         
         eventBus.addEventHandler( new HasValue.OnValueChangedEventHandler<String>(ti) {
-
             @Override
             public void valueChanged(HasValue<String> source) {
                 String newValue = source.getValue();
                 eventDisplayer.setText(newValue);
                 renderComponents.run();
             }
-            
         });
         
         eventBus.addEventHandler( new HasValue.OnValueChangedEventHandler<Boolean>(b_1) {
-
             @Override
             public void valueChanged(HasValue<Boolean> source) {
                 Boolean newValue = source.getValue();
                 eventDisplayer.setText("(1) Pressed = "+newValue);
                 renderComponents.run();
             }
-            
         });
         
         
         eventBus.addEventHandler( new HasValue.OnValueChangedEventHandler<Boolean>(b_2) {
-
+            public void handle(TerminalEvent<?> te) {
+                super.handle(te);
+                ti_4.requestFocus(te);
+                renderComponents.run();
+            }
+            
+            
             @Override
             public void valueChanged(HasValue<Boolean> source) {
                 Boolean newValue = source.getValue();
                 eventDisplayer.setText("(2) Pressed = "+newValue);
-                renderComponents.run();
             }
             
         });

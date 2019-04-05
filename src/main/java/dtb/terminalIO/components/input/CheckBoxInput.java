@@ -12,6 +12,7 @@ import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.Focusable;
 import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.ToFocusable;
 import dtb.terminalIO.events.keyboard.KeyEvent;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
@@ -19,7 +20,7 @@ import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.StringUtils;
 
-public class CheckBoxInput extends BoundedComponent<CheckBoxInput> implements HasValue<Boolean>, ParentContainer, AsFocusable.ToFocusable   {
+public class CheckBoxInput extends BoundedComponent<CheckBoxInput> implements HasValue<Boolean>, ParentContainer, ToFocusable   {
 
     private TextComponent textRenderer;
     
@@ -120,7 +121,7 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput> implements Ha
     
     public Focusable asFocusable() {
         
-        return new AsFocusable(this) {
+        return new DefaultFocusableBehaviour.ComponentHiliterFocusableBehaviour(this) {
 
             @Override
             public void handle(TerminalEvent<?> te) {

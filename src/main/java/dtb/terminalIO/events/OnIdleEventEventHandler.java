@@ -25,22 +25,18 @@ public class OnIdleEventEventHandler extends ConditionalEventHandler.Impl {
 
     public static class OneTime extends OnIdleEventEventHandler {
 
-	EventBus eventBus;
-
-        public OneTime(EventHandler handler, EventBus eventBus) {
+        public OneTime(EventHandler handler) {
             super(handler);
-            this.eventBus = eventBus;
         }
 
-	public OneTime(Predicate<TerminalEvent<?>> canHandlePredicate, EventHandler handler, EventBus eventBus) {
+	public OneTime(Predicate<TerminalEvent<?>> canHandlePredicate, EventHandler handler) {
 	    super(canHandlePredicate, handler);
-	    this.eventBus = eventBus;
 	}
 
 	@Override
 	public void handle(TerminalEvent<?> te) {
 	    getHandler().handle(te);
-	    this.eventBus.remove(this);
+	    te.getEventBus().remove(this);
 	}
 
     }
@@ -61,13 +57,13 @@ public class OnIdleEventEventHandler extends ConditionalEventHandler.Impl {
 
     public static class OneTimeAfterInterval extends OneTime {
 
-	public OneTimeAfterInterval(EventHandler handler, long interval, EventBus eventBus) {
-	    super(new IntervalPredicate(interval), handler, eventBus);
+	public OneTimeAfterInterval(EventHandler handler, long interval) {
+	    super(new IntervalPredicate(interval), handler);
 	}
 	@Override
 	public void handle(TerminalEvent<?> te) {
 	    getHandler().handle(te);
-	    this.eventBus.remove(this);
+	    te.getEventBus().remove(this);
 	}
     }
 

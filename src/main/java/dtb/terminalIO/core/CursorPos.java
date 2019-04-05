@@ -3,7 +3,7 @@ package dtb.terminalIO.core;
 import dtb.terminalIO.geom.Position;
 
 /**
- * Just a Position object -- do I really need it?
+ * Just a Position object -- do I really need it? I think not! delete please!!
  */
 public class CursorPos extends Position.Simple {
 

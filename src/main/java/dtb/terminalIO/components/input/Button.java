@@ -7,13 +7,14 @@ import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.Focusable;
+import dtb.terminalIO.events.ToFocusable;
 import dtb.terminalIO.events.keyboard.HasHotKey;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.util.StringUtils;
 
-public class Button extends Composite implements HasValue<Boolean>, AsFocusable.ToFocusable, HasHotKey   {
+public class Button extends Composite implements HasValue<Boolean>, ToFocusable, HasHotKey   {
 
     String buttonText;
     TextComponent renderedText;
@@ -140,7 +141,7 @@ public class Button extends Composite implements HasValue<Boolean>, AsFocusable.
         }
 
         
-        return new AsFocusable.Simple(this, chainedHandler.asConditionalEventHandler()) {
+        return new DefaultFocusableBehaviour.Simple(this, chainedHandler.asConditionalEventHandler()) {
  
             @Override
             public void setFocus(boolean focus, EventBus eventBus) {
