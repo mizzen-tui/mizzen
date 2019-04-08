@@ -126,7 +126,7 @@ public class Button extends Composite implements HasValue<Boolean>, ToFocusable,
     protected void buttonPressed(EventBus eventBus) {
         Button.this.setValue( (toggleButton? !pressed :true) );  // toggle the value
         renderedText.setText(getTextForRendering(true));
-        eventBus.addEvent(  new HasValue.ValueChangedEvent<>(Button.this) );
+        eventBus.raiseEvent(  new HasValue.ValueChangedEvent<>(Button.this) );
     }
 
     
@@ -134,10 +134,10 @@ public class Button extends Composite implements HasValue<Boolean>, ToFocusable,
         
         ChainedEventHandler chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
         
-        chainedHandler.addEventHandler(new KeyInputEventHandler(Keys.ENTER_KEYSTROKE,(te)->buttonPressed(te.getEventBus()))); 
+        chainedHandler.appendEventHandler(new KeyInputEventHandler(Keys.ENTER_KEYSTROKE,(te)->buttonPressed(te.getEventBus()))); 
 
         if (getHotKey() != null) {
-            chainedHandler.addEventHandler(new KeyInputEventHandler(getHotKey(),(te)->buttonPressed(te.getEventBus())));
+            chainedHandler.appendEventHandler(new KeyInputEventHandler(getHotKey(),(te)->buttonPressed(te.getEventBus())));
         }
 
         

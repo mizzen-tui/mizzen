@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import dtb.terminalIO.events.ConditionalEventHandler;
-import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandlerContainer;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
@@ -32,19 +31,19 @@ public interface Demo {
         Runnable flushDemoOutput;
 
         void addAndRememberEventHandler(EventHandlerContainer eventBus, ConditionalEventHandler eventHandler) {
-            eventBus.addEventHandler(eventHandler);
+            eventBus.appendEventHandler(eventHandler);
             eventHandlers.add(eventHandler);
         }
 
         public void addAllEventHandlers(EventHandlerContainer eventBus) {
             for (ConditionalEventHandler e : eventHandlers) {
-                eventBus.addEventHandler(e);
+                eventBus.appendEventHandler(e);
             }
         }
         
         void removeAllEventHandlers(EventHandlerContainer eventBus) {
             for (ConditionalEventHandler e : eventHandlers) {
-                eventBus.remove(e);
+                eventBus.removeEventHandler(e);
             }
         }
         

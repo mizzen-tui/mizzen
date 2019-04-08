@@ -193,7 +193,7 @@ public class TabPanelTest {
 
                     barChartUpdater = buildBarChartUpdaterTask(bc, tabCtx);
 
-                    tabCtx.getEventBus().addEventHandler(barChartUpdater);
+                    tabCtx.getEventBus().appendEventHandler(barChartUpdater);
 
                 }
 
@@ -201,7 +201,7 @@ public class TabPanelTest {
                 public void drawOnUnActive(TabContext tabCtx) {
 
                     if (barChartUpdater != null) {
-                        tabCtx.getEventBus().remove(barChartUpdater);
+                        tabCtx.getEventBus().removeEventHandler(barChartUpdater);
                         barChartUpdater = null;
                     }
 
@@ -236,7 +236,7 @@ public class TabPanelTest {
 
             AtomicInteger counter = new AtomicInteger(0);
 
-            eventBus.addEventHandler(new OnIdleEventEventHandler.RepeatingInterval(100, new EventHandler() {
+            eventBus.appendEventHandler(new OnIdleEventEventHandler.RepeatingInterval(100, new EventHandler() {
 
                 @Override
                 public void handle(TerminalEvent<?> te) {
@@ -258,7 +258,7 @@ public class TabPanelTest {
             
             TerminalResizeDetection.initiate(screen, eventBus);
 
-	    eventBus.addEventHandler(new OnResizeEventHandler() {
+	    eventBus.appendEventHandler(new OnResizeEventHandler() {
 		@Override
 		public void handleResize(Dimension size) {
 		    master_canvas.setSize(size.getHeight() - 1, size.getWidth() - 1); 
@@ -296,9 +296,9 @@ public class TabPanelTest {
             // translate_to_x_plotValue(this.x_leftValue),
             // translate_to_y_plotValue(this.y_bottomValue)
 
-            eventBus.addEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
-            eventBus.addEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
-            eventBus.addEventHandler(new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
+            eventBus.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
+            eventBus.appendEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
+            eventBus.appendEventHandler(new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
 
             master_canvas.refresh();
             

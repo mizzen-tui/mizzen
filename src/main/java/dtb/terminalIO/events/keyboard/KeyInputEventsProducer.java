@@ -42,7 +42,7 @@ public class KeyInputEventsProducer implements Runnable {
     InputCharsEventParser readerParser = new InputCharsEventParser();
 
     
-    /* For autonumbering KeyInputEventsProducer threads. */
+    /* For auto-numbering KeyInputEventsProducer threads. */
     private static int threadInitNumber;
     private static synchronized int nextThreadNum() {
         return threadInitNumber++;
@@ -104,7 +104,7 @@ public class KeyInputEventsProducer implements Runnable {
                     if (!idleHandled) {
                 	// no pending keyboard keys handled - lets generate a timerEvent
                         if (eventBus.isEmptyQueue()) {
-                	    eventBus.addEvent(new OnIdleEvent(this));
+                	    eventBus.raiseEvent(new OnIdleEvent(this));
                         }
                     }
                 }
@@ -117,7 +117,7 @@ public class KeyInputEventsProducer implements Runnable {
                 } else {
                     e1 = (Exception) e;
                 }
-                eventBus.addEvent(KeyInputEventsProducer.this, TYPE.EXCEPTION, e1);
+                eventBus.raiseEvent(KeyInputEventsProducer.this, TYPE.EXCEPTION, e1);
                 if (!(e instanceof Exception)) { // if not an Exception - then probably an Error - so better to get the hell out
                     throw new RuntimeException(e);
                 }

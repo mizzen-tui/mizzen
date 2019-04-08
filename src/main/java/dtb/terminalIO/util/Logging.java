@@ -10,7 +10,7 @@ public class Logging {
 
     
     public static void info(String msg) {
-        appendText(msg);
+        appendTextGOOD(msg);
     }
     
     private static void appendTextGOOD(String msg) {

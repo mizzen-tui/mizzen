@@ -127,8 +127,8 @@ public class FocusManager implements ConditionalEventHandler, Focusable, HasChil
         
         ChainedEventHandler chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
         
-        chainedEventHandler.addEventHandler(buildRequestFocusEventHandler());
-        chainedEventHandler.addEventHandler(buildKeyStrokeEventHandler());
+        chainedEventHandler.appendEventHandler(buildRequestFocusEventHandler());
+        chainedEventHandler.appendEventHandler(buildKeyStrokeEventHandler());
         
         return chainedEventHandler.asConditionalEventHandler();
     }
@@ -140,9 +140,9 @@ public class FocusManager implements ConditionalEventHandler, Focusable, HasChil
      * If focusTarget found,  then it returns path (a list of objects)
      * from this this focusManager to focusTarget
      */
-    private List<Object> findTarget(Object focusTarget) {
+    private List<Focusable> findTarget(Focusable focusTarget) {
         
-        List<Object> path = new FindPathToTarget<Object>().findPath(this, focusTarget);
+        List<Focusable> path = new FindPathToTarget<Focusable>().findPath(this, focusTarget);
         
         return path;
     }
@@ -164,7 +164,7 @@ public class FocusManager implements ConditionalEventHandler, Focusable, HasChil
                 }
                 RequestFocusEvent fe = (RequestFocusEvent) te;
                 
-                List<Object> result = findTarget(fe.getEventData());
+                List<Focusable> result = findTarget(fe.getEventData());
                 
                 // TODO: is it possible to implement a child find?
                 if (result == null) {
@@ -179,7 +179,9 @@ public class FocusManager implements ConditionalEventHandler, Focusable, HasChil
         return new ConditionalEventHandler.Impl(canHandlePredicate, (te) -> {
             RequestFocusEvent fe = (RequestFocusEvent) te;
 
-            List<Object> path = findTarget(te.getSource());
+            Focusable focusTarget = fe.getEventData();
+            
+            List<Focusable> path = findTarget(focusTarget);
 
             if (path == null) {
                 return;
@@ -188,10 +190,12 @@ public class FocusManager implements ConditionalEventHandler, Focusable, HasChil
             // at this point target is within our tree
             // time to traverse the path in order to "select" (focus) it
 
-            if (!FocusManager.this.hasFocus()) {
+            if ( ! FocusManager.this.hasFocus()) {
                 // FIXME: dont know how to deal with this scenario yet
-            }
+            } 
 
+            FocusManager lastFocusManager = FocusManager.this; 
+            
             Object last = null;
             for (Object o : path) {
                 // if (o != this) {
@@ -202,6 +206,10 @@ public class FocusManager implements ConditionalEventHandler, Focusable, HasChil
                     } else {
                         ((Focusable) o).setFocus(true, te.getEventBus());
                     }
+                }
+                
+                if (o instanceof FocusManager) {
+                    lastFocusManager = (FocusManager) o;
                 }
 
                 last = o;

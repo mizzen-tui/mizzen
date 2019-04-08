@@ -167,12 +167,12 @@ public class TextBoxTest {
         };
         
         
-        eventBus.addEventHandler(master_canvas.asShowCursorEventHandler());
-        eventBus.addEventHandler(master_canvas.asHideCursorEventHandler());
+        eventBus.appendEventHandler(master_canvas.asShowCursorEventHandler());
+        eventBus.appendEventHandler(master_canvas.asHideCursorEventHandler());
 
-        eventBus.addEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
-        eventBus.addEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
-        eventBus.addEventHandler(new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
+        eventBus.appendEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
+        eventBus.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
+        eventBus.appendEventHandler(new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
         
         
         FocusManager focusManager = new FocusManager(Keys.TAB_KEYSTROKE);
@@ -194,14 +194,14 @@ public class TextBoxTest {
         focusManager.addFocusable(focusManager2, eventBus);
 
         
-        eventBus.addEventHandler(focusManager);
+        eventBus.appendEventHandler(focusManager);
         
-        eventBus.addEventHandler( new OnIdleEventEventHandler.RepeatingInterval(100, (te) -> {
+        eventBus.appendEventHandler( new OnIdleEventEventHandler.RepeatingInterval(100, (te) -> {
                                           renderComponents.run();                       
                                      }));
         
         
-        eventBus.addEventHandler( new HasValue.OnValueChangedEventHandler<String>(ti) {
+        eventBus.appendEventHandler( new HasValue.OnValueChangedEventHandler<String>(ti) {
             @Override
             public void valueChanged(HasValue<String> source) {
                 String newValue = source.getValue();
@@ -210,7 +210,7 @@ public class TextBoxTest {
             }
         });
         
-        eventBus.addEventHandler( new HasValue.OnValueChangedEventHandler<Boolean>(b_1) {
+        eventBus.appendEventHandler( new HasValue.OnValueChangedEventHandler<Boolean>(b_1) {
             @Override
             public void valueChanged(HasValue<Boolean> source) {
                 Boolean newValue = source.getValue();
@@ -220,7 +220,7 @@ public class TextBoxTest {
         });
         
         
-        eventBus.addEventHandler( new HasValue.OnValueChangedEventHandler<Boolean>(b_2) {
+        eventBus.appendEventHandler( new HasValue.OnValueChangedEventHandler<Boolean>(b_2) {
             public void handle(TerminalEvent<?> te) {
                 super.handle(te);
                 ti_4.requestFocus(te);

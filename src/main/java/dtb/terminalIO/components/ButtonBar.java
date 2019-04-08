@@ -6,7 +6,6 @@ import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventHandler;
-import dtb.terminalIO.events.Focusable;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
@@ -60,7 +59,7 @@ public class ButtonBar extends Composite implements ConditionalEventHandler {
             chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
             chainedEventHandlerAsConditionalEventHandler = chainedEventHandler.asConditionalEventHandler();
         }
-        this.chainedEventHandler.addEventHandler(eventHandler);
+        this.chainedEventHandler.appendEventHandler(eventHandler);
     }
     
     ConditionalEventHandler addEventHandlerWithCanvasUpdate(ConditionalEventHandler eventHandler) {

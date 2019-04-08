@@ -32,7 +32,7 @@ public class TerminalResizePoller {
 	// uses an OnIdleEventEventHandler to watch for Terminal resizes .. if a resize is detected,
 	// it fires off TerminalEvent.TYPE.RESIZE events that other handlers can then deal with.
 
-        eventBus.addEventHandler( new OnIdleEventEventHandler.RepeatingInterval(pollingInterval, 
+        eventBus.appendEventHandler( new OnIdleEventEventHandler.RepeatingInterval(pollingInterval, 
                                                                                 new TerminalResizeEventGenerator(screen, eventBus).asEventHandler()));	
     }
 

@@ -36,7 +36,7 @@ public class OnIdleEventEventHandler extends ConditionalEventHandler.Impl {
 	@Override
 	public void handle(TerminalEvent<?> te) {
 	    getHandler().handle(te);
-	    te.getEventBus().remove(this);
+	    te.getEventBus().removeEventHandler(this);
 	}
 
     }
@@ -63,7 +63,7 @@ public class OnIdleEventEventHandler extends ConditionalEventHandler.Impl {
 	@Override
 	public void handle(TerminalEvent<?> te) {
 	    getHandler().handle(te);
-	    te.getEventBus().remove(this);
+	    te.getEventBus().removeEventHandler(this);
 	}
     }
 

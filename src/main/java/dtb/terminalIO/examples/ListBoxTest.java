@@ -131,7 +131,7 @@ public class ListBoxTest {
        };
        
        
-       eventBus.addEventHandler( new HasValue.OnValueChangedEventHandler<String>(lb1) {
+       eventBus.appendEventHandler( new HasValue.OnValueChangedEventHandler<String>(lb1) {
            
            StringDisplayValue[]  currentList = weird;
            
@@ -155,7 +155,7 @@ public class ListBoxTest {
            }
        });
        
-       eventBus.addEventHandler( new HasValue.OnValueChangedEventHandler<String>(lb2) {
+       eventBus.appendEventHandler( new HasValue.OnValueChangedEventHandler<String>(lb2) {
 
            @Override
            public void valueChanged(HasValue<String> source) {
@@ -167,12 +167,12 @@ public class ListBoxTest {
        
        eventBus.disableIdleEvents();
        
-       eventBus.addEventHandler(master_canvas.asShowCursorEventHandler());
-       eventBus.addEventHandler(master_canvas.asHideCursorEventHandler());
+       eventBus.appendEventHandler(master_canvas.asShowCursorEventHandler());
+       eventBus.appendEventHandler(master_canvas.asHideCursorEventHandler());
 
-       eventBus.addEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
+       eventBus.appendEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
 
-       eventBus.addEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
+       eventBus.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
 
        TestsCommon.addNoGraphicsToggleEvent(eventBus, screen, renderComponents);
        
@@ -181,7 +181,7 @@ public class ListBoxTest {
        fm.addFocusable( lb2.asFocusable(), eventBus  );
        
        
-       eventBus.addEventHandler(fm);
+       eventBus.appendEventHandler(fm);
        
     }
     

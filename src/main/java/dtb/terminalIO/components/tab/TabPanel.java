@@ -131,7 +131,7 @@ public class TabPanel extends Composite {
             }
         });
 
-        getTabContext().getEventBus().addEventHandler(hotKeyEventHandler);
+        getTabContext().getEventBus().appendEventHandler(hotKeyEventHandler);
 
         this.prevNextHelp = blockChars.getVERTICAL_LEFT()+" " + Keys.SHIFT_TAB_KEYSTROKE.getName() +prevArrow;
         
@@ -141,7 +141,7 @@ public class TabPanel extends Composite {
                 selectNextAsActive();
             }
         });
-        getTabContext().getEventBus().addEventHandler(hotKeyEventHandler);
+        getTabContext().getEventBus().appendEventHandler(hotKeyEventHandler);
         
         this.prevNextHelp +=  blockChars.getVERTICAL_RIGHT()+ ""
                              +blockChars.getHORIZONTAL_LINE()+""
@@ -192,7 +192,7 @@ public class TabPanel extends Composite {
                 selectAsActive(tabAction);
             }
         });
-        getTabContext().getEventBus().addEventHandler(hotKeyEventHandler);
+        getTabContext().getEventBus().appendEventHandler(hotKeyEventHandler);
         
         // eventHandlers so that we can later remove on clean up
         registeredEventHandlers.add(hotKeyEventHandler);

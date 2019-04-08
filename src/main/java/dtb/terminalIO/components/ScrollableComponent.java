@@ -1,14 +1,14 @@
 package dtb.terminalIO.components;
 
-import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.EventHandlerContainer;
 import dtb.terminalIO.events.Focusable;
+import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.TerminalEvent;
-import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
@@ -38,7 +38,7 @@ import dtb.terminalIO.textsegments.ScreenLineSegmentsView;
  * being viewed from.
  * 
  */
-public class ScrollableComponent extends Composite implements CanResize, Focusable , Hiliter /*, AsAConditionalEventHandler*/ {
+public class ScrollableComponent extends Composite implements CanResize, Focusable , Hiliter , EventHandlerContainer {
     
     BorderedComponent   borderedComponent;
     ScrollBarVertical   vScrollBar;
@@ -306,23 +306,64 @@ public class ScrollableComponent extends Composite implements CanResize, Focusab
         }
     }
     
-    public void addEventHandler(ConditionalEventHandler eventHandler) {
+    public ScrollableComponent prependEventHandler(ConditionalEventHandler eventHandler) {
+        
         if (chainedEventHandler == null) 
         {
             throw new IllegalStateException("Must first call asEventHandler(updateCanvas) before calling handle(TerminalEvent<?> te)");
         }
-        this.chainedEventHandler.addEventHandler(eventHandler);
+        
+        this.chainedEventHandler.prependEventHandler(eventHandler);
+        return this;
     }
     
-    public ConditionalEventHandler addEventHandlerWithCanvasUpdate(ConditionalEventHandler eventHandler) {
+    @Override
+    public ScrollableComponent appendEventHandler(ConditionalEventHandler eventHandler) {
+        if (chainedEventHandler == null) 
+        {
+            throw new IllegalStateException("Must first call asEventHandler(updateCanvas) before calling handle(TerminalEvent<?> te)");
+        }
+        this.chainedEventHandler.appendEventHandler(eventHandler);
+        return this;
+    }
+
+    @Override
+    public ScrollableComponent removeEventHandler(ConditionalEventHandler eventHandler) {
+        if (chainedEventHandler == null) 
+        {
+            throw new IllegalStateException("Must first call asEventHandler(updateCanvas) before calling handle(TerminalEvent<?> te)");
+        }
+        this.chainedEventHandler.removeEventHandler(eventHandler);
+        return this;
+    }
+    
+    private ConditionalEventHandler wrapEventHandlerWithCanvasUpdate(ConditionalEventHandler eventHandler) {
         ConditionalEventHandler handler = new ConditionalEventHandler.Delegate(eventHandler) { 
-                                                        @Override
-                                                        public void handle(TerminalEvent<?> te) {
-                                                            super.handle(te);
-                                                            updateCanvas();
-                                                        }
-                                                    };
-        addEventHandler(handler);
+            @Override
+            public void handle(TerminalEvent<?> te) {
+                super.handle(te);
+                updateCanvas();
+            }
+        };
+        return handler;
+    }
+    
+    public ConditionalEventHandler prependEventHandlerWithCanvasUpdate(ConditionalEventHandler eventHandler) {
+	if (eventHandler == this) {
+	    throw new IllegalArgumentException("Trying to add yourself as an eventhandler to yourself!");
+	}
+        ConditionalEventHandler handler = wrapEventHandlerWithCanvasUpdate(eventHandler);
+        prependEventHandler(handler);
+        
+        return handler;
+    }
+
+    public ConditionalEventHandler addEventHandlerWithCanvasUpdate(ConditionalEventHandler eventHandler) {
+	if (eventHandler == this) {
+	    throw new IllegalArgumentException("Trying to add yourself as an eventhandler to yourself!");
+	}
+        ConditionalEventHandler handler = wrapEventHandlerWithCanvasUpdate(eventHandler);
+        appendEventHandler(handler);
         
         return handler;
     }
@@ -344,7 +385,7 @@ public class ScrollableComponent extends Composite implements CanResize, Focusab
         chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
         
         
-        chainedEventHandler.addEventHandler(new ConditionalEventHandler() {
+        chainedEventHandler.appendEventHandler(new ConditionalEventHandler() {
             @Override
             public void handle(TerminalEvent<?> te) {
                 if (footerControls == null) {
@@ -374,7 +415,7 @@ public class ScrollableComponent extends Composite implements CanResize, Focusab
         
         this.setUpdateCanvas(_updateCanvas);
         
-        eventBus.addEventHandler( asEventHandler() );
+        eventBus.appendEventHandler( asEventHandler() );
    }
 
     @Override
@@ -383,7 +424,10 @@ public class ScrollableComponent extends Composite implements CanResize, Focusab
         {
             throw new IllegalStateException("Must first call asEventHandler(updateCanvas) before calling canHandle(TerminalEvent<?> te)");
         }
-        return conditionalEventHandler.canHandle(te);
+        if ( conditionalEventHandler.canHandle(te) != null) {
+            return this;
+        }
+        return null;
     }
     
     

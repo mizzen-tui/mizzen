@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.chart.LineChart;
 import dtb.terminalIO.controlcodes.Colors;
@@ -352,13 +351,13 @@ public class LineChartTest {
 	
 	
 	
-	eventBus.addEventHandler(new KeyInputEventHandler(Keys.CTRL_A_KEYSTROKE, (e)-> {
+	eventBus.appendEventHandler(new KeyInputEventHandler(Keys.CTRL_A_KEYSTROKE, (e)-> {
 	                  lineChartDemo.pauseOnIdle  = !lineChartDemo.pauseOnIdle;
 	                  //System.out.println("idle = " + lineChartDemo.pauseOnIdle);
 	                  //terminate.handle(e);
 	                  })) ;
 
-	eventBus.addEventHandler(new KeyInputEventHandler(Keys.CTRL_R_KEYSTROKE, (e)-> {
+	eventBus.appendEventHandler(new KeyInputEventHandler(Keys.CTRL_R_KEYSTROKE, (e)-> {
             TerminalDimensions size = TerminalDimensions.create();
 	    master_canvas.clearCanvas();
             master_canvas.refresh();
@@ -384,9 +383,9 @@ public class LineChartTest {
 	
 	// eventBus.addEventHandler(new KeyInputEventHandler(Keys.CTRL_A_KEYSTROKE, (e)-> )) ;
 
-	eventBus.addEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
-	eventBus.addEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
-	eventBus.addEventHandler(new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
+	eventBus.appendEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
+	eventBus.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
+	eventBus.appendEventHandler(new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
     
 	TestsCommon.addNoGraphicsToggleEvent(eventBus, screen);
 	
@@ -479,11 +478,11 @@ public class LineChartTest {
 
 	TestsCommon.addNoGraphicsToggleEvent(eventBus, screen);
 	
-	eventBus.addEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
-	eventBus.addEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
-	eventBus.addEventHandler(new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
+	eventBus.appendEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
+	eventBus.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
+	eventBus.appendEventHandler(new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
 
-        eventBus.addEventHandler(new KeyInputEventHandler(Keys.CTRL_R_KEYSTROKE, new EventHandler() {
+        eventBus.appendEventHandler(new KeyInputEventHandler(Keys.CTRL_R_KEYSTROKE, new EventHandler() {
             @Override
             public void handle(TerminalEvent<?> te) {
                 master_canvas.clearCanvas();
@@ -496,7 +495,7 @@ public class LineChartTest {
 	if (style.equals("MAX")) {
 	    TerminalResizeDetection.initiate(screen, eventBus);
 
-	    eventBus.addEventHandler(new OnResizeEventHandler() {
+	    eventBus.appendEventHandler(new OnResizeEventHandler() {
 		@Override
 		public void handleResize(Dimension size) {
 		    Logging.info( "DEMO: resize "  + size );
@@ -526,56 +525,56 @@ public class LineChartTest {
 	            lineChartDemo.resize(newBounds);
 	    };
 	    
-	    eventBus.addEventHandler( new KeyInputEventHandler(new KeyStroke('s'), new EventHandler() {
+	    eventBus.appendEventHandler( new KeyInputEventHandler(new KeyStroke('s'), new EventHandler() {
 	        @Override
 	        public void handle(TerminalEvent<?> te) {
 	            resizeChartOnStyle.accept("SMALL");
 	        }
 	    }) );
 	    
-	    eventBus.addEventHandler( new KeyInputEventHandler(new KeyStroke('S'), new EventHandler() {
+	    eventBus.appendEventHandler( new KeyInputEventHandler(new KeyStroke('S'), new EventHandler() {
 	        @Override
 	        public void handle(TerminalEvent<?> te) {
 	            resizeChartOnStyle.accept("SMALL");
 	        }
 	    }) );
 	    
-	    eventBus.addEventHandler( new KeyInputEventHandler(new KeyStroke('m'), new EventHandler() {
+	    eventBus.appendEventHandler( new KeyInputEventHandler(new KeyStroke('m'), new EventHandler() {
 	        @Override
 	        public void handle(TerminalEvent<?> te) {
 	            resizeChartOnStyle.accept("MEDIUM");
 	        }
 	    }) );
 	    
-	    eventBus.addEventHandler( new KeyInputEventHandler(new KeyStroke('m'), new EventHandler() {
+	    eventBus.appendEventHandler( new KeyInputEventHandler(new KeyStroke('m'), new EventHandler() {
 	        @Override
 	        public void handle(TerminalEvent<?> te) {
 	            resizeChartOnStyle.accept("MEDIUM");
 	        }
 	    }) );
 	    
-	    eventBus.addEventHandler( new KeyInputEventHandler(new KeyStroke('t'), new EventHandler() {
+	    eventBus.appendEventHandler( new KeyInputEventHandler(new KeyStroke('t'), new EventHandler() {
 	        @Override
 	        public void handle(TerminalEvent<?> te) {
 	            resizeChartOnStyle.accept("TINY");
 	        }
 	    }) );
 	    
-	    eventBus.addEventHandler( new KeyInputEventHandler(new KeyStroke('T'), new EventHandler() {
+	    eventBus.appendEventHandler( new KeyInputEventHandler(new KeyStroke('T'), new EventHandler() {
 	        @Override
 	        public void handle(TerminalEvent<?> te) {
 	            resizeChartOnStyle.accept("TINY");
 	        }
 	    }) );
 
-	    eventBus.addEventHandler( new KeyInputEventHandler(new KeyStroke('l'), new EventHandler() {
+	    eventBus.appendEventHandler( new KeyInputEventHandler(new KeyStroke('l'), new EventHandler() {
 	        @Override
 	        public void handle(TerminalEvent<?> te) {
 	            resizeChartOnStyle.accept("LARGE");
 	        }
 	    }) );
 	    
-	    eventBus.addEventHandler( new KeyInputEventHandler(new KeyStroke('L'), new EventHandler() {
+	    eventBus.appendEventHandler( new KeyInputEventHandler(new KeyStroke('L'), new EventHandler() {
 	        @Override
 	        public void handle(TerminalEvent<?> te) {
 	            resizeChartOnStyle.accept("LARGE");

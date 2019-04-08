@@ -216,7 +216,7 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
 
     private void raiseEventOnChanged(EventBus eventBus, Supplier<Boolean> changeTextAction) {
         if (changeTextAction.get()) {
-            eventBus.addEvent(new HasValue.ValueChangedEvent<>(this));
+            eventBus.raiseEvent(new HasValue.ValueChangedEvent<>(this));
         }
     }
 
@@ -256,20 +256,20 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
 
         ChainedEventHandler chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
 
-        chainedHandler.addEventHandler(
+        chainedHandler.appendEventHandler(
                 new KeyInputEventHandler(Keys.BACKSPACE_KEYSTROKE, (te) -> raiseEventOnChanged(te.getEventBus(), () -> deleteCharBeforeCaret())));
 
         chainedHandler
-                .addEventHandler(new KeyInputEventHandler(Keys.DELETE_KEYSTROKE, (te) -> raiseEventOnChanged(te.getEventBus(), () -> deleteCharAtCaret())));
+                .appendEventHandler(new KeyInputEventHandler(Keys.DELETE_KEYSTROKE, (te) -> raiseEventOnChanged(te.getEventBus(), () -> deleteCharAtCaret())));
 
-        chainedHandler.addEventHandler(new KeyInputEventHandler(Keys.LEFT_KEYSTROKE, (te) -> {
+        chainedHandler.appendEventHandler(new KeyInputEventHandler(Keys.LEFT_KEYSTROKE, (te) -> {
             if (caret.getCol() > 0) {
                 caretOffsetAdd(0, -1);
             }
             return;
         }));
 
-        chainedHandler.addEventHandler(new KeyInputEventHandler(Keys.RIGHT_KEYSTROKE, (te) -> {
+        chainedHandler.appendEventHandler(new KeyInputEventHandler(Keys.RIGHT_KEYSTROKE, (te) -> {
             if (caret.getCol() < getWidth() && caret.getCol() < getText().length()) {
                 // TODO: This will have to be fixed when text scrolling
                 // in place
@@ -279,7 +279,7 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
             return;
         }));
 
-        chainedHandler.addEventHandler(new KeyInputEventHandler((te) -> {
+        chainedHandler.appendEventHandler(new KeyInputEventHandler((te) -> {
             KeyEvent ke = (KeyEvent) te;
             if (ke.getKeyStroke().getKeySequenceLength() == 1) {
                 return true;
@@ -314,13 +314,14 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
 
         // calc where cursor should be relative to text component + its caret position
 
-        Position cursorPos = Component.UTIL.getCanvasOffsetFor(TextInput.this).offsetAdd(caret);
+	Position canvasOffset = Component.UTIL.getCanvasOffsetFor(TextInput.this);
+        Position cursorPos = canvasOffset.offsetAdd(caret);
         
-        eventBus.addEvent(new RequestShowCursorEvent(TextInput.this, cursorPos));
+        eventBus.raiseEvent(new RequestShowCursorEvent(TextInput.this, cursorPos));
     }
 
     private void requestHideCursor(EventBus eventBus) {
-        eventBus.addEvent(new RequestHideCursorEvent(TextInput.this));
+        eventBus.raiseEvent(new RequestHideCursorEvent(TextInput.this));
     }
     
     
@@ -347,11 +348,11 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
     }
 
     public void requestFocus(TerminalEvent<?> te) {
-        te.getEventBus().addEvent( new RequestFocusEvent(this) );
+        te.getEventBus().raiseEvent( new RequestFocusEvent(this) );
     }
     
     public void requestFocus(EventBus eventBus) {
-        eventBus.addEvent( new RequestFocusEvent(this) );
+        eventBus.raiseEvent( new RequestFocusEvent(this) );
     }
 
     @Override

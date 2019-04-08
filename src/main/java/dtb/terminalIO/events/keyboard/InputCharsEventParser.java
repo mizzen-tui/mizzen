@@ -6,6 +6,14 @@ import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.keyboard.Keys.KeyStrokeFindResult;
 
+// TODO and CRITICAL!!!:   This code is not properly handling when keyboard input is coming in fast..
+
+//  can't handle the following input that comes into the input buffer right away .. 
+//  right arrow twice -- Chars read in:  new KeySequence(27,91,67,27,91,67) 
+//  left arrow twice -- chars read in: new KeySequence(27,91,68,27,91,68)   - ends up interpreting as ESC , '[' , 'D'
+// -- need to rework the parser - in order to break down the sequence correctly
+//    logic currently currently assumes that what is read in from the buffer represents 1 key - which is incorrect.
+
 /**
  * A helper class used primarily by KeyInputEventsProducer.
  * 
@@ -13,7 +21,7 @@ import dtb.terminalIO.events.keyboard.Keys.KeyStrokeFindResult;
  * and converts this into a KeyStroke object which then gets enqueued into an EventBus
  * to be later handled by the application. 
  * 
- * Main entry point method is:  {@link #parseInput(char[], int, EventBus)}
+ * Main entry point method is:  {@link #parseInput(char[], int, EventBus)}░░░░░░░░░░░░░░░░─
  *  
  */
 public class InputCharsEventParser {
@@ -50,12 +58,12 @@ public class InputCharsEventParser {
      */
     public void parseInput(char[] buffer, int readIn, EventBus eventBus) {
 	
-	eventBus.addEvent( new InputCharsDEBUGEvent(buffer, readIn)  );
+	eventBus.raiseEvent( new InputCharsDEBUGEvent(buffer, readIn)  );
 	
 	KeyStrokeFindResult result = Keys.getKeyStrokeFromChars(buffer, readIn);
 	
 	if (result.foundKeyStroke != null) {
-	    eventBus.addEvent( new KeyEvent(this, result.foundKeyStroke) );
+	    eventBus.raiseEvent( new KeyEvent(this, result.foundKeyStroke) );
 	}
 	
         for (int i = 0; i < result.remainingBuffer.length; i++) {
@@ -71,8 +79,8 @@ public class InputCharsEventParser {
         if (parse_STATE == STATE_ESCAPE) {
             long now = System.currentTimeMillis();
             long elapsedSinceEscapePressed = now - last_ESC_PRESSED_TIME;
-            if (elapsedSinceEscapePressed > 500) {
-                eventBus.addEvent( new KeyEvent(this, Keys.ESC_KEYSTROKE) );
+            if (elapsedSinceEscapePressed > 500) { // 1/2 second ... might be a bit long - we'll see ..
+                eventBus.raiseEvent( new KeyEvent(this, Keys.ESC_KEYSTROKE) );
                 parse_STATE = STATE_START;
                 return true;
             }
@@ -95,14 +103,14 @@ public class InputCharsEventParser {
 
                 if (ch <= 0x1F) {
                     // Control character
-                    eventBus.addEvent( Keys.controlChar(this,ch, false));
+                    eventBus.raiseEvent( Keys.controlChar(this,ch, false));
                     parse_STATE = STATE_START;
                     return;
                 }
 
                 if (ch >= 0x20) {
                     // Normal character
-                    eventBus.addEvent(Keys.normalKeyEvent(this, ch));
+                    eventBus.raiseEvent(Keys.normalKeyEvent(this, ch));
                     parse_STATE = STATE_START;
                     return;
                 }
@@ -112,7 +120,7 @@ public class InputCharsEventParser {
             case STATE_ESCAPE:
                 if (ch <= 0x1F) {
                     // ALT-Control character
-                    eventBus.addEvent( Keys.controlChar(this,ch, true));
+                    eventBus.raiseEvent( Keys.controlChar(this,ch, true));
                     parse_STATE = STATE_START;
                     return;
                 }
@@ -124,7 +132,7 @@ public class InputCharsEventParser {
                 }
                 
                 //  assume ALT-keystroke
-                eventBus.addEvent( new KeyEvent(this, KeyStroke.ALTKey(ch) ));
+                eventBus.raiseEvent( new KeyEvent(this, KeyStroke.ALTKey(ch) ));
                 
                 parse_STATE = STATE_START;
                 
@@ -136,16 +144,16 @@ public class InputCharsEventParser {
                     // Function key
                     switch (ch) {
                     case 'P':
-                        eventBus.addEvent(new KeyEvent(this, Keys.F1_KEYSTROKE));
+                        eventBus.raiseEvent(new KeyEvent(this, Keys.F1_KEYSTROKE));
                         break;
                     case 'Q':
-                        eventBus.addEvent(new KeyEvent(this, Keys.F2_KEYSTROKE));
+                        eventBus.raiseEvent(new KeyEvent(this, Keys.F2_KEYSTROKE));
                         break;
                     case 'R':
-                        eventBus.addEvent(new KeyEvent(this, Keys.F3_KEYSTROKE));
+                        eventBus.raiseEvent(new KeyEvent(this, Keys.F3_KEYSTROKE));
                         break;
                     case 'S':
-                        eventBus.addEvent(new KeyEvent(this, Keys.F4_KEYSTROKE));
+                        eventBus.raiseEvent(new KeyEvent(this, Keys.F4_KEYSTROKE));
                         break;
                     default:
                         break;

@@ -129,7 +129,7 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput> implements Ha
                 
                 if (ke.isKeyStroke( Keys.ENTER_KEYSTROKE )  || ke.isKeyStroke(Keys.SPACE_KEYSTROKE)) {
                     CheckBoxInput.this.setValue(  !  CheckBoxInput.this.getValue()  );  // toggle the value
-                    te.getEventBus().addEvent(  new HasValue.ValueChangedEvent<>(CheckBoxInput.this) );
+                    te.getEventBus().raiseEvent(  new HasValue.ValueChangedEvent<>(CheckBoxInput.this) );
                 }
             }
 

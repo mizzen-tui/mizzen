@@ -70,7 +70,7 @@ public class DrawingBoardDispatch {
             }
         };
         
-        eventBus.addEventHandler(new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), terminateEventHandler));
+        eventBus.appendEventHandler(new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), terminateEventHandler));
         
         
     }

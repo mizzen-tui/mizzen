@@ -138,7 +138,7 @@ public class EventBus implements EventHandlerContainer {
     }
 
     // TODO: If queue is full event wont get enqueue.. I dont tell caller - isn't that a bad design?
-    public EventBus addEvent(TerminalEvent<?> te) {
+    public EventBus raiseEvent(TerminalEvent<?> te) {
 	if (queue.size()<EVENT_Q_CAPACITY) {  // todo:  make configurable - or block?
 	   queue.add(te);
 	   
@@ -146,13 +146,13 @@ public class EventBus implements EventHandlerContainer {
 	return this;
     }
 
-    public <T> EventBus addEvent(Object source, TYPE type, T eventData) {
+    public <T> EventBus raiseEvent(Object source, TYPE type, T eventData) {
 	TerminalEvent<T> te = new TerminalEvent<T>(source, type, eventData);
-	return addEvent(te);
+	return raiseEvent(te);
     }
 
     
-    public EventBus addIdleEventHandler(OnIdleEventEventHandler onIdleEventHandler) {
+    public EventBus appendIdleEventHandler(OnIdleEventEventHandler onIdleEventHandler) {
         
         if (idleEventsSuppressed) return this;
         
@@ -164,13 +164,13 @@ public class EventBus implements EventHandlerContainer {
 
 		    // now build a handler on the main eventbus to dispatch to the 
 		    // the newly built idleEventsHandler
-		    // this.addEventHandler(master_idlEventHandler);
+		    // this.appendEventHandler(master_idlEventHandler);
 		    
 		    enableIdleEvents();
 		}
 	    }
 	}
-	this.idleEventsHandlerChain.addEventHandler(onIdleEventHandler);
+	this.idleEventsHandlerChain.appendEventHandler(onIdleEventHandler);
 	return this;
     }
     
@@ -209,7 +209,7 @@ public class EventBus implements EventHandlerContainer {
             }
         };
         
-        this.addEventHandler(master_idlEventHandlerBRIDGE);
+        this.appendEventHandler(master_idlEventHandlerBRIDGE);
         idleEventsSuppressed = false;
         
     }
@@ -224,7 +224,7 @@ public class EventBus implements EventHandlerContainer {
         // The way to suppress idle events is to 
         // remove the master_idlEventHandlerBRIDGE handler from
         // eventBus
-        this.remove(master_idlEventHandlerBRIDGE);
+        this.removeEventHandler(master_idlEventHandlerBRIDGE);
         
         master_idlEventHandlerBRIDGE = null;
         
@@ -236,27 +236,42 @@ public class EventBus implements EventHandlerContainer {
 	if (this.idleEventsHandlerChain == null) {
 	    return this;
 	}
-	this.idleEventsHandlerChain.remove(onIdleEventHandler);
+	this.idleEventsHandlerChain.removeEventHandler(onIdleEventHandler);
 	return this;
     }
 
-    public EventBus addEventHandler(ConditionalEventHandler eventHandler) {
-	if (eventHandler instanceof OnIdleEventEventHandler) {	 
+    public EventHandlerContainer prependEventHandler(ConditionalEventHandler eventHandler) {
+	if (eventHandler instanceof OnIdleEventEventHandler) {
 
-	    addIdleEventHandler((OnIdleEventEventHandler) eventHandler);
+	    // TODO: perform an prepend instead!!!
+	    appendIdleEventHandler((OnIdleEventEventHandler) eventHandler);
+	    return this;
+	}
+	
+	// add non idleEventHandler
+	eventsHandlerChain.prependEventHandler(eventHandler);
+	return this;
+	
+    }
+
+    
+    public EventBus appendEventHandler(ConditionalEventHandler eventHandler) {
+	if (eventHandler instanceof OnIdleEventEventHandler) {
+
+	    appendIdleEventHandler((OnIdleEventEventHandler) eventHandler);
 	    return this;
 	}
 	// add non idleEventHandler
-	eventsHandlerChain.addEventHandler(eventHandler);
+	eventsHandlerChain.appendEventHandler(eventHandler);
 	return this;
     }
 
-    public EventBus remove(ConditionalEventHandler eventHandler) {
+    public EventBus removeEventHandler(ConditionalEventHandler eventHandler) {
 	if (eventHandler instanceof OnIdleEventEventHandler) {
 	    removeIdleEventHandler((OnIdleEventEventHandler) eventHandler);
 	    return this;
 	}
-	eventsHandlerChain.remove(eventHandler);
+	eventsHandlerChain.removeEventHandler(eventHandler);
 	return this;
     }
 

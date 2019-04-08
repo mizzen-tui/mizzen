@@ -121,31 +121,31 @@ public class CompositeLayeringTest {
         
        eventBus.disableIdleEvents();
        
-       eventBus.addEventHandler(master_canvas.asShowCursorEventHandler());
-       eventBus.addEventHandler(master_canvas.asHideCursorEventHandler());
+       eventBus.appendEventHandler(master_canvas.asShowCursorEventHandler());
+       eventBus.appendEventHandler(master_canvas.asHideCursorEventHandler());
 
-       eventBus.addEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
+       eventBus.appendEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
 
-       eventBus.addEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
+       eventBus.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
 
        TestsCommon.addNoGraphicsToggleEvent(eventBus, screen, renderComponents);
        
-       eventBus.addEventHandler(new KeyInputEventHandler(Keys.DOWN_KEYSTROKE, (te)-> {container.moveDown(the_c); renderComponents.run();} ));
+       eventBus.appendEventHandler(new KeyInputEventHandler(Keys.DOWN_KEYSTROKE, (te)-> {container.moveDown(the_c); renderComponents.run();} ));
         
-       eventBus.addEventHandler(new KeyInputEventHandler(Keys.UP_KEYSTROKE, (te)-> {container.moveUp(the_c); renderComponents.run();} ));
+       eventBus.appendEventHandler(new KeyInputEventHandler(Keys.UP_KEYSTROKE, (te)-> {container.moveUp(the_c); renderComponents.run();} ));
         
-       eventBus.addEventHandler(new KeyInputEventHandler(Keys.PGDN_KEYSTROKE, (te)-> {container.bringToBack(the_c); renderComponents.run();} ));
+       eventBus.appendEventHandler(new KeyInputEventHandler(Keys.PGDN_KEYSTROKE, (te)-> {container.bringToBack(the_c); renderComponents.run();} ));
        
-       eventBus.addEventHandler(new KeyInputEventHandler(Keys.PGUP_KEYSTROKE, (te)-> {container.bringToFront(the_c); renderComponents.run();} ));
+       eventBus.appendEventHandler(new KeyInputEventHandler(Keys.PGUP_KEYSTROKE, (te)-> {container.bringToFront(the_c); renderComponents.run();} ));
         
         
-       eventBus.addEventHandler(new KeyInputEventHandler(Keys.CTRL_T_KEYSTROKE, (te)-> {container.moveChildDelta(new Position.Simple(-1,0),the_c); renderComponents.run();} ));
+       eventBus.appendEventHandler(new KeyInputEventHandler(Keys.CTRL_T_KEYSTROKE, (te)-> {container.moveChildDelta(new Position.Simple(-1,0),the_c); renderComponents.run();} ));
        
-       eventBus.addEventHandler(new KeyInputEventHandler(Keys.CTRL_F_KEYSTROKE, (te)-> {container.moveChildDelta(new Position.Simple(0,-1),the_c); renderComponents.run();} ));
+       eventBus.appendEventHandler(new KeyInputEventHandler(Keys.CTRL_F_KEYSTROKE, (te)-> {container.moveChildDelta(new Position.Simple(0,-1),the_c); renderComponents.run();} ));
         
-       eventBus.addEventHandler(new KeyInputEventHandler(Keys.CTRL_G_KEYSTROKE, (te)-> {container.moveChildDelta(new Position.Simple(0,1),the_c); renderComponents.run();} ));
+       eventBus.appendEventHandler(new KeyInputEventHandler(Keys.CTRL_G_KEYSTROKE, (te)-> {container.moveChildDelta(new Position.Simple(0,1),the_c); renderComponents.run();} ));
        
-       eventBus.addEventHandler(new KeyInputEventHandler(Keys.CTRL_V_KEYSTROKE, (te)-> {container.moveChildDelta(new Position.Simple(1,0),the_c); renderComponents.run();} ));
+       eventBus.appendEventHandler(new KeyInputEventHandler(Keys.CTRL_V_KEYSTROKE, (te)-> {container.moveChildDelta(new Position.Simple(1,0),the_c); renderComponents.run();} ));
         
         
         

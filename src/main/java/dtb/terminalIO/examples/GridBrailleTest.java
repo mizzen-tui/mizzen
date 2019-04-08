@@ -172,14 +172,14 @@ public class GridBrailleTest {
 	    }
 	};
 
-	eventBus.addEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
-	eventBus.addEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
-	eventBus.addEventHandler(new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
+	eventBus.appendEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
+	eventBus.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
+	eventBus.appendEventHandler(new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
 
 	if (style.equals("MAX")) {
 	    TerminalResizeDetection.initiate(screen, eventBus);
 
-	    eventBus.addEventHandler(new OnResizeEventHandler() {
+	    eventBus.appendEventHandler(new OnResizeEventHandler() {
 		@Override
 		public void handleResize(Dimension size) {
 		    master_canvas.setSize(size.getHeight() , size.getWidth() ); 

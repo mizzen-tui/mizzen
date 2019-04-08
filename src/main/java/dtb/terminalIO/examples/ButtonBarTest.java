@@ -69,7 +69,7 @@ public class ButtonBarTest {
             return;
         }
         
-        eventBus.addEventHandler(bbar1);
+        eventBus.appendEventHandler(bbar1);
 
         EventHandler terminate = new EventHandler() {
 
@@ -93,12 +93,12 @@ public class ButtonBarTest {
 
         eventBus.disableIdleEvents();
 
-        eventBus.addEventHandler(master_canvas.asShowCursorEventHandler());
-        eventBus.addEventHandler(master_canvas.asHideCursorEventHandler());
+        eventBus.appendEventHandler(master_canvas.asShowCursorEventHandler());
+        eventBus.appendEventHandler(master_canvas.asHideCursorEventHandler());
 
-        eventBus.addEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
+        eventBus.appendEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
 
-        eventBus.addEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
+        eventBus.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
 
         TestsCommon.addNoGraphicsToggleEvent(eventBus, screen, renderComponents);
 

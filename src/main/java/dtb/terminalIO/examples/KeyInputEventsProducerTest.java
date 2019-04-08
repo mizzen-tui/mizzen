@@ -74,7 +74,7 @@ public class KeyInputEventsProducerTest {
 
             if (keyInputEventsProducer.isActive()) {
 
-                eventBus.addEventHandler(new ConditionalEventHandler() {
+                eventBus.appendEventHandler(new ConditionalEventHandler() {
 
                     @Override
                     public void handle(TerminalEvent<?> te) {
@@ -117,12 +117,12 @@ public class KeyInputEventsProducerTest {
                     }
                 };
                 
-                eventBus.addEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
-                eventBus.addEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
-                eventBus.addEventHandler(new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
+                eventBus.appendEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
+                eventBus.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
+                eventBus.appendEventHandler(new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
                 
                 
-                eventBus.addEventHandler(new ConditionalEventHandler() {
+                eventBus.appendEventHandler(new ConditionalEventHandler() {
 
                     @Override
                     public void handle(TerminalEvent<?> te) {

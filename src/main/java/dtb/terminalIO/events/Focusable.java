@@ -10,7 +10,7 @@ public interface Focusable extends ConditionalEventHandler {
     // Position getPosition();
     
     
-    class FocusableDelegate implements Focusable {
+    public class FocusableDelegate implements Focusable {
         
         Focusable delegate ;
         public FocusableDelegate(Focusable delegate) {
@@ -20,7 +20,10 @@ public interface Focusable extends ConditionalEventHandler {
     
         @Override
         public EventHandler canHandle(TerminalEvent<?> te) {
-            return delegate.canHandle(te);
+            if ( delegate.canHandle(te) == null ) {
+        	return null;
+            }
+            return this;
         }
 
         @Override

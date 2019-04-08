@@ -443,17 +443,17 @@ public class ListBox<T> extends Composite  implements HasValue<T>, ToFocusable {
         
         ChainedEventHandler chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
         
-        chainedHandler.addEventHandler(new KeyInputEventHandler(this.keystrokePrevious, 
+        chainedHandler.appendEventHandler(new KeyInputEventHandler(this.keystrokePrevious, 
                 (te)->  {
                             if (setSelectedPrev()) {
-                                te.getEventBus().addEvent(  new HasValue.ValueChangedEvent<>(ListBox.this) );
+                                te.getEventBus().raiseEvent(  new HasValue.ValueChangedEvent<>(ListBox.this) );
                             }
                         }));
         
-        chainedHandler.addEventHandler(new KeyInputEventHandler(this.keystrokeNext, 
+        chainedHandler.appendEventHandler(new KeyInputEventHandler(this.keystrokeNext, 
                 (te)->  {
                             if (setSelectedNext()) {
-                                te.getEventBus().addEvent(  new HasValue.ValueChangedEvent<>(ListBox.this) );
+                                te.getEventBus().raiseEvent(  new HasValue.ValueChangedEvent<>(ListBox.this) );
                             }
                         }));
         

@@ -90,10 +90,6 @@ public interface ConditionalEventHandler extends EventHandler {
                 return null;
             }
             return this;
-        }
-        
+        }   
     }
-    
-    
-    
 }

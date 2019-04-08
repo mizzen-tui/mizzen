@@ -5,10 +5,12 @@ package dtb.terminalIO.events;
  */
 public interface EventHandlerContainer {
 
-    public EventHandlerContainer addEventHandler(ConditionalEventHandler eventHandler);
+    public EventHandlerContainer prependEventHandler(ConditionalEventHandler eventHandler);
+
+    public EventHandlerContainer appendEventHandler(ConditionalEventHandler eventHandler);
     
     
-    public EventHandlerContainer remove(ConditionalEventHandler eventHandler);
+    public EventHandlerContainer removeEventHandler(ConditionalEventHandler eventHandler);
     
     
 }

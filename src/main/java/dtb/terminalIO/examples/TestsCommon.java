@@ -80,7 +80,7 @@ public class TestsCommon {
     }
     
     public static void addNoGraphicsToggleEvent(EventBus eventBus, TerminalScreen screen, Runnable updateScreen) {
-        eventBus.addEventHandler( new KeyInputEventHandler(Keys.CTRL_X_KEYSTROKE,
+        eventBus.appendEventHandler( new KeyInputEventHandler(Keys.CTRL_X_KEYSTROKE,
                                     new EventHandler() {
                                         @Override
                                         public void handle(TerminalEvent<?> te) {

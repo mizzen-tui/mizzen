@@ -60,7 +60,7 @@ public class TerminalResizeEventGenerator implements Runnable {
                         } /* while */
                         
                         synchronized (myLock) {
-                            eventBus.addEvent( new TerminalEvent<Dimension>(this, TerminalEvent.TYPE.RESIZE, new DelayedDimensionProperties(size)) );
+                            eventBus.raiseEvent( new TerminalEvent<Dimension>(this, TerminalEvent.TYPE.RESIZE, new DelayedDimensionProperties(size)) );
                             TerminalResizeEventGenerator.this.lastChange.set(System.currentTimeMillis());
                             eventBus.enableIdleEvents();
                             DelayedResizer.this.resizer = null;   // get rid of thread - its task is done..

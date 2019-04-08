@@ -111,14 +111,14 @@ public class TerminalResizeTest {
             }
         };
 
-        eventBus.addEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
+        eventBus.appendEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
 
-        eventBus.addEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
+        eventBus.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
         
         TextComponent idleCounter = new TextComponent("IDLE COUNT : XXXX    ");
         
         
-        eventBus.addEventHandler( new OnIdleEventEventHandler.RepeatingInterval(100, new EventHandler() {
+        eventBus.appendEventHandler( new OnIdleEventEventHandler.RepeatingInterval(100, new EventHandler() {
             
             int idleCount = 0;
             
@@ -139,7 +139,7 @@ public class TerminalResizeTest {
         
         TerminalResizeDetection.initiate(screen, eventBus);
         
-        eventBus.addEventHandler( new OnResizeEventHandler() {
+        eventBus.appendEventHandler( new OnResizeEventHandler() {
             @Override
             public void handleResize(Dimension size) {
                 resizer.accept(size);

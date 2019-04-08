@@ -2,7 +2,7 @@ package dtb.terminalIO.examples;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
 import java.util.function.Supplier;
 
 import dtb.terminalIO.components.Component;
@@ -27,7 +27,6 @@ import dtb.terminalIO.events.OnResizeEventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
-import dtb.terminalIO.events.keyboard.KeyEvent;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyInputEventsProducer;
 import dtb.terminalIO.events.keyboard.Keys;
@@ -57,7 +56,7 @@ public class ScrollableComponentTest {
     
     public static ScrollableComponent testWindowViewer1(Dimension size) throws IOException { 
         
-        String text2a = execTop(); 
+        String text2a = execTop();  
         
         String text2 = text2a; // StringUtils.wrap(text2a, size.getWidth()*2);
         
@@ -140,7 +139,8 @@ public class ScrollableComponentTest {
         
         class Finder extends HorizontalPanel {
             TextComponent find;
-            TextInput  findTextInput; 
+            TextInput  findTextInput;
+	    private ConditionalEventHandler findTextInputEventHandler; 
             
             Finder(Color color) {
                 super(color);
@@ -154,9 +154,18 @@ public class ScrollableComponentTest {
                     this.findTextInput.setEmptyColor(Finder.this.getColor().invert());
                     findTextInput.setText("test");
                     this.add(findTextInput);
-                    findTextInput.requestFocus(te);
+                    // findTextInput.requestFocus(te);
+                    // FIXME:  1) doing a prepend causes hotkeys on viewComp1 to be blocked including CTRL-F
+                    //            so cannot get out of find mode..  TextInput accepting too many keys
+                    //            need to fix
+                    //          2) Cursor never hides
+                    //          3) Cursor mis-positioned on terminal resize
+                    findTextInputEventHandler = viewComp1.prependEventHandlerWithCanvasUpdate(findTextInput);
                 } else { // temp
+                    viewComp1.removeEventHandler(findTextInputEventHandler);
+                    findTextInputEventHandler = null;
                     this.remove(findTextInput);
+                    this.findTextInput.setFocus(false, te.getEventBus());
                     this.findTextInput = null;
                     //findTextInput.requestReleaseFocus();
                 }
@@ -261,9 +270,9 @@ public class ScrollableComponentTest {
             }
         };
 
-        eventBus.addEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
-        eventBus.addEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
-        eventBus.addEventHandler(new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
+        eventBus.appendEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
+        eventBus.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
+        eventBus.appendEventHandler(new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
     }
     
     
@@ -299,21 +308,24 @@ public class ScrollableComponentTest {
             return ;
         }
         
+        eventBus.appendEventHandler(master_canvas.asShowCursorEventHandler());
+        eventBus.appendEventHandler(master_canvas.asHideCursorEventHandler());
+        
         
         setUpTerminateHandler(screen, master_canvas, eventBus);
         
-        Collection<ConditionalEventHandler> gridEventHandlers = new ArrayList<ConditionalEventHandler>();
+        List<ConditionalEventHandler> gridEventHandlers = new ArrayList<ConditionalEventHandler>();
 
         EventHandlerContainer gridBrailleEventHandlers = new EventHandlerContainer() {
             
             ChainedEventHandler  idleEventHandlers = ChainedEventHandler.useHandleAllStrategy();
 
             @Override
-            public EventHandlerContainer addEventHandler(ConditionalEventHandler eventHandler) {
+            public EventHandlerContainer appendEventHandler(ConditionalEventHandler eventHandler) {
                 
                 if (eventHandler instanceof OnIdleEventEventHandler) {
-                    idleEventHandlers.addEventHandler(eventHandler);
-                    eventBus.addEventHandler(eventHandler);
+                    idleEventHandlers.appendEventHandler(eventHandler);
+                    eventBus.appendEventHandler(eventHandler);
                     return this;
                 }
                 gridEventHandlers.add(eventHandler);
@@ -322,15 +334,28 @@ public class ScrollableComponentTest {
             }
 
             @Override
-            public EventHandlerContainer remove(ConditionalEventHandler eventHandler) {
+            public EventHandlerContainer removeEventHandler(ConditionalEventHandler eventHandler) {
                 if (eventHandler instanceof OnIdleEventEventHandler) {
-                    idleEventHandlers.remove(eventHandler);
-                    eventBus.remove(eventHandler);
+                    idleEventHandlers.removeEventHandler(eventHandler);
+                    eventBus.removeEventHandler(eventHandler);
                     return this;
                 }
                 gridEventHandlers.remove(eventHandler);
                 return this;
             }
+
+	    @Override
+	    public EventHandlerContainer prependEventHandler(ConditionalEventHandler eventHandler) {
+                
+                if (eventHandler instanceof OnIdleEventEventHandler) {
+                    idleEventHandlers.prependEventHandler(eventHandler);
+                    eventBus.prependEventHandler(eventHandler);
+                    return this;
+                }
+                gridEventHandlers.add(0, eventHandler);
+                
+                return this;
+	    }
         };
         
         ScrollableComponent brailleViewComp2 = testScrollingGridBrailleWindowViewer(sizeOfWindow, master_canvas, gridBrailleEventHandlers);
@@ -463,12 +488,12 @@ public class ScrollableComponentTest {
         focusManager.addFocusable(brailleViewComp2, eventBus );
         
         TestsCommon.addNoGraphicsToggleEvent(eventBus, screen);
-        
-        eventBus.addEventHandler(focusManager);
+
+        eventBus.appendEventHandler(focusManager);
 
         TerminalResizeDetection.initiate(screen, eventBus);
         
-        eventBus.addEventHandler(new OnResizeEventHandler() {
+        eventBus.appendEventHandler(new OnResizeEventHandler() {
             @Override
             public void handleResize(Dimension size) {
                 master_canvas.setSize(size.getHeight() , size.getWidth() ); 
@@ -488,6 +513,7 @@ public class ScrollableComponentTest {
             }
         });
 
+        
         return ;
     }
     
