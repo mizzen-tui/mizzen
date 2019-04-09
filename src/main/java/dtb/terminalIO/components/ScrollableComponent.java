@@ -460,10 +460,13 @@ public class ScrollableComponent extends Composite implements CanResize, Focusab
     @Override
     public void hilite() {
         this.borderedComponent.hilite();
-        //this.borderedComponent.setTitle("XXXXX");
         vScrollBar.setColor( borderedComponent.getBorderColor()  );
         hScrollBar.setColor( borderedComponent.getBorderColor()  );
 
+        if (footerControls != null) {
+            footerControls.hilite();
+        }
+        
         this.markAsDirty();
     }
 
@@ -473,6 +476,9 @@ public class ScrollableComponent extends Composite implements CanResize, Focusab
         //this.borderedComponent.setTitle("");
         vScrollBar.setColor( borderedComponent.getBorderColor()  );
         hScrollBar.setColor( borderedComponent.getBorderColor()  );
+        if (footerControls != null) {
+            footerControls.unHilite();
+        }
         this.markAsDirty();
     }
 

@@ -21,7 +21,7 @@ import dtb.terminalIO.events.keyboard.Keys.KeyStrokeFindResult;
  * and converts this into a KeyStroke object which then gets enqueued into an EventBus
  * to be later handled by the application. 
  * 
- * Main entry point method is:  {@link #parseInput(char[], int, EventBus)}░░░░░░░░░░░░░░░░─
+ * Main entry point method is:  {@link #parseInput(char[], int, EventBus)}
  *  
  */
 public class InputCharsEventParser {

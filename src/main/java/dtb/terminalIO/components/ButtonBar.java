@@ -9,9 +9,10 @@ import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
+import dtb.terminalIO.traverse.Traverser;
+import dtb.terminalIO.traverse.Traverser.Visitor;
 
 public class ButtonBar extends Composite implements ConditionalEventHandler {
-    
     
     HorizontalPanel horizontalPanel;
     
@@ -136,4 +137,28 @@ public class ButtonBar extends Composite implements ConditionalEventHandler {
     }
 
 
+    @Override
+    public void hilite() {
+	super.hilite();
+	
+        Traverser<Component<?>> componentTraverser = new Traverser<Component<?>>();
+        Visitor<Component<?>> hilite = (c)-> {new HiliterAdapter<Component<?>>(c).getHiliter().hilite(); return Traverser.CONTINUE_TRAVERSE;};
+        componentTraverser.traverse(horizontalPanel, (c)-> hilite.visit(c) );
+
+        this.markAsDirty();
+    }
+
+    @Override
+    public void unHilite() {
+	super.unHilite();
+	horizontalPanel.unHilite();
+	
+        Traverser<Component<?>> componentTraverser = new Traverser<Component<?>>();
+        Visitor<Component<?>> unHilite = (c)-> {new HiliterAdapter<Component<?>>(c).getHiliter().unHilite(); return Traverser.CONTINUE_TRAVERSE;};
+        componentTraverser.traverse(horizontalPanel, (c)-> unHilite.visit(c) );
+	
+        this.markAsDirty();
+    }
+    
+    
 }

@@ -141,6 +141,7 @@ public class ScrollableComponentTest {
             TextComponent find;
             TextInput  findTextInput;
 	    private ConditionalEventHandler findTextInputEventHandler; 
+	    private String lastFindText = null;
             
             Finder(Color color) {
                 super(color);
@@ -148,11 +149,31 @@ public class ScrollableComponentTest {
                 this.add(find);
             }
             
+            public void hilite() {
+        	super.hilite();
+                if (findTextInput != null) {
+                    this.findTextInput.setColor(Finder.this.getColor().invert());
+                    this.findTextInput.setEmptyColor(Finder.this.getColor().invert());
+                }
+            }
+
+            public void unHilite() {
+        	super.unHilite();
+                if (findTextInput != null) {
+                    this.findTextInput.setColor(Finder.this.getColor());
+                    this.findTextInput.setEmptyColor(Finder.this.getColor());
+                }
+            }
+            
             void setInFindMode(TerminalEvent<?> te) {
                 if (findTextInput == null) {
                     findTextInput = new TextInput(Finder.this.getColor().invert(), 10);
                     this.findTextInput.setEmptyColor(Finder.this.getColor().invert());
-                    findTextInput.setText("test");
+                    if (lastFindText != null) {
+                       findTextInput.setText("test");
+                    } else {
+                	findTextInput.setText("");
+                    }
                     this.add(findTextInput);
                     // findTextInput.requestFocus(te);
                     // FIXME:  1) doing a prepend causes hotkeys on viewComp1 to be blocked including CTRL-F
@@ -162,6 +183,7 @@ public class ScrollableComponentTest {
                     //          3) Cursor mis-positioned on terminal resize
                     findTextInputEventHandler = viewComp1.prependEventHandlerWithCanvasUpdate(findTextInput);
                 } else { // temp
+                    lastFindText = findTextInput.getText();
                     viewComp1.removeEventHandler(findTextInputEventHandler);
                     findTextInputEventHandler = null;
                     this.remove(findTextInput);

@@ -143,6 +143,19 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
         this.setText(this.buffer.toString());
     }
 
+    boolean caretHome() {
+        this.caret = Position.ZERO;
+        markAsDirty();
+        return true;
+    }
+
+    boolean caretEnd() {
+	int col = Math.min(this.getText().length(),this.getWidth())-1; 
+        this.caret = new Position.Simple(0,col);
+        markAsDirty();
+        return true;
+    }
+
     void caretOffsetAdd(Position offsetToAdd) {
         // todo: should check valid?
         this.caret = this.caret.offsetAdd(offsetToAdd);
@@ -260,7 +273,7 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
                 new KeyInputEventHandler(Keys.BACKSPACE_KEYSTROKE, (te) -> raiseEventOnChanged(te.getEventBus(), () -> deleteCharBeforeCaret())));
 
         chainedHandler
-                .appendEventHandler(new KeyInputEventHandler(Keys.DELETE_KEYSTROKE, (te) -> raiseEventOnChanged(te.getEventBus(), () -> deleteCharAtCaret())));
+                .appendEventHandler(new KeyInputEventHandler(Keys.DELETE_KEYSTROKE, (te) -> raiseEventOnChanged(te.getEventBus(), () -> deleteCharAtCaret() )));
 
         chainedHandler.appendEventHandler(new KeyInputEventHandler(Keys.LEFT_KEYSTROKE, (te) -> {
             if (caret.getCol() > 0) {
@@ -279,6 +292,20 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
             return;
         }));
 
+        chainedHandler.appendEventHandler(new KeyInputEventHandler(Keys.ENTER_KEYSTROKE, (te) -> {
+            // for now ... do nothing - but maybe later go to next focus? (new concept)
+            return;
+        }));
+
+        chainedHandler
+        .appendEventHandler(new KeyInputEventHandler(Keys.HOME_KEYSTROKE, (te) -> raiseEventOnChanged(te.getEventBus(), () -> caretHome())));
+
+        chainedHandler
+        .appendEventHandler(new KeyInputEventHandler(Keys.END_KEYSTROKE, (te) -> raiseEventOnChanged(te.getEventBus(), () -> caretEnd())));
+
+        
+        
+        
         chainedHandler.appendEventHandler(new KeyInputEventHandler((te) -> {
             KeyEvent ke = (KeyEvent) te;
             if (ke.getKeyStroke().getKeySequenceLength() == 1) {
@@ -290,7 +317,7 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
                 return false;
             }
         }, (te) -> {
-            // then probably a simple char - so lets see if its asci
+            // then probably a simple char - so lets see if its ascii
             // TODO: I have discovered an problem ( try CTRL-UP ) it generates
             // multiple keystroke events - which is incorrect - issue with key input parser
             // dont try to handle this bug here - do it in the parser
