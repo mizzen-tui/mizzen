@@ -60,14 +60,23 @@ public class InputCharsEventParser {
 	
 	eventBus.raiseEvent( new InputCharsDEBUGEvent(buffer, readIn)  );
 	
-	KeyStrokeFindResult result = Keys.getKeyStrokeFromChars(buffer, readIn);
+	boolean lookForKnownKeys = true;
 	
-	if (result.foundKeyStroke != null) {
-	    eventBus.raiseEvent( new KeyEvent(this, result.foundKeyStroke) );
+	while (lookForKnownKeys && buffer.length >= 1) {
+	
+	   KeyStrokeFindResult result = Keys.getKeyStrokeFromChars(buffer, readIn);
+	
+	   if (result.foundKeyStroke != null) {
+	      eventBus.raiseEvent( new KeyEvent(this, result.foundKeyStroke) );
+	   } else {
+	      lookForKnownKeys = false;
+	   }
+	   buffer = result.remainingBuffer;
+	   readIn = result.remainingBuffer.length;
 	}
 	
-        for (int i = 0; i < result.remainingBuffer.length; i++) {
-            int ch = result.remainingBuffer[i];
+        for (int i = 0; i < readIn; i++) {
+            int ch = buffer[i];
             processChar((char) ch, eventBus);
         }
         handleESC_ifNeeded(eventBus);
