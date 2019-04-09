@@ -62,6 +62,45 @@ public class KeyStroke {
         this.altPressed = altPressed;
     }
     
+    public boolean isCtrlKey() {
+        return this.ctrl;
+    }
+    
+    public boolean isAltKey() { 
+        return this.altPressed;
+    }
+
+    public static KeyStroke CTRL_keyStroke(int i) {
+        
+        if (i > 0x1F) {
+            throw new IllegalArgumentException("CTRL_keyStroke(i) - i should have value <= 0x1F, i = " + i);
+        }
+        
+        boolean alt = false;
+        switch (i) {
+            case 0x0D:
+                // Carriage return --> ENTER
+                return new KeyStroke(13, "ENTER", alt);
+            case 0x0A:
+                // Linefeed --> ENTER
+                return new KeyStroke(13, "ENTER", alt);
+            case 0x1B:
+                // ESC
+                return new KeyStroke(27, "ESC", alt);
+            case '\t':
+                // TAB
+                return new KeyStroke('\t', "TAB", alt);
+            default:
+                // Make all other control characters come back as the alphabetic
+                // character with the ctrl field set. So SOH would be 'A' +
+                // ctrl.
+                KeyStroke keyStroke = new KeyStroke(i, "CTRL-" + ((char) ('A' + i - 1)), alt);
+                keyStroke.ctrl = true;
+                return keyStroke;
+        }
+    }
+    
+    
     
     public int getKeySequenceLength() {
         return this.getKeys(0).getLength();

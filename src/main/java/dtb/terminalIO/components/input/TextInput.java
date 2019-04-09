@@ -282,6 +282,9 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
         chainedHandler.appendEventHandler(new KeyInputEventHandler((te) -> {
             KeyEvent ke = (KeyEvent) te;
             if (ke.getKeyStroke().getKeySequenceLength() == 1) {
+                if (ke.getKeyStroke().isCtrlKey() || ke.getKeyStroke().isAltKey()) {
+                    return false;
+                }
                 return true;
             } else {
                 return false;
