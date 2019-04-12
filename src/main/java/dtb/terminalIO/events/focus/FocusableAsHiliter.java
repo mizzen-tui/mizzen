@@ -1,7 +1,8 @@
-package dtb.terminalIO.events;
+package dtb.terminalIO.events.focus;
 
 import dtb.terminalIO.components.HasHiliter;
 import dtb.terminalIO.components.Hiliter;
+import dtb.terminalIO.events.EventBus;
 
 public class FocusableAsHiliter implements HasHiliter {
     

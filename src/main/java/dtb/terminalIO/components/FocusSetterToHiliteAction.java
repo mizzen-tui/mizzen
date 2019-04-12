@@ -1,6 +1,6 @@
 package dtb.terminalIO.components;
 
-import dtb.terminalIO.events.Focusable;
+import dtb.terminalIO.events.focus.Focusable;
 
 public class FocusSetterToHiliteAction {
 

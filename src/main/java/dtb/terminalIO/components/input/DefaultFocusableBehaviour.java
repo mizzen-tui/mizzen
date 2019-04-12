@@ -6,8 +6,8 @@ import dtb.terminalIO.components.FocusSetterToHiliteAction;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
-import dtb.terminalIO.events.Focusable;
 import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.focus.Focusable;
 
 public abstract class DefaultFocusableBehaviour  implements Focusable {
      

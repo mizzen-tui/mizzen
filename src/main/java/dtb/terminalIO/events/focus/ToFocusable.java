@@ -1,4 +1,4 @@
-package dtb.terminalIO.events;
+package dtb.terminalIO.events.focus;
 
 public interface ToFocusable {
     Focusable asFocusable();

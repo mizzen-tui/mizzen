@@ -1,4 +1,7 @@
-package dtb.terminalIO.events;
+package dtb.terminalIO.events.focus;
+
+import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.TerminalEvent.TYPE;
 
 public class RequestFocusEvent extends TerminalEvent<Focusable> {
 

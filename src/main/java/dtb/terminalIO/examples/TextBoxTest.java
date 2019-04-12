@@ -17,11 +17,11 @@ import dtb.terminalIO.core.TerminalScreen;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
-import dtb.terminalIO.events.FocusManager;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
+import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyInputEventsProducer;
 import dtb.terminalIO.events.keyboard.Keys;
@@ -175,10 +175,10 @@ public class TextBoxTest {
         eventBus.appendEventHandler(new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
         
         
-        FocusManager focusManager = new FocusManager(Keys.TAB_KEYSTROKE);
+        DefaultFocusManager focusManager = new DefaultFocusManager(Keys.TAB_KEYSTROKE);
         
-        FocusManager focusManager1 = new FocusManager();
-        FocusManager focusManager2 = new FocusManager();
+        DefaultFocusManager focusManager1 = new DefaultFocusManager();
+        DefaultFocusManager focusManager2 = new DefaultFocusManager();
 
         focusManager1.addFocusable(ti, eventBus);
         focusManager1.addFocusable(ti_2, eventBus);

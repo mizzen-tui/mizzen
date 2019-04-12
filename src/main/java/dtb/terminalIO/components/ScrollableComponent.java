@@ -6,9 +6,9 @@ import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.EventHandlerContainer;
-import dtb.terminalIO.events.Focusable;
-import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.focus.FocusManager;
+import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
@@ -38,7 +38,7 @@ import dtb.terminalIO.textsegments.ScreenLineSegmentsView;
  * being viewed from.
  * 
  */
-public class ScrollableComponent extends Composite implements CanResize, Focusable , Hiliter , EventHandlerContainer {
+public class ScrollableComponent extends Composite implements CanResize, FocusManager, Focusable , Hiliter , EventHandlerContainer {
     
     BorderedComponent   borderedComponent;
     ScrollBarVertical   vScrollBar;
@@ -455,6 +455,10 @@ public class ScrollableComponent extends Composite implements CanResize, Focusab
         } else {
             this.unHilite();
         }
+        if (footerControls != null) {
+            footerControls.setFocus(focus, eventBus);
+        }
+
     } 
 
     @Override
@@ -509,6 +513,25 @@ public class ScrollableComponent extends Composite implements CanResize, Focusab
         __addFooterButton(componentForButtonBar, hotKey, handler);
         positionFooterText();
         
+    }
+
+    @Override
+    public void setChildAsCurrentFocus(Focusable focusable, EventBus eventBus) {
+        if (focusable == null) {
+            return ;
+        }
+        if (footerControls != focusable) {
+            throw new IllegalStateException(String.valueOf(focusable)+" is not the footer control fro this scrollable");
+        }
+        
+        FocusManager.UTIL.setNewFocusable(footerControls, null, eventBus, null);
+        
+        
+    }
+
+    @Override
+    public Focusable getCurrentChildFocus() {
+        return footerControls;
     }
 
     

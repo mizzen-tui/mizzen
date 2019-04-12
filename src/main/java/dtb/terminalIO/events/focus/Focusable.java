@@ -1,4 +1,9 @@
-package dtb.terminalIO.events;
+package dtb.terminalIO.events.focus;
+
+import dtb.terminalIO.events.ConditionalEventHandler;
+import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.TerminalEvent;
 
 public interface Focusable extends ConditionalEventHandler {
 

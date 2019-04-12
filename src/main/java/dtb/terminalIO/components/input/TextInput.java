@@ -14,16 +14,18 @@ import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
-import dtb.terminalIO.events.Focusable;
-import dtb.terminalIO.events.RequestFocusEvent;
 import dtb.terminalIO.events.RequestHideCursorEvent;
 import dtb.terminalIO.events.RequestShowCursorEvent;
 import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.focus.RequestFocusEvent;
+import dtb.terminalIO.events.focus.RequestReleaseFocusEvent;
 import dtb.terminalIO.events.keyboard.KeyEvent;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
+import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 
 public class TextInput extends BoundedComponent<TextInput> implements HasValue<String>, ParentContainer, ConditionalEventHandler , Focusable  {
@@ -38,6 +40,7 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
 
     private boolean       modeOverite = false;        // true means insertMode
 
+    
     public TextInput(Color color, int length) {
         super(color, new Dimension.Simple(1, length));
         init();
@@ -129,6 +132,13 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
         return this.getText();
     }
 
+    public void resize(Dimension d) {
+        setRectangle(new Rectangle.Simple(this.getPostion_TopLeft(), d));
+        markAsDirty();
+    }
+    
+    
+    
     public void appendText(String text) {
         int maxWidth = this.getWidth();
         if (this.buffer.length() >= maxWidth) {
@@ -345,6 +355,12 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
         // calc where cursor should be relative to text component + its caret position
 
 	Position canvasOffset = Component.UTIL.getCanvasOffsetFor(TextInput.this);
+	
+	if (canvasOffset == null) {
+	    throw new IllegalStateException("requestShowCursor(): Offset not calcylated");
+	}
+	
+	
         Position cursorPos = canvasOffset.offsetAdd(caret);
         
         eventBus.raiseEvent(new RequestShowCursorEvent(TextInput.this, cursorPos));
@@ -379,6 +395,10 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
 
     public void requestFocus(TerminalEvent<?> te) {
         te.getEventBus().raiseEvent( new RequestFocusEvent(this) );
+    }
+
+    public void requestReleaseFocus(TerminalEvent<?> te) {
+        te.getEventBus().raiseEvent( new RequestReleaseFocusEvent(this) );
     }
     
     public void requestFocus(EventBus eventBus) {

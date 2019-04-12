@@ -21,12 +21,12 @@ import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.EventHandlerContainer;
-import dtb.terminalIO.events.FocusManager;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.OnResizeEventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
+import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyInputEventsProducer;
 import dtb.terminalIO.events.keyboard.Keys;
@@ -167,29 +167,44 @@ public class ScrollableComponentTest {
             
             void setInFindMode(TerminalEvent<?> te) {
                 if (findTextInput == null) {
-                    findTextInput = new TextInput(Finder.this.getColor().invert(), 10);
+                    findTextInput = new TextInput(Finder.this.getColor().invert(), 10) {
+                        @Override
+                        public void setFocus(boolean focus, EventBus eventBus) {
+                            super.setFocus(focus, eventBus);
+                            if (! focus) {
+                                if (Finder.this.findTextInput != null) {
+                                    Finder.this.lastFindText = findTextInput.getText();
+                                    viewComp1.removeEventHandler(findTextInputEventHandler);
+                                    Finder.this.findTextInputEventHandler = null;
+                                    Finder.this.remove(findTextInput);
+                                    Finder.this.findTextInput = null;
+                                    viewComp1.refreshFooter();
+                                }
+                            }
+                        }
+                    };
                     this.findTextInput.setEmptyColor(Finder.this.getColor().invert());
                     if (lastFindText != null) {
-                       findTextInput.setText("test");
+                       findTextInput.setText(lastFindText);
                     } else {
                 	findTextInput.setText("");
                     }
                     this.add(findTextInput);
-                    // findTextInput.requestFocus(te);
                     // FIXME:  1) doing a prepend causes hotkeys on viewComp1 to be blocked including CTRL-F
                     //            so cannot get out of find mode..  TextInput accepting too many keys
                     //            need to fix
                     //          2) Cursor never hides
                     //          3) Cursor mis-positioned on terminal resize
                     findTextInputEventHandler = viewComp1.prependEventHandlerWithCanvasUpdate(findTextInput);
+                    findTextInput.requestFocus(te);
                 } else { // temp
-                    lastFindText = findTextInput.getText();
-                    viewComp1.removeEventHandler(findTextInputEventHandler);
-                    findTextInputEventHandler = null;
-                    this.remove(findTextInput);
-                    this.findTextInput.setFocus(false, te.getEventBus());
-                    this.findTextInput = null;
-                    //findTextInput.requestReleaseFocus();
+                    findTextInput.requestReleaseFocus(te);
+//                    lastFindText = findTextInput.getText();
+//                    viewComp1.removeEventHandler(findTextInputEventHandler);
+//                    findTextInputEventHandler = null;
+//                    this.remove(findTextInput);
+//                    this.findTextInput.setFocus(false, te.getEventBus());
+//                    this.findTextInput = null;
                 }
             }
         };
@@ -466,12 +481,17 @@ public class ScrollableComponentTest {
         barChartDemoContainer.setBorder(true);
         BarChartDemo barChartDemo = new BarChartDemo();
 
+        boolean showYvalues[] = new boolean[] {false};
+        
+        
+        
         Runnable updateCanvas = new Runnable() {
             
             long lastRun = 0;
 
             long updateTaskTime=0;
             long updateTaskDuration = 200;
+            
             
             @Override
             public synchronized void run() {
@@ -485,12 +505,26 @@ public class ScrollableComponentTest {
                 master_canvas.addComponentSegments(lineChartPosition, lineChartDemoContainer);
                 master_canvas.addComponentSegments(barChartPosition, barChartDemoContainer);
                 master_canvas.t(master_canvas.getHeight()-1,1,"[Rendering stats | Rendering time :" + updateTaskTime + " | Wait time between updates: " + updateTaskDuration + "]     " );
+                
+                if (showYvalues[0]) {
+                    int master_canvas_height = master_canvas.getHeight();
+                    
+                    for (int i = 0; i< master_canvas_height; i++) {
+                        master_canvas.t(i,0, String.format("|  %03d  |", i));
+                    }
+                }
                 master_canvas.refresh();
+                
+                
                 updateTaskTime = System.currentTimeMillis() - now;
                 updateTaskDuration = updateTaskTime * 3;
             }
         };
 
+        
+        eventBus.appendEventHandler(  new KeyInputEventHandler(  Keys.CTRL_N_KEYSTROKE  , (te)-> { showYvalues[0] = ! showYvalues[0]; }));
+        
+        
         lineChartDemo.setUpDemo(eventBus, new Rectangle.Simple(lineChartDemoContainer), lineChartDemoContainer);
         lineChartDemo.setFlushDemoOutput(updateCanvas);
         
@@ -503,7 +537,7 @@ public class ScrollableComponentTest {
         
         brailleViewComp2.setUpdateCanvas(updateCanvas);
         
-        FocusManager focusManager = new FocusManager(Keys.TAB_KEYSTROKE);
+        DefaultFocusManager focusManager = new DefaultFocusManager(Keys.TAB_KEYSTROKE);
         
         focusManager.addFocusable(viewComp1, eventBus );
 
@@ -518,7 +552,7 @@ public class ScrollableComponentTest {
         eventBus.appendEventHandler(new OnResizeEventHandler() {
             @Override
             public void handleResize(Dimension size) {
-                master_canvas.setSize(size.getHeight() , size.getWidth() ); 
+                master_canvas.setSize(size.getHeight(), size.getWidth()); 
                 master_canvas.clearCanvas();
                 viewComp1.resize(sizeOfWindow);
                 brailleViewComp2.resize(sizeOfWindow);

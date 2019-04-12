@@ -1,18 +1,22 @@
 package dtb.terminalIO.components;
 
 import dtb.terminalIO.components.input.Button;
+import dtb.terminalIO.components.input.DefaultFocusableBehaviour;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.ConditionalEventHandler;
+import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.focus.FocusManager;
+import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.traverse.Traverser;
 import dtb.terminalIO.traverse.Traverser.Visitor;
 
-public class ButtonBar extends Composite implements ConditionalEventHandler {
+public class ButtonBar extends Composite implements FocusManager {
     
     HorizontalPanel horizontalPanel;
     
@@ -23,7 +27,11 @@ public class ButtonBar extends Composite implements ConditionalEventHandler {
     ChainedEventHandler chainedEventHandler;
     ConditionalEventHandler chainedEventHandlerAsConditionalEventHandler;
     
-    Runnable updateCanvas = null; 
+    Runnable updateCanvas = null;
+
+    private Focusable meAsFocusable; 
+    private Focusable current;
+
     
     public ButtonBar(Color color) {
         super(color);
@@ -52,6 +60,8 @@ public class ButtonBar extends Composite implements ConditionalEventHandler {
         // clear out event handlers as well
         chainedEventHandler = null;
         chainedEventHandlerAsConditionalEventHandler = null;
+
+        current = null;
     }
 
     
@@ -159,6 +169,45 @@ public class ButtonBar extends Composite implements ConditionalEventHandler {
 	
         this.markAsDirty();
     }
+
+    @Override
+    public boolean hasFocus() {
+        return asFocusable().hasFocus();
+    }
+
+    @Override
+    public void setFocus(boolean focus, EventBus eventBus) {
+        asFocusable().setFocus(focus, eventBus);
+    }
+
+    @Override
+    public Focusable getCurrentChildFocus() {
+        return this.current;
+    }
+
+    @Override
+    public void setChildAsCurrentFocus(Focusable focusable, EventBus eventBus) {
+        Focusable prevCurrent = this.current;
+        this.current = null;
+        FocusManager.UTIL.setNewFocusable(focusable, prevCurrent, eventBus, (f)->updateCanvas());
+        this.current = focusable;
+    }
     
+    @SuppressWarnings("unchecked")
+    private Focusable asFocusable() {
+        if (meAsFocusable == null) {
+            this.meAsFocusable = new DefaultFocusableBehaviour.Simple(this, (ConditionalEventHandler) this) {
+                @Override
+                public void setFocus(boolean focus, EventBus eventBus) {
+                    super.setFocus(focus, eventBus);
+                    if (ButtonBar.this.current != null) {
+                        ButtonBar.this.setChildAsCurrentFocus(focus ? ButtonBar.this.current : null, eventBus);
+                    }
+                }
+            };
+        }
+        return meAsFocusable;
+    }
+
     
 }

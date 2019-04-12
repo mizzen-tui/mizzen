@@ -37,7 +37,7 @@ public interface Position {
     }
     
     public default Position offsetTo(int row, int col) {
-        return new Position.Simple(row-this.getRow(), col-this.getCol());
+        return new Position.Simple(row - this.getRow(), col - this.getCol());
     }
 
     public default Position offsetAdd(int row, int col) {

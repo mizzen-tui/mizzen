@@ -14,8 +14,8 @@ import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.TerminalScreen;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
-import dtb.terminalIO.events.FocusManager;
 import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyInputEventsProducer;
 import dtb.terminalIO.events.keyboard.Keys;
@@ -176,7 +176,7 @@ public class ListBoxTest {
 
        TestsCommon.addNoGraphicsToggleEvent(eventBus, screen, renderComponents);
        
-       FocusManager fm = new FocusManager(Keys.LEFT_KEYSTROKE, Keys.RIGHT_KEYSTROKE).setOnFocusChanged((f)->renderComponents.run());
+       DefaultFocusManager fm = new DefaultFocusManager(Keys.LEFT_KEYSTROKE, Keys.RIGHT_KEYSTROKE).setOnFocusChanged((f)->renderComponents.run());
        fm.addFocusable( lb1.asFocusable() , eventBus );
        fm.addFocusable( lb2.asFocusable(), eventBus  );
        

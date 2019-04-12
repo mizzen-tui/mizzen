@@ -7,7 +7,7 @@ import java.util.Stack;
 public class FindPathToTarget<T> {
 
     /**
-     * Find a path of related objects (parrent/child/grandchild/..) relationship
+     * Find a path of related objects (parent/child/grandchild/..) relationship
      * between root and target.
      * Returns relation in the form of a list
      * otherwise returns null when no relation

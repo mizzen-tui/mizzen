@@ -112,7 +112,7 @@ public class TestsCommon {
             size = new Dimension.Simple(35, 150);
         }
         Canvas master_canvas = new Canvas(screen);
-        master_canvas.setSize(size.getHeight() - 1, size.getWidth() - 1); // todo: detect term size
+        master_canvas.setSize(size.getHeight() , size.getWidth() ); // todo: detect term size
         return master_canvas;
     }
 
