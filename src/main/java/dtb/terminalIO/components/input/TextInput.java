@@ -357,7 +357,7 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
 	Position canvasOffset = Component.UTIL.getCanvasOffsetFor(TextInput.this);
 	
 	if (canvasOffset == null) {
-	    throw new IllegalStateException("requestShowCursor(): Offset not calcylated");
+	    throw new IllegalStateException("requestShowCursor(): Offset not calculated");
 	}
 	
 	
