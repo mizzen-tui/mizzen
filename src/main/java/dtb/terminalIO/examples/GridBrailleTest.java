@@ -100,9 +100,14 @@ public class GridBrailleTest {
 	Canvas master_canvas = TestsCommon.getMasterCanvasForTesting(screen);
 	master_canvas.setEmptyChar(' ');
 
+	EventBus eventBus = new EventBus();
+	
 	BrailleDemo brailleDemo = new BrailleDemo() {
 	    public void flushOutput() {
 		master_canvas.t(0, 0, "Braille Characters used for plotting.  MODE :" + style + "  ");
+		
+		TestsCommon.renderScreenDEBUG(master_canvas, screen, eventBus);
+		
 		master_canvas.refresh();
 	    }
 	};
@@ -130,7 +135,6 @@ public class GridBrailleTest {
 
 	master_canvas.refresh();
 
-	EventBus eventBus = new EventBus();
 	KeyInputEventsProducer keyInputEventsProducer = null;
 	try {
 	    keyInputEventsProducer = new KeyInputEventsProducer(eventBus);
@@ -307,6 +311,7 @@ public class GridBrailleTest {
         		    // copy grid contents into segmentsBufferProvider ( the parent component)
         		    segmentsBufferProvider.getSegmentsBuffer().mergeAt(2, 2, brailleComponent.getSegmentsBuffer());
 		    }
+		    
 		    // 
 		    flushOutput();
 		}

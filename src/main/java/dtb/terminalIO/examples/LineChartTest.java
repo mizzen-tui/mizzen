@@ -435,6 +435,8 @@ public class LineChartTest {
 	// master_canvas.t("  Braille Characters used for plotting");
 	master_canvas.t(" ");
 
+	// by performing a refresh now ( before screen is set to RAW) we get the screen to
+	// scroll up
 	master_canvas.refresh();
 
 	EventBus eventBus = new EventBus();

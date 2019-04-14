@@ -36,10 +36,11 @@ public class TextBoxTest {
         
         TerminalScreen screen = TestsCommon.getTerminalScreenForTesting(args);
 
-        Canvas master_canvas = new Canvas(screen);
-        master_canvas.setSize(20, 60);
+        //Canvas master_canvas = new Canvas(screen);
+        Canvas master_canvas = TestsCommon.getMasterCanvasForTesting(screen);
+       // master_canvas.setSize(20, 60);
         
-        screen.setRaw();
+//        screen.setRaw();
         
         master_canvas.t("Some text");
         
@@ -79,6 +80,8 @@ public class TextBoxTest {
         
         
         TextComponent eventDisplayer = new TextComponent("                                       ");
+
+        EventBus eventBus = new EventBus();
         
         Runnable renderComponents = () -> {
             
@@ -105,6 +108,8 @@ public class TextBoxTest {
             
             master_canvas.addComponentSegments(master_canvas.getHeight()-2, 2, eventDisplayer);
             
+            TestsCommon.renderScreenDEBUG(master_canvas, screen,  eventBus);
+            
             master_canvas.refresh();
             
             
@@ -113,7 +118,6 @@ public class TextBoxTest {
         
         renderComponents.run();
         
-        EventBus eventBus = new EventBus();
         KeyInputEventsProducer keyInputEventsProducer = null;
         try {
             keyInputEventsProducer = new KeyInputEventsProducer(eventBus);

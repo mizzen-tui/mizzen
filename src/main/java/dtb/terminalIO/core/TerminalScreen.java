@@ -60,11 +60,8 @@ public class TerminalScreen implements ControlCodeContext {
     }
 
     public void wrapEmitter(DelegateEmitter wrappingEmitter) {
-
         wrappingEmitter.setDelegate(baseEmitter);
-        
         this.baseEmitter = wrappingEmitter;
-
     }
     
     // returns true if emitter is unwrapped
@@ -127,8 +124,6 @@ public class TerminalScreen implements ControlCodeContext {
 	//write(cc.getControlCode());
     }
     
-    
-    
     public TerminalScreen add(Renderer r) {
         if (refreshed) {
             out.clearLastTrackedLines(false);
@@ -169,12 +164,10 @@ public class TerminalScreen implements ControlCodeContext {
     }
 
     public void showCursor() {
-
         add( ControlCode.SHOW_CURSOR);
     }
 
     public void hideCursor() {
-
         add( ControlCode.HIDE_CURSOR);
     }
 

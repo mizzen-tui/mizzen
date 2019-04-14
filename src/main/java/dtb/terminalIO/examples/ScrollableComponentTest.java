@@ -44,7 +44,6 @@ import dtb.terminalIO.util.Stty;
 
 public class ScrollableComponentTest {
     
-    
     static String execTop()   {
         try {
             return ExecUtil.executeWithShell("top -n 1 -b");
@@ -67,7 +66,6 @@ public class ScrollableComponentTest {
         Position viewOffset = new Position.Simple(0, 0);
 
         ScrollableComponent viewComp1 = new ScrollableComponent(Colors.Gre, sizeOfWindow, srcOfText);
-        
         
         Supplier<String> text3 = new Supplier<String>() {
             
@@ -99,10 +97,9 @@ public class ScrollableComponentTest {
                 return "Reading large text file - one moment ..";
             }
         };
-        
-        
+
         boolean[] toggle = new boolean[] {false};
-        
+
         Runnable setTextToView = new Runnable() {
             @Override
             public void run() {
@@ -110,15 +107,13 @@ public class ScrollableComponentTest {
                 srcOfText.setTextAndResize((toggle[0])?text3.get():text2);
             }
         };
-        
+
         setTextToView.run();
- 
+
         viewComp1.setViewOffset(viewOffset.getRow(), viewOffset.getCol());
-        
-        
         viewComp1.setViewOffset(viewOffset.getRow(), viewOffset.getCol());
         viewComp1.setFooterText("Help comes in many forms!");
-        
+
         viewComp1.setUpdateCanvas(()-> {});
          
         viewComp1.addEventHandlerWithCanvasUpdate(new KeyInputEventHandler(Keys.CTRL_H_KEYSTROKE, new EventHandler() {
@@ -135,7 +130,6 @@ public class ScrollableComponentTest {
                 viewComp1.markAsDirty();
             }
         }));
-        
         
         class Finder extends HorizontalPanel {
             TextComponent find;
@@ -199,12 +193,6 @@ public class ScrollableComponentTest {
                     findTextInput.requestFocus(te);
                 } else { // temp
                     findTextInput.requestReleaseFocus(te);
-//                    lastFindText = findTextInput.getText();
-//                    viewComp1.removeEventHandler(findTextInputEventHandler);
-//                    findTextInputEventHandler = null;
-//                    this.remove(findTextInput);
-//                    this.findTextInput.setFocus(false, te.getEventBus());
-//                    this.findTextInput = null;
                 }
             }
         };
@@ -219,7 +207,6 @@ public class ScrollableComponentTest {
             
             });
         
-        
 //        viewComp1.addEventHandlerWithCanvasUpdate(new KeyInputEventHandler(Keys.CTRL_F_KEYSTROKE, new EventHandler() {
 //            @Override
 //            public void handle(TerminalEvent<?> te) {
@@ -230,54 +217,48 @@ public class ScrollableComponentTest {
         
         return viewComp1;
     }
-    
+
 
     public static ScrollableComponent testScrollingGridBrailleWindowViewer(Dimension size, Dimension sizeOfGrid, EventHandlerContainer eventBus) throws IOException { 
 
- 
-        
         Composite sourceComponentContainingBrailleDemo = new Composite();
         sourceComponentContainingBrailleDemo.setBounds(sizeOfGrid);
         
         ScrollableComponent viewComp1 = new ScrollableComponent(Colors.Gre, size, sourceComponentContainingBrailleDemo);
-        
-        
+
 
         Position viewOffset = new Position.Simple(0, 0);
 
         viewComp1.setViewOffset(viewOffset.getRow(), viewOffset.getCol());
         
-        
         viewComp1.setViewOffset(viewOffset.getRow(), viewOffset.getCol());
         viewComp1.setFooterText("Help comes in many forms!");
-        
-         viewComp1.setUpdateCanvas(()-> {});
-         
-         
-         BrailleDemo brailleDemo = new BrailleDemo() {
+
+        viewComp1.setUpdateCanvas(()-> {});
+
+        BrailleDemo brailleDemo = new BrailleDemo() {
              public void flushOutput() {
                  sourceComponentContainingBrailleDemo.markAsDirty();
                  viewComp1.markAsDirty();
                  viewComp1.updateCanvas();
              }
-         };
-         
-         // this call must happen before brailleDemo.setUpDemo(..)
-         brailleDemo.setupMpvementKeys(Keys.CTRL_T_KEYSTROKE,    // up
+        };
+
+        // this call must happen before brailleDemo.setUpDemo(..)
+        brailleDemo.setupMpvementKeys(Keys.CTRL_T_KEYSTROKE,    // up
                                        Keys.CTRL_V_KEYSTROKE,    // down
                                        Keys.CTRL_F_KEYSTROKE,    // left
                                        Keys.CTRL_G_KEYSTROKE);   // right
          
-         // sets up a braille demo using the source component both for size as well as 
-         // the place where grid segments will be copied on a render iteration
-         brailleDemo.setUpDemo(eventBus, sourceComponentContainingBrailleDemo, null);
+        // sets up a braille demo using the source component both for size as well as 
+        // the place where grid segments will be copied on a render iteration
+        brailleDemo.setUpDemo(eventBus, sourceComponentContainingBrailleDemo, null);
          
-         Component<?> brailleComponent = brailleDemo.getBrailleComponent();
+        Component<?> brailleComponent = brailleDemo.getBrailleComponent();
          
-         sourceComponentContainingBrailleDemo.add(brailleComponent);
-         
+        sourceComponentContainingBrailleDemo.add(brailleComponent);
+ 
         return viewComp1;
-        
     }
     
     
@@ -319,6 +300,9 @@ public class ScrollableComponentTest {
         TerminalScreen screen = TestsCommon.getTerminalScreenForTesting(args);
 
         Canvas master_canvas = TestsCommon.getMasterCanvasForTesting(screen);
+        
+        master_canvas.setSize(30, master_canvas.getWidth());
+        
         master_canvas.setEmptyChar('.');
         
         Dimension sizeOfWindow = new Dimension() {
@@ -344,11 +328,10 @@ public class ScrollableComponentTest {
             eventBus.stopConsuming();
             return ;
         }
-        
+
         eventBus.appendEventHandler(master_canvas.asShowCursorEventHandler());
         eventBus.appendEventHandler(master_canvas.asHideCursorEventHandler());
-        
-        
+
         setUpTerminateHandler(screen, master_canvas, eventBus);
         
         List<ConditionalEventHandler> gridEventHandlers = new ArrayList<ConditionalEventHandler>();
@@ -481,9 +464,6 @@ public class ScrollableComponentTest {
         barChartDemoContainer.setBorder(true);
         BarChartDemo barChartDemo = new BarChartDemo();
 
-        boolean showYvalues[] = new boolean[] {false};
-        
-        
         
         Runnable updateCanvas = new Runnable() {
             
@@ -506,15 +486,9 @@ public class ScrollableComponentTest {
                 master_canvas.addComponentSegments(barChartPosition, barChartDemoContainer);
                 master_canvas.t(master_canvas.getHeight()-1,1,"[Rendering stats | Rendering time :" + updateTaskTime + " | Wait time between updates: " + updateTaskDuration + "]     " );
                 
-                if (showYvalues[0]) {
-                    int master_canvas_height = master_canvas.getHeight();
-                    
-                    for (int i = 0; i< master_canvas_height; i++) {
-                        master_canvas.t(i,0, String.format("|  %03d  |", i));
-                    }
-                }
-                master_canvas.refresh();
+                TestsCommon.renderScreenDEBUG(master_canvas, screen, eventBus);
                 
+                master_canvas.refresh();
                 
                 updateTaskTime = System.currentTimeMillis() - now;
                 updateTaskDuration = updateTaskTime * 3;
@@ -522,7 +496,7 @@ public class ScrollableComponentTest {
         };
 
         
-        eventBus.appendEventHandler(  new KeyInputEventHandler(  Keys.CTRL_N_KEYSTROKE  , (te)-> { showYvalues[0] = ! showYvalues[0]; }));
+//        eventBus.appendEventHandler(  new KeyInputEventHandler(  Keys.CTRL_N_KEYSTROKE  , (te)-> { showYvalues[0] = ! showYvalues[0]; }));
         
         
         lineChartDemo.setUpDemo(eventBus, new Rectangle.Simple(lineChartDemoContainer), lineChartDemoContainer);
@@ -572,15 +546,10 @@ public class ScrollableComponentTest {
         
         return ;
     }
-    
 
     public static void main(String[] args) throws IOException {
 
-        // testWindowViewer(args);
         testTwoScrollableWindows(args);
-        //testScrollingGridBrailleTest(args);
 
     }
-    
-    
 }

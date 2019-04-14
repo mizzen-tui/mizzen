@@ -173,4 +173,33 @@ public class TestsCommon {
         }
     }
 
+    static boolean[] showScreen_DEBUGINFO = null;
+
+    public static void renderScreenDEBUG(Canvas master_canvas, TerminalScreen screen, EventBus eventBus) {
+	
+	
+	if (showScreen_DEBUGINFO == null && eventBus != null) {
+	    showScreen_DEBUGINFO = new boolean[]{false};
+	    eventBus.appendEventHandler(  new KeyInputEventHandler(  Keys.CTRL_N_KEYSTROKE  , 
+		    (te)-> { 
+			
+			showScreen_DEBUGINFO[0] = ! showScreen_DEBUGINFO[0]; 
+			     		    
+		    }
+		    
+		    ));
+	}
+	
+        if (showScreen_DEBUGINFO != null && showScreen_DEBUGINFO[0]) {
+            int master_canvas_height = master_canvas.getHeight();
+            
+            for (int i = 0; i< master_canvas_height; i++) {
+                master_canvas.t(i,0, String.format("|  %03d  |", i));
+            }
+            
+            master_canvas.t(0,10, "linecounter =    " + screen.getEmitter().DEBUGCTR());
+        }
+	
+    }
+
 }

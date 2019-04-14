@@ -10,12 +10,24 @@ import dtb.terminalIO.util.Logging;
 
 /**
  * A CLIEmmitter that tracks the # of lines emitted (output) so far
+ * 
+ * TODO:  There is a fundamental problem with the lineCounter
+ *        variable .it always seems to be +1 or the actual value.
+ *        This causes issues when using the  showCursorAtFromBottomUP(showCursorPosition)
+ *        method when canvas is full screen..  
+ *        
+ *        Also can have issues when outputting to last line of canvas
+ *        when canvas is full screen
+ * 
+ * 
  */
 public class LineTrackingCLIEmmitter implements CLIEmitter {
 
     int lineCounter = 0;
     boolean nextOutputIncsLineCounter = true;
 
+    Position lastShowCursorPosition = null;
+    
     ControlCodeContext ctx;
 
     public LineTrackingCLIEmmitter(ControlCodeContext ctx) {
@@ -58,7 +70,7 @@ public class LineTrackingCLIEmmitter implements CLIEmitter {
     }
 
     public String DEBUGCTR() {
-	return String.format("[%4d]: ", lineCounter);
+	return String.format("[%4d]: ", lineCounter)+ "  "  + String.valueOf(lastShowCursorPosition );
     }
     
     public int getLineCounter() {
@@ -157,7 +169,7 @@ public class LineTrackingCLIEmmitter implements CLIEmitter {
      * relative to the start position of this LineTrackingCLIEmitter
      * @param showCursorPosition
      */
-    public void showCursorAt(Position showCursorPosition) {
+    private void showCursorAtFromBottomUP(Position showCursorPosition) {
         int currentLineCounter = lineCounter;
         Position curPos = new Position.Simple(currentLineCounter,0); 
         Position delta = curPos.offsetTo(showCursorPosition);
@@ -167,6 +179,43 @@ public class LineTrackingCLIEmmitter implements CLIEmitter {
         output(ControlCode.moveToDeltaRow(  delta.getRow() + 1) );
         
         output( new ControlCode.CursorForward(delta.getCol()) );
+  
+        lastShowCursorPosition = showCursorPosition;
+    }
+
+    /**
+     * moves the cursor to showCursorPosition
+     * relative to the start position of this LineTrackingCLIEmitter
+     * @param showCursorPosition
+     */
+    private void showCursorAtFromTopDown(Position showCursorPosition) {
+	
+	clearLastTrackedLines(false);
+	
+        int currentLineCounter = lineCounter;
+        Position curPos = new Position.Simple(currentLineCounter,0); 
+        Position delta = curPos.offsetTo(showCursorPosition);
+        
+        output( ControlCode.CURSOR_LEFT );
+        
+        output(ControlCode.moveToDeltaRow(  delta.getRow() ) );
+        
+        output( new ControlCode.CursorForward(delta.getCol()) );
+  
+        lastShowCursorPosition = showCursorPosition;
+    }
+
+    /**
+     * moves the cursor to showCursorPosition
+     * relative to the start position of this LineTrackingCLIEmitter
+     * @param showCursorPosition
+     */
+    public void showCursorAt(Position showCursorPosition) {
+	
+	// showCursorAtFromBottomUP(showCursorPosition);
+
+	showCursorAtFromTopDown(showCursorPosition);
         
     }
+
 }
