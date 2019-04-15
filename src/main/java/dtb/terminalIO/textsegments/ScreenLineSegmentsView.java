@@ -8,11 +8,11 @@ import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.geom.Rectangle.Offset;
 
 /**
  * IScreenLineSegmentsBuffer that has a view into a 'source'
  * IScreenLineSegmentsBuffer object
- *
  */
 public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate implements CanResize {
 
@@ -28,7 +28,7 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
         this.offsetIntoSource = new Position.Simple(offsetIntoSource);
         this.maxsize = new Dimension.Simple(maxsize);
         ((ClippedSegmentsBuffer)this.getDelegate()).fullrecalcDim();
-        popuateViewFromSource();
+        populateViewFromSource();
     }
 
     // create a ScreenLineSegmentsBuffer with a custom fullrecalcDim() method 
@@ -36,22 +36,22 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
         ScreenLineSegmentsView segmentsView;
         
         synchronized protected void fullrecalcDim() {
-            this.preCalulatedRectangle = segmentsView.rectangeFromOffsetAndDimension();
+            this.preCalculatedRectangle = segmentsView.rectangeFromOffsetAndDimension();
             this.recalcNeeded = false;
         }
     }
-    
+
     @Override
     public void resize(Dimension d) {
         this.maxsize = new Dimension.Simple(d);
         ((ClippedSegmentsBuffer)this.getDelegate()).fullrecalcDim();
-        popuateViewFromSource();
+        populateViewFromSource();
     }
 
     Rectangle rectangeFromOffsetAndDimension() {
         return new Rectangle.Simple(offsetIntoSource, maxsize);
     }
-    
+
 
     public Position getOffsetIntoSource() {
         return offsetIntoSource;
@@ -64,26 +64,67 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
     public boolean isDirty() {
         return ! segmentsUpToDate;
     }
+
+    
+    public Position calculateScrollToViewOffset(Rectangle targetToView) {
+	// sanity check input
+	if (targetToView == null) {
+	    return null;
+	}
+
+	if (Position.UTIL.POS_COMPARE.compare(Position.ZERO, targetToView) >= 0) {
+            return null;
+	}
+
+	if (!sourceSegments.getSegmentsBuffer().overlapsWith(targetToView)) {
+	    return null;
+	}
+
+	Rectangle viewerRectangle = rectangeFromOffsetAndDimension();
+	
+	if (viewerRectangle.contains(targetToView)) {
+	    return offsetIntoSource;
+	}
+	
+	int rowOffset = offsetIntoSource.getRow();
+	
+	if ( ! viewerRectangle.containsRow(targetToView.getRow())) {
+	    rowOffset = targetToView.getRow();
+	}
+	
+	int colOffset = offsetIntoSource.getCol();
+		
+	if ( ((Dimension)viewerRectangle).contains((Dimension)targetToView) ) {
+	    
+	    if (targetToView.getCol() < viewerRectangle.getCol()) {
+		colOffset = targetToView.getCol();
+	    } else if (targetToView.getRightMostCol() > viewerRectangle.getRightMostCol()) {
+		colOffset = offsetIntoSource.getCol() + (targetToView.getRightMostCol() - viewerRectangle.getRightMostCol());
+	    }
+	    
+	} else {
+	    colOffset = targetToView.getCol();
+	}
+	
+	return new Position.Simple(rowOffset, colOffset);
+    }    
     
     public void setOffsetIntoSource(Position offsetIntoSource) {
         this.offsetIntoSource = offsetIntoSource;
         segmentsUpToDate = false;
     }
 
-    boolean foundBALME = false;
-    String sTest;
-    String sSourceTest;
-    
-    private void popuateViewFromSource() {
+    private void populateViewFromSource() {
         this.clear();
         Rectangle bounds = rectangeFromOffsetAndDimension();
         Collection<ScreenLineSegment> segments = this.sourceSegments.getSegmentsBuffer().getSegments();
        
-        // TODO:   Need to inspect segemnts type ( if treeset) then be smart about how to
-        //         interate of the set segments that are within the bounds
-        //         use the floor and cieling functions to find lower and upper bounds
+        // TODO:   This loop below is crazy inefficient
+        //
+        //         Need to inspect segments type ( if treeset) then be smart about how to
+        //         iterate of the set segments that are within the bounds
+        //         use the floor and ceiling functions to find lower and upper bounds
         //         that we need to traverse over .. this might help speed up the iteration 
-        
         
         for (ScreenLineSegment sourceSegment : segments) {
             if (Rectangle.UTIL.hasOverlap(bounds, sourceSegment)) {
@@ -93,9 +134,9 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
         segmentsUpToDate = true;
     }
     
-    private void popuateViewFromSourceIfNeeded() {
+    private void populateViewFromSourceIfNeeded() {
         if (!segmentsUpToDate) {
-            popuateViewFromSource();
+            populateViewFromSource();
         }
     }
 
@@ -103,18 +144,15 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
     
     @Override
     public Collection<ScreenLineSegment> getSegments() {
-        popuateViewFromSourceIfNeeded();
+        populateViewFromSourceIfNeeded();
         return super.getSegments();
     }
-
     
     @Override
     public Iterator<ScreenLineSegment> iterator() {
-        popuateViewFromSourceIfNeeded();
+        populateViewFromSourceIfNeeded();
         return super.iterator();
     }
-
-    
     
     public ScreenLineSegmentsView(IScreenLineSegmentsBuffer.Provider sourceSegments, Rectangle bounds) {
         this(sourceSegments, bounds, bounds);
@@ -211,7 +249,4 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
         }
 
     }
-
-    
-
 }

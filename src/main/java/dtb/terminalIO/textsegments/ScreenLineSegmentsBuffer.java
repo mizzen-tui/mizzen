@@ -21,7 +21,7 @@ public class ScreenLineSegmentsBuffer implements Rectangle, IScreenLineSegmentsB
     private TreeSet<ScreenLineSegment> segments              = ScreenLineSegment.UTIL.makeCollection(null);
 
     protected boolean                    recalcNeeded = true;
-    protected Rectangle                  preCalulatedRectangle = Rectangle.ZERO;
+    protected Rectangle                  preCalculatedRectangle = Rectangle.ZERO;
 
     @Override
     public boolean isEmpty() {
@@ -29,7 +29,7 @@ public class ScreenLineSegmentsBuffer implements Rectangle, IScreenLineSegmentsB
     }
 
     synchronized protected void fullrecalcDim() {
-        preCalulatedRectangle = Rectangle.UTIL.calcDimensionsWith(segments);
+        preCalculatedRectangle = Rectangle.UTIL.calcDimensionsWith(segments);
         recalcNeeded = false;
     }
 
@@ -58,22 +58,22 @@ public class ScreenLineSegmentsBuffer implements Rectangle, IScreenLineSegmentsB
 
     @Override
     public int getCol() {
-        return this.preCalulatedRectangle.getCol();
+        return this.getPreCalulatedRectangle().getCol();
     }
 
     @Override
     public int getRow() {
-        return this.preCalulatedRectangle.getRow();
+        return this.getPreCalulatedRectangle().getRow();
     }
 
     @Override
     public int getHeight() {
-        return this.preCalulatedRectangle.getHeight();
+        return this.getPreCalulatedRectangle().getHeight();
     }
 
     @Override
     public int getWidth() {
-        return this.preCalulatedRectangle.getWidth();
+        return this.getPreCalulatedRectangle().getWidth();
     }
 
     @Override
@@ -205,14 +205,14 @@ public class ScreenLineSegmentsBuffer implements Rectangle, IScreenLineSegmentsB
         if (simple == null || simple.length()==0) {
             simple = this.getClass().getName()+":ScreenLineSegmentsBuffer";
         }
-        return simple+" [segments=" + segments + ", preCalulatedRectangle=" + preCalulatedRectangle + "]";
+        return simple+" [segments=" + segments + ", preCalulatedRectangle=" + getPreCalulatedRectangle() + "]";
     }
 
     public Rectangle getPreCalulatedRectangle() {
         if (recalcNeeded) {
             fullrecalcDim();
         }
-        return preCalulatedRectangle;
+        return preCalculatedRectangle;
     }
 
     public void setSegments(TreeSet<ScreenLineSegment> segments) {

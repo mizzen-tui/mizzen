@@ -107,6 +107,17 @@ public interface Rectangle extends Position, Dimension, Movable {
     }
 
     /**
+     * Does rectangle contain column (col)
+     */
+    public default boolean containsCol(int col) {
+        if (col < this.getCol())
+            return false;
+        if (col > this.getRightMostCol())
+            return false;
+        return true;
+    }
+
+    /**
      * Returns a row of a rectangle as a rectangle. Think of it as a "view" into one
      * row of a rectangle.. where a row is just a rectangle of height 1
      * 

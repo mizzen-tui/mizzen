@@ -1,5 +1,7 @@
 package dtb.terminalIO.components;
 
+import java.util.Collection;
+
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.ConditionalEventHandler;
@@ -15,6 +17,7 @@ import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.textsegments.ScreenLineSegment;
 import dtb.terminalIO.textsegments.ScreenLineSegmentsView;
 
 /**
@@ -100,6 +103,11 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         this.markAsDirty();
     }
     
+    public Composite setTitle(String title) {
+	this.borderedComponent.setTitle(title);
+	return this;
+    }
+    
     public boolean visibleBorder() {
         return this.borderedComponent.visibleBorder();
     }
@@ -140,6 +148,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         } else {
             footerTextComponent = null;
         }
+        
         buildAndPopulateFooterPanel();
         positionFooterText();
     }
@@ -173,7 +182,6 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         
         this.hScrollBar.resize(new Dimension.Simple(1, newHScrollBarWidth>0?newHScrollBarWidth:0));
         lastFooterWidth = footerControls.getWidth();
-
     }
 
     public void setViewOffset(int r, int c) {
@@ -185,19 +193,33 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         this.vScrollBar.setOffset( offset );
         this.hScrollBar.setOffset( offset );
     }
+    
+    public void scrollToView(Rectangle targetToView) {
+	
+	Position offset = viewer.calculateScrollToViewOffset(targetToView);
+	
+	if (offset != null) {
+	    setViewOffset( offset.getRow(), offset.getCol() );
+	}
+    }
+    
 
     public static class WindowViewComponent extends BoundedComponent<WindowViewComponent> implements Hiliter {
 
         private IScreenLineSegmentsBuffer.Provider viewSource;
         private ScreenLineSegmentsView             segmentsViewBuffer;
 
-        public WindowViewComponent(Color color, Dimension d, IScreenLineSegmentsBuffer.Provider viewSource) {
-            super(color, d);
-            this.viewSource = viewSource;
-            segmentsViewBuffer = new ScreenLineSegmentsView(this.viewSource, WindowViewComponent.this);
-        }
-        
-        @Override
+	public WindowViewComponent(Color color, Dimension d, IScreenLineSegmentsBuffer.Provider viewSource) {
+	    super(color, d);
+	    this.viewSource = viewSource;
+	    segmentsViewBuffer = new ScreenLineSegmentsView(this.viewSource, WindowViewComponent.this);
+	}
+
+	public Position calculateScrollToViewOffset(Rectangle targetToView) {
+	    return segmentsViewBuffer.calculateScrollToViewOffset(targetToView);
+	}
+
+	@Override
         public void resize(Dimension d) {
             super.resize(d);
             segmentsViewBuffer.resize(d);
@@ -254,8 +276,6 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
                 ((Hiliter) viewSource).unHilite();
             }
         }
-
-
     }
     
     public Position getOffsetIntoSource() {
@@ -477,7 +497,6 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
     @Override
     public void unHilite() {
         this.borderedComponent.unHilite();
-        //this.borderedComponent.setTitle("");
         vScrollBar.setColor( borderedComponent.getBorderColor()  );
         hScrollBar.setColor( borderedComponent.getBorderColor()  );
         if (footerControls != null) {
@@ -526,7 +545,6 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         
         FocusManager.UTIL.setNewFocusable(footerControls, null, eventBus, null);
         
-        
     }
 
     @Override
@@ -534,5 +552,24 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         return footerControls;
     }
 
+    public void search(String newValue) {
+
+	Collection<ScreenLineSegment> searchesble = componentBeingViewed.getSegmentsBuffer().getSegments();
+
+	for (ScreenLineSegment sc : searchesble) {
+	    // TODO:  problem with this check is that the compare does not
+	    //        span across multiple ScreenLineSegment objects..  works in the simple case only
+	    int idx = sc.getText().indexOf(newValue);
+	    if (idx > -1) {
+		 Rectangle targetToView = new Rectangle.Simple(sc.getRow(), sc.getCol() + idx, Dimension.UTIL.stringToDimension(newValue));
+		 scrollToView(targetToView);
+		// setViewOffset( sc.getRow(), sc.getCol() );
+		 return;
+	    }
+	}
+	
+	// TODO Auto-generated method stub
+	
+    }
     
 }

@@ -319,6 +319,9 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
         chainedHandler.appendEventHandler(new KeyInputEventHandler((te) -> {
             KeyEvent ke = (KeyEvent) te;
             if (ke.getKeyStroke().getKeySequenceLength() == 1) {
+        	if (ke.isKeyStroke(Keys.ESC_KEYSTROKE)) {
+        	    return false; // TODO:  Is this correct?  decide later (data drive this maybe?)
+        	}
                 if (ke.getKeyStroke().isCtrlKey() || ke.getKeyStroke().isAltKey()) {
                     return false;
                 }

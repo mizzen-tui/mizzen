@@ -10,6 +10,8 @@ import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.ScrollableComponent;
 import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.components.input.HasValue;
+import dtb.terminalIO.components.input.HasValue.OnValueChangedEventHandler;
 import dtb.terminalIO.components.input.TextInput;
 import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode;
@@ -83,8 +85,8 @@ public class ScrollableComponentTest {
                     if (readFileThread == null) {
                         readFileThread = new Thread(()->{
                             try {
-                                largeText =  ReadSampleFiles.readSampleFile(bigFile);  
-                                largeText =  StringUtils.wrap(largeText, size.getWidth()*2);
+                                largeText = ReadSampleFiles.readSampleFile(bigFile);  
+                                largeText = StringUtils.wrap(largeText, size.getWidth()*2);
                                 srcOfText.setTextAndResize(largeText);
                                 viewComp1.updateCanvas();
                             } catch (IOException e) {
@@ -136,6 +138,8 @@ public class ScrollableComponentTest {
             TextInput  findTextInput;
 	    private ConditionalEventHandler findTextInputEventHandler; 
 	    private String lastFindText = null;
+	    private OnValueChangedEventHandler<String> titleUpdater;
+	    private ConditionalEventHandler finishSearchInputEventHandler;
             
             Finder(Color color) {
                 super(color);
@@ -160,7 +164,11 @@ public class ScrollableComponentTest {
             }
             
             void setInFindMode(TerminalEvent<?> te) {
-                if (findTextInput == null) {
+        	setInFindMode(te, findTextInput == null);
+            }
+            
+            void setInFindMode(TerminalEvent<?> te, boolean enable) {
+                if (enable) {
                     findTextInput = new TextInput(Finder.this.getColor().invert(), 10) {
                         @Override
                         public void setFocus(boolean focus, EventBus eventBus) {
@@ -170,6 +178,10 @@ public class ScrollableComponentTest {
                                     Finder.this.lastFindText = findTextInput.getText();
                                     viewComp1.removeEventHandler(findTextInputEventHandler);
                                     Finder.this.findTextInputEventHandler = null;
+                                    if (Finder.this.finishSearchInputEventHandler != null) {
+                                        viewComp1.removeEventHandler(Finder.this.finishSearchInputEventHandler);
+                                        Finder.this.finishSearchInputEventHandler = null;
+                                    }
                                     Finder.this.remove(findTextInput);
                                     Finder.this.findTextInput = null;
                                     viewComp1.refreshFooter();
@@ -179,6 +191,7 @@ public class ScrollableComponentTest {
                     };
                     this.findTextInput.setEmptyColor(Finder.this.getColor().invert());
                     if (lastFindText != null) {
+                	// should I trigger the search here?
                        findTextInput.setText(lastFindText);
                     } else {
                 	findTextInput.setText("");
@@ -187,33 +200,46 @@ public class ScrollableComponentTest {
                     // FIXME:  1) doing a prepend causes hotkeys on viewComp1 to be blocked including CTRL-F
                     //            so cannot get out of find mode..  TextInput accepting too many keys
                     //            need to fix
-                    //          2) Cursor never hides
-                    //          3) Cursor mis-positioned on terminal resize
+                    //         2) Cursor never hides
+                    //         3) Cursor mis-positioned on terminal resize
                     findTextInputEventHandler = viewComp1.prependEventHandlerWithCanvasUpdate(findTextInput);
                     findTextInput.requestFocus(te);
-                } else { // temp
+
+                    finishSearchInputEventHandler = viewComp1.prependEventHandlerWithCanvasUpdate(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, new EventHandler() {
+                        @Override
+                        public void handle(TerminalEvent<?> te) {
+                            setInFindMode(te, false);
+                        }
+                    }));
+                    
+                    
+                    titleUpdater =  new HasValue.OnValueChangedEventHandler<String>(findTextInput) {
+                        @Override
+                        public void valueChanged(HasValue<String> source) {
+                            String newValue = source.getValue();
+                            viewComp1.setTitle(newValue);
+                            viewComp1.search(newValue);
+                        }
+                    };
+                    te.getEventBus().appendEventHandler(titleUpdater);
+
+                } else { 
                     findTextInput.requestReleaseFocus(te);
+                    if (titleUpdater != null) {
+                	te.getEventBus().removeEventHandler(titleUpdater);
+                	titleUpdater = null;
+                        viewComp1.setTitle("");
+                    }
                 }
             }
         };
-        
+
         Finder finder = new Finder(viewComp1.getColor());
-        
-        
+
         viewComp1.addFooterButton(finder, Keys.CTRL_F_KEYSTROKE, (te)->{
-            
             finder.setInFindMode(te);
             viewComp1.refreshFooter();
-            
-            });
-        
-//        viewComp1.addEventHandlerWithCanvasUpdate(new KeyInputEventHandler(Keys.CTRL_F_KEYSTROKE, new EventHandler() {
-//            @Override
-//            public void handle(TerminalEvent<?> te) {
-//                setTextToView.run();
-//                viewComp1.markAsDirty();
-//            }
-//        }));
+        });
         
         return viewComp1;
     }
@@ -225,7 +251,6 @@ public class ScrollableComponentTest {
         sourceComponentContainingBrailleDemo.setBounds(sizeOfGrid);
         
         ScrollableComponent viewComp1 = new ScrollableComponent(Colors.Gre, size, sourceComponentContainingBrailleDemo);
-
 
         Position viewOffset = new Position.Simple(0, 0);
 
@@ -246,9 +271,9 @@ public class ScrollableComponentTest {
 
         // this call must happen before brailleDemo.setUpDemo(..)
         brailleDemo.setupMpvementKeys(Keys.CTRL_T_KEYSTROKE,    // up
-                                       Keys.CTRL_V_KEYSTROKE,    // down
-                                       Keys.CTRL_F_KEYSTROKE,    // left
-                                       Keys.CTRL_G_KEYSTROKE);   // right
+                                      Keys.CTRL_V_KEYSTROKE,    // down
+                                      Keys.CTRL_F_KEYSTROKE,    // left
+                                      Keys.CTRL_G_KEYSTROKE);   // right
          
         // sets up a braille demo using the source component both for size as well as 
         // the place where grid segments will be copied on a render iteration
@@ -292,10 +317,9 @@ public class ScrollableComponentTest {
         eventBus.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
         eventBus.appendEventHandler(new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
     }
-    
-    
+
+
     public static void testTwoScrollableWindows(String[] args) throws IOException {
-        
 
         TerminalScreen screen = TestsCommon.getTerminalScreenForTesting(args);
 
@@ -332,7 +356,6 @@ public class ScrollableComponentTest {
         eventBus.appendEventHandler(master_canvas.asShowCursorEventHandler());
         eventBus.appendEventHandler(master_canvas.asHideCursorEventHandler());
 
-        setUpTerminateHandler(screen, master_canvas, eventBus);
         
         List<ConditionalEventHandler> gridEventHandlers = new ArrayList<ConditionalEventHandler>();
 
@@ -342,14 +365,12 @@ public class ScrollableComponentTest {
 
             @Override
             public EventHandlerContainer appendEventHandler(ConditionalEventHandler eventHandler) {
-                
                 if (eventHandler instanceof OnIdleEventEventHandler) {
                     idleEventHandlers.appendEventHandler(eventHandler);
                     eventBus.appendEventHandler(eventHandler);
                     return this;
                 }
-                gridEventHandlers.add(eventHandler);
-                
+                gridEventHandlers.add(eventHandler);                
                 return this;
             }
 
@@ -366,24 +387,21 @@ public class ScrollableComponentTest {
 
 	    @Override
 	    public EventHandlerContainer prependEventHandler(ConditionalEventHandler eventHandler) {
-                
                 if (eventHandler instanceof OnIdleEventEventHandler) {
                     idleEventHandlers.prependEventHandler(eventHandler);
                     eventBus.prependEventHandler(eventHandler);
                     return this;
                 }
                 gridEventHandlers.add(0, eventHandler);
-                
                 return this;
 	    }
         };
-        
+
         ScrollableComponent brailleViewComp2 = testScrollingGridBrailleWindowViewer(sizeOfWindow, master_canvas, gridBrailleEventHandlers);
         for (ConditionalEventHandler eventHandler : gridEventHandlers) {
             brailleViewComp2.addEventHandlerWithCanvasUpdate(eventHandler);
         }
-        
-        
+
         Position viewComp1OffsetOnCanvas = new Position.Simple(1, 1);
         
         screen.add(ControlCode.HIDE_CURSOR);
@@ -437,17 +455,14 @@ public class ScrollableComponentTest {
         }; 
 
         Dimension sizeOfBarChartWindow = new Dimension() {
-
             @Override
             public int getWidth() {
                 return brailleViewComp2.getWidth();
             }
-
             @Override
             public int getHeight() {
                 return sizeOfLineChartWindow.getHeight() ;
             }
-            
         };
         
         class ContainerForDemo extends Composite {
@@ -487,18 +502,16 @@ public class ScrollableComponentTest {
                 master_canvas.t(master_canvas.getHeight()-1,1,"[Rendering stats | Rendering time :" + updateTaskTime + " | Wait time between updates: " + updateTaskDuration + "]     " );
                 
                 TestsCommon.renderScreenDEBUG(master_canvas, screen, eventBus);
-                
+
                 master_canvas.refresh();
-                
+
                 updateTaskTime = System.currentTimeMillis() - now;
                 updateTaskDuration = updateTaskTime * 3;
             }
         };
-
         
 //        eventBus.appendEventHandler(  new KeyInputEventHandler(  Keys.CTRL_N_KEYSTROKE  , (te)-> { showYvalues[0] = ! showYvalues[0]; }));
-        
-        
+                
         lineChartDemo.setUpDemo(eventBus, new Rectangle.Simple(lineChartDemoContainer), lineChartDemoContainer);
         lineChartDemo.setFlushDemoOutput(updateCanvas);
         
@@ -544,12 +557,13 @@ public class ScrollableComponentTest {
         });
 
         
+        setUpTerminateHandler(screen, master_canvas, eventBus);
+        
+        
         return ;
     }
 
     public static void main(String[] args) throws IOException {
-
         testTwoScrollableWindows(args);
-
     }
 }

@@ -12,7 +12,7 @@ import dtb.terminalIO.util.Logging;
  * A CLIEmmitter that tracks the # of lines emitted (output) so far
  * 
  * TODO:  There is a fundamental problem with the lineCounter
- *        variable .it always seems to be +1 or the actual value.
+ *        variable .it always seems to be +1 of the actual value.
  *        This causes issues when using the  showCursorAtFromBottomUP(showCursorPosition)
  *        method when canvas is full screen..  
  *        
