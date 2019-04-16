@@ -14,6 +14,7 @@ import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.EventHandlerContainer;
 import dtb.terminalIO.events.RequestHideCursorEvent;
 import dtb.terminalIO.events.RequestShowCursorEvent;
 import dtb.terminalIO.events.TerminalEvent;
@@ -28,14 +29,17 @@ import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 
-public class TextInput extends BoundedComponent<TextInput> implements HasValue<String>, ParentContainer, ConditionalEventHandler , Focusable  {
+public class TextInput extends BoundedComponent<TextInput> implements HasValue<String>, ParentContainer, ConditionalEventHandler , Focusable, EventHandlerContainer  {
 
     private TextComponent textRenderer;
     private StringBuffer  buffer;
     private Position      viewOffset  = Position.ZERO;
     private Position      caret       = Position.ZERO;
     private int           maxTextWidth;
+
     ConditionalEventHandler eventHandler;
+    ChainedEventHandler     chainedEventHandler;
+
     Focusable               focusable;
 
     private boolean       modeOverite = false;        // true means insertMode
@@ -257,6 +261,23 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
         return this;
     }
     
+    public TextInput prependEventHandler(ConditionalEventHandler eventHandler) {
+        this.chainedEventHandler.prependEventHandler(eventHandler);
+        return this;
+    }
+
+    public TextInput appendEventHandler(ConditionalEventHandler eventHandler) {
+        this.chainedEventHandler.appendEventHandler(eventHandler);
+        return this;
+    }
+    
+    
+    public TextInput removeEventHandler(ConditionalEventHandler eventHandler) {
+        this.chainedEventHandler.removeEventHandler(eventHandler);
+        return this;
+    }
+    
+    
     @Override
     public void setFocus(boolean focus, EventBus eventBus) {
         asFocusable().setFocus(focus, eventBus);
@@ -277,22 +298,23 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
     
     private KeyInputEventHandler buildEventHandler() {
 
-        ChainedEventHandler chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
+        this.chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
 
-        chainedHandler.appendEventHandler(
-                new KeyInputEventHandler(Keys.BACKSPACE_KEYSTROKE, (te) -> raiseEventOnChanged(te.getEventBus(), () -> deleteCharBeforeCaret())));
+        appendEventHandler(new KeyInputEventHandler(Keys.BACKSPACE_KEYSTROKE, (te) -> raiseEventOnChanged(te.getEventBus(), () -> deleteCharBeforeCaret())));
 
-        chainedHandler
-                .appendEventHandler(new KeyInputEventHandler(Keys.DELETE_KEYSTROKE, (te) -> raiseEventOnChanged(te.getEventBus(), () -> deleteCharAtCaret() )));
+        
+        appendEventHandler(new KeyInputEventHandler(Keys.DELETE_KEYSTROKE, (te) -> raiseEventOnChanged(te.getEventBus(), () -> deleteCharAtCaret() )));
 
-        chainedHandler.appendEventHandler(new KeyInputEventHandler(Keys.LEFT_KEYSTROKE, (te) -> {
+        appendEventHandler(new KeyInputEventHandler(Keys.LEFT_KEYSTROKE, (te)->caret.getCol() > 0,(te) -> {
             if (caret.getCol() > 0) {
                 caretOffsetAdd(0, -1);
             }
             return;
         }));
 
-        chainedHandler.appendEventHandler(new KeyInputEventHandler(Keys.RIGHT_KEYSTROKE, (te) -> {
+        appendEventHandler(new KeyInputEventHandler(Keys.RIGHT_KEYSTROKE,
+                (te) ->caret.getCol() < getWidth() && caret.getCol() < getText().length(),
+                (te) -> {
             if (caret.getCol() < getWidth() && caret.getCol() < getText().length()) {
                 // TODO: This will have to be fixed when text scrolling
                 // in place
@@ -302,21 +324,16 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
             return;
         }));
 
-        chainedHandler.appendEventHandler(new KeyInputEventHandler(Keys.ENTER_KEYSTROKE, (te) -> {
+        appendEventHandler(new KeyInputEventHandler(Keys.ENTER_KEYSTROKE, (te) -> {
             // for now ... do nothing - but maybe later go to next focus? (new concept)
             return;
         }));
 
-        chainedHandler
-        .appendEventHandler(new KeyInputEventHandler(Keys.HOME_KEYSTROKE, (te) -> raiseEventOnChanged(te.getEventBus(), () -> caretHome())));
+        appendEventHandler(new KeyInputEventHandler(Keys.HOME_KEYSTROKE, (te) -> raiseEventOnChanged(te.getEventBus(), () -> caretHome())));
 
-        chainedHandler
-        .appendEventHandler(new KeyInputEventHandler(Keys.END_KEYSTROKE, (te) -> raiseEventOnChanged(te.getEventBus(), () -> caretEnd())));
+        appendEventHandler(new KeyInputEventHandler(Keys.END_KEYSTROKE, (te) -> raiseEventOnChanged(te.getEventBus(), () -> caretEnd())));
 
-        
-        
-        
-        chainedHandler.appendEventHandler(new KeyInputEventHandler((te) -> {
+        appendEventHandler(new KeyInputEventHandler((te) -> {
             KeyEvent ke = (KeyEvent) te;
             if (ke.getKeyStroke().getKeySequenceLength() == 1) {
         	if (ke.isKeyStroke(Keys.ESC_KEYSTROKE)) {
@@ -345,7 +362,7 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
             return;
         }));
 
-        ConditionalEventHandler complexKeyHandler = chainedHandler.asConditionalEventHandler();
+        ConditionalEventHandler complexKeyHandler = chainedEventHandler.asConditionalEventHandler();
         
         return new KeyInputEventHandler(complexKeyHandler.asPredicate(), complexKeyHandler);
 
