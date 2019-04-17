@@ -1,7 +1,13 @@
-package dtb.terminalIO.components;
+package dtb.terminalIO.components.scroll;
 
-import java.util.Collection;
-
+import dtb.terminalIO.components.BorderedComponent;
+import dtb.terminalIO.components.BoundedComponent;
+import dtb.terminalIO.components.ButtonBar;
+import dtb.terminalIO.components.CanResize;
+import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.Composite;
+import dtb.terminalIO.components.Hiliter;
+import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.ConditionalEventHandler;
@@ -17,8 +23,8 @@ import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
-import dtb.terminalIO.textsegments.ScreenLineSegment;
 import dtb.terminalIO.textsegments.ScreenLineSegmentsView;
+import dtb.terminalIO.textsegments.SegmentsSearchUtils;
 
 /**
  * 
@@ -554,21 +560,10 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
 
     public void search(String newValue) {
 
-	Collection<ScreenLineSegment> searchesble = componentBeingViewed.getSegmentsBuffer().getSegments();
-
-	for (ScreenLineSegment sc : searchesble) {
-	    // TODO:  problem with this check is that the compare does not
-	    //        span across multiple ScreenLineSegment objects..  works in the simple case only
-	    int idx = sc.getText().indexOf(newValue);
-	    if (idx > -1) {
-		 Rectangle targetToView = new Rectangle.Simple(sc.getRow(), sc.getCol() + idx, Dimension.UTIL.stringToDimension(newValue));
-		 scrollToView(targetToView);
-		// setViewOffset( sc.getRow(), sc.getCol() );
-		 return;
-	    }
+	Rectangle targetToView = SegmentsSearchUtils.searchTextInSegments(componentBeingViewed.getSegmentsBuffer(), newValue);
+	if (targetToView != null) {
+	    scrollToView(targetToView);
 	}
-	
-	// TODO Auto-generated method stub
 	
     }
     

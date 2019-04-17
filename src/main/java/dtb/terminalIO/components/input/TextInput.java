@@ -33,7 +33,7 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
 
     private TextComponent textRenderer;
     private StringBuffer  buffer;
-    private Position      viewOffset  = Position.ZERO;
+    private Position      viewOffset  = Position.ZERO; // future use .. maybe ..
     private Position      caret       = Position.ZERO;
     private int           maxTextWidth;
 
@@ -164,7 +164,7 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
     }
 
     boolean caretEnd() {
-	int col = Math.min(this.getText().length(),this.getWidth())-1; 
+	int col = Math.min(this.getText().length()+1,this.getWidth())-1; 
         this.caret = new Position.Simple(0,col);
         markAsDirty();
         return true;

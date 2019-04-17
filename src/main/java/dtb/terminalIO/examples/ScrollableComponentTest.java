@@ -2,16 +2,18 @@ package dtb.terminalIO.examples;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Supplier;
 
 import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.ComponentWithHilightedText;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.HorizontalPanel;
-import dtb.terminalIO.components.ScrollableComponent;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.input.HasValue;
 import dtb.terminalIO.components.input.HasValue.OnValueChangedEventHandler;
+import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.components.input.TextInput;
 import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode;
@@ -40,6 +42,7 @@ import dtb.terminalIO.examples.sampledata.ReadSampleFiles;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.textsegments.SegmentsSearchUtils;
 import dtb.terminalIO.util.ExecUtil;
 import dtb.terminalIO.util.StringUtils;
 import dtb.terminalIO.util.Stty;
@@ -61,9 +64,13 @@ public class ScrollableComponentTest {
         
         String text2 = text2a; // StringUtils.wrap(text2a, size.getWidth()*2);
         
-        TextComponent srcOfText = new TextComponent("");
-        srcOfText.setFillOnClear(false);
+        TextComponent __srcOfText = new TextComponent("");
+        __srcOfText.setFillOnClear(false);
 
+        ComponentWithHilightedText srcOfText = new ComponentWithHilightedText();
+        srcOfText.add(__srcOfText);
+        
+        
         Dimension sizeOfWindow = size;
         Position viewOffset = new Position.Simple(0, 0);
 
@@ -87,7 +94,8 @@ public class ScrollableComponentTest {
                             try {
                                 largeText = ReadSampleFiles.readSampleFile(bigFile);  
                                 largeText = StringUtils.wrap(largeText, size.getWidth()*2);
-                                srcOfText.setTextAndResize(largeText);
+                                __srcOfText.setTextAndResize(largeText);
+                                srcOfText.setBounds(__srcOfText);
                                 viewComp1.updateCanvas();
                             } catch (IOException e) {
                                 e.printStackTrace();
@@ -106,7 +114,8 @@ public class ScrollableComponentTest {
             @Override
             public void run() {
                 toggle[0] = !toggle[0];
-                srcOfText.setTextAndResize((toggle[0])?text3.get():text2);
+                __srcOfText.setTextAndResize((toggle[0])?text3.get():text2);
+                srcOfText.setBounds(__srcOfText);
             }
         };
 
@@ -208,7 +217,12 @@ public class ScrollableComponentTest {
                     finishSearchInputEventHandler = viewComp1.prependEventHandlerWithCanvasUpdate(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, new EventHandler() {
                         @Override
                         public void handle(TerminalEvent<?> te) {
+                            if (findTextInput != null) {
+                                findTextInput.setText("");
+                            }
                             setInFindMode(te, false);
+                            srcOfText.clearHilights();
+                            lastFindText = null;
                         }
                     }));
                     
@@ -218,7 +232,30 @@ public class ScrollableComponentTest {
                         public void valueChanged(HasValue<String> source) {
                             String newValue = source.getValue();
                             viewComp1.setTitle(newValue);
-                            viewComp1.search(newValue);
+                            
+                            Rectangle targetToView = null;
+                            
+                            srcOfText.clearHilights();
+                            
+                            if (newValue == null || newValue.length()<2) {
+                                return;
+                            }
+                            
+                            Collection<Rectangle> searchResult = SegmentsSearchUtils.searchTextInSegmentsAll(srcOfText.getSegmentsBuffer(), newValue);
+                            
+                            if (searchResult != null && searchResult.size() > 0) {
+                                targetToView = searchResult.iterator().next();
+                                if (targetToView != null) {
+                                    viewComp1.scrollToView(targetToView);
+                                }
+                                
+                                for (Rectangle r : searchResult) {
+                                    srcOfText.addHilitedRegion(r);
+                                }
+                                viewComp1.setTitle(newValue + " (" + searchResult.size()  + ")" ); 
+                            }
+                            
+                            // viewComp1.search(newValue);
                         }
                     };
                     te.getEventBus().appendEventHandler(titleUpdater);

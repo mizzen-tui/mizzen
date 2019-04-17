@@ -146,8 +146,8 @@ public class Keys {
     public static final KeyStroke PGUP_KEYSTROKE      = createAndStoreNewKeyStroke(new int[] { 27, 91, 53, 126 }, "PgUp");
     public static final KeyStroke PGDN_KEYSTROKE      = createAndStoreNewKeyStroke(new int[] { 27, 91, 54, 126 }, "PgDn");
 
-    public static final KeyStroke HOME_KEYSTROKE      = createAndStoreNewKeyStroke(new int[] { 27, 79, 72 }, "Home");
-    public static final KeyStroke END_KEYSTROKE       = createAndStoreNewKeyStroke(new int[] { 27, 79, 70 }, "End");
+    public static final KeyStroke HOME_KEYSTROKE      = createAndStoreNewKeyStroke(new int[][] {{ 27, 91, 72 },{27, 91, 49, 126}}, "Home");
+    public static final KeyStroke END_KEYSTROKE       = createAndStoreNewKeyStroke(new int[][] {{ 27, 91, 70 },{27, 91, 52, 126}}, "End");
 
     public static final KeyStroke INSERT_KEYSTROKE    = createAndStoreNewKeyStroke(new int[] { 27, 91, 50, 126 }, "Insert");
     public static final KeyStroke DELETE_KEYSTROKE    = createAndStoreNewKeyStroke(new int[] { 27, 91, 51, 126 }, "Delete");

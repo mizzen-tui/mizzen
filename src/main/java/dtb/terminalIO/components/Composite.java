@@ -14,6 +14,9 @@ import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegment;
 
+/**
+ * A component with child components
+ */
 public class Composite extends AbstractComponent<Composite> 
       implements Rectangle, HasTitleAndBorder<Composite>, CanResize, ParentContainer  {
 
@@ -55,8 +58,6 @@ public class Composite extends AbstractComponent<Composite>
 	        }
 	    };
 	    
-//            this.bounds = new Rectangle.Simple(offset.getRow() + component.getRow(), offset.getCol()
-//                    + component.getCol(), component.getHeight(), component.getWidth());
 	}
 	
 	public void setComponent(Component<?> component) {
@@ -165,7 +166,7 @@ public class Composite extends AbstractComponent<Composite>
 	return brdr;
     }
 
-    protected void fullrecalcDim() {
+    public void fullrecalcDim() {
 	fullrecalcDim(hasBorder());
     }
 
@@ -247,13 +248,20 @@ public class Composite extends AbstractComponent<Composite>
 	return this;
     }
 
+    protected ComponentWithOffset addComponentWithOffset(Position offset, Component<?> component) {
+        ComponentWithOffset componentWithOffset = new ComponentWithOffset(offset, component);
+        children.add(componentWithOffset);
+        component.setParentContainer(this);
+        return componentWithOffset;
+    }
+    
+    
     public Composite add(Position offset, Component<?> component) {
         ComponentWithOffset child = findChild(component);
         if (child != null) {
             throw new IllegalArgumentException("Component add failure:  Duplicate !");
         }
-        children.add(new ComponentWithOffset(offset, component));
-        component.setParentContainer(this);
+        addComponentWithOffset(offset, component);
         fullrecalcDim();
         markAsDirty();
         return this;
@@ -489,30 +497,29 @@ public class Composite extends AbstractComponent<Composite>
     }
     
     protected void draw(Color color, IScreenLineSegmentsBuffer segments, boolean boundsFixed) {
-	// loop thru children and draw
-
-	Position offset = Position.ZERO;
-	if (this.hasBorder()) {
-	    offset = offset.offsetTo(1, 1);
-	}
-
-	for (ComponentWithOffset child : children) {
-
-	    Position childOffset = child.offset.offsetAdd(offset);
-
-	    if (boundsFixed) {
-		ScreenLineSegment.UTIL.addSegmentsWithOffsetBounded(childOffset, bounds, segments.getSegments(),
-			child.component.getSegmentsBuffer().getSegments());
-	    } else {
-		ScreenLineSegment.UTIL.addSegmentsWithOffsetUnBounded(childOffset, segments.getSegments(),
-			child.component.getSegmentsBuffer().getSegments());
-	    }
-
-	    // segments.merge(child.getSegmentsBuffer());
-	}
-
+        drawChildren(color, segments, children, boundsFixed);
 	drawBorderIfNeeded(segments);
+    }
 
+    protected void drawChildren(Color color, IScreenLineSegmentsBuffer segments, List<ComponentWithOffset> children, boolean boundsFixed) {
+        // loop thru children and draw
+        Position offset = Position.ZERO;
+        if (this.hasBorder()) {
+            offset = offset.offsetTo(1, 1);
+        }
+
+        for (ComponentWithOffset child : children) {
+
+            Position childOffset = child.offset.offsetAdd(offset);
+
+            if (boundsFixed) {
+                ScreenLineSegment.UTIL.addSegmentsWithOffsetBounded(childOffset, bounds, segments.getSegments(),
+                        child.component.getSegmentsBuffer().getSegments());
+            } else {
+                ScreenLineSegment.UTIL.addSegmentsWithOffsetUnBounded(childOffset, segments.getSegments(),
+                        child.component.getSegmentsBuffer().getSegments());
+            }
+        }
     }
 
     public Position getPositionRelativeToParent(Component<?> child) {

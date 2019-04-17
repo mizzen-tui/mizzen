@@ -1,5 +1,7 @@
-package dtb.terminalIO.components;
+package dtb.terminalIO.components.scroll;
 
+import dtb.terminalIO.components.BoundedComponent;
+import dtb.terminalIO.components.HorizontalLine;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
