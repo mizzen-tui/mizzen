@@ -241,9 +241,14 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
         return false;
     }
 
-    private void raiseEventOnChanged(EventBus eventBus, Supplier<Boolean> changeTextAction) {
+    void REALraiseEventOnChanged(EventBus eventBus, Supplier<Boolean> changeTextAction) {
         if (changeTextAction.get()) {
             eventBus.raiseEvent(new HasValue.ValueChangedEvent<>(this));
+        }
+    }
+    void raiseEventOnChanged(EventBus eventBus, Supplier<Boolean> changeTextAction) {
+        if (changeTextAction.get()) {
+           // eventBus.raiseEvent(new HasValue.ValueChangedEvent<>(this));
         }
     }
 
@@ -326,6 +331,7 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
 
         appendEventHandler(new KeyInputEventHandler(Keys.ENTER_KEYSTROKE, (te) -> {
             // for now ... do nothing - but maybe later go to next focus? (new concept)
+            TextInput.this.REALraiseEventOnChanged(te.getEventBus(), () -> true);
             return;
         }));
 

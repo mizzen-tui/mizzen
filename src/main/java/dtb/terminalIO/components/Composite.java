@@ -446,9 +446,9 @@ public class Composite extends AbstractComponent<Composite>
 
     public void clear() {
 	super.clear();
-	for (ComponentWithOffset child : children) {
-	    child.component.clear();
-	}
+//	for (ComponentWithOffset child : children) {
+//	    child.component.clear();
+//	}
     }
     
     public void clearAndRemoveAllChildren() {
@@ -463,25 +463,25 @@ public class Composite extends AbstractComponent<Composite>
     }
 
 
-    public boolean isDirty() {
-        if (super.isDirty()) {
-            return true;
-        }
-        for (ComponentWithOffset child : children) {
-            if (child.component.isDirty()) {
-                return true;
-            }
-        }
-        return false;
-    }
+//    public boolean isDirty() {
+//        if (super.isDirty()) {
+//            return true;
+//        }
+//        for (ComponentWithOffset child : children) {
+//            if (child.component.isDirty()) {
+//                return true;
+//            }
+//        }
+//        return false;
+//    }
 
     
     public void markAsDirty() {
 	super.markAsDirty();
 	// Why mark the children dirty - not necessary is it?
-	for (ComponentWithOffset child : children) {
-	    child.component.markAsDirty();
-	}
+//	for (ComponentWithOffset child : children) {
+//	    child.component.markAsDirty();
+//	}
     }
     
 
@@ -512,6 +512,15 @@ public class Composite extends AbstractComponent<Composite>
 
             Position childOffset = child.offset.offsetAdd(offset);
 
+            // Simple [row=20, lcol37, rcol=39 width=3, height=1]
+            
+            int test=0;
+            if (childOffset.getRow() == 20 && childOffset.getCol() == 37) {
+
+                test=1;
+            }
+            
+            
             if (boundsFixed) {
                 ScreenLineSegment.UTIL.addSegmentsWithOffsetBounded(childOffset, bounds, segments.getSegments(),
                         child.component.getSegmentsBuffer().getSegments());

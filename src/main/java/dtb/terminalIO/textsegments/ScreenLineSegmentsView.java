@@ -4,17 +4,17 @@ import java.util.Collection;
 import java.util.Iterator;
 
 import dtb.terminalIO.components.CanResize;
+import dtb.terminalIO.components.DirtyFlag;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
-import dtb.terminalIO.geom.Rectangle.Offset;
 
 /**
  * IScreenLineSegmentsBuffer that has a view into a 'source'
  * IScreenLineSegmentsBuffer object
  */
-public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate implements CanResize {
+public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate implements CanResize , DirtyFlag {
 
     private IScreenLineSegmentsBuffer.Provider sourceSegments;
 
@@ -72,7 +72,7 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
 	    return null;
 	}
 
-	if (Position.UTIL.POS_COMPARE.compare(Position.ZERO, targetToView) >= 0) {
+	if (Position.UTIL.POS_COMPARE.compare(Position.ZERO, targetToView) > 0) {
             return null;
 	}
 
@@ -126,9 +126,18 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
         //         use the floor and ceiling functions to find lower and upper bounds
         //         that we need to traverse over .. this might help speed up the iteration 
         
+        int topRow = bounds.getRow();
+        int bottomRow = bounds.getBottomMostRow();
+        
         for (ScreenLineSegment sourceSegment : segments) {
+            if (sourceSegment.getRow()< topRow) {
+                continue;
+            }
             if (Rectangle.UTIL.hasOverlap(bounds, sourceSegment)) {
                 this.add(new ScreenLineSegmentView(sourceSegment));
+            }
+            if (sourceSegment.getRow()> bottomRow) {
+                break;
             }
         }
         segmentsUpToDate = true;

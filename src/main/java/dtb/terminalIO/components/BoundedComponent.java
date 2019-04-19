@@ -95,10 +95,24 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
         return !this.hasDrawn;
     }
     
-    
     public void markAsDirty() {
+        if (isDirty()) {
+            return;
+        }
         this.hasDrawn = false;
+        if (this.getParentContainer()!=null && this.getParentContainer() instanceof DirtyFlag) {
+            if ( ! ((DirtyFlag)this.getParentContainer()).isDirty()) {
+               ((DirtyFlag)this.getParentContainer()).markAsDirty();
+            }
+        }
     }
+    
+//    public void markAsDirty() {
+//        this.hasDrawn = false;
+//        
+//        
+//        
+//    }
     
     protected void drawIfNeeded() {
         if (isDirty()) {

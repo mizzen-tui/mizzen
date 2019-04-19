@@ -362,7 +362,7 @@ public class ScrollableComponentTest {
 
         Canvas master_canvas = TestsCommon.getMasterCanvasForTesting(screen);
         
-        master_canvas.setSize(30, master_canvas.getWidth());
+       // master_canvas.setSize(30, master_canvas.getWidth());
         
         master_canvas.setEmptyChar('.');
         

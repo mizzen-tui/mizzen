@@ -9,12 +9,13 @@ import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegment;
+import dtb.terminalIO.textsegments.ScreenLineSegment.SegmentImpl;
 
 public class ComponentWithHilightedText extends Composite {
     
     private Color hiliteTextColor = new FGBGColors(Colors.BBla,Colors.On_Whi);
 
-    private List<Component<TextComponent>> hilightList = new ArrayList<Component<TextComponent>>();
+    private List<Component<?>> hilightList = new ArrayList<Component<?>>();
     
     private List<HilightRequest> hilightRequestList = new ArrayList<HilightRequest>();
     
@@ -65,32 +66,45 @@ public class ComponentWithHilightedText extends Composite {
             
             s = s.substring(0, hilightRequest.r.getWidth());
             
-            TextComponent tcSRCH = new TextComponent(hilightRequest.hiliteColor, hilightRequest.r,  s);
+            TextComponent sc_SRCH = new TextComponent(hilightRequest.hiliteColor, hilightRequest.r,  s);
+            //SegmentComponent sc_SRCH = new SegmentComponent(new SegmentImpl(hilightRequest.hiliteColor, hilightRequest.r,-1,s));
             
-            ComponentWithOffset componentWithOffset = this.addComponentWithOffset(hilightRequest.r, tcSRCH);
+            
+            ComponentWithOffset componentWithOffset = this.addComponentWithOffset(hilightRequest.r, sc_SRCH);
             
             addedComponentsList.add(componentWithOffset);
             
-            hilightList.add(tcSRCH);
+            hilightList.add(sc_SRCH);
         }
         hilightRequestList.clear();
         
         return addedComponentsList;
     }
     
+    public void markAsDirty() {
+        super.markAsDirty();
+        // Why mark the children dirty - not necessary is it?
+//      for (ComponentWithOffset child : children) {
+//          child.component.markAsDirty();
+//      }
+    }
+
+    
     @Override    
-    protected void drawChildren(Color color, IScreenLineSegmentsBuffer segments, List<ComponentWithOffset> children, boolean boundsFixed) {
+    synchronized protected void drawChildren(Color color, IScreenLineSegmentsBuffer segments, List<ComponentWithOffset> children, boolean boundsFixed) {
         super.drawChildren(color, segments, children, boundsFixed);
         if (hilightRequestList.size()>0) {
             List<ComponentWithOffset> addedComponentsList = addHilites(color, segments);
             if (addedComponentsList != null && addedComponentsList.size()>0) {
                 super.drawChildren(color, segments, addedComponentsList, boundsFixed);
+                this.markAsDirty();
             }
         }
     }
     
     public void addHilitedRegion(Color hiliteColor, Rectangle r) { // assume a height of 1 for now
         this.hilightRequestList.add( new HilightRequest( hiliteColor, r ));
+        this.markAsDirty();
     }
     
     public void addHilitedRegion(Rectangle r) { // assume a height of 1 for now

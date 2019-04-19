@@ -83,11 +83,11 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
         return this.showBorder;
     }
     
-    public boolean isDirty() {
-        return super.isDirty() ||
-               this.component.isDirty() ||
-               this.border.isDirty();
-    }
+//    public boolean isDirty() {
+//        return super.isDirty() ||
+//               this.component.isDirty() ||
+//               this.border.isDirty();
+//    }
     
     public void markAsDirty() {
         super.markAsDirty();

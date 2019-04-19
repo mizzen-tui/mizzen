@@ -22,15 +22,11 @@ import dtb.terminalIO.textsegments.ScreenLineSegmentsBuffer;
  * @author dbalme
  *
  */
-public interface Component<T extends Component<?>> extends IScreenLineSegmentsBuffer.Provider , ControlCode.ColorProvider, Rectangle {
+public interface Component<T extends Component<?>> extends IScreenLineSegmentsBuffer.Provider , DirtyFlag, ControlCode.ColorProvider, Rectangle {
 
     T setColor(Color drawingcolor);
     
     void clear();
-    
-    boolean isDirty();
-
-    void markAsDirty();
     
     void setParentContainer(ParentContainer composite);
     
@@ -70,7 +66,6 @@ public interface Component<T extends Component<?>> extends IScreenLineSegmentsBu
         protected void clearBeforeDraw() {
             clear();
         }
-
         
         protected void drawIfNeeded() {
             if (isDirty()) {
@@ -85,7 +80,15 @@ public interface Component<T extends Component<?>> extends IScreenLineSegmentsBu
         }
         
         public void markAsDirty() {
+            if (isDirty()) {
+                return;
+            }
             this.hasDrawn = false;
+            if (this.getParentContainer()!=null && this.getParentContainer() instanceof DirtyFlag) {
+                if ( ! ((DirtyFlag)this.getParentContainer()).isDirty()) {
+                   ((DirtyFlag)this.getParentContainer()).markAsDirty();
+                }
+            }
         }
 
         public void clear() {

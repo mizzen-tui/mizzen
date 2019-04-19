@@ -1,5 +1,8 @@
 package dtb.terminalIO.components.scroll;
 
+import java.util.Collection;
+import java.util.Collections;
+
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.ButtonBar;
@@ -7,6 +10,7 @@ import dtb.terminalIO.components.CanResize;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.Hiliter;
+import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.events.ChainedEventHandler;
@@ -210,7 +214,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
     }
     
 
-    public static class WindowViewComponent extends BoundedComponent<WindowViewComponent> implements Hiliter {
+    public static class WindowViewComponent extends BoundedComponent<WindowViewComponent> implements Hiliter, ParentContainer {
 
         private IScreenLineSegmentsBuffer.Provider viewSource;
         private ScreenLineSegmentsView             segmentsViewBuffer;
@@ -218,6 +222,9 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
 	public WindowViewComponent(Color color, Dimension d, IScreenLineSegmentsBuffer.Provider viewSource) {
 	    super(color, d);
 	    this.viewSource = viewSource;
+	    if (viewSource instanceof Component) {
+	        ((Component)this.viewSource).setParentContainer(this);
+	    }
 	    segmentsViewBuffer = new ScreenLineSegmentsView(this.viewSource, WindowViewComponent.this);
 	}
 
@@ -233,18 +240,11 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
 
         public boolean isDirty() {
             if ( super.isDirty() ) return true;
-            if (viewSource instanceof Component) {
-                if (((Component) viewSource).isDirty()) return true;
-            }
             return segmentsViewBuffer.isDirty();
         }
         
         public void markAsDirty() {
             super.markAsDirty();
-            if (viewSource != null && viewSource instanceof Component) {
-                
-                ((Component) viewSource).markAsDirty();
-            }
             if (segmentsViewBuffer != null) {
                 segmentsViewBuffer.markAsDirty();
             }
@@ -253,7 +253,6 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         @Override
         protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
             segments.merge(segmentsViewBuffer);
-
         }
 
         public void setViewOffset(int r, int c) {
@@ -281,6 +280,21 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
             if (viewSource instanceof Hiliter) {
                 ((Hiliter) viewSource).unHilite();
             }
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public Collection<? extends Component<?>> getChildren() {
+            if (viewSource instanceof Component) {
+                return (Collection<? extends Component<?>>) Collections.singleton((Component<?>)this.viewSource);
+            }
+            return Collections.emptyList();
+        }
+
+        @Override
+        public Position getPositionRelativeToParent(Component<?> child) {
+            // TODO Auto-generated method stub
+            return Position.ZERO; // todo - need a proper implementation (using offset)
         }
     }
     
