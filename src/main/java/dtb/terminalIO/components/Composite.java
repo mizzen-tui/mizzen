@@ -150,6 +150,7 @@ public class Composite extends AbstractComponent<Composite>
 
     public void resize(Dimension size) {
 	setBounds(size);
+	markAsDirty();
     }
     
     

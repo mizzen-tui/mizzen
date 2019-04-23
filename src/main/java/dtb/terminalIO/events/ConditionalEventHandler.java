@@ -18,7 +18,6 @@ public interface ConditionalEventHandler extends EventHandler {
     
     public default Predicate<TerminalEvent<?>>  asPredicate() {
         return new Predicate<TerminalEvent<?>>() {
-
             @Override
             public boolean test(TerminalEvent<?> te) {
                 return ConditionalEventHandler.this.canHandle(te) != null;

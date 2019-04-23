@@ -120,6 +120,7 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
             hasDrawn = true;
             Color currentColor = getColor();
             draw(currentColor, segments);
+            hasDrawn = true;
         }
     }
     

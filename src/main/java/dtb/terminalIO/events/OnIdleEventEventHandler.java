@@ -38,7 +38,6 @@ public class OnIdleEventEventHandler extends ConditionalEventHandler.Impl {
 	    getHandler().handle(te);
 	    te.getEventBus().removeEventHandler(this);
 	}
-
     }
 
     static class IntervalPredicate implements Predicate<TerminalEvent<?>> {

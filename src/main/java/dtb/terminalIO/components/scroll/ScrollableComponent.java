@@ -63,7 +63,8 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
     String              footerText;
 
     public ScrollableComponent(Color color, Dimension d, Component<?> componentBeingViewed) {
-        super(color);
+
+	super(color);
         this.componentBeingViewed = componentBeingViewed;
         viewer = new WindowViewComponent(color, new Dimension.Simple(d.getHeight() - 2, d.getWidth() - 2), this.componentBeingViewed);
         borderedComponent = new BorderedComponent(color, viewer, this);
@@ -82,6 +83,15 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         
         setShowBorder(visibleBorder());  // add border and footertext if border defined 
         positionFooterText();
+    }
+    
+    public Component<?> getComponentBeingViewed() {
+	return this.componentBeingViewed;
+    }
+
+    public void  setComponentBeingViewed(Component<?> componentBeingViewed) {
+	this.componentBeingViewed = componentBeingViewed;
+	viewer.setViewSource(componentBeingViewed);
     }
     
     public void setShowBorder(boolean showBorder) {
@@ -173,6 +183,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         hScrollBar.setRectangle(  new Rectangle.Simple( borderedComponent.getPostion_BottomLeft().offsetAdd(0, 1), (Dimension)hScrollBar  ));
         
         markAsDirty();
+        this.componentBeingViewed.markAsDirty();
     }
     
     public void refreshFooter() {
@@ -221,11 +232,21 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
 
 	public WindowViewComponent(Color color, Dimension d, IScreenLineSegmentsBuffer.Provider viewSource) {
 	    super(color, d);
+	    setViewSource(viewSource);
+//	    this.viewSource = viewSource;
+//	    if (viewSource instanceof Component) {
+//	        ((Component)this.viewSource).setParentContainer(this);
+//	    }
+//	    segmentsViewBuffer = new ScreenLineSegmentsView(this.viewSource, WindowViewComponent.this);
+	}
+	
+	public void setViewSource(IScreenLineSegmentsBuffer.Provider viewSource) {
 	    this.viewSource = viewSource;
 	    if (viewSource instanceof Component) {
 	        ((Component)this.viewSource).setParentContainer(this);
 	    }
 	    segmentsViewBuffer = new ScreenLineSegmentsView(this.viewSource, WindowViewComponent.this);
+	    this.markAsDirty();
 	}
 
 	public Position calculateScrollToViewOffset(Rectangle targetToView) {
@@ -572,13 +593,13 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         return footerControls;
     }
 
-    public void search(String newValue) {
-
-	Rectangle targetToView = SegmentsSearchUtils.searchTextInSegments(componentBeingViewed.getSegmentsBuffer(), newValue);
-	if (targetToView != null) {
-	    scrollToView(targetToView);
-	}
-	
-    }
+//    public void search(String newValue) {
+//
+//	Rectangle targetToView = SegmentsSearchUtils.searchTextInSegments(componentBeingViewed.getSegmentsBuffer(), newValue);
+//	if (targetToView != null) {
+//	    scrollToView(targetToView);
+//	}
+//	
+//    }
     
 }

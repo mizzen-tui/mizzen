@@ -72,6 +72,7 @@ public interface Component<T extends Component<?>> extends IScreenLineSegmentsBu
                 clearBeforeDraw();
                 hasDrawn = true;
                 draw(color, segments);
+                hasDrawn = true;
             }
         }
         

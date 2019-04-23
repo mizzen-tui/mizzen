@@ -14,6 +14,7 @@ import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.input.HasValue;
 import dtb.terminalIO.components.input.HasValue.OnValueChangedEventHandler;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
+import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
 import dtb.terminalIO.components.input.TextInput;
 import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode;
@@ -67,14 +68,14 @@ public class ScrollableComponentTest {
         TextComponent __srcOfText = new TextComponent("");
         __srcOfText.setFillOnClear(false);
 
-        ComponentWithHilightedText srcOfText = new ComponentWithHilightedText();
-        srcOfText.add(__srcOfText);
-        
-        
+        //ComponentWithHilightedText srcOfText = new ComponentWithHilightedText();
+        //srcOfText.add(__srcOfText);
+
+
         Dimension sizeOfWindow = size;
         Position viewOffset = new Position.Simple(0, 0);
 
-        ScrollableComponent viewComp1 = new ScrollableComponent(Colors.Gre, sizeOfWindow, srcOfText);
+        ScrollableComponent viewComp1 = new ScrollableComponent(Colors.Gre, sizeOfWindow, __srcOfText);
         
         Supplier<String> text3 = new Supplier<String>() {
             
@@ -94,8 +95,11 @@ public class ScrollableComponentTest {
                             try {
                                 largeText = ReadSampleFiles.readSampleFile(bigFile);  
                                 largeText = StringUtils.wrap(largeText, size.getWidth()*2);
+                                
+                                largeText = StringUtils.addLineNumbers(largeText);
+                                
                                 __srcOfText.setTextAndResize(largeText);
-                                srcOfText.setBounds(__srcOfText);
+                                //srcOfText.setBounds(__srcOfText);
                                 viewComp1.updateCanvas();
                             } catch (IOException e) {
                                 e.printStackTrace();
@@ -115,7 +119,7 @@ public class ScrollableComponentTest {
             public void run() {
                 toggle[0] = !toggle[0];
                 __srcOfText.setTextAndResize((toggle[0])?text3.get():text2);
-                srcOfText.setBounds(__srcOfText);
+               // srcOfText.setBounds(__srcOfText);
             }
         };
 
@@ -142,141 +146,8 @@ public class ScrollableComponentTest {
             }
         }));
         
-        class Finder extends HorizontalPanel {
-            TextComponent find;
-            TextInput  findTextInput;
-	    private ConditionalEventHandler findTextInputEventHandler; 
-	    private String lastFindText = null;
-	    private OnValueChangedEventHandler<String> titleUpdater;
-	    private ConditionalEventHandler finishSearchInputEventHandler;
-            
-            Finder(Color color) {
-                super(color);
-                this.find = new TextComponent(Finder.this.getColor(), " " + Finder.this.getColor().bold().asString()+"^F"+Finder.this.getColor().asString()+"ind");
-                this.add(find);
-            }
-            
-            public void hilite() {
-        	super.hilite();
-                if (findTextInput != null) {
-                    this.findTextInput.setColor(Finder.this.getColor().invert());
-                    this.findTextInput.setEmptyColor(Finder.this.getColor().invert());
-                }
-            }
-
-            public void unHilite() {
-        	super.unHilite();
-                if (findTextInput != null) {
-                    this.findTextInput.setColor(Finder.this.getColor());
-                    this.findTextInput.setEmptyColor(Finder.this.getColor());
-                }
-            }
-            
-            void setInFindMode(TerminalEvent<?> te) {
-        	setInFindMode(te, findTextInput == null);
-            }
-            
-            void setInFindMode(TerminalEvent<?> te, boolean enable) {
-                if (enable) {
-                    findTextInput = new TextInput(Finder.this.getColor().invert(), 10) {
-                        @Override
-                        public void setFocus(boolean focus, EventBus eventBus) {
-                            super.setFocus(focus, eventBus);
-                            if (! focus) {
-                                if (Finder.this.findTextInput != null) {
-                                    Finder.this.lastFindText = findTextInput.getText();
-                                    viewComp1.removeEventHandler(findTextInputEventHandler);
-                                    Finder.this.findTextInputEventHandler = null;
-                                    if (Finder.this.finishSearchInputEventHandler != null) {
-                                        viewComp1.removeEventHandler(Finder.this.finishSearchInputEventHandler);
-                                        Finder.this.finishSearchInputEventHandler = null;
-                                    }
-                                    Finder.this.remove(findTextInput);
-                                    Finder.this.findTextInput = null;
-                                    viewComp1.refreshFooter();
-                                }
-                            }
-                        }
-                    };
-                    this.findTextInput.setEmptyColor(Finder.this.getColor().invert());
-                    if (lastFindText != null) {
-                	// should I trigger the search here?
-                       findTextInput.setText(lastFindText);
-                    } else {
-                	findTextInput.setText("");
-                    }
-                    this.add(findTextInput);
-                    // FIXME:  1) doing a prepend causes hotkeys on viewComp1 to be blocked including CTRL-F
-                    //            so cannot get out of find mode..  TextInput accepting too many keys
-                    //            need to fix
-                    //         2) Cursor never hides
-                    //         3) Cursor mis-positioned on terminal resize
-                    findTextInputEventHandler = viewComp1.prependEventHandlerWithCanvasUpdate(findTextInput);
-                    findTextInput.requestFocus(te);
-
-                    finishSearchInputEventHandler = viewComp1.prependEventHandlerWithCanvasUpdate(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, new EventHandler() {
-                        @Override
-                        public void handle(TerminalEvent<?> te) {
-                            if (findTextInput != null) {
-                                findTextInput.setText("");
-                            }
-                            setInFindMode(te, false);
-                            srcOfText.clearHilights();
-                            lastFindText = null;
-                        }
-                    }));
-                    
-                    
-                    titleUpdater =  new HasValue.OnValueChangedEventHandler<String>(findTextInput) {
-                        @Override
-                        public void valueChanged(HasValue<String> source) {
-                            String newValue = source.getValue();
-                            viewComp1.setTitle(newValue);
-                            
-                            Rectangle targetToView = null;
-                            
-                            srcOfText.clearHilights();
-                            
-                            if (newValue == null || newValue.length()<2) {
-                                return;
-                            }
-                            
-                            Collection<Rectangle> searchResult = SegmentsSearchUtils.searchTextInSegmentsAll(srcOfText.getSegmentsBuffer(), newValue);
-                            
-                            if (searchResult != null && searchResult.size() > 0) {
-                                targetToView = searchResult.iterator().next();
-                                if (targetToView != null) {
-                                    viewComp1.scrollToView(targetToView);
-                                }
-                                
-                                for (Rectangle r : searchResult) {
-                                    srcOfText.addHilitedRegion(r);
-                                }
-                                viewComp1.setTitle(newValue + " (" + searchResult.size()  + ")" ); 
-                            }
-                            
-                            // viewComp1.search(newValue);
-                        }
-                    };
-                    te.getEventBus().appendEventHandler(titleUpdater);
-
-                } else { 
-                    findTextInput.requestReleaseFocus(te);
-                    if (titleUpdater != null) {
-                	te.getEventBus().removeEventHandler(titleUpdater);
-                	titleUpdater = null;
-                        viewComp1.setTitle("");
-                    }
-                }
-            }
-        };
-
-        Finder finder = new Finder(viewComp1.getColor());
-
-        viewComp1.addFooterButton(finder, Keys.CTRL_F_KEYSTROKE, (te)->{
-            finder.setInFindMode(te);
-            viewComp1.refreshFooter();
-        });
+        
+        SearchFunctionForScrollableComponent.addFinderToScrollable(viewComp1);
         
         return viewComp1;
     }
@@ -319,7 +190,10 @@ public class ScrollableComponentTest {
         Component<?> brailleComponent = brailleDemo.getBrailleComponent();
          
         sourceComponentContainingBrailleDemo.add(brailleComponent);
- 
+
+        SearchFunctionForScrollableComponent.addFinderToScrollable(viewComp1);
+        
+        
         return viewComp1;
     }
     
@@ -367,17 +241,14 @@ public class ScrollableComponentTest {
         master_canvas.setEmptyChar('.');
         
         Dimension sizeOfWindow = new Dimension() {
-
             @Override
             public int getWidth() {
                 return master_canvas.getWidth()/2-2;
             }
-
             @Override
             public int getHeight() {
                 return master_canvas.getHeight()-17;
             }
-            
         };
 
         ScrollableComponent viewComp1 = testWindowViewer1(sizeOfWindow);

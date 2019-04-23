@@ -29,7 +29,7 @@ import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 
-public class TextInput extends BoundedComponent<TextInput> implements HasValue<String>, ParentContainer, ConditionalEventHandler , Focusable, EventHandlerContainer  {
+public class TextInput extends BoundedComponent<TextInput> implements HasValue<String>, ParentContainer , Focusable, EventHandlerContainer  {
 
     private TextComponent textRenderer;
     private StringBuffer  buffer;
@@ -111,7 +111,6 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
         }
         return null;
     }
-    
     
     public void setText(String text) {
         if (text == null) {
@@ -246,9 +245,10 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
             eventBus.raiseEvent(new HasValue.ValueChangedEvent<>(this));
         }
     }
+
     void raiseEventOnChanged(EventBus eventBus, Supplier<Boolean> changeTextAction) {
         if (changeTextAction.get()) {
-           // eventBus.raiseEvent(new HasValue.ValueChangedEvent<>(this));
+           eventBus.raiseEvent(new HasValue.ValueChangedEvent<>(this));
         }
     }
 
@@ -267,18 +267,18 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
     }
     
     public TextInput prependEventHandler(ConditionalEventHandler eventHandler) {
-        this.chainedEventHandler.prependEventHandler(eventHandler);
+        this.getChainedEventHandler().prependEventHandler(eventHandler);
         return this;
     }
 
     public TextInput appendEventHandler(ConditionalEventHandler eventHandler) {
-        this.chainedEventHandler.appendEventHandler(eventHandler);
+        this.getChainedEventHandler().appendEventHandler(eventHandler);
         return this;
     }
     
     
     public TextInput removeEventHandler(ConditionalEventHandler eventHandler) {
-        this.chainedEventHandler.removeEventHandler(eventHandler);
+        this.getChainedEventHandler().removeEventHandler(eventHandler);
         return this;
     }
     
@@ -300,13 +300,19 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
         }
         return this.eventHandler;
     }
+
+    private ChainedEventHandler getChainedEventHandler() {
+        if ( this.chainedEventHandler == null) {
+            getEventHandler();
+        }
+        return this.chainedEventHandler;
+    }
     
-    private KeyInputEventHandler buildEventHandler() {
+    private ConditionalEventHandler buildEventHandler() {
 
         this.chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
 
         appendEventHandler(new KeyInputEventHandler(Keys.BACKSPACE_KEYSTROKE, (te) -> raiseEventOnChanged(te.getEventBus(), () -> deleteCharBeforeCaret())));
-
         
         appendEventHandler(new KeyInputEventHandler(Keys.DELETE_KEYSTROKE, (te) -> raiseEventOnChanged(te.getEventBus(), () -> deleteCharAtCaret() )));
 
@@ -370,7 +376,9 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
 
         ConditionalEventHandler complexKeyHandler = chainedEventHandler.asConditionalEventHandler();
         
-        return new KeyInputEventHandler(complexKeyHandler.asPredicate(), complexKeyHandler);
+        return complexKeyHandler;
+        
+        //return new KeyInputEventHandler(complexKeyHandler.asPredicate(), complexKeyHandler);
 
     }
 

@@ -2,7 +2,9 @@ package dtb.terminalIO.components.input;
 
 import java.util.function.Predicate;
 
+import dtb.terminalIO.events.AbstractTimedRequestedController;
 import dtb.terminalIO.events.ConditionalEventHandler;
+import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
@@ -74,7 +76,6 @@ public interface HasValue<V> {
                     return this;  
                 }
             }
-            
             return null;   // no match!
         }
         
@@ -87,6 +88,50 @@ public interface HasValue<V> {
         abstract public void valueChanged(HasValue<V> source);
         
         
+    }
+    
+    public static abstract class TimerControlledOnValueChangedEventHandler<V>  extends OnValueChangedEventHandler<V> {
+
+	private AbstractTimedRequestedController timer;
+	private V lastValue;
+	private V currentValue;
+	
+	public TimerControlledOnValueChangedEventHandler(HasValue<V> targetSource) {
+	    super(targetSource);
+	    makeTimer();
+	}
+	
+	private void makeTimer() {
+	    timer = new AbstractTimedRequestedController(()->{
+		 valueChanged( targetSource );
+	    } ) {
+
+		@Override
+		protected boolean isRequestDifferentFromPrevious() {
+		    if (lastValue == null && currentValue == null) {
+			return false;
+		    }
+		    if (lastValue != null && lastValue.equals(currentValue)) {
+			return false;
+		    }
+		    if (currentValue != null && currentValue.equals(lastValue)) {
+			return false;
+		    }
+	            lastValue = currentValue;
+		    return true;
+		}
+	    };
+	}
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public void handle(TerminalEvent<?> te) {
+            this.lastValue = this.currentValue;
+            this.currentValue = ((HasValue<V>) te.getEventData()).getValue();
+            timer.onRequest(te.getEventBus());
+            valueChanged((HasValue<V>) te.getEventData());
+        }
+
     }
     
     

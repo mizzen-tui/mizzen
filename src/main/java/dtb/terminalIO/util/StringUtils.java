@@ -3,6 +3,7 @@ package dtb.terminalIO.util;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.StringJoiner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -166,6 +167,21 @@ public class StringUtils {
         wrappedLine.append(str.substring(offset));
         return wrappedLine.toString();
     }
+    
+    public static String addLineNumbers(String input) {
+	if (input == null) {
+	    return null;
+	}
+	
+	StringJoiner sj = new StringJoiner("\n");
+	String[] lines = input.split("\n");
+	for (int i = 0; i< lines.length; i++) {
+	    sj.add(String.format("%4d ",i) + lines[i]);
+	}
+	
+	return sj.toString();
+    }
+    
     
     // This class take from : https://sourceforge.net/p/drjava/git_repo/ci/master/tree/drjava/src/edu/rice/cs/util/ArgumentTokenizer.java#l132
     static public class ArgumentTokenizer {

@@ -97,7 +97,7 @@ public class ComponentWithHilightedText extends Composite {
             List<ComponentWithOffset> addedComponentsList = addHilites(color, segments);
             if (addedComponentsList != null && addedComponentsList.size()>0) {
                 super.drawChildren(color, segments, addedComponentsList, boundsFixed);
-                this.markAsDirty();
+                //this.markAsDirty();
             }
         }
     }
