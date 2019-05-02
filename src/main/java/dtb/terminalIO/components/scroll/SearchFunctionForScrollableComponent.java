@@ -30,6 +30,8 @@ public class SearchFunctionForScrollableComponent extends HorizontalPanel {
     private ConditionalEventHandler finishSearchInputEventHandler;
     private ScrollableComponent viewComp;
     private ComponentWithHilightedText srcOfText;
+    private int maxSearchTextWidth = 10;
+    private int minSearchLength = 3;
     
     public SearchFunctionForScrollableComponent(Color color, ScrollableComponent viewComp) {
         super(color);
@@ -62,7 +64,7 @@ public class SearchFunctionForScrollableComponent extends HorizontalPanel {
 
     void setInFindMode(TerminalEvent<?> te, boolean enable) {
         if (enable) {
-            findTextInput = new TextInput(SearchFunctionForScrollableComponent.this.getColor().invert(), 10) {
+            findTextInput = new TextInput(SearchFunctionForScrollableComponent.this.getColor().invert(), maxSearchTextWidth) {
                 @Override
                 public void setFocus(boolean focus, EventBus eventBus) {
                     super.setFocus(focus, eventBus);
@@ -111,9 +113,6 @@ public class SearchFunctionForScrollableComponent extends HorizontalPanel {
             }));
             
             
-            // need to leverage something like this:
-            // ./workspace/CommandEMS/ems/trunk/platform/ems-gwt-lib/src/main/java/com/mw/ems/gwt/client/core/util/AbstractTimedRequestedCommandController.java
-            
             titleUpdater =  new HasValue.TimerControlledOnValueChangedEventHandler<String>(findTextInput) {
                 @Override
                 public void valueChanged(HasValue<String> source) {
@@ -124,7 +123,7 @@ public class SearchFunctionForScrollableComponent extends HorizontalPanel {
                     
                     srcOfText.clearHilights();
                     
-                    if (newValue == null || newValue.length()<3) {
+                    if (newValue == null || newValue.length() < minSearchLength) {
                         return;
                     }
                     
@@ -141,8 +140,7 @@ public class SearchFunctionForScrollableComponent extends HorizontalPanel {
                         }
                         viewComp.setTitle(newValue + " (" + searchResult.size()  + ")" ); 
                     }
-                    
-                    // viewComp1.search(newValue);
+
                 }
             };
             te.getEventBus().appendEventHandler(titleUpdater);
@@ -158,9 +156,10 @@ public class SearchFunctionForScrollableComponent extends HorizontalPanel {
     }
     
     
-    public static void addFinderToScrollable(ScrollableComponent viewComp,  KeyStroke hotKey) {
+    public static void addFinderToScrollable(ScrollableComponent viewComp,  KeyStroke hotKey, int maxSearchTextWidth) {
 	
 	SearchFunctionForScrollableComponent finder = new SearchFunctionForScrollableComponent(viewComp.getColor(), viewComp);
+	finder.maxSearchTextWidth = maxSearchTextWidth;
 
 	if ( ! (viewComp.getComponentBeingViewed() instanceof ComponentWithHilightedText)) {
 	    
@@ -179,14 +178,21 @@ public class SearchFunctionForScrollableComponent extends HorizontalPanel {
             finder.setInFindMode(te);
             viewComp.refreshFooter();
         });
-	
-	
     }
     
+    public static void addFinderToScrollable(ScrollableComponent viewComp,  KeyStroke hotKey) {
+        addFinderToScrollable(viewComp, hotKey, 10);
+    }
+    
+    
+    public static void addFinderToScrollable(ScrollableComponent viewComp, int maxSearchTextWidth) {
+        addFinderToScrollable(viewComp,Keys.CTRL_F_KEYSTROKE, maxSearchTextWidth);
+   }
+   
     public static void addFinderToScrollable(ScrollableComponent viewComp) {
-	addFinderToScrollable(viewComp,Keys.CTRL_F_KEYSTROKE);
-    }
-    
+        addFinderToScrollable(viewComp,Keys.CTRL_F_KEYSTROKE);
+   }
+   
     
 }
 

@@ -47,6 +47,10 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
         return componentPosition;
     }
     
+    @Override
+    public void childResized(Component<?> child) {
+        this.markAsDirty();
+    }
     
     public BorderedComponent(Color color, Component<?> component) {
         this(color, component, (ParentContainer)null);

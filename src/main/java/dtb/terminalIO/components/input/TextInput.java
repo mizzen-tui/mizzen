@@ -112,6 +112,12 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
         return null;
     }
     
+    @Override
+    public void childResized(Component<?> child) {
+        this.markAsDirty();
+    }
+    
+    
     public void setText(String text) {
         if (text == null) {
             text = "";

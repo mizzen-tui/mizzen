@@ -63,6 +63,11 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder> implements HasT
         return null;
     }
     
+    @Override
+    public void childResized(Component<?> child) {
+        this.markAsDirty();
+    }
+    
     
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {

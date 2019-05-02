@@ -178,9 +178,12 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         borderedComponent.resize(d);
         
         vScrollBar.setRectangle( new Rectangle.Simple( borderedComponent.getPostion_TopRight().offsetAdd(1, 0), new Dimension.Simple(borderedComponent.getHeight()-2,1) ) );
-        positionFooterText();
+        vScrollBar.markAsDirty();
 
         hScrollBar.setRectangle(  new Rectangle.Simple( borderedComponent.getPostion_BottomLeft().offsetAdd(0, 1), (Dimension)hScrollBar  ));
+        hScrollBar.markAsDirty();
+        
+        positionFooterText();
         
         markAsDirty();
         this.componentBeingViewed.markAsDirty();
@@ -317,7 +320,19 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
             // TODO Auto-generated method stub
             return Position.ZERO; // todo - need a proper implementation (using offset)
         }
+        
+        public void childResized(Component<?> child) {
+            markAsDirty();
+        }
+
+        
     }
+    
+    @Override
+    public void childResized(Component<?> child) {
+        this.markAsDirty();
+    }
+    
     
     public Position getOffsetIntoSource() {
         return viewer.getOffsetIntoSource();

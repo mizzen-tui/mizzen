@@ -224,7 +224,7 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
     }
 
     protected void refreshBackend() {
-        if (hideCursorRequested) {
+        if (hideCursorRequested || showCursorRequested) {
             hideCursorRequested = false;
             backend.hideCursor(); // this takes effect on next refresh just below
         }
@@ -240,7 +240,7 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
             backend.showCursorAt(last_RequestShowCursorPosition);
         }
         
-        
+
     }
     
     
@@ -252,6 +252,11 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
             return this;
         }
 
+        if (hideCursorRequested || showCursorRequested) {
+            hideCursorRequested = false;
+            backend.hideCursor(); // this takes effect on next back end refresh 
+        }
+        
         List<ScreenLineSegment> mergedRow = new ArrayList<ScreenLineSegment>();
         Iterator<ScreenLineSegment> sortedI = segmentsBuffer.iterator();
         ScreenLineSegment prev_sc = sortedI.next();
@@ -301,15 +306,7 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
 
         int lastRightMostPlus1 = 0;
 
-        int marker =0;
-        
         for (ScreenLineSegment scs : scsOnSameRow) {
-            
-            if (scs.getText().contains("poly1")) {
-                marker = 1;
-            }
-            
-            
             if (row == -1)
                 row = scs.getRow();
             if (lastRightMostPlus1 < scs.getCol()) {

@@ -33,23 +33,17 @@ public class SegmentsSearchUtils {
             // TODO:  problem with this check is that the compare does not
             //        span across multiple ScreenLineSegment objects..  works in the simple case only
             
-            int test=0;
-            if ( sc.getText().contains("DAVID ex non")) {
-                test=1;
-            }
-            
             int stringOffset = 0;
             
             int idx = sc.getText().indexOf(searchText, stringOffset);
             while (idx > -1) {
                  Rectangle targetToView = new Rectangle.Simple(sc.getRow(), sc.getCol() + idx, Dimension.UTIL.stringToDimension(searchText));
                  searchResult.add(targetToView);
-                 stringOffset += searchText.length();
+                 stringOffset = idx + searchText.length();
                  idx = sc.getText().indexOf(searchText, stringOffset);
             }
         }
         return searchResult;
     }
-    // TODO:  find nth
 
 }

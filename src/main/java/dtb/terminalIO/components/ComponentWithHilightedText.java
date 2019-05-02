@@ -9,7 +9,6 @@ import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegment;
-import dtb.terminalIO.textsegments.ScreenLineSegment.SegmentImpl;
 
 public class ComponentWithHilightedText extends Composite {
     

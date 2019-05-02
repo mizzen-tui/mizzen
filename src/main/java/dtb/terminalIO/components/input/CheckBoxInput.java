@@ -106,6 +106,11 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput> implements Ha
         return null;
     }
     
+    @Override
+    public void childResized(Component<?> child) {
+        this.markAsDirty();
+    }
+    
     
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {

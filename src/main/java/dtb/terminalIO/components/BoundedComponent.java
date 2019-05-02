@@ -81,6 +81,9 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
 
     public void resize(Dimension d) {
         setRectangle(new Rectangle.Simple(this.getPostion_TopLeft(), d));
+        if (this.getParentContainer()!=null ) {
+            this.getParentContainer().childResized(this);
+        }
         markAsDirty();
     }
 

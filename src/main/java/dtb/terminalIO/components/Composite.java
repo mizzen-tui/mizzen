@@ -136,6 +136,9 @@ public class Composite extends AbstractComponent<Composite>
 	this.boundsFixed = true;
 	if (this.border != null) rebuildBorder(this.bounds);
 	markAsDirty();
+        if (this.getParentContainer()!=null ) {
+            this.getParentContainer().childResized(this);
+        }
 	return this;
     } 
 
@@ -540,6 +543,12 @@ public class Composite extends AbstractComponent<Composite>
             return findChildOrFail(child,"getPositionRelativeToParent").offset.offsetAdd(1,1);
         }
         return findChildOrFail(child,"getPositionRelativeToParent").offset;
+    }
+    
+    @Override
+    public void childResized(Component<?> child) {
+        this.markAsDirty();
+        fullrecalcDim();
     }
     
     

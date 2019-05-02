@@ -7,4 +7,6 @@ public interface ParentContainer extends  HasChildren<Component<?>> {
     
     Position getPositionRelativeToParent(Component<?> child);
     
+    void childResized(Component<?> child);
+    
 }
