@@ -32,7 +32,7 @@ import dtb.terminalIO.geom.Relation.LeftRight;
  *   It has {@link Color} attribute that dictates default color to render the text in.
  *   
  */
-public interface ScreenLineSegment extends Rectangle {
+public interface ScreenLineSegment extends Rectangle, CleanString {
 
     public abstract int getId();
 
@@ -40,18 +40,18 @@ public interface ScreenLineSegment extends Rectangle {
 
     public abstract Color getColors();
 
-    public abstract int getLength();
+    public abstract int length();
 
     public abstract int getRow();
 
     public abstract int getCol();
 
     public default int getWidth() {
-        return getLength();
+        return length();
     }
 
     public default int getHeight() {
-        if (getLength() > 0)
+        if (length() > 0)
             return 1;
         else
             return 0;
@@ -63,14 +63,14 @@ public interface ScreenLineSegment extends Rectangle {
         return getText().charAt(col - getCol());
     }
 
-    public default String subTextAtColumns(int beginColIndex, int endColIndexInclusive) {
+    public default CleanString subTextAtColumns(int beginColIndex, int endColIndexInclusive) {
         if (beginColIndex < getCol() || beginColIndex > getRightMostCol())
             throw new IllegalArgumentException("bad start column " + beginColIndex);
         if (endColIndexInclusive < beginColIndex || endColIndexInclusive > getRightMostCol())
             throw new IllegalArgumentException("bad end column " + endColIndexInclusive);
-        String theText = getText();
+       // String theText = getText();
         int col = getCol();
-        return theText.substring(beginColIndex - col, endColIndexInclusive - col + 1);
+        return this.substring(beginColIndex - col, endColIndexInclusive - col + 1);
     }
 
     @SuppressWarnings("unchecked")
@@ -128,7 +128,7 @@ public interface ScreenLineSegment extends Rectangle {
         if (offset < 0) {
             throw new IllegalArgumentException("Creating a negative offset slice!");
         }
-        int lenOfOrig = source.getLength();
+        int lenOfOrig = source.length();
         if (offset >= lenOfOrig) {
             throw new IllegalArgumentException("Offset larger than original len");
         }
@@ -137,7 +137,7 @@ public interface ScreenLineSegment extends Rectangle {
                     + "\n" + "source = " + String.valueOf(source) + "\n" + "slice offset = " + offset + " len " + len);
         }
 
-        String txt = source.getText().substring(offset, offset + len);
+        CleanString txt = source.substring(offset, offset + len);
         SegmentImpl so = new SegmentImpl(source.getColors(), new CursorPos(source.getRow(), source.getCol() + offset),
                 source.getId(), txt);
         return so;
@@ -239,7 +239,7 @@ public interface ScreenLineSegment extends Rectangle {
             
             if (width < 0) throw new IllegalArgumentException("width="+width);
             
-            if (emptyChar == 'Z') {
+            if (emptyChar <= 27) {
                 throw new IllegalStateException("!!!!");
             }
             
@@ -249,7 +249,7 @@ public interface ScreenLineSegment extends Rectangle {
                     return id;
                 }
 
-                public int getLength() {
+                public int length() {
                     return width;
                 }
 
@@ -425,9 +425,12 @@ public interface ScreenLineSegment extends Rectangle {
         }
         
         public static void setCharAt(TreeSet<ScreenLineSegment> ts, int row, int col, char ch, Color color) {
+            if ( ! CleanString.UTIL.isClean(ch)) {
+                throw new IllegalStateException("Bad char to set in text segment.  Cannot be a control code");
+            }
             ScreenLineSegment sc = getAtCol(ts,row, col);
-            if (1+1==3 || sc == null || !sc.getColors().equals(color) || !(sc instanceof SegmentImpl) ) {
-                ScreenLineSegment new_sc = new SegmentImpl(color,row, col, sc!=null?sc.getId()+1:1,ch+"");
+            if (sc == null || !sc.getColors().equals(color) || !(sc instanceof SegmentImpl) ) {
+                ScreenLineSegment new_sc = new SegmentImpl(color,row, col, sc!=null?sc.getId()+1:1,new CleanString.Simple(ch));
                 addTo(ts,new_sc);
                 return;
             }
@@ -435,13 +438,11 @@ public interface ScreenLineSegment extends Rectangle {
             int offset = col - sc.getCol();
             String oldText = sc.getText();
             
-            String left   = ( (offset>0)? oldText.substring(0,offset)  : "" );
-            String right  = ((offset< oldText.length())? oldText.substring(offset+1, oldText.length()) : "");
+            CleanString left   = ( (offset>0)? sc.substring(0,offset)  : CleanString.UTIL.EMPTY_CLEAN_STRING );
+            CleanString right  = ((offset< sc.length())? sc.substring(offset+1, oldText.length()) : CleanString.UTIL.EMPTY_CLEAN_STRING);
 
             
-            String newText = left   
-                              + String.valueOf(ch)  
-                              + right;
+            CleanString newText = new CleanString.Simple(left).append(new CleanString.Simple(ch)).append(right);   
             
             ((SegmentImpl)sc).setText(newText);
         }
@@ -478,7 +479,7 @@ public interface ScreenLineSegment extends Rectangle {
             if (clipped.getWidth() < 1 || clipped.getHeight() < 1) {
                 return null;
             }
-            String text = source.subTextAtColumns(clipped.getCol(), clipped.getRightMostCol());
+            CleanString text = source.subTextAtColumns(clipped.getCol(), clipped.getRightMostCol());
             SegmentImpl so = new SegmentImpl(source.getColors(), new CursorPos(clipped.getRow(), clipped.getCol()),
                     source.getId(), text);
             return so;
@@ -491,7 +492,7 @@ public interface ScreenLineSegment extends Rectangle {
             if (offset < 0) {
                 throw new IllegalArgumentException("Creating a negative offset slice!");
             }
-            int lenOfOrig = source.getLength();
+            int lenOfOrig = source.length();
             if (offset >= lenOfOrig) {
                 throw new IllegalArgumentException("Offset larger than original len");
             }
@@ -501,7 +502,7 @@ public interface ScreenLineSegment extends Rectangle {
                                 + String.valueOf(source) + "\n" + "slice offset = " + offset + " len " + len);
             }
 
-            String txt = source.getText().substring(offset, offset + len);
+            CleanString txt = source.substring(offset, offset + len);
             SegmentImpl so = new SegmentImpl(source.getColors(),
                     new CursorPos(source.getRow(), source.getCol() + offset), source.getId(), txt);
             return so;
@@ -537,13 +538,13 @@ public interface ScreenLineSegment extends Rectangle {
 
         @FunctionalInterface
         public static interface CreateSegmentWithColor {
-            ScreenLineSegment create(Color color, Position position, String simpleText);
+            ScreenLineSegment create(Color color, Position position, CleanString simpleText);
         }
         
         
         public static SegmentsFromStringResult textSegmentsFromString(String multiLineString, int offSetRow,
                 int offSetCol, Rectangle boundingRectangle,
-                BiFunction<Position, String, ScreenLineSegment> createSegment) {
+                BiFunction<Position, CleanString, ScreenLineSegment> createSegment) {
 
             TreeSet<ScreenLineSegment> ts = makeCollection(null); // empty
             if (multiLineString == null || multiLineString.length() == 0) {
@@ -561,7 +562,7 @@ public interface ScreenLineSegment extends Rectangle {
             lines[0] = clip(lines[0], boundAndClipped.getWidth());
             ScreenLineSegment sc = null;
             if (lines[0]!=null && lines[0].length()>0) {
-                sc = createSegment.apply(position, lines[0]);
+                sc = createSegment.apply(position, new CleanString.Simple(lines[0]));
                 ts.add(sc);
             }
             int lineLimit = Math.min(lines.length, boundAndClipped.getHeight());
@@ -572,7 +573,7 @@ public interface ScreenLineSegment extends Rectangle {
                 lines[i] = clip(lines[i], originalWidth);  // and now we use width of original rectangle for subsequent
                                                            // clippings
                 if (lines[i]!=null && lines[i].length()>0) {
-                   sc = createSegment.apply(position, lines[i]);
+                   sc = createSegment.apply(position, new CleanString.Simple(lines[i]));
                    ts.add(sc);
                 }
             }
@@ -595,13 +596,15 @@ public interface ScreenLineSegment extends Rectangle {
             
             ControlCode.parseColorsAndBuildResult(colorCodedStr, new ColorColorSegmentBuilder() {
 		@Override
-		public boolean newColorSegment(Color color, String simpleText) {
+		public boolean newColorSegment(Color color, CleanString simpleText) {
 		    if (simpleText==null) {
-			simpleText="";
+			simpleText= CleanString.UTIL.EMPTY_CLEAN_STRING;
 		    }
 		    boolean continueParsing=true;
+		    //  if (s.length() > width)
 		    if (curlength[0] + simpleText.length()>width) {
-			simpleText = clip(simpleText, width - curlength[0]);
+		        // TODO: not doing a length check!! fixme!
+			simpleText = simpleText.substring(0, width - curlength[0]); //  clip(simpleText, width - curlength[0]);
 			continueParsing = false;
 		    }
 		    
@@ -665,14 +668,22 @@ public interface ScreenLineSegment extends Rectangle {
         int    id;
         String simpleText;
 
-        public SegmentImpl(Color color, Position position, int id, String simpleText) {
+        public SegmentImpl(Color color, Position position, int id, CleanString simpleText) {
             super(color, position);
             this.id = id;
-            this.simpleText = simpleText;
+            this.simpleText = simpleText.getText();
         }
 
-        public Object setText(String newText) {
-            return this.simpleText = newText;
+        public SegmentImpl(Color color, Position position, int id, String simpleText) {
+            this(color, position, id, new CleanString.Simple(simpleText));
+        }
+
+        public Object setText(CleanString newText) {
+            return this.simpleText = newText.getText();
+        }
+
+        public SegmentImpl(Color color, int row, int col, int id, CleanString simpleText) {
+            this(color, new Position.Simple(row,col),id, simpleText);
         }
 
         public SegmentImpl(Color color, int row, int col, int id, String simpleText) {

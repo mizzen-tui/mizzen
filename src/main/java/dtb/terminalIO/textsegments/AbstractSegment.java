@@ -22,7 +22,7 @@ abstract class AbstractSegment implements ScreenLineSegment {
     }
 
     @Override
-    public int getLength() {
+    public int length() {
         return this.getText().length();
     }
 

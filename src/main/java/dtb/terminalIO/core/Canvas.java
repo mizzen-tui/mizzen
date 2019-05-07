@@ -17,6 +17,7 @@ import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.textsegments.CleanString;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegment;
 import dtb.terminalIO.textsegments.ScreenLineSegment.SegmentImpl;
@@ -185,7 +186,7 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
         int newRow = sc.getRow() + rowOffset;
         if (newRow >= this.getHeight())
             return;
-        int len = sc.getLength();
+        int len = sc.length();
         String txt;
         if (newCol + len <= this.getWidth()) {
             txt = sc.getText();
@@ -333,7 +334,7 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
                 scsColor = scsColor.mergeWith(this.getTextColor());
             }
             // recreate with new color
-            scs = createScreenObject(scsColor, scs, scs.getText());
+            scs = createScreenObject(scsColor, scs, scs);
         }
         backend.writeToBackend(scs);
     }
@@ -366,7 +367,7 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
         return this;
     }
 
-    public ScreenLineSegment createScreenObject(Color color, Position cursorPos, String simpleText) {
+    public ScreenLineSegment createScreenObject(Color color, Position cursorPos, CleanString simpleText) {
         sc_current_id++;
         SegmentImpl so = new SegmentImpl(color, cursorPos, sc_current_id, simpleText);
         return so;

@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 import dtb.terminalIO.controlcodes.ControlCode;
+import dtb.terminalIO.textsegments.CleanString;
 
 /**
  * Encapsulate Height and width
@@ -87,6 +88,13 @@ public interface Dimension {
             return new Dimension.Simple(height, width);
         }
 
+        public static Dimension stringToDimension(CleanString s) {
+
+            if (s == null || s.length() == 0)
+                return ZERO;
+
+            return new Dimension.Simple(1, s.length());
+        }
     }
 
       // TODO: move this to a unit test

@@ -14,7 +14,6 @@ import dtb.terminalIO.geom.Rectangle;
 
 /**
  * This is the primary (and default) implementation of  IScreenLineSegmentsBuffer.
- * 
  */
 public class ScreenLineSegmentsBuffer implements Rectangle, IScreenLineSegmentsBuffer {
 

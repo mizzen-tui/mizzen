@@ -186,7 +186,7 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
         int rememberedLength = -1; // will this become a problem?
         
         @Override
-        public int getLength() {
+        public int length() {
             if (rememberedLength == -1) {
                 rememberedLength = this.getText().length();
             }

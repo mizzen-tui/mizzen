@@ -130,7 +130,12 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput> implements Ha
 
             @Override
             public void handle(TerminalEvent<?> te) {
-                KeyEvent ke = (KeyEvent) te; // TODO:  In the future, this cast might not be valid
+                
+                if (!(te instanceof KeyEvent)) {
+                    return;
+                }
+                
+                KeyEvent ke = (KeyEvent) te; 
                 
                 if (ke.isKeyStroke( Keys.ENTER_KEYSTROKE )  || ke.isKeyStroke(Keys.SPACE_KEYSTROKE)) {
                     CheckBoxInput.this.setValue(  !  CheckBoxInput.this.getValue()  );  // toggle the value
@@ -140,7 +145,11 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput> implements Ha
 
             @Override
             public EventHandler canHandle(TerminalEvent<?> te) {
-                KeyEvent ke = (KeyEvent) te; // TODO:  In the future, this cast might not be valid
+                if (!(te instanceof KeyEvent)) {
+                    return null;
+                }
+                
+                KeyEvent ke = (KeyEvent) te; 
                 
                 if (ke.isKeyStroke( Keys.ENTER_KEYSTROKE )  || ke.isKeyStroke(Keys.SPACE_KEYSTROKE)) {
                     return this;

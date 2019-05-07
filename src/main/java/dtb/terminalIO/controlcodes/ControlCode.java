@@ -7,6 +7,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors.HasRowChange;
+import dtb.terminalIO.textsegments.CleanString;
 
 
 /**
@@ -583,8 +584,8 @@ public abstract class ControlCode implements Renderer {
     
     public static class ColorParseSegment {
         Color color;
-        String simpleText;
-        public ColorParseSegment(Color color, String simpleText) {
+        CleanString simpleText;
+        public ColorParseSegment(Color color, CleanString simpleText) {
             super();
             this.color = color;
             this.simpleText = simpleText;
@@ -606,7 +607,7 @@ public abstract class ControlCode implements Renderer {
 
     
     public static interface ColorColorSegmentBuilder {
-	boolean newColorSegment(Color color, String simpleText);
+	boolean newColorSegment(Color color, CleanString simpleText);
     }
     
     @FunctionalInterface
@@ -622,7 +623,7 @@ public abstract class ControlCode implements Renderer {
         
         StringBuffer sb = new StringBuffer(50);
         sb.setLength(0);
-        String simpleText = null;
+        CleanString simpleText = null;
         Color color = null;
         int colorCodedStrLength = colorCodedStr.length();
         for (int i=0; i<colorCodedStrLength; i++) {
@@ -632,7 +633,7 @@ public abstract class ControlCode implements Renderer {
             switch (PARSE_STATE) {
 	    case PARSE_TEXT:
                 if (ch == '\u001B') {
-                    simpleText = sb.toString();
+                    simpleText = new CleanString.Simple(sb.toString());
                     boolean continueParsing = colorColorSegmentBuilder.newColorSegment(color, simpleText);
                     if (!continueParsing) return;
                     //result.add( new  ColorParseSegment(color, simpleText) ); 
@@ -691,8 +692,8 @@ public abstract class ControlCode implements Renderer {
 		PARSE_STATE = PARSE_TEXT;
                 
 		if (ch == '\u001B') { // this can happen if we have color codes back to back.
-                    simpleText = sb.toString();
-                    boolean continueParsing = colorColorSegmentBuilder.newColorSegment(color, "");
+                    simpleText = new CleanString.Simple(sb.toString());
+                    boolean continueParsing = colorColorSegmentBuilder.newColorSegment(color, CleanString.UTIL.EMPTY_CLEAN_STRING);
                     if (!continueParsing) return;
                     PARSE_STATE = PARSE_COLOR_START;
                     simpleText = null;
@@ -709,7 +710,7 @@ public abstract class ControlCode implements Renderer {
         }
         
       if (sb.length()>0) {
-	  colorColorSegmentBuilder.newColorSegment(color, sb.toString());
+	  colorColorSegmentBuilder.newColorSegment(color, new CleanString.Simple(sb.toString()));
       }
     }
     
@@ -718,7 +719,7 @@ public abstract class ControlCode implements Renderer {
         
         parseColorsAndBuildResult(colorCodedStr, new ColorColorSegmentBuilder() {
 	    @Override
-	    public boolean newColorSegment(Color color, String simpleText) {
+	    public boolean newColorSegment(Color color, CleanString simpleText) {
 		result.add(new ColorParseSegment(color, simpleText));
 		return true; // true means keep parsing
 	    }

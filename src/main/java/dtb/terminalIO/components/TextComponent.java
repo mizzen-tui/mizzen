@@ -5,6 +5,7 @@ import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.textsegments.CleanString;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegment;
 import dtb.terminalIO.textsegments.ScreenLineSegment.SegmentImpl;
@@ -31,7 +32,8 @@ import dtb.terminalIO.textsegments.ScreenLineSegment.UTIL.SegmentsFromStringResu
  * 
  */
 public class TextComponent extends BoundedComponent<TextComponent> {
-    private String text;
+    private String text;            // will be non-null only if we have color control codes.
+    private CleanString cleanText;  // will be null if we have color control codes.
     private boolean hasColorCodes = false;
     
     public TextComponent(Color color, String text) {
@@ -39,8 +41,21 @@ public class TextComponent extends BoundedComponent<TextComponent> {
         this.setText(text);
     }
 
+    public TextComponent(Color color, CleanString text) {
+        super(color, calcDimentionOfText(text));
+        this.setText(text);
+    }
+
     static private Dimension calcDimentionOfText(String text) {
 	return Dimension.UTIL.stringToDimension(text);
+    }
+
+    static private Dimension calcDimentionOfText(CleanString text) {
+        return Dimension.UTIL.stringToDimension(text);
+    }
+    
+    public TextComponent(CleanString text) {
+        this(FGBGColors.NO_COLOR_SPECIFIED, text);
     }
     
     public TextComponent(String text) {
@@ -52,7 +67,17 @@ public class TextComponent extends BoundedComponent<TextComponent> {
         setText(text);
     }
 
+    public TextComponent(Color color, int row, int col, CleanString text) {
+        super(color, new Rectangle.Simple(row, col, Dimension.UTIL.stringToDimension(text)));
+        setText(text);
+    }
+
     public TextComponent(Color color, Dimension d, String text) {
+        super(color,new Rectangle.Simple(d));
+        setText(text);
+    }
+
+    public TextComponent(Color color, Dimension d, CleanString text) {
         super(color,new Rectangle.Simple(d));
         setText(text);
     }
@@ -81,7 +106,7 @@ public class TextComponent extends BoundedComponent<TextComponent> {
             result = ScreenLineSegment.UTIL.textSegmentsFromStringWithEmbeddedColor(this.text, 0, 0, this,
                     (strColor, p, txt) -> new SegmentImpl( strColor != null ? strColor : color, p, -1, txt));
         }  else {
-            result = ScreenLineSegment.UTIL.textSegmentsFromString(this.text, 0, 0, this, 
+            result = ScreenLineSegment.UTIL.textSegmentsFromString(this.getText(), 0, 0, this,  // TODO: more efficient way!
         	                                                   (p,s)->new SegmentImpl(color, p, -1, s));
         }
         if (result.size()!=0) {
@@ -95,7 +120,7 @@ public class TextComponent extends BoundedComponent<TextComponent> {
     }
 
     public String getText() {
-        return text;
+        return this.text != null ? text : cleanText.getText();
     }
 
     public void setTextAndResize(String text) {
@@ -103,9 +128,26 @@ public class TextComponent extends BoundedComponent<TextComponent> {
         this.setText(text);
     }
 
+    public void setTextAndResize(CleanString text) {
+        this.resize(Dimension.UTIL.stringToDimension(text));
+        this.setText(text);
+    }
+
+    public void setText(CleanString text) {
+        this.cleanText = text;
+        this.text = null;
+        this.hasColorCodes = false;
+        this.clear();
+        this.markAsDirty();
+    }
+
     public void setText(String text) {
-        this.text = text;
         this.hasColorCodes = ControlCode.hasColorCodes(text);
+        if (! this.hasColorCodes && CleanString.UTIL.isClean(text)) {
+            setText( new CleanString.Simple(text) );
+            return;
+        }
+        this.text = text;
         this.clear();
         this.markAsDirty();
     }

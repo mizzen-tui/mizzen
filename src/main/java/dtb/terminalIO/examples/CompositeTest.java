@@ -95,7 +95,7 @@ public class CompositeTest {
                 // .setBounds(25, 50 )
                 .setTitle(new FGBGColors(Colors.Red, Colors.On_IYel), "Unbounded Frame title:before ")
                 .add(new TextComponent(null, "In Spain .. In Spain\n" + 
-                                             "The Rain in Spain stays \n" + 
+                                             "The Rain in \r\rSpain stays \n" + 
                                              "mainly on the plain!")).t(6,4, "Texxxxxt"); //.t("1-one\n2-two\n3-three\n!");
         
 

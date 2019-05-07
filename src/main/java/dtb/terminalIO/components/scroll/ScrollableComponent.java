@@ -28,7 +28,6 @@ import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegmentsView;
-import dtb.terminalIO.textsegments.SegmentsSearchUtils;
 
 /**
  * 
