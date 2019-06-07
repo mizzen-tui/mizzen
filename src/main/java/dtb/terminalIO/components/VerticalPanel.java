@@ -24,6 +24,7 @@ public class VerticalPanel extends Composite {
 
     public void setVerticalSpacer(int verticalSpacer) {
         this.verticalSpacer = verticalSpacer;
+        fullrecalcDim();
     }
 
     public Composite add(Component<?> component) {

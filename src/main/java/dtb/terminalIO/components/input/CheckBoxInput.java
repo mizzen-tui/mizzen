@@ -1,14 +1,17 @@
 package dtb.terminalIO.components.input;
 
+import java.awt.Checkbox;
 import java.util.Collection;
 import java.util.Collections;
 
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.FocusSetterToHiliteAction;
 import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.Focusable;
@@ -128,6 +131,15 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput> implements Ha
         
         return new DefaultFocusableBehaviour.ComponentHiliterFocusableBehaviour(this) {
 
+            @Override
+            public void setFocus(boolean focus, EventBus eventBus) {
+                super.setFocus(focus, eventBus);
+                if (focus) {
+                    new ShowComponentOnFocus().onFocus(CheckBoxInput.this, eventBus);
+                }
+            }
+            
+            
             @Override
             public void handle(TerminalEvent<?> te) {
                 

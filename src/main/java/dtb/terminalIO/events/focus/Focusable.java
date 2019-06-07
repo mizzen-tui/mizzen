@@ -5,15 +5,26 @@ import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 
+/**
+ * A ConditionalEventHandler that can have focus; which means
+ * that it can have an outside entity (usually a {@link FocusManager}) direct
+ * events to it.   
+ * 
+ * <p/>
+ * 
+ * This is a useful behaviour that Components that participate in
+ * a data-form entry will implement.  
+ * 
+ * A good example is:  {@link dtb.terminalIO.components.input.TextInput}
+ * 
+ * 
+ */
 public interface Focusable extends ConditionalEventHandler {
-
 
     boolean hasFocus();
 
     void setFocus(boolean focus, EventBus eventBus);
 
-    // Position getPosition();
-    
     
     public class FocusableDelegate implements Focusable {
         

@@ -147,6 +147,9 @@ public class Button extends Composite implements HasValue<Boolean>, ToFocusable,
             public void setFocus(boolean focus, EventBus eventBus) {
                 super.setFocus(focus, eventBus);
                 renderedText.setText(getTextForRendering(focus));
+                if (focus) {
+                    new ShowComponentOnFocus().onFocus(Button.this, eventBus);
+                }
             }
             
         };

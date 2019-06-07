@@ -146,8 +146,6 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
         markAsDirty();
     }
     
-    
-    
     public void appendText(String text) {
         int maxWidth = this.getWidth();
         if (this.buffer.length() >= maxWidth) {
@@ -384,8 +382,6 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
         
         return complexKeyHandler;
         
-        //return new KeyInputEventHandler(complexKeyHandler.asPredicate(), complexKeyHandler);
-
     }
 
     
@@ -399,7 +395,6 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
 	if (canvasOffset == null) {
 	    throw new IllegalStateException("requestShowCursor(): Offset not calculated");
 	}
-	
 	
         Position cursorPos = canvasOffset.offsetAdd(caret);
         
@@ -419,6 +414,7 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
                     super.setFocus(focus, eventBus);
                     if (focus) {
                         requestShowCursor(eventBus);
+                        new ShowComponentOnFocus().onFocus(TextInput.this, eventBus);
                     } else {
                         requestHideCursor(eventBus);
                     }

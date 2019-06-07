@@ -24,8 +24,6 @@ public interface DisplayableValue<V> extends HasValue<V> {
         
     }
     
-    static String[][] test = new String[][] {{"1","2"}};
-    
     public class StringDisplayValue extends  SimpleDisplayValue<String> {
         
         public StringDisplayValue(String value) {

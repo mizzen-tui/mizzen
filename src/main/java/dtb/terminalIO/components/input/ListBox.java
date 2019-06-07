@@ -2,13 +2,17 @@ package dtb.terminalIO.components.input;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.CharComponent;
 import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.Component.AbstractComponent;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.HiliterAdapter;
+import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.VerticalPanel;
 import dtb.terminalIO.components.input.DisplayableValue.StringDisplayValue;
@@ -23,16 +27,19 @@ import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
+import dtb.terminalIO.geom.Position;
+import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.util.StringUtils;
 
-public class ListBox<T> extends Composite  implements HasValue<T>, ToFocusable {
+public class ListBox<T> extends AbstractComponent<ListBox<T>>  implements HasValue<T>, ToFocusable, ParentContainer {
     
     List<ListItem> items = new ArrayList<ListItem>();
-    VerticalPanel itemsContainer;
-    int selected;
-    KeyStroke keystrokePrevious       = Keys.UP_KEYSTROKE;
-    KeyStroke keystrokeNext           = Keys.DOWN_KEYSTROKE;
-    Color     selectedColor           = new FGBGColors(Colors.IYel);
+    VerticalPanel  itemsContainer;
+    int            selected;
+    KeyStroke      keystrokePrevious       = Keys.UP_KEYSTROKE;
+    KeyStroke      keystrokeNext           = Keys.DOWN_KEYSTROKE;
+    Color          selectedColor           = new FGBGColors(Colors.IYel);
 
     // Components that are rendered in the list
     abstract class ItemComponent  {
@@ -46,7 +53,8 @@ public class ListBox<T> extends Composite  implements HasValue<T>, ToFocusable {
              this.component = component;
          }
          
-         abstract public void select();
+         abstract public void selectWithFocus();
+         abstract public void selectWithNoFocus();
          abstract public void unSelect();
     }
     
@@ -99,7 +107,7 @@ public class ListBox<T> extends Composite  implements HasValue<T>, ToFocusable {
                  return new ItemComponent(component) {
 
                     @Override
-                    public void select() {
+                    public void selectWithFocus() {
                         //new HiliterAdapter<Component<?>>(getComponent()).getHiliter().hilite();
                         getComponent().setColor(ListBox.this.selectedColor.invert());
                     }
@@ -109,6 +117,11 @@ public class ListBox<T> extends Composite  implements HasValue<T>, ToFocusable {
                         //new HiliterAdapter<Component<?>>(getComponent()).getHiliter().unHilite();
                         getComponent().setColor(ListBox.this.getColor());
                     }
+
+                    @Override
+                    public void selectWithNoFocus() {
+                        getComponent().setColor(ListBox.this.selectedColor.bold());
+                    }
                  };
              }
 
@@ -116,7 +129,7 @@ public class ListBox<T> extends Composite  implements HasValue<T>, ToFocusable {
                  return new ItemComponent(component) {
 
                     @Override
-                    public void select() {
+                    public void selectWithFocus() {
                         new HiliterAdapter<Component<?>>(getComponent()).getHiliter().hilite();
                         getComponent().setColor(selectedColor);
                         ((BorderedComponent)getComponent()).setShowBorder(true);
@@ -129,6 +142,12 @@ public class ListBox<T> extends Composite  implements HasValue<T>, ToFocusable {
                         getComponent().setColor(ListBox.this.getColor());
                         ((BorderedComponent)getComponent()).setShowBorder(false);
                     }
+
+                    @Override
+                    public void selectWithNoFocus() {
+                        getComponent().setColor(selectedColor);
+                        ((BorderedComponent)getComponent()).setShowBorder(false);
+                    }
                      
                  };
              }
@@ -137,7 +156,7 @@ public class ListBox<T> extends Composite  implements HasValue<T>, ToFocusable {
                  return new ItemComponent(component) {
 
                     @Override
-                    public void select() {
+                    public void selectWithFocus() {
                         ListItemComponent<?> component = (ListItemComponent<?>)getComponent();
                         new HiliterAdapter<Component<?>>(component).getHiliter().hilite();
                         component.setColor(selectedColor);
@@ -153,6 +172,15 @@ public class ListBox<T> extends Composite  implements HasValue<T>, ToFocusable {
                         component.setBorder(false);
                         component.setUnSelectedBullet();
                     }
+
+                    @Override
+                    public void selectWithNoFocus() {
+                        ListItemComponent<?> component = (ListItemComponent<?>)getComponent();
+                        new HiliterAdapter<Component<?>>(component).getHiliter().hilite();
+                        component.setColor(selectedColor);
+                        component.setBorder(false);
+                        component.setSelectedBullet();
+                    }
                      
                  };
              }
@@ -161,7 +189,7 @@ public class ListBox<T> extends Composite  implements HasValue<T>, ToFocusable {
                  return new ItemComponent(component) {
 
                     @Override
-                    public void select() {
+                    public void selectWithFocus() {
                         new HiliterAdapter<Component<?>>(getComponent()).getHiliter().hilite();
                         getComponent().setColor(selectedColor);
                         ((Composite)getComponent()).setBorder(true);
@@ -173,13 +201,20 @@ public class ListBox<T> extends Composite  implements HasValue<T>, ToFocusable {
                         getComponent().setColor(ListBox.this.getColor());
                         ((Composite)getComponent()).setBorder(false);
                     }
+
+                    @Override
+                    public void selectWithNoFocus() {
+                        new HiliterAdapter<Component<?>>(getComponent()).getHiliter().hilite();
+                        getComponent().setColor(selectedColor);
+                        ((Composite)getComponent()).setBorder(false);
+                    }
                      
                  };
              }
              return new ItemComponent(component) {
 
                  @Override
-                 public void select() {
+                 public void selectWithFocus() {
                      new HiliterAdapter<Component<?>>(getComponent()).getHiliter().hilite();
                  }
 
@@ -187,6 +222,11 @@ public class ListBox<T> extends Composite  implements HasValue<T>, ToFocusable {
                  public void unSelect() {
                      new HiliterAdapter<Component<?>>(getComponent()).getHiliter().unHilite();
                  }
+
+                @Override
+                public void selectWithNoFocus() {
+                    selectWithFocus();
+                }
               };
     }
 
@@ -228,9 +268,9 @@ public class ListBox<T> extends Composite  implements HasValue<T>, ToFocusable {
         super(color);
         this.selected = -1;
         itemsContainer = new VerticalPanel(color);
-        this.add(itemsContainer);
+        itemsContainer.setColor(color);
+        itemsContainer.setParentContainer(this);
     }
-    
     
     public ListBox() {
         this(FGBGColors.NO_COLOR_SPECIFIED);
@@ -241,20 +281,59 @@ public class ListBox<T> extends Composite  implements HasValue<T>, ToFocusable {
         setItems(Arrays.asList(listItems));
     }
     
+    public ListBox(DisplayableValue<T>[] listItems, ComponentItemFactory<T> displayItemToComponent) {
+        this();
+        setItems(Arrays.asList(listItems), displayItemToComponent);
+    }
+
+    public ListBox(Color color, DisplayableValue<T>[] listItems, ComponentItemFactory<T> displayItemToComponent) {
+        this(color);
+        setItems(Arrays.asList(listItems), displayItemToComponent);
+    }
+    
     public ListBox(Color color, DisplayableValue<T>[] listItems) {
         this(color);
-        setItems(Arrays.asList(listItems));
+        setItems(Arrays.asList(listItems), DEFAULT_COMPONENT_FACTORY);
     }
     
     public static ListBox<String> fromStrings(String[] listItems) {
         return new ListBox<String>(StringDisplayValue.fromStringValues(listItems));
     }
 
+    public static ListBox<String> fromStrings(String[] listItems, ComponentItemFactory<String> displayItemToComponent) {
+        return new ListBox<String>(StringDisplayValue.fromStringValues(listItems), displayItemToComponent);
+    }
+
     public static ListBox<String> fromStrings(Color color, String[] listItems) {
         return new ListBox<String>(color, StringDisplayValue.fromStringValues(listItems));
     }
 
-    public void setItems( List<DisplayableValue<T>> displayableItems ) {
+    public static ListBox<String> fromStrings(Color color, String[] listItems, ComponentItemFactory<String> displayItemToComponent) {
+        return new ListBox<String>(color, StringDisplayValue.fromStringValues(listItems), displayItemToComponent);
+    }
+
+    @FunctionalInterface
+    public interface ComponentItemFactory<T> {
+        Component<?> makeComponentFromdisplayableItem(Color color, int maxWidthStr, DisplayableValue<T> displayableItem);
+    }
+    
+    public static class TextComponentItemFactory<T> implements ComponentItemFactory<T> {
+
+        @Override
+        public Component<?> makeComponentFromdisplayableItem(Color color, int maxWidthStr, DisplayableValue<T> displayableItem) {
+            
+            Dimension d = new Dimension.Simple(Dimension.UTIL.stringToDimension(displayableItem.getDisplayValue()).getHeight(), maxWidthStr);
+            
+            TextComponent tc = new TextComponent(color, d, StringUtils.padRight(displayableItem.getDisplayValue(),maxWidthStr)) ;
+            return tc;
+        }
+    }
+    
+    
+    ComponentItemFactory<T> DEFAULT_COMPONENT_FACTORY = (color, maxWidthStr, displayableItem) -> new ListItemComponent<T>(this.getColor(), maxWidthStr, displayableItem);
+    
+    
+    public void setItems( List<DisplayableValue<T>> displayableItems , ComponentItemFactory<T> displayItemToComponent) {
         this.items = new ArrayList<ListItem>(displayableItems.size());
         this.itemsContainer.clearAndRemoveAllChildren();
         int maxWidthStr = displayableItems.stream().map( (dv)-> Dimension.UTIL.stringToDimension( dv.getDisplayValue()) ).mapToInt((d)->d.getWidth()).max().orElse(0);
@@ -262,18 +341,16 @@ public class ListBox<T> extends Composite  implements HasValue<T>, ToFocusable {
         if (maxHeightStr>1 && itemsContainer.getVerticalSpacer()==0) {
             itemsContainer.setVerticalSpacer(1);
         }
+        
+        int padding = 2;
+        
         for (DisplayableValue<T> displayableItem : displayableItems) {
             
             
-//            Dimension strDim = Dimension.UTIL.stringToDimension( displayableItem.getDisplayValue());
-//            Dimension tcDim = new Dimension.Simple( strDim.getHeight(), maxWidthStr ); 
-//            TextComponent tc = new TextComponent(this.getColor(), tcDim, displayableItem.getDisplayValue());
-//            
-//            Composite component = new Composite();
-//            component.setColor(getColor());
-//            component.add(tc);
-          
-            Component<?> component = new ListItemComponent<T>(this.getColor(), maxWidthStr, displayableItem);
+            Component<?> component = displayItemToComponent.makeComponentFromdisplayableItem(this.getColor(), maxWidthStr, displayableItem);
+            if (component instanceof Composite) {
+                padding = 4;
+            }
 
             ListItem item = new ListItem(displayableItem, component);
             item.itemComponent.unSelect();
@@ -282,44 +359,21 @@ public class ListBox<T> extends Composite  implements HasValue<T>, ToFocusable {
             this.itemsContainer.add(component);
         }
         itemsContainer.setBounds( null ); // forces recalc of dimensions
-        itemsContainer.setBounds( new Dimension.Simple( itemsContainer.getHeight()+2 , itemsContainer.getWidth()+2) );
-        fullrecalcDim();
+        itemsContainer.setBounds( new Dimension.Simple( itemsContainer.getHeight()+padding , itemsContainer.getWidth()+padding) );
         selected = -1;
         
     }
-
-    public void addItem( DisplayableValue<T> displayableItem ) {
-        if (this.items == null) {
-           this.items = new ArrayList<ListItem>();
-           this.itemsContainer.clearAndRemoveAllChildren();
-        }
+    
+    public void setItems( List<DisplayableValue<T>> displayableItems) {
+        setItems(displayableItems, DEFAULT_COMPONENT_FACTORY);
     }
-    
-    
+
     public ListBox<T> setColor(Color drawingcolor) {
         super.setColor(drawingcolor);
         this.itemsContainer.setColor(drawingcolor);
         return this;
     }
 
-//    public TextInput setEmptyColor(Color emptyColor) {
-//        super.setEmptyColor(emptyColor);
-//        if (this.textRenderer != null) {
-//            this.textRenderer.setEmptyColor(emptyColor);
-//        }
-//        return this;
-//    }
-//    
-//    public TextInput setEmptyChar(char emptyChar) {
-//        super.setEmptyChar(emptyChar);
-//        if (this.textRenderer != null) {
-//            this.textRenderer.setEmptyChar(emptyChar);
-//        }
-//        return this;
-//    }
-
-    
-    
     public int size() {
         return items.size();
     }
@@ -373,11 +427,35 @@ public class ListBox<T> extends Composite  implements HasValue<T>, ToFocusable {
         if (curSelected>-1) {
             ItemComponent curSelectedComponent = getItemComponentAt(curSelected);
             if (curSelectedComponent != null) {
-                curSelectedComponent.select();
+                curSelectedComponent.selectWithFocus();
             }
         }
         
         return true;
+    }
+    
+    private boolean canSetSelectedPrev() {
+        int selected = getSelectedIndex();
+        if (selected < 0) {
+            if (size()>0) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+        return selected > 0;
+    }
+    
+    private boolean canSetSelectedNext() {
+        int selected = getSelectedIndex();
+        if (selected < 0) {
+            if (size()>0) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+        return selected + 1 < size();
     }
     
     public boolean setSelectedPrev() {
@@ -392,7 +470,7 @@ public class ListBox<T> extends Composite  implements HasValue<T>, ToFocusable {
         return setSelected(selected - 1);
     }
 
-    public boolean setSelectedNext() {
+    private boolean setSelectedNext() {
         int selected = getSelectedIndex();
         if (selected < 0) {
             if (size()>0) {
@@ -429,31 +507,38 @@ public class ListBox<T> extends Composite  implements HasValue<T>, ToFocusable {
     }
     
     @Override
-    public boolean isDirty() {
-        return super.isDirty();
+    protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
+        segments.merge(this.itemsContainer.getSegmentsBuffer());
     }
     
-    @Override
-    public void draw(Color color, IScreenLineSegmentsBuffer segments) {
-        draw(color, segments, true);
+    private void raiseEventRequestShowSelected(EventBus eventBus) {
+        int curSelected = getSelectedIndex();
+        if (curSelected>-1) {
+            ItemComponent curSelectedComponent = getItemComponentAt(curSelected);
+            new ShowComponentOnFocus().onFocus(curSelectedComponent.getComponent(), eventBus);
+        }
     }
-
+    
 
     public Focusable asFocusable() {
         
         ChainedEventHandler chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
         
         chainedHandler.appendEventHandler(new KeyInputEventHandler(this.keystrokePrevious, 
+                (te)->  canSetSelectedPrev(),
                 (te)->  {
                             if (setSelectedPrev()) {
                                 te.getEventBus().raiseEvent(  new HasValue.ValueChangedEvent<>(ListBox.this) );
+                                raiseEventRequestShowSelected(te.getEventBus());
                             }
                         }));
         
         chainedHandler.appendEventHandler(new KeyInputEventHandler(this.keystrokeNext, 
+                (te)->  canSetSelectedNext(),
                 (te)->  {
                             if (setSelectedNext()) {
                                 te.getEventBus().raiseEvent(  new HasValue.ValueChangedEvent<>(ListBox.this) );
+                                raiseEventRequestShowSelected(te.getEventBus());
                             }
                         }));
         
@@ -468,20 +553,17 @@ public class ListBox<T> extends Composite  implements HasValue<T>, ToFocusable {
                     int curSelected = getSelectedIndex();
                     if (curSelected>-1) {
                         setSelected(curSelected);
-//                       ItemComponent curSelectedComponent = getItemComponentAt(curSelected);
-//                       if (curSelectedComponent != null) {
-//                           curSelectedComponent.select();
-//                       }
                     } else {
                         setSelected(0);
                     }
+                    raiseEventRequestShowSelected(eventBus);
                 } else {
                     if (!focus) {
                         int curSelected = getSelectedIndex();
-                        if (curSelected>-1) {
+                        if (curSelected > -1) {
                            ItemComponent curSelectedComponent = getItemComponentAt(curSelected);
                            if (curSelectedComponent != null) {
-                               curSelectedComponent.unSelect();
+                               curSelectedComponent.selectWithNoFocus();
                            }
                         }
                    }
@@ -491,5 +573,61 @@ public class ListBox<T> extends Composite  implements HasValue<T>, ToFocusable {
         };
     }
 
+    @Override
+    public int getCol() {
+        return itemsContainer.getCol();
+    }
+
+    @Override
+    public int getRow() {
+        return itemsContainer.getRow();
+    }
+
+    @Override
+    public int getWidth() {
+        return itemsContainer.getWidth();
+    }
+
+    @Override
+    public int getHeight() {
+        return itemsContainer.getHeight();
+    }
+
+    @Override
+    public void moveTo(int row, int col) {
+        itemsContainer.moveTo(row, col);
+    }
+
+    @Override
+    protected Rectangle getRectangleForClearAndFill() {
+        return itemsContainer;
+    }
+
+    public void setBorder(boolean hasBorder) {
+        itemsContainer.setBorder(hasBorder);
+    }
+
+    public void setTitle(String title) {
+        itemsContainer.setTitle(title);
+        
+    }
+
+    @Override
+    public Collection<? extends Component<?>> getChildren() {
+        return Collections.singleton(this.itemsContainer);
+    }
+
+    @Override
+    public Position getPositionRelativeToParent(Component<?> child) {
+        if (child == this.itemsContainer) {
+            return Position.ZERO;
+        }
+        return null;
+    }
+
+    @Override
+    public void childResized(Component<?> child) {
+        this.markAsDirty();
+    }
     
 }

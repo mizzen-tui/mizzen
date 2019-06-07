@@ -7,6 +7,7 @@ import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegmentsBuffer;
+import dtb.terminalIO.traverse.FindPathToTarget;
 
 
 /**
@@ -228,6 +229,40 @@ public interface Component<T extends Component<?>> extends IScreenLineSegmentsBu
             }
             
             return null;
+        }
+        
+
+        public static Position getOffsetFromComponentContainer(Component<?> component, ParentContainer container) {
+            
+            if (component == null || container == null) {
+                return null;
+            }
+            
+            if ( ! new FindPathToTarget<Object>().exists(container, component)) {
+                return null;
+            }
+            
+            if (container.equals(component.getParentContainer())) {
+                return container.getPositionRelativeToParent(component);
+            }
+            
+            // parent is different from container - so let's get parentOffset first ..
+            
+            ParentContainer parentContainer = component.getParentContainer();
+            
+            
+            if (parentContainer != null && parentContainer instanceof Component<?>) {
+               Position parentOffset = getOffsetFromComponentContainer((Component<?>)component.getParentContainer(), container);
+               if (parentOffset == null) {
+                   return null;
+               }
+               
+               Position newOffset = new Position.Simple(parentOffset).offsetAdd(parentContainer.getPositionRelativeToParent(component)).offsetAdd(component.getPostion_TopLeft());   
+               return newOffset;
+            }
+            
+            return null;
+            
         }
         
         

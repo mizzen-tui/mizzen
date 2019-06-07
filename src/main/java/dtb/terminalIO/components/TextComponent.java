@@ -120,7 +120,7 @@ public class TextComponent extends BoundedComponent<TextComponent> {
     }
 
     public String getText() {
-        return this.text != null ? text : cleanText.getText();
+        return this.text != null ? text : (cleanText != null ? cleanText.getText() : null) ;
     }
 
     public void setTextAndResize(String text) {
@@ -148,6 +148,7 @@ public class TextComponent extends BoundedComponent<TextComponent> {
             return;
         }
         this.text = text;
+        this.cleanText = null;
         this.clear();
         this.markAsDirty();
     }

@@ -6,10 +6,13 @@ import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.components.VerticalPanel;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.input.CheckBoxInput;
 import dtb.terminalIO.components.input.HasValue;
 import dtb.terminalIO.components.input.TextInput;
+import dtb.terminalIO.components.scroll.ScrollableComponent;
+import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
 import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.core.Canvas;
@@ -25,59 +28,73 @@ import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyInputEventsProducer;
 import dtb.terminalIO.events.keyboard.Keys;
-import dtb.terminalIO.geom.Position;
+import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.util.Stty;
 
 public class TextBoxTest {
     
     public static void main(String[] args) throws IOException {
 
-        //Stty.setRaw();
-        
         TerminalScreen screen = TestsCommon.getTerminalScreenForTesting(args);
 
-        //Canvas master_canvas = new Canvas(screen);
         Canvas master_canvas = TestsCommon.getMasterCanvasForTesting(screen);
-       // master_canvas.setSize(20, 60);
+        master_canvas.setSize(20, 90);
         
-//        screen.setRaw();
+        master_canvas.setEmptyChar(' ');
         
         master_canvas.t("Some text");
         
         master_canvas.refresh();
         
+        
+        VerticalPanel panel1 = new VerticalPanel();
+        
+        
+        VerticalPanel panel2 = new VerticalPanel();
+        panel2.setTitle("Panel 2");
+        
         TextInput ti = new TextInput(10);
         
-        Position p_1 = new Position.Simple(5,10);
-        
+        panel1.add(ti);
+                
         ti.setText("Test");
         
         TextInput ti_2 = new TextInput(15);
         
         ti_2.setText("Test 2");
-        Position p_2 = new Position.Simple(7,10);
+        panel1.add(ti_2);
         
 
         TextInput ti_3 = new TextInput(15);
         ti_3.setText("Test3");
-        Position p_3 = new Position.Simple(4,30);
-
+        panel2.add(ti_3);
+        
         TextInput ti_4 = new TextInput(15);
         ti_4.setText("Test4");
-        Position p_4 = new Position.Simple(10,30);
+        panel2.add(ti_4);
         
         CheckBoxInput cb_1 = new CheckBoxInput();
         cb_1.setValue(false);
-        Position p_5 = new Position.Simple(10,10); 
+        panel1.add(cb_1);
         
         Button b_1 = new Button("Press Me", true);
-        Position p_6 = new Position.Simple(12,10);
+        panel1.add(b_1);
         
         Button b_2 = new Button("Press Too");
-        Position p_7 = new Position.Simple(13,10);
-                
-        Composite  bBar = new HorizontalPanel(Colors.BBlu);
+        panel1.add(b_2);
+
+        Composite topPanel = new Composite();
+        topPanel.setTitle("Form input testing");
+        HorizontalPanel horizontalPanel = new HorizontalPanel();
+        horizontalPanel.setHorizontalSpacer(5);
+
+        topPanel.add(2,1, horizontalPanel);
         
+        
+        ScrollableComponent sc_1 = new ScrollableComponent(Colors.Blu, new Dimension.Simple(panel1.getHeight()+1, 50), panel1);
+        SearchFunctionForScrollableComponent.addFinderToScrollable(sc_1);
+        horizontalPanel.add(sc_1);
+        horizontalPanel.add(panel2);
         
         TextComponent eventDisplayer = new TextComponent("                                       ");
 
@@ -85,34 +102,21 @@ public class TextBoxTest {
         
         Runnable renderComponents = () -> {
             
-            if ( ! Component.UTIL.isDirty(ti, ti_2, cb_1, ti_3, ti_4, b_1, b_2, eventDisplayer)) {
-                return ;
+            if (! topPanel.isDirty()) {
+                return;
             }
             
             master_canvas.clearCanvas();
             
-            master_canvas.t(1,1,String.valueOf(p_1));
-            
-            master_canvas.addComponentSegments(p_1,ti);
-            
             master_canvas.t(2,1,String.valueOf(Component.UTIL.getCanvasOffsetFor(ti)) );
-            
-            master_canvas.addComponentSegments(p_2,ti_2);
-            master_canvas.addComponentSegments(p_5,cb_1);
-            master_canvas.addComponentSegments(p_6,b_1);
-            master_canvas.addComponentSegments(p_7,b_2);
-            
-            
-            master_canvas.addComponentSegments(p_3,ti_3);
-            master_canvas.addComponentSegments(p_4,ti_4);
-            
+
+            master_canvas.addComponentSegments(5,5, topPanel);
+
             master_canvas.addComponentSegments(master_canvas.getHeight()-2, 2, eventDisplayer);
             
             TestsCommon.renderScreenDEBUG(master_canvas, screen,  eventBus);
             
             master_canvas.refresh();
-            
-            
             
         };
         
@@ -230,8 +234,7 @@ public class TextBoxTest {
                 ti_4.requestFocus(te);
                 renderComponents.run();
             }
-            
-            
+
             @Override
             public void valueChanged(HasValue<Boolean> source) {
                 Boolean newValue = source.getValue();

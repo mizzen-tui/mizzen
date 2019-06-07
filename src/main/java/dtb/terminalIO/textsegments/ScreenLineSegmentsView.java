@@ -34,7 +34,7 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
     // create a ScreenLineSegmentsBuffer with a custom fullrecalcDim() method 
     private static class ClippedSegmentsBuffer extends ScreenLineSegmentsBuffer {
         ScreenLineSegmentsView segmentsView;
-        
+
         synchronized protected void fullrecalcDim() {
             this.preCalculatedRectangle = segmentsView.rectangeFromOffsetAndDimension();
             this.recalcNeeded = false;
@@ -60,18 +60,19 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
     public void markAsDirty() {
         segmentsUpToDate = false;
     }
-    
+
     public boolean isDirty() {
         return ! segmentsUpToDate;
     }
 
-    
+
     public Position calculateScrollToViewOffset(Rectangle targetToView) {
 	// sanity check input
 	if (targetToView == null) {
 	    return null;
 	}
 
+        // target position is less than ZERO?
 	if (Position.UTIL.POS_COMPARE.compare(Position.ZERO, targetToView) > 0) {
             return null;
 	}
@@ -81,34 +82,55 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
 	}
 
 	Rectangle viewerRectangle = rectangeFromOffsetAndDimension();
-	
+
 	if (viewerRectangle.contains(targetToView)) {
 	    return offsetIntoSource;
 	}
-	
+
 	int rowOffset = offsetIntoSource.getRow();
-	
-	if ( ! viewerRectangle.containsRow(targetToView.getRow())) {
-	    rowOffset = targetToView.getRow();
+
+	if (offsetIntoSource.getRow() < targetToView.getRow()) {
+
+	        if ( ! viewerRectangle.containsRow(targetToView.getRow()) || !  viewerRectangle.containsRow(targetToView.getBottomMostRow()) ) {
+	            
+	            if (viewerRectangle.getHeight() >= targetToView.getHeight()) {
+	                
+	                int viewerRectangleBottomMostRow = viewerRectangle.getBottomMostRow();
+	                int targetToViewBottomMostRow = targetToView.getBottomMostRow();
+	                
+	                rowOffset = offsetIntoSource.getRow() - (viewerRectangleBottomMostRow - targetToViewBottomMostRow); 
+	                
+	            } else {
+	                rowOffset = targetToView.getRow();
+	            }
+	            
+	        }
+
+	} else {
+	    
+	        if ( ! viewerRectangle.containsRow(targetToView.getRow())) {
+	            rowOffset = targetToView.getRow();
+	        }
+	    
 	}
 	
 	int colOffset = offsetIntoSource.getCol();
-		
+
 	if ( ((Dimension)viewerRectangle).contains((Dimension)targetToView) ) {
-	    
+
 	    if (targetToView.getCol() < viewerRectangle.getCol()) {
 		colOffset = targetToView.getCol();
 	    } else if (targetToView.getRightMostCol() > viewerRectangle.getRightMostCol()) {
 		colOffset = offsetIntoSource.getCol() + (targetToView.getRightMostCol() - viewerRectangle.getRightMostCol());
 	    }
-	    
+
 	} else {
 	    colOffset = targetToView.getCol();
 	}
-	
+
 	return new Position.Simple(rowOffset, colOffset);
-    }    
-    
+    }
+
     public void setOffsetIntoSource(Position offsetIntoSource) {
         this.offsetIntoSource = offsetIntoSource;
         segmentsUpToDate = false;
@@ -118,17 +140,17 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
         this.clear();
         Rectangle bounds = rectangeFromOffsetAndDimension();
         Collection<ScreenLineSegment> segments = this.sourceSegments.getSegmentsBuffer().getSegments();
-       
+
         // TODO:   This loop below is crazy inefficient
         //
         //         Need to inspect segments type ( if treeset) then be smart about how to
         //         iterate of the set segments that are within the bounds
         //         use the floor and ceiling functions to find lower and upper bounds
         //         that we need to traverse over .. this might help speed up the iteration 
-        
+
         int topRow = bounds.getRow();
         int bottomRow = bounds.getBottomMostRow();
-        
+
         for (ScreenLineSegment sourceSegment : segments) {
             if (sourceSegment.getRow()< topRow) {
                 continue;
@@ -142,7 +164,7 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
         }
         segmentsUpToDate = true;
     }
-    
+
     private void populateViewFromSourceIfNeeded() {
         if (!segmentsUpToDate) {
             populateViewFromSource();
@@ -150,19 +172,19 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
     }
 
     boolean segmentsUpToDate = false;
-    
+
     @Override
     public Collection<ScreenLineSegment> getSegments() {
         populateViewFromSourceIfNeeded();
         return super.getSegments();
     }
-    
+
     @Override
     public Iterator<ScreenLineSegment> iterator() {
         populateViewFromSourceIfNeeded();
         return super.iterator();
     }
-    
+
     public ScreenLineSegmentsView(IScreenLineSegmentsBuffer.Provider sourceSegments, Rectangle bounds) {
         this(sourceSegments, bounds, bounds);
     }
@@ -184,7 +206,7 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
         }
 
         int rememberedLength = -1; // will this become a problem?
-        
+
         @Override
         public int length() {
             if (rememberedLength == -1) {

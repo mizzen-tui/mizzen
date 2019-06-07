@@ -132,11 +132,12 @@ public class Composite extends AbstractComponent<Composite>
             fullrecalcDim();
             return this;
         }
+        Dimension previousDimension = new Rectangle.Simple(this);
 	this.bounds = new Rectangle.Simple(d);
 	this.boundsFixed = true;
 	if (this.border != null) rebuildBorder(this.bounds);
 	markAsDirty();
-        if (this.getParentContainer()!=null ) {
+        if (this.getParentContainer()!=null && ! previousDimension.isSameDimension(this)) {
             this.getParentContainer().childResized(this);
         }
 	return this;
@@ -171,7 +172,11 @@ public class Composite extends AbstractComponent<Composite>
     }
 
     public void fullrecalcDim() {
+        Dimension previousDimension = new Dimension.Simple(this);
 	fullrecalcDim(hasBorder());
+        if (this.getParentContainer()!=null && ! previousDimension.isSameDimension(this)) {
+            this.getParentContainer().childResized(this);
+        }
     }
 
     private void fullrecalcDim(boolean includeBorder) {
@@ -195,15 +200,6 @@ public class Composite extends AbstractComponent<Composite>
 	}
 	bounds = calculatedBounds;
     }
-
-    // protected void moveChildrenDelta(Position delta) {
-    // moveChildrenDelta(delta.getRow(), delta.getCol());
-    // }
-    // protected void moveChildrenDelta(int rowOffset, int colOffset) {
-    // for (BoundedComponent<?> child : children) {
-    // child.moveDelta(rowOffset, colOffset);
-    // }
-    // }
 
     protected boolean hasBorder() {
 	return border != null;
@@ -466,28 +462,6 @@ public class Composite extends AbstractComponent<Composite>
         this.clear();
     }
 
-
-//    public boolean isDirty() {
-//        if (super.isDirty()) {
-//            return true;
-//        }
-//        for (ComponentWithOffset child : children) {
-//            if (child.component.isDirty()) {
-//                return true;
-//            }
-//        }
-//        return false;
-//    }
-
-    
-    public void markAsDirty() {
-	super.markAsDirty();
-	// Why mark the children dirty - not necessary is it?
-//	for (ComponentWithOffset child : children) {
-//	    child.component.markAsDirty();
-//	}
-    }
-    
 
     protected void drawBorderIfNeeded(IScreenLineSegmentsBuffer segments) {
 	if (hasBorder()) {

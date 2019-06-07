@@ -80,8 +80,9 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
     }
 
     public void resize(Dimension d) {
+        Dimension previousDimension = new Dimension.Simple(this);
         setRectangle(new Rectangle.Simple(this.getPostion_TopLeft(), d));
-        if (this.getParentContainer()!=null ) {
+        if (this.getParentContainer()!=null  && ! previousDimension.isSameDimension(this)) {
             this.getParentContainer().childResized(this);
         }
         markAsDirty();
@@ -109,13 +110,6 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
             }
         }
     }
-    
-//    public void markAsDirty() {
-//        this.hasDrawn = false;
-//        
-//        
-//        
-//    }
     
     protected void drawIfNeeded() {
         if (isDirty()) {

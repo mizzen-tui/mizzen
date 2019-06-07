@@ -9,8 +9,8 @@ public class FindPathToTarget<T> {
     /**
      * Find a path of related objects (parent/child/grandchild/..) relationship
      * between root and target.
-     * Returns relation in the form of a list
-     * otherwise returns null when no relation
+     * Returns relation in the form of a list ( root, child, grandchild, .. , target )
+     * otherwise returns null when no relation (path to target) found.
      */
     public List<T> findPath(T root, T target) {
 
@@ -48,7 +48,11 @@ public class FindPathToTarget<T> {
         }
         
         return new ArrayList<T>(theSTACK);
-        
+    }
+    
+
+    public boolean exists(T root, T target) {
+        return findPath(root, target) != null ;
     }
     
     

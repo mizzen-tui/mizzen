@@ -5,22 +5,54 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import dtb.terminalIO.components.input.TextInput;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.traverse.FindPathToTarget;
 
+/**
+ * A FocusManager is basically a 'Focusable' eventHandler that routes 
+ * any incoming events that it receives to a target 'child' Focusable.
+ * 
+ * <p/>
+ * 
+ * The idea is to be able to decide that we have a current EventHandler ( usually a Component that accepts input)
+ * that should receive the current ( usually keyboard ) events.
+ * 
+ * <p/>
+ * 
+ * This is useful, for example, when many input Components (example a form) are rendered on the canvas and a specific component
+ * is processing all keyboard events.
+ * 
+ */
 public interface FocusManager extends Focusable {
     
+    /**
+     * Sets current event handler focus to focusableChild
+     */
     public void setChildAsCurrentFocus(Focusable focusableChild, EventBus eventBus);
     
+
+    /**
+     * @return child focusable that has current focus. null if none defined.
+     */
     public Focusable getCurrentChildFocus();
     
+    
+    /**
+     * Utility focus methods helpful when setting or unsetting focus
+     *
+     */
     public static class UTIL {
         
-        
+        /**
+         * utility method to unfocus old focusable and focus new focusable and then optionally run an option function to perform "whatever" desired action
+         * @param focusableChild
+         * @param oldFocusableChild
+         * @param eventBus
+         * @param onFocusChanged
+         */
         public static void setNewFocusable(Focusable focusableChild, Focusable oldFocusableChild, EventBus eventBus, Consumer<Focusable> onFocusChanged) {
             
             if (oldFocusableChild != null) {
@@ -44,18 +76,17 @@ public interface FocusManager extends Focusable {
          * If focusTarget found,  then it returns path (a list of objects)
          * from focusManager to focusTarget
          */
-        public static List<Object> findTarget(FocusManager focusManager, Focusable focusTarget) {
+        public static List<Object> findTargetAsPath(FocusManager focusManager, Focusable focusTarget) {
             
-            List<Object> path = new FindPathToTarget<Object>().findPath(focusManager, focusTarget);
+            List<Object> pathToTarget = new FindPathToTarget<Object>().findPath(focusManager, focusTarget);
             
-            return path;
+            return pathToTarget;
         }
         
         /**
          * Builds a focus event handler that looks for object within this focusManager's
          * descendant objects
          */
-        
         public static ConditionalEventHandler buildRequestFocusEventHandler(FocusManager focusManager) {
             
             IS_Event_TYPE IS_REQUEST_FOCUS         = new IS_Event_TYPE(TerminalEvent.TYPE.REQUEST_FOCUS);
@@ -72,14 +103,17 @@ public interface FocusManager extends Focusable {
                     @SuppressWarnings("unchecked")
                     TerminalEvent<Focusable> fe = (TerminalEvent<Focusable>)te;
                     
-                    List<Object> result = findTarget(focusManager, fe.getEventData());
+                    Focusable focusTarget = fe.getEventData();
+                    
+                    List<Object> pathToTarget = findTargetAsPath(focusManager, focusTarget);
                     
                     // TODO: is it possible to implement a child find?
-                    if (result == null) {
+                    if (pathToTarget == null) {
                         return false;
                     }
                     // what a waste .. I'm throwing result away
                     //  to be recalc'd in the handle method - oh well.
+                    //  I cannot save state - reentrant issues otherwise.
                     return true;
                 }
             };
@@ -91,9 +125,9 @@ public interface FocusManager extends Focusable {
 
                 Focusable focusTarget = fe.getEventData();
                 
-                List<Object> path = findTarget(focusManager, focusTarget);
+                List<Object> pathToTarget = findTargetAsPath(focusManager, focusTarget);
 
-                if (path == null) {
+                if (pathToTarget == null) {
                     return;
                 }
 
@@ -105,29 +139,23 @@ public interface FocusManager extends Focusable {
                 } 
 
                 FocusManager lastFocusManager = focusManager; 
-                boolean textInputFound = false; 
                 
-                List<Focusable> focusPath = new ArrayList<Focusable>(path.size());
+                List<Focusable> focusPath = new ArrayList<Focusable>(pathToTarget.size());
                 boolean  hasGoodPath = false;
                 
-                Object last = null;
-                for (Object o : path) {
-                    // if (o != this) {
+                for (Object o : pathToTarget) {
+
                     if (o instanceof Focusable && o != focusManager) {
-                        
-                        if (o instanceof TextInput) {
-                            textInputFound = true;
-                        }
                         
                         if (o instanceof FocusManager) {
                             focusPath.add((FocusManager) o);
                             hasGoodPath = true;
                         } else {
-                            if (o instanceof Focusable) { // <-- unnessessary
+                            if (o instanceof Focusable) { // <-- Unnecessary
                                 if (o == focusTarget) {
                                     focusPath.add((Focusable) o);
                                 } else {
-                                    // a focusable that is not a focumanage and not equal to target means give up
+                                    // a focusable that is not a focusManager and not equal to target means give up
                                     return;
                                 }
                             }
@@ -138,9 +166,6 @@ public interface FocusManager extends Focusable {
                         lastFocusManager = (FocusManager) o;
                     }
 
-                    last = o;
-
-                    // }
                 }
                 
                 if (hasGoodPath) {
@@ -170,16 +195,14 @@ public interface FocusManager extends Focusable {
                                 }
                             }
                         }
-                        
-                        
                     }
                 }
                 
             });
 
         }
-        
-        
+
+
     }
     
 

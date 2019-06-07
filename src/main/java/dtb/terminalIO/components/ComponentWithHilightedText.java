@@ -6,18 +6,24 @@ import java.util.List;
 import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.CleanString;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegment;
 
-public class ComponentWithHilightedText extends Composite {
+public class ComponentWithHilightedText extends Composite implements Focusable {
 
     private Color                hiliteTextColor    = new FGBGColors(Colors.BBla, Colors.On_Whi);
 
     private List<Component<?>>   hilightList        = new ArrayList<Component<?>>();
 
     private List<HilightRequest> hilightRequestList = new ArrayList<HilightRequest>();
+    
+    private Focusable focusable;
 
     private class HilightRequest {
         Color     hiliteColor;
@@ -133,6 +139,37 @@ public class ComponentWithHilightedText extends Composite {
             this.remove(c);
         }
         hilightList.clear();
+    }
+
+    
+    public void setFocusable(Focusable focusable) {
+        this.focusable = focusable;
+    }
+
+    @Override
+    public EventHandler canHandle(TerminalEvent<?> te) {
+        return focusable == null ? null : focusable.canHandle(te);
+    }
+
+    @Override
+    public void handle(TerminalEvent<?> te) {
+        if (focusable == null) {
+            return;
+        }
+        focusable.handle(te);
+    }
+
+    @Override
+    public boolean hasFocus() {
+        return focusable == null ? null : focusable.hasFocus();
+    }
+
+    @Override
+    public void setFocus(boolean focus, EventBus eventBus) {
+        if (focusable == null) {
+            return;
+        }
+        focusable.setFocus(focus, eventBus);
     }
 
 }

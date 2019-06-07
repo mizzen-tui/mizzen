@@ -24,6 +24,7 @@ public class HorizontalPanel extends Composite {
 
     public HorizontalPanel setHorizontalSpacer(int horizontalSpacer) {
         this.horizontalSpacer = horizontalSpacer;
+        fullrecalcDim();
         return this;
     }
 

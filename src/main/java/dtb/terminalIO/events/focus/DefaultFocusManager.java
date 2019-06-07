@@ -14,7 +14,6 @@ import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.events.keyboard.KeyEvent;
-import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.traverse.HasChildren;

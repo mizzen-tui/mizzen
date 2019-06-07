@@ -18,6 +18,7 @@ import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.EventHandlerContainer;
+import dtb.terminalIO.events.OnRequestScrollToViewEventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
@@ -28,6 +29,7 @@ import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegmentsView;
+import dtb.terminalIO.traverse.FindPathToTarget;
 
 /**
  * 
@@ -50,8 +52,8 @@ import dtb.terminalIO.textsegments.ScreenLineSegmentsView;
  * being viewed from.
  * 
  */
-public class ScrollableComponent extends Composite implements CanResize, FocusManager, Focusable , Hiliter , EventHandlerContainer {
-    
+public class ScrollableComponent extends Composite implements CanResize, FocusManager, Hiliter , EventHandlerContainer {
+
     BorderedComponent   borderedComponent;
     ScrollBarVertical   vScrollBar;
     ScrollBarHorizontal hScrollBar;
@@ -78,12 +80,11 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
 
         footerText = null;
         this.add(borderedComponent);
-        //this.add(vScrollBar);
-        
+
         setShowBorder(visibleBorder());  // add border and footertext if border defined 
         positionFooterText();
     }
-    
+
     public Component<?> getComponentBeingViewed() {
 	return this.componentBeingViewed;
     }
@@ -92,7 +93,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
 	this.componentBeingViewed = componentBeingViewed;
 	viewer.setViewSource(componentBeingViewed);
     }
-    
+
     public void setShowBorder(boolean showBorder) {
         borderedComponent.setShowBorder(showBorder);
         if (showBorder) {
@@ -157,7 +158,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
 
     public void setFooterText() {
         if (!visibleBorder()) return;
-       // String fullFooterText = buildNavBarText(footerText);
+
         if (footerText != null) {
             if (footerTextComponent == null) {
                 footerTextComponent = new TextComponent(getColor(),footerText);
@@ -167,7 +168,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         } else {
             footerTextComponent = null;
         }
-        
+
         buildAndPopulateFooterPanel();
         positionFooterText();
     }
@@ -175,15 +176,15 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
     public void resize(Dimension d) {
         super.resize(d);
         borderedComponent.resize(d);
-        
+
         vScrollBar.setRectangle( new Rectangle.Simple( borderedComponent.getPostion_TopRight().offsetAdd(1, 0), new Dimension.Simple(borderedComponent.getHeight()-2,1) ) );
         vScrollBar.markAsDirty();
 
         hScrollBar.setRectangle(  new Rectangle.Simple( borderedComponent.getPostion_BottomLeft().offsetAdd(0, 1), (Dimension)hScrollBar  ));
         hScrollBar.markAsDirty();
-        
+
         positionFooterText();
-        
+
         markAsDirty();
         this.componentBeingViewed.markAsDirty();
     }
@@ -200,9 +201,11 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         if (!visibleBorder()) return;
         Dimension d = this;
         // TODO: validate position - problematic when width smaller than footerText - FIXME!
-        this.moveChildTo(new Position.Simple(d.getHeight()-1, d.getWidth()-footerControls.getWidth() -1), footerControls);
+        int desiredRow = d.getHeight()-1;
+        int desiredCol = d.getWidth()-footerControls.getWidth() -1;
+        this.moveChildTo(new Position.Simple(desiredRow<0?0:desiredRow, desiredCol<0?0:desiredCol), footerControls);
         int newHScrollBarWidth = (this.borderedComponent.getWidth()-2) - footerControls.getWidth();
-        
+
         this.hScrollBar.resize(new Dimension.Simple(1, newHScrollBarWidth>0?newHScrollBarWidth:0));
         lastFooterWidth = footerControls.getWidth();
     }
@@ -218,16 +221,16 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
     }
     
     public void scrollToView(Rectangle targetToView) {
-	
+
 	Position offset = viewer.calculateScrollToViewOffset(targetToView);
-	
+
 	if (offset != null) {
 	    setViewOffset( offset.getRow(), offset.getCol() );
 	}
     }
     
 
-    public static class WindowViewComponent extends BoundedComponent<WindowViewComponent> implements Hiliter, ParentContainer {
+    public static class WindowViewComponent extends BoundedComponent<WindowViewComponent> implements Hiliter, Focusable, ParentContainer {
 
         private IScreenLineSegmentsBuffer.Provider viewSource;
         private ScreenLineSegmentsView             segmentsViewBuffer;
@@ -235,17 +238,12 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
 	public WindowViewComponent(Color color, Dimension d, IScreenLineSegmentsBuffer.Provider viewSource) {
 	    super(color, d);
 	    setViewSource(viewSource);
-//	    this.viewSource = viewSource;
-//	    if (viewSource instanceof Component) {
-//	        ((Component)this.viewSource).setParentContainer(this);
-//	    }
-//	    segmentsViewBuffer = new ScreenLineSegmentsView(this.viewSource, WindowViewComponent.this);
 	}
 	
 	public void setViewSource(IScreenLineSegmentsBuffer.Provider viewSource) {
 	    this.viewSource = viewSource;
 	    if (viewSource instanceof Component) {
-	        ((Component)this.viewSource).setParentContainer(this);
+	        ((Component<?>)this.viewSource).setParentContainer(this);
 	    }
 	    segmentsViewBuffer = new ScreenLineSegmentsView(this.viewSource, WindowViewComponent.this);
 	    this.markAsDirty();
@@ -286,7 +284,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
             markAsDirty();
             segmentsViewBuffer.setOffsetIntoSource(offset);
         }
-        
+
         Position getOffsetIntoSource() {
             return segmentsViewBuffer.getOffsetIntoSource();
         }
@@ -324,7 +322,37 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
             markAsDirty();
         }
 
+        @Override
+        public EventHandler canHandle(TerminalEvent<?> te) {
+            if (viewSource instanceof ConditionalEventHandler) {
+                return ((ConditionalEventHandler) viewSource).canHandle(te);
+            }
+            return null;
+        }
+
+        @Override
+        public void handle(TerminalEvent<?> te) {
+            if (viewSource instanceof EventHandler) {
+                ((EventHandler) viewSource).handle(te);
+            }
+        }
+
         
+        @Override
+        public boolean hasFocus() {
+            if (viewSource instanceof Focusable) {
+                return ((Focusable) viewSource).hasFocus();
+            }
+            return false;
+        }
+
+        @Override
+        public void setFocus(boolean focus, EventBus eventBus) {
+            if (viewSource instanceof Focusable) {
+                ((Focusable) viewSource).setFocus(focus, eventBus);
+                return;
+            }
+        }
     }
     
     @Override
@@ -382,12 +410,12 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
     }
     
     public ScrollableComponent prependEventHandler(ConditionalEventHandler eventHandler) {
-        
+
         if (chainedEventHandler == null) 
         {
             throw new IllegalStateException("Must first call asEventHandler(updateCanvas) before calling handle(TerminalEvent<?> te)");
         }
-        
+
         this.chainedEventHandler.prependEventHandler(eventHandler);
         return this;
     }
@@ -456,10 +484,10 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         if (conditionalEventHandler != null) {
             return conditionalEventHandler;
         }
-        
+
         chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
-        
-        
+
+        // hookup footer controls event handling
         chainedEventHandler.appendEventHandler(new ConditionalEventHandler() {
             @Override
             public void handle(TerminalEvent<?> te) {
@@ -478,18 +506,36 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
                 }
                 return this;
             }});
-        
+
+        // hookup scroll to view requests
+        chainedEventHandler.appendEventHandler(new OnRequestScrollToViewEventHandler(
+                      (te)->{
+                              Component<?> componentToScrollTo = (Component<?>) te.getEventData();
+                              // if a path from viewer to component exists, then return true
+                              return new FindPathToTarget<Component<?>>().exists(ScrollableComponent.this.viewer, componentToScrollTo);
+                            },
+                      (te)->{
+                          Component<?> componentToScrollTo = (Component<?>) te.getEventData();
+
+                          Position offset = Component.UTIL.getOffsetFromComponentContainer(componentToScrollTo, ScrollableComponent.this.viewer);
+                          
+                          if (offset != null) {
+                              ScrollableComponent.this.scrollToView(new Rectangle.Simple(offset, (Dimension) componentToScrollTo));
+                          }
+                          
+                          // ScrollableComponent.this.scrollToView(componentToScrollTo);
+                        }));
+            
         conditionalEventHandler =  chainedEventHandler.asConditionalEventHandler();
-        
+
         return conditionalEventHandler;
     }
-    
-    
-    
+
+
     public void addStandardNavigationKeyInputEventHandlers(EventBus eventBus, Runnable _updateCanvas) {
-        
+
         this.setUpdateCanvas(_updateCanvas);
-        
+
         eventBus.appendEventHandler( asEventHandler() );
    }
 
@@ -504,8 +550,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         }
         return null;
     }
-    
-    
+
     @Override
     public void handle(TerminalEvent<?> te) {
         if (conditionalEventHandler == null) 
@@ -516,7 +561,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
     }
 
     boolean hasFocus = false; 
-    
+
     @Override
     public boolean hasFocus() {
         return hasFocus;
@@ -530,10 +575,10 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         } else {
             this.unHilite();
         }
+        this.viewer.setFocus(focus, eventBus);
         if (footerControls != null) {
             footerControls.setFocus(focus, eventBus);
         }
-
     } 
 
     @Override
@@ -545,7 +590,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         if (footerControls != null) {
             footerControls.hilite();
         }
-        
+
         this.markAsDirty();
     }
 
@@ -561,28 +606,28 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
     }
 
     public void addFooterButton(String buttonText, KeyStroke hotKey, EventHandler handler) {
-        
+
         if (footerControls == null) {
             throw new IllegalStateException("FooterControls object is null! Cannot add button control yet!");
         }
-        
+
         footerControls.addButton(buttonText, hotKey,   handler );
-        
+
     }
 
-    private void __addFooterButton(Component componentForButtonBar, KeyStroke hotKey, EventHandler handler) {
-        
+    private void __addFooterButton(Component<?> componentForButtonBar, KeyStroke hotKey, EventHandler handler) {
+
         if (footerControls == null) {
             throw new IllegalStateException("FooterControls object is null! Cannot add button control yet!");
         }
-        
+
         footerControls.addComponent(componentForButtonBar,  hotKey, handler);
-        
+
         positionFooterText();
         
     }
 
-    public void addFooterButton(Component componentForButtonBar, KeyStroke hotKey, EventHandler handler) {
+    public void addFooterButton(Component<?> componentForButtonBar, KeyStroke hotKey, EventHandler handler) {
         
         __addFooterButton(componentForButtonBar, hotKey, handler);
         positionFooterText();
@@ -599,7 +644,6 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         }
         
         FocusManager.UTIL.setNewFocusable(footerControls, null, eventBus, null);
-        
     }
 
     @Override
@@ -607,13 +651,5 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         return footerControls;
     }
 
-//    public void search(String newValue) {
-//
-//	Rectangle targetToView = SegmentsSearchUtils.searchTextInSegments(componentBeingViewed.getSegmentsBuffer(), newValue);
-//	if (targetToView != null) {
-//	    scrollToView(targetToView);
-//	}
-//	
-//    }
     
 }

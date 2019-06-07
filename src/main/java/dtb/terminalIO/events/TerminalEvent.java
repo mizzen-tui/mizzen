@@ -29,6 +29,7 @@ public class TerminalEvent<T> extends EventObject {
         REQUEST_RELEASE_FOCUS,
         REQUEST_SHOW_CURSOR,
         REQUEST_HIDE_CURSOR,
+        REQUEST_SCROLL_TO_VIEW,
         VALUE_CHANGED,
         RESIZE,
         EXCEPTION,

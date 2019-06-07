@@ -14,6 +14,8 @@ import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.focus.ToFocusable;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
@@ -165,6 +167,13 @@ public class SearchFunctionForScrollableComponent extends HorizontalPanel {
 	    
 	    Component<?> componentBeingViewed = viewComp.getComponentBeingViewed();
 	    ComponentWithHilightedText hilitingComponent = new ComponentWithHilightedText(componentBeingViewed.getColor());
+	    
+	    if (componentBeingViewed instanceof Focusable) {
+	        hilitingComponent.setFocusable((Focusable)componentBeingViewed);
+	    } else if (componentBeingViewed instanceof ToFocusable) {
+                hilitingComponent.setFocusable(((ToFocusable)componentBeingViewed).asFocusable());
+	    }
+	    
 	    hilitingComponent.add(componentBeingViewed);
 	    viewComp.setComponentBeingViewed(hilitingComponent);
 	    

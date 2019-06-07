@@ -329,15 +329,34 @@ public abstract class ControlCode implements Renderer {
         }
         
         
-        public Color setInvertTransform(ColorTransform invertTransform) {
-            this.invertTransform = invertTransform;
-            return this;
+        protected ColorTransform buildDefaultColorTransform() {
+            if (this.fgc != null && this.fgc.getInvertTransform() != null) {
+                
+                if (this.bgc == null || this.bgc.getInvertTransform() == null) {
+                    return this.fgc.getInvertTransform(); 
+                }
+                
+                int[] fgcInvertedColorCodes = this.fgc.getInvertTransform().transform(this.fgc).buildControlCodes();
+                int[] bgcInvertedColorCodes = this.bgc.getInvertTransform().transform(this.bgc).buildControlCodes();
+                
+                int[] combinedCodes = new int[fgcInvertedColorCodes.length + bgcInvertedColorCodes.length];
+                System.arraycopy(fgcInvertedColorCodes, 0, combinedCodes, 0, fgcInvertedColorCodes.length);
+                System.arraycopy(bgcInvertedColorCodes, 0, combinedCodes, fgcInvertedColorCodes.length, bgcInvertedColorCodes.length);
+                
+                return (color) -> new ColorFromCodes(combinedCodes).setInvertTransform((c)->FGBGColors.this);
+                
+                
+            } else if ((this.bgc != null && this.bgc.getInvertTransform()!=null)) {
+                return this.bgc.getInvertTransform();
+            } else {
+                return ColorTransform.NULL_colorTransform;
+            }
         }
         
-        
-//        public FGBGColors bold() {
-//            return new FGBGColors((fgc==null?(new FgColor(0)):fgc).asBold(), bgc);
-//        }
+        public ColorTransform getInvertTransform() {
+            return buildDefaultColorTransform();
+        }
+
 
         public FGBGColors removebold() {
             return new FGBGColors(fgc.removeBold(), bgc);
