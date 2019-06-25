@@ -203,6 +203,59 @@ public interface BlockChars {
         }
 
     }
+    public static class NiceDouble extends Nice {
+
+        @Override
+        public char getTOP_RIGHT() {
+            return '╗';
+        }
+
+        @Override
+        public char getVERTICAL_LINE() {
+            return '║';
+        }
+
+        @Override
+        public char getHORIZONTAL_LINE() {
+            return '═';
+        }
+
+        @Override
+        public char getTOP_LEFT() {
+            return '╔';
+        }
+
+        @Override
+        public char getBOTTOM_RIGHT() {
+            return '╝';
+        }
+
+        @Override
+        public char getBOTTOM_LEFT() {
+            return '╚';
+        }
+
+        @Override
+        public char getVERTICAL_LEFT() {
+            return '╣';
+        }
+
+        @Override
+        public char getVERTICAL_RIGHT() {
+            return '╠';
+        }
+
+        @Override
+        public char getHORIZONTAL_DOWN() {
+            return '╦';
+        }
+
+        @Override
+        public char getHORIZONTAL_UP() {
+            return '╩';
+        }
+
+    }
 
     public static class Basic extends AbstractBaseBlockChars {
 
@@ -272,6 +325,8 @@ public interface BlockChars {
 
     public static final BlockChars NICE    = new Nice();
 
+    public static final BlockChars NICE_DOUBLE    = new NiceDouble();
+
     public static final BlockChars DEFAULT = NICE;
 
     public static class UTIL {
@@ -298,5 +353,27 @@ public interface BlockChars {
         }
 
     }
+    
+    public static class BlockHiliter implements Hiliter {
+
+        BlockChars blockChars = NICE;
+        
+        @Override
+        public void hilite() {
+            blockChars = NICE_DOUBLE;
+        }
+
+        @Override
+        public void unHilite() {
+            blockChars = NICE;
+        }
+        
+        public BlockChars getBlockChars() {
+            return blockChars;
+        }
+        
+    };
+    
+    
 
 }

@@ -27,6 +27,7 @@ import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.EventHandlerContainer;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
+import dtb.terminalIO.events.OnRequestUpdateCanvasEventHandler;
 import dtb.terminalIO.events.OnResizeEventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
@@ -44,12 +45,12 @@ import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.SegmentsSearchUtils;
-import dtb.terminalIO.util.ExecUtil;
 import dtb.terminalIO.util.StringUtils;
 import dtb.terminalIO.util.Stty;
+import dtb.terminalIO.util.linuxproc.ExecUtil;
 
 public class ScrollableComponentTest {
-    
+
     static String execTop()   {
         try {
             return ExecUtil.executeWithShell("top -n 1 -b");
@@ -58,38 +59,36 @@ public class ScrollableComponentTest {
             return "EXCEPTION:  " + e;
         }
     }
-    
+
     public static ScrollableComponent testWindowViewer1(Dimension size) throws IOException { 
-        
+
         String text2a = execTop();  
-        
+
         String text2 = text2a; // StringUtils.wrap(text2a, size.getWidth()*2);
-        
+
         TextComponent __srcOfText = new TextComponent("");
         __srcOfText.setFillOnClear(false);
-
-        //ComponentWithHilightedText srcOfText = new ComponentWithHilightedText();
-        //srcOfText.add(__srcOfText);
-
 
         Dimension sizeOfWindow = size;
         Position viewOffset = new Position.Simple(0, 0);
 
         ScrollableComponent viewComp1 = new ScrollableComponent(Colors.Gre, sizeOfWindow, __srcOfText);
-        
+
+        viewComp1.setFillOnClear(false);
+
         Supplier<String> text3 = new Supplier<String>() {
-            
+
             String bigFile = "LoremIpsumLarge.txt";
             Thread readFileThread = null;
             String largeText = null;
-            
+
             @Override
             public String get() {
                 synchronized (this) {
                     if (largeText != null) {
                         return largeText;
                     }
-                    
+
                     if (readFileThread == null) {
                         readFileThread = new Thread(()->{
                             try {
@@ -99,8 +98,9 @@ public class ScrollableComponentTest {
                                 largeText = StringUtils.addLineNumbers(largeText);
                                 
                                 __srcOfText.setTextAndResize(largeText);
-                                //srcOfText.setBounds(__srcOfText);
-                                viewComp1.updateCanvas();
+                                
+                                
+                                
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
@@ -126,11 +126,8 @@ public class ScrollableComponentTest {
         setTextToView.run();
 
         viewComp1.setViewOffset(viewOffset.getRow(), viewOffset.getCol());
-        viewComp1.setViewOffset(viewOffset.getRow(), viewOffset.getCol());
         viewComp1.setFooterText("Help comes in many forms!");
 
-        viewComp1.setUpdateCanvas(()-> {});
-         
         viewComp1.addEventHandlerWithCanvasUpdate(new KeyInputEventHandler(Keys.CTRL_H_KEYSTROKE, new EventHandler() {
             @Override
             public void handle(TerminalEvent<?> te) {
@@ -167,13 +164,10 @@ public class ScrollableComponentTest {
         viewComp1.setViewOffset(viewOffset.getRow(), viewOffset.getCol());
         viewComp1.setFooterText("Help comes in many forms!");
 
-        viewComp1.setUpdateCanvas(()-> {});
-
         BrailleDemo brailleDemo = new BrailleDemo() {
              public void flushOutput() {
                  sourceComponentContainingBrailleDemo.markAsDirty();
                  viewComp1.markAsDirty();
-                 viewComp1.updateCanvas();
              }
         };
 
@@ -192,8 +186,7 @@ public class ScrollableComponentTest {
         sourceComponentContainingBrailleDemo.add(brailleComponent);
 
         SearchFunctionForScrollableComponent.addFinderToScrollable(viewComp1);
-        
-        
+
         return viewComp1;
     }
     
@@ -225,7 +218,7 @@ public class ScrollableComponentTest {
         };
 
         eventBus.appendEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
-        eventBus.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
+        //eventBus.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
         eventBus.appendEventHandler(new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
     }
 
@@ -261,6 +254,8 @@ public class ScrollableComponentTest {
             return ;
         }
 
+        setUpTerminateHandler(screen, master_canvas, eventBus);
+        
         eventBus.appendEventHandler(master_canvas.asShowCursorEventHandler());
         eventBus.appendEventHandler(master_canvas.asHideCursorEventHandler());
 
@@ -306,6 +301,9 @@ public class ScrollableComponentTest {
         };
 
         ScrollableComponent brailleViewComp2 = testScrollingGridBrailleWindowViewer(sizeOfWindow, master_canvas, gridBrailleEventHandlers);
+
+        brailleViewComp2.setFillOnClear(false);
+
         for (ConditionalEventHandler eventHandler : gridEventHandlers) {
             brailleViewComp2.addEventHandlerWithCanvasUpdate(eventHandler);
         }
@@ -420,17 +418,14 @@ public class ScrollableComponentTest {
         
 //        eventBus.appendEventHandler(  new KeyInputEventHandler(  Keys.CTRL_N_KEYSTROKE  , (te)-> { showYvalues[0] = ! showYvalues[0]; }));
                 
+        eventBus.appendEventHandler(new OnRequestUpdateCanvasEventHandler(updateCanvas));
+        
         lineChartDemo.setUpDemo(eventBus, new Rectangle.Simple(lineChartDemoContainer), lineChartDemoContainer);
         lineChartDemo.setFlushDemoOutput(updateCanvas);
         
         barChartDemo.setUpDemo(eventBus, new Rectangle.Simple(barChartDemoContainer), barChartDemoContainer);
         barChartDemo.setFlushDemoOutput(updateCanvas);
 
-        updateCanvas.run();  //  can cause issues -- do an invokelater .. 
-        
-        viewComp1.setUpdateCanvas(updateCanvas);
-        
-        brailleViewComp2.setUpdateCanvas(updateCanvas);
         
         DefaultFocusManager focusManager = new DefaultFocusManager(Keys.TAB_KEYSTROKE);
         
@@ -443,7 +438,7 @@ public class ScrollableComponentTest {
         eventBus.appendEventHandler(focusManager);
 
         TerminalResizeDetection.initiate(screen, eventBus);
-        
+
         eventBus.appendEventHandler(new OnResizeEventHandler() {
             @Override
             public void handleResize(Dimension size) {
@@ -455,7 +450,7 @@ public class ScrollableComponentTest {
                 lineChartDemoContainer.clear();
                 lineChartDemoContainer.resize(sizeOfLineChartWindow);
                 lineChartDemo.resize(sizeOfLineChartWindow);
-                
+
                 barChartDemoContainer.clear();
                 barChartDemoContainer.resize(sizeOfBarChartWindow);
                 barChartDemo.resize(sizeOfBarChartWindow);
@@ -466,8 +461,7 @@ public class ScrollableComponentTest {
 
         
         setUpTerminateHandler(screen, master_canvas, eventBus);
-        
-        
+
         return ;
     }
 

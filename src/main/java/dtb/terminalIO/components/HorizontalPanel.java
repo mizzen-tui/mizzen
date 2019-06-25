@@ -65,8 +65,5 @@ public class HorizontalPanel extends Composite {
         readjustAllAnchors();
         super.fullrecalcDim();
     }
-    
-    
-    
 
 }

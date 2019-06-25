@@ -24,9 +24,6 @@ public class BootStrapTests {
 
         TerminalScreen screen = TestsCommon.getTerminalScreenForTesting(args);
 
-        // IScreenLineSegmentsBuffer component1= new
-        // ScreenLineSegmentsBuffer();
-
         FGBGColors drawingcolor = new FGBGColors(Colors.IYel, null);
 
         Component componentBox1 = new Box(drawingcolor, 10);

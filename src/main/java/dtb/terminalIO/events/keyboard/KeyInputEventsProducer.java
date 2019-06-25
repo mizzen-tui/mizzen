@@ -110,7 +110,7 @@ public class KeyInputEventsProducer implements Runnable {
                 }
 
             } catch (Throwable e) {  // Warning .. dangerous to catch Throwable (I know) - but I have 
-                                     //            signal other threads (in EventBus) of the situation
+                                     //            to signal other threads (in EventBus) of the situation
                 Exception e1 = null;
                 if (!(e instanceof Exception)) {
                     e1 = new Exception(e);

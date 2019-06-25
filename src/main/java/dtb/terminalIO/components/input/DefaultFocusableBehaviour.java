@@ -25,10 +25,10 @@ public abstract class DefaultFocusableBehaviour  implements Focusable {
     
     
     public static abstract class ComponentHiliterFocusableBehaviour extends DefaultFocusableBehaviour {
-        
+
         Component<?> component;
         ColorHiliter colorHiliter;
-        
+   
         public ComponentHiliterFocusableBehaviour(Component<?> component) {
             super();
             this.component = component;

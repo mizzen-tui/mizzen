@@ -3,6 +3,7 @@ package dtb.terminalIO.components;
 import java.util.Collection;
 import java.util.Collections;
 
+import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.geom.Dimension;
@@ -82,16 +83,11 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
         this.markAsDirty();
     }
     
+
     
     public boolean visibleBorder() {
         return this.showBorder;
     }
-    
-//    public boolean isDirty() {
-//        return super.isDirty() ||
-//               this.component.isDirty() ||
-//               this.border.isDirty();
-//    }
     
     public void markAsDirty() {
         super.markAsDirty();

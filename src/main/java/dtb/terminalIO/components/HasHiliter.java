@@ -14,7 +14,5 @@ public interface HasHiliter {
             return input instanceof HasHiliter;
         }
     }
-    
-    
-    
+
 }

@@ -213,14 +213,8 @@ public class TabPanelTest {
                 public void renderPreUPdate() {
                     tb.clearForRedraw();
                 }
-
-//                public void flushOutput() {
-//                    // tabContext.clearForRedraw();
-//                }
             }).getTabAction(Keys.F7_KEYSTROKE, "LineChart Example"));
             
-            
-
             tb.addTab(new DemoInTab(new BrailleDemo() {
                 public void renderPreUPdate() {
                     tb.clearForRedraw();

@@ -2,10 +2,14 @@ package dtb.terminalIO.examples;
 
 import java.io.IOException;
 
+import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.core.Canvas;
+import dtb.terminalIO.events.OnIdleEventEventHandler;
+import dtb.terminalIO.events.RequestUpdateCanvasEvent;
+import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.TerminalEvent.TYPE;
 import dtb.terminalIO.examples.sampledata.ReadSampleFiles;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
@@ -17,55 +21,76 @@ public class ColoredTextTest {
 
     public static void main(String[] args) throws IOException {
 
-	Canvas master_canvas = TestsCommon.getMasterCanvasForTesting(TestsCommon.getTerminalScreenForTesting(args));
-
-	master_canvas.t("HELLO WORLD!");
-	
-	String fileName = "acme-white-150.txt";
-	
-	SegmentsFromStringResult r = new SegmentsFromStringResult(null,null);
-	
-	boolean stripColors = true;
-
-	Dimension maxDim = new Dimension.Simple(master_canvas.getHeight()-4, master_canvas.getWidth()-4);
-	Dimension textSize = Dimension.UTIL.stringToDimension( ReadSampleFiles.readSampleFile(fileName, true));
-	Dimension dim = maxDim.contains(textSize) ? textSize : maxDim;
-	
-	
-	BoundedComponent image = new BoundedComponent(null, dim) {
-
-		@Override
-		protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
-		    segments.merge(r.ts);
-
-		}
-
-	    };
+        TUIApp app = new TUIApp().initFromArgs(args);
 
 
-	
-	BorderedComponent imageWithBorder = new BorderedComponent(image);
-	    
-	for (int i = 0; i < 10; i++) {
+        String fileName = "acme-white-150.txt";
 
-	    String text = ReadSampleFiles.readSampleFile(fileName, stripColors);
+        SegmentsFromStringResult r = new SegmentsFromStringResult(null, null);
 
-	    SegmentsFromStringResult rr = ScreenLineSegment.UTIL.textSegmentsFromStringWithEmbeddedColor(text, 2, 0,
-		    new Rectangle.Simple(0, 0, master_canvas));
-	    
-	    r.pos = rr.pos;
-	    r.ts = rr.ts;
 
-	    image.clear();
-	    imageWithBorder.clear();
-	    master_canvas.addComponentSegments(2,2,imageWithBorder);
+        Dimension maxDim = new Dimension.Simple(app.getCanvas().getHeight() - 4, app.getCanvas().getWidth() - 4);
+        Dimension textSize = Dimension.UTIL.stringToDimension(ReadSampleFiles.readSampleFile(fileName, true));
+        Dimension dim = maxDim.contains(textSize) ? textSize : maxDim;
 
-	    master_canvas.refresh();
-	    
-	    TestsCommon.sleep(500);
-	    
-	    stripColors = ! stripColors;
-	}
+        BoundedComponent image = new BoundedComponent(null, dim) {
+            @Override
+            protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
+                if (r.ts == null) {
+                    return;
+                }
+                segments.merge(r.ts);
+            }
+        };
+
+        BorderedComponent imageWithBorder = new BorderedComponent(image);
+        
+        app.setUpdateCanvas((tApp)-> {
+            
+            if (imageWithBorder.isDirty()) {
+                tApp.getCanvas().addComponentSegments(2, 2, imageWithBorder);
+            }
+            return true;
+        });
+
+        app.setOnReadyStart((tApp) -> {
+
+            app.getCanvas().t("HELLO WORLD!");
+
+            boolean[] stripColors = new boolean[] {true};
+
+            tApp.getEventBus().appendEventHandler(new OnIdleEventEventHandler.Countdown(500, 10, (te, count) -> {
+
+                String text;
+                try {
+                    text = ReadSampleFiles.readSampleFile(fileName, stripColors[0]);
+                    SegmentsFromStringResult rr = ScreenLineSegment.UTIL.textSegmentsFromStringWithEmbeddedColor(text, 2, 0,
+                                                                                   new Rectangle.Simple(0, 0, tApp.getCanvas()));
+                    r.pos = rr.pos;
+                    r.ts = rr.ts;
+
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+                image.clear();
+                imageWithBorder.clear();
+
+                stripColors[0] = !stripColors[0];
+               
+                te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(tApp));
+                
+                if (count == 1) {
+                    te.getEventBus().raiseEvent( new TerminalEvent<Object>(tApp, TYPE.TERMINATE, null) );
+                }
+                
+
+            }));
+
+        });
+        
+        app.start();
+
     }
 
 }

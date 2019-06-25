@@ -12,30 +12,22 @@ import dtb.terminalIO.textsegments.ScreenLineSegment;
  */
 public class HorizontalLine extends BoundedComponent<HorizontalLine> {
 
-    private char horizontalLineChar;
+    private char horizontalLineChar = 0;
     
     public HorizontalLine(Color color, Position pos, int len) {
         super(color, pos, new Dimension.Simple(1, len));
-        this.setHorizontalLineChar( this.getBlockChars().getHORIZONTAL_LINE());
     }
 
     public HorizontalLine(Color color, int len) {
         super(color, Position.ZERO, new Dimension.Simple(1, len));
-        this.setHorizontalLineChar( this.getBlockChars().getHORIZONTAL_LINE());
     }
 
     public HorizontalLine(int len) {
         super(FGBGColors.NO_COLOR_SPECIFIED, Position.ZERO, new Dimension.Simple(1, len));
-        this.setHorizontalLineChar( this.getBlockChars().getHORIZONTAL_LINE());
     }
 
     public HorizontalLine(Color color, int row, int col, int len) {
         super(color, new Position.Simple(row, col), new Dimension.Simple(1, len));
-        this.setHorizontalLineChar( this.getBlockChars().getHORIZONTAL_LINE());
-    }
-
-    public char getHorizontalLineChar() {
-        return horizontalLineChar;
     }
 
     public HorizontalLine setHorizontalLineChar(char horizontalLineChar) {
@@ -47,7 +39,8 @@ public class HorizontalLine extends BoundedComponent<HorizontalLine> {
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
         segments.clear();
         if (getWidth() > 0) {
-    	  ScreenLineSegment line = ScreenLineSegment.UTIL.blankScreenObject(color, this.horizontalLineChar, getRow(), getCol(), -1, getWidth());
+          char horizChar = this.horizontalLineChar != 0 ? this.horizontalLineChar : this.getBlockChars().getHORIZONTAL_LINE();
+    	  ScreenLineSegment line = ScreenLineSegment.UTIL.blankScreenObject(color, horizChar, getRow(), getCol(), -1, getWidth());
     	  segments.add(line);
         }
     }

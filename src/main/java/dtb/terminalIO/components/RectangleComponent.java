@@ -1,5 +1,6 @@
 package dtb.terminalIO.components;
 
+import dtb.terminalIO.components.BlockChars.BlockHiliter;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
@@ -13,6 +14,7 @@ public class RectangleComponent extends BoundedComponent<RectangleComponent> imp
 
     private boolean hilited = false;
     private ColorHiliter colorHiliter;
+    private BlockHiliter blockHiliter = new BlockChars.BlockHiliter();
     
     public RectangleComponent(Color color, int height, int width) {
         super(color, new Dimension.Simple(height, width));
@@ -30,8 +32,13 @@ public class RectangleComponent extends BoundedComponent<RectangleComponent> imp
     }
     
     private ColorHiliter makeColorHiliter() {
-        return new ColorHiliter(super.getColor());
+        return new ColorHiliter(()->RectangleComponent.super.getColor());
     }
+    
+    public BlockChars getBlockChars() {
+        return blockHiliter.getBlockChars();
+    }
+    
     
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
@@ -66,6 +73,7 @@ public class RectangleComponent extends BoundedComponent<RectangleComponent> imp
             markAsDirty();
         }
         colorHiliter.hilite();
+        blockHiliter.hilite();
         this.hilited = true;
     }
 
@@ -75,6 +83,7 @@ public class RectangleComponent extends BoundedComponent<RectangleComponent> imp
             markAsDirty();
         }
         colorHiliter.unHilite();
+        blockHiliter.unHilite();
         this.hilited = false;
     }
 

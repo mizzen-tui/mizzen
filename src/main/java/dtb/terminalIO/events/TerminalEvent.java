@@ -29,10 +29,12 @@ public class TerminalEvent<T> extends EventObject {
         REQUEST_RELEASE_FOCUS,
         REQUEST_SHOW_CURSOR,
         REQUEST_HIDE_CURSOR,
+        REQUEST_UPDATE_CANVAS,
         REQUEST_SCROLL_TO_VIEW,
         VALUE_CHANGED,
         RESIZE,
         EXCEPTION,
+        TERMINATE,
         DEBUG
     }
     
@@ -42,17 +44,17 @@ public class TerminalEvent<T> extends EventObject {
     
     public static class IS_Event_TYPE implements Predicate<TerminalEvent<?>> {
 
-	private TYPE type;
+        private TYPE type;
 
-	public IS_Event_TYPE(TYPE type) {
-	    this.type = type;
-	}
-	
-	@Override
-	public boolean test(TerminalEvent<?> te) {
-	    return te.type.equals(type);
-	}
-	
+        public IS_Event_TYPE(TYPE type) {
+            this.type = type;
+        }
+
+        @Override
+        public boolean test(TerminalEvent<?> te) {
+            return te.type.equals(type);
+        }
+
     }
     
     public TerminalEvent(Object source, TYPE type, T eventData, EventBus eventBus) {
@@ -75,7 +77,7 @@ public class TerminalEvent<T> extends EventObject {
     }
     
     protected void setEventData(T eventData) {
-	this.eventData = eventData;
+        this.eventData = eventData;
     }
 
     @Override
@@ -91,6 +93,5 @@ public class TerminalEvent<T> extends EventObject {
         return eventBus;
     }
 
-    
 
 }

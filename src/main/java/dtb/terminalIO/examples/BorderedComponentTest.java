@@ -11,16 +11,14 @@ import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 
 public class BorderedComponentTest {
 
-    
+
     public static void main(String[] args) {
-        // TODO Auto-generated method stub
 
         Canvas master_canvas = TestsCommon.getMasterCanvasForTesting(TestsCommon.getTerminalScreenForTesting(args));
         master_canvas.setEmptyChar('~');
-        
 
         int[] count = new int[] {0,0};
-        
+
         RectangleComponent r1 = new RectangleComponent(new FGBGColors(Colors.Yel),10, 30) {
             @Override
             protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
@@ -28,7 +26,6 @@ public class BorderedComponentTest {
                 super.draw(color, segments);
                 count[1] ++;
             }
-            
         };
         r1.setFillOnClear(true);
         r1.setEmptyChar('*');
@@ -40,28 +37,26 @@ public class BorderedComponentTest {
 
         StringBuffer sbDEBUG = new StringBuffer();
         sbDEBUG.append("-------\nDEBUG LOG\n");
-        
+
         sbDEBUG.append("canvas textcolor = ").append(master_canvas.getTextColor()).append("\n");
         sbDEBUG.append("canvas emptycolor = ").append(master_canvas.getEmptyColor()).append("\n");
-        
-        
+
         master_canvas.addComponentSegments(5, 50, componentBox2);
 
-        
         master_canvas.refresh();
         sbDEBUG.append("\nAFTER REFRESH\ncanvas textcolor = ").append(master_canvas.getTextColor()).append("\n");
         sbDEBUG.append("canvas emptycolor = ").append(master_canvas.getEmptyColor()).append("\n");
-        
-        
+
+
         System.out.println("count = "+count[0]);
-        
+
         System.out.println("r1            = " + r1);
         System.out.println("componentBox2 = " + componentBox2);
-        
-        
+
+
         System.out.println(sbDEBUG);
 
     }
-    
-    
+
+
 }

@@ -14,9 +14,9 @@ import dtb.terminalIO.components.plot.PointPlotter;
 public class CompositeShape implements Shape {
 
     Collection<Shape> shapes = new ArrayList<Shape>();
-    
+
     public void addShape(Shape shape) {
-	shapes.add(shape);
+        shapes.add(shape);
     }
 
     public void removeShape(Shape shape) {
@@ -25,9 +25,9 @@ public class CompositeShape implements Shape {
     
     @Override
     public void draw(PointPlotter pointPlotter) {
-	for (Shape shape : shapes) {
-	    shape.draw(pointPlotter);
-	}
+        for (Shape shape : shapes) {
+            shape.draw(pointPlotter);
+        }
     }
 
 }

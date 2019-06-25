@@ -65,15 +65,12 @@ public class ComponentWithHilightedText extends Composite implements Focusable {
             if (sc == null || !sc.overlapsWith(hilightRequest.r) || sc.getWidth() < hilightRequest.r.getWidth()) {
                 continue;
             }
-            //String sc_text = sc.getText();
 
             CleanString s = sc.substring(hilightRequest.r.getCol() - sc.getCol());
 
             s = s.substring(0, hilightRequest.r.getWidth());
 
             TextComponent sc_SRCH = new TextComponent(hilightRequest.hiliteColor, hilightRequest.r, s);
-            // SegmentComponent sc_SRCH = new SegmentComponent(new
-            // SegmentImpl(hilightRequest.hiliteColor, hilightRequest.r,-1,s));
 
             ComponentWithOffset componentWithOffset = this.addComponentWithOffset(hilightRequest.r, sc_SRCH);
 
@@ -84,14 +81,6 @@ public class ComponentWithHilightedText extends Composite implements Focusable {
         hilightRequestList.clear();
 
         return addedComponentsList;
-    }
-
-    public void markAsDirty() {
-        super.markAsDirty();
-        // Why mark the children dirty - not necessary is it?
-        // for (ComponentWithOffset child : children) {
-        // child.component.markAsDirty();
-        // }
     }
 
     @Override

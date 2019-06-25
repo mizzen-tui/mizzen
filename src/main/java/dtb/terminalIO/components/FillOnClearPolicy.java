@@ -33,7 +33,7 @@ public interface FillOnClearPolicy {
     
     public static interface Provider {
         FillOnClearPolicy getFillOnClearPolicy();
-        void setFillOnClearPolicy(FillOnClearPolicy fillerPolicy);
+        // void setFillOnClearPolicy(FillOnClearPolicy fillerPolicy);
     }
 
     public static abstract class AbstractImpl implements FillOnClearPolicy {

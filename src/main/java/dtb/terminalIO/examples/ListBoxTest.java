@@ -19,6 +19,7 @@ import dtb.terminalIO.core.TerminalScreen;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
+import dtb.terminalIO.events.OnRequestUpdateCanvasEventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
@@ -154,6 +155,8 @@ public class ListBoxTest {
            }
        };
        
+       eventBus.appendEventHandler(new OnRequestUpdateCanvasEventHandler(renderComponents));
+       
        
        eventBus.appendEventHandler( new HasValue.OnValueChangedEventHandler<String>(lb1) {
            
@@ -203,8 +206,6 @@ public class ListBoxTest {
        fm.addFocusable( lb2.asFocusable(), eventBus  );
        fm.addFocusable( lb3.asFocusable(), eventBus  );
        
-       
-       lb1_sc.setUpdateCanvas(renderComponents);
        lb1_sc.prependEventHandler( lb1.asFocusable() );
        SearchFunctionForScrollableComponent.addFinderToScrollable(lb1_sc);
 

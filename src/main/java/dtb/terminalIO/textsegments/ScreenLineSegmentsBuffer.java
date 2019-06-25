@@ -13,7 +13,7 @@ import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 
 /**
- * This is the primary (and default) implementation of  IScreenLineSegmentsBuffer.
+ * This is the primary (and default) implementation of IScreenLineSegmentsBuffer.
  */
 public class ScreenLineSegmentsBuffer implements Rectangle, IScreenLineSegmentsBuffer {
 
@@ -119,8 +119,8 @@ public class ScreenLineSegmentsBuffer implements Rectangle, IScreenLineSegmentsB
     public void mergeAtBounded(int row, int col, Rectangle bounds, IScreenLineSegmentsBuffer segmentsBuffer) {
         Position position = new Position.Simple(row, col);  
         ScreenLineSegment.UTIL.addSegmentsWithOffsetBounded( position, bounds,
-                                                               this.getSegments(), 
-                                                               segmentsBuffer.getSegments());
+                                                             this.getSegments(), 
+                                                             segmentsBuffer.getSegments());
     }
     
     
@@ -332,7 +332,5 @@ public class ScreenLineSegmentsBuffer implements Rectangle, IScreenLineSegmentsB
     public void fillRectWithChar(Color color, char fillChar, Rectangle bounds) {
         ScreenLineSegment.UTIL.fillRectWithChar(color, fillChar, bounds, getSegments());
     }
-
-
 
 }

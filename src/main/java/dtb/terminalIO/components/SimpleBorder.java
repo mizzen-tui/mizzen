@@ -17,7 +17,8 @@ import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
  * Used by other components to draw borders around themselves
  *
  */
-public class SimpleBorder extends BoundedComponent<SimpleBorder> implements HasTitleAndBorder<SimpleBorder> , ParentContainer {
+public class SimpleBorder extends BoundedComponent<SimpleBorder>
+        implements HasTitleAndBorder<SimpleBorder>, ParentContainer {
 
     private RectangleComponent border;
     private String title = null;
@@ -33,13 +34,13 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder> implements HasT
 
     public SimpleBorder(Color color, Position position, Dimension d) {
         super(color, position, d);
-        this.border = new RectangleComponent(color, position ,d);
+        this.border = new RectangleComponent(color, position, d);
         setFillOnClear(false);
     }
 
     public SimpleBorder(Color color, Dimension d) {
         super(color, d);
-        this.border = new RectangleComponent(color, Position.ZERO ,d);
+        this.border = new RectangleComponent(color, Position.ZERO, d);
         setFillOnClear(false);
     }
 
@@ -48,13 +49,12 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder> implements HasT
         this.border.setFillOnClear(fillOnClear);
         return this;
     }
-    
+
     public void resize(Dimension d) {
-	super.resize(d);
-	this.border.resize(d);
+        super.resize(d);
+        this.border.resize(d);
     }
-   
-    
+
     @Override
     public Position getPositionRelativeToParent(Component<?> child) {
         if (child == this.border) {
@@ -62,28 +62,29 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder> implements HasT
         }
         return null;
     }
-    
+
     @Override
     public void childResized(Component<?> child) {
         this.markAsDirty();
     }
-    
-    
+
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
         segments.merge(this.border.getSegmentsBuffer());
         if (this.getTitle() != null) {
-                segments.merge(makeChildComponent(()->new TextComponent(getTitleColor(), getRow(), getCol() + 1, getTitle())).getSegmentsBuffer());
+            segments.merge(
+                    makeChildComponent(() -> new TextComponent(getTitleColor(), getRow(), getCol() + 1, getTitle()))
+                            .getSegmentsBuffer());
         }
     }
 
     public String getTitle() {
         return title;
     }
-    
+
     public Color getTitleColor() {
         Color tColor = titleColor != null ? titleColor : getColor();
-        if (hilited ) {
+        if (hilited) {
             tColor = tColor.bold();
         }
         return tColor;
@@ -103,14 +104,14 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder> implements HasT
         this.title = title;
         return this;
     }
-    
+
     public SimpleBorder setTitle(String title) {
         return setTitle(null, title);
-}
+    }
 
     @Override
     public SimpleBorder setBorder(boolean hasBorder) {
-        if (!hasBorder) 
+        if (!hasBorder)
             throw new IllegalStateException("Cannnot turn off border");
         return this;
     }
@@ -120,7 +121,7 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder> implements HasT
         border.setColor(borderColors);
         return this;
     }
-    
+
     public Color getBorderColor() {
         return border.getColor();
     }

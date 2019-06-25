@@ -82,7 +82,7 @@ public class ScrollBarVertical extends BoundedComponent<ScrollBarVertical> {
         }
         
         if (b_height>0) {
-            segments.merge(makeChildComponent(()->new VerticalLine(color.bold(), this.getRow()+a_height, this.getCol(), b_height ).setVerticalLineChar('░')).getSegmentsBuffer());
+            segments.merge(makeChildComponent(()->new VerticalLine(color, this.getRow()+a_height, this.getCol(), b_height ).setVerticalLineChar('░')).getSegmentsBuffer());
         }
         
         if (c_height>0) {

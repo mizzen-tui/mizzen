@@ -3,6 +3,7 @@ package dtb.terminalIO.util;
 import java.io.IOException;
 
 import dtb.terminalIO.geom.Dimension;
+import dtb.terminalIO.util.linuxproc.ExecUtil;
 
 /**
  * Some terminal IO screen utility functions that use the linux stty 

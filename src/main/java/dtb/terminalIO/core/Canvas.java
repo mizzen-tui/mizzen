@@ -240,8 +240,6 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
         if (last_RequestShowCursorPosition != null) {
             backend.showCursorAt(last_RequestShowCursorPosition);
         }
-        
-
     }
     
     

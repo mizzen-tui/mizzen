@@ -264,12 +264,14 @@ public class DrawingBoardImpl implements DrawingBoard {
             Logging.info("TextComponent "+ name);
             return;
         }
+        
         if (c instanceof Composite) {
             ((Composite) c).clearAndRemoveAllChildren();
             Logging.info("clearAndRemoveAllChildren()" + name);
             autoRefresh();
             return;
         }
+        
         if (c instanceof BorderedComponent) {
             Component<?> child_c = ((BorderedComponent)c).getComponent();
             child_c.clear();
@@ -327,7 +329,10 @@ public class DrawingBoardImpl implements DrawingBoard {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
                 //String line = null;
                 
-                reader.lines().forEach( (line) -> { System.out.println("OUTSIDE " + line); new OnIdleEventEventHandler.OneTime((e)-> {System.out.println("INSIDE " + line);appendText(name, newLine + line);});}  );
+                reader.lines().forEach( (line) -> { 
+                	                     System.out.println("OUTSIDE " + line); 
+                	                     new OnIdleEventEventHandler.OneTime((e)-> {System.out.println("INSIDE " + line);
+                	                     appendText(name, newLine + line);});}  );
                 
 //                
 //                while ( (line = reader.readLine()) != null) {

@@ -16,7 +16,7 @@ public class MapChars {
     public void map(char key, char value) {
         charMAP.put(key, value);
     }
-    
+
     public void map(char[] mappings) {
         if (mappings == null) {
             throw new NullPointerException("mappings array was null!");
@@ -28,7 +28,7 @@ public class MapChars {
             map(mappings[i], mappings[i+1]);
         }
     }
-    
+
     public void mapAll(Map<Character, Character> mappedChars) {
         charMAP.putAll(mappedChars);
     }
@@ -89,16 +89,16 @@ public class MapChars {
 
         mapChars.mapAll(BlockChars.UTIL.getNICE_TO_BASIC()  );
         mapChars.mapAll(BrailleUtils.getBrailleToAsciiMapChars());
-        
-        
+
+
         System.out.println(" A = "   + mapChars.get('A'));
         System.out.println(" B = "   + mapChars.get('B'));
         System.out.println(" C = "   + mapChars.get('D'));
         System.out.println(" D = "   + mapChars.get('D'));
-        
-        
+
+
         System.out.println(mapChars.getMappedString("Hello there David"));
-        
+
         System.out.println(mapChars.getMappedString("Hello there Charles"));
         System.out.println(mapChars.getMappedString("Hello there Charles"));
         System.out.println(mapChars.getMappedString("⠆⠆⠁CCCAT in the HAT"));

@@ -29,22 +29,22 @@ import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 
-public class TextInput extends BoundedComponent<TextInput> implements HasValue<String>, ParentContainer , Focusable, EventHandlerContainer  {
+public class TextInput extends BoundedComponent<TextInput>
+        implements HasValue<String>, ParentContainer, Focusable, EventHandlerContainer {
 
     private TextComponent textRenderer;
-    private StringBuffer  buffer;
-    private Position      viewOffset  = Position.ZERO; // future use .. maybe ..
-    private Position      caret       = Position.ZERO;
-    private int           maxTextWidth;
+    private StringBuffer buffer;
+    private Position viewOffset = Position.ZERO; // future use .. maybe ..
+    private Position caret = Position.ZERO;
+    private int maxTextWidth;
 
     ConditionalEventHandler eventHandler;
-    ChainedEventHandler     chainedEventHandler;
+    ChainedEventHandler chainedEventHandler;
 
-    Focusable               focusable;
+    Focusable focusable;
 
-    private boolean       modeOverite = false;        // true means insertMode
+    private boolean modeOverite = false; // true means insertMode
 
-    
     public TextInput(Color color, int length) {
         super(color, new Dimension.Simple(1, length));
         init();
@@ -53,7 +53,7 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
     public TextInput(int length) {
         this(FGBGColors.DEFAULT, length);
     }
-    
+
     public TextInput(Color color, Dimension d) {
         super(color, d);
         init();
@@ -82,7 +82,7 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
         }
         return this;
     }
-    
+
     public TextInput setEmptyChar(char emptyChar) {
         super.setEmptyChar(emptyChar);
         if (this.textRenderer != null) {
@@ -95,7 +95,8 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
         this.buffer = new StringBuffer();
         this.caret = new Position.Simple(0, 0);
         this.setFillOnClear(true);
-        this.textRenderer = makeChildComponent( ()-> new TextComponent(TextInput.this.getColor(), TextInput.this.getRectangle(), TextInput.this.buffer.toString()));
+        this.textRenderer = makeChildComponent(() -> new TextComponent(TextInput.this.getColor(),
+                TextInput.this.getRectangle(), TextInput.this.buffer.toString()));
     }
 
     @Override
@@ -103,7 +104,6 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
         segments.merge(this.textRenderer.getSegmentsBuffer());
     }
 
-    
     @Override
     public Position getPositionRelativeToParent(Component<?> child) {
         if (child == this.textRenderer) {
@@ -111,13 +111,12 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
         }
         return null;
     }
-    
+
     @Override
     public void childResized(Component<?> child) {
         this.markAsDirty();
     }
-    
-    
+
     public void setText(String text) {
         if (text == null) {
             text = "";
@@ -145,7 +144,7 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
         setRectangle(new Rectangle.Simple(this.getPostion_TopLeft(), d));
         markAsDirty();
     }
-    
+
     public void appendText(String text) {
         int maxWidth = this.getWidth();
         if (this.buffer.length() >= maxWidth) {
@@ -167,8 +166,8 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
     }
 
     boolean caretEnd() {
-	int col = Math.min(this.getText().length()+1,this.getWidth())-1; 
-        this.caret = new Position.Simple(0,col);
+        int col = Math.min(this.getText().length() + 1, this.getWidth()) - 1;
+        this.caret = new Position.Simple(0, col);
         markAsDirty();
         return true;
     }
@@ -252,7 +251,7 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
 
     void raiseEventOnChanged(EventBus eventBus, Supplier<Boolean> changeTextAction) {
         if (changeTextAction.get()) {
-           eventBus.raiseEvent(new HasValue.ValueChangedEvent<>(this));
+            eventBus.raiseEvent(new HasValue.ValueChangedEvent<>(this));
         }
     }
 
@@ -269,7 +268,7 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
         }
         return this;
     }
-    
+
     public TextInput prependEventHandler(ConditionalEventHandler eventHandler) {
         this.getChainedEventHandler().prependEventHandler(eventHandler);
         return this;
@@ -279,14 +278,12 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
         this.getChainedEventHandler().appendEventHandler(eventHandler);
         return this;
     }
-    
-    
+
     public TextInput removeEventHandler(ConditionalEventHandler eventHandler) {
         this.getChainedEventHandler().removeEventHandler(eventHandler);
         return this;
     }
-    
-    
+
     @Override
     public void setFocus(boolean focus, EventBus eventBus) {
         asFocusable().setFocus(focus, eventBus);
@@ -296,31 +293,32 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
     public boolean hasFocus() {
         return asFocusable().hasFocus();
     }
-    
-    
+
     private ConditionalEventHandler getEventHandler() {
-        if ( this.eventHandler == null) {
+        if (this.eventHandler == null) {
             this.eventHandler = buildEventHandler();
         }
         return this.eventHandler;
     }
 
     private ChainedEventHandler getChainedEventHandler() {
-        if ( this.chainedEventHandler == null) {
+        if (this.chainedEventHandler == null) {
             getEventHandler();
         }
         return this.chainedEventHandler;
     }
-    
+
     private ConditionalEventHandler buildEventHandler() {
 
         this.chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
 
-        appendEventHandler(new KeyInputEventHandler(Keys.BACKSPACE_KEYSTROKE, (te) -> raiseEventOnChanged(te.getEventBus(), () -> deleteCharBeforeCaret())));
-        
-        appendEventHandler(new KeyInputEventHandler(Keys.DELETE_KEYSTROKE, (te) -> raiseEventOnChanged(te.getEventBus(), () -> deleteCharAtCaret() )));
+        appendEventHandler(new KeyInputEventHandler(Keys.BACKSPACE_KEYSTROKE,
+                (te) -> raiseEventOnChanged(te.getEventBus(), () -> deleteCharBeforeCaret())));
 
-        appendEventHandler(new KeyInputEventHandler(Keys.LEFT_KEYSTROKE, (te)->caret.getCol() > 0,(te) -> {
+        appendEventHandler(new KeyInputEventHandler(Keys.DELETE_KEYSTROKE,
+                (te) -> raiseEventOnChanged(te.getEventBus(), () -> deleteCharAtCaret())));
+
+        appendEventHandler(new KeyInputEventHandler(Keys.LEFT_KEYSTROKE, (te) -> caret.getCol() > 0, (te) -> {
             if (caret.getCol() > 0) {
                 caretOffsetAdd(0, -1);
             }
@@ -328,16 +326,15 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
         }));
 
         appendEventHandler(new KeyInputEventHandler(Keys.RIGHT_KEYSTROKE,
-                (te) ->caret.getCol() < getWidth() && caret.getCol() < getText().length(),
-                (te) -> {
-            if (caret.getCol() < getWidth() && caret.getCol() < getText().length()) {
-                // TODO: This will have to be fixed when text scrolling
-                // in place
-                caretOffsetAdd(0, 1);
-                markAsDirty();
-            }
-            return;
-        }));
+                (te) -> caret.getCol() < getWidth() && caret.getCol() < getText().length(), (te) -> {
+                    if (caret.getCol() < getWidth() && caret.getCol() < getText().length()) {
+                        // TODO: This will have to be fixed when text scrolling
+                        // in place
+                        caretOffsetAdd(0, 1);
+                        markAsDirty();
+                    }
+                    return;
+                }));
 
         appendEventHandler(new KeyInputEventHandler(Keys.ENTER_KEYSTROKE, (te) -> {
             // for now ... do nothing - but maybe later go to next focus? (new concept)
@@ -345,16 +342,18 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
             return;
         }));
 
-        appendEventHandler(new KeyInputEventHandler(Keys.HOME_KEYSTROKE, (te) -> raiseEventOnChanged(te.getEventBus(), () -> caretHome())));
+        appendEventHandler(new KeyInputEventHandler(Keys.HOME_KEYSTROKE,
+                (te) -> raiseEventOnChanged(te.getEventBus(), () -> caretHome())));
 
-        appendEventHandler(new KeyInputEventHandler(Keys.END_KEYSTROKE, (te) -> raiseEventOnChanged(te.getEventBus(), () -> caretEnd())));
+        appendEventHandler(new KeyInputEventHandler(Keys.END_KEYSTROKE,
+                (te) -> raiseEventOnChanged(te.getEventBus(), () -> caretEnd())));
 
         appendEventHandler(new KeyInputEventHandler((te) -> {
             KeyEvent ke = (KeyEvent) te;
             if (ke.getKeyStroke().getKeySequenceLength() == 1) {
-        	if (ke.isKeyStroke(Keys.ESC_KEYSTROKE)) {
-        	    return false; // TODO:  Is this correct?  decide later (data drive this maybe?)
-        	}
+                if (ke.isKeyStroke(Keys.ESC_KEYSTROKE)) {
+                    return false; // TODO: Is this correct? decide later (data drive this maybe?)
+                }
                 if (ke.getKeyStroke().isCtrlKey() || ke.getKeyStroke().isAltKey()) {
                     return false;
                 }
@@ -379,33 +378,31 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
         }));
 
         ConditionalEventHandler complexKeyHandler = chainedEventHandler.asConditionalEventHandler();
-        
+
         return complexKeyHandler;
-        
+
     }
 
-    
     private void requestShowCursor(EventBus eventBus) {
         // todo - need manage a textinput caret (pos) -- not just append
 
         // calc where cursor should be relative to text component + its caret position
 
-	Position canvasOffset = Component.UTIL.getCanvasOffsetFor(TextInput.this);
-	
-	if (canvasOffset == null) {
-	    throw new IllegalStateException("requestShowCursor(): Offset not calculated");
-	}
-	
+        Position canvasOffset = Component.UTIL.getCanvasOffsetFor(TextInput.this);
+
+        if (canvasOffset == null) {
+            throw new IllegalStateException("requestShowCursor(): Offset not calculated");
+        }
+
         Position cursorPos = canvasOffset.offsetAdd(caret);
-        
+
         eventBus.raiseEvent(new RequestShowCursorEvent(TextInput.this, cursorPos));
     }
 
     private void requestHideCursor(EventBus eventBus) {
         eventBus.raiseEvent(new RequestHideCursorEvent(TextInput.this));
     }
-    
-    
+
     private Focusable asFocusable() {
         if (focusable == null) {
             this.focusable = new DefaultFocusableBehaviour.Simple(this) {
@@ -430,23 +427,21 @@ public class TextInput extends BoundedComponent<TextInput> implements HasValue<S
     }
 
     public void requestFocus(TerminalEvent<?> te) {
-        te.getEventBus().raiseEvent( new RequestFocusEvent(this) );
+        te.getEventBus().raiseEvent(new RequestFocusEvent(this));
     }
 
     public void requestReleaseFocus(TerminalEvent<?> te) {
-        te.getEventBus().raiseEvent( new RequestReleaseFocusEvent(this) );
+        te.getEventBus().raiseEvent(new RequestReleaseFocusEvent(this));
     }
-    
+
     public void requestFocus(EventBus eventBus) {
-        eventBus.raiseEvent( new RequestFocusEvent(this) );
+        eventBus.raiseEvent(new RequestFocusEvent(this));
     }
 
     @Override
     public String toString() {
-        return "TextInput [buffer=" + buffer.toString() + "]" + "[row=" + getRow() + ", lcol" + getCol() + ", rcol=" + getRightMostCol() + " width="
-                + getWidth() + ", height=" + getHeight() + "]" ;
+        return "TextInput [buffer=" + buffer.toString() + "]" + "[row=" + getRow() + ", lcol" + getCol() + ", rcol="
+                + getRightMostCol() + " width=" + getWidth() + ", height=" + getHeight() + "]";
     }
 
-    
-    
 }

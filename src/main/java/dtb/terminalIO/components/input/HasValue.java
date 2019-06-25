@@ -4,7 +4,6 @@ import java.util.function.Predicate;
 
 import dtb.terminalIO.events.AbstractTimedRequestedController;
 import dtb.terminalIO.events.ConditionalEventHandler;
-import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;

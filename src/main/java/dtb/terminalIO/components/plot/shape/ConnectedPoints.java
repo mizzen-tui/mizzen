@@ -19,12 +19,12 @@ public class ConnectedPoints implements Shape {
 
     public ConnectedPoints() {
     }
-    
+
     public ConnectedPoints(boolean closedShape) {
         this.closedShape = closedShape;
     }
-    
-    
+
+
     public void addPoint(int x, int y) {
         points.add(new PointPlot(x,y));
     }

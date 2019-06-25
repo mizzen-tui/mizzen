@@ -29,7 +29,6 @@ import dtb.terminalIO.textsegments.ScreenLineSegment.UTIL.SegmentsFromStringResu
  *   
  * Translation .. the colors will be preserved.
  * 
- * 
  */
 public class TextComponent extends BoundedComponent<TextComponent> {
     private String text;            // will be non-null only if we have color control codes.

@@ -13,20 +13,16 @@ import dtb.terminalIO.textsegments.ScreenLineSegment.SegmentImpl;
  */
 public class VerticalLine extends BoundedComponent<VerticalLine> {
 
-    private char verticalLineChar;
-    
+    private char verticalLineChar = 0;
+
     public VerticalLine(Color color, Position pos, int len) {
-	super(color, pos, new Dimension.Simple(len, 1));
-	this.setVerticalLineChar( this.getBlockChars().getVERTICAL_LINE() );
+        super(color, pos, new Dimension.Simple(len, 1));
+        //this.setVerticalLineChar(this.getBlockChars().getVERTICAL_LINE());
     }
 
     public VerticalLine(Color color, int row, int col, int len) {
-	super(color, new Position.Simple(row, col), new Dimension.Simple(len, 1));
-        this.setVerticalLineChar( this.getBlockChars().getVERTICAL_LINE() );
-    }
-
-    public char getVerticalLineChar() {
-        return verticalLineChar;
+        super(color, new Position.Simple(row, col), new Dimension.Simple(len, 1));
+        //this.setVerticalLineChar(this.getBlockChars().getVERTICAL_LINE());
     }
 
     public VerticalLine setVerticalLineChar(char verticalLineChar) {
@@ -36,10 +32,11 @@ public class VerticalLine extends BoundedComponent<VerticalLine> {
 
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
-	int bottomRow = this.getBottomMostRow();
-	for (int row = this.getRow(); row <= bottomRow; row++) {
-	    ScreenLineSegment dot = new SegmentImpl(color, new CursorPos(row, getCol()), -1, String.valueOf(getVerticalLineChar()));
-	    segments.add(dot);
-	}
+        int bottomRow = this.getBottomMostRow();
+        String vertCharStr = String.valueOf(this.verticalLineChar != 0 ? this.verticalLineChar : this.getBlockChars().getVERTICAL_LINE());
+        for (int row = this.getRow(); row <= bottomRow; row++) {
+            ScreenLineSegment dot = new SegmentImpl(color, new CursorPos(row, getCol()), -1, vertCharStr);
+            segments.add(dot);
+        }
     }
 }

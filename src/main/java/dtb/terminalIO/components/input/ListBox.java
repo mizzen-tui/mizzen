@@ -361,7 +361,6 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>  implements HasVal
         itemsContainer.setBounds( null ); // forces recalc of dimensions
         itemsContainer.setBounds( new Dimension.Simple( itemsContainer.getHeight()+padding , itemsContainer.getWidth()+padding) );
         selected = -1;
-        
     }
     
     public void setItems( List<DisplayableValue<T>> displayableItems) {
@@ -544,7 +543,6 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>  implements HasVal
         
         return new DefaultFocusableBehaviour.Simple(this, chainedHandler.asConditionalEventHandler()) {
 
-            
             @Override
             public void setFocus(boolean focus, EventBus eventBus) {
                 super.setFocus(focus, eventBus);

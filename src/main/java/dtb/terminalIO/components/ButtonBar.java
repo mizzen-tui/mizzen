@@ -8,6 +8,7 @@ import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
@@ -27,8 +28,6 @@ public class ButtonBar extends Composite implements FocusManager {
     ChainedEventHandler chainedEventHandler;
     ConditionalEventHandler chainedEventHandlerAsConditionalEventHandler;
     
-    Runnable updateCanvas = null;
-
     private Focusable meAsFocusable; 
     private Focusable current;
 
@@ -44,10 +43,8 @@ public class ButtonBar extends Composite implements FocusManager {
         this(FGBGColors.NO_COLOR_SPECIFIED);
     }
     
-    public void updateCanvas() {
-        if (updateCanvas != null) {
-            updateCanvas.run();
-        }
+    private void updateCanvas(EventBus eventBus) {
+        eventBus.raiseEvent(new RequestUpdateCanvasEvent(this) );
     }
 
     public void removeChildren() {
@@ -78,7 +75,7 @@ public class ButtonBar extends Composite implements FocusManager {
                                                         @Override
                                                         public void handle(TerminalEvent<?> te) {
                                                             super.handle(te);
-                                                            updateCanvas();
+                                                            updateCanvas(te.getEventBus());
                                                         }
                                                     };
         addEventHandler(handler);
@@ -86,22 +83,14 @@ public class ButtonBar extends Composite implements FocusManager {
         return handler;
     }
     
-    public void setUpdateCanvas(Runnable _updateCanvas) {
-        this.updateCanvas = _updateCanvas;
-    }
-    
-    
     public void addButton(String buttonText, KeyStroke hotKey, EventHandler handler) {
-        
         addComponent(new Button(buttonText), hotKey, handler);  // <-- could be a simple text Component
-        
     }
 
     public void addComponent(Component<?> component, KeyStroke hotKey, EventHandler handler) {
         
         BlockChars blockChars = this.getBlockChars();
 
-        
         if (count == 0) {
             horizontalPanel.add(new CharComponent(this.getColor(), blockChars.getVERTICAL_LEFT()));
         } else {
@@ -149,10 +138,13 @@ public class ButtonBar extends Composite implements FocusManager {
 
     @Override
     public void hilite() {
-	super.hilite();
+        super.hilite();
 	
         Traverser<Component<?>> componentTraverser = new Traverser<Component<?>>();
-        Visitor<Component<?>> hilite = (c)-> {new HiliterAdapter<Component<?>>(c).getHiliter().hilite(); return Traverser.CONTINUE_TRAVERSE;};
+        Visitor<Component<?>> hilite = (c)-> {
+                                                new HiliterAdapter<Component<?>>(c).getHiliter().hilite(); 
+                                                return Traverser.CONTINUE_TRAVERSE;
+                                             };
         componentTraverser.traverse(horizontalPanel, (c)-> hilite.visit(c) );
 
         this.markAsDirty();
@@ -160,13 +152,13 @@ public class ButtonBar extends Composite implements FocusManager {
 
     @Override
     public void unHilite() {
-	super.unHilite();
-	horizontalPanel.unHilite();
-	
+        super.unHilite();
+        horizontalPanel.unHilite();
+
         Traverser<Component<?>> componentTraverser = new Traverser<Component<?>>();
         Visitor<Component<?>> unHilite = (c)-> {new HiliterAdapter<Component<?>>(c).getHiliter().unHilite(); return Traverser.CONTINUE_TRAVERSE;};
         componentTraverser.traverse(horizontalPanel, (c)-> unHilite.visit(c) );
-	
+
         this.markAsDirty();
     }
 
@@ -189,7 +181,7 @@ public class ButtonBar extends Composite implements FocusManager {
     public void setChildAsCurrentFocus(Focusable focusable, EventBus eventBus) {
         Focusable prevCurrent = this.current;
         this.current = null;
-        FocusManager.UTIL.setNewFocusable(focusable, prevCurrent, eventBus, (f)->updateCanvas());
+        FocusManager.UTIL.setNewFocusable(focusable, prevCurrent, eventBus, (f)-> updateCanvas(eventBus) );
         this.current = focusable;
     }
     

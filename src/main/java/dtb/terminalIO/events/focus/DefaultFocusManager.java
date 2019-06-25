@@ -18,28 +18,28 @@ import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.traverse.HasChildren;
 
-public class DefaultFocusManager implements FocusManager,  HasChildren<Focusable> {
+public class DefaultFocusManager implements FocusManager, HasChildren<Focusable> {
 
     private List<Focusable> eventConsumers;
     private Focusable current;
-    
+
     private KeyStroke prevKeyStroke = Keys.UP_KEYSTROKE;
     private KeyStroke nextKeyStroke = Keys.DOWN_KEYSTROKE;
     private Consumer<Focusable> onFocusChanged;
-    
+
     ConditionalEventHandler meAsEventHandler;
-    Focusable               meAsFocusable;
+    Focusable meAsFocusable;
 
     public DefaultFocusManager() {
         eventConsumers = new ArrayList<Focusable>();
     }
 
     public DefaultFocusManager(KeyStroke prevKeyStroke, KeyStroke nextKeyStroke) {
-	this();
-	this.prevKeyStroke = prevKeyStroke;
+        this();
+        this.prevKeyStroke = prevKeyStroke;
         this.nextKeyStroke = nextKeyStroke;
     }
-    
+
     public DefaultFocusManager(KeyStroke nextKeyStroke) {
         this(null, nextKeyStroke);
     }
@@ -54,20 +54,21 @@ public class DefaultFocusManager implements FocusManager,  HasChildren<Focusable
     }
 
     private Focusable getCurrentOrSet(EventBus eventBus) {
-	if (current == null && eventConsumers.size()>0) {
-	    setChildAsCurrentFocus(eventConsumers.get(0), eventBus);
-	}
-	return this.current;
+        if (current == null && eventConsumers.size() > 0) {
+            setChildAsCurrentFocus(eventConsumers.get(0), eventBus);
+        }
+        return this.current;
     }
-    
+
     public void setChildAsCurrentFocus(Focusable focusable, EventBus eventBus) {
 
-        if ( ! eventConsumers.contains(focusable) ) {
-            throw new IllegalArgumentException("DefaultFocusManager:  Cannot set a focusable that has not been first aded to the DefaultFocusManager. ");
+        if (!eventConsumers.contains(focusable)) {
+            throw new IllegalArgumentException(
+                    "DefaultFocusManager:  Cannot set a focusable that has not been first aded to the DefaultFocusManager. ");
         }
 
         FocusManager.UTIL.setNewFocusable(focusable, this.current, eventBus, onFocusChanged);
-	this.current = focusable;
+        this.current = focusable;
     }
 
     public int size() {
@@ -75,25 +76,25 @@ public class DefaultFocusManager implements FocusManager,  HasChildren<Focusable
     }
 
     private Focusable getPrev(EventBus eventBus) {
-        if (size()<1) {
+        if (size() < 1) {
             return null;
         }
-        int index = eventConsumers.indexOf( getCurrentOrSet(eventBus)  );
+        int index = eventConsumers.indexOf(getCurrentOrSet(eventBus));
         if (index < 1) {
-            return eventConsumers.get(size()-1);
+            return eventConsumers.get(size() - 1);
         }
         return eventConsumers.get(index - 1);
     }
 
     private Focusable getNext(EventBus eventBus) {
-        if (size()<1) {
+        if (size() < 1) {
             return null;
         }
-        if (size()<2) {
+        if (size() < 2) {
             return null;
         }
-        int index = eventConsumers.indexOf( getCurrentOrSet(eventBus)  );
-        if (index < 0 || index == size()-1) {
+        int index = eventConsumers.indexOf(getCurrentOrSet(eventBus));
+        if (index < 0 || index == size() - 1) {
             return eventConsumers.get(0);
         }
         return eventConsumers.get(index + 1);
@@ -110,15 +111,14 @@ public class DefaultFocusManager implements FocusManager,  HasChildren<Focusable
             return null;
         }
         return this;
-    }    
-    
+    }
+
     private ConditionalEventHandler getEventHandler() {
-        if ( this.meAsEventHandler == null) {
+        if (this.meAsEventHandler == null) {
             this.meAsEventHandler = buildEventHandler();
         }
         return this.meAsEventHandler;
     }
-
 
     private ConditionalEventHandler buildEventHandler() {
 
@@ -158,7 +158,7 @@ public class DefaultFocusManager implements FocusManager,  HasChildren<Focusable
                         return true;
                     } else if (nextKeyStroke != null && ke.isKeyStroke(nextKeyStroke)) {
                         return true;
-                    } 
+                    }
                 }
 
                 Focusable focusable = getCurrentOrSet(te.getEventBus());
@@ -169,72 +169,71 @@ public class DefaultFocusManager implements FocusManager,  HasChildren<Focusable
             }
         };
 
-	return new ConditionalEventHandler.Impl(canHandlePredicate, (te) -> {
+        return new ConditionalEventHandler.Impl(canHandlePredicate, (te) -> {
             if (IS_KEYPRESS.test(te)) {
-        	    KeyEvent ke = (KeyEvent) te;
-        	    
-        	    if (prevKeyStroke != null && ke.isKeyStroke(prevKeyStroke)) {
-        		Focusable prev = getPrev(te.getEventBus());
-        		if (prev != null) {
-        		    setChildAsCurrentFocus(prev, te.getEventBus());
-        		    return;
-        		}
-        	    } else if (nextKeyStroke != null && ke.isKeyStroke(nextKeyStroke)) {
-        		Focusable next = getNext(te.getEventBus());
-        		if (next != null) {
-        		    setChildAsCurrentFocus(next, te.getEventBus());
-        		    return;
-        		}
-        	    } 
+                KeyEvent ke = (KeyEvent) te;
+
+                if (prevKeyStroke != null && ke.isKeyStroke(prevKeyStroke)) {
+                    Focusable prev = getPrev(te.getEventBus());
+                    if (prev != null) {
+                        setChildAsCurrentFocus(prev, te.getEventBus());
+                        return;
+                    }
+                } else if (nextKeyStroke != null && ke.isKeyStroke(nextKeyStroke)) {
+                    Focusable next = getNext(te.getEventBus());
+                    if (next != null) {
+                        setChildAsCurrentFocus(next, te.getEventBus());
+                        return;
+                    }
+                }
             }
 
-	    Focusable focusable = getCurrentOrSet(te.getEventBus());
-	    if (focusable != null) {
-		focusable.handle(te);
-	    }
-	});
+            Focusable focusable = getCurrentOrSet(te.getEventBus());
+            if (focusable != null) {
+                focusable.handle(te);
+            }
+        });
     }
 
     public void addFocusable(Focusable focusable, EventBus eventBus) {
-	eventConsumers.add(focusable);
-	if (eventConsumers.size() == 1) {
-	    setChildAsCurrentFocus(focusable, eventBus);
-	}
+        eventConsumers.add(focusable);
+        if (eventConsumers.size() == 1) {
+            setChildAsCurrentFocus(focusable, eventBus);
+        }
     }
 
     public void addFocusable(ToFocusable focusable, EventBus eventBus) {
-        addFocusable( focusable.asFocusable(), eventBus );
+        addFocusable(focusable.asFocusable(), eventBus);
     }
-    
-    
+
     private Focusable getAsFocusable() {
-        
+
         if (meAsFocusable == null) {
-            
+
             ConditionalEventHandler event_handler = DefaultFocusManager.this;
-            
+
             meAsFocusable = new DefaultFocusableBehaviour() {
-    
+
                 @Override
                 public void setFocus(boolean focus, EventBus eventBus) {
                     super.setFocus(focus, eventBus);
                     getCurrentOrSet(eventBus).setFocus(focus, eventBus);
                 }
-                
+
                 @Override
                 public EventHandler canHandle(TerminalEvent<?> te) {
                     return event_handler.canHandle(te);
                 }
-    
+
                 @Override
                 public void handle(TerminalEvent<?> te) {
                     event_handler.handle(te);
                 }
-                
+
             };
         }
         return meAsFocusable;
-        
+
     }
 
     @Override

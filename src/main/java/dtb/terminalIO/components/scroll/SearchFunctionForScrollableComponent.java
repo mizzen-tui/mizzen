@@ -13,8 +13,12 @@ import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.OnIdleEventEventHandler;
+import dtb.terminalIO.events.RequestHideCursorEvent;
+import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.focus.RequestReleaseFocusEvent;
 import dtb.terminalIO.events.focus.ToFocusable;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
@@ -38,21 +42,27 @@ public class SearchFunctionForScrollableComponent extends HorizontalPanel {
     public SearchFunctionForScrollableComponent(Color color, ScrollableComponent viewComp) {
         super(color);
         this.viewComp = viewComp;
-        this.find = new TextComponent(SearchFunctionForScrollableComponent.this.getColor(), " " + SearchFunctionForScrollableComponent.this.getColor().bold().asString()+"^F"+SearchFunctionForScrollableComponent.this.getColor().asString()+"ind");
+        this.find = new TextComponent(SearchFunctionForScrollableComponent.this.getColor(), 
+                                      " " + SearchFunctionForScrollableComponent.this.getColor().bold().asString()+"^F"+SearchFunctionForScrollableComponent.this.getColor().asString()+"ind");
         this.add(find);
     }
     
     
     public void hilite() {
-	super.hilite();
+        super.hilite();
         if (findTextInput != null) {
-            this.findTextInput.setColor(SearchFunctionForScrollableComponent.this.getColor().invert());
-            this.findTextInput.setEmptyColor(SearchFunctionForScrollableComponent.this.getColor().invert());
+            this.findTextInput.setColor(textInputSelectedColor());
+            this.findTextInput.setEmptyColor(textInputSelectedColor());
         }
     }
 
+
+    private Color textInputSelectedColor() {
+        return SearchFunctionForScrollableComponent.this.getColor().invert();
+    }
+
     public void unHilite() {
-	super.unHilite();
+        super.unHilite();
         if (findTextInput != null) {
             this.findTextInput.setColor(SearchFunctionForScrollableComponent.this.getColor());
             this.findTextInput.setEmptyColor(SearchFunctionForScrollableComponent.this.getColor());
@@ -61,37 +71,50 @@ public class SearchFunctionForScrollableComponent extends HorizontalPanel {
 
     
     void setInFindMode(TerminalEvent<?> te) {
-	setInFindMode(te, findTextInput == null);
+        setInFindMode(te, findTextInput == null);
     }
 
+    private void removeFindTextInput(EventBus eventBus) {
+        if (SearchFunctionForScrollableComponent.this.findTextInput != null) {
+            TextInput textInput = SearchFunctionForScrollableComponent.this.findTextInput;
+            SearchFunctionForScrollableComponent.this.findTextInput = null;
+            SearchFunctionForScrollableComponent.this.lastFindText = textInput.getText();
+            eventBus.raiseEvent(new RequestReleaseFocusEvent(textInput));
+            eventBus.raiseEvent(new RequestHideCursorEvent(textInput));
+            viewComp.removeEventHandler(findTextInputEventHandler);
+            SearchFunctionForScrollableComponent.this.findTextInputEventHandler = null;
+            if (SearchFunctionForScrollableComponent.this.finishSearchInputEventHandler != null) {
+                viewComp.removeEventHandler(SearchFunctionForScrollableComponent.this.finishSearchInputEventHandler);
+                SearchFunctionForScrollableComponent.this.finishSearchInputEventHandler = null;
+            }
+            SearchFunctionForScrollableComponent.this.remove(textInput);
+            viewComp.refreshFooter();
+            eventBus.raiseEvent(new RequestUpdateCanvasEvent(this) );
+        }
+    }
+    
+    
     void setInFindMode(TerminalEvent<?> te, boolean enable) {
+        
         if (enable) {
-            findTextInput = new TextInput(SearchFunctionForScrollableComponent.this.getColor().invert(), maxSearchTextWidth) {
+            
+            attachComponentWithHilightedTextIfNeeded(viewComp, this);
+
+            findTextInput = new TextInput(textInputSelectedColor(), maxSearchTextWidth) {
                 @Override
                 public void setFocus(boolean focus, EventBus eventBus) {
                     super.setFocus(focus, eventBus);
                     if (! focus) {
-                        if (SearchFunctionForScrollableComponent.this.findTextInput != null) {
-                            SearchFunctionForScrollableComponent.this.lastFindText = findTextInput.getText();
-                            viewComp.removeEventHandler(findTextInputEventHandler);
-                            SearchFunctionForScrollableComponent.this.findTextInputEventHandler = null;
-                            if (SearchFunctionForScrollableComponent.this.finishSearchInputEventHandler != null) {
-                                viewComp.removeEventHandler(SearchFunctionForScrollableComponent.this.finishSearchInputEventHandler);
-                                SearchFunctionForScrollableComponent.this.finishSearchInputEventHandler = null;
-                            }
-                            SearchFunctionForScrollableComponent.this.remove(findTextInput);
-                            SearchFunctionForScrollableComponent.this.findTextInput = null;
-                            viewComp.refreshFooter();
-                        }
+                        removeFindTextInput(eventBus);
                     }
                 }
             };
-            this.findTextInput.setEmptyColor(SearchFunctionForScrollableComponent.this.getColor().invert());
+            this.findTextInput.setEmptyColor(textInputSelectedColor());
             if (lastFindText != null) {
-        	// should I trigger the search here?
+            // should I trigger the search here?
                findTextInput.setText(lastFindText);
             } else {
-        	findTextInput.setText("");
+            findTextInput.setText("");
             }
             this.add(findTextInput);
             // FIXME:  1) doing a prepend causes hotkeys on viewComp1 to be blocked including CTRL-F
@@ -110,12 +133,13 @@ public class SearchFunctionForScrollableComponent extends HorizontalPanel {
                     }
                     setInFindMode(te, false);
                     srcOfText.clearHilights();
+                    te.getEventBus().appendEventHandler( new OnIdleEventEventHandler.OneTime( (te1)-> removeFindTextInput(te1.getEventBus())));
                     lastFindText = null;
                 }
             }));
-            
-            
-            titleUpdater =  new HasValue.TimerControlledOnValueChangedEventHandler<String>(findTextInput) {
+
+
+            titleUpdater = new HasValue.TimerControlledOnValueChangedEventHandler<String>(findTextInput) {
                 @Override
                 public void valueChanged(HasValue<String> source) {
                     String newValue = source.getValue();
@@ -128,7 +152,7 @@ public class SearchFunctionForScrollableComponent extends HorizontalPanel {
                     if (newValue == null || newValue.length() < minSearchLength) {
                         return;
                     }
-                    
+
                     Collection<Rectangle> searchResult = SegmentsSearchUtils.searchTextInSegmentsAll(srcOfText.getSegmentsBuffer(), newValue);
                     
                     if (searchResult != null && searchResult.size() > 0) {
@@ -150,8 +174,8 @@ public class SearchFunctionForScrollableComponent extends HorizontalPanel {
         } else { 
             findTextInput.requestReleaseFocus(te);
             if (titleUpdater != null) {
-        	te.getEventBus().removeEventHandler(titleUpdater);
-        	titleUpdater = null;
+            te.getEventBus().removeEventHandler(titleUpdater);
+            titleUpdater = null;
                 viewComp.setTitle("");
             }
         }
@@ -159,34 +183,46 @@ public class SearchFunctionForScrollableComponent extends HorizontalPanel {
     
     
     public static void addFinderToScrollable(ScrollableComponent viewComp,  KeyStroke hotKey, int maxSearchTextWidth) {
-	
-	SearchFunctionForScrollableComponent finder = new SearchFunctionForScrollableComponent(viewComp.getColor(), viewComp);
-	finder.maxSearchTextWidth = maxSearchTextWidth;
+    
+        SearchFunctionForScrollableComponent finder = new SearchFunctionForScrollableComponent(viewComp.getColor(), viewComp);
+        finder.maxSearchTextWidth = maxSearchTextWidth;
 
-	if ( ! (viewComp.getComponentBeingViewed() instanceof ComponentWithHilightedText)) {
-	    
-	    Component<?> componentBeingViewed = viewComp.getComponentBeingViewed();
-	    ComponentWithHilightedText hilitingComponent = new ComponentWithHilightedText(componentBeingViewed.getColor());
-	    
-	    if (componentBeingViewed instanceof Focusable) {
-	        hilitingComponent.setFocusable((Focusable)componentBeingViewed);
-	    } else if (componentBeingViewed instanceof ToFocusable) {
-                hilitingComponent.setFocusable(((ToFocusable)componentBeingViewed).asFocusable());
-	    }
-	    
-	    hilitingComponent.add(componentBeingViewed);
-	    viewComp.setComponentBeingViewed(hilitingComponent);
-	    
-	}
-	
-	// at this point child being viewed is a ComponentWithHilightedText
-	
-	finder.srcOfText = (ComponentWithHilightedText)viewComp.getComponentBeingViewed();
-	
         viewComp.addFooterButton(finder, hotKey, (te)->{
-            finder.setInFindMode(te);
-            viewComp.refreshFooter();
-        });
+                                                           finder.setInFindMode(te);
+                                                           viewComp.refreshFooter();
+                                                        });
+    }
+
+
+    private static void attachComponentWithHilightedTextIfNeeded(ScrollableComponent viewComp,
+            SearchFunctionForScrollableComponent finder) {
+        
+        if (finder.srcOfText != null) {
+            return; // all done
+        }
+        
+        if ( ! (viewComp.getComponentBeingViewed() instanceof ComponentWithHilightedText)) {
+            
+            Component<?> componentBeingViewed = viewComp.getComponentBeingViewed();
+            ComponentWithHilightedText hilitingComponent = new ComponentWithHilightedText(componentBeingViewed.getColor());
+            
+            hilitingComponent.setFillOnClear( false );
+            
+            
+            if (componentBeingViewed instanceof Focusable) {
+                hilitingComponent.setFocusable((Focusable)componentBeingViewed);
+            } else if (componentBeingViewed instanceof ToFocusable) {
+                hilitingComponent.setFocusable(((ToFocusable)componentBeingViewed).asFocusable());
+            }
+            
+            hilitingComponent.add(componentBeingViewed);
+            viewComp.setComponentBeingViewed(hilitingComponent);
+            
+        }
+        
+        // at this point child being viewed is a ComponentWithHilightedText
+
+        finder.srcOfText = (ComponentWithHilightedText)viewComp.getComponentBeingViewed();
     }
     
     public static void addFinderToScrollable(ScrollableComponent viewComp,  KeyStroke hotKey) {

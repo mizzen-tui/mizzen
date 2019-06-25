@@ -2,6 +2,8 @@ package dtb.terminalIO.textsegments;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 import dtb.terminalIO.components.CanResize;
 import dtb.terminalIO.components.DirtyFlag;
@@ -137,10 +139,28 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
     }
 
     private void populateViewFromSource() {
+    	
+    	
         this.clear();
         Rectangle bounds = rectangeFromOffsetAndDimension();
+
         Collection<ScreenLineSegment> segments = this.sourceSegments.getSegmentsBuffer().getSegments();
 
+        if (segments instanceof TreeSet) {
+        	TreeSet<ScreenLineSegment> ts = (TreeSet<ScreenLineSegment>) segments;
+        	ScreenLineSegment first = ScreenLineSegment.UTIL.getAtCol(ts, bounds.getRow(), bounds.getCol());
+        	if (first != null) {
+	        	ScreenLineSegment last = ScreenLineSegment.UTIL.getAtCol(ts, bounds.getBottomMostRow(), bounds.getRightMostCol());
+	        	if (last != null) {
+	        		long bStart = System.currentTimeMillis();
+	        	   //throw new IllegalStateException("WORKED!!!");
+	        		//  really slow!!!!  need to find another way to get subset
+	        	   segments = ts.subSet(first, true, last, true);
+	        	}
+        	}
+        }
+        
+        
         // TODO:   This loop below is crazy inefficient
         //
         //         Need to inspect segments type ( if treeset) then be smart about how to
@@ -150,19 +170,33 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
 
         int topRow = bounds.getRow();
         int bottomRow = bounds.getBottomMostRow();
+        int leftCol = bounds.getCol();
+        int rightCol = bounds.getRightMostCol();
 
         for (ScreenLineSegment sourceSegment : segments) {
-            if (sourceSegment.getRow()< topRow) {
+        	int segmentRow = sourceSegment.getRow();
+            if (segmentRow < topRow) {
                 continue;
             }
-            if (Rectangle.UTIL.hasOverlap(bounds, sourceSegment)) {
-                this.add(new ScreenLineSegmentView(sourceSegment));
-            }
-            if (sourceSegment.getRow()> bottomRow) {
+            if (segmentRow > bottomRow) {
                 break;
             }
+            
+            if (sourceSegment.getCol() > rightCol) {
+            	continue;
+            }
+            
+            if (sourceSegment.getRightMostCol() < leftCol) {
+            	continue;
+            }
+            
+            
+            //if (Rectangle.UTIL.hasOverlap(bounds, sourceSegment)) {
+                this.add(new ScreenLineSegmentView(sourceSegment));
+            //}
         }
         segmentsUpToDate = true;
+        
     }
 
     private void populateViewFromSourceIfNeeded() {
@@ -206,6 +240,7 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
         }
 
         int rememberedLength = -1; // will this become a problem?
+        String _clippedText = null;
 
         @Override
         public int length() {
@@ -239,6 +274,7 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
         @Override
         public void moveTo(int row, int col) {
             rememberedLength = -1; // unremember my length
+            _clippedText = null;
             throw new IllegalStateException("No implemented yet!");
         }
 
@@ -249,6 +285,11 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
 
         @Override
         public String getText() {
+        	
+        	if (_clippedText != null) {
+        		return _clippedText;
+        	}
+        	
             // ech!!  and double-ech.. All of these checks make me see
             //                         a code smell..  When I get some time I 
             //                         need to simplify
@@ -271,6 +312,7 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
             }
             if (start<0 || start>rightCol) return "";
             String clippedText = sourceSegment.getText().substring(start, rightCol  );
+            _clippedText = clippedText;
             return clippedText;
         }
 

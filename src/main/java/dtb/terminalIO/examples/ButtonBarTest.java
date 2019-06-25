@@ -12,6 +12,7 @@ import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.TerminalScreen;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.OnRequestUpdateCanvasEventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyInputEventsProducer;
@@ -52,9 +53,6 @@ public class ButtonBarTest {
         bbar1.addButton("B2", Keys.F2_KEYSTROKE, (te)-> statusMSGs.setText("B2 Pressed"));
         bbar1.addButton("B3", Keys.F3_KEYSTROKE, (te)-> statusMSGs.setText("B3 Pressed"));
         
-        bbar1.setUpdateCanvas(renderComponents);
-        
-
         renderComponents.run();
 
         screen.add(ControlCode.HIDE_CURSOR);
@@ -68,8 +66,8 @@ public class ButtonBarTest {
             eventBus.stopConsuming();
             return;
         }
-        
-        eventBus.appendEventHandler(bbar1);
+
+        eventBus.appendEventHandler(new OnRequestUpdateCanvasEventHandler(renderComponents));
 
         EventHandler terminate = new EventHandler() {
 

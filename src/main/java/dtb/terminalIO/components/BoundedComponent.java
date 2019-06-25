@@ -153,9 +153,9 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
         return this.fillPolicy;
     }
     
-    public void setFillOnClearPolicy(FillOnClearPolicy fillerPolicy) {
-        this.fillPolicy = fillerPolicy;
-    }
+//    public void setFillOnClearPolicy(FillOnClearPolicy fillerPolicy) {
+//        this.fillPolicy = fillerPolicy;
+//    }
     
 
     public T setEmptyChar(char emptyChar) {

@@ -7,6 +7,10 @@ import dtb.terminalIO.geom.Dimension;
  */
 public interface CanResize {
 
+    
+    /**
+     * resize object with the current size
+     */
     public void resize(Dimension d);
     
 }

@@ -22,7 +22,7 @@ import dtb.terminalIO.util.Stty;
 
 public class CompositeLayeringTest {
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException { 
 
         TerminalScreen screen = TestsCommon.getTerminalScreenForTesting(args);
         

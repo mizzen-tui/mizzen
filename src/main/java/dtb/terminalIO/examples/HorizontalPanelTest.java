@@ -24,12 +24,11 @@ public class HorizontalPanelTest {
         
         Composite bbar1 = new HorizontalPanel();
         
-                bbar1.add(new BorderedComponent("In Spain .. In Spain\n" + 
-                                             "The Rain in Spain stays \n" + 
-                                             "mainly on the plain!")).t("Texxxxxt"); //.t("1-one\n2-two\n3-three\n!");
+        bbar1.add(new BorderedComponent("In Spain .. In Spain\n" + 
+                                        "The Rain in Spain stays \n" + 
+                                        "mainly on the plain!")).t("Texxxxxt");
 
 
-                
        Button b1 = new Button("Hello Button");
        b1.setBorder(true);
        
@@ -64,7 +63,7 @@ public class HorizontalPanelTest {
        
        master_canvas.refresh();
 
-        
+        // TODO:  add resizing to this test
         
     }
     

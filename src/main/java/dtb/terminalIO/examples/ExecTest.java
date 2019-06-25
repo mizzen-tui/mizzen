@@ -1,0 +1,235 @@
+package dtb.terminalIO.examples;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.function.Supplier;
+
+import dtb.terminalIO.app.TUIApp;
+import dtb.terminalIO.components.HorizontalPanel;
+import dtb.terminalIO.components.LinuxProcessViewer;
+import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.components.scroll.ScrollableComponent;
+import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
+import dtb.terminalIO.controlcodes.Colors;
+import dtb.terminalIO.controlcodes.ControlCode;
+import dtb.terminalIO.core.Canvas;
+import dtb.terminalIO.core.TerminalScreen;
+import dtb.terminalIO.events.ConditionalEventHandler;
+import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.OnIdleEventEventHandler;
+import dtb.terminalIO.events.OnRequestUpdateCanvasEventHandler;
+import dtb.terminalIO.events.OnResizeEventHandler;
+import dtb.terminalIO.events.OnTerminateEventHandler;
+import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
+import dtb.terminalIO.events.TerminalEvent.TYPE;
+import dtb.terminalIO.events.focus.DefaultFocusManager;
+import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
+import dtb.terminalIO.events.keyboard.KeyInputEventsProducer;
+import dtb.terminalIO.events.keyboard.Keys;
+import dtb.terminalIO.events.resize.TerminalResizeDetection;
+import dtb.terminalIO.geom.Dimension;
+import dtb.terminalIO.geom.Position;
+import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.util.ElapsedTime;
+import dtb.terminalIO.util.Stty;
+import dtb.terminalIO.util.linuxproc.ExecUtil;
+import dtb.terminalIO.util.linuxproc.LinuxProcessWatcher;
+
+public class ExecTest {
+
+    static String execTop() {
+        try {
+            return ExecUtil.executeWithShell("top -n 1 -b");
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            return "EXCEPTION:  " + e;
+        }
+    }
+
+    static boolean simple = true;
+
+    public static void testTail() throws Exception {
+        String fileToTail = "/var/log/example-server.log";
+
+        LinuxProcessWatcher watcher = LinuxProcessWatcher.tailFile(fileToTail, (line) -> System.out.println(line));
+
+        System.out.println(" result =  " + watcher.getLastResult());
+
+    }
+
+    private static String fileNameToTail(String[] args) {
+        for (int i = 0; i < args.length - 1; i++) {
+            if ("file".equalsIgnoreCase(args[i])) {
+                return args[i + 1];
+            }
+        }
+        return null;
+    }
+
+    private static class TimeAndCount {
+
+        int count;
+        ElapsedTime et;
+
+        public static TimeAndCount onRun(Runnable r, Supplier<Integer> s) {
+            TimeAndCount tR = new TimeAndCount();
+            tR.et = ElapsedTime.onRun(r);
+            tR.count = s.get();
+            return tR;
+        }
+
+        public static TimeAndCount onRun(Runnable r, IScreenLineSegmentsBuffer.Provider buffer) {
+            return onRun(r, () -> buffer.getSegmentsBuffer().getSegments().size());
+        }
+
+        public static TimeAndCount onRun(IScreenLineSegmentsBuffer.Provider buffer) {
+            return onRun(() -> buffer.getSegmentsBuffer().getSegments(),
+                    () -> buffer.getSegmentsBuffer().getSegments().size());
+        }
+
+        public String toString() {
+            return String.format("%10s  : %5d  %2.10f", et.toString(), count, ((float) et.elapsed() / count));
+        }
+    }
+
+    private static String fileNameToView(String[] args) {
+        for (int i = 0; i < args.length - 1; i++) {
+            if ("view".equalsIgnoreCase(args[i])) {
+                return args[i + 1];
+            }
+        }
+        return null;
+    }
+    
+    public static void slowRunnerTest2(String[] args) throws Exception {
+        
+        TUIApp app = new TUIApp();
+        app.initFromArgs(args);
+        
+        app.getCanvas().t("testing LinuxProcessViewer ..\n");
+
+        app.getCanvas().refresh();
+
+        Dimension sizeOfWindow = new Dimension() {
+            @Override
+            public int getWidth() {
+                return app.getCanvas().getWidth() / 2 - 4;
+            }
+
+            @Override
+            public int getHeight() {
+                return app.getCanvas().getHeight() - 17;
+            }
+        };
+
+        Dimension sizeOfPanel = new Dimension() {
+            @Override
+            public int getWidth() {
+                return sizeOfWindow.getWidth() * 2 + 6;
+            }
+
+            @Override
+            public int getHeight() {
+                return sizeOfWindow.getHeight()  + 8;
+            }
+        };
+
+        Position view1OffsetOnCanvas = new Position.Simple(2, 1);
+
+        LinuxProcessViewer lprocViewer = new LinuxProcessViewer(sizeOfWindow);
+        lprocViewer.setBorderColor(Colors.Gre);
+        lprocViewer.addFinder();
+
+        LinuxProcessViewer lprocViewer2 = new LinuxProcessViewer(sizeOfWindow);
+        lprocViewer2.setBorderColor(Colors.Blu);
+        lprocViewer2.addFinder();
+        
+        HorizontalPanel hPanel = new HorizontalPanel();
+        hPanel.setBounds(sizeOfPanel);
+        
+        hPanel.setHorizontalSpacer(2);
+        
+        hPanel.add(lprocViewer);
+        hPanel.add(lprocViewer2);
+        hPanel.setTitle("Proc viewers");
+        
+        
+        app.setUpdateCanvas((tApp)->{
+            if (!hPanel.isDirty()) {
+                return false; // false means no gui update
+            }
+
+            TimeAndCount elapsed = TimeAndCount.onRun(()->tApp.getCanvas().addComponentSegments(view1OffsetOnCanvas, hPanel), lprocViewer.textView);
+
+            tApp.getCanvas().t(lprocViewer.getBottomMostRow()+5, 0, "elapsed = "+elapsed);
+
+            return true; // true means updated
+        });
+        
+        app.setOnResizeAction((tApp, size)->{
+            tApp.getCanvas().setSize(size.getHeight(), size.getWidth());
+            tApp.getCanvas().clearCanvas(); 
+            lprocViewer.resize(sizeOfWindow);
+            lprocViewer2.resize(sizeOfWindow);
+            hPanel.resize(sizeOfPanel);
+            hPanel.fullrecalcDim();
+            hPanel.markAsDirty();
+        });
+        
+        app.setOnReadyStart((tApp)->{
+            
+            DefaultFocusManager focusManager = new DefaultFocusManager(Keys.TAB_KEYSTROKE);
+            
+            focusManager.addFocusable(lprocViewer, tApp.getEventBus() );
+
+            focusManager.addFocusable(lprocViewer2, tApp.getEventBus() );
+            
+            tApp.getEventBus().appendEventHandler(focusManager);
+            
+            
+            String fileToTail = fileNameToTail(args);
+
+            LinuxProcessWatcher linuxProc = null;
+
+            if (fileToTail != null) {
+                try {
+                    linuxProc = LinuxProcessWatcher.tailFile(fileToTail);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            } else {
+
+                String fileToView = fileNameToView(args);
+
+                if (fileToView != null) {
+                    try {
+                        linuxProc = LinuxProcessWatcher.viewTextFile(fileToView);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                } else {
+                    linuxProc = new LinuxProcessWatcher();
+                    linuxProc.setInvokeScript("/home/dbalme/workspace/dtbTerminalIO/slowRunner.sh testme");
+                }
+            }
+            
+            if (linuxProc != null)  {
+                lprocViewer.setLinuxProcessWatcher(linuxProc);
+                lprocViewer.invoke(tApp.getEventBus());
+            }
+            lprocViewer2.setLinuxProcessWatcher( new LinuxProcessWatcher().setInvokeScript("/home/dbalme/workspace/dtbTerminalIO/slowRunner.sh testme")  );
+            lprocViewer2.invoke(tApp.getEventBus());
+        });
+        
+        app.start();
+        
+        
+    }
+
+    public static void main(String[] args) throws Exception {
+        slowRunnerTest2(args);
+    }
+
+}
