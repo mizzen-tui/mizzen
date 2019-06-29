@@ -9,7 +9,7 @@ import dtb.terminalIO.core.TerminalScreen;
 import dtb.terminalIO.util.Stty;
 
 public class RawTest {
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
 
        Stty.setRaw();
         

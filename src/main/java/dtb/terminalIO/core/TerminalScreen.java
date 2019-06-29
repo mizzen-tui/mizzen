@@ -77,7 +77,7 @@ public class TerminalScreen implements ControlCodeContext {
     public void setRaw()  {
         try {
             Stty.setRaw();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -85,7 +85,7 @@ public class TerminalScreen implements ControlCodeContext {
     public void setCooked() throws IOException {
         try {
             Stty.setCooked();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

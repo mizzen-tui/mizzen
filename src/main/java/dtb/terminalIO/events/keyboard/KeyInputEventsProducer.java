@@ -2,7 +2,6 @@ package dtb.terminalIO.events.keyboard;
 
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -55,7 +54,7 @@ public class KeyInputEventsProducer implements Runnable {
             inputStream = new FileInputStream(FileDescriptor.in);
             try {
                 Stty.setRaw();
-            } catch (IOException e) {
+            } catch (Exception e) {
                 System.err.println("Failed to go into raw mode!");
                 inputStream = System.in;
             }

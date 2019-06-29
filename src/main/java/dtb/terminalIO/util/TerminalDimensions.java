@@ -1,7 +1,5 @@
 package dtb.terminalIO.util;
 
-import java.io.IOException;
-
 import dtb.terminalIO.geom.Dimension;
 
 /**
@@ -62,7 +60,7 @@ public class TerminalDimensions implements Dimension {
                 Dimension ttySize = Stty.terminalSize();
                 return new TerminalDimensions(ttySize);
 
-            } catch (IOException e)
+            } catch (Exception e)
             {
                 // do nothing and use defaults - maybe log error?
             }

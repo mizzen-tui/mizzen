@@ -30,9 +30,7 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
         this.component = component;
         this.component.setParentContainer(this);
         this.componentPosition = new Position.Simple(1,1);
-        //component.moveDelta(1,1);
         Position.Simple p = new Position.Simple(component);
-        //p.moveDelta(-1, -1);
         Rectangle bounds = new Rectangle.Simple(p, new Dimension.Simple(component.getHeight() + 2, component.getWidth() + 2));
         this.border = new SimpleBorder(color, bounds);
         this.border.setParentContainer(this);
@@ -50,7 +48,20 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
     
     @Override
     public void childResized(Component<?> child) {
-        this.markAsDirty();
+        if (child == this.border) {
+            if (this.border.isSameDimension(this)) {
+                return ;
+            }
+            super.resize( (Dimension)this.border );
+            return;
+        }
+        Dimension newSize = new Dimension.Simple(child.getHeight()+2, child.getWidth()+2);
+        if (newSize.isSameDimension(this)) {
+            return ; //  avoid infinite recursion
+        }
+        // adjust this container to be big enough for its child
+        super.resize(newSize);
+        this.border.resize(newSize);
     }
     
     public BorderedComponent(Color color, Component<?> component) {

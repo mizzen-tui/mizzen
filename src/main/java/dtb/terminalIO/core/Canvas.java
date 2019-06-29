@@ -85,9 +85,15 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
 
     public Canvas setSize(int height, int width) {
         synchronized(this) {
+           if (getSegmentsBuffer().getSegments().size()>0) {
+               clearCanvas();
+               
+               
+           }
            this.height = height;
            this.width = width;
            meAsARectangle = null;
+           
         }
         // TODO - if already rendered -- should reflect by changing buffer and by
         // re-rendering on backend

@@ -2,23 +2,16 @@ package dtb.terminalIO.examples;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.function.Supplier;
 
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.components.ComponentWithHilightedText;
 import dtb.terminalIO.components.Composite;
-import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.TextComponent;
-import dtb.terminalIO.components.input.HasValue;
-import dtb.terminalIO.components.input.HasValue.OnValueChangedEventHandler;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
-import dtb.terminalIO.components.input.TextInput;
 import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.TerminalScreen;
 import dtb.terminalIO.events.ChainedEventHandler;
@@ -44,7 +37,6 @@ import dtb.terminalIO.examples.sampledata.ReadSampleFiles;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
-import dtb.terminalIO.textsegments.SegmentsSearchUtils;
 import dtb.terminalIO.util.StringUtils;
 import dtb.terminalIO.util.Stty;
 import dtb.terminalIO.util.linuxproc.ExecUtil;
@@ -54,7 +46,7 @@ public class ScrollableComponentTest {
     static String execTop()   {
         try {
             return ExecUtil.executeWithShell("top -n 1 -b");
-        } catch (IOException e) {
+        } catch (Exception e) {
             // TODO Auto-generated catch block
             return "EXCEPTION:  " + e;
         }
@@ -202,7 +194,7 @@ public class ScrollableComponentTest {
 
                 try {
                     Stty.setCooked();
-                } catch (IOException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
                 if (te.getType().equals(TYPE.EXCEPTION)) {

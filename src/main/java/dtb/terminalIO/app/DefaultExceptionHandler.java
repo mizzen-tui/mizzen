@@ -1,6 +1,5 @@
 package dtb.terminalIO.app;
 
-import java.io.IOException;
 import java.util.function.BiConsumer;
 
 import dtb.terminalIO.controlcodes.ControlCode;
@@ -17,12 +16,11 @@ public class DefaultExceptionHandler implements BiConsumer<TUIApp, TerminalEvent
 
         try {
             Stty.setCooked();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
-        System.out.println("\n");
-        ((Exception) te.getEventData()).printStackTrace();
-        System.out.println("\n");
+        Exception e = (Exception) te.getEventData();
+        tApp.lastException = e;
     }
 
 }

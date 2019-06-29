@@ -15,7 +15,7 @@ public class Stty {
     static boolean         rawSet      = false;
 
 
-    public static Dimension terminalSize() throws IOException {
+    public static Dimension terminalSize() throws Exception {
         String output = ExecUtil.executeWithShell("stty size < /dev/tty");
         // String output = executeWithBash("echo `tput cols` `tput lines`");
         // parse output which is the form "cols lines"
@@ -31,7 +31,7 @@ public class Stty {
 
     }
     
-    public static void setRaw() throws IOException {
+    public static void setRaw() throws Exception {
         String output = ExecUtil.executeWithShell("stty -ignbrk -brkint -parmrk -istrip " +
                                                        "-inlcr -igncr -icrnl -ixon -opost " + 
                                                        "-echo -echonl -icanon -isig -iexten " +
@@ -39,7 +39,7 @@ public class Stty {
         rawSet = true;
     }
 
-    public static void setCooked() throws IOException {
+    public static void setCooked() throws Exception {
         //             "/bin/sh", "-c", "stty sane cooked < /dev/tty"
         String output = ExecUtil.executeWithShell("stty sane cooked < /dev/tty");
 

@@ -7,6 +7,8 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.function.Supplier;
 
+import dtb.terminalIO.util.ConsumeResult;
+
 /**
  * Utilities to exec external processes (usually via bash or sh)
  */
@@ -18,8 +20,7 @@ public class ExecUtil {
     }
 
     @FunctionalInterface
-    public static interface ConsumeLineOutput {
-        void handleLine(String line) throws IOException;
+    public static interface ConsumeLineOutput extends ConsumeResult<String> {
     }
 
     public static class StringBuilderConsumeOutput implements ConsumeLineOutput {
@@ -31,7 +32,7 @@ public class ExecUtil {
         }
 
         @Override
-        public void handleLine(String line) {
+        public void accept(String line) {
             sb.append(line);
             sb.append("\n");
         }
@@ -41,11 +42,11 @@ public class ExecUtil {
         }
     }
 
-    public static String executeWithShell(String command) throws IOException {
+    public static String executeWithShell(String command) throws Exception {
         return executeCMDAndReturnOutput(new String[] { "/bin/sh", "-c", command });
     }
 
-    public static void executeCMD(String[] commands, ConsumeLineOutput outputConsumer) throws IOException {
+    public static void executeCMD(String[] commands, ConsumeResult<String> outputConsumer) throws Exception {
 
         Process proc = new ProcessBuilder(commands).start();
         BufferedReader stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
@@ -54,16 +55,16 @@ public class ExecUtil {
 
         String s = null;
         while ((s = stdInput.readLine()) != null) {
-            outputConsumer.handleLine(s);
+            outputConsumer.accept(s);
         }
 
         while ((s = stdError.readLine()) != null) {
-            outputConsumer.handleLine(s);
+            outputConsumer.accept(s);
         }
 
     }
 
-    public static String executeCMDAndReturnOutput(String[] commands) throws IOException {
+    public static String executeCMDAndReturnOutput(String[] commands) throws Exception {
         StringBuilderConsumeOutput captureOutput = new StringBuilderConsumeOutput();
         executeCMD(commands, captureOutput);
         return captureOutput.toString();
@@ -87,7 +88,7 @@ public class ExecUtil {
 
         errorGobbler.join();
 
-        outputGobbler.join();
+        outputGobbler.join();  // TODO:  fixme  this does not come back look at LinuxProcessWatcher for a solution (join stdout and stderr)
 
         return exitVal;
     }
@@ -100,10 +101,10 @@ public class ExecUtil {
     public static class StreamLineGlobber implements Runnable {
 
         private InputStream is;
-        ConsumeLineOutput outputConsumer;
+        ConsumeResult<String> outputConsumer;
         Supplier<Boolean> isActive;
 
-        public StreamLineGlobber(InputStream is, ConsumeLineOutput outputConsumer, Supplier<Boolean> isActive) {
+        public StreamLineGlobber(InputStream is, ConsumeResult<String> outputConsumer, Supplier<Boolean> isActive) {
             super();
             this.is = is;
             this.outputConsumer = outputConsumer;
@@ -126,9 +127,9 @@ public class ExecUtil {
                 String s;
                 BufferedReader reader = new BufferedReader(new InputStreamReader(is));
                 while (isActive.get() && (s = reader.readLine()) != null) {
-                    outputConsumer.handleLine(s);
+                    outputConsumer.accept(s);
                 }
-            } catch (IOException e) {
+            } catch (Exception e) {
                 // handle error .. how?
             }
 

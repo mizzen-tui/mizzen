@@ -1,12 +1,10 @@
 package dtb.terminalIO.components.input;
 
-import java.awt.Checkbox;
 import java.util.Collection;
 import java.util.Collections;
 
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.components.FocusSetterToHiliteAction;
 import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.controlcodes.ControlCode.Color;

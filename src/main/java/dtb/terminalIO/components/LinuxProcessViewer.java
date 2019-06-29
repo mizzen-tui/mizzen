@@ -21,6 +21,8 @@ import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.ElapsedTime;
+import dtb.terminalIO.util.formatters.DefaultTextFormatter;
+import dtb.terminalIO.util.formatters.TextLineFormatter;
 import dtb.terminalIO.util.linuxproc.LinuxProcessWatcher;
 
 public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxProcessViewer>>
@@ -32,6 +34,7 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
     ScrollableComponent scrollView;
     public TextComponent textView;
     LinuxProcessWatcher linuProcWatcher;
+    TextLineFormatter textLineFormatter;
 
     Focusable focusable;
 
@@ -76,6 +79,7 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
         this.scrollView.setParentContainer(this);
         this.setFillOnClear(false);
         this.scrollView.asEventHandler();
+        this.textLineFormatter = new DefaultTextFormatter();
     }
 
     public LinuxProcessViewer(Dimension d) {
@@ -122,7 +126,7 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
 
     boolean idleEventsAdded = false;
 
-    public void addIdleAndTerminateEventsToEventBus(EventBus eventBus) {
+    private void addIdleAndTerminateEventsToEventBus(EventBus eventBus) {
 
         // FIXME/TODO " if existing linuProcWatcher then we need to kill it
 
@@ -180,6 +184,11 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
                 try {
                     int[] sleepCTR = new int[] { 0 };
                     linuProcWatcher.invokeLongRunning((line) -> {
+                        if (textLineFormatter != null)
+                        {
+                            line = textLineFormatter.getFormattedText(line);
+                        }
+                        
                         textBuffer.addLine(line);
                         sleepCTR[0]++;
                         if (sleepCTR[0] > 25) {
@@ -191,7 +200,7 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
                             }
                             sleepCTR[0] = 0;
                         }
-                    });
+                    }, (result)-> {});
 
                 } catch (Exception e) {
                     textView.setTextAndResize(e.toString());

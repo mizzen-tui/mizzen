@@ -1,39 +1,18 @@
 package dtb.terminalIO.examples;
 
-import java.io.IOException;
-import java.util.Arrays;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.LinuxProcessViewer;
-import dtb.terminalIO.components.TextComponent;
-import dtb.terminalIO.components.scroll.ScrollableComponent;
-import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
 import dtb.terminalIO.controlcodes.Colors;
-import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.core.Canvas;
-import dtb.terminalIO.core.TerminalScreen;
-import dtb.terminalIO.events.ConditionalEventHandler;
-import dtb.terminalIO.events.EventBus;
-import dtb.terminalIO.events.EventHandler;
-import dtb.terminalIO.events.OnIdleEventEventHandler;
-import dtb.terminalIO.events.OnRequestUpdateCanvasEventHandler;
-import dtb.terminalIO.events.OnResizeEventHandler;
-import dtb.terminalIO.events.OnTerminateEventHandler;
-import dtb.terminalIO.events.TerminalEvent;
-import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
-import dtb.terminalIO.events.TerminalEvent.TYPE;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
-import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
-import dtb.terminalIO.events.keyboard.KeyInputEventsProducer;
 import dtb.terminalIO.events.keyboard.Keys;
-import dtb.terminalIO.events.resize.TerminalResizeDetection;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.ElapsedTime;
-import dtb.terminalIO.util.Stty;
 import dtb.terminalIO.util.linuxproc.ExecUtil;
 import dtb.terminalIO.util.linuxproc.LinuxProcessWatcher;
 
@@ -42,7 +21,7 @@ public class ExecTest {
     static String execTop() {
         try {
             return ExecUtil.executeWithShell("top -n 1 -b");
-        } catch (IOException e) {
+        } catch (Exception e) {
             // TODO Auto-generated catch block
             return "EXCEPTION:  " + e;
         }
@@ -110,8 +89,6 @@ public class ExecTest {
         
         app.getCanvas().t("testing LinuxProcessViewer ..\n");
 
-        app.getCanvas().refresh();
-
         Dimension sizeOfWindow = new Dimension() {
             @Override
             public int getWidth() {
@@ -168,17 +145,30 @@ public class ExecTest {
             return true; // true means updated
         });
         
-        app.setOnResizeAction((tApp, size)->{
-            tApp.getCanvas().setSize(size.getHeight(), size.getWidth());
+        
+        BiConsumer<TUIApp, Dimension> resizeAction = (tApp, size)->{
+            
+            if ( ! size.contains(tApp.getCanvas())) {
+                tApp.getCanvas().clearCanvas();
+                tApp.getCanvas().refresh();
+            }
+            
+            // tApp.getCanvas().setSize(Math.min(size.getHeight(),25), Math.min(size.getWidth(),80));
+            tApp.getCanvas().setSize(size.getHeight()-1, size.getWidth()-1);
             tApp.getCanvas().clearCanvas(); 
             lprocViewer.resize(sizeOfWindow);
             lprocViewer2.resize(sizeOfWindow);
             hPanel.resize(sizeOfPanel);
             hPanel.fullrecalcDim();
             hPanel.markAsDirty();
-        });
+        };
+        
+        app.setOnResizeAction(resizeAction);
+        
+        resizeAction.accept(app, TestsCommon.terminalSize());
         
         app.setOnReadyStart((tApp)->{
+            
             
             DefaultFocusManager focusManager = new DefaultFocusManager(Keys.TAB_KEYSTROKE);
             

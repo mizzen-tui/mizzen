@@ -135,7 +135,7 @@ public class EventBus implements EventHandlerContainer {
                         // for now .. letting the application make the decision.
                     }
                 }
-                eventsHandlerChain.handle(new TerminalEvent<Exception>(EventBus.this, TerminalEvent.TYPE.TERMINATE, null));
+                eventsHandlerChain.handle(new TerminalEvent<Exception>(EventBus.this, TerminalEvent.TYPE.TERMINATE, null, EventBus.this));
             }
         };
 

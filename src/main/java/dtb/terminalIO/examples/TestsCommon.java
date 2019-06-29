@@ -103,17 +103,20 @@ public class TestsCommon {
         addNoGraphicsToggleEvent(eventBus, screen, null);
     }
     
-    
-
-    public static Canvas getMasterCanvasForTesting(TerminalScreen screen) {
+    public static Dimension terminalSize() {
         Dimension size = null;
         try {
             size = TerminalDimensions.create();
         } catch (Exception e) {
             size = new Dimension.Simple(35, 150);
         }
+        return size;
+    }
+
+    public static Canvas getMasterCanvasForTesting(TerminalScreen screen) {
+        Dimension size = terminalSize();
         Canvas master_canvas = new Canvas(screen);
-        master_canvas.setSize(size.getHeight() , size.getWidth() ); // todo: detect term size
+        master_canvas.setSize(size.getHeight() , size.getWidth() );
         return master_canvas;
     }
 

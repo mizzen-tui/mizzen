@@ -33,6 +33,7 @@ public class TUIApp {
     TerminalScreen screen;
     Function<TUIApp,Boolean> updateCanvas;
     BiConsumer<TUIApp, TerminalEvent<?>> exceptionHandler = new DefaultExceptionHandler();
+    Exception lastException = null;
     Consumer<TUIApp> terminateAction = new DefaultTerminateAction();
     
     Consumer<TUIApp> onReadyStartAction = null;
@@ -98,7 +99,24 @@ public class TUIApp {
         }
     }
     
+    public void setCanvasSize(Dimension size) {
+        Dimension curSize = getCanvas().asRectangle();
+        if ( ! size.contains(curSize)) { // new size is smaller - so clear
+            if (getCanvas().segmentsSize()>0) {
+                getCanvas().clearCanvas();
+                getCanvas().refresh();
+            }
+        }
+        getCanvas().setSize(size.getHeight(), size.getWidth());
+        getCanvas().refresh();
+        
+    }
+    
     public void start() {
+        
+        // We do an initial refresh before going into RAW mode (caused by makeEventBus())
+        // in order that canvas is correctly refresh after current screen cursor position
+        getCanvas().refresh();
         
         if (this.eventBus == null) {
             makeEventBus();
@@ -166,7 +184,9 @@ public class TUIApp {
             }
         });
         
-
+      //  eventBus.raiseEvent( new TerminalEvent<Dimension>(this, TerminalEvent.TYPE.RESIZE, TestsCommon.terminalSize()) );
+        
+        
         if (this.onReadyStartAction != null) {
             eventBus.appendIdleEventHandler(new OnIdleEventEventHandler.OneTime(new EventHandler() {
                 @Override

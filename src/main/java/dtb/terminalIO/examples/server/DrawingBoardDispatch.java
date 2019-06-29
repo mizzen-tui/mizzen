@@ -45,7 +45,7 @@ public class DrawingBoardDispatch {
 
                 try {
                     Stty.setCooked();
-                } catch (IOException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }

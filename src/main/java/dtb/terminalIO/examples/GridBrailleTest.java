@@ -160,7 +160,7 @@ public class GridBrailleTest {
 
 		try {
 		    Stty.setCooked();
-		} catch (IOException e) {
+		} catch (Exception e) {
 		    e.printStackTrace();
 		}
 

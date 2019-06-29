@@ -276,7 +276,7 @@ public class TabPanelTest {
 
                     try {
                         Stty.setCooked();
-                    } catch (IOException e) {
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
 

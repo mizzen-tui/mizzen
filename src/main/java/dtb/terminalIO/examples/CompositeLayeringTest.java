@@ -109,7 +109,7 @@ public class CompositeLayeringTest {
 
                try {
                    Stty.setCooked();
-               } catch (IOException e) {
+               } catch (Exception e) {
                    e.printStackTrace();
                }
                // next refresh() is necessary to get cursor to be below

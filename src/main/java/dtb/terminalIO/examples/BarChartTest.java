@@ -149,7 +149,7 @@ public class BarChartTest {
 
                 try {
                     Stty.setCooked();
-                } catch (IOException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
 

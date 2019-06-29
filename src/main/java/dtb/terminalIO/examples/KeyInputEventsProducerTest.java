@@ -1,6 +1,5 @@
 package dtb.terminalIO.examples;
 
-import java.io.IOException;
 import java.util.function.Consumer;
 
 import dtb.terminalIO.controlcodes.ControlCode;
@@ -34,7 +33,7 @@ import dtb.terminalIO.util.Stty;
 public class KeyInputEventsProducerTest {
     
     
-    public static void main(String[] args) throws InterruptedException, IOException {
+    public static void main(String[] args) throws Exception {
 
         
         TerminalScreen screen = TestsCommon.getTerminalScreenForTesting(args);
@@ -101,7 +100,7 @@ public class KeyInputEventsProducerTest {
 
                         try {
                             Stty.setCooked();
-                        } catch (IOException e) {
+                        } catch (Exception e) {
                             e.printStackTrace();
                         }
 

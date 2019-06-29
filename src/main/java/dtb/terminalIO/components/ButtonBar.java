@@ -12,6 +12,7 @@ import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.focus.ToFocusable;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.traverse.Traverser;
@@ -103,7 +104,25 @@ public class ButtonBar extends Composite implements FocusManager {
         count++;
         
         if (hotKey != null && handler != null) {
-           ConditionalEventHandler rememberHandlerSoWeCanRemove = addEventHandlerWithCanvasUpdate(new KeyInputEventHandler(hotKey, handler ));
+            
+            EventHandler componentHandler = handler;
+            
+           if (component instanceof Focusable) {
+               componentHandler = (te) -> {
+                   ((Focusable) component).setFocus(true, te.getEventBus());
+                   handler.handle(te);
+               };
+           } else {
+               if (component instanceof ToFocusable) {
+                   Focusable focusable = ((ToFocusable) component).asFocusable();
+                   componentHandler = (te) -> {
+                       focusable.setFocus(true, te.getEventBus());
+                       handler.handle(te);
+                   };
+               }
+           }
+            
+           ConditionalEventHandler rememberHandlerSoWeCanRemove = addEventHandlerWithCanvasUpdate(new KeyInputEventHandler(hotKey, componentHandler ));
         }
         
         horizontalPanel.add(component);

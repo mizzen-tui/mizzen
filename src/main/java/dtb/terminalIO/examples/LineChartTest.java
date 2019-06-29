@@ -334,7 +334,7 @@ public class LineChartTest {
 
 		try {
 		    Stty.setCooked();
-		} catch (IOException e) {
+		} catch (Exception e) {
 		    e.printStackTrace();
 		}
 		if (te.getType().equals(TYPE.EXCEPTION)) {
@@ -463,7 +463,7 @@ public class LineChartTest {
 
 		try {
 		    Stty.setCooked();
-		} catch (IOException e) {
+		} catch (Exception e) {
 		    e.printStackTrace();
 		}
 		if (te.getType().equals(TYPE.EXCEPTION)) {

@@ -5,7 +5,7 @@ import java.io.FileNotFoundException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
-import dtb.terminalIO.util.linuxproc.ExecUtil.ConsumeLineOutput;
+import dtb.terminalIO.util.ConsumeResult;
 import dtb.terminalIO.util.linuxproc.ExecUtil.StreamLineGlobber;
 
 public class LinuxProcessWatcher {
@@ -34,7 +34,7 @@ public class LinuxProcessWatcher {
         return this;
     }
 
-    public synchronized void invokeLongRunning(ConsumeLineOutput consumeOutput) throws Exception {
+    public synchronized void invokeLongRunning(ConsumeResult<String> consumeOutput, ConsumeResult<Integer> consumeResult) throws Exception {
         if (invokeScript == null) {
             throw new NullPointerException("invokeScript not set.  Please call setInvokeScript(() first");
         }
@@ -66,6 +66,8 @@ public class LinuxProcessWatcher {
 
                     outputGobbler.join();
 
+                    consumeResult.accept(LinuxProcessWatcher.this.lastResult);
+
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
@@ -94,7 +96,6 @@ public class LinuxProcessWatcher {
                     process.destroy();
                 }
             }
-            
         }
     }
 
@@ -139,10 +140,10 @@ public class LinuxProcessWatcher {
 
     }
 
-    public static LinuxProcessWatcher tailFile(String fileName, ConsumeLineOutput consumeOutput) throws Exception {
+    public static LinuxProcessWatcher tailFile(String fileName, ConsumeResult<String> consumeOutput) throws Exception {
 
         LinuxProcessWatcher watcher = tailFile(fileName);
-        watcher.invokeLongRunning(consumeOutput);
+        watcher.invokeLongRunning(consumeOutput, (result)->{});
 
         return watcher;
 
@@ -156,9 +157,9 @@ public class LinuxProcessWatcher {
             throw new FileNotFoundException(fileName + " not found.  Cannot perform tail.");
         }
 
-        // todo: Should not use cat !!!-- should just read file!!!!
+        // todo: Should not use cat !!!-- should just read the damn file!!!!  yeesh..
 
-        String tailCMD = "cat  " + fileToTail.getAbsolutePath();
+        String tailCMD = "cat " + fileToTail.getAbsolutePath();
 
         LinuxProcessWatcher watcher = new LinuxProcessWatcher();
 
@@ -168,10 +169,10 @@ public class LinuxProcessWatcher {
 
     }
 
-    public static LinuxProcessWatcher viewTextFile(String fileName, ConsumeLineOutput consumeOutput) throws Exception {
+    public static LinuxProcessWatcher viewTextFile(String fileName, ConsumeResult<String> consumeOutput) throws Exception {
 
         LinuxProcessWatcher watcher = viewTextFile(fileName);
-        watcher.invokeLongRunning(consumeOutput);
+        watcher.invokeLongRunning(consumeOutput, (result)->{});
 
         return watcher;
 

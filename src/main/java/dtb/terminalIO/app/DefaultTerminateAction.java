@@ -1,6 +1,5 @@
 package dtb.terminalIO.app;
 
-import java.io.IOException;
 import java.util.function.Consumer;
 
 import dtb.terminalIO.controlcodes.ControlCode;
@@ -16,12 +15,20 @@ public class DefaultTerminateAction implements Consumer<TUIApp> {
 
         try {
             Stty.setCooked();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         // next refresh() is necessary to get cursor to be below
         // rendered canvas
         tApp.getCanvas().refresh();
+        
+        
+        if (tApp.lastException != null) {
+            
+            tApp.lastException.printStackTrace();
+            
+        }
+        
         return;
     }
 
