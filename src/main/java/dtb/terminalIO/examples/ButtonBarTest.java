@@ -2,9 +2,11 @@ package dtb.terminalIO.examples;
 
 import java.io.IOException;
 
+import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
@@ -31,15 +33,16 @@ public class ButtonBarTest {
         
         container.setBounds(new Dimension.Simple(20,50));
         
-        TextComponent statusMSGs = new TextComponent(new FGBGColors(Colors.BBlu,Colors.On_IYel), new Dimension.Simple(1,container.getWidth()));
+        TextComponent statusMSGs = new TextComponent(new FGBGColors(Colors.BRed,Colors.On_Yel), new Dimension.Simple(1,container.getWidth()));
         
         ButtonBar bbar1 = new ButtonBar(Colors.IGre);
+        bbar1.setNoBorderChars();
 
         Canvas master_canvas = new Canvas(screen);
         master_canvas.setSize(container.getHeight() + 4, container.getWidth() + 5);
         master_canvas.setEmptyChar(' ');
 
-        container.add(bbar1);
+        container.add(1,1,bbar1);
         
         container.add( new PositionVerticalRelative(bbar1, 3), statusMSGs);
 
@@ -48,11 +51,26 @@ public class ButtonBarTest {
                 master_canvas.addComponentSegments(container);
                 master_canvas.refresh();
         };
+
+        bbar1.addComponent(new BorderedComponent(new TextComponent("Text area")), null, null);
         
-        bbar1.addButton("B1", Keys.F1_KEYSTROKE, (te)-> statusMSGs.setText("B1 Pressed"));
-        bbar1.addButton("B2", Keys.F2_KEYSTROKE, (te)-> statusMSGs.setText("B2 Pressed"));
-        bbar1.addButton("B3", Keys.F3_KEYSTROKE, (te)-> statusMSGs.setText("B3 Pressed"));
+        Button b1 = bbar1.addButton("B1", Keys.F1_KEYSTROKE, (te)-> {
+                   statusMSGs.setText("B1 Pressed");
+                   renderComponents.run();
+                   });
         
+        b1.setBorder(true);
+        
+        bbar1.addButton("B2", Keys.F2_KEYSTROKE, (te)-> {
+            statusMSGs.setText("B2 Pressed");
+            renderComponents.run();
+            }).setBorder(true);
+        
+        bbar1.addButton("B3", Keys.F3_KEYSTROKE, (te)-> {
+            statusMSGs.setText("B3 Pressed");
+            renderComponents.run();
+            }).setBorder(true);
+
         renderComponents.run();
 
         screen.add(ControlCode.HIDE_CURSOR);
@@ -89,7 +107,7 @@ public class ButtonBarTest {
             }
         };
 
-        eventBus.disableIdleEvents();
+        //eventBus.disableIdleEvents();
 
         eventBus.appendEventHandler(master_canvas.asShowCursorEventHandler());
         eventBus.appendEventHandler(master_canvas.asHideCursorEventHandler());
@@ -99,6 +117,8 @@ public class ButtonBarTest {
         eventBus.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
 
         TestsCommon.addNoGraphicsToggleEvent(eventBus, screen, renderComponents);
+        
+        eventBus.appendEventHandler( bbar1  );
 
     }
 

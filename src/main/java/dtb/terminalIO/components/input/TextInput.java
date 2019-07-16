@@ -37,6 +37,7 @@ public class TextInput extends BoundedComponent<TextInput>
     private Position viewOffset = Position.ZERO; // future use .. maybe ..
     private Position caret = Position.ZERO;
     private int maxTextWidth;
+    private boolean multiLine = false;  // TODO: multi-line not implemented yet
 
     ConditionalEventHandler eventHandler;
     ChainedEventHandler chainedEventHandler;
@@ -183,6 +184,7 @@ public class TextInput extends BoundedComponent<TextInput>
     }
 
     // TODO: needs lots 'o work! Get on it!!
+    // returns true if text modified by ch
     private boolean addCharAtCaret(char ch) {
         String currentText = getText();
         if (modeOverite) {
@@ -355,6 +357,12 @@ public class TextInput extends BoundedComponent<TextInput>
                     return false; // TODO: Is this correct? decide later (data drive this maybe?)
                 }
                 if (ke.getKeyStroke().isCtrlKey() || ke.getKeyStroke().isAltKey()) {
+                    return false;
+                }
+                if (ke.isKeyStroke(Keys.TAB_KEYSTROKE) && ! multiLine) {
+                    return false;
+                }
+                if (ke.isKeyStroke(Keys.SHIFT_TAB_KEYSTROKE) && ! multiLine) {
                     return false;
                 }
                 return true;

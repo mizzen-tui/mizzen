@@ -80,6 +80,9 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
     }
 
     public void resize(Dimension d) {
+        if (d.isSameDimension(this)) {
+            return;
+        }
         Dimension previousDimension = new Dimension.Simple(this);
         setRectangle(new Rectangle.Simple(this.getPostion_TopLeft(), d));
         if (this.getParentContainer()!=null  && ! previousDimension.isSameDimension(this)) {
@@ -104,6 +107,7 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
             return;
         }
         this.hasDrawn = false;
+        // if parent exists, then mark it as dirty as well
         if (this.getParentContainer()!=null && this.getParentContainer() instanceof DirtyFlag) {
             if ( ! ((DirtyFlag)this.getParentContainer()).isDirty()) {
                ((DirtyFlag)this.getParentContainer()).markAsDirty();
@@ -153,10 +157,6 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
         return this.fillPolicy;
     }
     
-//    public void setFillOnClearPolicy(FillOnClearPolicy fillerPolicy) {
-//        this.fillPolicy = fillerPolicy;
-//    }
-    
 
     public T setEmptyChar(char emptyChar) {
         this.fillPolicy.setEmptyChar(emptyChar);
@@ -184,6 +184,9 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
     
     @Override
     public void setParentContainer(ParentContainer parentContainer) {
+        if (parentContainer != null && this.getParentContainer() != null && this.getParentContainer() != parentContainer) {
+            throw new IllegalStateException("Parent container already set to another component");
+        }
         this.parentContainer = parentContainer;
     }
     

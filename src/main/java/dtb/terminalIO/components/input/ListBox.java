@@ -6,10 +6,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import dtb.terminalIO.components.AbstractComponent;
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.CharComponent;
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.components.Component.AbstractComponent;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.HiliterAdapter;
 import dtb.terminalIO.components.ParentContainer;

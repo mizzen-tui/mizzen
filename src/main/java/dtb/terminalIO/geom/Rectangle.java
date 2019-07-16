@@ -439,15 +439,24 @@ public interface Rectangle extends Position, Dimension, Movable {
 
     public static class UTIL {
 
+        /**
+         * given a list of Rectangles ( usually in the form of components), return
+         * a new Rectangle that encloses all of the Rectangles
+         */
         public static Rectangle calcDimensionsWith(Collection<? extends Rectangle> others) {
-            Rectangle.Simple result = new Simple(ZERO);
+            Rectangle.Simple result = new Simple(ZERO); // start at zero size
             for (Rectangle other : others) {
-                result.mergeAndExpandDimensionsWithMySelf(other);
+                result.mergeAndExpandDimensionsWithMySelf(other);  // now expand its size
             }
             return result;
         }
 
-        // returns true if rectangle r1 overlaps r2
+        /**
+         * returns true if rectangle r1 overlaps r2
+         * @param r1
+         * @param r2
+         * @return
+         */
         public static <T extends Rectangle> boolean hasOverlap(T r1, T r2) {
             LeftRight<T> lr = Position.UTIL.leftRight(r1, r2);
             if (lr.getLeft().getRightMostCol() >= lr.getRight().getCol()) {

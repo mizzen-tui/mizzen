@@ -1,5 +1,8 @@
 package dtb.terminalIO.components;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.input.DefaultFocusableBehaviour;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
@@ -13,65 +16,138 @@ import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.ToFocusable;
+import dtb.terminalIO.events.keyboard.HasHotKey;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.traverse.Traverser;
 import dtb.terminalIO.traverse.Traverser.Visitor;
 
 public class ButtonBar extends Composite implements FocusManager {
+
+    private HorizontalPanel horizontalPanel;
     
-    HorizontalPanel horizontalPanel;
+
+    private char leftMostBorderChar;
+    private char middleBorderChar;
+    private char rightMostBorderChar;
     
-    int count = 0;
-    
-    Component<?> lastDivider = null;
-    
-    ChainedEventHandler chainedEventHandler;
-    ConditionalEventHandler chainedEventHandlerAsConditionalEventHandler;
-    
+    private boolean useNavKeys;
+
+    private int count = 0;
+
+    private Component<?> lastDivider = null;
+
+    private ChainedEventHandler chainedEventHandler;
+    private ConditionalEventHandler chainedEventHandlerAsConditionalEventHandler;
+
     private Focusable meAsFocusable; 
     private Focusable current;
 
-    
     public ButtonBar(Color color) {
         super(color);
         horizontalPanel = new HorizontalPanel();
         horizontalPanel.setHorizontalSpacer(0);
         this.add(horizontalPanel);
+        BlockChars blockChars = this.getBlockChars();
+        leftMostBorderChar = blockChars.getVERTICAL_LEFT();
+        middleBorderChar = blockChars.getVERTICAL_LINE();
+        rightMostBorderChar = blockChars.getVERTICAL_RIGHT();
     }
 
     public ButtonBar() {
         this(FGBGColors.NO_COLOR_SPECIFIED);
     }
     
+    public void setLeftMostBorderChar(char leftMostBorderChar) {
+        this.leftMostBorderChar = leftMostBorderChar;
+    }
+
+    public void setMiddleBorderChar(char middleBorderChar) {
+        this.middleBorderChar = middleBorderChar;
+    }
+
+    public void setRightMostBorderChar(char rightMostBorderChar) {
+        this.rightMostBorderChar = rightMostBorderChar;
+    }
+
+    public void setNoBorderChars() {
+        setLeftMostBorderChar((char)0);
+        setMiddleBorderChar((char)0);
+        setRightMostBorderChar((char)0);
+    }
+    
+    public ButtonBar setColor(Color drawingcolor) {
+        super.setColor(drawingcolor);
+        horizontalPanel.setColor(drawingcolor);
+        for (Component<?> child : horizontalPanel.getChildren()) {
+            if (child instanceof CharComponent) { // assume divider
+                child.setColor(drawingcolor);
+            } else {
+                child.markAsDirty();
+            }
+            
+        }
+        return this;
+    }
+    
     private void updateCanvas(EventBus eventBus) {
         eventBus.raiseEvent(new RequestUpdateCanvasEvent(this) );
     }
 
+    public void setEmptyChar(char emptyChar) {
+        super.setEmptyChar(emptyChar);
+        horizontalPanel.setEmptyChar(emptyChar);
+    }
+
+    public void setEmptyColor(Color emptyColor) {
+        super.setEmptyColor(emptyColor);
+        horizontalPanel.setEmptyColor(emptyColor);
+    }
+    
+    public void markAsDirty() {
+        super.markAsDirty();
+        horizontalPanel.markAsDirty();
+    }
+    
     public void removeChildren() {
+        // TODO: What about the events that have been added to eventBus - how to get rid of?
         horizontalPanel.removeChildren();
         super.removeChildren();
         this.add(horizontalPanel);
         count = 0;
         lastDivider = null;
-         
-        // clear out event handlers as well
+
+        // clear out event handlers as well - it will get rebuilt automatically as needed
         chainedEventHandler = null;
         chainedEventHandlerAsConditionalEventHandler = null;
 
         current = null;
     }
 
+    /**
+     * Builds a focus event handler that looks for object within this focusManager's
+     * descendant objects
+     */
+    private ConditionalEventHandler buildRequestFocusEventHandler() {
+
+        ConditionalEventHandler requestFocusEventHandler = FocusManager.UTIL.buildRequestFocusEventHandler(this);
+
+        return requestFocusEventHandler;
+    }
+
     
-    void addEventHandler(ConditionalEventHandler eventHandler) {
+    private void addEventHandler(ConditionalEventHandler eventHandler) {
         if (chainedEventHandler == null) {
             chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
             chainedEventHandlerAsConditionalEventHandler = chainedEventHandler.asConditionalEventHandler();
+            
+            chainedEventHandler.appendEventHandler(buildRequestFocusEventHandler());
+
         }
         this.chainedEventHandler.appendEventHandler(eventHandler);
     }
-    
-    ConditionalEventHandler addEventHandlerWithCanvasUpdate(ConditionalEventHandler eventHandler) {
+
+    private ConditionalEventHandler addEventHandlerWithCanvasUpdate(ConditionalEventHandler eventHandler) {
         ConditionalEventHandler handler = new ConditionalEventHandler.Delegate(eventHandler) { 
                                                         @Override
                                                         public void handle(TerminalEvent<?> te) {
@@ -80,28 +156,36 @@ public class ButtonBar extends Composite implements FocusManager {
                                                         }
                                                     };
         addEventHandler(handler);
-        
+
         return handler;
     }
-    
-    public void addButton(String buttonText, KeyStroke hotKey, EventHandler handler) {
-        addComponent(new Button(buttonText), hotKey, handler);  // <-- could be a simple text Component
+
+    public Button addButton(String buttonText, KeyStroke hotKey, EventHandler handler) {
+        Button theButton = new Button(this.getColor(), buttonText);
+        addComponent(theButton, hotKey, handler);
+        return theButton;
     }
+
+    private List<Focusable> eventConsumers = new ArrayList<Focusable>();
 
     public void addComponent(Component<?> component, KeyStroke hotKey, EventHandler handler) {
         
-        BlockChars blockChars = this.getBlockChars();
-
-        if (count == 0) {
-            horizontalPanel.add(new CharComponent(this.getColor(), blockChars.getVERTICAL_LEFT()));
+        if (count == 0  && this.leftMostBorderChar > 0) {
+            horizontalPanel.add(new CharComponent(this.getColor(), leftMostBorderChar));
         } else {
             if (lastDivider != null) {
                 horizontalPanel.remove(lastDivider);
             }
-            horizontalPanel.add(new CharComponent(this.getColor(), blockChars.getVERTICAL_LINE()));
+            if (this.middleBorderChar > 0 ) {
+               horizontalPanel.add(new CharComponent(this.getColor(), this.middleBorderChar));
+            }
         }
-                
+
         count++;
+        
+        if (hotKey == null && component instanceof HasHotKey && ((HasHotKey)component).getHotKey() != null) {
+            hotKey = ((HasHotKey)component).getHotKey();
+        }
         
         if (hotKey != null && handler != null) {
             
@@ -109,31 +193,43 @@ public class ButtonBar extends Composite implements FocusManager {
             
            if (component instanceof Focusable) {
                componentHandler = (te) -> {
-                   ((Focusable) component).setFocus(true, te.getEventBus());
+                   setChildAsCurrentFocus(((Focusable) component), te.getEventBus());
+                   //((Focusable) component).setFocus(true, te.getEventBus());
                    handler.handle(te);
                };
+               if (count == 1)  this.current = (Focusable)component;
+               eventConsumers.add((Focusable)component);
            } else {
                if (component instanceof ToFocusable) {
                    Focusable focusable = ((ToFocusable) component).asFocusable();
                    componentHandler = (te) -> {
                        focusable.setFocus(true, te.getEventBus());
+                       setChildAsCurrentFocus(focusable, te.getEventBus());
                        handler.handle(te);
                    };
+                   if (count == 1)  this.current = focusable;
+                   eventConsumers.add(focusable);
                }
            }
-            
+ 
            ConditionalEventHandler rememberHandlerSoWeCanRemove = addEventHandlerWithCanvasUpdate(new KeyInputEventHandler(hotKey, componentHandler ));
         }
-        
+
         horizontalPanel.add(component);
         
-        lastDivider = new CharComponent(this.getColor(), blockChars.getVERTICAL_RIGHT());
-        horizontalPanel.add(lastDivider);
+        if (this.rightMostBorderChar > 0) {
+            lastDivider = new CharComponent(this.getColor(), this.rightMostBorderChar);
+            horizontalPanel.add(lastDivider);
+        }
         fullrecalcDim();
 
     }
 
-    
+    public ButtonBar setHorizontalSpacer(int horizontalSpacer) {
+        horizontalPanel.setHorizontalSpacer(horizontalSpacer);
+        fullrecalcDim();
+        return this;
+    }
     
     @Override
     public void handle(TerminalEvent<?> te) {
@@ -158,7 +254,7 @@ public class ButtonBar extends Composite implements FocusManager {
     @Override
     public void hilite() {
         super.hilite();
-	
+
         Traverser<Component<?>> componentTraverser = new Traverser<Component<?>>();
         Visitor<Component<?>> hilite = (c)-> {
                                                 new HiliterAdapter<Component<?>>(c).getHiliter().hilite(); 
@@ -191,6 +287,32 @@ public class ButtonBar extends Composite implements FocusManager {
         asFocusable().setFocus(focus, eventBus);
     }
 
+    private Focusable getPrevFocusable() {
+        if (eventConsumers.size() < 1) {
+            return null;
+        }
+        int index = current==null? 0:  eventConsumers.indexOf(current);
+        if (index < 1) {
+            return eventConsumers.get(eventConsumers.size() - 1);
+        }
+        return eventConsumers.get(index - 1);
+    }
+
+    private Focusable getNextFocusable() {
+        if (eventConsumers.size() < 1) {
+            return null;
+        }
+        if (eventConsumers.size() < 2) {
+            return null;
+        }
+
+        int index = current==null? 0:  eventConsumers.indexOf(current);
+        if (index < 0 || index == eventConsumers.size() - 1) {
+            return eventConsumers.get(0);
+        }
+        return eventConsumers.get(index + 1);
+    }
+    
     @Override
     public Focusable getCurrentChildFocus() {
         return this.current;
@@ -203,8 +325,7 @@ public class ButtonBar extends Composite implements FocusManager {
         FocusManager.UTIL.setNewFocusable(focusable, prevCurrent, eventBus, (f)-> updateCanvas(eventBus) );
         this.current = focusable;
     }
-    
-    @SuppressWarnings("unchecked")
+
     private Focusable asFocusable() {
         if (meAsFocusable == null) {
             this.meAsFocusable = new DefaultFocusableBehaviour.Simple(this, (ConditionalEventHandler) this) {
@@ -220,5 +341,4 @@ public class ButtonBar extends Composite implements FocusManager {
         return meAsFocusable;
     }
 
-    
 }

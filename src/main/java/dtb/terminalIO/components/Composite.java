@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import dtb.terminalIO.components.Component.AbstractComponent;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.geom.Dimension;
@@ -18,7 +17,7 @@ import dtb.terminalIO.textsegments.ScreenLineSegment;
  * A component with child components
  */
 public class Composite extends AbstractComponent<Composite>
-        implements Rectangle, HasTitleAndBorder<Composite>, CanResize, ParentContainer {
+        implements ChildComponentManager<Composite>, HasTitleAndBorder<Composite>, CanResize {
 
     private SimpleBorder border;
     protected boolean boundsFixed = false;
@@ -106,26 +105,26 @@ public class Composite extends AbstractComponent<Composite>
         this(FGBGColors.NO_COLOR_SPECIFIED);
     }
 
-    public Composite setBounds(Rectangle bounds) {
-        if (bounds == null) {
-            this.boundsFixed = false;
-            fullrecalcDim();
-            return this;
-        }
-        this.bounds = bounds;
-        this.boundsFixed = true;
-        if (this.border != null)
-            rebuildBorder(this.bounds);
-        return this;
-    }
+//    public Composite setBounds(Rectangle bounds) {
+//        if (bounds == null) {
+//            this.boundsFixed = false;
+//            fullrecalcDim();
+//            return this;
+//        }
+//        this.bounds = bounds;
+//        this.boundsFixed = true;
+//        if (this.border != null)
+//            rebuildBorder(this.bounds);
+//        return this;
+//    }
 
-    public Composite setBounds(int row, int col, int height, int width) {
-        this.bounds = new Rectangle.Simple(row, col, height, width);
-        this.boundsFixed = true;
-        if (this.border != null)
-            rebuildBorder(this.bounds);
-        return this;
-    }
+//    public Composite setBounds(int row, int col, int height, int width) {
+//        this.bounds = new Rectangle.Simple(row, col, height, width);
+//        this.boundsFixed = true;
+//        if (this.border != null)
+//            rebuildBorder(this.bounds);
+//        return this;
+//    }
 
     public Composite setBounds(Dimension d) {
         if (d == null) {
@@ -174,15 +173,18 @@ public class Composite extends AbstractComponent<Composite>
     public void fullrecalcDim() {
         Dimension previousDimension = new Dimension.Simple(this);
         fullrecalcDim(hasBorder());
+        // if we have a parent, then we better tell it our new size
         if (this.getParentContainer() != null && !previousDimension.isSameDimension(this)) {
             this.getParentContainer().childResized(this);
         }
     }
 
+    // calculates size of this component based on size and
+    // layout (positions) of all of its children
     private void fullrecalcDim(boolean includeBorder) {
 
-        if (boundsFixed) {
-            return;
+        if (boundsFixed) {  // if size is fixed (based on flag)
+            return;         // then don't recalculate
         }
 
         for (ComponentWithOffset child : children) {
@@ -200,7 +202,7 @@ public class Composite extends AbstractComponent<Composite>
         bounds = calculatedBounds;
     }
 
-    protected boolean hasBorder() {
+    public boolean hasBorder() {
         return border != null;
     }
 
@@ -345,6 +347,11 @@ public class Composite extends AbstractComponent<Composite>
         return findChildOrFail(component, null);
     }
 
+    public boolean containsChild(Component<?> component) {
+        ComponentWithOffset child = findChild(component);
+        return (child != null);
+    }
+
     protected ComponentWithOffset findChildOrFail(Component<?> component, String errorPrefix) {
         ComponentWithOffset child = findChild(component);
         if (child == null) {
@@ -472,21 +479,25 @@ public class Composite extends AbstractComponent<Composite>
 
     protected void drawChildren(Color color, IScreenLineSegmentsBuffer segments, List<ComponentWithOffset> children,
             boolean boundsFixed) {
-    	
-    	long start = System.currentTimeMillis();
-    	
+
+        Rectangle clippedArea = bounds;
+        
         // loop thru children and draw
         Position offset = Position.ZERO;
         if (this.hasBorder()) {
             offset = offset.offsetTo(1, 1);
+            if (boundsFixed) {
+                clippedArea = new Rectangle.Simple(bounds.getRow()+1, bounds.getCol()+1, bounds.getHeight()-2, bounds.getWidth()-2);
+            }
         }
+        
 
         for (ComponentWithOffset child : children) {
 
             Position childOffset = child.offset.offsetAdd(offset);
 
             if (boundsFixed) {
-                ScreenLineSegment.UTIL.addSegmentsWithOffsetBounded(childOffset, bounds, segments.getSegments(),
+                ScreenLineSegment.UTIL.addSegmentsWithOffsetBounded(childOffset, clippedArea, segments.getSegments(),
                         child.component.getSegmentsBuffer().getSegments());
             } else {
                 ScreenLineSegment.UTIL.addSegmentsWithOffsetUnBounded(childOffset, segments.getSegments(),

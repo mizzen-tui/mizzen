@@ -34,6 +34,9 @@ public class CanvasComponent implements Component<CanvasComponent>, CanResize {
 
     @Override
     public void setParentContainer(ParentContainer parentContainer) {
+        if (parentContainer != null && this.getParentContainer() != null && this.getParentContainer() != parentContainer) {
+            throw new IllegalStateException("Parent container already set to another component");
+        }
         this.parentContainer = parentContainer;
     }
     

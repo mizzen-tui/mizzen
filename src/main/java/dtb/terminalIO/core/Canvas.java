@@ -39,14 +39,14 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
     private int              sc_current_id    = 0;
 
     private char             emptyChar        = '░';
-    private FGBGColors       emptyColor       = FGBGColors.DEFAULT;
+    private Color            emptyColor       = FGBGColors.DEFAULT;
     private static final int EMPTY_SEGMENT_ID = -67233;
 
     public void setEmptyChar(char emptyChar) {
         this.emptyChar = emptyChar;
     }
 
-    public void setEmptyColors(FGBGColors emptyColor) {
+    public void setEmptyColors(Color emptyColor) {
         this.emptyColor = emptyColor;
     }
 
@@ -59,14 +59,14 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
         return meAsARectangle;
     }
 
-    public void setEmptyAttributes(FGBGColors emptyColor, char emptyChar) {
+    public void setEmptyAttributes(Color emptyColor, char emptyChar) {
         setEmptyColors(emptyColor);
         setEmptyChar(emptyChar);
     }
 
     IScreenLineSegmentsBuffer segmentsBuffer = new ScreenLineSegmentsBuffer();
 
-    public Canvas(CanvasBackend backend, FGBGColors color) {
+    public Canvas(CanvasBackend backend, Color color) {
         this.backend = backend;
         this.color = color;
     }
@@ -362,7 +362,7 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
         return this;
     }
 
-    public FGBGColors getEmptyColor() {
+    public Color getEmptyColor() {
         return this.emptyColor;
     }
 

@@ -1,0 +1,303 @@
+package dtb.terminalIO.components.modal;
+
+import dtb.terminalIO.components.BorderedComponent;
+import dtb.terminalIO.components.ButtonBar;
+import dtb.terminalIO.components.ChildComponentManager;
+import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.Composite;
+import dtb.terminalIO.components.HorizontalPanel;
+import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.components.input.Button;
+import dtb.terminalIO.controlcodes.Colors;
+import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.OnIdleEventEventHandler;
+import dtb.terminalIO.events.RequestUpdateCanvasEvent;
+import dtb.terminalIO.events.focus.RequestFocusEvent;
+import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
+import dtb.terminalIO.events.keyboard.KeyStroke;
+import dtb.terminalIO.events.keyboard.Keys;
+import dtb.terminalIO.geom.Dimension;
+import dtb.terminalIO.geom.Position;
+import dtb.terminalIO.geom.Rectangle;
+
+public class MessageBox {
+    
+    static enum IconStyle {
+        QUESTION,
+        INFO,
+        WARNING,
+        ERROR
+    }
+    
+    
+    static Color iconToIconColor(IconStyle icon) {
+        switch (icon) {
+        case QUESTION:
+            return new FGBGColors(Colors.BIBla, Colors.On_IGre);
+        case INFO:
+            return new FGBGColors(Colors.BIBla, Colors.On_IPur);
+        case WARNING:
+            return new FGBGColors(Colors.BIBla, Colors.On_Yel);
+        case ERROR:
+            return new FGBGColors(Colors.BIWhi, Colors.On_IRed);
+
+        default:
+            return null;
+        }
+    }
+
+    static Component<?> iconToIconComponent(IconStyle icon) {
+        switch (icon) {
+        case QUESTION:
+             return questionICON();
+        case INFO:
+            return informationICON();
+        case WARNING:
+            return warningICON();
+        case ERROR:
+            return errorICON();
+
+        default:
+            return null;
+        }
+    }
+    
+    private static Component<?> makeICON(char icon, Color iconColor) {
+        BorderedComponent question = new BorderedComponent(iconColor, new TextComponent(iconColor," " + icon + " "));
+        return question;
+    }
+    
+
+    private static Component<?> questionICON() {
+        return makeICON('?', new FGBGColors(Colors.BIBla, Colors.On_IGre));
+    }
+    
+    private static Component<?> informationICON() {
+        return makeICON('i', new FGBGColors(Colors.BIBla, Colors.On_IPur));
+    }
+    
+    private static Component<?> warningICON() {
+        return makeICON('!', new FGBGColors(Colors.BIBla, Colors.On_Yel));
+    }
+    
+    private static Component<?> errorICON() {
+        return makeICON('X', new FGBGColors(Colors.BIWhi, Colors.On_IRed));
+    }
+    
+    private static void simpleDialog(IconStyle icon,
+                                     String title,
+                                     String[] buttonLabels,
+                                     EventBus eventBus, 
+                                     ChildComponentManager<?> parentPanel,
+                                     String message,
+                                     KeyStroke onPressedKeyStroke,
+                                     EventHandler  onPressed) {
+
+        Color dialogColor = new FGBGColors(Colors.Bla,Colors.On_Whi);
+        dialogColor.setBoldTransform((c)-> Colors.BIRed);
+        dialogColor.setInvertTransform((c)-> new FGBGColors(Colors.BIWhi, Colors.On_Bla));
+
+        Composite dialog = new Composite( dialogColor );
+
+        dialog.setBorderColor(iconToIconColor(icon));
+        dialog.setBorder(true); 
+        dialog.setTitle(iconToIconColor(icon), " " + title + " ");
+        
+        if (icon != null && Dimension.UTIL.stringToDimension(message).getHeight()==1) {
+            message = "\n" + message;
+        }
+
+        TextComponent messageText = new TextComponent(dialog.getColor(), message);
+
+        HorizontalPanel messagePanel = new HorizontalPanel(dialogColor).setHorizontalSpacer(2);
+        if (icon != null) {
+            messagePanel.add(iconToIconComponent(icon));
+        }
+        messagePanel.add(messageText);
+        
+        Position messageTextPosition = new Position.Simple(1,1);
+        
+        dialog.add(messageTextPosition, messagePanel);
+        
+        ButtonBar buttons = new ButtonBar();
+
+        buttons.setColor(dialog.getColor());
+        buttons.setNoBorderChars();
+        buttons.setHorizontalSpacer(3);
+        for (int i=0; i<buttonLabels.length; i++) {
+            buttons.addButton(buttonLabels[i], null, null).setBorder(true);
+        }
+        
+        int buttonPositionCol = (dialog.getWidth() - buttons.getWidth()) / 2 ;
+        if (buttonPositionCol < 0) {
+            buttonPositionCol = messageTextPosition.getCol();
+        }
+        
+        Position positionOfButtons = messageTextPosition.offsetAdd(new Position.Simple(messagePanel.getHeight()+2,buttonPositionCol));
+        
+        dialog.add( positionOfButtons, buttons );
+
+        Position positionOfDialog = Position.ZERO;
+
+        if (parentPanel instanceof Rectangle) {
+            positionOfDialog = ((Rectangle)parentPanel).centered(dialog, Position.ZERO);
+        }
+
+        parentPanel.add( positionOfDialog, dialog );
+    
+        //  -- bind dialog events to modalDialogEvents which in 
+        //     turn is prepended to the eventBus --
+        
+        ModalEventHandler modalDialogEvents = new ModalEventHandler(eventBus);
+        
+        EventHandler removeDialog = (te)->{
+            parentPanel.remove(dialog);
+            te.getEventBus().removeEventHandler(modalDialogEvents);
+            te.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(dialog)  );
+        };
+        
+        EventHandler onPressedHandler = (te)-> {
+            removeDialog.handle(te);
+            te.getEventBus().appendEventHandler( new OnIdleEventEventHandler.OneTime(onPressed) );
+        };
+
+        EventHandler noActionHandler = (te)-> {
+            removeDialog.handle(te);
+        };
+        
+        modalDialogEvents.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, noActionHandler ) );
+
+        modalDialogEvents.appendEventHandler(new KeyInputEventHandler(onPressedKeyStroke, onPressedHandler ) );
+        modalDialogEvents.appendEventHandler(buttons);
+        
+    }
+    
+    public static void showInfoDialog(EventBus eventBus, 
+                                      ChildComponentManager<?> parentPanel,
+                                      String message,
+                                      EventHandler  onPressed) {
+        simpleDialog(IconStyle.INFO, "Info", new String[] {"OK"}, eventBus, parentPanel, message, Keys.ENTER_KEYSTROKE, onPressed );
+
+    }
+
+    public static void showInfoDialog(EventBus  eventBus, 
+                                      ChildComponentManager<?> parentPanel,
+                                      String message) {
+        showInfoDialog(eventBus, parentPanel, message, EventHandler.NULL_HANDLER);
+    }
+    
+    public static void showWarningDialog(EventBus  eventBus, 
+                                         ChildComponentManager<?> parentPanel,
+                                         String message,
+                                         EventHandler onPressed) {
+         simpleDialog(IconStyle.WARNING, "Warning", new String[] {"OK"}, eventBus, parentPanel, message, Keys.ENTER_KEYSTROKE, onPressed );
+    }
+    
+    public static void showWarningDialog(EventBus eventBus, 
+            ChildComponentManager<?> parentPanel,
+            String message) {
+        showWarningDialog(eventBus, parentPanel, message, (te)->{});
+    }
+    
+    public static void showErrorDialog(EventBus eventBus, 
+                                       ChildComponentManager<?> parentPanel,
+                                       String message,
+                                       EventHandler onPressed) {
+          simpleDialog(IconStyle.ERROR, "Error", new String[] {"OK"}, eventBus, parentPanel, message, Keys.ENTER_KEYSTROKE, onPressed );
+    }
+    
+    public static void showErrorDialog(EventBus eventBus, 
+            ChildComponentManager<?> parentPanel,
+            String message) {
+        showErrorDialog(eventBus, parentPanel, message, (te)->{});
+    }
+    
+    public static void showYesNoDialog(EventBus eventBus, 
+                                       ChildComponentManager<?> parentPanel,
+                                       String message,
+                                       EventHandler onYesAction) {
+
+        Color dialogColor = new FGBGColors(Colors.Bla,Colors.On_Whi);
+        dialogColor.setBoldTransform((c)-> Colors.BIRed);
+        dialogColor.setInvertTransform((c)-> new FGBGColors(Colors.BIWhi, Colors.On_Bla));
+        
+        Composite dialog = new Composite( dialogColor );
+
+        dialog.setBorder(true);
+        dialog.setTitle(" Yes / No ");
+
+        if (Dimension.UTIL.stringToDimension(message).getHeight()==1) {
+            message = "\n" + message;
+        }
+        
+        TextComponent messageText = new TextComponent(dialog.getColor(), message);
+        
+        HorizontalPanel messagePanel = new HorizontalPanel(dialogColor).setHorizontalSpacer(2);
+        messagePanel.add(questionICON());
+        messagePanel.add(messageText);
+        
+        Position messageTextPosition = new Position.Simple(1,1);
+        
+        dialog.add(messageTextPosition, messagePanel);
+
+        ButtonBar buttons = new ButtonBar();
+
+        buttons.setColor(dialog.getColor());
+        buttons.setNoBorderChars();
+        buttons.setHorizontalSpacer(3);
+        Button yes = buttons.addButton("Yes", null, null).setBorder(true);
+        buttons.addButton("No", null, null).setBorder(true);
+        
+        int buttonPositionCol = (dialog.getWidth() - buttons.getWidth()) / 2 ;
+        if (buttonPositionCol < 0) {
+            buttonPositionCol = messageTextPosition.getCol();
+        }
+        
+        Position positionOfButtons = messageTextPosition.offsetAdd(new Position.Simple(messagePanel.getHeight()+2,buttonPositionCol));
+        
+        dialog.add( positionOfButtons, buttons );
+
+        Position positionOfDialog = Position.ZERO;
+
+        if (parentPanel instanceof Rectangle) {
+            positionOfDialog = ((Rectangle)parentPanel).centered(dialog, Position.ZERO);
+        }
+
+        parentPanel.add( positionOfDialog, dialog );
+
+        //  -- bind dialog events to modalDialogEvents which in 
+        //     turn is prepended to the eventBus --
+        
+        ModalEventHandler modalDialogEvents = new ModalEventHandler(eventBus);
+        
+        EventHandler removeDialog = (te)->{
+            parentPanel.remove(dialog);
+            te.getEventBus().removeEventHandler(modalDialogEvents);
+            te.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(dialog)  );
+        };
+        
+        EventHandler yesHandler = (te)-> {
+            removeDialog.handle(te);
+            te.getEventBus().appendEventHandler( new OnIdleEventEventHandler.OneTime(onYesAction) );
+        };
+
+        EventHandler noHandler = (te)-> {
+            removeDialog.handle(te);
+        };
+        
+        modalDialogEvents.appendEventHandler(new KeyInputEventHandler(noHandler, 'n','N' ) );
+        modalDialogEvents.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, noHandler ) );
+
+        modalDialogEvents.appendEventHandler(new KeyInputEventHandler(yesHandler,'y','Y' ) );
+        modalDialogEvents.appendEventHandler(buttons);
+
+        eventBus.raiseEvent( new RequestUpdateCanvasEvent(dialog));
+
+        eventBus.raiseEvent( new RequestFocusEvent(yes.asFocusable()));
+
+    }
+
+}

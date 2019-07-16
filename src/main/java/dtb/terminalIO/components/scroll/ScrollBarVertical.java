@@ -16,6 +16,9 @@ public class ScrollBarVertical extends BoundedComponent<ScrollBarVertical> {
     Dimension viewedSize;
     Dimension viewerSize;
 
+    // ▒
+    // '░'
+    
     public ScrollBarVertical(Color color, Position pos, int len) {
         super(color, pos, new Dimension.Simple(len, 1));
     }
@@ -82,7 +85,7 @@ public class ScrollBarVertical extends BoundedComponent<ScrollBarVertical> {
         }
         
         if (b_height>0) {
-            segments.merge(makeChildComponent(()->new VerticalLine(color, this.getRow()+a_height, this.getCol(), b_height ).setVerticalLineChar('░')).getSegmentsBuffer());
+            segments.merge(makeChildComponent(()->new VerticalLine(color, this.getRow()+a_height, this.getCol(), b_height ).setVerticalLineChar('▒')).getSegmentsBuffer());
         }
         
         if (c_height>0) {

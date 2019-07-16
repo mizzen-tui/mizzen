@@ -2,11 +2,12 @@ package dtb.terminalIO.util.linuxproc;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 import dtb.terminalIO.util.ConsumeResult;
-import dtb.terminalIO.util.linuxproc.ExecUtil.StreamLineGlobber;
+import dtb.terminalIO.util.linuxproc.ExecUtil.StreamLineGobbler;
 
 public class LinuxProcessWatcher {
 
@@ -22,6 +23,9 @@ public class LinuxProcessWatcher {
     int lastResult = -123;
     Process process = null;
     Thread outputGobbler;
+    Thread controllerThread;
+    String name;
+    boolean controlledInterrupt = true;
 
     Supplier<Boolean> isActive = new Supplier<Boolean>() {
         @Override
@@ -34,15 +38,21 @@ public class LinuxProcessWatcher {
         return this;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+    
     public synchronized void invokeLongRunning(ConsumeResult<String> consumeOutput, ConsumeResult<Integer> consumeResult) throws Exception {
         if (invokeScript == null) {
-            throw new NullPointerException("invokeScript not set.  Please call setInvokeScript(() first");
+            throw new NullPointerException("invokeScript not set.  Please call setInvokeScript() first");
         }
 
         if (invoking.get()) {
             throw new IllegalStateException("Already invoked and still running!");
         }
 
+        controlledInterrupt = false;
+        
         invoking.set(true);
 
         Runnable invoker = new Runnable() {
@@ -58,7 +68,11 @@ public class LinuxProcessWatcher {
                     
                     LinuxProcessWatcher.this.process = procBuilder.start();
                     
-                    outputGobbler = new Thread(new StreamLineGlobber(LinuxProcessWatcher.this.process.getInputStream(), consumeOutput, isActive),"outputGobbler");
+                    String gobblerName = "outputGobbler";
+                    if ( LinuxProcessWatcher.this.name != null) {
+                        gobblerName = gobblerName + "-" + name;
+                    }
+                    outputGobbler = new Thread(new StreamLineGobbler(LinuxProcessWatcher.this.process.getInputStream(), consumeOutput, isActive),gobblerName);
 
                     outputGobbler.start();
 
@@ -69,6 +83,12 @@ public class LinuxProcessWatcher {
                     consumeResult.accept(LinuxProcessWatcher.this.lastResult);
 
                 } catch (Exception e) {
+                    if (controlledInterrupt && e instanceof InterruptedException) {
+                        invoking.set(false);
+                        process = null;
+                        outputGobbler = null;
+                        return;
+                    }
                     throw new RuntimeException(e);
                 }
 
@@ -80,23 +100,55 @@ public class LinuxProcessWatcher {
 
         };
 
-        new Thread(invoker, "LinuxProcessWatcher-" + nextThreadNum()).start();
+        String threadName = "LinuxProcessWatcher-" + (this.name != null?(name+"-"):"") + nextThreadNum(); 
+        
+        controllerThread = new Thread(invoker, threadName);
+        controllerThread.start();
+    }
+    
+    private synchronized void killGobblerThread() {
+        if (outputGobbler != null && outputGobbler.isAlive()) {
+            if (outputGobbler != null && outputGobbler.isAlive()) {
+                controlledInterrupt = true;
+                outputGobbler.interrupt();
+            }
+        }
+        outputGobbler = null;
+    }
+
+    private synchronized void killControllerThread() {
+        if (controllerThread != null && controllerThread.isAlive()) {
+            if (controllerThread != null && controllerThread.isAlive()) {
+                controlledInterrupt = true;
+                controllerThread.interrupt();
+            }
+        }
+        controllerThread = null;
     }
     
     public synchronized void stopRequest() {
         invoking.set(false);
+        Process theProcess = process;
         if (process != null) {
             if (outputGobbler != null && outputGobbler.isAlive()) {
-                if (process.isAlive()) {
+                if (theProcess.isAlive()) {
+                    try {
+                        theProcess.getInputStream().close();
+                    } catch (IOException e1) {
+                        // TODO Auto-generated catch block
+                        e1.printStackTrace();
+                    }
                     try {
                         Thread.sleep(50);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                    process.destroy();
+                    theProcess.destroy();
                 }
             }
         }
+        killGobblerThread();
+        killControllerThread();
     }
 
     public int getLastResult() {
@@ -122,7 +174,7 @@ public class LinuxProcessWatcher {
         return result;
     }
 
-    public static LinuxProcessWatcher tailFile(String fileName) throws Exception {
+    public static LinuxProcessWatcher tailFile(String name, String fileName) throws Exception {
 
         File fileToTail = new File(fileName);
 
@@ -133,11 +185,19 @@ public class LinuxProcessWatcher {
         String tailCMD = "/usr/bin/tail -f " + fileToTail.getAbsolutePath();
 
         LinuxProcessWatcher watcher = new LinuxProcessWatcher();
+        
+        if (name != null) {
+            watcher.setName(name);
+        }
 
         watcher.setInvokeScript(tailCMD);
 
         return watcher;
 
+    }
+
+    public static LinuxProcessWatcher tailFile(String fileName) throws Exception {
+        return tailFile(null, fileName);
     }
 
     public static LinuxProcessWatcher tailFile(String fileName, ConsumeResult<String> consumeOutput) throws Exception {

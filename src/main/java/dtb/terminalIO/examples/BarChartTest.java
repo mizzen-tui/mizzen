@@ -1,7 +1,5 @@
 package dtb.terminalIO.examples;
 
-import java.io.IOException;
-
 import dtb.terminalIO.components.chart.BarChart;
 import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode;
@@ -61,6 +59,15 @@ public class BarChartTest {
             return bc;
 
         }
+        
+        public BarChart getBarChart(Rectangle drawingArea) {
+            if (bc == null) {
+                bc = buildBarChart(drawingArea);
+            }
+            return this.bc;
+        }
+        
+        
         
         double[] bc_DATA       = new double[] { 10.0, 5.0, 13.0, 4.0, 6.0, 5.0, 6.0, 7.0, 8.0 };
         String[] bc_DATALabels = new String[] { "Lumber", "Metal", "Fish", "Beef", "Lamb", "Liquor", "Milk", "Butter", "Cherries" };

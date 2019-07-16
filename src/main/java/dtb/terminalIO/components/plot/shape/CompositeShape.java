@@ -8,7 +8,7 @@ import dtb.terminalIO.components.plot.PointPlotter;
 /**
  * A shape that contains multiple shapes
  * 
- * The draw method will draw all 
+ * The draw method will draw all
  * 
  */
 public class CompositeShape implements Shape {
@@ -20,9 +20,9 @@ public class CompositeShape implements Shape {
     }
 
     public void removeShape(Shape shape) {
-	shapes.remove(shape);
+        shapes.remove(shape);
     }
-    
+
     @Override
     public void draw(PointPlotter pointPlotter) {
         for (Shape shape : shapes) {

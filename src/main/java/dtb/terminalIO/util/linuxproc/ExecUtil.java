@@ -77,9 +77,9 @@ public class ExecUtil {
 
         Process proc = rt.exec(commands);
         
-        Thread errorGobbler = new Thread(new StreamLineGlobber(proc.getErrorStream(), outputConsumer, isActive),"errorGobbler");
+        Thread errorGobbler = new Thread(new StreamLineGobbler(proc.getErrorStream(), outputConsumer, isActive),"errorGobbler");
 
-        Thread outputGobbler = new Thread(new StreamLineGlobber(proc.getInputStream(), outputConsumer, isActive),"outputGobbler");
+        Thread outputGobbler = new Thread(new StreamLineGobbler(proc.getInputStream(), outputConsumer, isActive),"outputGobbler");
 
         errorGobbler.start();
         outputGobbler.start();
@@ -98,39 +98,72 @@ public class ExecUtil {
         return executeLongRunning(new String[] { "/bin/sh", "-c", command }, outputConsumer, isActive);
     }
 
-    public static class StreamLineGlobber implements Runnable {
+    public static class StreamLineGobbler implements Runnable {
 
         private InputStream is;
+//        private Reader      input;
         ConsumeResult<String> outputConsumer;
         Supplier<Boolean> isActive;
+        boolean isEOF = false;
 
-        public StreamLineGlobber(InputStream is, ConsumeResult<String> outputConsumer, Supplier<Boolean> isActive) {
+        public StreamLineGobbler(InputStream is, ConsumeResult<String> outputConsumer, Supplier<Boolean> isActive) {
             super();
             this.is = is;
             this.outputConsumer = outputConsumer;
             this.isActive = isActive;
         }
 
-        public StreamLineGlobber(InputStream is, PrintStream os, Supplier<Boolean> isActive) {
+        public StreamLineGobbler(InputStream is, PrintStream os, Supplier<Boolean> isActive) {
             super();
             this.is = is;
             this.outputConsumer = (line) -> os.println(line);
         }
 
-        public StreamLineGlobber(InputStream is, Supplier<Boolean> isActive) {
+        public StreamLineGobbler(InputStream is, Supplier<Boolean> isActive) {
             this(is, System.out, isActive);
         }
+
+        char buffer[] = new char[1024];
 
         @Override
         public void run() {
             try {
-                String s;
+                String pendingOutput = null;
                 BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-                while (isActive.get() && (s = reader.readLine()) != null) {
-                    outputConsumer.accept(s);
+                isEOF = false;
+                while (isActive.get() && !isEOF && !Thread.interrupted()) {
+                    int available = is.available();
+                    if (available > 0 && reader.ready()) {
+                        int count = reader.read(buffer, 0, Math.min(available / 2, buffer.length));
+                        isEOF = (count < 0);
+                        if (isEOF) break; // todo - need to ensure that pending gets output at end of loop
+                        int j = 0;
+                        int i = 0;
+                        for (; i < count; i++) {
+                            if (buffer[i] == '\n' || buffer[i] == '\r') {
+                                String output = ((pendingOutput != null) ? pendingOutput : "") + new String(buffer,j, i-j);
+                                j = i+1;
+                                pendingOutput = null;
+                                outputConsumer.accept(output);
+                            }
+                        }
+                        if (j+1 != i) {
+                            pendingOutput = new String(buffer,j, i-j);
+                        }
+                    } else {
+                        Thread.sleep(100);
+                    }
                 }
+                
+                if (pendingOutput != null && pendingOutput.length()>0) {
+                    outputConsumer.accept(pendingOutput);
+                }
+                
             } catch (Exception e) {
                 // handle error .. how?
+                if (isActive.get()) {
+                    e.printStackTrace();
+                }
             }
 
         }

@@ -47,7 +47,10 @@ public interface FocusManager extends Focusable {
     public static class UTIL {
         
         /**
-         * utility method to unfocus old focusable and focus new focusable and then optionally run an option function to perform "whatever" desired action
+         * utility method to unfocus old focusable and focus new focusable and then optionally 
+         * run a function to perform "whatever" desired action. Usually the action is to update the
+         * screen (refresh the canvas).
+         * 
          * @param focusableChild
          * @param oldFocusableChild
          * @param eventBus
@@ -55,14 +58,17 @@ public interface FocusManager extends Focusable {
          */
         public static void setNewFocusable(Focusable focusableChild, Focusable oldFocusableChild, EventBus eventBus, Consumer<Focusable> onFocusChanged) {
             
+            // unfocus the previous (old)
             if (oldFocusableChild != null) {
                 oldFocusableChild.setFocus(false, eventBus);
             }
             
+            // focus the new
             if ( focusableChild != null) {    
                 focusableChild.setFocus(true, eventBus);
             }
             
+            // run action ( typically to update the canvas )
             if (onFocusChanged != null) {
                 onFocusChanged.accept(focusableChild);
             }
@@ -77,9 +83,9 @@ public interface FocusManager extends Focusable {
          * from focusManager to focusTarget
          */
         public static List<Object> findTargetAsPath(FocusManager focusManager, Focusable focusTarget) {
-            
+
             List<Object> pathToTarget = new FindPathToTarget<Object>().findPath(focusManager, focusTarget);
-            
+
             return pathToTarget;
         }
         

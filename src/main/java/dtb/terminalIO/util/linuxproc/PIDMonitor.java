@@ -22,6 +22,9 @@ public class PIDMonitor {
     public int getPID() throws Exception {
         String result = ExecUtil.executeWithShell(pidScript);
         try {
+            if (result != null) {
+                result = result.trim();
+            }
             int pid = Integer.parseInt(result);
             return pid;
         } catch (NumberFormatException e) {
@@ -37,7 +40,7 @@ public class PIDMonitor {
     }
 
     private OnIdleEventEventHandler.RepeatingInterval makeMonitor(Consumer<Integer> success, Consumer<Exception> failure) {
-        return new OnIdleEventEventHandler.RepeatingInterval(5000, new EventHandler() {
+        return new OnIdleEventEventHandler.RepeatingInterval(2000, new EventHandler() {
             @Override
             public void handle(TerminalEvent<?> te) {
                 try {

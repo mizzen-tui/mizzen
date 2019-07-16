@@ -52,6 +52,10 @@ public class OnIdleEventEventHandler extends ConditionalEventHandler.Impl {
         IntervalPredicate(long interval) {
             this.afterTime = System.currentTimeMillis() + interval;
         }
+        
+        public void setInterval(long interval) {
+            this.afterTime = System.currentTimeMillis() + interval;
+        }
 
         @Override
         public boolean test(TerminalEvent<?> t) {
@@ -79,6 +83,14 @@ public class OnIdleEventEventHandler extends ConditionalEventHandler.Impl {
         public RepeatingInterval(long interval, EventHandler handler) {
             super(new IntervalPredicate(interval), handler);
             this.interval = interval;
+        }
+        
+        public void setInterval(long interval) {
+            this.interval = interval;
+        }
+
+        public long getInterval() {
+            return this.interval;
         }
 
         @Override

@@ -1,6 +1,12 @@
 package dtb.terminalIO.components.input;
 
+import java.util.Collection;
+import java.util.Collections;
+
+import dtb.terminalIO.components.BoundedComponent;
+import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
+import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
@@ -12,15 +18,21 @@ import dtb.terminalIO.events.keyboard.HasHotKey;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
+import dtb.terminalIO.geom.Dimension;
+import dtb.terminalIO.geom.Position;
+import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.StringUtils;
 
-public class Button extends Composite implements HasValue<Boolean>, ToFocusable, HasHotKey   {
+public class Button extends BoundedComponent<Button> implements HasValue<Boolean>, ToFocusable, HasHotKey, ParentContainer   {
 
     String buttonText;
+    Composite container;
     TextComponent renderedText;
     String leftSelectedBracket = "[";
     String rightSelectedBracket = "]";
     Boolean pressed = false;
+    boolean displayHotKey = false;
     boolean toggleButton = false;
     
     private KeyStroke hotKey;  // not used yet .. soon
@@ -30,20 +42,26 @@ public class Button extends Composite implements HasValue<Boolean>, ToFocusable,
         void buttonPressed( boolean toggleOn);
     }
     
-    public Button(Color color, String buttonText, boolean toggle, Action onPressed) {
-        super(color);
+    public Button(Color color, String buttonText, boolean toggle, Action onPressed1) {
+        super(color, Rectangle.ZERO);
         this.toggleButton = toggle;
         this.buttonText = buttonText;
-        renderedText = new TextComponent(color, getTextForRendering(false));
-        this.add(renderedText);
+        this.renderedText = new TextComponent(color, "");
+        this.container = new Composite(color);
+        this.container.add(renderedText);
+        this.container.setParentContainer(this);
+        this.setButtonTextAndResize(buttonText);
     }
 
     public Button(Color color, String buttonText, boolean toggle) {
-        super(color);
+        super(color, Rectangle.ZERO);
         this.toggleButton = toggle;
         this.buttonText = buttonText;
-        renderedText = new TextComponent(color, getTextForRendering(false));
-        this.add(renderedText);
+        this.renderedText = new TextComponent(color, "");
+        this.container = new Composite(color);
+        this.container.add(renderedText);
+        this.container.setParentContainer(null);
+        this.setButtonTextAndResize(buttonText);
     }
 
     public Button(Color color, String buttonText) {
@@ -62,17 +80,43 @@ public class Button extends Composite implements HasValue<Boolean>, ToFocusable,
         return hotKey;
     }
 
-    public void setHotKey(KeyStroke hotKey) {
+    public Button setHotKey(KeyStroke hotKey) {
         this.hotKey = hotKey;
+        return this;
     }
 
-    public String getButtonText() {
-        return buttonText;
+    public boolean isDisplayHotKey() {
+        return displayHotKey && getHotKey() != null;
+    }
+
+    public Button setDisplayHotKey(boolean displayHotKey) {
+        this.displayHotKey = displayHotKey;
+        renderedText.setTextAndResize(getTextForRendering(false));
+        return this;
     }
 
     public void setButtonText(String buttonText) {
+        setButtonTextAndResize(buttonText);
+    }
+
+    public void resize(Dimension d) {
+        if (d != null && d.isSameDimension(this)) {
+            return;
+        }
+        super.resize(d);
+        if ( ! d.isSameDimension(this.container)) {
+            this.container.resize(d);
+        }
+    }
+    
+    private void setButtonTextAndResize(String buttonText) {
+        Dimension prevSize = new Dimension.Simple(this.renderedText);
         this.buttonText = buttonText;
         renderedText.setTextAndResize(getTextForRendering(false));
+        if ( ! prevSize.isSameDimension(renderedText)) {
+            this.container.fullrecalcDim();
+            this.resize((Dimension)this.container);
+        }
     }
     
     private String lbracket(String brackStr) {
@@ -93,6 +137,13 @@ public class Button extends Composite implements HasValue<Boolean>, ToFocusable,
     
     private String getTextForRendering(boolean hasFocus) {
          String outputStr = this.buttonText;
+
+         if (isDisplayHotKey()) {
+             String hotKeyStr = this.getHotKey().getName();
+
+             outputStr = (this.renderedText.getColor().bold().asString()) + hotKeyStr + this.renderedText.getColor().asString() + " " + outputStr;
+         }
+         
          if (hasFocus) {
              outputStr = lbracket(leftSelectedBracket) + outputStr + rbracket(rightSelectedBracket);
          } else {
@@ -103,11 +154,13 @@ public class Button extends Composite implements HasValue<Boolean>, ToFocusable,
          }
          return outputStr;
     }
-    
+
     @Override
     public Button setColor(Color drawingcolor) {
         super.setColor(drawingcolor);
-        this.renderedText.setColor(drawingcolor);
+        if ( this.renderedText != null) {
+            this.renderedText.setColor(drawingcolor);
+        }
         return this;
     }
 
@@ -121,8 +174,7 @@ public class Button extends Composite implements HasValue<Boolean>, ToFocusable,
     public Boolean getValue() {
         return pressed;
     }
-    
-    
+ 
     protected void buttonPressed(EventBus eventBus) {
         Button.this.setValue( (toggleButton? !pressed :true) );  // toggle the value
         renderedText.setText(getTextForRendering(true));
@@ -140,7 +192,6 @@ public class Button extends Composite implements HasValue<Boolean>, ToFocusable,
             chainedHandler.appendEventHandler(new KeyInputEventHandler(getHotKey(),(te)->buttonPressed(te.getEventBus())));
         }
 
-        
         return new DefaultFocusableBehaviour.Simple(this, chainedHandler.asConditionalEventHandler()) {
  
             @Override
@@ -155,5 +206,38 @@ public class Button extends Composite implements HasValue<Boolean>, ToFocusable,
         };
     }
 
-    
+    @Override
+    protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
+        segments.merge(this.container.getSegmentsBuffer());
+    }
+
+    public boolean hasBorder() {
+        return this.container.hasBorder();
+    }
+
+
+    public Button setBorder(boolean hasBorder) {
+        this.container.setBorder(hasBorder);
+        this.container.fullrecalcDim();
+        this.resize((Dimension)container);
+        this.markAsDirty();
+        return this;
+    }
+
+    @Override
+    public Collection<? extends Component<?>> getChildren() {
+        return Collections.singletonList(this.container);
+    }
+
+    @Override
+    public Position getPositionRelativeToParent(Component<?> child) {
+        return Position.ZERO;
+    }
+
+    @Override
+    public void childResized(Component<?> child) {
+        this.resize((Dimension)child);
+    }
+
+
 }

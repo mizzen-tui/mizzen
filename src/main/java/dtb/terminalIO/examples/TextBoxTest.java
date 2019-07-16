@@ -32,7 +32,7 @@ import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.util.Stty;
 
 public class TextBoxTest {
-    
+
     public static void main(String[] args) throws IOException {
 
         TerminalScreen screen = TestsCommon.getTerminalScreenForTesting(args);
@@ -149,7 +149,6 @@ public class TextBoxTest {
                 // rendered canvas
                 master_canvas.refresh();
                 
-                
                 System.out.println("\n\n"+logger.toString());
                 
                 return;
@@ -182,11 +181,10 @@ public class TextBoxTest {
         eventBus.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
         eventBus.appendEventHandler(new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
         
+        DefaultFocusManager focusManager = new DefaultFocusManager(Keys.TAB_KEYSTROKE).setNavKeysFirst(false);
         
-        DefaultFocusManager focusManager = new DefaultFocusManager(Keys.TAB_KEYSTROKE);
-        
-        DefaultFocusManager focusManager1 = new DefaultFocusManager();
-        DefaultFocusManager focusManager2 = new DefaultFocusManager();
+        DefaultFocusManager focusManager1 = new DefaultFocusManager().setNavKeysFirst(false);
+        DefaultFocusManager focusManager2 = new DefaultFocusManager().setNavKeysFirst(false);
 
         focusManager1.addFocusable(ti, eventBus);
         focusManager1.addFocusable(ti_2, eventBus);
@@ -196,9 +194,12 @@ public class TextBoxTest {
         
         focusManager2.addFocusable(ti_3, eventBus);
         focusManager2.addFocusable(ti_4, eventBus); 
-        
 
-        focusManager.addFocusable(focusManager1, eventBus);
+        focusManager.addFocusable(sc_1, eventBus);
+        sc_1.prependEventHandler(focusManager1);
+        
+        //focusManager.addFocusable(focusManager1, eventBus);
+        
         focusManager.addFocusable(focusManager2, eventBus);
 
         
@@ -207,7 +208,6 @@ public class TextBoxTest {
         eventBus.appendEventHandler( new OnIdleEventEventHandler.RepeatingInterval(100, (te) -> {
                                           renderComponents.run();                       
                                      }));
-        
         
         eventBus.appendEventHandler( new HasValue.OnValueChangedEventHandler<String>(ti) {
             @Override
@@ -226,7 +226,7 @@ public class TextBoxTest {
                 renderComponents.run();
             }
         });
-        
+     
         
         eventBus.appendEventHandler( new HasValue.OnValueChangedEventHandler<Boolean>(b_2) {
             public void handle(TerminalEvent<?> te) {
@@ -247,6 +247,5 @@ public class TextBoxTest {
         screen.add(ControlCode.SHOW_CURSOR);
         
     }
-    
-    
+
 }

@@ -4,6 +4,8 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import dtb.terminalIO.components.ChildComponentManager;
+import dtb.terminalIO.components.modal.MessageBox;
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.TerminalScreen;
@@ -31,17 +33,23 @@ public class TUIApp {
     EventBus eventBus;
     Canvas master_canvas;
     TerminalScreen screen;
-    Function<TUIApp,Boolean> updateCanvas;
+    Function<TUIApp, Boolean> updateCanvas;
     BiConsumer<TUIApp, TerminalEvent<?>> exceptionHandler = new DefaultExceptionHandler();
     Exception lastException = null;
     Consumer<TUIApp> terminateAction = new DefaultTerminateAction();
-    
+
     Consumer<TUIApp> onReadyStartAction = null;
     BiConsumer<TUIApp, Dimension> onResizeAction = null;
     
+    String confirmApplicationExitMessage = null;  
+
+    Runnable refreshCanvasIfModified;
+
     KeyStroke terminateAppHotKey = Keys.CTRL_C_KEYSTROKE;
 
     KeyStroke noGraphicsToggleHotKey = Keys.CTRL_X_KEYSTROKE;
+    
+    ChildComponentManager<?> mainApplicationPanel;
 
     public TUIApp initFromArgs(String[] args) {
         screen = TestsCommon.getTerminalScreenForTesting(args);
@@ -63,16 +71,38 @@ public class TUIApp {
     }
 
     public EventBus getEventBus() {
-        if (eventBus == null) 
-        {
+        if (eventBus == null) {
             makeEventBus();
         }
         return eventBus;
     }
-    
-    
 
-    public void setUpdateCanvas(Function<TUIApp,Boolean> updateCanvas) {
+    public void runUIAction(Runnable task) {
+        getEventBus().appendEventHandler(new OnIdleEventEventHandler.OneTime(
+                ()-> {
+                    task.run();
+                    doRefreshCanvasIfModified();
+                }
+        ));
+    }
+
+    public void setMainApplicationPanel(ChildComponentManager<?> mainApplicationPanel) {
+        this.mainApplicationPanel = mainApplicationPanel;
+    }
+    
+    public void confirmOnExit(String confirmApplicationExitMessage) {
+        if (this.mainApplicationPanel == null) {
+            throw new IllegalStateException("Cannot call confirmOnExit() yet.  First call TUIApp.setMainApplicationPanel()");
+        }
+        this.confirmApplicationExitMessage = confirmApplicationExitMessage;
+    }
+    
+    public void confirmOnExit() {
+        this.confirmOnExit("Exit application?");
+    }
+    
+    
+    public void setUpdateCanvas(Function<TUIApp, Boolean> updateCanvas) {
         this.updateCanvas = updateCanvas;
     }
 
@@ -83,11 +113,10 @@ public class TUIApp {
     public void setOnReadyStart(Consumer<TUIApp> onReadyStartAction) {
         this.onReadyStartAction = onReadyStartAction;
     }
-    
+
     public void setOnResizeAction(BiConsumer<TUIApp, Dimension> resizeAction) {
         this.onResizeAction = resizeAction;
     }
-
 
     private void makeEventBus() {
         eventBus = new EventBus();
@@ -95,29 +124,58 @@ public class TUIApp {
             new KeyInputEventsProducer(eventBus);
         } catch (Exception e) {
             eventBus.stopConsuming();
-            return ;
+            return;
         }
     }
-    
+
     public void setCanvasSize(Dimension size) {
         Dimension curSize = getCanvas().asRectangle();
-        if ( ! size.contains(curSize)) { // new size is smaller - so clear
-            if (getCanvas().segmentsSize()>0) {
+        if (!size.contains(curSize)) { // new size is smaller - so clear
+            if (getCanvas().segmentsSize() > 0) {
                 getCanvas().clearCanvas();
                 getCanvas().refresh();
             }
         }
         getCanvas().setSize(size.getHeight(), size.getWidth());
         getCanvas().refresh();
-        
+    }
+
+    private void makeRefreshCanvasIfModified() {
+        refreshCanvasIfModified = () -> {
+            boolean result = (updateCanvas == null) ? true : updateCanvas.apply(this);
+            if (result) {
+                getCanvas().refresh();
+            }
+        };
+    }
+
+    public void doRefreshCanvasIfModified() {
+        if (this.refreshCanvasIfModified == null) {
+            makeRefreshCanvasIfModified();
+        }
+        refreshCanvasIfModified.run();
     }
     
+    private void onClick_terminateAppHotKey(TerminalEvent<?> te) {
+        EventHandler raiseTerminateEvent = (e)-> e.getEventBus().raiseEvent(new TerminalEvent<Void>(e.getEventBus(), TYPE.TERMINATE, null));
+        if (this.confirmApplicationExitMessage != null) {
+            MessageBox.showYesNoDialog(te.getEventBus(), 
+                                       this.mainApplicationPanel, 
+                                       this.confirmApplicationExitMessage, 
+                                       raiseTerminateEvent);
+        } else {
+            raiseTerminateEvent.handle(te);
+        }
+    }
+
     public void start() {
-        
-        // We do an initial refresh before going into RAW mode (caused by makeEventBus())
-        // in order that canvas is correctly refresh after current screen cursor position
+
+        // We do an initial refresh before going into RAW mode (caused by
+        // makeEventBus())
+        // in order that canvas is correctly refresh after current screen cursor
+        // position
         getCanvas().refresh();
-        
+
         if (this.eventBus == null) {
             makeEventBus();
         }
@@ -125,28 +183,28 @@ public class TUIApp {
         screen.add(ControlCode.HIDE_CURSOR);
         screen.refresh();
 
-        eventBus.appendEventHandler(new KeyInputEventHandler(terminateAppHotKey, (te)-> eventBus.raiseEvent( new TerminalEvent<Void>(eventBus, TYPE.TERMINATE, null) ) ));
+        eventBus.appendEventHandler(new KeyInputEventHandler(terminateAppHotKey,
+                (te) -> onClick_terminateAppHotKey(te) ));
 
-        Runnable canvasUpdateThenRefresh = ()-> {
-            boolean result = (updateCanvas==null)? true : updateCanvas.apply(this);
-            if (result) {
-                getCanvas().refresh();
-            }
+        makeRefreshCanvasIfModified();
+
+        Runnable updateThenForceRefresh = () -> {
+            updateCanvas.apply(this);
+            getCanvas().refresh();
         };
-        
-        
+
         if (noGraphicsToggleHotKey != null) {
             // todo -move addNoGraphicsToggleEvent(..) outside of testsCommon
-            TestsCommon.addNoGraphicsToggleEvent(eventBus, screen, canvasUpdateThenRefresh );
+            TestsCommon.addNoGraphicsToggleEvent(eventBus, screen, updateThenForceRefresh);
         }
-        
+
         eventBus.appendEventHandler(master_canvas.asShowCursorEventHandler());
         eventBus.appendEventHandler(master_canvas.asHideCursorEventHandler());
-        
+
         TerminalResizeDetection.initiate(screen, eventBus);
-        
+
         if (this.updateCanvas != null) {
-            eventBus.appendEventHandler(new OnRequestUpdateCanvasEventHandler(canvasUpdateThenRefresh));
+            eventBus.appendEventHandler(new OnRequestUpdateCanvasEventHandler(refreshCanvasIfModified));
         }
 
         if (terminateAction != null) {
@@ -154,7 +212,7 @@ public class TUIApp {
         }
 
         if (this.updateCanvas != null) {
-            eventBus.appendEventHandler(new OnIdleEventEventHandler.OneTime(canvasUpdateThenRefresh));
+            eventBus.appendEventHandler(new OnIdleEventEventHandler.OneTime(refreshCanvasIfModified));
         }
 
         if (exceptionHandler != null) {
@@ -166,27 +224,24 @@ public class TUIApp {
                         }
                     }));
         }
-        
+
         eventBus.appendEventHandler(new OnResizeEventHandler() {
             @Override
             public void handleResize(Dimension size) {
-                
+
                 if (onResizeAction != null) {
                     onResizeAction.accept(TUIApp.this, size);
                 }
-                
-                if (! size.contains(getCanvas())) {
+
+                if (!size.contains(getCanvas())) {
                     // canvas too big (onResizeAction didn't adjust it properly) - let's fix
-                    master_canvas.setSize(size.getHeight() , size.getWidth() );
+                    master_canvas.setSize(size.getHeight(), size.getWidth());
                 }
-                
+
                 eventBus.raiseEvent(new RequestUpdateCanvasEvent(TUIApp.this));
             }
         });
-        
-      //  eventBus.raiseEvent( new TerminalEvent<Dimension>(this, TerminalEvent.TYPE.RESIZE, TestsCommon.terminalSize()) );
-        
-        
+
         if (this.onReadyStartAction != null) {
             eventBus.appendIdleEventHandler(new OnIdleEventEventHandler.OneTime(new EventHandler() {
                 @Override
@@ -196,7 +251,7 @@ public class TUIApp {
                 }
             }));
         }
-        
+
     }
 
 }

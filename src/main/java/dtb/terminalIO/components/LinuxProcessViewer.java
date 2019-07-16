@@ -28,15 +28,17 @@ import dtb.terminalIO.util.linuxproc.LinuxProcessWatcher;
 public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxProcessViewer>>
         implements ParentContainer, FocusManager {
 
-    ConditionalEventHandler eventHandler;
-    ChainedEventHandler chainedEventHandler;
-    final TextBuffer textBuffer = new TextBuffer();
     ScrollableComponent scrollView;
     public TextComponent textView;
+
+    Focusable focusable;
+    ChainedEventHandler chainedEventHandler;
+    ConditionalEventHandler eventHandler;
+
     LinuxProcessWatcher linuProcWatcher;
     TextLineFormatter textLineFormatter;
 
-    Focusable focusable;
+    final TextBuffer textBuffer = new TextBuffer();
 
     static class TextBuffer {
         int height = 0;
@@ -79,6 +81,7 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
         this.scrollView.setParentContainer(this);
         this.setFillOnClear(false);
         this.scrollView.asEventHandler();
+        this.scrollView.setBorderColor(color);
         this.textLineFormatter = new DefaultTextFormatter();
     }
 
@@ -87,12 +90,21 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
     }
 
     public void setBorderColor(Color color) {
-        this.scrollView.setColor(color);
+        this.scrollView.setBorderColor(color);
+    }
+
+    public Color getBorderColor() {
+        return this.scrollView.getBorderColor();
     }
 
     public LinuxProcessViewer(Color color, Dimension d, ParentContainer parentContainer) {
         this(color, d);
         this.setParentContainer(parentContainer);
+    }
+    
+    public void setContentColor(Color drawingColor) {
+        this.textView.setColor(drawingColor);
+        this.scrollView.setContentColor(drawingColor);
     }
 
     boolean finderAdded = false;
@@ -116,6 +128,16 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
 
     public LinuxProcessViewer setTitle(String title) {
         scrollView.setTitle(title);
+        return this;
+    }
+    
+    public LinuxProcessViewer setFooterText(String footerText) {
+        scrollView.setFooterText(footerText);
+        return this;
+    }
+    
+    public LinuxProcessViewer setTitle(Color titleColors, String title) {
+        scrollView.setTitle(titleColors, title);
         return this;
     }
 
@@ -177,30 +199,29 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
         }
 
         eventBus.appendIdleEventHandler(new OnIdleEventEventHandler.OneTime(new EventHandler() {
-
             @Override
             public void handle(TerminalEvent<?> te) {
 
                 try {
                     int[] sleepCTR = new int[] { 0 };
                     linuProcWatcher.invokeLongRunning((line) -> {
-                        if (textLineFormatter != null)
-                        {
+                        if (textLineFormatter != null) {
                             line = textLineFormatter.getFormattedText(line);
                         }
-                        
+
                         textBuffer.addLine(line);
                         sleepCTR[0]++;
-                        if (sleepCTR[0] > 25) {
+                        if (sleepCTR[0] > 25) {  // every 25 lines sleep to give UI a chance to render
                             try {
-                                Thread.sleep(100); // FIXME: I dont like that I have to sleep - doing this to avoid
+                                Thread.sleep(50); // FIXME: I dont like that I have to sleep - doing this to avoid
                                                    // starvation. I must have a structural problem here
                             } catch (InterruptedException e) {
-                                e.printStackTrace();
+                                return;
                             }
                             sleepCTR[0] = 0;
                         }
-                    }, (result)-> {});
+                    }, (result) -> {
+                    });
 
                 } catch (Exception e) {
                     textView.setTextAndResize(e.toString());

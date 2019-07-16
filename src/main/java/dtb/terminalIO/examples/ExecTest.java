@@ -122,15 +122,15 @@ public class ExecTest {
         LinuxProcessViewer lprocViewer2 = new LinuxProcessViewer(sizeOfWindow);
         lprocViewer2.setBorderColor(Colors.Blu);
         lprocViewer2.addFinder();
-        
+
         HorizontalPanel hPanel = new HorizontalPanel();
         hPanel.setBounds(sizeOfPanel);
         
-        hPanel.setHorizontalSpacer(2);
+        hPanel.setHorizontalSpacer(12);
         
         hPanel.add(lprocViewer);
         hPanel.add(lprocViewer2);
-        hPanel.setTitle("Proc viewers");
+        //hPanel.setTitle("Proc viewers");
         
         
         app.setUpdateCanvas((tApp)->{
@@ -144,7 +144,7 @@ public class ExecTest {
 
             return true; // true means updated
         });
-        
+
         
         BiConsumer<TUIApp, Dimension> resizeAction = (tApp, size)->{
             

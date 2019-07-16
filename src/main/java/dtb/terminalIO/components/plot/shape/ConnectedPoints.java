@@ -15,6 +15,8 @@ import dtb.terminalIO.geom.Position;
 public class ConnectedPoints implements Shape {
     
     List<PointPlot> points = new ArrayList<PointPlot>();
+    
+    // when true, connect last point with first point
     boolean closedShape = true;
 
     public ConnectedPoints() {

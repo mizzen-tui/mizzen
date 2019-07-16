@@ -35,18 +35,21 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>
     public SimpleBorder(Color color, Position position, Dimension d) {
         super(color, position, d);
         this.border = new RectangleComponent(color, position, d);
+        this.border.setParentContainer(this);
         setFillOnClear(false);
     }
 
     public SimpleBorder(Color color, Dimension d) {
         super(color, d);
         this.border = new RectangleComponent(color, Position.ZERO, d);
+        this.border.setParentContainer(this);
         setFillOnClear(false);
     }
 
     public SimpleBorder setFillOnClear(boolean fillOnClear) {
         super.setFillOnClear(fillOnClear);
         this.border.setFillOnClear(fillOnClear);
+        this.border.setParentContainer(this);
         return this;
     }
 
@@ -106,7 +109,7 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>
     }
 
     public SimpleBorder setTitle(String title) {
-        return setTitle(null, title);
+        return setTitle(titleColor, title);
     }
 
     @Override

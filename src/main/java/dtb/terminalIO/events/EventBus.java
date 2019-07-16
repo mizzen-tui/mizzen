@@ -5,7 +5,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
 import dtb.terminalIO.events.keyboard.KeyInputEventsProducer;
 
@@ -65,8 +64,8 @@ import dtb.terminalIO.events.keyboard.KeyInputEventsProducer;
  */
 public class EventBus implements EventHandlerContainer {
 
-    private static final int EVENT_Q_CAPACITY = 20; // number picked out of my hat!
-                                                    // -- increase as needed
+    private static final int EVENT_Q_CAPACITY = 100; // number picked out of my hat!
+                                                     // -- increase as needed
 
     // main events handler chain
     private ChainedEventHandler eventsHandlerChain = ChainedEventHandler.useChainOfResponsibilityStrategy();
@@ -152,6 +151,10 @@ public class EventBus implements EventHandlerContainer {
 
     public boolean isEmptyQueue() {
         return queue.isEmpty();
+    }
+
+    public boolean isFullQueue() {
+        return queue.size() == EVENT_Q_CAPACITY;
     }
 
     // TODO: If queue is full event wont get enqueued.. I dont tell caller - isn't

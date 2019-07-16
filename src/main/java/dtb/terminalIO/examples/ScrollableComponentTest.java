@@ -118,7 +118,7 @@ public class ScrollableComponentTest {
         setTextToView.run();
 
         viewComp1.setViewOffset(viewOffset.getRow(), viewOffset.getCol());
-        viewComp1.setFooterText("Help comes in many forms!");
+        //viewComp1.setFooterText("Help comes in many forms!");
 
         viewComp1.addEventHandlerWithCanvasUpdate(new KeyInputEventHandler(Keys.CTRL_H_KEYSTROKE, new EventHandler() {
             @Override
@@ -158,8 +158,8 @@ public class ScrollableComponentTest {
 
         BrailleDemo brailleDemo = new BrailleDemo() {
              public void flushOutput() {
-                 sourceComponentContainingBrailleDemo.markAsDirty();
-                 viewComp1.markAsDirty();
+                 // sourceComponentContainingBrailleDemo.markAsDirty();
+                 // viewComp1.markAsDirty();
              }
         };
 

@@ -37,8 +37,8 @@ public abstract class DefaultFocusableBehaviour  implements Focusable {
 
         @Override
         public void setFocus(boolean focus, EventBus eventBus) {
-            super.setFocus(focus, eventBus);
-            new FocusSetterToHiliteAction().hiliteAction(this, colorHiliter);
+            super.setFocus(focus, eventBus);  // set the focus flag
+            new FocusSetterToHiliteAction().hiliteAction(this, colorHiliter); // hilite
             this.component.setColor( colorHiliter.asColor() );
         }
     }
@@ -68,7 +68,6 @@ public abstract class DefaultFocusableBehaviour  implements Focusable {
             return eventHandler.canHandle(te);
         }
 
-        
     }
     
 

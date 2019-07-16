@@ -43,6 +43,10 @@ public interface ConditionalEventHandler extends EventHandler {
             this.canHandlePredicate = canHandlePredicate;
         }
     
+        public void setHandler(EventHandler handler) {
+            this.handler = handler;
+        }
+        
         @Override
         public void handle(TerminalEvent<?> te) {
             handler.handle(te);
@@ -69,7 +73,25 @@ public interface ConditionalEventHandler extends EventHandler {
         
     }
     
-    public static class Delegate implements ConditionalEventHandler {
+    public static abstract class AbstractDelegate implements ConditionalEventHandler {
+        
+        protected abstract ConditionalEventHandler getDelegate();
+        
+        @Override
+        public void handle(TerminalEvent<?> te) {
+            getDelegate().handle(te);
+        }
+
+        @Override
+        public EventHandler canHandle(TerminalEvent<?> te) {
+            if (getDelegate().canHandle(te) == null) {
+                return null;
+            }
+            return this;
+        }   
+    }
+    
+    public static class Delegate extends AbstractDelegate {
 
         private ConditionalEventHandler handler;
         
@@ -78,17 +100,9 @@ public interface ConditionalEventHandler extends EventHandler {
             this.handler = handler;
         }
 
-        @Override
-        public void handle(TerminalEvent<?> te) {
-            handler.handle(te);
+        protected ConditionalEventHandler getDelegate() {
+            return handler;
         }
 
-        @Override
-        public EventHandler canHandle(TerminalEvent<?> te) {
-            if (handler.canHandle(te) == null) {
-                return null;
-            }
-            return this;
-        }   
     }
 }

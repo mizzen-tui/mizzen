@@ -4,12 +4,14 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.input.DisplayableValue.StringDisplayValue;
 import dtb.terminalIO.components.input.HasValue;
 import dtb.terminalIO.components.input.ListBox;
 import dtb.terminalIO.components.input.ListBox.TextComponentItemFactory;
+import dtb.terminalIO.components.modal.MessageBox;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
 import dtb.terminalIO.controlcodes.Colors;
@@ -24,6 +26,7 @@ import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyInputEventsProducer;
+import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
@@ -63,11 +66,10 @@ public class ListBoxTest {
                                                "He's a red nosed reindeer after all",
                                                "1\n2\n3\n4\n5\6\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16",
                                                "What?",
-                                               "You though we were done?",
+                                               "You thought we were done?",
                                                "NO!",
                                                "WAY!"
                                                });
-        
         
         lb1.setBorder(false);
         //lb1.setTitle("Ifaces");
@@ -96,29 +98,46 @@ public class ListBoxTest {
         ListBox<String> lb3 = ListBox.fromStrings(new String[] {"Test1", "Test2"}, new TextComponentItemFactory<String>());
        // lb3.setBorder(true);
         
+        HorizontalPanel listBoxesPanel = new HorizontalPanel().setHorizontalSpacer(4);
          
-        HorizontalPanel listBoxes = new HorizontalPanel().setHorizontalSpacer(4);
+        listBoxesPanel.add(lb1_sc);
+        listBoxesPanel.add(lb2);
+        listBoxesPanel.add(lb3);
          
-        listBoxes.add(lb1_sc);
-        listBoxes.add(lb2);
-        listBoxes.add(lb3);
-         
-        
         TextComponent eventDisplayer = new TextComponent("                                       ");
         
         Canvas master_canvas = new Canvas(screen);
-        master_canvas.setSize(listBoxes.getHeight()+anchorPoint.getRow()+2+4, listBoxes.getWidth()+ anchorPoint.getCol()+ 10);
+
+        master_canvas.setSize(listBoxesPanel.getHeight()+anchorPoint.getRow()+2+4, listBoxesPanel.getWidth()+ anchorPoint.getCol()+ 10);
         master_canvas.setEmptyChar(' ');
+
+        Composite mainPanel = new Composite(master_canvas.getTextColor());
+        mainPanel.resize((Dimension)master_canvas);
+        mainPanel.setEmptyChar(' ');
+        mainPanel.setEmptyColor(master_canvas.getEmptyColor());
+
+        mainPanel.add(anchorPoint, listBoxesPanel);
+        mainPanel.add(new PositionVerticalRelative(new Rectangle.Simple(anchorPoint, lb1_sc),1), eventDisplayer);
+        
+        mainPanel.setBorder(true);
+        
         
         Runnable renderComponents = ()-> {
             
-            if ( ! Component.UTIL.isDirty(listBoxes, eventDisplayer)) {
+            if ( ! Component.UTIL.isDirty(mainPanel, listBoxesPanel, eventDisplayer)) {
                 return ;
             }
             
             master_canvas.clearCanvas();
+            
+            master_canvas.addComponentSegments(mainPanel);
+            /*
             master_canvas.addComponentSegments(anchorPoint, listBoxes);
+            
             master_canvas.addComponentSegments(new PositionVerticalRelative(new Rectangle.Simple(anchorPoint, lb1_sc),1), eventDisplayer);
+            */
+            
+            
             master_canvas.refresh();
         };
         
@@ -167,6 +186,17 @@ public class ListBoxTest {
                String newValue = source.getValue();
                eventDisplayer.setTextAndResize("Pressed = "+newValue);
                
+               if ("WAY!".equals(newValue)) {
+                   MessageBox.showInfoDialog( eventBus , mainPanel, "Way to go Joe!");
+               }
+               if ("Blue Suede Shoes".equals(newValue)) {
+                   MessageBox.showErrorDialog( eventBus , mainPanel, "Don't step on my Blue Suede shoes!");
+               }
+               
+               if ("Pink Flamingos".equals(newValue)) {
+                   MessageBox.showWarningDialog( eventBus , mainPanel, "Not in my front lawn!\nTOO TACKY!!");
+               }
+               
                StringDisplayValue[]  newList = currentList;
 
                if (newValue.contains("Claus")) {
@@ -195,9 +225,17 @@ public class ListBoxTest {
        eventBus.appendEventHandler(master_canvas.asShowCursorEventHandler());
        eventBus.appendEventHandler(master_canvas.asHideCursorEventHandler());
 
-       eventBus.appendEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
+       EventHandler confirmTerminate = (te)->{
 
-       eventBus.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
+               MessageBox.showYesNoDialog(te.getEventBus(), 
+                                          mainPanel,
+                                          "  Exit application?  ",
+                                          (e)->terminate.handle(te));
+
+
+       };
+
+       eventBus.appendEventHandler(new KeyInputEventHandler(confirmTerminate, Keys.CTRL_C_KEYSTROKE, Keys.ESC_KEYSTROKE));
 
        TestsCommon.addNoGraphicsToggleEvent(eventBus, screen, renderComponents);
        

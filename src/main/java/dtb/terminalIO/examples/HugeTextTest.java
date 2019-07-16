@@ -23,8 +23,7 @@ public class HugeTextTest {
             return ReadSampleFiles.readStreamToString(stream);
         }
     }
-    
-    
+
     public static void main(String[] args) throws Exception {
         
         

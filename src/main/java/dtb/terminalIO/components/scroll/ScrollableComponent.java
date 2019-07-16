@@ -100,6 +100,12 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         return this;
     }
     
+    public void setContentColor(Color drawingColor) {
+        super.setColor(drawingColor);
+        this.borderedComponent.setColor(drawingColor);
+        this.componentBeingViewed.setColor(drawingColor);
+        this.viewer.setColor(drawingColor);
+    }
 
     public Component<?> getComponentBeingViewed() {
         return this.componentBeingViewed;
@@ -122,7 +128,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
                 footerControls = buildAndPopulateFooterPanel();
                 this.add(footerControls);
             }
-            setFooterText();
+            attachFooterText();
             if (this.findChild(vScrollBar) == null) {
                 this.add(vScrollBar);
             }
@@ -144,6 +150,22 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         this.markAsDirty();
     }
 
+    public Composite setBorderColor(Color borderColors) {
+        this.borderedComponent.setBorderColor(borderColors);
+//        if (this.borderedComponent.getTitle() != null) {
+//            this.borderedComponent.setTitle(borderColors, this.borderedComponent.getTitle())
+//        }
+        this.footerControls.setColor(borderColors);
+        vScrollBar.setColor(this.borderedComponent.getBorderColor());
+        hScrollBar.setColor(this.borderedComponent.getBorderColor());
+        return this;
+    }
+
+    public Color getBorderColor() {
+        return this.borderedComponent.getBorderColor();
+    }
+
+    
     public Composite setTitle(String title) {
         this.borderedComponent.setTitle(title);
         return this;
@@ -160,12 +182,27 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
     }
 
     private ButtonBar buildAndPopulateFooterPanel() {
+        boolean rebuild = false;
         Color borderColor = borderedComponent.getColor();
         if (footerControls == null) {
             footerControls = new ButtonBar(borderColor);
+            rebuild = true;
         }
-        footerControls.removeChildren();
 
+        if (footerTextComponent != null && !footerControls.containsChild(footerTextComponent)) {
+            rebuild = true;
+        }
+        
+        if (! rebuild) {
+            return footerControls;
+        }
+        
+        footerControls.removeChildren();
+        
+        if (footerTextComponent != null) {
+            footerControls.addComponent(footerTextComponent, null, null);
+        }
+        
         addFooterButton("^", Keys.UP_KEYSTROKE, (te) -> ScrollableComponent.this.up(1));
         addFooterButton("v", Keys.DOWN_KEYSTROKE, (te) -> ScrollableComponent.this.down(1));
         addFooterButton("PgUp", Keys.PGUP_KEYSTROKE, (te) -> ScrollableComponent.this.pageup());
@@ -178,10 +215,10 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
 
     public void setFooterText(String s) {
         this.footerText = s;
-        setFooterText();
+        attachFooterText();
     }
 
-    public void setFooterText() {
+    private void attachFooterText() {
         if (!visibleBorder())
             return;
 
@@ -233,8 +270,8 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         // FIXME!
         int desiredRow = d.getHeight() - 1;
         int desiredCol = d.getWidth() - footerControls.getWidth() - 1;
-        this.moveChildTo(new Position.Simple(desiredRow < 0 ? 0 : desiredRow, desiredCol < 0 ? 0 : desiredCol),
-                footerControls);
+        Position footerPosition = new Position.Simple(desiredRow < 0 ? 0 : desiredRow, desiredCol < 0 ? 0 : desiredCol);
+        this.moveChildTo(footerPosition, footerControls);
         int newHScrollBarWidth = (this.borderedComponent.getWidth() - 2) - footerControls.getWidth();
 
         this.hScrollBar.resize(new Dimension.Simple(1, newHScrollBarWidth > 0 ? newHScrollBarWidth : 0));
@@ -274,6 +311,9 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         }
 
         public void setViewSource(IScreenLineSegmentsBuffer.Provider viewSource) {
+            if (this.viewSource != null && this.viewSource instanceof Component) {
+                ((Component<?>)this.viewSource).setParentContainer(null);
+            }
             this.viewSource = viewSource;
             if (viewSource instanceof Component) {
                 ((Component<?>) this.viewSource).setParentContainer(this);
@@ -606,6 +646,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
     @Override
     public void hilite() {
         this.borderedComponent.hilite();
+        // copy color from border
         vScrollBar.setColor(borderedComponent.getBorderColor());
         hScrollBar.setColor(borderedComponent.getBorderColor());
 
@@ -627,7 +668,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         this.markAsDirty();
     }
 
-    public void addFooterButton(String buttonText, KeyStroke hotKey, EventHandler handler) {
+    private void addFooterButton(String buttonText, KeyStroke hotKey, EventHandler handler) {
 
         if (footerControls == null) {
             throw new IllegalStateException("FooterControls object is null! Cannot add button control yet!");

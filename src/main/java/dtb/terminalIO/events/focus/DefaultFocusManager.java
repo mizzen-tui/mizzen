@@ -27,11 +27,13 @@ public class DefaultFocusManager implements FocusManager, HasChildren<Focusable>
     private KeyStroke nextKeyStroke = Keys.DOWN_KEYSTROKE;
     private Consumer<Focusable> onFocusChanged;
 
-    ConditionalEventHandler meAsEventHandler;
-    Focusable meAsFocusable;
+    private ConditionalEventHandler meAsEventHandler;
+    private Focusable meAsFocusable;
+    private boolean navKeysFirst = false;
 
     public DefaultFocusManager() {
         eventConsumers = new ArrayList<Focusable>();
+        this.navKeysFirst = true;
     }
 
     public DefaultFocusManager(KeyStroke prevKeyStroke, KeyStroke nextKeyStroke) {
@@ -44,6 +46,11 @@ public class DefaultFocusManager implements FocusManager, HasChildren<Focusable>
         this(null, nextKeyStroke);
     }
 
+    public DefaultFocusManager setNavKeysFirst(boolean navKeysFirst) {
+        this.navKeysFirst = navKeysFirst;
+        return this;
+    }
+    
     public DefaultFocusManager setOnFocusChanged(Consumer<Focusable> onFocusChanged) {
         this.onFocusChanged = onFocusChanged;
         return this;
@@ -141,10 +148,34 @@ public class DefaultFocusManager implements FocusManager, HasChildren<Focusable>
         return requestFocusEventHandler;
     }
 
+    private ConditionalEventHandler buildKeyStrokeEventHandler() {
+        
+        return new ConditionalEventHandler.AbstractDelegate() {
+            
+            ConditionalEventHandler navFirstHandler = null;
+            ConditionalEventHandler navLastHandler = null;
+            
+            @Override
+            protected ConditionalEventHandler getDelegate() {
+                if (navKeysFirst) {
+                    if (navFirstHandler == null) { // todo: synchro this part
+                        navFirstHandler = buildNavKeysFirstKeyStrokeEventHandler();
+                    }
+                    return navFirstHandler;
+                } else {
+                    if (navLastHandler == null) { // todo: synchro this part
+                        navLastHandler = buildNavKeysLastKeyStrokeEventHandler();
+                    }
+                    return navLastHandler;
+                }
+            }
+        };
+    }
+
     /**
      * Builds a keyStroke eventHandler.
      */
-    private ConditionalEventHandler buildKeyStrokeEventHandler() {
+    private ConditionalEventHandler buildNavKeysFirstKeyStrokeEventHandler() {
 
         IS_Event_TYPE IS_KEYPRESS = new IS_Event_TYPE(TerminalEvent.TYPE.KEYPRESS);
 
@@ -195,6 +226,75 @@ public class DefaultFocusManager implements FocusManager, HasChildren<Focusable>
         });
     }
 
+
+    /**
+     * Builds a keyStroke eventHandler.
+     */
+    private ConditionalEventHandler buildNavKeysLastKeyStrokeEventHandler() {
+
+        IS_Event_TYPE IS_KEYPRESS = new IS_Event_TYPE(TerminalEvent.TYPE.KEYPRESS);
+
+        Predicate<TerminalEvent<?>> canHandlePredicate = new Predicate<TerminalEvent<?>>() {
+
+            @Override
+            public boolean test(TerminalEvent<?> te) {
+                
+                Focusable focusable = getCurrentOrSet(te.getEventBus());
+                if (focusable != null) {
+                    if  (focusable.canHandle(te) != null) {
+                        return true;
+                    }
+                }
+
+                // not handled by current component - so check if a nav key
+
+                if (IS_KEYPRESS.test(te)) {
+                    KeyEvent ke = (KeyEvent) te;
+                    if (prevKeyStroke != null && ke.isKeyStroke(prevKeyStroke)) {
+                        return true;
+                    } else if (nextKeyStroke != null && ke.isKeyStroke(nextKeyStroke)) {
+                        return true;
+                    }
+                }
+
+                return false; // not handled
+            }
+        };
+
+        return new ConditionalEventHandler.Impl(canHandlePredicate, (te) -> {
+            
+            Focusable focusable = getCurrentOrSet(te.getEventBus());
+            if (focusable != null) {
+                // ARG have to test again (is this 3 tests now!!!!)
+                //                         very inefficient)
+                //                      - might have to fix this
+                if (focusable.canHandle(te)!=null) {
+                    focusable.handle(te);
+                    return;
+                }
+            }
+
+            if (IS_KEYPRESS.test(te)) {
+                KeyEvent ke = (KeyEvent) te;
+
+                if (prevKeyStroke != null && ke.isKeyStroke(prevKeyStroke)) {
+                    Focusable prev = getPrev(te.getEventBus());
+                    if (prev != null) {
+                        setChildAsCurrentFocus(prev, te.getEventBus());
+                        return;
+                    }
+                } else if (nextKeyStroke != null && ke.isKeyStroke(nextKeyStroke)) {
+                    Focusable next = getNext(te.getEventBus());
+                    if (next != null) {
+                        setChildAsCurrentFocus(next, te.getEventBus());
+                        return;
+                    }
+                }
+            }
+
+        });
+    }
+
     public void addFocusable(Focusable focusable, EventBus eventBus) {
         eventConsumers.add(focusable);
         if (eventConsumers.size() == 1) {
@@ -229,7 +329,6 @@ public class DefaultFocusManager implements FocusManager, HasChildren<Focusable>
                 public void handle(TerminalEvent<?> te) {
                     event_handler.handle(te);
                 }
-
             };
         }
         return meAsFocusable;

@@ -2,73 +2,75 @@ package dtb.terminalIO.examples;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
-import dtb.terminalIO.components.BorderedComponent;
+import dtb.terminalIO.app.TUIApp;
+import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.TextComponent;
-import dtb.terminalIO.components.chart.BarChart;
+import dtb.terminalIO.components.VerticalPanel;
 import dtb.terminalIO.components.tab.TabPanel;
 import dtb.terminalIO.components.tab.TabPanel.TabAction;
 import dtb.terminalIO.components.tab.TabPanel.TabContext;
 import dtb.terminalIO.controlcodes.Colors;
-import dtb.terminalIO.controlcodes.ControlCode;
+import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
-import dtb.terminalIO.core.Canvas;
-import dtb.terminalIO.core.TerminalScreen;
-import dtb.terminalIO.events.ConditionalEventHandler;
-import dtb.terminalIO.events.EventBus;
-import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.EventHandlerContainer;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
-import dtb.terminalIO.events.OnResizeEventHandler;
+import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
-import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
-import dtb.terminalIO.events.TerminalEvent.TYPE;
-import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
-import dtb.terminalIO.events.keyboard.KeyInputEventsProducer;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
-import dtb.terminalIO.events.resize.TerminalResizeDetection;
+import dtb.terminalIO.examples.BarChartTest.BarChartDemo;
 import dtb.terminalIO.examples.GridBrailleTest.BrailleDemo;
 import dtb.terminalIO.examples.LineChartTest.LineChartDemo;
 import dtb.terminalIO.examples.sampledata.ReadSampleFiles;
 import dtb.terminalIO.geom.Dimension;
-import dtb.terminalIO.geom.Position;
-import dtb.terminalIO.geom.Rectangle;
-import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
-import dtb.terminalIO.util.Stty;
 
 public class TabPanelTest {
 
     static class DemoInTab {
-        Demo    demo;
+        Demo demo;
         boolean firstSetup = false;
+        Function<TabContext, Component<?>> componentSupplier;
 
-        public DemoInTab(Demo demo) {
-            super();
+        public DemoInTab(Demo demo, Function<TabContext, Component<?>> component) {
             this.demo = demo;
+            this.componentSupplier = component;
         }
 
         TabAction getTabAction(KeyStroke hotKey, String tabText) {
             return new TabAction(hotKey, tabText) {
-        	
+
+                EventHandlerContainer.Simple demoInTabEventHandlers = new EventHandlerContainer.Simple();
+
                 public void resize(TabContext tabContext) {
                     demo.resize(tabContext.getBounds());
                 }
 
-                @Override
-                public void drawOnActive(TabContext tabContext) {
-
+                public void activateComponent(TerminalEvent<?> te, TabContext tabContext) {
                     if (!firstSetup) {
                         firstSetup = true;
-                        demo.setUpDemo(tabContext.getEventBus(), tabContext.getBounds(), tabContext);
-
-                    } else {
-                        demo.addAllEventHandlers(tabContext.getEventBus());
+                        demo.setUpDemo(demoInTabEventHandlers, tabContext.getBounds(),
+                                componentSupplier.apply(tabContext));
                     }
+                    // setupDemo populated demoInTabEventHandlers with eventHandlers specific to the
+                    // demo in the tab
+                    // now let's copy those to the actual eventBus
+                    demoInTabEventHandlers.prependTo(te.getEventBus());
                 }
 
                 @Override
-                public void drawOnUnActive(TabContext tabContext) {
-                    demo.tearDownDemo(tabContext.getEventBus());
+                public void deactivateComponent(TerminalEvent<?> te, TabContext tabContext) {
+                    // demo.tearDownDemo(te.getEventBus());
+                    // on Tab deactivate, we will disable (remove) all eventHandlers related to the
+                    // demo
+                    demoInTabEventHandlers.removeFrom(te.getEventBus());
+                }
+
+                @Override
+                public Component<?> getComponent(TabContext tabContext) {
+                    return componentSupplier.apply(tabContext);
                 }
             };
         }
@@ -76,242 +78,167 @@ public class TabPanelTest {
     }
 
     public static void main(String args[]) throws Exception {
-	
-	final EventBus eventBus = new EventBus();
 
-        try {
-            //eventBus = new EventBus();
+        TUIApp tabPanelDemoApp = new TUIApp();
 
-            TerminalScreen screen = TestsCommon.getTerminalScreenForTesting(args);
-            Canvas master_canvas = TestsCommon.getMasterCanvasForTesting(screen);
-            master_canvas.setEmptyChar(' ');
-            screen.add(ControlCode.HIDE_CURSOR);
-            screen.refresh();
+        tabPanelDemoApp.initFromArgs(args);
 
-            // Dimension d_80 = acmeLOGOfileDimension(80);
-            Dimension d_100 = acmeLOGOfileDimension(100);
-            Dimension d_150 = acmeLOGOfileDimension(150);
-            Dimension d_200 = acmeLOGOfileDimension(200);
+        char emptyChar = '░';
+        Color emptyColor = new FGBGColors(Colors.IYel, Colors.On_IBlu);
+        tabPanelDemoApp.getCanvas().setEmptyAttributes(emptyColor, emptyChar);
 
-            TestsCommon.addNoGraphicsToggleEvent(eventBus, screen);
-            
-            TabPanel tb = new TabPanel(FGBGColors.DEFAULT, new FGBGColors(Colors.Blu).bold(), eventBus,
-                                       new Dimension.Simple(master_canvas.getHeight() - 10, master_canvas.getWidth() - 10));
-            tb.setBorder(false);
+        Composite topFrame = new Composite();
+        topFrame.setEmptyChar(emptyChar);
+        topFrame.setEmptyColor(emptyColor);
 
-            tb.addTab(new TabAction(Keys.F5_KEYSTROKE, "Acme Demo") {
+        // Dimension d_80 = acmeLOGOfileDimension(80);
+        Dimension d_100 = acmeLOGOfileDimension(100);
+        Dimension d_150 = acmeLOGOfileDimension(150);
+        Dimension d_200 = acmeLOGOfileDimension(200);
 
-                public void resize(TabContext tabCtx) {
-                    int fileID = 80;
-                    if (tabCtx.getBounds().contains(d_200)) {
-                        fileID = 200;
-                    } else if (tabCtx.getBounds().contains(d_150)) {
-                        fileID = 150;
-                    } else if (tabCtx.getBounds().contains(d_100)) {
-                        fileID = 100;
-                    }
+        Dimension sizeOfTabPanelWindow = new Dimension() {
+            @Override
+            public int getWidth() {
+                return tabPanelDemoApp.getCanvas().getWidth() - 4;
+            }
 
-                    String imgText;
-                    try {
-                        imgText = acmeLOGO(fileID);
-                    } catch (IOException e) {
-                        imgText = "Failed to read file.  Exception " + e;
-                    }
+            @Override
+            public int getHeight() {
+                return tabPanelDemoApp.getCanvas().getHeight() - 8;
+            }
+        };
 
-                    TextComponent tc = new TextComponent(tabCtx.getColor(), imgText);
-                    BorderedComponent imageWithBorder = new BorderedComponent(tc);
-                    Position pos = tabCtx.getBounds().centered(imageWithBorder, Position.ZERO);
-                    tabCtx.getSegmentsBuffer().mergeAtBounded(pos, tabCtx.getBounds(), imageWithBorder.getSegmentsBuffer());
+        Dimension sizeOfDebugWindow = new Dimension() {
+            @Override
+            public int getWidth() {
+                return tabPanelDemoApp.getCanvas().getWidth() - 4;
+            }
+
+            @Override
+            public int getHeight() {
+                return 5;
+            }
+        };
+
+        VerticalPanel vPanel = new VerticalPanel();
+        vPanel.setEmptyChar(emptyChar);
+        vPanel.setEmptyColor(emptyColor);
+        vPanel.setVerticalSpacer(1);
+        topFrame.add(vPanel);
+
+        TabPanel tb = new TabPanel(FGBGColors.DEFAULT, new FGBGColors(Colors.Blu).bold(), sizeOfTabPanelWindow);
+        tb.setBorder(false);
+        tb.setEmptyChar(emptyChar);
+        tb.setEmptyColor(emptyColor);
+        vPanel.add(tb);
+
+        TextComponent debugSTATs = new TextComponent(Colors.IYel, "");
+        Composite debugWindow = new Composite(Colors.IGre).setBounds(sizeOfDebugWindow);
+        debugWindow.setTitle(new FGBGColors(Colors.BYel, Colors.On_Gre), "DEBUG");
+        debugWindow.add(debugSTATs);
+        vPanel.add(debugWindow);
+
+        AtomicInteger counter = new AtomicInteger(0);
+
+        tabPanelDemoApp.setUpdateCanvas((tApp) -> {
+            if (!topFrame.isDirty()) {
+                return false; // false means no GUI change to update
+            }
+
+            tApp.getCanvas().addComponentSegments(1,2,topFrame);
+
+            return true;
+        });
+
+        tb.addTab(new TabAction(Keys.F5_KEYSTROKE, "Acme Demo") {
+
+            TextComponent tc;
+
+            public void resize(TabContext tabCtx) {
+                int fileID = 80;
+                if (tabCtx.getBounds().contains(d_200)) {
+                    fileID = 200;
+                } else if (tabCtx.getBounds().contains(d_150)) {
+                    fileID = 150;
+                } else if (tabCtx.getBounds().contains(d_100)) {
+                    fileID = 100;
                 }
 
-                @Override
-                public void drawOnActive(TabContext tabCtx) {
-                    resize(tabCtx);
+                String imgText;
+                try {
+                    imgText = acmeLOGO(fileID);
+                } catch (IOException e) {
+                    imgText = "Failed to read file.  Exception " + e;
                 }
 
-                @Override
-                public void drawOnUnActive(TabContext tabCtx) {
-                    // nothing to do ..
+                ((TextComponent) getComponent(tabCtx)).setTextAndResize(imgText);
+            }
+
+            @Override
+            public void activateComponent(TerminalEvent<?> te, TabContext tabCtx) {
+                resize(tabCtx);
+            }
+
+            @Override
+            public void deactivateComponent(TerminalEvent<?> te, TabContext tabCtx) {
+                // nothing to do ..
+            }
+
+            @Override
+            public Component<?> getComponent(TabContext tabCtx) {
+                if (this.tc == null) {
+                    tc = new TextComponent(tabCtx.getColor(), "ACME LOGO");
                 }
+                return tc;
+            }
 
-            });
+        });
 
-            tb.addTab(new TabAction(Keys.F6_KEYSTROKE, "BarChart Example") {
+        BarChartDemo barChartDemo = new BarChartDemo();
+        tb.addTab(new DemoInTab(barChartDemo, (tc) -> barChartDemo.getBarChart(tc.getBounds()))
+                .getTabAction(Keys.F6_KEYSTROKE, "BarChart Example"));
 
-                BarChart buildBarChart(Rectangle drawingArea) {
+        LineChartDemo lineChartDemo = new LineChartDemo();
+        tb.addTab(new DemoInTab(lineChartDemo, (tc) -> lineChartDemo.getLineChart()).getTabAction(Keys.F7_KEYSTROKE,
+                "LineChart Example"));
 
-                    BarChart bc = new BarChart(drawingArea.getHeight() - 4, drawingArea.getWidth() - 4);
-                    bc.setBorder(true);
-                    bc.setPlotColor(new FGBGColors(Colors.BIYel));
+        BrailleDemo brailleDemo = new BrailleDemo();
+        tb.addTab(new DemoInTab(brailleDemo, (tc) -> brailleDemo.getBrailleComponent()).getTabAction(Keys.F8_KEYSTROKE,
+                "Braille Character Graphics Demo"));
 
-                    bc.setTitle("| Import Percentages |");
+        tabPanelDemoApp.setOnResizeAction((tApp, size) -> {
+            tApp.getCanvas().setSize(size.getHeight(), size.getWidth());
+            tApp.getCanvas().clearCanvas();
+            tb.resize(sizeOfTabPanelWindow);
+            debugWindow.resize(sizeOfDebugWindow);
+        });
 
-                    return bc;
+        tabPanelDemoApp.setOnReadyStart((tApp) -> {
+            tApp.setMainApplicationPanel(topFrame);
+            tApp.confirmOnExit();
 
-                }
-                 
+            tApp.getEventBus().appendEventHandler(tb);
 
-                double[] bc_DATA       = new double[] { 10.0, 5.0, 13.0, 4.0, 6.0, 5.0, 6.0, 7.0, 8.0 };
-                String[] bc_DATALabels = new String[] { "Lumber", "Metal", "Fish", "Beef", "Lamb", "Liquor", "Milk", "Butter", "Cherries" };
+            // select first tab once eventBus is rdy to go
+            tApp.getEventBus().appendEventHandler(
+                    new OnIdleEventEventHandler.OneTime((te) -> tb.selectAsActive(te, Keys.F5_KEYSTROKE)));
 
-                OnIdleEventEventHandler buildBarChartUpdaterTask(BarChart bc, TabContext tabCtx) {
-
-                    return new OnIdleEventEventHandler.RepeatingInterval(500, new EventHandler() {
-
-                        @Override
-                        public void handle(TerminalEvent<?> te) {
-                            bc.clearData();
-                            bc.clear();
-                            tabCtx.clearForRedraw();
-
-                            for (int i = 0; i < bc_DATA.length; i++) {
-                                double d = Math.random() * 20;
-                                bc.addData(d, bc_DATALabels[i]);
-                            }
-
-                            tabCtx.getSegmentsBuffer().mergeAt(tabCtx.getBounds().centered(bc, Position.ZERO), bc.getSegmentsBuffer());
-                        }
-                    });
-                }
-
-                ConditionalEventHandler barChartUpdater;
-                BarChart bc;
-                
-                public void resize(TabContext tabCtx) {
-                    if (bc != null)
-                       bc.resize(tabCtx.getBounds());
-                }
-
-
-                @Override
-                public void drawOnActive(TabContext tabCtx) {
-
-                    if (barChartUpdater != null)
-                        return;
-
-                    bc = buildBarChart(tabCtx.getDrawingArea());
-
-                    barChartUpdater = buildBarChartUpdaterTask(bc, tabCtx);
-
-                    tabCtx.getEventBus().appendEventHandler(barChartUpdater);
-
-                }
-
-                @Override
-                public void drawOnUnActive(TabContext tabCtx) {
-
-                    if (barChartUpdater != null) {
-                        tabCtx.getEventBus().removeEventHandler(barChartUpdater);
-                        barChartUpdater = null;
-                    }
-
-                }
-            });
-            
-            
-            tb.addTab(new DemoInTab(new LineChartDemo() {
-                public void renderPreUPdate() {
-                    tb.clearForRedraw();
-                }
-            }).getTabAction(Keys.F7_KEYSTROKE, "LineChart Example"));
-            
-            tb.addTab(new DemoInTab(new BrailleDemo() {
-                public void renderPreUPdate() {
-                    tb.clearForRedraw();
-                }
-
-                public void flushOutput() {
-                    // tabContext.clearForRedraw();
-                }
-            }).getTabAction(Keys.F8_KEYSTROKE, "Braille Character Graphics Demo"));
-
-
-            tb.selectAsActive(Keys.F5_KEYSTROKE);
-
-            AtomicInteger counter = new AtomicInteger(0);
-
-            eventBus.appendEventHandler(new OnIdleEventEventHandler.RepeatingInterval(100, new EventHandler() {
-
-                @Override
-                public void handle(TerminalEvent<?> te) {
-                    // master_canvas.remove_rect()
-                    master_canvas.getSegmentsBuffer().removeRect(tb);
-                    master_canvas.addComponentSegments(tb);
-                    int count = counter.incrementAndGet();
-
-                    BorderedComponent debugWindow = new BorderedComponent(Colors.IGre,
-                            new TextComponent(Colors.Yel, "IDLE task invoke counter = " + count + "   \n" + eventBus.statsAsStr() + "      \n"
-                                    + "Text segments on screen: " + master_canvas.segmentsSize() + "  "));
-                    debugWindow.setTitle(new FGBGColors(Colors.BYel, Colors.On_Gre), "DEBUG");
-                    master_canvas.addComponentSegments(master_canvas.getHeight() - 6, 0, debugWindow);
-
-                    master_canvas.refresh();
-                }
+            tApp.getEventBus().appendEventHandler(new OnIdleEventEventHandler.RepeatingInterval(100, (te) -> {
+                        int count = counter.incrementAndGet();
+                        debugSTATs.setTextAndResize(
+                                "IDLE task invoke counter = " + count + 
+                                "   \n" + tApp.getEventBus().statsAsStr() + 
+                                "\n" + 
+                                "Text segments on screen: " + tApp.getCanvas().segmentsSize() + "  ");
+        
+                        te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(tApp));
             }));
 
-            
-            TerminalResizeDetection.initiate(screen, eventBus);
+        });
+        
+        
+        tabPanelDemoApp.start();
 
-	    eventBus.appendEventHandler(new OnResizeEventHandler() {
-		@Override
-		public void handleResize(Dimension size) {
-		    master_canvas.setSize(size.getHeight() - 1, size.getWidth() - 1); 
-		    master_canvas.clearCanvas();
-		    tb.resize(new Dimension.Simple(master_canvas.getHeight() - 10, master_canvas.getWidth() - 10));
-		    
-		}
-	    });
-            
-            
-            EventHandler terminate = new EventHandler() {
-                @Override
-                public void handle(TerminalEvent<?> te) {
-
-                    eventBus.stopConsuming();
-                    screen.add(ControlCode.SHOW_CURSOR);
-                    screen.refresh();
-                    master_canvas.refresh();
-
-                    System.out.println("Exited application\n");
-
-                    try {
-                        Stty.setCooked();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-
-                    if (te.getType().equals(TYPE.EXCEPTION)) {
-                        System.out.println("\n");
-                        ((Exception) te.getEventData()).printStackTrace();
-                    }
-                }
-            };
-
-            // translate_to_x_plotValue(this.x_leftValue),
-            // translate_to_y_plotValue(this.y_bottomValue)
-
-            eventBus.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
-            eventBus.appendEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
-            eventBus.appendEventHandler(new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
-
-            master_canvas.refresh();
-            
-            try {
-                new KeyInputEventsProducer(eventBus);
-            } catch (Exception e) {
-                eventBus.stopConsuming();
-                return;
-            }
-           
-        } catch (Exception e1) {
-            eventBus.stopConsuming();
-            Stty.setCooked();
-            e1.printStackTrace();
-            
-        } finally {
-            //eventBus.stopConsuming();
-            // Stty.setCooked();
-        }
     }
 
     static private String acmeLOGOFileName(int sizeInName) {

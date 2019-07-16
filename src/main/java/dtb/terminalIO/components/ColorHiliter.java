@@ -4,12 +4,16 @@ import dtb.terminalIO.controlcodes.ColorTransform;
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 
+/**
+ * A hilite action that takes a color and transforms it to
+ * its hilited equivalent which usually means making it bold
+ */
 public class ColorHiliter implements Hiliter {
     
-    boolean hilited = false;
+    private boolean hilited = false;
     
-    ControlCode.ColorProvider colorToHilite;
-    ColorTransform colorHilitedTransform = (color)->color.bold();
+    private ControlCode.ColorProvider colorToHilite;
+    private ColorTransform colorHilitedTransform = (color)->color.bold();
 
     public ColorHiliter(ControlCode.ColorProvider colorProvider) {
         this.colorToHilite = colorProvider;
@@ -38,7 +42,7 @@ public class ColorHiliter implements Hiliter {
        }
         this.hilited = false;
     }
-    
+
     public Color asColor() {
         return getColor();
     }

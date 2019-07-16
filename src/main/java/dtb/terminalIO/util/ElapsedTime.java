@@ -15,6 +15,11 @@ public class ElapsedTime {
         }
         return elapsed;
     }
+
+    public long recalcElapsed() {
+        elapsed = System.currentTimeMillis() - start;
+        return elapsed;
+    }
     
     public static ElapsedTime start() {
         return new ElapsedTime();

@@ -8,7 +8,7 @@ import dtb.terminalIO.textsegments.ScreenLineSegment;
 /**
  * A Component that draws one ScreenLineSegment (text with a color and position)
  */
-public class SegmentComponent extends Component.AbstractComponent<SegmentComponent> {
+public class SegmentComponent extends AbstractComponent<SegmentComponent> {
     
     ScreenLineSegment scs;
     

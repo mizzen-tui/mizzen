@@ -90,6 +90,9 @@ public class TerminalEvent<T> extends EventObject {
     }
     
     public EventBus getEventBus() {
+        if (eventBus == null) {
+            throw new NullPointerException("Trying to access eventBus from event object that is not in the active state.  Are you using the correct event object?");
+        }
         return eventBus;
     }
 

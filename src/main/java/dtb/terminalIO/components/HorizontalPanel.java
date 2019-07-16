@@ -45,7 +45,7 @@ public class HorizontalPanel extends Composite {
             anchor = getChildrenComponentsWithOffset().get(childrenSize-1);
         }
 
-        return super.add(  new PositionHorizontalRelative(anchor, horizontalSpacer) , component);        
+        return super.add(  new PositionHorizontalRelative(anchor, horizontalSpacer) , component);
     }
 
     private void readjustAllAnchors() {

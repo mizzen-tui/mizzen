@@ -7,12 +7,12 @@ public class ShapeWithTransform extends Shape.Delegate {
     private PointPlotter.Delegate pointPlotter;
 
     public ShapeWithTransform(Shape shape, PointPlotter.Delegate pointPlotter) {
-	super(shape);
-	this.pointPlotter = pointPlotter;
+        super(shape);
+        this.pointPlotter = pointPlotter;
     }
 
     public ShapeWithTransform(Shape shape) {
-	this(shape, new PointPlotter.Delegate(null));
+        this(shape, new PointPlotter.Delegate(null));
     }
 
     public PointPlotter.Delegate getPointPlotter() {
@@ -25,8 +25,8 @@ public class ShapeWithTransform extends Shape.Delegate {
 
     @Override
     public void draw(PointPlotter pointPlotter) {
-	this.pointPlotter.setPointPlotter(pointPlotter);
-	super.draw(this.pointPlotter);
+        this.pointPlotter.setPointPlotter(pointPlotter);
+        super.draw(this.pointPlotter);
     }
 
 }

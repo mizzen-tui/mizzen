@@ -49,6 +49,10 @@ public class KeyStroke {
         this(new int[] {key}, name);
     }
 
+    public KeyStroke(char ch) {
+        this(new int[] {ch}, ch+"");
+    }
+
     public KeyStroke(int key) {
         this(key, ((char)key)+"");
     }
