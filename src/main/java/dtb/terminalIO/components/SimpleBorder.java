@@ -105,6 +105,7 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>
 ////                }
 //        }
         this.title = title;
+        this.markAsDirty();
         return this;
     }
 

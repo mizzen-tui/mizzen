@@ -71,7 +71,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>  implements HasVal
             Dimension tcDim = new Dimension.Simple( strDim.getHeight(), maxWidthStr ); 
             tc = new TextComponent(this.getColor(), tcDim, displayableItem.getDisplayValue());
             
-            bullet = new CharComponent( this.getColor() , '-');            
+            bullet = new CharComponent( this.getColor() , '-');
             
             this.add( 0,0, bullet);
             this.add( 0,2, tc);
@@ -409,7 +409,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>  implements HasVal
         if (index < 0 || index >= size()) {
             return false;
         }
-        
+
         // unhilite
         int curSelected = getSelectedIndex();
         if (curSelected>-1) {
@@ -433,6 +433,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>  implements HasVal
         return true;
     }
     
+    // returns true if we can select a 'previous' item
     private boolean canSetSelectedPrev() {
         int selected = getSelectedIndex();
         if (selected < 0) {
@@ -444,7 +445,8 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>  implements HasVal
         }
         return selected > 0;
     }
-    
+
+    // returns true if we can select a 'next' item
     private boolean canSetSelectedNext() {
         int selected = getSelectedIndex();
         if (selected < 0) {
@@ -456,7 +458,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>  implements HasVal
         }
         return selected + 1 < size();
     }
-    
+
     public boolean setSelectedPrev() {
         int selected = getSelectedIndex();
         if (selected < 0) {
@@ -489,8 +491,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>  implements HasVal
         }
         return items.get(selected).getHasValue();
     }
-    
-    
+
     public T getSelectedValue() {
         int selected = getSelectedIndex();
         if (selected < 0) {
@@ -498,18 +499,18 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>  implements HasVal
         }
         return items.get(selected).getValue();
     }
-    
+
     @Override
     public T getValue() {
         HasValue<T> selectedItem = getSelected();
         return selectedItem == null ? null : selectedItem.getValue();
     }
-    
+
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
         segments.merge(this.itemsContainer.getSegmentsBuffer());
     }
-    
+
     private void raiseEventRequestShowSelected(EventBus eventBus) {
         int curSelected = getSelectedIndex();
         if (curSelected>-1) {
@@ -517,12 +518,11 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>  implements HasVal
             new ShowComponentOnFocus().onFocus(curSelectedComponent.getComponent(), eventBus);
         }
     }
-    
 
     public Focusable asFocusable() {
-        
+
         ChainedEventHandler chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
-        
+
         chainedHandler.appendEventHandler(new KeyInputEventHandler(this.keystrokePrevious, 
                 (te)->  canSetSelectedPrev(),
                 (te)->  {

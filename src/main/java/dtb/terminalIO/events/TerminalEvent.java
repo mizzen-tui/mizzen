@@ -85,8 +85,9 @@ public class TerminalEvent<T> extends EventObject {
 	return "TerminalEvent [type=" + type + ", eventData=" + eventData + "]";
     }
 
-    public void setEventBus(EventBus eventBus) {
+    public TerminalEvent<T> setEventBus(EventBus eventBus) {
         this.eventBus = eventBus;
+        return this;
     }
     
     public EventBus getEventBus() {

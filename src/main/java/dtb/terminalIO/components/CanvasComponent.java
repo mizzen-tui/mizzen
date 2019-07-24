@@ -38,6 +38,9 @@ public class CanvasComponent implements Component<CanvasComponent>, CanResize {
             throw new IllegalStateException("Parent container already set to another component");
         }
         this.parentContainer = parentContainer;
+
+        Component.UTIL.markParentDirtyIfChildDirty(this);
+        
     }
     
     public ParentContainer getParentContainer() {

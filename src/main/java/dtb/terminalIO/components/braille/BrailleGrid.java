@@ -29,16 +29,17 @@ public class BrailleGrid extends Composite {
     
     public void resize(Dimension d) {
         this.plotter.resize(d);
-	gridRectangle = BrailleUtils.componentRectangleToGridRectangle(plotter);
+        gridRectangle = BrailleUtils.componentRectangleToGridRectangle(plotter);
     }
 
-    public void setEmptyChar(char emptyChar) {
+    public BrailleGrid setEmptyChar(char emptyChar) {
         super.setEmptyChar(emptyChar);
         this.plotter.setEmptyChar(emptyChar);
+        return this;
     }
     
     public Rectangle getGridRectangle() {
-	return this.gridRectangle;
+        return this.gridRectangle;
     }
 
     Position gridPosToComponentPosition(Position gridPosition) {

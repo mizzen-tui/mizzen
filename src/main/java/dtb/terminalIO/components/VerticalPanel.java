@@ -55,7 +55,7 @@ public class VerticalPanel extends Composite {
             anchor.setOffset(new PositionVerticalRelative(null));
             for (int i = 1; i < childCount; i++) {
                 ComponentWithOffset componentWithOffset = getChildrenComponentsWithOffset().get(i);
-                componentWithOffset.setOffset(new PositionVerticalRelative(anchor, verticalSpacer)  );
+                componentWithOffset.setOffset(new PositionVerticalRelative(anchor.getRectangleForLayout(), verticalSpacer)  );
                 anchor = componentWithOffset;
             }
         }

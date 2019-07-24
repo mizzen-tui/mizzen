@@ -22,7 +22,7 @@ public class CharacterViewerTest {
     public static void main(String[] args) throws IOException {
 
         TUIApp app = new TUIApp();
-        
+
         app.initFromArgs(args);
 
         TextComponent dataToView = new TextComponent("\n\n Loading characters .. ");
@@ -62,7 +62,7 @@ public class CharacterViewerTest {
         AtomicBoolean isConsumerBusy = new AtomicBoolean(true);
 
         StringSpinner spinner = new StringSpinner(StringSpinner.ARC);
-        
+
         scrollPanel.asEventHandler(); // TODO: fixme!!!!!!  .. time passes ... why? .. oh .. I get it ..
         app.getEventBus().appendEventHandler(scrollPanel);
 
@@ -130,7 +130,7 @@ public class CharacterViewerTest {
                     et = ElapsedTime.onRun(()-> dataToView.getSegmentsBuffer().getSegments() );
                     counter[1] = textSource.length();
                 }
-                
+
             }
             scrollPanel.setFooterText("count: " + counter[3]);
             scrollPanel.setTitle(Colors.IGre, " ASCII VIEWER " /*+ et.elapsed()*/ + " "+ ((changed||isConsumerBusy.get())?spinner.spin()+" ":""));
@@ -139,7 +139,7 @@ public class CharacterViewerTest {
         }));
 
         new Thread(produceText).start();
-        
+
         new Thread(consumeText).start();
 
     }

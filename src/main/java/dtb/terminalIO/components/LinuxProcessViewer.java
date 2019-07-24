@@ -178,6 +178,8 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
 
                     setTitle("lines: " + height + "  elapsed: " + elapsed);
 
+                    LinuxProcessViewer.this.markAsDirty();
+                    
                     updateCanvas(te.getEventBus());
 
                 });

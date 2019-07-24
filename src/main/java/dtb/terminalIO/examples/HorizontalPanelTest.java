@@ -19,14 +19,13 @@ public class HorizontalPanelTest {
         
         Canvas master_canvas = TestsCommon.getMasterCanvasForTesting(TestsCommon.getTerminalScreenForTesting(args));
 
-        
         Position anchorPoint = new Position.Simple(3,10);
         
-        Composite bbar1 = new HorizontalPanel();
+        Composite hPanel1 = new HorizontalPanel();
         
-        bbar1.add(new BorderedComponent("In Spain .. In Spain\n" + 
+        hPanel1.add(new BorderedComponent("In Spain .. In Spain\n" + 
                                         "The Rain in Spain stays \n" + 
-                                        "mainly on the plain!")).t("Texxxxxt");
+                                        "mainly on the plain!")).t("Some Random Text");
 
 
        Button b1 = new Button("Hello Button");
@@ -35,38 +34,28 @@ public class HorizontalPanelTest {
        Button b2 = new Button("Button2");
        b2.setBorder(true);
        
-       bbar1.add(b1);
+       hPanel1.add(b1);
        
-       bbar1.add(b2);
+       hPanel1.add(b2);
                 
-       bbar1.setEmptyChar(' ');
+       hPanel1.setEmptyChar(' ');
        
+       master_canvas.addComponentSegments(anchorPoint, hPanel1.setTitle(" A Horizontal panel "));
 
-       master_canvas.addComponentSegments(anchorPoint, bbar1);
-        
+       VerticalPanel vPanel1 = new VerticalPanel();
+       
+       vPanel1.setVerticalSpacer(1);
+       
+       vPanel1.add(new BorderedComponent("Silly Sally sold seashells\n" + 
+                                         "At the sea shore")).t("I dont know why..").t("1-one\n2-two\n3-three\n!");
 
-       Composite bbar2 = new VerticalPanel();
+       vPanel1.setEmptyChar(' ');
        
-       bbar2.add(new BorderedComponent("In Spain .. In Spain\n" + 
-                                    "The Rain in Spain stays \n" + 
-                                    "mainly on the plain!")).t("Texxxxxt"); //.t("1-one\n2-two\n3-three\n!");
-
-       
-       bbar2.add(b1);
-       
-       bbar2.add(b2);
-                
-       bbar2.setEmptyChar(' ');
-       
-       master_canvas.addComponentSegments( new PositionVerticalRelative( bbar1).offsetAdd(anchorPoint), bbar2);
-       
+       master_canvas.addComponentSegments( new PositionVerticalRelative(hPanel1).offsetAdd(anchorPoint).offsetAdd(1, 0), 
+                                           new BorderedComponent(vPanel1).setTitle(" A Vertical Panel "));
        
        master_canvas.refresh();
 
-        // TODO:  add resizing to this test
-        
     }
-    
-    
     
 }

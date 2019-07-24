@@ -56,14 +56,14 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
     
     public void markAsDirty() {
         if (isDirty()) {
+            Component.UTIL.markParentDirtyIfChildDirty(this);
             return;
         }
         this.hasDrawn = false;
-        if (this.getParentContainer()!=null && this.getParentContainer() instanceof DirtyFlag) {
-            if ( ! ((DirtyFlag)this.getParentContainer()).isDirty()) {
-               ((DirtyFlag)this.getParentContainer()).markAsDirty();
-            }
-        }
+        
+        // if parent exists, then mark it as dirty as well
+        Component.UTIL.markParentDirtyIfChildDirty(this);
+
     }
 
     public void clear() {
@@ -121,12 +121,14 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
         return (T) this;
     }
 
-    public void setEmptyChar(char emptyChar) {
+    public T setEmptyChar(char emptyChar) {
         this.fillPolicy.setEmptyChar(emptyChar);
+        return (T) this;
     }
 
-    public void setEmptyColor(Color emptyColor) {
+    public T setEmptyColor(Color emptyColor) {
         this.fillPolicy.setEmptyColor(emptyColor);
+        return (T) this;
     }
 
     public void setFillOnClear(boolean fillOnClear) {
@@ -143,7 +145,6 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
         this.canvasOffset = canvasOffset;
     }
     
-    
     abstract protected Rectangle getRectangleForClearAndFill();
 
     @Override
@@ -152,6 +153,8 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
             throw new IllegalStateException("Parent container already set to another component");
         }
         this.parentContainer = parentContainer;
+        
+        Component.UTIL.markParentDirtyIfChildDirty(this);
     }
     
     public ParentContainer getParentContainer() {

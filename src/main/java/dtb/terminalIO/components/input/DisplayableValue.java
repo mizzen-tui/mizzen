@@ -22,6 +22,11 @@ public interface DisplayableValue<V> extends HasValue<V> {
             return String.valueOf(getValue());
         }
         
+        @Override
+        public String toString() {
+            return getDisplayValue();
+        }
+        
     }
     
     public class StringDisplayValue extends  SimpleDisplayValue<String> {
@@ -45,5 +50,28 @@ public interface DisplayableValue<V> extends HasValue<V> {
         
     }
     
+    public class BooleanDisplayValue extends  SimpleDisplayValue<Boolean> {
+        
+        String displayValue;
+        
+        public BooleanDisplayValue(String displayValue,  Boolean value) {
+            super(value);
+            this.displayValue = displayValue;
+        }
+
+        public BooleanDisplayValue(Boolean value) {
+            this(null, value);
+        }
+        
+        @Override
+        public String getDisplayValue() {
+            if (displayValue != null) {
+                return displayValue;
+            }
+            return super.getDisplayValue();
+        }
+
+        
+    }
 
 }

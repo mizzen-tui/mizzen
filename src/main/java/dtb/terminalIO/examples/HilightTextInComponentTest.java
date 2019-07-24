@@ -25,7 +25,6 @@ public class HilightTextInComponentTest {
         
         container.setBounds(new Dimension.Simple(20,50));
         
-        
         TextComponent tc = new TextComponent( StringUtils.wrap("It was July 21, 1969, and Neil Armstrong awoke with a start. "
                 + "It was the day he would become the first human being to ever walk on the moon. "
                 + "The journey had begun several days earlier, when on July 16th, the Apollo 11 "
@@ -41,8 +40,6 @@ public class HilightTextInComponentTest {
         
         Collection<Rectangle> result = SegmentsSearchUtils.searchTextInSegmentsAll(container.getSegmentsBuffer(),srchSTR);
         
-        //List<Component> hilightList = new ArrayList<Component>();
-        
         for (Rectangle r : result) {
             container.addHilitedRegion(r);
         }
@@ -57,11 +54,9 @@ public class HilightTextInComponentTest {
             TestsCommon.sleep(1000);
             container.clearHiliteRegion(r);
             master_canvas.addComponentSegments(1,1,container);
-            master_canvas.t(master_canvas.getHeight()-3, 1, String.valueOf(r)+ "     ");
+            master_canvas.t(master_canvas.getHeight()-4, 1, String.valueOf(r)+ "     ");
             master_canvas.refresh();
         }
-        
-        
         
     }
     

@@ -78,7 +78,9 @@ public class LinuxProcessWatcher {
 
                     LinuxProcessWatcher.this.lastResult = LinuxProcessWatcher.this.process.waitFor();
 
-                    outputGobbler.join();
+                    if (outputGobbler != null) {
+                        outputGobbler.join();
+                    }
 
                     consumeResult.accept(LinuxProcessWatcher.this.lastResult);
 
@@ -101,7 +103,7 @@ public class LinuxProcessWatcher {
         };
 
         String threadName = "LinuxProcessWatcher-" + (this.name != null?(name+"-"):"") + nextThreadNum(); 
-        
+
         controllerThread = new Thread(invoker, threadName);
         controllerThread.start();
     }

@@ -6,6 +6,7 @@ import java.util.Collections;
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
+import dtb.terminalIO.components.DirtyFlag;
 import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
@@ -99,6 +100,7 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
         setButtonTextAndResize(buttonText);
     }
 
+    @Override
     public void resize(Dimension d) {
         if (d != null && d.isSameDimension(this)) {
             return;
@@ -117,6 +119,7 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
             this.container.fullrecalcDim();
             this.resize((Dimension)this.container);
         }
+        this.markAsDirty();
     }
     
     private String lbracket(String brackStr) {
@@ -169,6 +172,14 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
         this.markAsDirty();
     }
     
+    public void markAsDirty() {
+        if (isDirty()) {
+            return;
+        }
+       super.markAsDirty();
+       this.renderedText.markAsDirty();
+       this.container.markAsDirty();
+    }
     
     @Override
     public Boolean getValue() {
@@ -214,7 +225,6 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
     public boolean hasBorder() {
         return this.container.hasBorder();
     }
-
 
     public Button setBorder(boolean hasBorder) {
         this.container.setBorder(hasBorder);

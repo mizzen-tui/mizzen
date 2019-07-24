@@ -296,6 +296,9 @@ public class DefaultFocusManager implements FocusManager, HasChildren<Focusable>
     }
 
     public void addFocusable(Focusable focusable, EventBus eventBus) {
+        if (eventConsumers.contains(focusable)) {
+            throw new IllegalArgumentException("Duplicate add error: Focusable already added to this FocusManager.");
+        }
         eventConsumers.add(focusable);
         if (eventConsumers.size() == 1) {
             setChildAsCurrentFocus(focusable, eventBus);

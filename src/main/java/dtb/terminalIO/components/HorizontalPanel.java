@@ -55,7 +55,7 @@ public class HorizontalPanel extends Composite {
             anchor.setOffset(new PositionHorizontalRelative(null));
             for (int i = 1; i < childCount; i++) {
                 ComponentWithOffset componentWithOffset = getChildrenComponentsWithOffset().get(i);
-                componentWithOffset.setOffset(new PositionHorizontalRelative(anchor, horizontalSpacer)  );
+                componentWithOffset.setOffset(new PositionHorizontalRelative(anchor.getRectangleForLayout(), horizontalSpacer)  );
                 anchor = componentWithOffset;
             }
         }

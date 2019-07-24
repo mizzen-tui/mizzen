@@ -128,13 +128,13 @@ public class EventBus implements EventHandlerContainer {
                             te.setEventBus(null);
                         }
                     } catch (Exception e) {
-                        eventsHandlerChain.handle(new TerminalEvent<Exception>(EventBus.this, TerminalEvent.TYPE.EXCEPTION, e));
+                        eventsHandlerChain.handle(new TerminalEvent<Exception>(EventBus.this, TerminalEvent.TYPE.EXCEPTION, e).setEventBus(EventBus.this));
                         // hmm... should I really be looping after an exception.. or should I
                         // terminate..
                         // for now .. letting the application make the decision.
                     }
                 }
-                eventsHandlerChain.handle(new TerminalEvent<Exception>(EventBus.this, TerminalEvent.TYPE.TERMINATE, null, EventBus.this));
+                eventsHandlerChain.handle(new TerminalEvent<Exception>(EventBus.this, TerminalEvent.TYPE.TERMINATE, null, EventBus.this).setEventBus(EventBus.this));
             }
         };
 

@@ -7,7 +7,9 @@ import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.components.VerticalPanel;
 import dtb.terminalIO.components.input.DisplayableValue.StringDisplayValue;
+import dtb.terminalIO.components.input.DropdownListBox;
 import dtb.terminalIO.components.input.HasValue;
 import dtb.terminalIO.components.input.ListBox;
 import dtb.terminalIO.components.input.ListBox.TextComponentItemFactory;
@@ -18,15 +20,17 @@ import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.TerminalScreen;
+import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.OnRequestUpdateCanvasEventHandler;
 import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
+import dtb.terminalIO.events.TerminalEvent.TYPE;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyInputEventsProducer;
-import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
@@ -75,8 +79,8 @@ public class ListBoxTest {
         //lb1.setTitle("Ifaces");
         
         ScrollableComponent lb1_sc = new ScrollableComponent(Colors.Blu, new Dimension.Simple(Math.min(15,lb1.getHeight()-5), lb1.getWidth()+20), lb1);
-        
-        
+
+
         StringDisplayValue[] weird = StringDisplayValue.fromStringValues(new String[] {
                 "I am", 
                 "Forever known", 
@@ -95,15 +99,22 @@ public class ListBoxTest {
         // TODO: make it so we can specify border color/ title color
         lb2.setTitle("Child list");
         
-        ListBox<String> lb3 = ListBox.fromStrings(new String[] {"Test1", "Test2"}, new TextComponentItemFactory<String>());
-       // lb3.setBorder(true);
-        
+        DropdownListBox<String> lb3 = DropdownListBox.fromStrings(new String[] {"Test1", "Test2", "No tests", "No more teacher's","dirty looks"}, new TextComponentItemFactory<String>());
+        DropdownListBox<Boolean> lb4 = DropdownListBox.yesNoDropDown();
+        // lb3.setBorder(true);
+
         HorizontalPanel listBoxesPanel = new HorizontalPanel().setHorizontalSpacer(4);
          
         listBoxesPanel.add(lb1_sc);
         listBoxesPanel.add(lb2);
-        listBoxesPanel.add(lb3);
-         
+        
+        VerticalPanel droppablesPanel = new VerticalPanel();
+
+        droppablesPanel.add(lb3);
+        droppablesPanel.add(lb4);
+
+        listBoxesPanel.add(droppablesPanel);
+
         TextComponent eventDisplayer = new TextComponent("                                       ");
         
         Canvas master_canvas = new Canvas(screen);
@@ -121,7 +132,7 @@ public class ListBoxTest {
         
         mainPanel.setBorder(true);
         
-        
+
         Runnable renderComponents = ()-> {
             
             if ( ! Component.UTIL.isDirty(mainPanel, listBoxesPanel, eventDisplayer)) {
@@ -222,6 +233,16 @@ public class ListBoxTest {
            }
        });
        
+       eventBus.appendEventHandler(
+               new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), new EventHandler() {
+                   @Override
+                   public void handle(TerminalEvent<?> te) {
+                       terminate.handle(te);
+                       ((Exception)te.getEventData()).printStackTrace();
+                   }
+               }));
+
+       
        eventBus.appendEventHandler(master_canvas.asShowCursorEventHandler());
        eventBus.appendEventHandler(master_canvas.asHideCursorEventHandler());
 
@@ -242,7 +263,8 @@ public class ListBoxTest {
        DefaultFocusManager fm = new DefaultFocusManager(Keys.LEFT_KEYSTROKE, Keys.RIGHT_KEYSTROKE).setOnFocusChanged((f)->renderComponents.run());
        fm.addFocusable( lb1_sc, eventBus );
        fm.addFocusable( lb2.asFocusable(), eventBus  );
-       fm.addFocusable( lb3.asFocusable(), eventBus  );
+       fm.addFocusable( lb3, eventBus  );
+       fm.addFocusable( lb4, eventBus  );
        
        lb1_sc.prependEventHandler( lb1.asFocusable() );
        SearchFunctionForScrollableComponent.addFinderToScrollable(lb1_sc);

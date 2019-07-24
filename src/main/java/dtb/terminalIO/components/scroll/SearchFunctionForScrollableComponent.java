@@ -28,11 +28,11 @@ import dtb.terminalIO.textsegments.SegmentsSearchUtils;
 
 public class SearchFunctionForScrollableComponent extends HorizontalPanel {
 
-    private TextComponent find;
+    private TextComponent findLabel;
     private TextInput findTextInput;
     private ConditionalEventHandler findTextInputEventHandler;
     private String lastFindText = null;
-    private OnValueChangedEventHandler<String> titleUpdater;
+    private OnValueChangedEventHandler<String> updateTitleOnTextChangedHandler;
     private ConditionalEventHandler finishSearchInputEventHandler;
     private ScrollableComponent viewComp;
     private ComponentWithHilightedText srcOfText;
@@ -42,10 +42,10 @@ public class SearchFunctionForScrollableComponent extends HorizontalPanel {
     public SearchFunctionForScrollableComponent(Color color, ScrollableComponent viewComp) {
         super(color);
         this.viewComp = viewComp;
-        this.find = new TextComponent(SearchFunctionForScrollableComponent.this.getColor(),
-                " " + SearchFunctionForScrollableComponent.this.getColor().bold().asString() + "^F"
-                        + SearchFunctionForScrollableComponent.this.getColor().asString() + "ind");
-        this.add(find);
+        this.findLabel = new TextComponent(SearchFunctionForScrollableComponent.this.getColor(),
+                                      " " + SearchFunctionForScrollableComponent.this.getColor().bold().asString() + "^F"
+                                      + SearchFunctionForScrollableComponent.this.getColor().asString() + "ind");
+        this.add(findLabel);
     }
 
     public void hilite() {
@@ -138,7 +138,7 @@ public class SearchFunctionForScrollableComponent extends HorizontalPanel {
                         }
                     }));
 
-            titleUpdater = new HasValue.TimerControlledOnValueChangedEventHandler<String>(findTextInput) {
+            updateTitleOnTextChangedHandler = new HasValue.TimerControlledOnValueChangedEventHandler<String>(findTextInput) {
                 @Override
                 public void valueChanged(HasValue<String> source) {
                     String newValue = source.getValue();
@@ -169,13 +169,13 @@ public class SearchFunctionForScrollableComponent extends HorizontalPanel {
 
                 }
             };
-            te.getEventBus().appendEventHandler(titleUpdater);
+            te.getEventBus().appendEventHandler(updateTitleOnTextChangedHandler);
 
         } else {
             findTextInput.requestReleaseFocus(te);
-            if (titleUpdater != null) {
-                te.getEventBus().removeEventHandler(titleUpdater);
-                titleUpdater = null;
+            if (updateTitleOnTextChangedHandler != null) {
+                te.getEventBus().removeEventHandler(updateTitleOnTextChangedHandler);
+                updateTitleOnTextChangedHandler = null;
                 viewComp.setTitle("");
             }
         }

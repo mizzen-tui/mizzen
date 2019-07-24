@@ -16,7 +16,7 @@ import dtb.terminalIO.traverse.FindPathToTarget;
  * 
  * 
  * TODO:  Need to clean up the inheritance hierarchy of Components.. seems like 
- * 2 parallel heirarchies  - ( AbstractComponent & BoundedComponent)  
+ * 2 parallel hierarchies  - ( AbstractComponent & BoundedComponent)  
  * 
  * @author dbalme
  *
@@ -33,6 +33,10 @@ public interface Component<T extends Component<?>> extends IScreenLineSegmentsBu
 
     Position getCanvasOffset();
     void setCanvasOffset(Position canvasOffset);
+    
+    default Rectangle getPreferredRectangleForLayout() {
+        return this;
+    }
 
     public static class UTIL {
         
@@ -50,6 +54,25 @@ public interface Component<T extends Component<?>> extends IScreenLineSegmentsBu
             
             return false;
             
+        }
+        
+        public static void markParentDirtyIfChildDirty(Component<?> child) {
+            if (child.getParentContainer() == null) {
+                return;
+            }
+            if ( ! child.isDirty()) {
+                return;
+            }
+            // child is dirty - and has a parent
+            if (!(child.getParentContainer() instanceof Component<?>)) {
+                return;
+            }
+            Component<?> parentComponent = (Component<?>)child.getParentContainer();
+            if (parentComponent.isDirty()) {
+                return;
+            }
+            // child is dirty, but parent is not dirty - so mark parent dirty
+            parentComponent.markAsDirty();
         }
         
         
@@ -110,6 +133,19 @@ public interface Component<T extends Component<?>> extends IScreenLineSegmentsBu
             
             return null;
             
+        }
+
+        public static boolean bringToFront(Component<?> component) {
+            if (component == null || component.getParentContainer() == null) {
+                return false;
+            }
+            ParentContainer parentContainer = component.getParentContainer();
+            if ( ! (parentContainer instanceof Composite) ) {
+                return false;
+            }
+            
+            ((Composite)parentContainer).bringToFront(component);
+            return true;
         }
         
         

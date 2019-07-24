@@ -280,22 +280,10 @@ public interface Rectangle extends Position, Dimension, Movable {
         }
 
     }
+    
+    public static abstract class AbstractDelegate implements Rectangle {
 
-    public static class Delegate implements Rectangle {
-        Rectangle rectangle;
-
-        public Delegate(Rectangle rectangle) {
-            super();
-            this.rectangle = rectangle;
-        }
-
-        public void setRectangle(Rectangle rectangle) {
-            this.rectangle = rectangle;
-        }
-
-        public Rectangle getRectangle() {
-            return rectangle;
-        }
+        public abstract Rectangle getRectangle();
 
         @Override
         public int getCol() {
@@ -335,6 +323,24 @@ public interface Rectangle extends Position, Dimension, Movable {
         public String toStringDetails() {
             return "[row=" + getRow() + ", lcol" + getCol() + ", rcol=" + getRightMostCol() + " width="
                     + getWidth() + ", height=" + getHeight() + "]";
+        }
+    }
+    
+
+    public static class Delegate extends AbstractDelegate {
+        Rectangle rectangle;
+
+        public Delegate(Rectangle rectangle) {
+            super();
+            this.rectangle = rectangle;
+        }
+
+        public void setRectangle(Rectangle rectangle) {
+            this.rectangle = rectangle;
+        }
+
+        public Rectangle getRectangle() {
+            return rectangle;
         }
 
     }

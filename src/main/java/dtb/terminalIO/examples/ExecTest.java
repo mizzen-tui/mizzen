@@ -92,7 +92,7 @@ public class ExecTest {
         Dimension sizeOfWindow = new Dimension() {
             @Override
             public int getWidth() {
-                return app.getCanvas().getWidth() / 2 - 4;
+                return app.getCanvas().getWidth() / 2 - 6;
             }
 
             @Override
@@ -104,7 +104,7 @@ public class ExecTest {
         Dimension sizeOfPanel = new Dimension() {
             @Override
             public int getWidth() {
-                return sizeOfWindow.getWidth() * 2 + 6;
+                return sizeOfWindow.getWidth() * 2 + 6+4;
             }
 
             @Override
@@ -126,7 +126,7 @@ public class ExecTest {
         HorizontalPanel hPanel = new HorizontalPanel();
         hPanel.setBounds(sizeOfPanel);
         
-        hPanel.setHorizontalSpacer(12);
+        hPanel.setHorizontalSpacer(6);
         
         hPanel.add(lprocViewer);
         hPanel.add(lprocViewer2);

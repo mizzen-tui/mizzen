@@ -40,6 +40,9 @@ public abstract class DefaultFocusableBehaviour  implements Focusable {
             super.setFocus(focus, eventBus);  // set the focus flag
             new FocusSetterToHiliteAction().hiliteAction(this, colorHiliter); // hilite
             this.component.setColor( colorHiliter.asColor() );
+            if (focus) {
+               Component.UTIL.bringToFront(component);
+            }
         }
     }
     

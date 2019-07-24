@@ -6,7 +6,7 @@ import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.util.Stty;
 
-public class DefaultExceptionHandler implements BiConsumer<TUIApp, TerminalEvent<?>> {
+public class DefaultExceptionAction implements BiConsumer<TUIApp, TerminalEvent<?>> {
 
     @Override
     public void accept(TUIApp tApp, TerminalEvent<?> te) {

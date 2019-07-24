@@ -11,7 +11,6 @@ import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegment;
 import dtb.terminalIO.textsegments.ScreenLineSegmentsBuffer;
-import dtb.terminalIO.traverse.HasChildren;
 
 
 /**
@@ -104,15 +103,13 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
     
     public void markAsDirty() {
         if (isDirty()) {
+            Component.UTIL.markParentDirtyIfChildDirty(this);
             return;
         }
         this.hasDrawn = false;
         // if parent exists, then mark it as dirty as well
-        if (this.getParentContainer()!=null && this.getParentContainer() instanceof DirtyFlag) {
-            if ( ! ((DirtyFlag)this.getParentContainer()).isDirty()) {
-               ((DirtyFlag)this.getParentContainer()).markAsDirty();
-            }
-        }
+        Component.UTIL.markParentDirtyIfChildDirty(this);
+
     }
     
     protected void drawIfNeeded() {
@@ -187,7 +184,10 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
         if (parentContainer != null && this.getParentContainer() != null && this.getParentContainer() != parentContainer) {
             throw new IllegalStateException("Parent container already set to another component");
         }
+
         this.parentContainer = parentContainer;
+        
+        Component.UTIL.markParentDirtyIfChildDirty(this);
     }
     
     public ParentContainer getParentContainer() {

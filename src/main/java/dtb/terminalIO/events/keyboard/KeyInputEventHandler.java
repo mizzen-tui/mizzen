@@ -36,7 +36,6 @@ public class KeyInputEventHandler extends ConditionalEventHandler.Impl {
         }
 
         public KeyStrokePredicate(char ... ch) {
-            
             if (ch == null || ch.length < 1) {
                 throw new IllegalArgumentException("keystrokes not defined");
             }
@@ -88,8 +87,7 @@ public class KeyInputEventHandler extends ConditionalEventHandler.Impl {
                  this.filterOnKeyEvtType = new IS_Event_TYPE(TerminalEvent.TYPE.KEYPRESS);
     }
 
-    
-    
+
     public KeyInputEventHandler(KeyStroke onKeyStroke, 
                                 Predicate<TerminalEvent<?>> canHandlePredicate,
                                 EventHandler handler) {

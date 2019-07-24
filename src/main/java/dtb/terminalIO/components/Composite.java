@@ -23,11 +23,14 @@ public class Composite extends AbstractComponent<Composite>
     protected boolean boundsFixed = false;
     private Rectangle bounds = Rectangle.ZERO;
     private List<ComponentWithOffset> children = new ArrayList<ComponentWithOffset>();
-
+    private List<ComponentWithOffset> childrenInZOrder = new ArrayList<ComponentWithOffset>();
+    
+    
     protected static class ComponentWithOffset implements Rectangle {
-        Position offset;
-        Component<?> component;
-        Rectangle bounds;
+        private Position offset;
+        private Component<?> component;
+        private Rectangle bounds;
+        private Rectangle rectangleForLayout; // used only by layout managers ( Horizontal/VerticalPanels
 
         public ComponentWithOffset(Position offset, Component<?> component) {
             super();
@@ -55,7 +58,42 @@ public class Composite extends AbstractComponent<Composite>
                     return super.getRow() + offset.getRow();
                 }
             };
+            
+        }
+        
+        // this function is used by Composites that want to 
+        // layout components relative to other components
+        // most components will return themselves as the "rectangleForLayout"
+        // but others, like the DropDownListBox will return their size
+        // when their dropdownlist is not visible.
+        public Rectangle getRectangleForLayout() {
+            if (rectangleForLayout != null) {
+                return rectangleForLayout;
+            }
+            // normally just return yourself
+            Rectangle preferredRectangle = component.getPreferredRectangleForLayout();
+            if (preferredRectangle == component) {
+                rectangleForLayout = this;
+                return rectangleForLayout;
+            }
+            
+            rectangleForLayout = new Rectangle.AbstractDelegate() {
+                
+                public Rectangle getRectangle() {
+                    return component.getPreferredRectangleForLayout();
+                }
+                @Override
+                public int getCol() {
+                    return super.getCol() + (offset != null ? offset.getCol() : 0);
+                }
 
+                @Override
+                public int getRow() {
+                    return super.getRow() + (offset!= null ? offset.getRow() : 0);
+                }
+            };
+            
+            return this;
         }
 
         public void setComponent(Component<?> component) {
@@ -249,14 +287,27 @@ public class Composite extends AbstractComponent<Composite>
         return this;
     }
 
+    private void addChild(ComponentWithOffset componentWithOffset) {
+        children.add(componentWithOffset);
+        childrenInZOrder.add(componentWithOffset);
+    }
+
+    private void removeChild(ComponentWithOffset componentWithOffset) {
+        children.remove(componentWithOffset);
+        childrenInZOrder.remove(componentWithOffset);
+    }
+    
     protected ComponentWithOffset addComponentWithOffset(Position offset, Component<?> component) {
         ComponentWithOffset componentWithOffset = new ComponentWithOffset(offset, component);
-        children.add(componentWithOffset);
+        addChild(componentWithOffset);
         component.setParentContainer(this);
         return componentWithOffset;
     }
 
     public Composite add(Position offset, Component<?> component) {
+        if (component == null) {
+            throw new NullPointerException("Component add failure: Cannot add null component!");
+        }
         ComponentWithOffset child = findChild(component);
         if (child != null) {
             throw new IllegalArgumentException("Component add failure:  Duplicate !");
@@ -277,7 +328,7 @@ public class Composite extends AbstractComponent<Composite>
 
     public Composite remove(Component<?> component) {
         ComponentWithOffset child = findChildOrFail(component, "remove");
-        children.remove(child);
+        removeChild(child);
         child.component.setParentContainer(null);
         fullrecalcDim();
         markAsDirty();
@@ -285,51 +336,51 @@ public class Composite extends AbstractComponent<Composite>
     }
 
     // layering functions
-
+    
     public Composite moveUp(Component<?> component) {
         ComponentWithOffset child = findChildOrFail(component, "moveUp");
-        int index = children.indexOf(child);
-        if (index == children.size() - 1) {
+        int index = childrenInZOrder.indexOf(child);
+        if (index == childrenInZOrder.size() - 1) {
             return this;
         }
-        children.remove(child);
-        children.add(index + 1, child);
+        childrenInZOrder.remove(child);
+        childrenInZOrder.add(index + 1, child);
         markAsDirty();
         return this;
     }
 
     public Composite moveDown(Component<?> component) {
         ComponentWithOffset child = findChildOrFail(component, "moveDown");
-        int index = children.indexOf(child);
+        int index = childrenInZOrder.indexOf(child);
         if (index == 0) {
             return this;
         }
-        children.remove(child);
-        children.add(index - 1, child);
+        childrenInZOrder.remove(child);
+        childrenInZOrder.add(index - 1, child);
         markAsDirty();
         return this;
     }
 
     public Composite bringToFront(Component<?> component) {
         ComponentWithOffset child = findChildOrFail(component, "bringToFront");
-        int index = children.indexOf(child);
-        if (index == children.size() - 1) {
+        int index = childrenInZOrder.indexOf(child);
+        if (index == childrenInZOrder.size() - 1) {
             return this;
         }
-        children.remove(child);
-        children.add(children.size(), child);
+        childrenInZOrder.remove(child);
+        childrenInZOrder.add(childrenInZOrder.size(), child);
         markAsDirty();
         return this;
     }
 
     public Composite bringToBack(Component<?> component) {
         ComponentWithOffset child = findChildOrFail(component, "bringToBack");
-        int index = children.indexOf(child);
+        int index = childrenInZOrder.indexOf(child);
         if (index == 0) {
             return this;
         }
-        children.remove(child);
-        children.add(0, child);
+        childrenInZOrder.remove(child);
+        childrenInZOrder.add(0, child);
         markAsDirty();
         return this;
     }
@@ -474,7 +525,7 @@ public class Composite extends AbstractComponent<Composite>
 
     protected void draw(Color color, IScreenLineSegmentsBuffer segments, boolean boundsFixed) {
         drawBorderIfNeeded(segments);
-        drawChildren(color, segments, children, boundsFixed);
+        drawChildren(color, segments, childrenInZOrder, boundsFixed);
     }
 
     protected void drawChildren(Color color, IScreenLineSegmentsBuffer segments, List<ComponentWithOffset> children,

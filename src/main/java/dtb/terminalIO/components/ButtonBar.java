@@ -26,7 +26,6 @@ public class ButtonBar extends Composite implements FocusManager {
 
     private HorizontalPanel horizontalPanel;
     
-
     private char leftMostBorderChar;
     private char middleBorderChar;
     private char rightMostBorderChar;
@@ -94,14 +93,16 @@ public class ButtonBar extends Composite implements FocusManager {
         eventBus.raiseEvent(new RequestUpdateCanvasEvent(this) );
     }
 
-    public void setEmptyChar(char emptyChar) {
+    public ButtonBar setEmptyChar(char emptyChar) {
         super.setEmptyChar(emptyChar);
         horizontalPanel.setEmptyChar(emptyChar);
+        return this;
     }
 
-    public void setEmptyColor(Color emptyColor) {
+    public ButtonBar setEmptyColor(Color emptyColor) {
         super.setEmptyColor(emptyColor);
         horizontalPanel.setEmptyColor(emptyColor);
+        return this;
     }
     
     public void markAsDirty() {
