@@ -9,8 +9,8 @@ import dtb.terminalIO.components.CanResize;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventHandler;
@@ -38,7 +38,7 @@ public class TabPanel extends Composite implements CanResize, ConditionalEventHa
     private BorderedComponent workAreaBorder;
     private Composite workArea;
 
-    Color textActiveTabColor = FGBGColors.DEFAULT.bold();
+    Color textActiveTabColor = ControlCode.DEFAULT_COLOR.bold();
 
     private String prevNextHelp = "";
 
@@ -295,7 +295,7 @@ public class TabPanel extends Composite implements CanResize, ConditionalEventHa
         public TabAction(KeyStroke hotKey, String tabText) {
             this.hotKey = hotKey;
             this.tabText = tabText;
-            this.tabComponent = new TabComponent(FGBGColors.DEFAULT, tabText, false);
+            this.tabComponent = new TabComponent(ControlCode.DEFAULT_COLOR, tabText, false);
         }
 
         public abstract Component<?> getComponent(TabContext tabContext);

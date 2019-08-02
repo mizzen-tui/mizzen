@@ -7,7 +7,9 @@ import dtb.terminalIO.geom.Position;
 /**
  * Defines a line between two points.
  * 
- * Uses a LinePlotter to draw itself.
+ * <p/>
+ * 
+ * Uses a {@link LinePlotter} to draw itself.
  *
  */
 public class Line implements Shape {

@@ -7,6 +7,10 @@ public interface CleanString {
     
     String getText();
     
+    default char charAt(int index) {
+        return getText().charAt(index);
+    }
+    
     default CleanString substring(int beginIndex, int endIndex) {
         String alreadyCleanedString = getText().substring(beginIndex, endIndex);
         return new KnownCleanString(alreadyCleanedString);

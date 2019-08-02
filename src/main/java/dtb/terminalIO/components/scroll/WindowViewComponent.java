@@ -112,8 +112,9 @@ public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
 
     @Override
     public Position getPositionRelativeToParent(Component<?> child) {
-        // TODO Auto-generated method stub
-        return Position.ZERO; // todo - need a proper implementation (using offset)
+        Position offsetIntoSource = getOffsetIntoSource();
+        return new Position.Simple(offsetIntoSource.getRow()*-1, offsetIntoSource.getCol()*-1);
+        // return Position.ZERO; // todo - need a proper implementation (using offset)
     }
 
     public void childResized(Component<?> child) {

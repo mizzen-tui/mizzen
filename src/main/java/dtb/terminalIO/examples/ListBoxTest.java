@@ -260,7 +260,7 @@ public class ListBoxTest {
 
        TestsCommon.addNoGraphicsToggleEvent(eventBus, screen, renderComponents);
        
-       DefaultFocusManager fm = new DefaultFocusManager(Keys.LEFT_KEYSTROKE, Keys.RIGHT_KEYSTROKE).setOnFocusChanged((f)->renderComponents.run());
+       DefaultFocusManager fm = new DefaultFocusManager(Keys.LEFT_KEYSTROKE, Keys.RIGHT_KEYSTROKE).setOnFocusChanged((f,e)->renderComponents.run());
        fm.addFocusable( lb1_sc, eventBus );
        fm.addFocusable( lb2.asFocusable(), eventBus  );
        fm.addFocusable( lb3, eventBus  );

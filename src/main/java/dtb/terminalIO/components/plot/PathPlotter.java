@@ -7,6 +7,22 @@ import dtb.terminalIO.components.plot.shape.Circle;
 import dtb.terminalIO.components.plot.shape.CirclePlotter.CircleClockwise_SORT;
 import dtb.terminalIO.geom.Position;
 
+/**
+ * A PathPlotter draws shapes into a PointPlotterList..
+ * 
+ * <p/>
+ * 
+ * This is useful when you want to create a path that is in the form of a 
+ * shape.   For example.. Maybe you have a box that you wan to move around
+ * in a circular path.   You can do that with this type of object
+ * 
+ * <p/>
+ * 
+ * See uses of CirclePathPlotter for example uses.
+ * 
+ * @author dbalme
+ *
+ */
 public abstract class PathPlotter {
     PointPlotter.PointPlotterList plotsInPath = new PointPlotter.PointPlotterList();
 

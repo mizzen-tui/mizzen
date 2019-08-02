@@ -8,6 +8,20 @@ import java.util.List;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.geom.Position;
 
+/**
+ * 
+ * A container ( of sorts ) that allows you to plot x, y
+ * coordinates ( with optional color ) onto some destination
+ * - usually a grid component ..  
+ * 
+ * <p/>
+ * 
+ * But it could be plotted simply to memory (like to a
+ * PointPlotterList). 
+ * 
+ * @author dbalme
+ *
+ */
 public interface PointPlotter {
 
     void plot(int x, int y);
@@ -49,6 +63,22 @@ public interface PointPlotter {
 
     }
 
+    /**
+     * Same thing as a {@link Position} object
+     * but we just refer to col() as x and row() as y
+     * 
+     * <p/>
+     * 
+     * It also optionally maintains a Color.
+     * 
+     * <p/>
+     * 
+     * This is used when plotting points on a Grid.
+     * 
+     * 
+     * @author dbalme
+     *
+     */
     public static class PointPlot implements Position {
         public int x;
         public int y;
@@ -86,6 +116,15 @@ public interface PointPlotter {
     }
 
     /**
+     * A {@link PointPlotter} that plots points to list rather than
+     * to a grid of some sort.
+     * 
+     * <p/>
+     * 
+     * See its use in PathPlotter
+     * 
+     * <p/>
+     * 
      * A list contains plots ( a plot = a Position object with optional color)
      */
     public static class PointPlotterList implements PointPlotter {

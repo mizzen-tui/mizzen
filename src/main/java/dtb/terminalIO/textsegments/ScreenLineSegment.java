@@ -404,7 +404,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
         }
         
         public static ScreenLineSegment getAtCol(TreeSet<ScreenLineSegment> ts, int row, int col) {
-            ScreenLineSegment srchKey = blankScreenObject(FGBGColors.DEFAULT, ' ', row, col, Integer.MIN_VALUE, 1);
+            ScreenLineSegment srchKey = blankScreenObject(ControlCode.DEFAULT_COLOR, ' ', row, col, Integer.MIN_VALUE, 1);
             ScreenLineSegment siblingGreater = ts.ceiling(srchKey);
             if (siblingGreater != null && srchKey.overlapsWith(siblingGreater)) {
                 return siblingGreater;
@@ -447,8 +447,6 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
             ((SegmentImpl)sc).setText(newText);
         }
 
-        
-        
         public static Collection<ScreenLineSegment> split_on_overlap(Rectangle top, ScreenLineSegment under) {
             if (!top.overlapsWith(under)) {
                 return Collections.singleton(under);

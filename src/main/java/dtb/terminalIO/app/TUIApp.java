@@ -252,7 +252,7 @@ public class TUIApp {
                 return true; // true means updated
             });
         }
-        
+
         Runnable updateThenForceRefresh = () -> {
             updateCanvas.apply(this);
             getCanvas().refresh();

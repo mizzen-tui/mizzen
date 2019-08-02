@@ -4,8 +4,8 @@ import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.PositionTransform;
 
 /**
- * A PointPlotter that transforms the x, y coordinates (before plotting) using a
- * PositionTransform object.
+ * A {@link PointPlotter} that transforms the x, y coordinates (before plotting) using a
+ * {@link PositionTransform} object.
  * 
  * <p/>
  * 
@@ -24,7 +24,9 @@ public class TransformPointPlotter extends PointPlotter.Delegate {
 
     @Override
     public void plot(int x, int y) {
+        // transform the points
         Position p = positionTransform.transform(new Position.Simple(y, x));
+        // now plot onto the 'real' PointPlotter object
         super.plot(p.getCol(), p.getRow());
     }
 

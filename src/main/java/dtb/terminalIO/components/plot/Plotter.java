@@ -8,6 +8,7 @@ import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
+import dtb.terminalIO.textsegments.CleanString;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 
 /**
@@ -51,6 +52,18 @@ public class Plotter extends BoundedComponent<Plotter> {
 
     public Plotter addPlot(int row, int col) {
         return addPlot(row, col, defaultPlotChar, this.getColor());
+    }
+
+    public Plotter addText(int row, int col, CleanString text, Color color) {
+        int sLen = text.length();
+        for (int i = 0; i < sLen; i++) {
+            addPlot(row, col+i, text.charAt(i));
+        }
+        return this;
+    }
+
+    public Plotter addText(int row, int col, CleanString text) {
+        return addText(row, col, text);
     }
 
     @Override

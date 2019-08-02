@@ -4,6 +4,8 @@ import dtb.terminalIO.components.plot.PointPlotter;
 
 public class ShapeWithTransform extends Shape.Delegate {
 
+    // TODO:  I need to document why this needs to be a delegate
+    //        why I did this escapes me ( for the moment )
     private PointPlotter.Delegate pointPlotter;
 
     public ShapeWithTransform(Shape shape, PointPlotter.Delegate pointPlotter) {

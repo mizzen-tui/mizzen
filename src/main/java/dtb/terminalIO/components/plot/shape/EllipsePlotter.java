@@ -3,7 +3,7 @@ package dtb.terminalIO.components.plot.shape;
 import dtb.terminalIO.components.plot.PointPlotter;
 
 /**
- * Doesn't work yet.
+ * Doesn't work yet.  sigh ..
  *
  */
 public class EllipsePlotter {

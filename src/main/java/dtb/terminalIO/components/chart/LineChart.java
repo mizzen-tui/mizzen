@@ -521,8 +521,8 @@ public class LineChart extends Composite {
 
         master_canvas.setSize(30, 130);
 
-        master_canvas.addComponentSegments(2, 4, new RectangleComponent(FGBGColors.DEFAULT, 5, 10));
-        master_canvas.addComponentSegments(4, 8, new RectangleComponent(FGBGColors.DEFAULT, 5, 15));
+        master_canvas.addComponentSegments(2, 4, new RectangleComponent(ControlCode.DEFAULT_COLOR, 5, 10));
+        master_canvas.addComponentSegments(4, 8, new RectangleComponent(ControlCode.DEFAULT_COLOR, 5, 15));
 
         LineChart lc = new LineChart(20, 60);
         lc.setBorder(true);

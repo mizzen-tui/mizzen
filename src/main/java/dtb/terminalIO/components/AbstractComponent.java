@@ -1,5 +1,6 @@
 package dtb.terminalIO.components;
 
+import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.geom.Position;
@@ -11,7 +12,7 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
 
     private IScreenLineSegmentsBuffer segments   = new ScreenLineSegmentsBuffer();
 
-    private Color                     color      = FGBGColors.DEFAULT;
+    private Color                     color      = ControlCode.DEFAULT_COLOR;
 
     BlockChars                        blockChars = BlockChars.DEFAULT;
     

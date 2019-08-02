@@ -39,7 +39,7 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
     private int              sc_current_id    = 0;
 
     private char             emptyChar        = '░';
-    private Color            emptyColor       = FGBGColors.DEFAULT;
+    private Color            emptyColor       = ControlCode.DEFAULT_COLOR;
     private static final int EMPTY_SEGMENT_ID = -67233;
 
     public void setEmptyChar(char emptyChar) {
@@ -72,7 +72,7 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
     }
 
     public Canvas(CanvasBackend backend) {
-        this(backend, FGBGColors.DEFAULT);
+        this(backend, ControlCode.DEFAULT_COLOR);
     }
 
     public Canvas(TerminalScreen screen, FGBGColors color) {

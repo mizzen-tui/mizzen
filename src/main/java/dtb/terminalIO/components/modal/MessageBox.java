@@ -105,14 +105,20 @@ public class MessageBox {
         dialog.setBorderColor(iconToIconColor(icon));
         dialog.setBorder(true); 
         dialog.setTitle(iconToIconColor(icon), " " + title + " ");
+        dialog.setFillOnClear(true);
+        dialog.setEmptyColor(dialogColor);
         
         if (icon != null && Dimension.UTIL.stringToDimension(message).getHeight()==1) {
             message = "\n" + message;
         }
 
         TextComponent messageText = new TextComponent(dialog.getColor(), message);
+        messageText.setFillOnClear(true);
+        messageText.setEmptyColor(dialogColor);
 
         HorizontalPanel messagePanel = new HorizontalPanel(dialogColor).setHorizontalSpacer(2);
+        messagePanel.setFillOnClear(true);
+        messagePanel.setEmptyColor(dialogColor);
         if (icon != null) {
             messagePanel.add(iconToIconComponent(icon));
         }
@@ -123,6 +129,8 @@ public class MessageBox {
         dialog.add(messageTextPosition, messagePanel);
         
         ButtonBar buttons = new ButtonBar();
+        buttons.setFillOnClear(true);
+        buttons.setEmptyColor(dialog.getColor());
 
         buttons.setColor(dialog.getColor());
         buttons.setNoBorderChars();
@@ -228,14 +236,21 @@ public class MessageBox {
 
         dialog.setBorder(true);
         dialog.setTitle(" Yes / No ");
+        dialog.setFillOnClear(true);
+        dialog.setEmptyColor(dialogColor);
 
         if (Dimension.UTIL.stringToDimension(message).getHeight()==1) {
             message = "\n" + message;
         }
         
         TextComponent messageText = new TextComponent(dialog.getColor(), message);
+        messageText.setFillOnClear(true);
+        messageText.setEmptyColor(dialogColor);
         
         HorizontalPanel messagePanel = new HorizontalPanel(dialogColor).setHorizontalSpacer(2);
+        messagePanel.setFillOnClear(true);
+        messagePanel.setEmptyColor(dialogColor);
+
         messagePanel.add(questionICON());
         messagePanel.add(messageText);
         
@@ -246,6 +261,8 @@ public class MessageBox {
         ButtonBar buttons = new ButtonBar();
 
         buttons.setColor(dialog.getColor());
+        buttons.setFillOnClear(true);
+        buttons.setEmptyColor(dialogColor);
         buttons.setNoBorderChars();
         buttons.setHorizontalSpacer(3);
         Button yes = buttons.addButton("Yes", null, null).setBorder(true);

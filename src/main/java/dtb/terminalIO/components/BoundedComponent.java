@@ -3,6 +3,7 @@ package dtb.terminalIO.components;
 import java.util.Collection;
 import java.util.function.Supplier;
 
+import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.geom.Dimension;
@@ -22,7 +23,7 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
     protected IScreenLineSegmentsBuffer segments   = createSegmentsBuffer();
 
     private boolean                     hasDrawn   = false;
-    private Color                       color      = FGBGColors.DEFAULT;
+    private Color                       color      = ControlCode.DEFAULT_COLOR;
     private BlockChars                  blockChars = BlockChars.DEFAULT;
 
     private FillOnClearPolicy    fillPolicy = new FillOnClearPolicy.AbstractImpl(this) {

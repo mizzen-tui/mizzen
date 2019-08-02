@@ -1,17 +1,20 @@
 package dtb.terminalIO.examples;
 
-import java.io.IOException;
 import java.util.Comparator;
 
+import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.PathPlotter.CirclePathPlotter;
+import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.components.plot.TransformPointPlotter;
 import dtb.terminalIO.components.plot.XYTranslate;
 import dtb.terminalIO.components.plot.shape.Circle;
+import dtb.terminalIO.components.plot.shape.Circle.DrawCircleAlgorithm;
 import dtb.terminalIO.components.plot.shape.CirclePlotter.CircleCounterClockwise_SORT;
+import dtb.terminalIO.components.plot.shape.CirclePlotter.DonutPlotter;
 import dtb.terminalIO.components.plot.shape.CompositeShape;
 import dtb.terminalIO.components.plot.shape.RectangleShape;
 import dtb.terminalIO.components.plot.shape.ShapeWithTransform;
@@ -20,22 +23,13 @@ import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
-import dtb.terminalIO.core.Canvas;
-import dtb.terminalIO.core.TerminalScreen;
-import dtb.terminalIO.events.ConditionalEventHandler;
-import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.EventHandlerContainer;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
-import dtb.terminalIO.events.OnResizeEventHandler;
 import dtb.terminalIO.events.TerminalEvent;
-import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
-import dtb.terminalIO.events.TerminalEvent.TYPE;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
-import dtb.terminalIO.events.keyboard.KeyInputEventsProducer;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
-import dtb.terminalIO.events.resize.TerminalResizeDetection;
 import dtb.terminalIO.examples.Demo.SimpleDemo;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
@@ -44,389 +38,352 @@ import dtb.terminalIO.geom.PositionTransform.RotateAroundFixedPoint;
 import dtb.terminalIO.geom.PositionTransform.Translate;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
-import dtb.terminalIO.util.Stty;
 
 public class GridBrailleTest {
 
     // an eventhandler that is used to move points around a circle
     // this would work well as a handler for an idle event
     static class CirclePathEventHandler implements EventHandler {
-	CirclePathPlotter circlePath;
+        CirclePathPlotter circlePath;
 
-	public CirclePathEventHandler(int x, int y, int radius, Comparator<Position> pointsSorter,
-		XYTranslate pointsPlotter) {
-	    circlePath = new CirclePathPlotter(x, y, radius, pointsSorter) {
-		@Override
-		protected void plotOnePoint(Position curPos) {
-		    pointsPlotter.setxDelta(curPos.getCol());
-		    pointsPlotter.setyDelta(curPos.getRow());
-		}
-	    };
-	}
+        public CirclePathEventHandler(int x, int y, int radius, Comparator<Position> pointsSorter,
+                XYTranslate pointsPlotter) {
+            circlePath = new CirclePathPlotter(x, y, radius, pointsSorter) {
+                @Override
+                protected void plotOnePoint(Position curPos) {
+                    pointsPlotter.setxDelta(curPos.getCol());
+                    pointsPlotter.setyDelta(curPos.getRow());
+                }
+            };
+        }
 
-	public CirclePathEventHandler(int x, int y, int radius, XYTranslate pointsPlotter) {
-	    circlePath = new CirclePathPlotter(x, y, radius) {
-		@Override
-		protected void plotOnePoint(Position curPos) {
-		    pointsPlotter.setxDelta(curPos.getCol());
-		    pointsPlotter.setyDelta(curPos.getRow());
-		}
-	    };
-	}
+        public CirclePathEventHandler(int x, int y, int radius, XYTranslate pointsPlotter) {
+            circlePath = new CirclePathPlotter(x, y, radius) {
+                @Override
+                protected void plotOnePoint(Position curPos) {
+                    pointsPlotter.setxDelta(curPos.getCol());
+                    pointsPlotter.setyDelta(curPos.getRow());
+                }
+            };
+        }
 
-	@Override
-	public void handle(TerminalEvent<?> te) {
-	    circlePath.plotOnePointFromPath();
-	}
+        @Override
+        public void handle(TerminalEvent<?> te) {
+            circlePath.plotOnePointFromPath();
+        }
 
     }
 
-    public static void main(String[] args) {
-
-	String _style = "MAX";
-	if (args != null && args.length > 0 && args[0].equalsIgnoreCase("small")) {
-	    _style = "SMALL";
-	}
-	if (args != null && args.length > 0 && args[0].equalsIgnoreCase("medium")) {
-	    _style = "MEDIUM";
-	}
-	if (args != null && args.length > 0 && args[0].equalsIgnoreCase("tiny")) {
-	    _style = "TINY";
-	}
-	String style = _style;
-
-	TerminalScreen screen = TestsCommon.getTerminalScreenForTesting(args);
-	
-	Canvas master_canvas = TestsCommon.getMasterCanvasForTesting(screen);
-	master_canvas.setEmptyChar(' ');
-
-	EventBus eventBus = new EventBus();
-	
-	BrailleDemo brailleDemo = new BrailleDemo() {
-	    public void flushOutput() {
-		master_canvas.t(0, 0, "Braille Characters used for plotting.  MODE :" + style + "  ");
-		
-		TestsCommon.renderScreenDEBUG(master_canvas, screen, eventBus);
-		
-		master_canvas.refresh();
-	    }
-	};
-
-	Rectangle bounds = null;
-	if ("SMALL".equalsIgnoreCase(style)) {
-	    bounds = new Rectangle.Simple(0, 0, Math.min(20, master_canvas.getHeight()), Math.min(100,
-		    master_canvas.getWidth()));
-	} else if ("MEDIUM".equalsIgnoreCase(style)) {
-	    bounds = new Rectangle.Simple(0, 0, Math.min(25, master_canvas.getHeight()), Math.min(100,
-		    master_canvas.getWidth()));
-	} else if ("TINY".equalsIgnoreCase(style)) {
-	    bounds = new Rectangle.Simple(0, 0, Math.min(15, master_canvas.getHeight()), Math.min(60,
-		    master_canvas.getWidth()));
-	} else {
-	    bounds = new Rectangle.Simple(master_canvas);
-	}
-
-	master_canvas.setSize(bounds.getHeight(), bounds.getWidth());
-
-	screen.add(ControlCode.HIDE_CURSOR);
-	// screen.refresh();
-	// master_canvas.t("  Braille Characters used for plotting");
-	master_canvas.t(" ");
-
-	master_canvas.refresh();
-
-	KeyInputEventsProducer keyInputEventsProducer = null;
-	try {
-	    keyInputEventsProducer = new KeyInputEventsProducer(eventBus);
-	} catch (Exception e) {
-	    eventBus.stopConsuming();
-	    return;
-	}
-
-	TestsCommon.addNoGraphicsToggleEvent(eventBus, screen);
-	
-	master_canvas.t("Braille Characters used for plotting");
-	master_canvas.refresh();
-
-	brailleDemo.setUpDemo(eventBus, bounds, master_canvas);
-
-	EventHandler terminate = new EventHandler() {
-
-	    @Override
-	    public void handle(TerminalEvent<?> te) {
-		eventBus.stopConsuming();
-		screen.add(ControlCode.SHOW_CURSOR);
-		screen.refresh();
-
-		try {
-		    Stty.setCooked();
-		} catch (Exception e) {
-		    e.printStackTrace();
-		}
-
-		if (te.getType().equals(TYPE.EXCEPTION)) {
-		    System.out.println("\n");
-		    ((Exception) te.getEventData()).printStackTrace();
-		} else {
-		    // next refresh() is necessary to get cursor to be below
-		    // rendered canvas
-		    master_canvas.refresh();
-		}
-		return;
-	    }
-	};
-
-	eventBus.appendEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
-	eventBus.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
-	eventBus.appendEventHandler(new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
-
-	if (style.equals("MAX")) {
-	    TerminalResizeDetection.initiate(screen, eventBus);
-
-	    eventBus.appendEventHandler(new OnResizeEventHandler() {
-		@Override
-		public void handleResize(Dimension size) {
-		    master_canvas.setSize(size.getHeight() , size.getWidth() ); 
-		    master_canvas.clearCanvas();
-		    //master_canvas.refresh();
-		    brailleDemo.resize(master_canvas);
-		    eventBus.enableIdleEvents();
-		}
-	    });
-	}
-    }
 
     public static class BrailleDemo extends SimpleDemo {
 
-	Composite brailleComponent;
-	BrailleGrid grid;
-	TextComponent tc;
-	Runnable drawIt;
+        Composite brailleComponent;
+        BrailleGrid grid;
+        TextComponent tc;
+        Runnable drawIt;
 
-	public void resize(Dimension size) {
-	    
-	    brailleComponent.setBounds(size.getHeight() - 4, size.getWidth() - 4);
+        public void resize(Dimension size) {
 
-	    Dimension textHelpDim = Dimension.UTIL.stringToDimension(tc.getText());
+            brailleComponent.setBounds(size.getHeight() - 4, size.getWidth() - 4);
 
-	    tc.resize(new Dimension.Simple(Math.min(textHelpDim.getHeight(), size.getHeight() - 4), Math.min(
-		    textHelpDim.getWidth(), size.getWidth() / 2)));
+            Dimension textHelpDim = Dimension.UTIL.stringToDimension(tc.getText());
 
-	    grid.resize(new Dimension.Simple(brailleComponent.getHeight() - 4, brailleComponent.getWidth() - 4
-		    - tc.getWidth()));
+            tc.resize(new Dimension.Simple(Math.min(textHelpDim.getHeight(), size.getHeight() - 4),
+                    Math.min(textHelpDim.getWidth(), size.getWidth() / 2)));
 
-	    brailleComponent.moveChildTo(new Position.Simple(2, tc.getWidth() + 2), grid);
-	    
-	}
+            grid.resize(new Dimension.Simple(brailleComponent.getHeight() - 4,
+                                             brailleComponent.getWidth() - 4 - tc.getWidth()));
 
-	
-	public Component getBrailleComponent() {
-	    return brailleComponent;
-	}
-	
-	public void setUpDemo(EventHandlerContainer eventBus, 
-	                      Rectangle bounds,
-		              IScreenLineSegmentsBuffer.Provider segmentsBufferProvider) {
+            brailleComponent.moveChildTo(new Position.Simple(2, tc.getWidth() + 2), grid);
 
-	    brailleComponent = new Composite();
-	    brailleComponent.setBounds(bounds.getHeight() - 4, bounds.getWidth() - 4);
-	    brailleComponent.setBorder(true);
+        }
 
-	    Color textCOLOR = FGBGColors.DEFAULT;
-	    Color textColorBOLD = textCOLOR.bold();
+        public Component<?> getBrailleComponent() {
+            return brailleComponent;
+        }
 
-	    TextComponent tcBrailleChars = new TextComponent(textCOLOR, textColorBOLD.asString()
-		    + "Braille Character set : " + Colors.ICya.asBold().asString()
-		    + "⠀⠁⠂⠃⠄⠅⠆⠇⠈⠉⠊⠋⠌⠍⠎⠏⠐⠑⠒⠓⠔⠕⠖⠗⠘⠙⠚⠛⠜⠝⠞⠟⠠⠡⠢⠣⠤⠥⠦⠧⠨⠩⠪⠫⠬⠭⠮⠯⠰⠱⠲⠳⠴⠵⠶⠷⠸⠹⠺⠻⠼⠽⠾⠿" + textCOLOR.asString());
+        public void setUpDemo(EventHandlerContainer eventBus, Rectangle bounds,
+                IScreenLineSegmentsBuffer.Provider segmentsBufferProvider) {
 
-	    tc = new TextComponent(textCOLOR, "This is a demonstration \n" + 
-	                                      "using the special braille\n"
-		    + "character set to plot points\n" + "in a standard linux terminal.\n" + "\n"
-		    + "The idea is that we map the normal\n" + "terminal row columns combined with the\n"
-		    + "2 x 8 dots of the braille character set\n" + "to come up with a plottable coordinate system.\n"
-		    + "\n" + "      " + Colors.IYel.asBold().asString() + "    .........." + textCOLOR.asString()
-		    + "\n" + "\n" + "In this example we are\n" + "plotting boxes, circles and triangles.\n" + "\n"
-		    + "We transform (move/rotate) their positions\n" + "using simple trigonometry\n" + "\n"
-		    + "A more practical Acme use-case for\n" + "this plotting technique would be to\n"
-		    + "to build terminal-based charts for\n" + "monitoring values stored in the OLT-MGR\n"
-		    + "and rendered via CLIApp.java");
+            brailleComponent = new Composite();
+            brailleComponent.setBounds(bounds.getHeight() - 4, bounds.getWidth() - 4);
+            brailleComponent.setBorder(true);
 
-	    brailleComponent.add(tcBrailleChars);
-	    brailleComponent.add(2, 0, tc);
+            Color textCOLOR = ControlCode.DEFAULT_COLOR;
+            Color textColorBOLD = textCOLOR.bold();
 
-	    grid = new BrailleGrid(FGBGColors.DEFAULT, new Dimension.Simple(brailleComponent.getHeight() - 4,
-		    brailleComponent.getWidth() - 4 - tc.getWidth()));
-	    grid.setPlotColor(new FGBGColors(Colors.Yel));
+            TextComponent tcBrailleChars = new TextComponent(textCOLOR,
+                    textColorBOLD.asString() + "Braille Character set : " + Colors.ICya.asBold().asString()
+                            + "⠀⠁⠂⠃⠄⠅⠆⠇⠈⠉⠊⠋⠌⠍⠎⠏⠐⠑⠒⠓⠔⠕⠖⠗⠘⠙⠚⠛⠜⠝⠞⠟⠠⠡⠢⠣⠤⠥⠦⠧⠨⠩⠪⠫⠬⠭⠮⠯⠰⠱⠲⠳⠴⠵⠶⠷⠸⠹⠺⠻⠼⠽⠾⠿"
+                            + textCOLOR.asString());
 
-	    brailleComponent.add(new Position.Simple(2, tc.getWidth() + 2), grid);
+            tc = new TextComponent(textCOLOR,
+                    "This is a demonstration \n" + "using the special braille\n" + "character set to plot points\n"
+                            + "in a standard linux terminal.\n" + "\n" + "The idea is that we map the normal\n"
+                            + "terminal row columns combined with the\n" + "2 x 8 dots of the braille character set\n"
+                            + "to come up with a plottable coordinate system.\n" + "\n" + "      "
+                            + Colors.IYel.asBold().asString() + "    .........." + textCOLOR.asString() + "\n" + "\n"
+                            + "In this example we are\n" + "plotting boxes, circles and triangles.\n" + "\n"
+                            + "We transform (move/rotate) their positions\n" + "using simple trigonometry\n" + "\n"
+                            + "A more practical Acme use-case for\n" + "this plotting technique would be to\n"
+                            + "to build terminal-based charts for\n" + "monitoring values stored in the OLT-MGR\n"
+                            + "and rendered via CLIApp.java");
 
-	    XYTranslate pointPlotter = new XYTranslate(grid.asPointPlotter(), 0, 0);
+            brailleComponent.add(tcBrailleChars);
+            brailleComponent.add(2, 0, tc);
 
-	    CompositeShape shapes = new CompositeShape();
+            grid = new BrailleGrid(ControlCode.DEFAULT_COLOR, new Dimension.Simple(brailleComponent.getHeight() - 4,
+                    brailleComponent.getWidth() - 4 - tc.getWidth()));
+            grid.setPlotColor(new FGBGColors(Colors.Yel));
 
-	    XYTranslate rectangle1PointPlotter = new XYTranslate(null, 0, 0);
+            brailleComponent.add(new Position.Simple(2, tc.getWidth() + 2), grid);
 
-	    shapes.addShape(new ShapeWithTransform(
-		    new RectangleShape(new Rectangle.Simple(30, 30, 20, 20), Colors.IBlu), rectangle1PointPlotter));
+            XYTranslate pointPlotter = new XYTranslate(grid.asPointPlotter(), 0, 0);
 
-	    Position fixedPoint = new Position.Simple(30, 50);
+            CompositeShape shapes = new CompositeShape();
 
-	    RotateAroundFixedPoint rectangle2Rotator = new RotateAroundFixedPoint(0, fixedPoint);
+            XYTranslate rectangle1PointPlotter = new XYTranslate(null, 0, 0);
 
-	    TransformPointPlotter rectangle2PointPlotter = new TransformPointPlotter(null, rectangle2Rotator);
+            shapes.addShape(new ShapeWithTransform(
+                    new RectangleShape(new Rectangle.Simple(30, 30, 20, 20), Colors.IBlu), rectangle1PointPlotter));
 
-	    shapes.addShape(new ShapeWithTransform(
-		    new RectangleShape(new Rectangle.Simple(30, 30, 20, 20), Colors.IGre), rectangle2PointPlotter));
+            Position fixedPoint = new Position.Simple(30, 50);
 
-	    PositionTransform.FofG trianglePositionTransform = new PositionTransform.FofG(new RotateAroundFixedPoint(0,
-		    fixedPoint), new PositionTransform.Translate(0, 0));
-	    shapes.addShape(new ShapeWithTransform(new Triangle(0, 0, 30, 100, 65, 50, Colors.ICya),
-		    new TransformPointPlotter(null, trianglePositionTransform)));
+            RotateAroundFixedPoint rectangle2Rotator = new RotateAroundFixedPoint(0, fixedPoint);
 
-	    XYTranslate circle1PointPlotter = new XYTranslate(null, 0, 0);
-	    shapes.addShape(new ShapeWithTransform(new Circle(0, 0, 30), circle1PointPlotter));
+            TransformPointPlotter rectangle2PointPlotter = new TransformPointPlotter(null, rectangle2Rotator);
 
-	    XYTranslate circle2PointPlotter = new XYTranslate(null, 0, 0);
-	    shapes.addShape(new ShapeWithTransform(new Circle(50, 50, 30, Colors.IRed), circle2PointPlotter));
-	    drawIt = new Runnable() {
+            shapes.addShape(new ShapeWithTransform(
+                    new RectangleShape(new Rectangle.Simple(30, 30, 20, 20), Colors.IGre), rectangle2PointPlotter));
 
-		@Override
-		public void run() {
+            PositionTransform.FofG trianglePositionTransform = new PositionTransform.FofG(
+                    new RotateAroundFixedPoint(0, fixedPoint), new PositionTransform.Translate(0, 0));
+            shapes.addShape(new ShapeWithTransform(new Triangle(0, 0, 30, 100, 65, 50, Colors.ICya),
+                    new TransformPointPlotter(null, trianglePositionTransform)));
 
-		    renderPreUPdate();
+            XYTranslate circle1PointPlotter = new XYTranslate(null, 0, 0);
 
-		    brailleComponent.markAsDirty();
+            DonutPlotter donutPlotter = new DonutPlotter(0);
 
-		    grid.clear(); // clears and marks as dirty
-		    grid.clearPlots();
+            shapes.addShape(
+                    new ShapeWithTransform(new Circle(0, 0, 30).setAlgorithm(donutPlotter), circle1PointPlotter));
 
+            XYTranslate circle2PointPlotter = new XYTranslate(null, 0, 0);
+            shapes.addShape(new ShapeWithTransform(new Circle(50, 50, 30, Colors.IRed), circle2PointPlotter));
+            drawIt = new Runnable() {
 
-		    // draw the shapes into the pointPlotter ( into the grid )
-		    shapes.draw(pointPlotter);
+                @Override
+                public void run() {
 
-		    if (segmentsBufferProvider != null) {
-        		    // remove / erase rectangle where grid will be copied into
-        		    segmentsBufferProvider.getSegmentsBuffer().removeRect(brailleComponent);
-        
-        		    // copy grid contents into segmentsBufferProvider ( the parent component)
-        		    segmentsBufferProvider.getSegmentsBuffer().mergeAt(2, 2, brailleComponent.getSegmentsBuffer());
-		    }
-		    
-		    // 
-		    flushOutput();
-		}
-	    };
+                    renderPreUPdate();
 
-	    // redraw the grid every 100 millisec's
-	    addAndRememberEventHandler(eventBus, new OnIdleEventEventHandler.RepeatingInterval(100, new EventHandler() {
-		@Override
-		public void handle(TerminalEvent<?> te) {
-		    drawIt.run();
-		}
-	    }));
+                    brailleComponent.markAsDirty();
 
-	    // move the triangle
-	    addAndRememberEventHandler(eventBus, new OnIdleEventEventHandler.RepeatingInterval(100, new EventHandler() {
+                    grid.clear(); // clears and marks as dirty
+                    grid.clearPlots();
 
-		int x = 0;
-		int xIncr = 1;
+                    // draw the shapes into the pointPlotter ( into the grid )
+                    shapes.draw(pointPlotter);
+                    grid.markAsDirty();
 
-		@Override
-		public void handle(TerminalEvent<?> te) {
-		    if (x <= -20) {
-			xIncr = 1;
-		    } else {
-			if (x >= 20) {
-			    xIncr = -1;
-			}
-		    }
-		    x += xIncr;
+                    if (segmentsBufferProvider != null) {
+                        // remove / erase rectangle where grid will be copied into
+                        segmentsBufferProvider.getSegmentsBuffer().removeRect(brailleComponent);
 
-		    Translate translate = (PositionTransform.Translate) trianglePositionTransform.getG_transform();
-		    RotateAroundFixedPoint rotator = (RotateAroundFixedPoint) trianglePositionTransform
-			    .getF_transform();
+                        // copy grid contents into segmentsBufferProvider ( the parent component)
+                        segmentsBufferProvider.getSegmentsBuffer().mergeAt(2, 2, brailleComponent.getSegmentsBuffer());
+                    }
 
-		    int newTheta = (rectangle2Rotator.getTheta() + 1) % 360;
-		    rotator.setTheta(newTheta);
+                    //
+                    flushOutput();
+                }
+            };
 
-		    translate.setColDelta(x);
-		}
-	    }));
+            // redraw the grid every 100 millisec's
+            addAndRememberEventHandler(eventBus, new OnIdleEventEventHandler.RepeatingInterval(100, new EventHandler() {
+                @Override
+                public void handle(TerminalEvent<?> te) {
+                    drawIt.run();
+                }
+            }));
 
-	    // redraw rectangle1 and move it around a circle path
-	    addAndRememberEventHandler(eventBus, new OnIdleEventEventHandler.RepeatingInterval(100,
-		    new CirclePathEventHandler(0, 0, 20, rectangle1PointPlotter)));
+            // move the triangle
+            addAndRememberEventHandler(eventBus, new OnIdleEventEventHandler.RepeatingInterval(100, new EventHandler() {
 
-	    // redraw circle1 and move it around a circle path
-	    addAndRememberEventHandler(eventBus, new OnIdleEventEventHandler.RepeatingInterval(100,
-		    new CirclePathEventHandler(10, 10, 35, circle1PointPlotter)));
+                int x = 0;
+                int xIncr = 1;
 
-	    // redraw circle2 and move it around a circle path
-	    addAndRememberEventHandler(eventBus, new OnIdleEventEventHandler.RepeatingInterval(100,
-		    new CirclePathEventHandler(0, 0, 25, new CircleCounterClockwise_SORT(0, 0), circle2PointPlotter)));
+                @Override
+                public void handle(TerminalEvent<?> te) {
+                    if (x <= -20) {
+                        xIncr = 1;
+                    } else {
+                        if (x >= 20) {
+                            xIncr = -1;
+                        }
+                    }
+                    x += xIncr;
 
-	    addAndRememberEventHandler(eventBus, new OnIdleEventEventHandler.RepeatingInterval(100, new EventHandler() {
-		@Override
-		public void handle(TerminalEvent<?> te) {
-		    int newTheta = (rectangle2Rotator.getTheta() + 1) % 360;
-		    rectangle2Rotator.setTheta(newTheta);
-		}
-	    }));
+                    Translate translate = (PositionTransform.Translate) trianglePositionTransform.getG_transform();
+                    RotateAroundFixedPoint rotator = (RotateAroundFixedPoint) trianglePositionTransform
+                            .getF_transform();
 
-	    addAndRememberEventHandler(eventBus, new KeyInputEventHandler(KEY_MOVE_UP, new EventHandler() {
+                    int newTheta = (rectangle2Rotator.getTheta() + 1) % 360;
+                    rotator.setTheta(newTheta);
 
-		@Override
-		public void handle(TerminalEvent<?> te) {
-		    pointPlotter.setyDelta(pointPlotter.getyDelta() - 1);
-		    drawIt.run();
-		}
-	    }));
+                    translate.setColDelta(x);
+                }
+            }));
 
-	    addAndRememberEventHandler(eventBus, new KeyInputEventHandler(KEY_MOVE_DOWN, new EventHandler() {
-		@Override
-		public void handle(TerminalEvent<?> te) {
-		    pointPlotter.setyDelta(pointPlotter.getyDelta() + 1);
-		    drawIt.run();
-		}
-	    }));
+            // redraw rectangle1 and move it around a circle path
+            addAndRememberEventHandler(eventBus, new OnIdleEventEventHandler.RepeatingInterval(100,
+                    new CirclePathEventHandler(0, 0, 20, rectangle1PointPlotter)));
 
-	    addAndRememberEventHandler(eventBus, new KeyInputEventHandler(KEY_MOVE_LEFT, new EventHandler() {
-		@Override
-		public void handle(TerminalEvent<?> te) {
-		    pointPlotter.setxDelta(pointPlotter.getxDelta() - 1);
-		    drawIt.run();
-		}
-	    }));
+            // redraw circle1 and move it around a circle path
+            CirclePathEventHandler pathForCircle1 = new CirclePathEventHandler(10, 10, 35, circle1PointPlotter);
+            addAndRememberEventHandler(eventBus, new OnIdleEventEventHandler.RepeatingInterval(100, (te) -> {
+                int curAngle = donutPlotter.getMaxAngle();
+                donutPlotter.setAngle(curAngle == 360 ? 0 : curAngle + 1);
+                pathForCircle1.handle(te);
+            }));
 
-	    addAndRememberEventHandler(eventBus, new KeyInputEventHandler(KEY_MOVE_RIGHT, new EventHandler() {
-		@Override
-		public void handle(TerminalEvent<?> te) {
-		    pointPlotter.setxDelta(pointPlotter.getxDelta() + 1);
-		    drawIt.run();
-		}
-	    }));
-	}
-	
-	private KeyStroke KEY_MOVE_UP    = Keys.UP_KEYSTROKE;
-	private KeyStroke KEY_MOVE_DOWN  = Keys.DOWN_KEYSTROKE;
-	private KeyStroke KEY_MOVE_LEFT  = Keys.LEFT_KEYSTROKE;
-	private KeyStroke KEY_MOVE_RIGHT = Keys.RIGHT_KEYSTROKE;
-	
-	public void setupMpvementKeys(KeyStroke KEY_MOVE_UP, 
-	                              KeyStroke KEY_MOVE_DOWN,
-	                              KeyStroke KEY_MOVE_LEFT,
-	                              KeyStroke KEY_MOVE_RIGHT) {
-	    this.KEY_MOVE_UP = KEY_MOVE_UP;
-	    this.KEY_MOVE_DOWN = KEY_MOVE_DOWN;
-	    this.KEY_MOVE_LEFT = KEY_MOVE_LEFT;
-	    this.KEY_MOVE_RIGHT = KEY_MOVE_RIGHT;
-	}
-	
-	
-	    
+            // redraw circle2 and move it around a circle path
+            addAndRememberEventHandler(eventBus, new OnIdleEventEventHandler.RepeatingInterval(100,
+                    new CirclePathEventHandler(0, 0, 25, new CircleCounterClockwise_SORT(0, 0), circle2PointPlotter)));
+
+            addAndRememberEventHandler(eventBus, new OnIdleEventEventHandler.RepeatingInterval(100, new EventHandler() {
+                @Override
+                public void handle(TerminalEvent<?> te) {
+                    int newTheta = (rectangle2Rotator.getTheta() + 1) % 360;
+                    rectangle2Rotator.setTheta(newTheta);
+                }
+            }));
+
+            addAndRememberEventHandler(eventBus, new KeyInputEventHandler(KEY_MOVE_UP, new EventHandler() {
+
+                @Override
+                public void handle(TerminalEvent<?> te) {
+                    pointPlotter.setyDelta(pointPlotter.getyDelta() - 1);
+                    drawIt.run();
+                }
+            }));
+
+            addAndRememberEventHandler(eventBus, new KeyInputEventHandler(KEY_MOVE_DOWN, new EventHandler() {
+                @Override
+                public void handle(TerminalEvent<?> te) {
+                    pointPlotter.setyDelta(pointPlotter.getyDelta() + 1);
+                    drawIt.run();
+                }
+            }));
+
+            addAndRememberEventHandler(eventBus, new KeyInputEventHandler(KEY_MOVE_LEFT, new EventHandler() {
+                @Override
+                public void handle(TerminalEvent<?> te) {
+                    pointPlotter.setxDelta(pointPlotter.getxDelta() - 1);
+                    drawIt.run();
+                }
+            }));
+
+            addAndRememberEventHandler(eventBus, new KeyInputEventHandler(KEY_MOVE_RIGHT, new EventHandler() {
+                @Override
+                public void handle(TerminalEvent<?> te) {
+                    pointPlotter.setxDelta(pointPlotter.getxDelta() + 1);
+                    drawIt.run();
+                }
+            }));
+        }
+
+        private KeyStroke KEY_MOVE_UP = Keys.UP_KEYSTROKE;
+        private KeyStroke KEY_MOVE_DOWN = Keys.DOWN_KEYSTROKE;
+        private KeyStroke KEY_MOVE_LEFT = Keys.LEFT_KEYSTROKE;
+        private KeyStroke KEY_MOVE_RIGHT = Keys.RIGHT_KEYSTROKE;
+
+        public void setupMpvementKeys(KeyStroke KEY_MOVE_UP, KeyStroke KEY_MOVE_DOWN, KeyStroke KEY_MOVE_LEFT,
+                KeyStroke KEY_MOVE_RIGHT) {
+            this.KEY_MOVE_UP = KEY_MOVE_UP;
+            this.KEY_MOVE_DOWN = KEY_MOVE_DOWN;
+            this.KEY_MOVE_LEFT = KEY_MOVE_LEFT;
+            this.KEY_MOVE_RIGHT = KEY_MOVE_RIGHT;
+        }
     }
     
     
+    public static void main(String[] args) {
+
+        String _style = "MAX";
+        if (args != null && args.length > 0 && args[0].equalsIgnoreCase("small")) {
+            _style = "SMALL";
+        }
+        if (args != null && args.length > 0 && args[0].equalsIgnoreCase("medium")) {
+            _style = "MEDIUM";
+        }
+        if (args != null && args.length > 0 && args[0].equalsIgnoreCase("tiny")) {
+            _style = "TINY";
+        }
+        String style = _style;
+        
+        TUIApp app = new TUIApp(args).setEmptyChar(' ')
+                                     .setMainApplicationPanel(new Composite().setEmptyChar(' '))
+                                     .confirmOnExit();
+
+        TextComponent tc_status = new TextComponent("[             ]");
+
+        BrailleDemo brailleDemo = new BrailleDemo() {
+            int counter = 0;
+            public void flushOutput() {
+                TestsCommon.renderScreenDEBUG(app.getCanvas(), app.getScreen(), app.getEventBus());
+                counter = (counter +1) % 100 ;
+                tc_status.setTextAndResize(" [ " + String.format("%4d", counter) + " ] ");
+                app.doRefreshCanvasIfModified();
+            }
+        };
+        
+        if (style.equals("MAX")) {
+            app.setOnResizeAction((tApp, size)->{
+                tApp.clearCanvas();
+                tApp.setCanvasSize(size);
+                
+                ((Composite)tApp.getMainApplicationPanel()).resize(size);
+                
+                brailleDemo.resize(size);
+            });
+        }
+
+        app.setOnReadyStart((tApp)->{
+            
+            Rectangle bounds = null;
+            if ("SMALL".equalsIgnoreCase(style)) {
+                bounds = new Rectangle.Simple(0, 0, Math.min(20, app.getCanvas().getHeight()),
+                        Math.min(100, app.getCanvas().getWidth()));
+            } else if ("MEDIUM".equalsIgnoreCase(style)) {
+                bounds = new Rectangle.Simple(0, 0, Math.min(25, app.getCanvas().getHeight()),
+                        Math.min(100, app.getCanvas().getWidth()));
+            } else if ("TINY".equalsIgnoreCase(style)) {
+                bounds = new Rectangle.Simple(0, 0, Math.min(15, app.getCanvas().getHeight()),
+                        Math.min(60, app.getCanvas().getWidth()));
+            } else {
+                bounds = new Rectangle.Simple(app.getCanvas());
+            }
+
+            app.getCanvas().setSize(bounds.getHeight(), bounds.getWidth());
+
+            // set to size of canvas
+            ((Composite)app.getMainApplicationPanel()).resize(app.getCanvas());
+            
+            brailleDemo.setUpDemo(tApp.getEventBus(), bounds, null);
+            
+            Component<?> brailleComponent = brailleDemo.getBrailleComponent();
+            
+            ((Composite)app.getMainApplicationPanel()).add(brailleComponent);
+
+            ((Composite)app.getMainApplicationPanel()).add(tc_status);
+            
+        });
+
+
+        app.start();
+        
+    }
     
 
 }

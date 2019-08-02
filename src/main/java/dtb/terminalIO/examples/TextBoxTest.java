@@ -3,6 +3,7 @@ package dtb.terminalIO.examples;
 import java.io.IOException;
 
 import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.ComponentWithFocusManager;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.TextComponent;
@@ -90,8 +91,8 @@ public class TextBoxTest {
 
         topPanel.add(2,1, horizontalPanel);
         
-        
-        ScrollableComponent sc_1 = new ScrollableComponent(Colors.Blu, new Dimension.Simple(panel1.getHeight()+1, 50), panel1);
+        ComponentWithFocusManager sc_1_component = new ComponentWithFocusManager(panel1);
+        ScrollableComponent sc_1 = new ScrollableComponent(Colors.Blu, new Dimension.Simple(panel1.getHeight()+1, 50), sc_1_component);
         SearchFunctionForScrollableComponent.addFinderToScrollable(sc_1);
         horizontalPanel.add(sc_1);
         horizontalPanel.add(panel2);
@@ -178,7 +179,7 @@ public class TextBoxTest {
         eventBus.appendEventHandler(master_canvas.asHideCursorEventHandler());
 
         eventBus.appendEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
-        eventBus.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
+        // eventBus.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
         eventBus.appendEventHandler(new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
         
         DefaultFocusManager focusManager = new DefaultFocusManager(Keys.TAB_KEYSTROKE).setNavKeysFirst(false);
@@ -186,6 +187,10 @@ public class TextBoxTest {
         DefaultFocusManager focusManager1 = new DefaultFocusManager().setNavKeysFirst(false);
         DefaultFocusManager focusManager2 = new DefaultFocusManager().setNavKeysFirst(false);
 
+        sc_1_component.setFocusManager(focusManager1);
+
+        // sc_1.asEventHandler(); // TODO: this should not need to be done
+        
         focusManager1.addFocusable(ti, eventBus);
         focusManager1.addFocusable(ti_2, eventBus);
         focusManager1.addFocusable(cb_1, eventBus);
@@ -196,7 +201,9 @@ public class TextBoxTest {
         focusManager2.addFocusable(ti_4, eventBus); 
 
         focusManager.addFocusable(sc_1, eventBus);
-        sc_1.prependEventHandler(focusManager1);
+        
+        
+        //sc_1.prependEventHandler(focusManager1);
         
         //focusManager.addFocusable(focusManager1, eventBus);
         

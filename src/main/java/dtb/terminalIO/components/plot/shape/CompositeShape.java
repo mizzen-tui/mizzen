@@ -6,7 +6,9 @@ import java.util.Collection;
 import dtb.terminalIO.components.plot.PointPlotter;
 
 /**
- * A shape that contains multiple shapes
+ * A {@link Shape} that contains multiple shapes
+ * 
+ * <p/>
  * 
  * The draw method will draw all
  * 

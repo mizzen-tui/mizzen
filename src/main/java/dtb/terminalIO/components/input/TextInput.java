@@ -8,8 +8,8 @@ import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
@@ -17,6 +17,7 @@ import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.EventHandlerContainer;
 import dtb.terminalIO.events.RequestHideCursorEvent;
 import dtb.terminalIO.events.RequestShowCursorEvent;
+import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.RequestFocusEvent;
@@ -52,7 +53,7 @@ public class TextInput extends BoundedComponent<TextInput>
     }
 
     public TextInput(int length) {
-        this(FGBGColors.DEFAULT, length);
+        this(ControlCode.DEFAULT_COLOR, length);
     }
 
     public TextInput(Color color, Dimension d) {
@@ -245,22 +246,21 @@ public class TextInput extends BoundedComponent<TextInput>
         return false;
     }
 
-    void REALraiseEventOnChanged(EventBus eventBus, Supplier<Boolean> changeTextAction) {
-        if (changeTextAction.get()) {
-            eventBus.raiseEvent(new HasValue.ValueChangedEvent<>(this));
-        }
+    private void updateCursorPositionAndRefreshCanvas(EventBus eventBus) {
+        requestShowCursor(eventBus);
+        eventBus.raiseEvent(new RequestUpdateCanvasEvent(this));
     }
-
+    
     void raiseEventOnChanged(EventBus eventBus, Supplier<Boolean> changeTextAction) {
         if (changeTextAction.get()) {
             eventBus.raiseEvent(new HasValue.ValueChangedEvent<>(this));
+            updateCursorPositionAndRefreshCanvas(eventBus);
         }
     }
 
     @Override
     public void handle(TerminalEvent<?> te) {
         getEventHandler().handle(te);
-        requestShowCursor(te.getEventBus());
     }
 
     @Override
@@ -323,6 +323,8 @@ public class TextInput extends BoundedComponent<TextInput>
         appendEventHandler(new KeyInputEventHandler(Keys.LEFT_KEYSTROKE, (te) -> caret.getCol() > 0, (te) -> {
             if (caret.getCol() > 0) {
                 caretOffsetAdd(0, -1);
+                markAsDirty();
+                updateCursorPositionAndRefreshCanvas(te.getEventBus());
             }
             return;
         }));
@@ -334,13 +336,14 @@ public class TextInput extends BoundedComponent<TextInput>
                         // in place
                         caretOffsetAdd(0, 1);
                         markAsDirty();
+                        updateCursorPositionAndRefreshCanvas(te.getEventBus());
                     }
                     return;
                 }));
 
         appendEventHandler(new KeyInputEventHandler(Keys.ENTER_KEYSTROKE, (te) -> {
             // for now ... do nothing - but maybe later go to next focus? (new concept)
-            TextInput.this.REALraiseEventOnChanged(te.getEventBus(), () -> true);
+            TextInput.this.raiseEventOnChanged(te.getEventBus(), () -> true);
             return;
         }));
 
@@ -392,19 +395,7 @@ public class TextInput extends BoundedComponent<TextInput>
     }
 
     private void requestShowCursor(EventBus eventBus) {
-        // todo - need manage a textinput caret (pos) -- not just append
-
-        // calc where cursor should be relative to text component + its caret position
-
-        Position canvasOffset = Component.UTIL.getCanvasOffsetFor(TextInput.this);
-
-        if (canvasOffset == null) {
-            throw new IllegalStateException("requestShowCursor(): Offset not calculated");
-        }
-
-        Position cursorPos = canvasOffset.offsetAdd(caret);
-
-        eventBus.raiseEvent(new RequestShowCursorEvent(TextInput.this, cursorPos));
+        Component.UTIL.requestShowCursorAtComponent(this, caret, eventBus);
     }
 
     private void requestHideCursor(EventBus eventBus) {

@@ -3,12 +3,13 @@ package dtb.terminalIO.components;
 import dtb.terminalIO.controlcodes.ColorTransform;
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.ControlCode.ColorProvider;
 
 /**
  * A hilite action that takes a color and transforms it to
  * its hilited equivalent which usually means making it bold
  */
-public class ColorHiliter implements Hiliter {
+public class ColorHiliter implements Hiliter, ColorProvider {
     
     private boolean hilited = false;
     

@@ -13,6 +13,7 @@ import dtb.terminalIO.components.tab.TabPanel;
 import dtb.terminalIO.components.tab.TabPanel.TabAction;
 import dtb.terminalIO.components.tab.TabPanel.TabContext;
 import dtb.terminalIO.controlcodes.Colors;
+import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.events.EventHandlerContainer;
@@ -126,7 +127,7 @@ public class TabPanelTest {
         vPanel.setVerticalSpacer(1);
         topFrame.add(vPanel);
 
-        TabPanel tb = new TabPanel(FGBGColors.DEFAULT, new FGBGColors(Colors.Blu).bold(), sizeOfTabPanelWindow);
+        TabPanel tb = new TabPanel(ControlCode.DEFAULT_COLOR, new FGBGColors(Colors.Blu).bold(), sizeOfTabPanelWindow);
         tb.setBorder(false);
         tb.setEmptyChar(emptyChar);
         tb.setEmptyColor(emptyColor);
@@ -235,7 +236,7 @@ public class TabPanelTest {
             }));
 
         });
-        
+
         tabPanelDemoApp.start();
 
     }

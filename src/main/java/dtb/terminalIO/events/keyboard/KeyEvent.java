@@ -3,7 +3,7 @@ package dtb.terminalIO.events.keyboard;
 import dtb.terminalIO.events.TerminalEvent;
 
 /**
- * Encapsulates an event where a key has been presssed ( A {@link KeyStroke} ).
+ * Encapsulates an event where a key has been pressed ( A {@link KeyStroke} ).
  */
 public class KeyEvent extends TerminalEvent<KeyStroke> {
 

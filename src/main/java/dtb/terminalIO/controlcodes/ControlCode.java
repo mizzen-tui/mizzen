@@ -22,6 +22,9 @@ import dtb.terminalIO.textsegments.CleanString;
  */
 public abstract class ControlCode implements Renderer {
 
+    // public static final FGBGColors DEFAULT = new
+    // FGBGColors(Colors.On_Bla,Colors.Whi);
+
     public ControlCode() {
     }
 
@@ -114,11 +117,11 @@ public abstract class ControlCode implements Renderer {
         }
         
         public FGBGColors newFrom(FgColor fgcNew) {
-            throw new IllegalStateException("not implemented! only works for FGBGColors object");
+            throw new IllegalStateException("Not implemented! Only works for FGBGColors object");
         }
 
         public FGBGColors newFrom(BgColor bgcNew) {
-            throw new IllegalStateException("not implemented!only works for FGBGColors object");
+            throw new IllegalStateException("Not implemented! Only works for FGBGColors object");
         }
 
         public Color bold() {
@@ -134,6 +137,7 @@ public abstract class ControlCode implements Renderer {
         }
         
     }
+    
     
     public static class ColorFromCodes extends Color {
 
@@ -292,11 +296,7 @@ public abstract class ControlCode implements Renderer {
      */
     public static class FGBGColors extends Color {
 
-        // public static final FGBGColors DEFAULT = new
-        // FGBGColors(Colors.On_Bla,Colors.Whi);
-        public static final FGBGColors DEFAULT            = new FGBGColors(Colors.Whi, null);
-
-        public static final FGBGColors NO_COLOR_SPECIFIED = new FGBGColors(null, null);
+        public static final Color NO_COLOR_SPECIFIED = ControlCode.DEFAULT_COLOR ; //new FGBGColors(null, null);
 
         BgColor                        bgc;
         FgColor                        fgc;
@@ -464,13 +464,16 @@ public abstract class ControlCode implements Renderer {
     public static final String      escape_CHR          = "\u001B";
     public static final String      escape_PREFIX       = escape_CHR + "[";
 
-    public static final ControlCode RCol                = new Color() {
+    public static final Color RCol                = new Color() {
                                                             @Override
                                                             protected int[] buildControlCodes() {
                                                                 return new int[] { 0 };
                                                             }
                                                         };
 
+     public static final Color DEFAULT_COLOR            = RCol ; // new FGBGColors(Colors.Whi, null);
+
+                                                        
     // erasing ..
 
     public static final ControlCode ERASE_END_OF_LINE   = new BaseTextControlCode(escape_CHR + "[K");

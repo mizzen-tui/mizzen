@@ -4,6 +4,25 @@ import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.geom.Position;
 
+/**
+ * 
+ * Draws a triangle
+ * 
+ * <pre>
+ * 
+ *               /-\
+ *              /`  \\.
+ *            /      '-\
+ *          .+          \\.
+ *         :/             '-\
+ *        /:      ____-------*
+ *       :*-------             
+ * 
+ * </pre>
+ * 
+ * @author dbalme
+ *
+ */
 public class Triangle implements Shape {
 
     Position p1;
@@ -24,11 +43,11 @@ public class Triangle implements Shape {
     }
 
     public Triangle(int x1, int y1, int x2, int y2, int x3, int y3, Color color) {
-        this(new Position.Simple(x1, y2), new Position.Simple(x2, y2), new Position.Simple(x3, y3), color);
+        this(new Position.Simple(y1, x1), new Position.Simple(y2, x2), new Position.Simple(y3, x3), color);
     }
 
     public Triangle(int x1, int y1, int x2, int y2, int x3, int y3) {
-        this(x1, y2, x2, y2, x3, y3, null);
+        this(x1, y1, x2, y2, x3, y3, null);
     }
 
     @Override

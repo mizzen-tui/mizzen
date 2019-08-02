@@ -82,6 +82,7 @@ public class ButtonBar extends Composite implements FocusManager {
             if (child instanceof CharComponent) { // assume divider
                 child.setColor(drawingcolor);
             } else {
+                // child.setColor(drawingcolor);
                 child.markAsDirty();
             }
             
@@ -183,11 +184,11 @@ public class ButtonBar extends Composite implements FocusManager {
         }
 
         count++;
-        
+
         if (hotKey == null && component instanceof HasHotKey && ((HasHotKey)component).getHotKey() != null) {
             hotKey = ((HasHotKey)component).getHotKey();
         }
-        
+
         if (hotKey != null && handler != null) {
             
             EventHandler componentHandler = handler;
@@ -217,7 +218,7 @@ public class ButtonBar extends Composite implements FocusManager {
         }
 
         horizontalPanel.add(component);
-        
+
         if (this.rightMostBorderChar > 0) {
             lastDivider = new CharComponent(this.getColor(), this.rightMostBorderChar);
             horizontalPanel.add(lastDivider);
@@ -256,11 +257,15 @@ public class ButtonBar extends Composite implements FocusManager {
     public void hilite() {
         super.hilite();
 
+        // We will visit this component and all its children using a Traverser
         Traverser<Component<?>> componentTraverser = new Traverser<Component<?>>();
+        
+        // We will hilite any node that we visit
         Visitor<Component<?>> hilite = (c)-> {
                                                 new HiliterAdapter<Component<?>>(c).getHiliter().hilite(); 
                                                 return Traverser.CONTINUE_TRAVERSE;
                                              };
+        // now finally, let's traverse and hilite
         componentTraverser.traverse(horizontalPanel, (c)-> hilite.visit(c) );
 
         this.markAsDirty();
@@ -271,6 +276,7 @@ public class ButtonBar extends Composite implements FocusManager {
         super.unHilite();
         horizontalPanel.unHilite();
 
+        // traverse and unilte buttonbar and all its children
         Traverser<Component<?>> componentTraverser = new Traverser<Component<?>>();
         Visitor<Component<?>> unHilite = (c)-> {new HiliterAdapter<Component<?>>(c).getHiliter().unHilite(); return Traverser.CONTINUE_TRAVERSE;};
         componentTraverser.traverse(horizontalPanel, (c)-> unHilite.visit(c) );
@@ -323,7 +329,7 @@ public class ButtonBar extends Composite implements FocusManager {
     public void setChildAsCurrentFocus(Focusable focusable, EventBus eventBus) {
         Focusable prevCurrent = this.current;
         this.current = null;
-        FocusManager.UTIL.setNewFocusable(focusable, prevCurrent, eventBus, (f)-> updateCanvas(eventBus) );
+        FocusManager.UTIL.setNewFocusable(focusable, prevCurrent, eventBus, (f, evtBus)-> updateCanvas(evtBus) );
         this.current = focusable;
     }
 

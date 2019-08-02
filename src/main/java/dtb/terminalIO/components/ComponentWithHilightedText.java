@@ -150,7 +150,7 @@ public class ComponentWithHilightedText extends Composite implements Focusable {
 
     @Override
     public boolean hasFocus() {
-        return focusable == null ? null : focusable.hasFocus();
+        return (focusable == null) ? false : focusable.hasFocus();
     }
 
     @Override

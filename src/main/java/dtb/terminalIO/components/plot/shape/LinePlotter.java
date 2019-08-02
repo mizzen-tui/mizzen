@@ -3,7 +3,7 @@ package dtb.terminalIO.components.plot.shape;
 import dtb.terminalIO.components.plot.PointPlotter;
 
 /**
- * Draws a line between 2 points
+ * Draws a line between 2 points into a {@link PointPlotter}.
  */
 public class LinePlotter {
 

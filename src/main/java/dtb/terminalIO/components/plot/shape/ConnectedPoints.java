@@ -9,8 +9,13 @@ import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.geom.Position;
 
 /**
- * Given a set of points (defined in Position objects),
+ * Given a set of points (defined in {@link PointPlot} objects),
  * This draws a shape that is a set of connected lines.
+ * 
+ * <p/>
+ * 
+ * Makes heavy use of the {@link Line} shape.
+ * 
  */
 public class ConnectedPoints implements Shape {
     

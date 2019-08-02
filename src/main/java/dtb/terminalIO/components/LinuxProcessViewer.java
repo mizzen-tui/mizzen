@@ -5,8 +5,8 @@ import java.util.Collections;
 
 import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
+import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
@@ -86,7 +86,7 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
     }
 
     public LinuxProcessViewer(Dimension d) {
-        this(FGBGColors.DEFAULT, d);
+        this(ControlCode.DEFAULT_COLOR, d);
     }
 
     public void setBorderColor(Color color) {

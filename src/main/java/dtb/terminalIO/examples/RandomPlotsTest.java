@@ -10,6 +10,7 @@ import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.plot.Plotter;
 import dtb.terminalIO.components.plot.Plotter.Plot;
 import dtb.terminalIO.controlcodes.Colors;
+import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.geom.Dimension;
@@ -45,7 +46,7 @@ public class RandomPlotsTest {
 
         Composite box = new Composite().setPosition(5, 40).add(new BoundedComponent.DONOTHING(10,20)).setBorder(true);
         
-        Plotter plotter = new Plotter(FGBGColors.DEFAULT,12,20)
+        Plotter plotter = new Plotter(ControlCode.DEFAULT_COLOR,12,20)
                 .addPlot(1,2)
                 .addPlot(2, 2)
                 .addPlot(3, 3)

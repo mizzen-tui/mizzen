@@ -7,10 +7,13 @@ import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.RequestHideCursorEvent;
+import dtb.terminalIO.events.RequestShowCursorEvent;
+import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.ToFocusable;
@@ -37,7 +40,7 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput> implements Ha
     }
     
     public CheckBoxInput() {
-        this(FGBGColors.DEFAULT);
+        this(ControlCode.DEFAULT_COLOR);
     }
     
     
@@ -124,6 +127,14 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput> implements Ha
         this.textRenderer.setParentContainer(this);
     }
     
+
+    private void requestShowCursorAtComponent(EventBus eventBus) {
+        Component.UTIL.requestShowCursorAtComponent(this, new Position.Simple(0,2), eventBus);
+    }
+
+    private void requestHideCursor(EventBus eventBus) {
+        eventBus.raiseEvent(new RequestHideCursorEvent(this));
+    }
     
     public Focusable asFocusable() {
         
@@ -134,6 +145,9 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput> implements Ha
                 super.setFocus(focus, eventBus);
                 if (focus) {
                     new ShowComponentOnFocus().onFocus(CheckBoxInput.this, eventBus);
+                    requestShowCursorAtComponent(eventBus);
+                } else {
+                    requestHideCursor(eventBus);
                 }
             }
             
@@ -149,7 +163,8 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput> implements Ha
                 
                 if (ke.isKeyStroke( Keys.ENTER_KEYSTROKE )  || ke.isKeyStroke(Keys.SPACE_KEYSTROKE)) {
                     CheckBoxInput.this.setValue(  !  CheckBoxInput.this.getValue()  );  // toggle the value
-                    te.getEventBus().raiseEvent(  new HasValue.ValueChangedEvent<>(CheckBoxInput.this) );
+                    te.getEventBus().raiseEvent(new HasValue.ValueChangedEvent<>(CheckBoxInput.this) );
+                    te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(this));
                 }
             }
 

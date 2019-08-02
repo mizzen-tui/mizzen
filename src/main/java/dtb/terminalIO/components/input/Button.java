@@ -13,6 +13,8 @@ import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.RequestHideCursorEvent;
+import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.ToFocusable;
 import dtb.terminalIO.events.keyboard.HasHotKey;
@@ -35,6 +37,7 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
     Boolean pressed = false;
     boolean displayHotKey = false;
     boolean toggleButton = false;
+    boolean useCursor = true;
     
     private KeyStroke hotKey;  // not used yet .. soon
     
@@ -124,7 +127,7 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
     
     private String lbracket(String brackStr) {
         if (toggleButton) {
-            return brackStr + (pressed? "*" : " ");
+            return brackStr + (pressed? "▪" : " ");
         }
         // not a toggle button
         return brackStr;
@@ -189,10 +192,26 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
     protected void buttonPressed(EventBus eventBus) {
         Button.this.setValue( (toggleButton? !pressed :true) );  // toggle the value
         renderedText.setText(getTextForRendering(true));
-        eventBus.raiseEvent(  new HasValue.ValueChangedEvent<>(Button.this) );
+        eventBus.raiseEvent( new HasValue.ValueChangedEvent<>(Button.this) );
+        eventBus.raiseEvent( new RequestUpdateCanvasEvent(this));
     }
 
+    public Button setUseCursor(boolean use) {
+        this.useCursor = use;
+        return this;
+    }
     
+    private void requestShowCursorAtComponent(EventBus eventBus) {
+        if (!useCursor) return;
+
+        Component.UTIL.requestShowCursorAtComponent(this, new Position.Simple(hasBorder()?1:0,toggleButton?2:1+(hasBorder()?1:0)), eventBus);
+    }
+
+    private void requestHideCursor(EventBus eventBus) {
+        if (!useCursor) return;
+        eventBus.raiseEvent(new RequestHideCursorEvent(this));
+    }
+
     public Focusable asFocusable() {
         
         ChainedEventHandler chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
@@ -211,9 +230,12 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
                 renderedText.setText(getTextForRendering(focus));
                 if (focus) {
                     new ShowComponentOnFocus().onFocus(Button.this, eventBus);
+                    requestShowCursorAtComponent(eventBus);
+                } else {
+                    requestHideCursor(eventBus);
                 }
             }
-            
+
         };
     }
 
@@ -248,6 +270,5 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
     public void childResized(Component<?> child) {
         this.resize((Dimension)child);
     }
-
 
 }

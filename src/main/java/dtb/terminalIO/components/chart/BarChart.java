@@ -1,21 +1,14 @@
 package dtb.terminalIO.components.chart;
 
-import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 
 import dtb.terminalIO.components.Composite;
-import dtb.terminalIO.components.RectangleComponent;
 import dtb.terminalIO.controlcodes.Colors;
-import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.ControlCode.BgColor;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.controlcodes.ControlCode.FgColor;
-import dtb.terminalIO.core.Canvas;
-import dtb.terminalIO.core.TerminalScreen;
-import dtb.terminalIO.examples.TestsCommon;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
@@ -192,65 +185,5 @@ public class BarChart extends Composite {
         super.draw(color, segments);
     }
 
-    public static void main(String[] args) {
-
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        TerminalScreen screen = new TerminalScreen();
-        // screen.setPrintStream( new PrintStream( outputStream ));
-        // screen.setControlCodesEnabled(false);
-
-        screen.add(ControlCode.HIDE_CURSOR);
-        screen.refresh();
-
-        Canvas master_canvas = new Canvas(screen);
-        master_canvas.setEmptyChar(' ');
-        // master_canvas.setEmptyColor(new FGBGColors(Colors.Bla));
-
-        master_canvas.setSize(25, 100);
-
-        master_canvas.addComponentSegments(2, 4, new RectangleComponent(FGBGColors.DEFAULT, 5, 10));
-        master_canvas.addComponentSegments(4, 8, new RectangleComponent(FGBGColors.DEFAULT, 5, 15));
-
-        BarChart bc = new BarChart(20, 75);
-        bc.setBorder(true);
-        // bc.setEmptyChar('.');
-        bc.setPlotColor(new FGBGColors(Colors.BIYel));
-
-        double[] bc_DATA = new double[] { 10.0, 5.0, 13.0, 4.0, 6.0, 5.0, 6.0, 7.0, 8.0 };
-        String[] bc_DATALabels = new String[] { "Lumber", "Metal", "Fish", "Beef", "Lamb", "Liquor", "Milk", "Butter",
-                "Cherries" };
-
-        // bc.barWidth = 5;
-        // bc.barGap = 2;
-
-        bc.setTitle("| Import Percentages |");
-
-        Consumer<Integer> dataProducer = (j) -> {
-            bc.clearData();
-            bc.clear();
-
-            for (int i = 0; i < bc_DATA.length; i++) {
-                double d = Math.random() * 20;
-
-                bc.addData(d, bc_DATALabels[i]);
-            }
-            master_canvas.addComponentSegments(2, 15, bc);
-            master_canvas.t(bc.getBottomMostRow() + 3, 1, "j = " + j + "   ");
-            master_canvas.refresh();
-            master_canvas.t("  " + bc.topValue + "    ");
-        };
-
-        for (int j = 10; j < 1100; j++) {
-            dataProducer.accept(j);
-            TestsCommon.sleep(250);
-        }
-
-        screen.add(ControlCode.SHOW_CURSOR);
-        screen.refresh();
-        master_canvas.refresh();
-
-        System.out.println(new String(outputStream.toByteArray()));
-
-    }
 
 }

@@ -2,11 +2,12 @@ package dtb.terminalIO.events.focus;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.EventHandlerContainer;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.traverse.FindPathToTarget;
@@ -56,7 +57,7 @@ public interface FocusManager extends Focusable {
          * @param eventBus
          * @param onFocusChanged
          */
-        public static void setNewFocusable(Focusable focusableChild, Focusable oldFocusableChild, EventBus eventBus, Consumer<Focusable> onFocusChanged) {
+        public static void setNewFocusable(Focusable focusableChild, Focusable oldFocusableChild, EventBus eventBus, BiConsumer<Focusable, EventBus> onFocusChanged) {
             
             // unfocus the previous (old)
             if (oldFocusableChild != null) {
@@ -70,7 +71,7 @@ public interface FocusManager extends Focusable {
             
             // run action ( typically to update the canvas )
             if (onFocusChanged != null) {
-                onFocusChanged.accept(focusableChild);
+                onFocusChanged.accept(focusableChild, eventBus);
             }
         }
 

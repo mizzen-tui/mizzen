@@ -59,7 +59,10 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
     ButtonBar footerControls;
     TextComponent footerTextComponent;
     String footerText;
+    Focusable currentFocusable;
 
+    
+    
     public ScrollableComponent(Color color, Dimension d, Component<?> componentBeingViewed) {
 
         super(color);
@@ -83,6 +86,8 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
 
         setShowBorder(visibleBorder()); // add border and footertext if border defined
         positionFooterText();
+        currentFocusable = footerControls;
+        asEventHandler();
     }
     
     public ScrollableComponent setColor(Color drawingcolor) {
@@ -169,8 +174,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         this.borderedComponent.setTitle(titleColors, title);
         return this;
     }
-    
-    
+
     public boolean visibleBorder() {
         return this.borderedComponent.visibleBorder();
     }
@@ -197,12 +201,12 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
             footerControls.addComponent(footerTextComponent, null, null);
         }
         
-        addFooterButton("^", Keys.UP_KEYSTROKE, (te) -> ScrollableComponent.this.up(1));
-        addFooterButton("v", Keys.DOWN_KEYSTROKE, (te) -> ScrollableComponent.this.down(1));
-        addFooterButton("PgUp", Keys.PGUP_KEYSTROKE, (te) -> ScrollableComponent.this.pageup());
-        addFooterButton("PgDn", Keys.PGDN_KEYSTROKE, (te) -> ScrollableComponent.this.pagedown());
-        addFooterButton("«", Keys.LEFT_KEYSTROKE, (te) -> ScrollableComponent.this.left(1));
-        addFooterButton("»", Keys.RIGHT_KEYSTROKE, (te) -> ScrollableComponent.this.right(1));
+        addFooterButton("^",    Keys.UP_KEYSTROKE,    (te) -> ScrollableComponent.this.up(1));
+        addFooterButton("v",    Keys.DOWN_KEYSTROKE,  (te) -> ScrollableComponent.this.down(1));
+        addFooterButton("PgUp", Keys.PGUP_KEYSTROKE,  (te) -> ScrollableComponent.this.pageup());
+        addFooterButton("PgDn", Keys.PGDN_KEYSTROKE,  (te) -> ScrollableComponent.this.pagedown());
+        addFooterButton("«",    Keys.LEFT_KEYSTROKE,  (te) -> ScrollableComponent.this.left(1));
+        addFooterButton("»",    Keys.RIGHT_KEYSTROKE, (te) -> ScrollableComponent.this.right(1));
 
         return footerControls;
     }
@@ -274,9 +278,9 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
 
     public void setViewOffset(int r, int c) {
         if (r < 0 || c < 0)
-            return;
+            return; // too small
         if (r > componentBeingViewed.getBottomMostRow() + 1 || c > componentBeingViewed.getRightMostCol() + 1)
-            return;
+            return; // too large
         markAsDirty();
         Position offset = new Position.Simple(r, c);
         viewer.setViewOffset(offset);
@@ -387,6 +391,9 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         ConditionalEventHandler handler = new ConditionalEventHandler.Delegate(eventHandler) {
             @Override
             public void handle(TerminalEvent<?> te) {
+                if (eventHandler != footerControls && !ScrollableComponent.this.viewer.hasFocus()) {
+                    ScrollableComponent.this.viewer.setFocus(true, te.getEventBus());
+                }
                 super.handle(te);
                 updateCanvas(te.getEventBus());
             }
@@ -410,7 +417,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         }
         ConditionalEventHandler handler = wrapEventHandlerWithCanvasUpdate(eventHandler);
         appendEventHandler(handler);
-
+        
         return handler;
     }
 
@@ -428,6 +435,9 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
             public void handle(TerminalEvent<?> te) {
                 if (footerControls == null) {
                     return;
+                }
+                if (viewer.hasFocus()) {
+                    viewer.setFocus(false, te.getEventBus());
                 }
                 footerControls.handle(te);
             }
@@ -462,6 +472,12 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         }));
 
         conditionalEventHandler = chainedEventHandler.asConditionalEventHandler();
+        
+        if (viewer instanceof ConditionalEventHandler) {
+            // careful .. doing a small recursion here ( follow prependEventHandler() to see what I mean)
+            //            because conditionalEventHandler is not null - we don't come in here infinitely
+            prependEventHandler((ConditionalEventHandler) viewer);
+        }
 
         return conditionalEventHandler;
     }
@@ -513,29 +529,51 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         updateCanvas(eventBus);
     }
 
-    @Override
-    public void hilite() {
-        this.borderedComponent.hilite();
-        // copy color from border
-        vScrollBar.setColor(borderedComponent.getBorderColor());
-        hScrollBar.setColor(borderedComponent.getBorderColor());
+    public Hiliter getHiliter() {
+        return hiliter;
+    }
+    
+    public void setHiliter(Hiliter hiliter) {
+        this.hiliter = hiliter;
+    }
+    
+    private Hiliter hiliter = new Hiliter() {
 
-        if (footerControls != null) {
-            footerControls.hilite();
+        @Override
+        public void hilite() {
+            ScrollableComponent.this.borderedComponent.hilite();
+            // copy color from border
+            vScrollBar.setColor(borderedComponent.getBorderColor());
+            hScrollBar.setColor(borderedComponent.getBorderColor());
+
+            if (footerControls != null) {
+                footerControls.hilite();
+            }
+
+            ScrollableComponent.this.markAsDirty();
         }
 
-        this.markAsDirty();
+        @Override
+        public void unHilite() {
+            ScrollableComponent.this.borderedComponent.unHilite();
+            vScrollBar.setColor(borderedComponent.getBorderColor());
+            hScrollBar.setColor(borderedComponent.getBorderColor());
+            if (footerControls != null) {
+                footerControls.unHilite();
+            }
+            ScrollableComponent.this.markAsDirty();
+        }
+
+    };
+
+    @Override
+    public void hilite() {
+        hiliter.hilite();
     }
 
     @Override
     public void unHilite() {
-        this.borderedComponent.unHilite();
-        vScrollBar.setColor(borderedComponent.getBorderColor());
-        hScrollBar.setColor(borderedComponent.getBorderColor());
-        if (footerControls != null) {
-            footerControls.unHilite();
-        }
-        this.markAsDirty();
+        hiliter.unHilite();
     }
 
     private void addFooterButton(String buttonText, KeyStroke hotKey, EventHandler handler) {
@@ -544,7 +582,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
             throw new IllegalStateException("FooterControls object is null! Cannot add button control yet!");
         }
 
-        footerControls.addButton(buttonText, hotKey, handler);
+        footerControls.addButton(buttonText, hotKey, handler).setUseCursor(false);
 
     }
 
@@ -572,17 +610,19 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         if (focusable == null) {
             return;
         }
-        if (footerControls != focusable) {
+        if (footerControls != focusable && viewer != focusable ) {
             throw new IllegalStateException(
-                    String.valueOf(focusable) + " is not the footer control fro this scrollable");
+                    String.valueOf(focusable) + " is not the footer control or the viewer for this scrollable");
         }
+        
+        currentFocusable = focusable;
 
-        FocusManager.UTIL.setNewFocusable(footerControls, null, eventBus, null);
+        FocusManager.UTIL.setNewFocusable(currentFocusable, null, eventBus, null);
     }
 
     @Override
     public Focusable getCurrentChildFocus() {
-        return footerControls;
+        return currentFocusable;
     }
 
 }

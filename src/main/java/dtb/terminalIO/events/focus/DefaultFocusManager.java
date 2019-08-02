@@ -3,7 +3,7 @@ package dtb.terminalIO.events.focus;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
 import dtb.terminalIO.components.input.DefaultFocusableBehaviour;
@@ -11,6 +11,7 @@ import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.events.keyboard.KeyEvent;
@@ -20,16 +21,19 @@ import dtb.terminalIO.traverse.HasChildren;
 
 public class DefaultFocusManager implements FocusManager, HasChildren<Focusable> {
 
+    private static final BiConsumer<Focusable, EventBus> DEFAULT_ONFOCUS_CHANGED = (f,e)-> e.raiseEvent(new RequestUpdateCanvasEvent(f)); 
+    
     private List<Focusable> eventConsumers;
     private Focusable current;
 
     private KeyStroke prevKeyStroke = Keys.UP_KEYSTROKE;
     private KeyStroke nextKeyStroke = Keys.DOWN_KEYSTROKE;
-    private Consumer<Focusable> onFocusChanged;
+    private BiConsumer<Focusable, EventBus> onFocusChanged = DEFAULT_ONFOCUS_CHANGED;
 
     private ConditionalEventHandler meAsEventHandler;
     private Focusable meAsFocusable;
     private boolean navKeysFirst = false;
+    private boolean cycling = true;   // true mean cycle thru focus object
 
     public DefaultFocusManager() {
         eventConsumers = new ArrayList<Focusable>();
@@ -51,8 +55,15 @@ public class DefaultFocusManager implements FocusManager, HasChildren<Focusable>
         return this;
     }
     
-    public DefaultFocusManager setOnFocusChanged(Consumer<Focusable> onFocusChanged) {
+    public DefaultFocusManager setOnFocusChanged(BiConsumer<Focusable, EventBus> onFocusChanged) {
         this.onFocusChanged = onFocusChanged;
+        return this;
+    }
+
+    
+    
+    public DefaultFocusManager setCycling(boolean cycling) {
+        this.cycling = cycling;
         return this;
     }
 
@@ -64,6 +75,11 @@ public class DefaultFocusManager implements FocusManager, HasChildren<Focusable>
         if (current == null && eventConsumers.size() > 0) {
             setChildAsCurrentFocus(eventConsumers.get(0), eventBus);
         }
+        
+        if (current == null) {
+            throw new IllegalStateException("ERROR: Trying to set current focus. No focusable objects added to this FocusManager.");
+        }
+        
         return this.current;
     }
 
@@ -88,7 +104,11 @@ public class DefaultFocusManager implements FocusManager, HasChildren<Focusable>
         }
         int index = eventConsumers.indexOf(getCurrentOrSet(eventBus));
         if (index < 1) {
-            return eventConsumers.get(size() - 1);
+            if (cycling) {
+               return eventConsumers.get(size() - 1);
+            } else {
+                return null;
+            }
         }
         return eventConsumers.get(index - 1);
     }
@@ -99,10 +119,14 @@ public class DefaultFocusManager implements FocusManager, HasChildren<Focusable>
         }
         if (size() < 2) {
             return null;
-        }
+        } 
         int index = eventConsumers.indexOf(getCurrentOrSet(eventBus));
         if (index < 0 || index == size() - 1) {
-            return eventConsumers.get(0);
+            if (cycling) {
+                return eventConsumers.get(0);
+            } else {
+                return null;
+            }
         }
         return eventConsumers.get(index + 1);
     }
@@ -183,15 +207,17 @@ public class DefaultFocusManager implements FocusManager, HasChildren<Focusable>
 
             @Override
             public boolean test(TerminalEvent<?> te) {
+                // is it a FocusManager navigation key?
                 if (IS_KEYPRESS.test(te)) {
                     KeyEvent ke = (KeyEvent) te;
-                    if (prevKeyStroke != null && ke.isKeyStroke(prevKeyStroke)) {
+                    if (prevKeyStroke != null && ke.isKeyStroke(prevKeyStroke) && getPrev(te.getEventBus()) != null) {
                         return true;
-                    } else if (nextKeyStroke != null && ke.isKeyStroke(nextKeyStroke)) {
+                    } else if (nextKeyStroke != null && ke.isKeyStroke(nextKeyStroke) && getNext(te.getEventBus()) != null) {
                         return true;
                     }
                 }
 
+                // FocusManager cannot handle directly - what about its focus child?
                 Focusable focusable = getCurrentOrSet(te.getEventBus());
                 if (focusable != null) {
                     return focusable.canHandle(te) != null;
@@ -250,9 +276,9 @@ public class DefaultFocusManager implements FocusManager, HasChildren<Focusable>
 
                 if (IS_KEYPRESS.test(te)) {
                     KeyEvent ke = (KeyEvent) te;
-                    if (prevKeyStroke != null && ke.isKeyStroke(prevKeyStroke)) {
+                    if (prevKeyStroke != null && ke.isKeyStroke(prevKeyStroke) && getPrev(te.getEventBus()) != null) {
                         return true;
-                    } else if (nextKeyStroke != null && ke.isKeyStroke(nextKeyStroke)) {
+                    } else if (nextKeyStroke != null && ke.isKeyStroke(nextKeyStroke) && getNext(te.getEventBus()) != null) {
                         return true;
                     }
                 }
