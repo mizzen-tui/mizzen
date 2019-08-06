@@ -1,6 +1,5 @@
 package dtb.terminalIO.components.chart;
 
-import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -8,20 +7,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
-import java.util.function.Consumer;
 
 import dtb.terminalIO.components.Composite;
-import dtb.terminalIO.components.RectangleComponent;
 import dtb.terminalIO.components.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.components.plot.shape.ConnectedPoints;
-import dtb.terminalIO.controlcodes.Colors;
-import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
-import dtb.terminalIO.core.Canvas;
-import dtb.terminalIO.core.TerminalScreen;
-import dtb.terminalIO.examples.TestsCommon;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
@@ -505,74 +497,5 @@ public class LineChart extends Composite {
         return this;
     }
 
-    public static void main(String[] args) {
-
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        TerminalScreen screen = new TerminalScreen();
-        // screen.setPrintStream( new PrintStream( outputStream ));
-        // screen.setControlCodesEnabled(false);
-
-        screen.add(ControlCode.HIDE_CURSOR);
-        screen.refresh();
-
-        Canvas master_canvas = new Canvas(screen);
-        master_canvas.setEmptyChar(' ');
-        // master_canvas.setEmptyColor(new FGBGColors(Colors.Bla));
-
-        master_canvas.setSize(30, 130);
-
-        master_canvas.addComponentSegments(2, 4, new RectangleComponent(ControlCode.DEFAULT_COLOR, 5, 10));
-        master_canvas.addComponentSegments(4, 8, new RectangleComponent(ControlCode.DEFAULT_COLOR, 5, 15));
-
-        LineChart lc = new LineChart(20, 60);
-        lc.setBorder(true);
-        lc.setPlotColor(new FGBGColors(Colors.BIYel));
-
-        BarChart bc = new BarChart(15, 50);
-        bc.setBorder(true);
-        // bc.setEmptyChar('.');
-        // bc.setPlotColor(new FGBGColors(Colors.BIYel));
-        bc.setTitle("| Import Percentages |");
-
-        double[] bc_DATA = new double[] { 10.0, 5.0, 13.0, 4.0, 6.0, 5.0, 6.0, 7.0, 8.0 };
-        String[] bc_DATALabels = new String[] { "Lumber", "Metal", "Fish", "Beef", "Lamb", "Liquor", "Milk", "Butter", "Cherries" };
-
-        Consumer<Integer> dataProducer = (j) -> {
-            lc.clearData();
-            lc.clear();
-            for (int i = j; i < (220 + j); i++) {
-                double d = Math.sin(((float) i) / 5) * 10;
-                // System.out.println(d);
-                lc.addData(d, i + "");
-                d = Math.cos(((float) i) / 5) * 3;
-                lc.addData(d);
-            }
-
-            bc.clearData();
-            bc.clear();
-
-            for (int i = 0; i < bc_DATA.length; i++) {
-                double d = Math.random() * 20;
-
-                bc.addData(d, bc_DATALabels[i]);
-            }
-            master_canvas.addComponentSegments(2, 15, bc);
-
-            master_canvas.addComponentSegments(5, 65, lc);
-            master_canvas.t(31, 1, "j = " + j + "   ");
-            master_canvas.refresh();
-            master_canvas.t(lc.y_bottomValue + "  " + lc.y_topValue + "    ");
-        };
-
-        for (int j = 10; j < 10000; j++) {
-            dataProducer.accept(j);
-            TestsCommon.sleep(250);
-        }
-
-        screen.add(ControlCode.SHOW_CURSOR);
-        screen.refresh();
-        master_canvas.refresh();
-
-    }
 
 }

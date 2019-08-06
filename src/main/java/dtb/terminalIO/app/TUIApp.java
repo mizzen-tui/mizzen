@@ -110,6 +110,10 @@ public class TUIApp {
         return this;
     }
 
+    public TUIApp setDefaultMainApplicationPanel() {
+        return setMainApplicationPanel(  new Composite().setBounds(this.getCanvas()).setEmptyChar(this.getCanvas().getEmptyChar()));
+    }
+
     public ChildComponentManager<?> getMainApplicationPanel() {
         return this.mainApplicationPanel;
     }

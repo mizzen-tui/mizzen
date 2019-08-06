@@ -94,6 +94,10 @@ public interface Rectangle extends Position, Dimension, Movable {
     public default Position centered(Dimension d) {
         return centered(d, null);
    }
+   
+   public default Position centerPosition() {
+        return centered(Dimension.ZERO, null);
+   }
     
     /**
      * Does rectangle contain row

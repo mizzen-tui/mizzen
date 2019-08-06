@@ -118,41 +118,39 @@ public class CirclePlotter implements DrawCircleAlgorithm {
     public static class DonutPlotter implements DrawCircleAlgorithm {
         
         boolean filled;
-        Integer minAngle;
-        Integer maxAngle;
+        Integer startAngle;
+        Integer endAngle;
         
         
         public DonutPlotter(boolean filled) {
             this.filled = filled;
         }
 
-        public DonutPlotter(int maxAngle) {
-            setAngle(maxAngle);
+        public DonutPlotter(int startAngle, int endAngle) {
+            setAngles(startAngle, endAngle);
+        }
+
+        public DonutPlotter(int endAngle) {
+            setAngle(endAngle);
         }
         
-        public DonutPlotter setAngle(int maxAngle) {
-            return setAngles(0, maxAngle);
+        public DonutPlotter setAngle(int endAngle) {
+            return setAngles(0, endAngle);
         }
 
-        public int getMaxAngle() {
-            return maxAngle;
+        public int getEndAngle() {
+            return endAngle;
         }
 
-        public int getMinAngle() {
-            return minAngle;
+        public int getStartAngle() {
+            return startAngle;
         }
 
-        
-        public DonutPlotter setAngles(int minAngle, int maxAngle) {
-            checkAngle(minAngle);
-            checkAngle(maxAngle);
-            if (minAngle <= maxAngle) {
-                this.maxAngle = maxAngle;
-                this.minAngle = minAngle;
-            } else {
-                this.maxAngle = maxAngle;
-                this.minAngle = minAngle;
-            }
+        public DonutPlotter setAngles(int startAngle, int endAngle) {
+            checkAngle(startAngle);
+            checkAngle(endAngle);
+            this.endAngle = endAngle;
+            this.startAngle = startAngle;
             this.filled = true;
             return this;
         }
@@ -162,7 +160,7 @@ public class CirclePlotter implements DrawCircleAlgorithm {
         }
         
         public void draw(int x, int y, int outerRadius, PointPlotter plot) {
-            
+
             int innerRadius = outerRadius/2;
             PlotCondition plotCondition;
             if (filled) {
@@ -170,18 +168,21 @@ public class CirclePlotter implements DrawCircleAlgorithm {
                     return  compare(radius, distance, 0.5d) >= 0 &&
                             compare(innerRadius, distance, 0.5d) <= 0;
                 };
-                
-                if (maxAngle != null) {
-                    if (minAngle == null) {
-                        minAngle = 0;
+
+                if (endAngle != null) {
+                    if (startAngle == null) {
+                        startAngle = 0;
                     }
                     plotCondition = (x1, y1, radius, distance) -> {
                         boolean inDonut =   (compare(radius, distance, 0.5d) >= 0 &&
                                              compare(innerRadius, distance, 0.5d) <= 0);
                         if (!inDonut) return false;
                         int curAngle = TrigUtil.circleAngleAtPoint(x1, y1, x, y);
-                        if (curAngle <= minAngle) return true;
-                        if (curAngle > maxAngle) return true;
+                        if (startAngle <= endAngle) {
+                            if (curAngle >= startAngle && curAngle<=endAngle) return true;
+                        } else {
+                            if (curAngle >= startAngle || curAngle<=endAngle) return true;
+                        }
                         return false;
                     };
                 }
@@ -189,7 +190,7 @@ public class CirclePlotter implements DrawCircleAlgorithm {
             } else {
                 plotCondition = (x1, y1, radius, distance) -> {
                      return compare(radius, distance, 0.5d) == 0 ||
-                                compare(innerRadius, distance, 0.5d) == 0;
+                            compare(innerRadius, distance, 0.5d) == 0;
                 };
             }
             CirclePlotter plotter = new CirclePlotter(plotCondition);

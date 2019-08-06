@@ -61,7 +61,7 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
             return;
         }
         this.hasDrawn = false;
-        
+
         // if parent exists, then mark it as dirty as well
         Component.UTIL.markParentDirtyIfChildDirty(this);
 

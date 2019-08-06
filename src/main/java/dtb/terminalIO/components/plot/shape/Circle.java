@@ -1,6 +1,7 @@
 package dtb.terminalIO.components.plot.shape;
 
 import dtb.terminalIO.components.plot.PointPlotter;
+import dtb.terminalIO.components.plot.PointPlotter.PointPlot;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 
 /**
@@ -98,6 +99,10 @@ public class Circle implements Shape {
         this.y = y;
         this.radius = radius;
         this.algorithm = new CirclePlotter();
+    }
+    
+    public Circle(PointPlot middle, int radius) {
+        this(middle.x, middle.y, radius);
     }
 
     public Circle(int x, int y, int radius, Color color) {

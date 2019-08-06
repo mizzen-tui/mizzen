@@ -242,7 +242,7 @@ public class GridBrailleTest {
             // redraw circle1 and move it around a circle path
             CirclePathEventHandler pathForCircle1 = new CirclePathEventHandler(10, 10, 35, circle1PointPlotter);
             addAndRememberEventHandler(eventBus, new OnIdleEventEventHandler.RepeatingInterval(100, (te) -> {
-                int curAngle = donutPlotter.getMaxAngle();
+                int curAngle = donutPlotter.getEndAngle();
                 donutPlotter.setAngle(curAngle == 360 ? 0 : curAngle + 1);
                 pathForCircle1.handle(te);
             }));

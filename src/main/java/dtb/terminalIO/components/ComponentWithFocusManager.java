@@ -69,7 +69,6 @@ public class ComponentWithFocusManager extends AbstractComponent<ComponentWithFo
     }
 
 
-
     public void setFocusManagerBuilder(Function<EventBus, FocusManager> focusManagerBuilder) {
         if (focusManagerBuilder != null) {
             this.focusManager = null;

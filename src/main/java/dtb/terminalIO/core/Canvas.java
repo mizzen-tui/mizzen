@@ -366,6 +366,10 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
         return this.emptyColor;
     }
 
+    public char getEmptyChar() {
+        return this.emptyChar;
+    }
+
     public Canvas setEmptyColor(FGBGColors color) {
         this.emptyColor = color;
         return this;

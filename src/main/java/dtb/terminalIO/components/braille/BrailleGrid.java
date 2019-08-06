@@ -41,6 +41,12 @@ public class BrailleGrid extends Composite {
     public Rectangle getGridRectangle() {
         return this.gridRectangle;
     }
+    
+    public void markAsDirty() {
+        super.markAsDirty();
+        this.plotter.markAsDirty();
+    }
+
 
     Position gridPosToComponentPosition(Position gridPosition) {
         return new Position.Simple(gridPosition.getRow() / 4, gridPosition.getCol() / 2);
