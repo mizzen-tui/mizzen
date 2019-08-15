@@ -98,7 +98,7 @@ public class Circle implements Shape {
         this.x = x;
         this.y = y;
         this.radius = radius;
-        this.algorithm = new CirclePlotter();
+        this.algorithm = new CircleAlgorithm();
     }
     
     public Circle(PointPlot middle, int radius) {
@@ -110,7 +110,7 @@ public class Circle implements Shape {
         this.y = y;
         this.radius = radius;
         this.color = color;
-        this.algorithm = new CirclePlotter();
+        this.algorithm = new CircleAlgorithm();
     }
 
     public Circle setAlgorithm(DrawCircleAlgorithm algorithm) {
@@ -120,7 +120,7 @@ public class Circle implements Shape {
     
     public Circle setFilled(boolean filled) {
         // assume simple circle .. might need to fix this to be smarter
-        return setAlgorithm(new CirclePlotter(filled));
+        return setAlgorithm(new CircleAlgorithm(filled));
     }
     
     public int getX() {

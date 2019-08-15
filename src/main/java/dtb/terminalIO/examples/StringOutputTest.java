@@ -9,7 +9,7 @@ import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.components.plot.shape.Circle;
-import dtb.terminalIO.components.plot.shape.CirclePlotter.DonutPlotter;
+import dtb.terminalIO.components.plot.shape.CircleAlgorithm.DonutCircleAlgorithm;
 import dtb.terminalIO.components.plot.shape.Triangle;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.TerminalScreen;
@@ -29,7 +29,7 @@ public class StringOutputTest {
     private static void draw_small_donut(PointPlotter pointPlotter, String args[]) {
         boolean filled = hasARG(args, "filled");
         
-        DonutPlotter donutPlotter = new DonutPlotter(filled);
+        DonutCircleAlgorithm donutPlotter = new DonutCircleAlgorithm(filled);
         
         new Circle(36, 36, 30).setAlgorithm( donutPlotter ).draw(pointPlotter);
     }

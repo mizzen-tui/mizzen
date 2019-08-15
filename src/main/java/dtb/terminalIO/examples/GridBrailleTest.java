@@ -13,8 +13,8 @@ import dtb.terminalIO.components.plot.TransformPointPlotter;
 import dtb.terminalIO.components.plot.XYTranslate;
 import dtb.terminalIO.components.plot.shape.Circle;
 import dtb.terminalIO.components.plot.shape.Circle.DrawCircleAlgorithm;
-import dtb.terminalIO.components.plot.shape.CirclePlotter.CircleCounterClockwise_SORT;
-import dtb.terminalIO.components.plot.shape.CirclePlotter.DonutPlotter;
+import dtb.terminalIO.components.plot.shape.CircleAlgorithm.CircleCounterClockwise_SORT;
+import dtb.terminalIO.components.plot.shape.CircleAlgorithm.DonutCircleAlgorithm;
 import dtb.terminalIO.components.plot.shape.CompositeShape;
 import dtb.terminalIO.components.plot.shape.RectangleShape;
 import dtb.terminalIO.components.plot.shape.ShapeWithTransform;
@@ -163,7 +163,7 @@ public class GridBrailleTest {
 
             XYTranslate circle1PointPlotter = new XYTranslate(null, 0, 0);
 
-            DonutPlotter donutPlotter = new DonutPlotter(0);
+            DonutCircleAlgorithm donutPlotter = new DonutCircleAlgorithm(0);
 
             shapes.addShape(
                     new ShapeWithTransform(new Circle(0, 0, 30).setAlgorithm(donutPlotter), circle1PointPlotter));

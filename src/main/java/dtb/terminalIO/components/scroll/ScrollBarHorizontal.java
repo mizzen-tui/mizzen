@@ -65,30 +65,29 @@ public class ScrollBarHorizontal  extends BoundedComponent<ScrollBarVertical> {
 
         //  --------XXXXXXXX--------
         //    [A]     [B]      [C]
-        
+
         float percentage = (float)viewerSize.getWidth() / (float)viewedSize.getWidth();
-        
-        
+
         int a_width = scrollBarOffset.getCol();
-        int b_width = Math.max((int)(percentage * (float)this.getWidth()),1);
+        int b_width = Math.max((int)(  Math.round( percentage * (float)this.getWidth() ) ),1);
         int c_width = this.getWidth() - ( a_width + b_width );
         
         if (b_width >= this.getWidth()) {
             segments.merge(makeChildComponent(()->new HorizontalLine(color, this.getRow(), this.getCol(), this.getWidth() )).getSegmentsBuffer());
             return;
         }
-        
+
         if (a_width>0) {
             segments.merge(makeChildComponent(()->new HorizontalLine(color, this.getRow(), this.getCol(), a_width )).getSegmentsBuffer());
         }
-        
+
         if (b_width>0) {
-            segments.merge(makeChildComponent(()->new HorizontalLine(color.bold(), this.getRow(), this.getCol()+a_width, b_width ).setHorizontalLineChar('▒')).getSegmentsBuffer());
+            segments.merge(makeChildComponent(()->new HorizontalLine(color, this.getRow(), this.getCol()+a_width, b_width ).setHorizontalLineChar('▒')).getSegmentsBuffer());
         }
-        
+
         if (c_width>0) {
             segments.merge(makeChildComponent(()->new HorizontalLine(color, this.getRow(), this.getCol()+a_width+b_width, c_width )).getSegmentsBuffer());
         }
     }
-    
+
 }

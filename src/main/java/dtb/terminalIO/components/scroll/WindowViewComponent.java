@@ -114,7 +114,7 @@ public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
     public Position getPositionRelativeToParent(Component<?> child) {
         Position offsetIntoSource = getOffsetIntoSource();
         return new Position.Simple(offsetIntoSource.getRow()*-1, offsetIntoSource.getCol()*-1);
-        // return Position.ZERO; // todo - need a proper implementation (using offset)
+        //return Position.ZERO; // todo - need a proper implementation (using offset)
     }
 
     public void childResized(Component<?> child) {

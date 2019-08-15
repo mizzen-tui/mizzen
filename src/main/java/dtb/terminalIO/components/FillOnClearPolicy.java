@@ -9,9 +9,7 @@ import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 /**
  *  Used by many components to decide how to perform a clear (erase) of its LineSegments buffer 
  */
-public interface FillOnClearPolicy {
-
-    char getEmptyChar();
+public interface FillOnClearPolicy<T> extends EmptyAttributes<T> {
 
     void fillEmptyIfConfigured();
 
@@ -23,12 +21,6 @@ public interface FillOnClearPolicy {
 
     boolean isFillOnClear();
 
-    Color getEmptyColor();
-
-    void setEmptyChar(char emptyChar);
-
-    void setEmptyColor(Color emptyColor);
-
     void setFillOnClear(boolean fillOnClear);
     
     public static interface Provider {
@@ -36,7 +28,7 @@ public interface FillOnClearPolicy {
         // void setFillOnClearPolicy(FillOnClearPolicy fillerPolicy);
     }
 
-    public static abstract class AbstractImpl implements FillOnClearPolicy {
+    public static abstract class AbstractImpl<T extends ControlCode.ColorProvider> implements FillOnClearPolicy<T> {
 
         private boolean          fillOnClear      = true;
         private char             emptyChar        = ' ';
@@ -54,8 +46,9 @@ public interface FillOnClearPolicy {
             return emptyChar;
         }
 
-        public void setEmptyChar(char emptyChar) {
+        public T setEmptyChar(char emptyChar) {
             this.emptyChar = emptyChar;
+            return (T) parentColorProvider;
         }
         
         public Color getParentColor() {
@@ -70,8 +63,9 @@ public interface FillOnClearPolicy {
             return emptyColor.mergeWith(getParentColor());
         }
 
-        public void setEmptyColor(Color emptyColor) {
+        public T setEmptyColor(Color emptyColor) {
             this.emptyColor = emptyColor==null? FGBGColors.NO_COLOR_SPECIFIED : emptyColor;
+            return (T) parentColorProvider;
         }
 
         @Override

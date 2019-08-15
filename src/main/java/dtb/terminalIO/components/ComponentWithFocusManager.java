@@ -2,6 +2,7 @@ package dtb.terminalIO.components;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import dtb.terminalIO.controlcodes.ControlCode.Color;
@@ -178,6 +179,11 @@ public class ComponentWithFocusManager extends AbstractComponent<ComponentWithFo
     @Override
     public void resize(Dimension d) {
         container.resize(d);
+    }
+
+    public ComponentWithFocusManager setOnResize(Consumer<Dimension> onResize) {
+        container.setOnResize(onResize);
+        return this;
     }
 
     @Override

@@ -73,7 +73,7 @@ public class ListBoxTest {
                                                "You thought we were done?",
                                                "NO!",
                                                "WAY!"
-                                               });
+                                               },new TextComponentItemFactory<String>());
         
         lb1.setBorder(false);
         //lb1.setTitle("Ifaces");
@@ -197,16 +197,16 @@ public class ListBoxTest {
                String newValue = source.getValue();
                eventDisplayer.setTextAndResize("Pressed = "+newValue);
                
-               if ("WAY!".equals(newValue)) {
-                   MessageBox.showInfoDialog( eventBus , mainPanel, "Way to go Joe!");
-               }
-               if ("Blue Suede Shoes".equals(newValue)) {
-                   MessageBox.showErrorDialog( eventBus , mainPanel, "Don't step on my Blue Suede shoes!");
-               }
-               
-               if ("Pink Flamingos".equals(newValue)) {
-                   MessageBox.showWarningDialog( eventBus , mainPanel, "Not in my front lawn!\nTOO TACKY!!");
-               }
+//               if ("WAY!".equals(newValue)) {
+//                   MessageBox.showInfoDialog( eventBus , mainPanel, "Way to go Joe!");
+//               }
+//               if ("Blue Suede Shoes".equals(newValue)) {
+//                   MessageBox.showErrorDialog( eventBus , mainPanel, "Don't step on my Blue Suede shoes!");
+//               }
+//               
+//               if ("Pink Flamingos".equals(newValue)) {
+//                   MessageBox.showWarningDialog( eventBus , mainPanel, "Not in my front lawn!\nTOO TACKY!!");
+//               }
                
                StringDisplayValue[]  newList = currentList;
 
@@ -269,7 +269,6 @@ public class ListBoxTest {
        lb1_sc.prependEventHandler( lb1.asFocusable() );
        SearchFunctionForScrollableComponent.addFinderToScrollable(lb1_sc);
 
-       
        eventBus.appendEventHandler(fm);
        
        eventBus.appendIdleEventHandler( new OnIdleEventEventHandler.RepeatingInterval(200, (te)-> renderComponents.run() ));

@@ -8,7 +8,7 @@ import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegmentsBuffer;
 
-public abstract class AbstractComponent<T extends AbstractComponent<?>> implements Component<T> {
+public abstract class AbstractComponent<T extends AbstractComponent<?>> implements Component<T>, EmptyAttributes<T> {
 
     private IScreenLineSegmentsBuffer segments   = new ScreenLineSegmentsBuffer();
 
@@ -18,7 +18,7 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
     
     ParentContainer parentContainer;
 
-    FillOnClearPolicy.AbstractImpl    fillPolicy = new FillOnClearPolicy.AbstractImpl(this) {
+    FillOnClearPolicy.AbstractImpl<T>    fillPolicy = new FillOnClearPolicy.AbstractImpl<T>(this) {
                                                      @Override
                                                      public Rectangle getRectangleForClearAndFill() {
                                                          return AbstractComponent.this
@@ -36,6 +36,7 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
 
     protected AbstractComponent(Color color) {
         this.color = color == null? FGBGColors.NO_COLOR_SPECIFIED : color ;
+        this.setEmptyColor(this.color);
     }
 
     protected void clearBeforeDraw() {
@@ -122,6 +123,17 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
         return (T) this;
     }
 
+    @Override
+    public char getEmptyChar() {
+        return this.fillPolicy.getEmptyChar();
+    }
+
+    @Override
+    public Color getEmptyColor() {
+        return this.fillPolicy.getEmptyColor();
+    }
+
+    
     public T setEmptyChar(char emptyChar) {
         this.fillPolicy.setEmptyChar(emptyChar);
         return (T) this;

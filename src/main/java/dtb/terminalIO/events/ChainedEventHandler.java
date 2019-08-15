@@ -17,7 +17,7 @@ import java.util.function.Predicate;
  * 
  * <p/>
  * 
- * This objects operates in 2 behaviour styles when delegating to its internal
+ * This object operates in 2 behaviour styles when delegating to its internal
  * eventHandlers
  * 
  * <p/>
@@ -26,7 +26,7 @@ import java.util.function.Predicate;
  * 1) Handle-All
  *      - when an event comes in 
  *         - loop thru all internal eventHandlers and
- *           tell each event to handler the event
+ *           tell each handler to handle the event
  *             -- good example :  Idle (Timer) events are handled 
  *                                this way by the EventBus
  *                                

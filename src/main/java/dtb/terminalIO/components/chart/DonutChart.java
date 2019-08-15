@@ -12,7 +12,7 @@ import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.PointPlotter.PointPlot;
 import dtb.terminalIO.components.plot.shape.Circle;
-import dtb.terminalIO.components.plot.shape.CirclePlotter.DonutPlotter;
+import dtb.terminalIO.components.plot.shape.CircleAlgorithm.DonutCircleAlgorithm;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
@@ -102,17 +102,26 @@ public class DonutChart extends AbstractComponent<DonutChart> implements ParentC
     }
     
     
+    private int lastDataPoint = -1;
+    
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
         
         // rotate clockwise
         int startAngle =  360 - (int)Math.round(((double)this.dataPoint / (double) this.maxValue  * 360.0 ));
         int endAngle = 0;
-
+//        if (lastDataPoint >= 0 && lastDataPoint < this.dataPoint) {  // we are increasing
+//            endAngle = 360 - (int)Math.round(((double)this.lastDataPoint / (double) this.maxValue  * 360.0 ));
+//            lastDataPoint = this.dataPoint;
+//        } 
+//        lastDataPoint = this.dataPoint;
+        
         startAngle = shift90(startAngle);  // now 0 is at 12 oclock ( 90 degrees )
         endAngle = shift90(endAngle);
+//        startAngle = shift90(startAngle);  // now 0 is at 12 oclock ( 90 degrees )
+//        endAngle = shift90(endAngle);
 
-        DonutPlotter donutPlotter = new DonutPlotter(startAngle, endAngle);
+        DonutCircleAlgorithm donutPlotter = new DonutCircleAlgorithm(startAngle, endAngle);
         
         Rectangle gridRectangle = this.grid.getGridRectangle();
 
@@ -122,8 +131,12 @@ public class DonutChart extends AbstractComponent<DonutChart> implements ParentC
         
         Circle circle = new Circle(centerOfGrid, radius).setAlgorithm(donutPlotter);
         
-        this.grid.clearPlots();
-        this.grid.clear();
+        this.clear();
+        
+        if (lastDataPoint < 0) {
+            this.grid.clearPlots();
+            this.grid.clear();
+        }
         circle.draw(  this.grid.asPointPlotter()  );
         
         if (message != null) {

@@ -12,8 +12,8 @@ import dtb.terminalIO.controlcodes.ControlCode.FgColor;
 public class Colors {
 
 	 
-	static Map<String, FgColor> namedForgroundColors  = new HashMap<String, FgColor>();
-	static Map<String, BgColor> namedBackgroundColors = new HashMap<String, BgColor>();
+	public static Map<String, FgColor> namedForgroundColors  = new HashMap<String, FgColor>();
+	public static Map<String, BgColor> namedBackgroundColors = new HashMap<String, BgColor>();
 
 	static Map<FgColor, String> foregroundColorToName = new HashMap<FgColor, String>();
 	static Map<BgColor, String> backgroundColorToName = new HashMap<BgColor, String>();

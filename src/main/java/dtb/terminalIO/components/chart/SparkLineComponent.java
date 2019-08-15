@@ -1,5 +1,6 @@
 package dtb.terminalIO.components.chart;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -22,13 +23,17 @@ public class SparkLineComponent extends AbstractComponent<SparkLineComponent> im
     private Composite container;
     private TextComponent chart;
     
-    
     public SparkLineComponent(Color color) {
         super(color);
         container = new Composite(color);
         chart = new TextComponent(color, SparkLine.render(0));
         container.add(chart);
         container.setParentContainer(this);
+    }
+
+    public SparkLineComponent(Color color, Dimension size) {
+        this(color);
+        this.resize(size);
     }
 
     @Override
@@ -90,7 +95,7 @@ public class SparkLineComponent extends AbstractComponent<SparkLineComponent> im
     }
 
     public void renderPoints(Integer[] data) {
-        chart.setText( SparkLine.render(data)  );
+        chart.setText( SparkLine.render( Arrays.asList(data), chart.getHeight())  );
         
     }
 

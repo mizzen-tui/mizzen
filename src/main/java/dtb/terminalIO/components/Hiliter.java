@@ -15,6 +15,9 @@ public interface Hiliter {
             }
     };
     
+    /**
+     * Chain hilite actions 
+     */
     public static class Chained implements Hiliter  {
 
         private Hiliter h1;

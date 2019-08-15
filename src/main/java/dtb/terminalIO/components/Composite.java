@@ -3,8 +3,10 @@ package dtb.terminalIO.components;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.geom.Dimension;
@@ -24,13 +26,15 @@ public class Composite extends AbstractComponent<Composite>
     private Rectangle bounds = Rectangle.ZERO;
     private List<ComponentWithOffset> children = new ArrayList<ComponentWithOffset>();
     private List<ComponentWithOffset> childrenInZOrder = new ArrayList<ComponentWithOffset>();
+    private OnResizeService onResizeService = new OnResizeService();
     
     
     protected static class ComponentWithOffset implements Rectangle {
         private Position offset;
         private Component<?> component;
         private Rectangle bounds;
-        private Rectangle rectangleForLayout; // used only by layout managers ( Horizontal/VerticalPanels
+        private Rectangle rectangleForLayout; // used only by layout managers ( Horizontal/VerticalPanels )
+        private boolean hasShadow;
 
         public ComponentWithOffset(Position offset, Component<?> component) {
             super();
@@ -143,27 +147,6 @@ public class Composite extends AbstractComponent<Composite>
         this(FGBGColors.NO_COLOR_SPECIFIED);
     }
 
-//    public Composite setBounds(Rectangle bounds) {
-//        if (bounds == null) {
-//            this.boundsFixed = false;
-//            fullrecalcDim();
-//            return this;
-//        }
-//        this.bounds = bounds;
-//        this.boundsFixed = true;
-//        if (this.border != null)
-//            rebuildBorder(this.bounds);
-//        return this;
-//    }
-
-//    public Composite setBounds(int row, int col, int height, int width) {
-//        this.bounds = new Rectangle.Simple(row, col, height, width);
-//        this.boundsFixed = true;
-//        if (this.border != null)
-//            rebuildBorder(this.bounds);
-//        return this;
-//    }
-
     public Composite setBounds(Dimension d) {
         if (d == null) {
             this.boundsFixed = false;
@@ -193,6 +176,12 @@ public class Composite extends AbstractComponent<Composite>
     public void resize(Dimension size) {
         setBounds(size);
         markAsDirty();
+        this.onResizeService.resize(size);
+    }
+    
+    public Composite setOnResize(Consumer<Dimension> onResize) {
+        this.onResizeService.setOnResize(onResize);
+        return this;
     }
 
     // todo: not sure what this method means -- what do i
@@ -208,7 +197,28 @@ public class Composite extends AbstractComponent<Composite>
         return brdr;
     }
 
+    boolean bulkAdd = false;
+    
+    public void setBulkAdd(boolean b) {
+        if (b != bulkAdd) {
+            
+            if (b == true) {
+                this.bulkAdd = b;
+                return ;
+            }
+
+            this.bulkAdd = false;
+            fullrecalcDim();
+            markAsDirty();
+        }
+        
+    }
+
+
     public void fullrecalcDim() {
+        if (this.bulkAdd) {
+            return;
+        }
         Dimension previousDimension = new Dimension.Simple(this);
         fullrecalcDim(hasBorder());
         // if we have a parent, then we better tell it our new size
@@ -425,6 +435,12 @@ public class Composite extends AbstractComponent<Composite>
         markAsDirty();
         return this;
     }
+    
+    public Composite setDropShadow(boolean dropShadow, Component<?> component) {
+        ComponentWithOffset found = findChildOrFail(component, "setDropShadow");
+        found.hasShadow = dropShadow;
+        return this;
+    }
 
     public Composite moveChildTo(Position offset, Component<?> component) {
         ComponentWithOffset found = findChildOrFail(component, "moveChildTo");
@@ -461,15 +477,6 @@ public class Composite extends AbstractComponent<Composite>
         int bottomMost = calculatedBounds.getBottomMostRow();
         return this.add(bottomMost + 1, 0, component);
 
-//        
-//        int offsetRow = 0;
-//        int offsetCol = calculatedBounds.getRightMostCol();
-//        if (component.getWidth() + calculatedBounds.getWidth() > this.bounds.getWidth()+(hasBorder?-2:0)) {
-//            offsetRow++;
-//        } else {
-//            offsetCol = calculatedBounds.getWidth();
-//        }
-//        return add(offsetRow, offsetCol, component); 
     }
 
     @Override
@@ -528,8 +535,10 @@ public class Composite extends AbstractComponent<Composite>
         drawChildren(color, segments, childrenInZOrder, boundsFixed);
     }
 
-    protected void drawChildren(Color color, IScreenLineSegmentsBuffer segments, List<ComponentWithOffset> children,
-            boolean boundsFixed) {
+    private static Color shadowColor = new FGBGColors(Colors.IBla, Colors.On_Bla);
+    private static char  shadowChar = '░';
+    
+    protected void drawChildren(Color color, IScreenLineSegmentsBuffer destinationSegments, List<ComponentWithOffset> children, boolean boundsFixed) {
 
         Rectangle clippedArea = bounds;
         
@@ -541,21 +550,43 @@ public class Composite extends AbstractComponent<Composite>
                 clippedArea = new Rectangle.Simple(bounds.getRow()+1, bounds.getCol()+1, bounds.getHeight()-2, bounds.getWidth()-2);
             }
         }
-        
 
         for (ComponentWithOffset child : children) {
 
             Position childOffset = child.offset.offsetAdd(offset);
 
             if (boundsFixed) {
-                ScreenLineSegment.UTIL.addSegmentsWithOffsetBounded(childOffset, clippedArea, segments.getSegments(),
-                        child.component.getSegmentsBuffer().getSegments());
+                ScreenLineSegment.UTIL.addSegmentsWithOffsetBounded(childOffset, clippedArea, destinationSegments.getSegments(),
+                                                                    child.component.getSegmentsBuffer().getSegments());
+                addDropShadowIfNeeded(childOffset, child, clippedArea, destinationSegments);
             } else {
-                ScreenLineSegment.UTIL.addSegmentsWithOffsetUnBounded(childOffset, segments.getSegments(),
-                        child.component.getSegmentsBuffer().getSegments());
+                ScreenLineSegment.UTIL.addSegmentsWithOffsetUnBounded(childOffset, destinationSegments.getSegments(),
+                                                                      child.component.getSegmentsBuffer().getSegments());
+                addDropShadowIfNeeded(childOffset, child, clippedArea, destinationSegments);
             }
         }
-        
+    }
+
+    private void addDropShadowIfNeeded(Position childOffset, ComponentWithOffset child, Rectangle clippedArea,
+                                       IScreenLineSegmentsBuffer destinationSegments) {
+        if (child.hasShadow) {
+            // right shadow (clipped)
+            ScreenLineSegment.UTIL.fillRectWithChar(shadowColor,
+                                                    shadowChar,
+                                                    new Clipped(clippedArea,new Rectangle.Simple(childOffset.getRow()+1,
+                                                                                                 childOffset.getCol()+child.component.getWidth(),
+                                                                                                 child.component.getHeight(), 
+                                                                                                 1)),
+                                                    destinationSegments.getSegments());
+            // bottom shadow (clipped)
+            ScreenLineSegment.UTIL.fillRectWithChar(shadowColor,
+                                                    shadowChar,
+                                                    new Clipped(clippedArea,new Rectangle.Simple(childOffset.getRow()+child.component.getHeight(),
+                                                                                                 childOffset.getCol()+1,
+                                                                                                 1, 
+                                                                                                 child.component.getWidth())),
+                                                    destinationSegments.getSegments());
+            }
     }
 
     public Position getPositionRelativeToParent(Component<?> child) {

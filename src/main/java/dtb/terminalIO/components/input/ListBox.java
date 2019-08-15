@@ -546,7 +546,6 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>  implements HasVal
             @Override
             public void setFocus(boolean focus, EventBus eventBus) {
                 super.setFocus(focus, eventBus);
-                
                 if (focus) {
                     int curSelected = getSelectedIndex();
                     if (curSelected>-1) {
@@ -627,5 +626,5 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>  implements HasVal
     public void childResized(Component<?> child) {
         this.markAsDirty();
     }
-    
+
 }

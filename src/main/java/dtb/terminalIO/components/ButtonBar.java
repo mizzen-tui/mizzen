@@ -77,15 +77,16 @@ public class ButtonBar extends Composite implements FocusManager {
     
     public ButtonBar setColor(Color drawingcolor) {
         super.setColor(drawingcolor);
-        horizontalPanel.setColor(drawingcolor);
-        for (Component<?> child : horizontalPanel.getChildren()) {
-            if (child instanceof CharComponent) { // assume divider
-                child.setColor(drawingcolor);
-            } else {
-                // child.setColor(drawingcolor);
-                child.markAsDirty();
+        if (horizontalPanel != null) {
+            horizontalPanel.setColor(drawingcolor);
+            for (Component<?> child : horizontalPanel.getChildren()) {
+                if (child instanceof CharComponent) { // assume divider
+                    child.setColor(drawingcolor);
+                } else {
+                    // child.setColor(drawingcolor);
+                    child.markAsDirty();
+                }
             }
-            
         }
         return this;
     }
@@ -96,13 +97,17 @@ public class ButtonBar extends Composite implements FocusManager {
 
     public ButtonBar setEmptyChar(char emptyChar) {
         super.setEmptyChar(emptyChar);
-        horizontalPanel.setEmptyChar(emptyChar);
+        if (horizontalPanel != null) {
+            horizontalPanel.setEmptyChar(emptyChar);
+        }
         return this;
     }
 
     public ButtonBar setEmptyColor(Color emptyColor) {
         super.setEmptyColor(emptyColor);
-        horizontalPanel.setEmptyColor(emptyColor);
+        if (horizontalPanel != null) {
+            horizontalPanel.setEmptyColor(emptyColor);
+        }
         return this;
     }
     
@@ -205,7 +210,7 @@ public class ButtonBar extends Composite implements FocusManager {
                if (component instanceof ToFocusable) {
                    Focusable focusable = ((ToFocusable) component).asFocusable();
                    componentHandler = (te) -> {
-                       focusable.setFocus(true, te.getEventBus());
+                       //focusable.setFocus(true, te.getEventBus());
                        setChildAsCurrentFocus(focusable, te.getEventBus());
                        handler.handle(te);
                    };
@@ -340,7 +345,12 @@ public class ButtonBar extends Composite implements FocusManager {
                 public void setFocus(boolean focus, EventBus eventBus) {
                     super.setFocus(focus, eventBus);
                     if (ButtonBar.this.current != null) {
-                        ButtonBar.this.setChildAsCurrentFocus(focus ? ButtonBar.this.current : null, eventBus);
+                        if (focus) {
+                           ButtonBar.this.setChildAsCurrentFocus(ButtonBar.this.current, eventBus);
+                        } else {
+                            ButtonBar.this.current.setFocus(false, eventBus);
+                            ButtonBar.this.setChildAsCurrentFocus(null, eventBus);
+                        }
                     }
                 }
             };

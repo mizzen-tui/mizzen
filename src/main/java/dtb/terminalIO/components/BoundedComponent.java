@@ -18,7 +18,7 @@ import dtb.terminalIO.textsegments.ScreenLineSegmentsBuffer;
  * A component that has a defined fixed rectangular size.
  */
 public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Rectangle.Delegate 
-            implements Component<T>, FillOnClearPolicy.Provider, CanResize  {
+            implements Component<T>, FillOnClearPolicy.Provider, CanResize, EmptyAttributes<T>  {
 
     protected IScreenLineSegmentsBuffer segments   = createSegmentsBuffer();
 
@@ -26,7 +26,7 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
     private Color                       color      = ControlCode.DEFAULT_COLOR;
     private BlockChars                  blockChars = BlockChars.DEFAULT;
 
-    private FillOnClearPolicy    fillPolicy = new FillOnClearPolicy.AbstractImpl(this) {
+    private FillOnClearPolicy<T>    fillPolicy = new FillOnClearPolicy.AbstractImpl<T>(this) {
                                                      @Override
                                                      public Rectangle getRectangleForClearAndFill() {
                                                          return BoundedComponent.this.getRectangleForClearAndFill();
@@ -54,6 +54,7 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
     public BoundedComponent(Color color, Rectangle r, ParentContainer parentContainer) {
         super(new Rectangle.Simple(r));
         this.setColor(color);
+        this.setEmptyColor(this.color);
         this.setParentContainer(parentContainer);
     }
 
@@ -156,6 +157,16 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
     }
     
 
+    @Override
+    public char getEmptyChar() {
+        return this.fillPolicy.getEmptyChar();
+    }
+
+    @Override
+    public Color getEmptyColor() {
+        return this.fillPolicy.getEmptyColor();
+    }
+    
     public T setEmptyChar(char emptyChar) {
         this.fillPolicy.setEmptyChar(emptyChar);
         return (T) this;
@@ -202,6 +213,11 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
     }
     
     
+    /**
+     * Make a component that has the same empty char and empty color.
+     * @param createComponent
+     * @return
+     */
     @SuppressWarnings("unchecked")
     protected <T extends BoundedComponent<?>> T makeChildComponent(Supplier<T> createComponent) {
        T component = createComponent.get();

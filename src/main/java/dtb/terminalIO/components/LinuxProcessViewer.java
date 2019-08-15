@@ -77,7 +77,7 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
         this.textView = new TextComponent(color, "Initializing..");
         this.textView.setFillOnClear(false);
         this.scrollView = new ScrollableComponent(color, d, textView);
-        this.scrollView.setFillOnClear(false);
+        this.scrollView.setFillOnClear(true);
         this.scrollView.setParentContainer(this);
         this.setFillOnClear(false);
         this.scrollView.asEventHandler();
@@ -104,7 +104,11 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
     
     public void setContentColor(Color drawingColor) {
         this.textView.setColor(drawingColor);
+        this.textView.setEmptyColor(drawingColor);
+        this.scrollView.setColor(drawingColor);
         this.scrollView.setContentColor(drawingColor);
+        this.scrollView.setEmptyColor(drawingColor);
+        this.scrollView.setEmptyChar(' ');
     }
 
     boolean finderAdded = false;

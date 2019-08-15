@@ -9,6 +9,7 @@ public interface ChildComponentManager<T extends ChildComponentManager<?>> exten
     
     public T add(Position offset, Component<?> component);
  
+    public T setDropShadow(boolean dropShadow, Component<?> component);
     
     public default T add(Component<?> component) {
         return this.add(Position.ZERO, component);

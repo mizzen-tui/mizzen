@@ -27,6 +27,7 @@ import dtb.terminalIO.examples.GridBrailleTest.BrailleDemo;
 import dtb.terminalIO.examples.LineChartTest.LineChartDemo;
 import dtb.terminalIO.examples.sampledata.ReadSampleFiles;
 import dtb.terminalIO.geom.Dimension;
+import dtb.terminalIO.geom.Position;
 
 public class TabPanelTest {
 
@@ -154,6 +155,7 @@ public class TabPanelTest {
         tb.addTab(new TabAction(Keys.F5_KEYSTROKE, "Acme Demo") {
 
             TextComponent tc;
+            Composite panel;
 
             public void resize(TabContext tabCtx) {
                 int fileID = 80;
@@ -172,7 +174,12 @@ public class TabPanelTest {
                     imgText = "Failed to read file.  Exception " + e;
                 }
 
-                ((TextComponent) getComponent(tabCtx)).setTextAndResize(imgText);
+                // hack to ensure component is built
+                getComponent(tabCtx);
+                
+                tc.setTextAndResize(imgText);
+                panel.resize(tabCtx.getBounds());
+                panel.moveChildTo(panel.centered(tc, Position.ZERO), tc);
             }
 
             @Override
@@ -188,9 +195,11 @@ public class TabPanelTest {
             @Override
             public Component<?> getComponent(TabContext tabCtx) {
                 if (this.tc == null) {
+                    panel = new Composite(tabCtx.getColor()).setBounds( tabCtx.getBounds());
                     tc = new TextComponent(tabCtx.getColor(), "ACME LOGO");
+                    panel.add(tc);
                 }
-                return tc;
+                return panel;
             }
 
         });

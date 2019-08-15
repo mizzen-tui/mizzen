@@ -16,24 +16,25 @@ import dtb.terminalIO.geom.Rectangle;
  * IScreenLineSegmentsBuffer that has a view into a 'source'
  * IScreenLineSegmentsBuffer object
  */
-public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate implements CanResize , DirtyFlag {
+public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate implements CanResize, DirtyFlag {
 
     private IScreenLineSegmentsBuffer.Provider sourceSegments;
 
-    private Position                  offsetIntoSource;
-    private Dimension                 maxsize;
+    private Position offsetIntoSource;
+    private Dimension maxsize;
 
-    public ScreenLineSegmentsView(IScreenLineSegmentsBuffer.Provider sourceSegments, Position offsetIntoSource, Dimension maxsize) {
+    public ScreenLineSegmentsView(IScreenLineSegmentsBuffer.Provider sourceSegments, Position offsetIntoSource,
+            Dimension maxsize) {
         super(new ClippedSegmentsBuffer());
-        ((ClippedSegmentsBuffer)this.getDelegate()).segmentsView = this;
+        ((ClippedSegmentsBuffer) this.getDelegate()).segmentsView = this;
         this.sourceSegments = sourceSegments;
         this.offsetIntoSource = new Position.Simple(offsetIntoSource);
         this.maxsize = new Dimension.Simple(maxsize);
-        ((ClippedSegmentsBuffer)this.getDelegate()).fullrecalcDim();
+        ((ClippedSegmentsBuffer) this.getDelegate()).fullrecalcDim();
         populateViewFromSource();
     }
 
-    // create a ScreenLineSegmentsBuffer with a custom fullrecalcDim() method 
+    // create a ScreenLineSegmentsBuffer with a custom fullrecalcDim() method
     private static class ClippedSegmentsBuffer extends ScreenLineSegmentsBuffer {
         ScreenLineSegmentsView segmentsView;
 
@@ -46,14 +47,13 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
     @Override
     public void resize(Dimension d) {
         this.maxsize = new Dimension.Simple(d);
-        ((ClippedSegmentsBuffer)this.getDelegate()).fullrecalcDim();
+        ((ClippedSegmentsBuffer) this.getDelegate()).fullrecalcDim();
         populateViewFromSource();
     }
 
     Rectangle rectangeFromOffsetAndDimension() {
         return new Rectangle.Simple(offsetIntoSource, maxsize);
     }
-
 
     public Position getOffsetIntoSource() {
         return offsetIntoSource;
@@ -64,73 +64,74 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
     }
 
     public boolean isDirty() {
-        return ! segmentsUpToDate;
+        return !segmentsUpToDate;
     }
 
-
     public Position calculateScrollToViewOffset(Rectangle targetToView) {
-	// sanity check input
-	if (targetToView == null) {
-	    return null;
-	}
+        // sanity check input
+        if (targetToView == null) {
+            return null;
+        }
 
         // target position is less than ZERO?
-	if (Position.UTIL.POS_COMPARE.compare(Position.ZERO, targetToView) > 0) {
+        if (Position.UTIL.POS_COMPARE.compare(Position.ZERO, targetToView) > 0) {
             return null;
-	}
+        }
 
-	if (!sourceSegments.getSegmentsBuffer().overlapsWith(targetToView)) {
-	    return null;
-	}
+        if (!sourceSegments.getSegmentsBuffer().overlapsWith(targetToView)) {
+            return null;
+        }
 
-	Rectangle viewerRectangle = rectangeFromOffsetAndDimension();
+        Rectangle viewerRectangle = rectangeFromOffsetAndDimension();
 
-	if (viewerRectangle.contains(targetToView)) {
-	    return offsetIntoSource;
-	}
+        if (viewerRectangle.contains(targetToView)) {
+            return offsetIntoSource;
+        }
 
-	int rowOffset = offsetIntoSource.getRow();
+        int rowOffset = offsetIntoSource.getRow();
 
-	if (offsetIntoSource.getRow() < targetToView.getRow()) {
+        if (offsetIntoSource.getRow() < targetToView.getRow()) {
 
-	        if ( ! viewerRectangle.containsRow(targetToView.getRow()) || !  viewerRectangle.containsRow(targetToView.getBottomMostRow()) ) {
-	            
-	            if (viewerRectangle.getHeight() >= targetToView.getHeight()) {
-	                
-	                int viewerRectangleBottomMostRow = viewerRectangle.getBottomMostRow();
-	                int targetToViewBottomMostRow = targetToView.getBottomMostRow();
-	                
-	                rowOffset = offsetIntoSource.getRow() - (viewerRectangleBottomMostRow - targetToViewBottomMostRow); 
-	                
-	            } else {
-	                rowOffset = targetToView.getRow();
-	            }
-	            
-	        }
+            if (!viewerRectangle.containsRow(targetToView.getRow())
+                    || !viewerRectangle.containsRow(targetToView.getBottomMostRow())) {
 
-	} else {
-	    
-	        if ( ! viewerRectangle.containsRow(targetToView.getRow())) {
-	            rowOffset = targetToView.getRow();
-	        }
-	    
-	}
-	
-	int colOffset = offsetIntoSource.getCol();
+                if (viewerRectangle.getHeight() >= targetToView.getHeight()) {
 
-	if ( ((Dimension)viewerRectangle).contains((Dimension)targetToView) ) {
+                    int viewerRectangleBottomMostRow = viewerRectangle.getBottomMostRow();
+                    int targetToViewBottomMostRow = targetToView.getBottomMostRow();
 
-	    if (targetToView.getCol() < viewerRectangle.getCol()) {
-		colOffset = targetToView.getCol();
-	    } else if (targetToView.getRightMostCol() > viewerRectangle.getRightMostCol()) {
-		colOffset = offsetIntoSource.getCol() + (targetToView.getRightMostCol() - viewerRectangle.getRightMostCol());
-	    }
+                    rowOffset = offsetIntoSource.getRow() - (viewerRectangleBottomMostRow - targetToViewBottomMostRow);
 
-	} else {
-	    colOffset = targetToView.getCol();
-	}
+                } else {
+                    rowOffset = targetToView.getRow();
+                }
 
-	return new Position.Simple(rowOffset, colOffset);
+            }
+
+        } else {
+
+            if (!viewerRectangle.containsRow(targetToView.getRow())) {
+                rowOffset = targetToView.getRow();
+            }
+
+        }
+
+        int colOffset = offsetIntoSource.getCol();
+
+        if (((Dimension) viewerRectangle).contains((Dimension) targetToView)) {
+
+            if (targetToView.getCol() < viewerRectangle.getCol()) {
+                colOffset = targetToView.getCol();
+            } else if (targetToView.getRightMostCol() > viewerRectangle.getRightMostCol()) {
+                colOffset = offsetIntoSource.getCol()
+                        + (targetToView.getRightMostCol() - viewerRectangle.getRightMostCol());
+            }
+
+        } else {
+            colOffset = targetToView.getCol();
+        }
+
+        return new Position.Simple(rowOffset, colOffset);
     }
 
     public void setOffsetIntoSource(Position offsetIntoSource) {
@@ -139,34 +140,33 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
     }
 
     private void populateViewFromSource() {
-    	
-    	
+
         this.clear();
         Rectangle bounds = rectangeFromOffsetAndDimension();
 
         Collection<ScreenLineSegment> segments = this.sourceSegments.getSegmentsBuffer().getSegments();
 
         if (segments instanceof TreeSet) {
-        	TreeSet<ScreenLineSegment> ts = (TreeSet<ScreenLineSegment>) segments;
-        	ScreenLineSegment first = ScreenLineSegment.UTIL.getAtCol(ts, bounds.getRow(), bounds.getCol());
-        	if (first != null) {
-	        	ScreenLineSegment last = ScreenLineSegment.UTIL.getAtCol(ts, bounds.getBottomMostRow(), bounds.getRightMostCol());
-	        	if (last != null) {
-	        		long bStart = System.currentTimeMillis();
-	        	   //throw new IllegalStateException("WORKED!!!");
-	        		//  really slow!!!!  need to find another way to get subset
-	        	   segments = ts.subSet(first, true, last, true);
-	        	}
-        	}
+            TreeSet<ScreenLineSegment> ts = (TreeSet<ScreenLineSegment>) segments;
+            ScreenLineSegment first = ScreenLineSegment.UTIL.getAtCol(ts, bounds.getRow(), bounds.getCol());
+            if (first != null) {
+                ScreenLineSegment last = ScreenLineSegment.UTIL.getAtCol(ts, bounds.getBottomMostRow(),
+                        bounds.getRightMostCol());
+                if (last != null) {
+                    long bStart = System.currentTimeMillis();
+                    // throw new IllegalStateException("WORKED!!!");
+                    // really slow!!!! need to find another way to get subset
+                    segments = ts.subSet(first, true, last, true);
+                }
+            }
         }
-        
-        
-        // TODO:   This loop below is crazy inefficient
+
+        // TODO: This loop below is crazy inefficient
         //
-        //         Need to inspect segments type ( if treeset) then be smart about how to
-        //         iterate of the set segments that are within the bounds
-        //         use the floor and ceiling functions to find lower and upper bounds
-        //         that we need to traverse over .. this might help speed up the iteration 
+        // Need to inspect segments type ( if treeset) then be smart about how to
+        // iterate of the set segments that are within the bounds
+        // use the floor and ceiling functions to find lower and upper bounds
+        // that we need to traverse over .. this might help speed up the iteration
 
         int topRow = bounds.getRow();
         int bottomRow = bounds.getBottomMostRow();
@@ -174,29 +174,28 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
         int rightCol = bounds.getRightMostCol();
 
         for (ScreenLineSegment sourceSegment : segments) {
-        	int segmentRow = sourceSegment.getRow();
+            int segmentRow = sourceSegment.getRow();
             if (segmentRow < topRow) {
                 continue;
             }
             if (segmentRow > bottomRow) {
                 break;
             }
-            
+
             if (sourceSegment.getCol() > rightCol) {
-            	continue;
+                continue;
             }
-            
+
             if (sourceSegment.getRightMostCol() < leftCol) {
-            	continue;
+                continue;
             }
-            
-            
-            //if (Rectangle.UTIL.hasOverlap(bounds, sourceSegment)) {
-                this.add(new ScreenLineSegmentView(sourceSegment));
-            //}
+
+            // if (Rectangle.UTIL.hasOverlap(bounds, sourceSegment)) {
+            this.add(new ScreenLineSegmentView(sourceSegment));
+            // }
         }
         segmentsUpToDate = true;
-        
+
     }
 
     private void populateViewFromSourceIfNeeded() {
@@ -263,7 +262,8 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
         }
 
         public String toString() {
-            return String.format("VS(row=%d,lcol=%d,rcol=%d,[id=%d]):'%s'", getRow(), getCol(), getRightMostCol(), getId(), getText());
+            return String.format("VS(row=%d,lcol=%d,rcol=%d,[id=%d]):'%s'", getRow(), getCol(), getRightMostCol(),
+                    getId(), getText());
         }
 
         @Override
@@ -285,14 +285,14 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
 
         @Override
         public String getText() {
-        	
-        	if (_clippedText != null) {
-        		return _clippedText;
-        	}
-        	
-            // ech!!  and double-ech.. All of these checks make me see
-            //                         a code smell..  When I get some time I 
-            //                         need to simplify
+
+            if (_clippedText != null) {
+                return _clippedText;
+            }
+
+            // ech!! and double-ech.. All of these checks make me see
+            // a code smell.. When I get some time I
+            // need to simplify
             int start = 0;
             int src_col = sourceSegment.getCol();
             int offset_col = ScreenLineSegmentsView.this.offsetIntoSource.getCol();
@@ -305,20 +305,22 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
             if (rightCol >= sourceText.length()) {
                 rightCol = sourceText.length();
             } else {
-                if (rightCol > viewerRightCol  + offset_col ) {
+                if (rightCol > viewerRightCol + offset_col) {
                     rightCol = viewerRightCol + offset_col;
                 }
-                rightCol +=1; // +1 to include rightmost char
+                rightCol += 1; // +1 to include rightmost char
             }
-            if (start<0 || start>rightCol) return "";
-            String clippedText = sourceSegment.getText().substring(start, rightCol  );
+            if (start < 0 || start > rightCol)
+                return "";
+            String clippedText = sourceSegment.getText().substring(start, rightCol);
             _clippedText = clippedText;
             return clippedText;
         }
 
         @Override
         public ScreenLineSegment fromOffset(Position offset) {
-            return new SegmentImpl(getColor(), Position.Simple.withOffset((Position) this, offset), getId(), this.getText());
+            return new SegmentImpl(getColor(), Position.Simple.withOffset((Position) this, offset), getId(),
+                    this.getText());
         }
 
     }

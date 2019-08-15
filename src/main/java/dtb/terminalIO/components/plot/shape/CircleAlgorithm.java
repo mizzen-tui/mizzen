@@ -10,7 +10,7 @@ import dtb.terminalIO.geom.Position;
 /**
  * Draws a circle using specified {@link DrawCircleAlgorithm}
  */
-public class CirclePlotter implements DrawCircleAlgorithm {
+public class CircleAlgorithm implements DrawCircleAlgorithm {
     
     @FunctionalInterface
     static interface PlotCondition {
@@ -19,12 +19,12 @@ public class CirclePlotter implements DrawCircleAlgorithm {
     
     private PlotCondition plotCondition;
 
-    public CirclePlotter(PlotCondition plotCondition) {
+    public CircleAlgorithm(PlotCondition plotCondition) {
         super();
         this.plotCondition = plotCondition;
     }
 
-    public CirclePlotter(boolean filled) {
+    public CircleAlgorithm(boolean filled) {
         super();
         if (filled) {
             plotCondition = (x, y, radius, distance)-> (compare(radius, distance, 0.5d) >= 0);
@@ -33,7 +33,7 @@ public class CirclePlotter implements DrawCircleAlgorithm {
         }
     }
     
-    public CirclePlotter() {
+    public CircleAlgorithm() {
         this(false);
     }
 
@@ -60,7 +60,7 @@ public class CirclePlotter implements DrawCircleAlgorithm {
     }
 
     /**
-     * A {@link DrawCircleAlgorithm} that plots a circle and then an inner circle so  that it
+     * A {@link DrawCircleAlgorithm} that plots a circle and then an inner circle so that it
      * ends up looking like a donut.
      * 
      * 
@@ -115,26 +115,26 @@ public class CirclePlotter implements DrawCircleAlgorithm {
      * </pre>
      * 
      */
-    public static class DonutPlotter implements DrawCircleAlgorithm {
+    public static class DonutCircleAlgorithm implements DrawCircleAlgorithm {
         
         boolean filled;
         Integer startAngle;
         Integer endAngle;
         
         
-        public DonutPlotter(boolean filled) {
+        public DonutCircleAlgorithm(boolean filled) {
             this.filled = filled;
         }
 
-        public DonutPlotter(int startAngle, int endAngle) {
+        public DonutCircleAlgorithm(int startAngle, int endAngle) {
             setAngles(startAngle, endAngle);
         }
 
-        public DonutPlotter(int endAngle) {
+        public DonutCircleAlgorithm(int endAngle) {
             setAngle(endAngle);
         }
         
-        public DonutPlotter setAngle(int endAngle) {
+        public DonutCircleAlgorithm setAngle(int endAngle) {
             return setAngles(0, endAngle);
         }
 
@@ -146,7 +146,7 @@ public class CirclePlotter implements DrawCircleAlgorithm {
             return startAngle;
         }
 
-        public DonutPlotter setAngles(int startAngle, int endAngle) {
+        public DonutCircleAlgorithm setAngles(int startAngle, int endAngle) {
             checkAngle(startAngle);
             checkAngle(endAngle);
             this.endAngle = endAngle;
@@ -193,7 +193,7 @@ public class CirclePlotter implements DrawCircleAlgorithm {
                             compare(innerRadius, distance, 0.5d) == 0;
                 };
             }
-            CirclePlotter plotter = new CirclePlotter(plotCondition);
+            CircleAlgorithm plotter = new CircleAlgorithm(plotCondition);
             plotter.draw(x, y, outerRadius, plot);
         }
     }

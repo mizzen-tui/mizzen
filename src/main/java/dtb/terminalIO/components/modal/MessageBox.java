@@ -284,6 +284,7 @@ public class MessageBox {
         }
 
         parentPanel.add( positionOfDialog, dialog );
+        parentPanel.setDropShadow(true, dialog);
 
         //  -- bind dialog events to modalDialogEvents which in 
         //     turn is prepended to the eventBus --

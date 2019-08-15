@@ -24,18 +24,18 @@ echo " "
 
 ls -l
 
-echo "sleeping for 10 seconds .. "
-sleep 10
+echo "sleeping for 5 seconds .. "
+sleep 5
 echo "done sleep .."
 
-echo " "
-echo " "
-echo " "
-echo " "
+echo "A"
+echo "B"
+echo "C"
+echo "D"
 
 ls -l
 
-echo ""
-echo ""
-echo ""
+echo "1"
+echo "2"
+echo "3"
 echo "Done! ........................................."

@@ -51,6 +51,13 @@ public class FindPathToTarget<T> {
     }
     
 
+    /**
+     * Returns true if path exists between root and target.
+     * #see {@link #findPath(Object, Object)}
+     * @param root
+     * @param target
+     * @return
+     */
     public boolean exists(T root, T target) {
         return findPath(root, target) != null ;
     }

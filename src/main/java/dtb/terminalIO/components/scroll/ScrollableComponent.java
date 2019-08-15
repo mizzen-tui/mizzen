@@ -61,8 +61,6 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
     String footerText;
     Focusable currentFocusable;
 
-    
-    
     public ScrollableComponent(Color color, Dimension d, Component<?> componentBeingViewed) {
 
         super(color);
@@ -106,6 +104,15 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         this.viewer.setColor(drawingColor);
     }
 
+    public ScrollableComponent setEmptyColor(Color emptyColor) {
+        super.setEmptyColor(emptyColor);
+        if (this.viewer != null) {
+            this.viewer.setEmptyColor(emptyColor);
+        }
+        return this;
+    }
+    
+    
     public Component<?> getComponentBeingViewed() {
         return this.componentBeingViewed;
     }
@@ -116,7 +123,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
     }
 
     public void setFillOnClear(boolean fillOnClear) {
-        super.setFillOnClear(fillOnClear);
+        //super.setFillOnClear(fillOnClear);
         this.viewer.setFillOnClear(fillOnClear);
     }
 
@@ -190,17 +197,17 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         if (footerTextComponent != null && !footerControls.containsChild(footerTextComponent)) {
             rebuild = true;
         }
-        
+
         if (! rebuild) {
             return footerControls;
         }
-        
+
         footerControls.removeChildren();
-        
+
         if (footerTextComponent != null) {
             footerControls.addComponent(footerTextComponent, null, null);
         }
-        
+
         addFooterButton("^",    Keys.UP_KEYSTROKE,    (te) -> ScrollableComponent.this.up(1));
         addFooterButton("v",    Keys.DOWN_KEYSTROKE,  (te) -> ScrollableComponent.this.down(1));
         addFooterButton("PgUp", Keys.PGUP_KEYSTROKE,  (te) -> ScrollableComponent.this.pageup());
@@ -279,8 +286,24 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
     public void setViewOffset(int r, int c) {
         if (r < 0 || c < 0)
             return; // too small
-        if (r > componentBeingViewed.getBottomMostRow() + 1 || c > componentBeingViewed.getRightMostCol() + 1)
+        if (r > (componentBeingViewed.getBottomMostRow() + 1)  || 
+            c > (componentBeingViewed.getRightMostCol()  + 1)  )
             return; // too large
+//        if (r > (componentBeingViewed.getBottomMostRow() - viewer.getHeight() + 2)  || 
+//                c > (componentBeingViewed.getRightMostCol()  - viewer.getWidth()  + 2)  ) {
+//                
+//                return; // too large
+//        }
+  
+//        if (r > (componentBeingViewed.getBottomMostRow() - viewer.getHeight() + 1)) {
+//            r = componentBeingViewed.getBottomMostRow() + 1;
+//        }
+//        
+//        if (c > (componentBeingViewed.getRightMostCol()  - viewer.getWidth()  + 1)) {
+//            c = componentBeingViewed.getRightMostCol()  + 1;
+//        }
+        
+        
         markAsDirty();
         Position offset = new Position.Simple(r, c);
         viewer.setViewOffset(offset);
@@ -292,9 +315,12 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
 
         Position offset = viewer.calculateScrollToViewOffset(targetToView);
 
+        Position oldcurOffset = viewer.getOffsetIntoSource();
+        
         if (offset != null) {
             setViewOffset(offset.getRow(), offset.getCol());
         }
+        Position curOffset = viewer.getOffsetIntoSource();
     }
 
     @Override
@@ -464,9 +490,16 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
 
             Position offset = Component.UTIL.getOffsetFromComponentContainer(componentToScrollTo,
                     ScrollableComponent.this.viewer);
+            
+            Position offsetIntoSource = ScrollableComponent.this.viewer.getOffsetIntoSource();
+            if ( ! offsetIntoSource.isSamePosition(Position.ZERO)) {
+                //offset = offset.offsetAdd( new Position.Simple(offsetIntoSource.getRow()*-1, offsetIntoSource.getCol()*-1) );
+                offset = offset.offsetAdd( offsetIntoSource);
+            }
 
             if (offset != null) {
                 ScrollableComponent.this.scrollToView(new Rectangle.Simple(offset, (Dimension) componentToScrollTo));
+                updateCanvas( te.getEventBus() );
             }
 
         }));
@@ -614,7 +647,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
             throw new IllegalStateException(
                     String.valueOf(focusable) + " is not the footer control or the viewer for this scrollable");
         }
-        
+
         currentFocusable = focusable;
 
         FocusManager.UTIL.setNewFocusable(currentFocusable, null, eventBus, null);

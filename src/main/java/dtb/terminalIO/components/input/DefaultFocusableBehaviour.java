@@ -2,6 +2,7 @@ package dtb.terminalIO.components.input;
 
 import dtb.terminalIO.components.ColorHiliter;
 import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.EmptyAttributes;
 import dtb.terminalIO.components.FocusSetterToHiliteAction;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
@@ -22,17 +23,24 @@ public abstract class DefaultFocusableBehaviour  implements Focusable {
     public void setFocus(boolean focus, EventBus eventBus) {
         this.hasFocus = focus;
     }
-    
-    
+
     public static abstract class ComponentHiliterFocusableBehaviour extends DefaultFocusableBehaviour {
 
         Component<?> component;
         ColorHiliter colorHiliter;
+        ColorHiliter emptyColorHiliter;
    
-        public ComponentHiliterFocusableBehaviour(Component<?> component) {
+        public ComponentHiliterFocusableBehaviour(Component<?> component, boolean hiliteEmptyColor) {
             super();
             this.component = component;
             colorHiliter =  new ColorHiliter(this.component.getColor());
+            if (hiliteEmptyColor) {
+                emptyColorHiliter = new ColorHiliter(this.component.getColor());
+            }
+        }
+
+        public ComponentHiliterFocusableBehaviour(Component<?> component) {
+            this(component, false);
         }
 
         @Override
@@ -40,13 +48,17 @@ public abstract class DefaultFocusableBehaviour  implements Focusable {
             super.setFocus(focus, eventBus);  // set the focus flag
             new FocusSetterToHiliteAction().hiliteAction(this, colorHiliter); // hilite
             this.component.setColor( colorHiliter.asColor() );
+            if (this.emptyColorHiliter != null && this.component instanceof EmptyAttributes) {
+                new FocusSetterToHiliteAction().hiliteAction(this, emptyColorHiliter); // hilite
+                ((EmptyAttributes)this.component).setEmptyColor( emptyColorHiliter.asColor() );
+            }
             if (focus) {
                Component.UTIL.bringToFront(component);
             }
         }
     }
-    
 
+    // a focus
     public static class Simple extends ComponentHiliterFocusableBehaviour {
         
         private ConditionalEventHandler eventHandler;
@@ -60,6 +72,11 @@ public abstract class DefaultFocusableBehaviour  implements Focusable {
             super(component);
             this.eventHandler = (ConditionalEventHandler) component;
         }
+
+        public Simple(Component<? extends ConditionalEventHandler> component, boolean hiliteEmptyColor) {
+            super(component, hiliteEmptyColor);
+            this.eventHandler = (ConditionalEventHandler) component;
+        }
         
         @Override
         public void handle(TerminalEvent<?> te) {
@@ -70,8 +87,6 @@ public abstract class DefaultFocusableBehaviour  implements Focusable {
         public EventHandler canHandle(TerminalEvent<?> te) {
             return eventHandler.canHandle(te);
         }
-
     }
-    
 
 }

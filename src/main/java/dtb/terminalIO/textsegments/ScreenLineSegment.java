@@ -19,18 +19,19 @@ import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.Relation.LeftRight;
 
 /**
- *   This object is the fundamental building block for all text objects that can be rendered
- *   on the terminal.
+ * This object is the fundamental building block for all text objects that can
+ * be rendered on the terminal.
  * 
- *   <p/>
+ * <p/>
  * 
- *   A Screen line segment is a Rectangle[row,col,height,width] that always have a height of one
- *   and width the length of its text.
+ * A Screen line segment is a Rectangle[row,col,height,width] that always have a
+ * height of one and width the length of its text.
  * 
- *   <p/>
+ * <p/>
  * 
- *   It has {@link Color} attribute that dictates default color to render the text in.
- *   
+ * It has {@link Color} attribute that dictates default color to render the text
+ * in.
+ * 
  */
 public interface ScreenLineSegment extends Rectangle, CleanString {
 
@@ -68,7 +69,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
             throw new IllegalArgumentException("bad start column " + beginColIndex);
         if (endColIndexInclusive < beginColIndex || endColIndexInclusive > getRightMostCol())
             throw new IllegalArgumentException("bad end column " + endColIndexInclusive);
-       // String theText = getText();
+        // String theText = getText();
         int col = getCol();
         return this.substring(beginColIndex - col, endColIndexInclusive - col + 1);
     }
@@ -152,15 +153,15 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
         public int compare(ScreenLineSegment so1, ScreenLineSegment so2) {
             if (so1 == so2)
                 return 0;
-            
+
             int cmp = Position.UTIL.POS_COMPARE.compare(so1, so2);
             if (cmp != 0)
                 return cmp;
             if (so1.overlapsWith(so2)) {
-                // NOTE: reverse sort on id ! 
+                // NOTE: reverse sort on id !
                 // This way higher ids appear first (implies newer) and these
-                // will then be on top (TODO:  I have yet to take advantage of this feature)
-                cmp = Integer.compare(so2.getId(), so1.getId()); 
+                // will then be on top (TODO: I have yet to take advantage of this feature)
+                cmp = Integer.compare(so2.getId(), so1.getId());
             }
             if (cmp != 0)
                 return cmp;
@@ -209,25 +210,24 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
         }
 
         /**
-         * We make the collection of ScreenLineSegment's a TreeSet such that it naturally sorts
-         * itself by row/col in order that when we traverse the collection we visit
-         * elements (ScreenLineSegment) from topLeft (0,0) to bottom right (height,width)
-         * order.
+         * We make the collection of ScreenLineSegment's a TreeSet such that it
+         * naturally sorts itself by row/col in order that when we traverse the
+         * collection we visit elements (ScreenLineSegment) from topLeft (0,0) to bottom
+         * right (height,width) order.
          */
         public static TreeSet<ScreenLineSegment> makeCollection(Collection<ScreenLineSegment> scs) {
             TreeSet<ScreenLineSegment> ts = new TreeSet<ScreenLineSegment>(SO_COMPARE);
-            /*  key to happiness (and screen alignment) is to ensure screenlinesegment objects have a len > 0
-            {  -- keeping this around for posterity .. 
-                public boolean add(ScreenLineSegment scs) {
-                    
-                    if (scs == null || scs.getText()==null || scs.getText().length()==0) {
-                        throw new IllegalArgumentException(String.valueOf(scs));
-                    }
-                    
-                    return super.add(scs);
-                }
-            }; */
-            
+            /*
+             * key to happiness (and screen alignment) is to ensure screenlinesegment
+             * objects have a len > 0 { -- keeping this around for posterity .. public
+             * boolean add(ScreenLineSegment scs) {
+             * 
+             * if (scs == null || scs.getText()==null || scs.getText().length()==0) { throw
+             * new IllegalArgumentException(String.valueOf(scs)); }
+             * 
+             * return super.add(scs); } };
+             */
+
             if (scs != null && scs.size() > 0) {
                 ts.addAll(scs);
             }
@@ -236,13 +236,14 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
 
         public static ScreenLineSegment blankScreenObject(Color color, char emptyChar, int row, int col, int id,
                 int width) {
-            
-            if (width < 0) throw new IllegalArgumentException("width="+width);
-            
+
+            if (width < 0)
+                throw new IllegalArgumentException("width=" + width);
+
             if (emptyChar <= 27) {
                 throw new IllegalStateException("!!!!");
             }
-            
+
             return new AbstractSegment(color, new CursorPos(row, col)) {
                 @Override
                 public int getId() {
@@ -270,8 +271,8 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
 
         // [left].....[right]
         //
-        // If there is a gap between left and right then return a gap screen
-        // object
+        // If there is a gap between left and right then return a gap ScreenLineSegment
+        // object - otherwise null
         //
         // [left][gap][right]
         //
@@ -292,8 +293,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
                     len);
         }
 
-        public static Collection<ScreenLineSegment> createBlankSegments(Color color, char emptyChar,
-                Rectangle bounds) {
+        public static Collection<ScreenLineSegment> createBlankSegments(Color color, char emptyChar, Rectangle bounds) {
             Collection<ScreenLineSegment> ts = makeCollection(null);
             int maxRow = bounds.getBottomMostRow();
             int col = bounds.getCol();
@@ -396,15 +396,15 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
             }
         }
 
-        // 
-        public static void addSegmentsWithOffsetUnBounded(Position offset,
-                                                          Collection<ScreenLineSegment> destination, 
-                                                          Collection<ScreenLineSegment> segmentsToAdd) {
+        //
+        public static void addSegmentsWithOffsetUnBounded(Position offset, Collection<ScreenLineSegment> destination,
+                Collection<ScreenLineSegment> segmentsToAdd) {
             addSegmentsWithOffsetBounded(offset, Rectangle.MAX_SIZE, destination, segmentsToAdd);
         }
-        
+
         public static ScreenLineSegment getAtCol(TreeSet<ScreenLineSegment> ts, int row, int col) {
-            ScreenLineSegment srchKey = blankScreenObject(ControlCode.DEFAULT_COLOR, ' ', row, col, Integer.MIN_VALUE, 1);
+            ScreenLineSegment srchKey = blankScreenObject(ControlCode.DEFAULT_COLOR, ' ', row, col, Integer.MIN_VALUE,
+                    1);
             ScreenLineSegment siblingGreater = ts.ceiling(srchKey);
             if (siblingGreater != null && srchKey.overlapsWith(siblingGreater)) {
                 return siblingGreater;
@@ -423,28 +423,29 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
             int offset = col - sc.getCol();
             return sc.getText().substring(offset, offset + 1);
         }
-        
+
         public static void setCharAt(TreeSet<ScreenLineSegment> ts, int row, int col, char ch, Color color) {
-            if ( ! CleanString.UTIL.isClean(ch)) {
+            if (!CleanString.UTIL.isClean(ch)) {
                 throw new IllegalStateException("Bad char to set in text segment.  Cannot be a control code");
             }
-            ScreenLineSegment sc = getAtCol(ts,row, col);
-            if (sc == null || !sc.getColors().equals(color) || !(sc instanceof SegmentImpl) ) {
-                ScreenLineSegment new_sc = new SegmentImpl(color,row, col, sc!=null?sc.getId()+1:1,new CleanString.Simple(ch));
-                addTo(ts,new_sc);
+            ScreenLineSegment sc = getAtCol(ts, row, col);
+            if (sc == null || !sc.getColors().equals(color) || !(sc instanceof SegmentImpl)) {
+                ScreenLineSegment new_sc = new SegmentImpl(color, row, col, sc != null ? sc.getId() + 1 : 1,
+                        new CleanString.Simple(ch));
+                addTo(ts, new_sc);
                 return;
             }
             // at this point we have an sc that is an SegmentImpl
             int offset = col - sc.getCol();
             String oldText = sc.getText();
-            
-            CleanString left   = ( (offset>0)? sc.substring(0,offset)  : CleanString.UTIL.EMPTY_CLEAN_STRING );
-            CleanString right  = ((offset< sc.length())? sc.substring(offset+1, oldText.length()) : CleanString.UTIL.EMPTY_CLEAN_STRING);
 
-            
-            CleanString newText = new CleanString.Simple(left).append(new CleanString.Simple(ch)).append(right);   
-            
-            ((SegmentImpl)sc).setText(newText);
+            CleanString left = ((offset > 0) ? sc.substring(0, offset) : CleanString.UTIL.EMPTY_CLEAN_STRING);
+            CleanString right = ((offset < sc.length()) ? sc.substring(offset + 1, oldText.length())
+                    : CleanString.UTIL.EMPTY_CLEAN_STRING);
+
+            CleanString newText = new CleanString.Simple(left).append(new CleanString.Simple(ch)).append(right);
+
+            ((SegmentImpl) sc).setText(newText);
         }
 
         public static Collection<ScreenLineSegment> split_on_overlap(Rectangle top, ScreenLineSegment under) {
@@ -514,7 +515,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
         }
 
         public static class SegmentsFromStringResult {
-            public Position                      pos = Position.ZERO;
+            public Position pos = Position.ZERO;
             public Collection<ScreenLineSegment> ts;
 
             public SegmentsFromStringResult(Position pos, Collection<ScreenLineSegment> ts) {
@@ -538,8 +539,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
         public static interface CreateSegmentWithColor {
             ScreenLineSegment create(Color color, Position position, CleanString simpleText);
         }
-        
-        
+
         public static SegmentsFromStringResult textSegmentsFromString(String multiLineString, int offSetRow,
                 int offSetCol, Rectangle boundingRectangle,
                 BiFunction<Position, CleanString, ScreenLineSegment> createSegment) {
@@ -555,72 +555,71 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
                 return new SegmentsFromStringResult(ts);
             }
 
-            
-            String lines[] = multiLineString.split("\n",-1);
+            String lines[] = multiLineString.split("\n", -1);
             lines[0] = clip(lines[0], boundAndClipped.getWidth());
             ScreenLineSegment sc = null;
-            if (lines[0]!=null && lines[0].length()>0) {
+            if (lines[0] != null && lines[0].length() > 0) {
                 sc = createSegment.apply(position, new CleanString.Simple(lines[0]));
                 ts.add(sc);
             }
             int lineLimit = Math.min(lines.length, boundAndClipped.getHeight());
             int originalWidth = boundingRectangle.getWidth();
             for (int i = 1; i < lineLimit; i++) {
-                position.moveTo(position.getRow() + 1, boundingRectangle.getCol()); // notice that we effectively carriage return
-                                                           // to start of next line (moveTo)
-                lines[i] = clip(lines[i], originalWidth);  // and now we use width of original rectangle for subsequent
-                                                           // clippings
-                if (lines[i]!=null && lines[i].length()>0) {
-                   sc = createSegment.apply(position, new CleanString.Simple(lines[i]));
-                   ts.add(sc);
+                position.moveTo(position.getRow() + 1, boundingRectangle.getCol()); // notice that we effectively
+                                                                                    // carriage return
+                                                                                    // to start of next line (moveTo)
+                lines[i] = clip(lines[i], originalWidth); // and now we use width of original rectangle for subsequent
+                                                          // clippings
+                if (lines[i] != null && lines[i].length() > 0) {
+                    sc = createSegment.apply(position, new CleanString.Simple(lines[i]));
+                    ts.add(sc);
                 }
             }
-            if (sc == null) return new SegmentsFromStringResult(position, ts);
+            if (sc == null)
+                return new SegmentsFromStringResult(position, ts);
             return new SegmentsFromStringResult(new Position.Simple(sc.getBottomMostRow(), sc.getRightMostCol()), ts);
         }
 
-        
         public static SegmentsFromStringResult textSegmentsFromString(String s, int offSetRow, int offSetCol,
                 Rectangle boundingRectangle) {
             return textSegmentsFromString(s, offSetCol, offSetCol, boundingRectangle,
                     (p, txt) -> new SegmentImpl(FGBGColors.NO_COLOR_SPECIFIED, p, -1, txt));
         }
-        
-        private static int clipStrWithEmbeddedColors(final Collection<ScreenLineSegment> ts, 
-        	                                     String colorCodedStr, int width, 
-        	                                     Position offset, 
-        	                                     CreateSegmentWithColor createSegment) {
-            int[] curlength = new int[]{0};
-            
+
+        private static int clipStrWithEmbeddedColors(final Collection<ScreenLineSegment> ts, String colorCodedStr,
+                int width, Position offset, CreateSegmentWithColor createSegment) {
+            int[] curlength = new int[] { 0 };
+
             ControlCode.parseColorsAndBuildResult(colorCodedStr, new ColorColorSegmentBuilder() {
-		@Override
-		public boolean newColorSegment(Color color, CleanString simpleText) {
-		    if (simpleText==null) {
-			simpleText= CleanString.UTIL.EMPTY_CLEAN_STRING;
-		    }
-		    boolean continueParsing=true;
-		    //  if (s.length() > width)
-		    if (curlength[0] + simpleText.length()>width) {
-		        // TODO: not doing a length check!! fixme!
-			simpleText = simpleText.substring(0, width - curlength[0]); //  clip(simpleText, width - curlength[0]);
-			continueParsing = false;
-		    }
-		    
-		    if (simpleText.length()>0) {
-            		ScreenLineSegment segment = createSegment.create(color, offset.offsetAdd(0, curlength[0]), simpleText);
-            		curlength[0] += simpleText.length();
-            		ts.add(segment);
-		    }
-		    
-		    return continueParsing;
-		}
+                @Override
+                public boolean newColorSegment(Color color, CleanString simpleText) {
+                    if (simpleText == null) {
+                        simpleText = CleanString.UTIL.EMPTY_CLEAN_STRING;
+                    }
+                    boolean continueParsing = true;
+                    // if (s.length() > width)
+                    if (curlength[0] + simpleText.length() > width) {
+                        // TODO: not doing a length check!! fixme!
+                        simpleText = simpleText.substring(0, width - curlength[0]); // clip(simpleText, width -
+                                                                                    // curlength[0]);
+                        continueParsing = false;
+                    }
+
+                    if (simpleText.length() > 0) {
+                        ScreenLineSegment segment = createSegment.create(color, offset.offsetAdd(0, curlength[0]),
+                                simpleText);
+                        curlength[0] += simpleText.length();
+                        ts.add(segment);
+                    }
+
+                    return continueParsing;
+                }
             });
             return curlength[0];
         }
 
-        
-        public static SegmentsFromStringResult textSegmentsFromStringWithEmbeddedColor(String multiLineString, int offSetRow,
-                int offSetCol, Rectangle boundingRectangle,CreateSegmentWithColor createSegment) {
+        public static SegmentsFromStringResult textSegmentsFromStringWithEmbeddedColor(String multiLineString,
+                int offSetRow, int offSetCol, Rectangle boundingRectangle, CreateSegmentWithColor createSegment) {
 
             TreeSet<ScreenLineSegment> ts = makeCollection(null); // empty
             if (multiLineString == null || multiLineString.length() == 0) {
@@ -632,38 +631,41 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
             if (boundAndClipped == null) {
                 return new SegmentsFromStringResult(ts);
             }
-            String lines[] = multiLineString.split("\n",-1);
-            //lines[0] = clip(lines[0], boundAndClipped.getWidth());
-            if (lines[0]!=null && lines[0].length()>0) {
-        	clipStrWithEmbeddedColors(ts, lines[0], boundAndClipped.getWidth(), position, createSegment);
+            String lines[] = multiLineString.split("\n", -1);
+            // lines[0] = clip(lines[0], boundAndClipped.getWidth());
+            if (lines[0] != null && lines[0].length() > 0) {
+                clipStrWithEmbeddedColors(ts, lines[0], boundAndClipped.getWidth(), position, createSegment);
             }
             int lineLimit = Math.min(lines.length, boundAndClipped.getHeight());
             int originalWidth = boundingRectangle.getWidth();
             for (int i = 1; i < lineLimit; i++) {
-                position.moveTo(position.getRow() + 1, boundingRectangle.getCol()); // notice that we effectively carriage return
+                position.moveTo(position.getRow() + 1, boundingRectangle.getCol()); // notice that we effectively
+                                                                                    // carriage return
                                                                                     // to start of next line (moveTo)
-                                                                                    // and now we use width of original rectangle for subsequent
+                                                                                    // and now we use width of original
+                                                                                    // rectangle for subsequent
                                                                                     // clippings
-                if (lines[i]!=null && lines[i].length()>0) {
-                    clipStrWithEmbeddedColors(ts, lines[i],originalWidth, position, createSegment);
+                if (lines[i] != null && lines[i].length() > 0) {
+                    clipStrWithEmbeddedColors(ts, lines[i], originalWidth, position, createSegment);
                 }
             }
-            if (ts.size() == 0) return new SegmentsFromStringResult(position, ts);
-            ScreenLineSegment lastSegment =  ts.last();
-            return new SegmentsFromStringResult(new Position.Simple(lastSegment.getBottomMostRow(), lastSegment.getRightMostCol()), ts);
+            if (ts.size() == 0)
+                return new SegmentsFromStringResult(position, ts);
+            ScreenLineSegment lastSegment = ts.last();
+            return new SegmentsFromStringResult(
+                    new Position.Simple(lastSegment.getBottomMostRow(), lastSegment.getRightMostCol()), ts);
         }
-        
-        public static SegmentsFromStringResult textSegmentsFromStringWithEmbeddedColor(String s, int offSetRow, int offSetCol,
-                Rectangle boundingRectangle) {
-            return textSegmentsFromStringWithEmbeddedColor(s, offSetCol, offSetCol, boundingRectangle,
-        	    (color, p, txt) -> new SegmentImpl( color != null ? color : FGBGColors.NO_COLOR_SPECIFIED, p, -1, txt));
+
+        public static SegmentsFromStringResult textSegmentsFromStringWithEmbeddedColor(String s, int offSetRow,
+                int offSetCol, Rectangle boundingRectangle) {
+            return textSegmentsFromStringWithEmbeddedColor(s, offSetCol, offSetCol, boundingRectangle, (color, p,
+                    txt) -> new SegmentImpl(color != null ? color : FGBGColors.NO_COLOR_SPECIFIED, p, -1, txt));
         }
-        
 
     }
 
     public static class SegmentImpl extends AbstractSegment {
-        int    id;
+        int id;
         String simpleText;
 
         public SegmentImpl(Color color, Position position, int id, CleanString simpleText) {
@@ -681,11 +683,11 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
         }
 
         public SegmentImpl(Color color, int row, int col, int id, CleanString simpleText) {
-            this(color, new Position.Simple(row,col),id, simpleText);
+            this(color, new Position.Simple(row, col), id, simpleText);
         }
 
         public SegmentImpl(Color color, int row, int col, int id, String simpleText) {
-            this(color, new Position.Simple(row,col),id, simpleText);
+            this(color, new Position.Simple(row, col), id, simpleText);
         }
 
         @Override

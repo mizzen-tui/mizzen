@@ -404,13 +404,13 @@ public class TextInput extends BoundedComponent<TextInput>
 
     private Focusable asFocusable() {
         if (focusable == null) {
-            this.focusable = new DefaultFocusableBehaviour.Simple(this) {
+            this.focusable = new DefaultFocusableBehaviour.Simple(this, true) {
                 @Override
                 public void setFocus(boolean focus, EventBus eventBus) {
                     super.setFocus(focus, eventBus);
                     if (focus) {
-                        requestShowCursor(eventBus);
                         new ShowComponentOnFocus().onFocus(TextInput.this, eventBus);
+                        requestShowCursor(eventBus);
                     } else {
                         requestHideCursor(eventBus);
                     }

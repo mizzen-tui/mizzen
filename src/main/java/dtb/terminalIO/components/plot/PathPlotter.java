@@ -4,7 +4,7 @@ import java.util.Comparator;
 
 import dtb.terminalIO.components.plot.PointPlotter.PointPlotterList;
 import dtb.terminalIO.components.plot.shape.Circle;
-import dtb.terminalIO.components.plot.shape.CirclePlotter.CircleClockwise_SORT;
+import dtb.terminalIO.components.plot.shape.CircleAlgorithm.CircleClockwise_SORT;
 import dtb.terminalIO.geom.Position;
 
 /**

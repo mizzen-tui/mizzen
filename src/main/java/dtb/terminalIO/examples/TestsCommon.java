@@ -17,6 +17,7 @@ import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.util.MapChars;
+import dtb.terminalIO.util.SparkLine;
 import dtb.terminalIO.util.TerminalDimensions;
 
 public class TestsCommon {
@@ -51,6 +52,8 @@ public class TestsCommon {
         MapChars mapChars = new MapChars();
         mapChars.mapAll(BlockChars.UTIL.getNICE_TO_BASIC()  );
         mapChars.mapAll(BrailleUtils.getBrailleToAsciiMapChars());
+        
+        mapChars.mapAll(SparkLine.UTIL.getSparklineToAsciiMapChars());
         
         
         mapChars.map('┈','~');

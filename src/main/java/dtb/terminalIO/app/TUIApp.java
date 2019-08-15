@@ -205,6 +205,7 @@ public class TUIApp {
         refreshCanvasIfModified.run();
     }
     
+    // this gets call when user hits terminate app hot key -- usually CTRL-C
     private void onClick_terminateAppHotKey(TerminalEvent<?> te) {
         EventHandler raiseTerminateEvent = (e)-> e.getEventBus().raiseEvent(new TerminalEvent<Void>(e.getEventBus(), TYPE.TERMINATE, null));
         if (this.confirmApplicationExitMessage != null) {
