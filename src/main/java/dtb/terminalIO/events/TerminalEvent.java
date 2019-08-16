@@ -24,6 +24,7 @@ public class TerminalEvent<T> extends EventObject {
     
     public static enum TYPE {
         KEYPRESS,
+        MOUSE,
         TIMER,
         REQUEST_FOCUS,
         REQUEST_RELEASE_FOCUS,

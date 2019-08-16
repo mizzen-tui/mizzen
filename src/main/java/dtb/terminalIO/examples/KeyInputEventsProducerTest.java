@@ -16,6 +16,7 @@ import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyInputEventsProducer;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
+import dtb.terminalIO.events.mouse.MouseEvent;
 import dtb.terminalIO.util.Stty;
 
 /**
@@ -126,6 +127,14 @@ public class KeyInputEventsProducerTest {
                     @Override
                     public void handle(TerminalEvent<?> te) {
 
+                        
+                        if (te instanceof MouseEvent) {
+                            status1Displayer.accept(  String.valueOf(te) );
+                            
+                            return;
+                        }
+                        
+                        
                         KeyEvent ke = (KeyEvent) te;
 
                         // eventBus.stopConsuming();
@@ -162,6 +171,8 @@ public class KeyInputEventsProducerTest {
                     @Override
                     public EventHandler canHandle(TerminalEvent<?> te) {
                         if (te.getType().equals(TYPE.KEYPRESS))
+                            return this;
+                        if (te.getType().equals(TYPE.MOUSE))
                             return this;
                         return null;
                     }

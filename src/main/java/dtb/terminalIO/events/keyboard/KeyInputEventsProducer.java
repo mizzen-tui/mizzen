@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.OnIdleEvent;
@@ -61,7 +62,7 @@ public class KeyInputEventsProducer implements Runnable {
         } else {
             inputStream = input;
         }
-        this.input = new InputStreamReader(inputStream, "UTF-8");
+        this.input = new InputStreamReader(inputStream , Charset.defaultCharset());
 
         readThread = new Thread(this, "KeyInputEvents-Thread"+nextThreadNum());
         readThread.start();
@@ -103,7 +104,7 @@ public class KeyInputEventsProducer implements Runnable {
                     if (!idleHandled) {
                 	// no pending keyboard keys handled - lets generate a timerEvent
                         if (eventBus.isEmptyQueue()) {
-                	    eventBus.raiseEvent(new OnIdleEvent(this));
+                          eventBus.raiseEvent(new OnIdleEvent(this));
                         }
                     }
                 }

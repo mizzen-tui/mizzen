@@ -108,7 +108,7 @@ public class TabComponent extends BoundedComponent<TabComponent> {
     }
 
     public void setTextActiveTabColor(Color colortextActiveTabColor) {
-        this.textActiveTabColor = textActiveTabColor;
+        this.textActiveTabColor = colortextActiveTabColor;
     }
 
 }
