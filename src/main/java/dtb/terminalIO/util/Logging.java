@@ -1,47 +1,68 @@
 package dtb.terminalIO.util;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
 
 public class Logging {
 
+    // FIXME : would be better if an real logger was used..  Issue is..
+    //         dont want this lib to depend on any external libs.  But I could (should)
+    //         make it possible to have this point to a real logger.
+    
+    
+    static boolean enabled = false;
+    static String loggerFileName;
+    
+    public static void setEnabled(boolean enabled) {
+        Logging.enabled = enabled;
+    }
+    
+    private static String getLoggerFileName() throws FileNotFoundException, IOException  {
+        if (loggerFileName == null) {
+            String pwd = System.getProperty("user.dir");
+            Path path = Paths.get(pwd, "dtbTerminal.log");
+            loggerFileName = path.toString();
+            if ( ! new File(loggerFileName).exists()) {
+                FileOutputStream stream = new FileOutputStream(new File(loggerFileName));
+                stream.write("dtbTerminal UI logger\n\n".getBytes());
+                stream.close();
+            }
+        }
+        return loggerFileName;
+    }
     
     public static void info(String msg) {
-        appendTextGOOD(msg);
+        if (enabled) {
+            appendText(msg);
+        } 
     }
     
-    private static void appendTextGOOD(String msg) {
-        // do nothing
-    }
     private static void appendText(String msg) {
-        
         try {
             // todo:  FIX THIS!!
             Thread.currentThread().getName();
             msg = Thread.currentThread().getName() + ":  " + msg;
-            Files.write(Paths.get("/home/david/workspace/dtbTerminalIO/dtbTTerminal.log"), (msg + "\n").getBytes(), StandardOpenOption.APPEND);
+            // todo: add date
+            Files.write(Paths.get(getLoggerFileName()), (msg + "\n").getBytes(), StandardOpenOption.APPEND);
         }catch (IOException e) {
-            //exception handling left as an exercise for the reader
+            // exception handling left as an exercise for the reader
             System.out.println(e.toString());
         }        
-        
     }
     
     
     public static void main(String[] args) {
-        
 
-        String s = "\na\n";
+        Logging.setEnabled(true);
         
-        String[] s_a  = s.split("\n");
-        String[] s_a1 = s.split("\n",-1);
-        
-        System.out.println( String.format("%s  :  %d   %d  %s   %s", s, s_a.length, s_a1.length, Arrays.toString(s_a),Arrays.toString(s_a1)));
-        
+        Logging.info("here is a test");
+
     }
-    
-    
+
 }

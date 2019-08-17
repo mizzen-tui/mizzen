@@ -107,7 +107,7 @@ public class LineTrackingCLIEmmitter implements CLIEmitter {
     int lastLoggedLineCounter = -1;
     private void logStats() {
         if (lastLoggedLineCounter != lineCounter) {
-            Logging.info("lineCounter:" + lineCounter);
+            //Logging.info("lineCounter:" + lineCounter);
             lastLoggedLineCounter = lineCounter;
         }
     }
