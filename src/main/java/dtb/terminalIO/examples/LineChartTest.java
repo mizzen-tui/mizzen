@@ -22,7 +22,7 @@ import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
-import dtb.terminalIO.events.keyboard.KeyInputEventsProducer;
+import dtb.terminalIO.events.keyboard.InputEventsProducer;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.events.resize.TerminalResizeDetection;
@@ -306,9 +306,9 @@ public class LineChartTest {
         master_canvas.refresh();
 
         EventBus eventBus = new EventBus();
-        KeyInputEventsProducer keyInputEventsProducer = null;
+        InputEventsProducer keyInputEventsProducer = null;
         try {
-            keyInputEventsProducer = new KeyInputEventsProducer(eventBus);
+            keyInputEventsProducer = new InputEventsProducer(eventBus);
         } catch (Exception e) {
             eventBus.stopConsuming();
             return;
@@ -431,9 +431,9 @@ public class LineChartTest {
         master_canvas.refresh();
 
         EventBus eventBus = new EventBus();
-        KeyInputEventsProducer keyInputEventsProducer = null;
+        InputEventsProducer keyInputEventsProducer = null;
         try {
-            keyInputEventsProducer = new KeyInputEventsProducer(eventBus);
+            keyInputEventsProducer = new InputEventsProducer(eventBus);
         } catch (Exception e) {
             eventBus.stopConsuming();
             return;
@@ -489,7 +489,6 @@ public class LineChartTest {
             eventBus.appendEventHandler(new OnResizeEventHandler() {
                 @Override
                 public void handleResize(Dimension size) {
-                    Logging.info("DEMO: resize " + size);
                     master_canvas.clearCanvas();
                     master_canvas.refresh();
 

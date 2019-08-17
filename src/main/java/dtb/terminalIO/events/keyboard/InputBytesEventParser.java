@@ -21,14 +21,14 @@ import dtb.terminalIO.geom.Position.Simple;
 /**
  * A helper class used primarily by KeyInputEventsProducer.
  * 
- * Its job is to process a char[] buffer of characters (presumably read in from
+ * Its job is to process a byte[] buffer of characters (presumably read in from
  * stdin) and converts this into a KeyStroke object which then gets enqueued
  * into an EventBus to be later handled by the application.
  * 
- * Main entry point method is: {@link #parseInput(char[], int, EventBus)}
+ * Main entry point method is: {@link #parseInput(byte[], int, EventBus)}
  * 
  */
-public class InputCharsEventParser {
+public class InputBytesEventParser {
 
     private static final int STATE_START = 1;
     private static final int STATE_ESCAPE_INTERMEDIATE = 2;
@@ -48,17 +48,17 @@ public class InputCharsEventParser {
 
     private long last_ESC_PRESSED_TIME = Integer.MAX_VALUE;
 
-    public class InputCharsDEBUGEvent extends TerminalEvent<String> {
+    public class InputBytesDEBUGEvent extends TerminalEvent<String> {
         private static final long serialVersionUID = 1L;
 
-        public InputCharsDEBUGEvent(char[] buffer, int readIn) {
-            super(InputCharsEventParser.this, TYPE.DEBUG, null);
+        public InputBytesDEBUGEvent(byte[] buffer, int readIn) {
+            super(InputBytesEventParser.this, TYPE.DEBUG, null);
             StringBuffer sb = new StringBuffer();
             StringJoiner sj = new StringJoiner(",");
             for (int i = 0; i < readIn; i++) {
-                sj.add(((int) buffer[i]) + "");
+                sj.add(((int) buffer[i] & 0xff) + "");
             }
-            sb.append("Chars read in:  new KeySequence(" + sj.toString() + ")     ");
+            sb.append("Bytes read in:  new KeySequence(" + sj.toString() + ")     ");
             setEventData(sb.toString());
         }
     }
@@ -70,9 +70,9 @@ public class InputCharsEventParser {
      * @param readIn
      * @param eventBus
      */
-    public void parseInput(char[] buffer, int readIn, EventBus eventBus) {
+    public void parseInput(byte[] buffer, int readIn, EventBus eventBus) {
 
-        eventBus.raiseEvent(new InputCharsDEBUGEvent(buffer, readIn));
+        eventBus.raiseEvent(new InputBytesDEBUGEvent(buffer, readIn));
 
         boolean lookForKnownKeys = true;
 
@@ -92,7 +92,7 @@ public class InputCharsEventParser {
         }
 
         for (int i = 0; i < readIn; i++) {
-            int ch = buffer[i];
+            int ch = buffer[i] & 0xff;
             processChar(ch, eventBus);
         }
         handleESC_ifNeeded(eventBus);

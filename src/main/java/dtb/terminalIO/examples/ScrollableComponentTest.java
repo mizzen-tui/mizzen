@@ -27,7 +27,7 @@ import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
-import dtb.terminalIO.events.keyboard.KeyInputEventsProducer;
+import dtb.terminalIO.events.keyboard.InputEventsProducer;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.events.resize.TerminalResizeDetection;
 import dtb.terminalIO.examples.BarChartTest.BarChartDemo;
@@ -240,7 +240,7 @@ public class ScrollableComponentTest {
         
         EventBus eventBus = new EventBus();
         try {
-            new KeyInputEventsProducer(eventBus);
+            new InputEventsProducer(eventBus);
         } catch (Exception e) {
             eventBus.stopConsuming();
             return ;

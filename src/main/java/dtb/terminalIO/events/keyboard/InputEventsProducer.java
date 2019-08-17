@@ -22,9 +22,9 @@ import dtb.terminalIO.util.Stty;
  * <p/>
  * 
  * This object reads input (usually from stdin) and then converts
- * the input to the appropriate event (usually a keystroke event).
- * This event is enqueued onto an eventBus for later handling.  Any keyStroke handlers
- * can then process the keystroke.
+ * the input (a sequence of bytes) to the appropriate event (usually a keystroke or mouse event).
+ * This event is enqueued onto an eventBus for later handling.  Any handlers
+ * attached to the eventBus can then process the enqueued event.
  * 
  * <p/>
  * 
@@ -33,15 +33,14 @@ import dtb.terminalIO.util.Stty;
  * in the {@link EventBus} can subsequently process the timer event. 
  * 
  */
-public class KeyInputEventsProducer implements Runnable {
+public class InputEventsProducer implements Runnable {
 
     private InputStream   inputStream;
     private EventBus      eventBus;
-    private Reader        input;
+//    private Reader        input;
     Thread                readThread;
-    InputCharsEventParser readerParser = new InputCharsEventParser();
+    InputBytesEventParser readerParser = new InputBytesEventParser();
 
-    
     /* For auto-numbering KeyInputEventsProducer threads. */
     private static int threadInitNumber;
     private static synchronized int nextThreadNum() {
@@ -49,7 +48,7 @@ public class KeyInputEventsProducer implements Runnable {
     }
     
     
-    public KeyInputEventsProducer(InputStream input, EventBus eventBus) throws UnsupportedEncodingException {
+    public InputEventsProducer(InputStream input, EventBus eventBus) throws UnsupportedEncodingException {
         this.eventBus = eventBus;
         if (input == null) {
             inputStream = new FileInputStream(FileDescriptor.in);
@@ -62,14 +61,14 @@ public class KeyInputEventsProducer implements Runnable {
         } else {
             inputStream = input;
         }
-        this.input = new InputStreamReader(inputStream , Charset.defaultCharset());
+  //      this.input = new InputStreamReader(inputStream , Charset.defaultCharset());
 
         readThread = new Thread(this, "KeyInputEvents-Thread"+nextThreadNum());
         readThread.start();
 
     }
 
-    public KeyInputEventsProducer(EventBus eventBus) throws UnsupportedEncodingException {
+    public InputEventsProducer(EventBus eventBus) throws UnsupportedEncodingException {
         this(null, eventBus);
     }
 
@@ -83,7 +82,7 @@ public class KeyInputEventsProducer implements Runnable {
 
     @Override
     public void run() {
-        char[] buffer = new char[255];
+        byte[] buffer = new byte[127];
         boolean isEOF = false;
 
         while (eventBus.isActive() && !isEOF) {
@@ -92,7 +91,7 @@ public class KeyInputEventsProducer implements Runnable {
 
                 int available = this.inputStream.available();
                 if (available > 0) {
-                    int readIn = input.read(buffer, 0, buffer.length);
+                    int readIn = inputStream.read(buffer, 0, buffer.length);
 
                     isEOF = readIn == -1;
                     if (!isEOF) {
@@ -117,7 +116,7 @@ public class KeyInputEventsProducer implements Runnable {
                 } else {
                     e1 = (Exception) e;
                 }
-                eventBus.raiseEvent(KeyInputEventsProducer.this, TYPE.EXCEPTION, e1);
+                eventBus.raiseEvent(InputEventsProducer.this, TYPE.EXCEPTION, e1);
                 if (!(e instanceof Exception)) { // if not an Exception - then probably an Error - so better to get the hell out
                     throw new RuntimeException(e);
                 }
@@ -141,7 +140,7 @@ public class KeyInputEventsProducer implements Runnable {
 	return readerParser.idle(eventBus);
     }
 
-    private void handleReaderInput(char[] buffer, int readIn) {
+    private void handleReaderInput(byte[] buffer, int readIn) {
         readerParser.parseInput(buffer, readIn, eventBus);
     }
 

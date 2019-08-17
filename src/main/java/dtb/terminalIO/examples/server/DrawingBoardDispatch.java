@@ -17,7 +17,7 @@ import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
-import dtb.terminalIO.events.keyboard.KeyInputEventsProducer;
+import dtb.terminalIO.events.keyboard.InputEventsProducer;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.util.StringUtils;
@@ -402,7 +402,7 @@ public class DrawingBoardDispatch {
         if (args!=null && args.length == 2 && args[0].equalsIgnoreCase("PIPE")) {
             //System.out.println("Reading from pipe "+args[1]);
             EventBus eventBus = new EventBus();
-            new KeyInputEventsProducer(eventBus);
+            new InputEventsProducer(eventBus);
             new DrawingBoardDispatch(eventBus).readFromNamedPipe(args[1]);
         } else {
             test1(args);

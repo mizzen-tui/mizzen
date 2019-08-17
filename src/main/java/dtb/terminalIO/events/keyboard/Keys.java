@@ -69,7 +69,7 @@ public class Keys {
         }
         
     }
-                                                         
+
 
     static Comparator<KeySetEntry>    KeySetEntryComparator = new Comparator<KeySetEntry>() {
         @Override
@@ -269,24 +269,24 @@ public class Keys {
     }
 
     public static class KeyStrokeFindResult {
-        public KeyStrokeFindResult(KeyStroke foundKeyStroke, char[] remainingBuffer) {
+        public KeyStrokeFindResult(KeyStroke foundKeyStroke, byte[] remainingBuffer) {
             super();
             this.foundKeyStroke = foundKeyStroke;
             this.remainingBuffer = remainingBuffer;
         }
 
         public KeyStroke foundKeyStroke = null;
-        public char[]    remainingBuffer;
+        public byte[]    remainingBuffer;
 
     }
 
     /**
      * Given a sequence of chars in buffer, map that to a known keystroke
      */
-    public static KeyStrokeFindResult getKeyStrokeFromChars(char[] buffer, int readIn) {
+    public static KeyStrokeFindResult getKeyStrokeFromChars(byte[] buffer, int readIn) {
         int keysBuffer[] = new int[readIn];
         for (int i = 0; i < readIn; i++) {
-            keysBuffer[i] = buffer[i];
+            keysBuffer[i] = buffer[i] & 0xff;
         }
 
         KeySequence keys = new KeySequence(keysBuffer);
@@ -296,7 +296,7 @@ public class Keys {
         Supplier<KeyStrokeFindResult> makeNullResult = new Supplier<KeyStrokeFindResult>() {
             @Override
             public KeyStrokeFindResult get() {
-                char newBuf[] = new char[readIn];
+                byte newBuf[] = new byte[readIn];
                 System.arraycopy(buffer, 0, newBuf, 0, readIn);
                 return new KeyStrokeFindResult(null, newBuf);
             }
@@ -326,7 +326,7 @@ public class Keys {
         if (newLen < 0) {
             return makeNullResult.get();
         }
-        char newBuf[] = new char[readIn - foundMatchingKeySequence.getLength()];
+        byte newBuf[] = new byte[readIn - foundMatchingKeySequence.getLength()];
         System.arraycopy(buffer, 0, newBuf, 0, newBuf.length);
         return new KeyStrokeFindResult(foundKeyStroke, newBuf);
     }

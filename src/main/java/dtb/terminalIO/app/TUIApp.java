@@ -24,7 +24,7 @@ import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
-import dtb.terminalIO.events.keyboard.KeyInputEventsProducer;
+import dtb.terminalIO.events.keyboard.InputEventsProducer;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.events.resize.TerminalResizeDetection;
@@ -151,7 +151,7 @@ public class TUIApp {
     private void makeEventBus() {
         eventBus = new EventBus();
         try {
-            new KeyInputEventsProducer(eventBus);
+            new InputEventsProducer(eventBus);
         } catch (Exception e) {
             eventBus.stopConsuming();
             return;

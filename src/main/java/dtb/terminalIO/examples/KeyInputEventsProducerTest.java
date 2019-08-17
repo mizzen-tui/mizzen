@@ -13,7 +13,7 @@ import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
 import dtb.terminalIO.events.keyboard.KeyEvent;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
-import dtb.terminalIO.events.keyboard.KeyInputEventsProducer;
+import dtb.terminalIO.events.keyboard.InputEventsProducer;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.events.mouse.MouseEvent;
@@ -64,9 +64,9 @@ public class KeyInputEventsProducerTest {
         
         EventBus eventBus = new EventBus();
         try {
-            KeyInputEventsProducer keyInputEventsProducer = null;
+            InputEventsProducer keyInputEventsProducer = null;
             try {
-                keyInputEventsProducer = new KeyInputEventsProducer(eventBus);
+                keyInputEventsProducer = new InputEventsProducer(eventBus);
             } catch (Exception e) {
                 eventBus.stopConsuming();
                 return;

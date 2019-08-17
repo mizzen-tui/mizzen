@@ -14,7 +14,7 @@ import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
-import dtb.terminalIO.events.keyboard.KeyInputEventsProducer;
+import dtb.terminalIO.events.keyboard.InputEventsProducer;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
@@ -91,9 +91,9 @@ public class CompositeLayeringTest {
 
         
        EventBus eventBus = new EventBus();
-       KeyInputEventsProducer keyInputEventsProducer = null;
+       InputEventsProducer keyInputEventsProducer = null;
        try {
-           keyInputEventsProducer = new KeyInputEventsProducer(eventBus);
+           keyInputEventsProducer = new InputEventsProducer(eventBus);
        } catch (Exception e) {
            eventBus.stopConsuming();
            return;

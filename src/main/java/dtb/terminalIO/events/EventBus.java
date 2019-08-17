@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import dtb.terminalIO.events.TerminalEvent.TYPE;
-import dtb.terminalIO.events.keyboard.KeyInputEventsProducer;
+import dtb.terminalIO.events.keyboard.InputEventsProducer;
 
 /**
  * Warning: This object will spawn a new thread in its constructor.
@@ -26,7 +26,7 @@ import dtb.terminalIO.events.keyboard.KeyInputEventsProducer;
  * <p/>
  * 
  * Usually TerminalEvent objects are generated for every Keystroke that has been
- * pressed by the user. See {@link KeyInputEventsProducer}.
+ * pressed by the user. See {@link InputEventsProducer}.
  * 
  * <pre>
  * 

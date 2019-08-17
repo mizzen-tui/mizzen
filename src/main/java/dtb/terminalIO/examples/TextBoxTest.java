@@ -27,7 +27,7 @@ import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
-import dtb.terminalIO.events.keyboard.KeyInputEventsProducer;
+import dtb.terminalIO.events.keyboard.InputEventsProducer;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.util.Stty;
@@ -123,9 +123,9 @@ public class TextBoxTest {
         
         renderComponents.run();
         
-        KeyInputEventsProducer keyInputEventsProducer = null;
+        InputEventsProducer keyInputEventsProducer = null;
         try {
-            keyInputEventsProducer = new KeyInputEventsProducer(eventBus);
+            keyInputEventsProducer = new InputEventsProducer(eventBus);
         } catch (Exception e) {
             eventBus.stopConsuming();
             return;
