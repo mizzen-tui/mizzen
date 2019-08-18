@@ -5,7 +5,9 @@ import java.util.function.Consumer;
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.TerminalScreen;
+import dtb.terminalIO.events.CPREvent;
 import dtb.terminalIO.events.ConditionalEventHandler;
+import dtb.terminalIO.events.DSREvent;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
@@ -133,7 +135,15 @@ public class KeyInputEventsProducerTest {
                             
                             return;
                         }
+                        if (te instanceof CPREvent || te instanceof DSREvent) {
+                            status1Displayer.accept(  String.valueOf(te) );
+                            return;
+                        }
                         
+                        if (te instanceof DSREvent || te instanceof DSREvent) {
+                            status1Displayer.accept(  String.valueOf(te) );
+                            return;
+                        }
                         
                         KeyEvent ke = (KeyEvent) te;
 
@@ -154,6 +164,20 @@ public class KeyInputEventsProducerTest {
                             status1Displayer.accept("A KEY HIT!!!");
                         }
                         
+                        if (ke.isKeyStroke(Keys.CTRL_K_KEYSTROKE)) {
+                            //status1Displayer.accept(  "Test cursor report" );
+                            screen.t("                         ");
+                            screen.add(ControlCode.CPR);
+                            screen.refresh();
+                        }
+
+                        if (ke.isKeyStroke(Keys.CTRL_L_KEYSTROKE)) {
+                            screen.t(" ");
+                            screen.add(ControlCode.DSR);
+                            screen.refresh();
+                        }
+                        
+                        
                         if (ke.isKeyStroke(Keys.ESC_KEYSTROKE)) {
                             status1Displayer.accept(ke.getKeyName() + " hit. Quitting..");
                             terminate.handle(ke);
@@ -173,6 +197,10 @@ public class KeyInputEventsProducerTest {
                         if (te.getType().equals(TYPE.KEYPRESS))
                             return this;
                         if (te.getType().equals(TYPE.MOUSE))
+                            return this;
+                        if (te.getType().equals(TYPE.DSR_REPORT))
+                            return this;
+                        if (te.getType().equals(TYPE.CPR_REPORT))
                             return this;
                         return null;
                     }

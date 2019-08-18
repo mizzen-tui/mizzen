@@ -487,9 +487,19 @@ public abstract class ControlCode implements Renderer {
     public static final ControlCode HIDE_CURSOR         = new BaseTextControlCode(escape_CHR + "[?25l");
     public static final ControlCode SHOW_CURSOR         = new BaseTextControlCode(escape_CHR + "[?25h");
 
+    public static final ControlCode ENABLE_MOUSE_TRACKING  = new BaseTextControlCode(escape_CHR + "[?1000h");
+    public static final ControlCode DISABLE_MOUSE_TRACKING = new BaseTextControlCode(escape_CHR + "[?1000l");
+
     public static final String      CURSOR_FAR_LEFT_STR = escape_CHR + "[G";
     public static final ControlCode CURSOR_LEFT         = new BaseTextControlCode(CURSOR_FAR_LEFT_STR);
 
+    // Device status report (DSR): Answer is ESC [ 0 n (Terminal OK).
+    public static final ControlCode DSR = new BaseTextControlCode(escape_CHR + "[5n");
+
+    // Cursor position report (CPR): Answer is ESC [ y ; x R, where
+    // x,y is the cursor location.
+    public static final ControlCode CPR = new BaseTextControlCode(escape_CHR + "[6n");
+    
     protected static class CursorMovementWithCount extends BaseTextControlCode {
 
         protected int count;

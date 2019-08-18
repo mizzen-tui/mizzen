@@ -170,5 +170,7 @@ public class TerminalScreen implements ControlCodeContext {
     public void hideCursor() {
         add( ControlCode.HIDE_CURSOR);
     }
+    
+    
 
 }

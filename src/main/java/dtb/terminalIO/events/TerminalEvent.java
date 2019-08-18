@@ -33,6 +33,8 @@ public class TerminalEvent<T> extends EventObject {
         REQUEST_UPDATE_CANVAS,
         REQUEST_SCROLL_TO_VIEW,
         VALUE_CHANGED,
+        DSR_REPORT,  // device status report
+        CPR_REPORT,  // cursor position report
         RESIZE,
         EXCEPTION,
         TERMINATE,
