@@ -7,8 +7,8 @@ import dtb.terminalIO.events.DSREvent;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.keyboard.Keys.KeyStrokeFindResult;
-import dtb.terminalIO.events.mouse.MouseEvent;
-import dtb.terminalIO.events.mouse.MouseEvent.MOUSE_ACTION;
+import dtb.terminalIO.events.mouse.MOUSE_ACTION;
+import dtb.terminalIO.events.mouse.RawParsedFromConsoleMouseEvent;
 import dtb.terminalIO.geom.Position;
 
 // TODO and CRITICAL!!!:   This code is not properly handling when keyboard input is coming in fast..
@@ -25,7 +25,7 @@ import dtb.terminalIO.geom.Position;
  * <p/>
  * 
  * Its job is to process a byte[] buffer of characters (presumably read in from
- * stdin) and converts this into a KeyStroke object which then gets enqueued
+ * stdin) and converts this into (usually) a KeyStroke object which then gets enqueued
  * into an EventBus to be later handled by the application.
  * 
  * <p/>
@@ -220,20 +220,6 @@ public class InputBytesEventParser {
             resetTo_STATE_START();
             return;
 
-//        case STATE_NAVIGATION:
-//
-//            if (ch == 77 /* same as 'M' */) {
-//                parse_STATE = STATE_MOUSE_START;
-//                mouse_action = null;
-//                parsed_row = -1;
-//                parsed_col = -1;
-//
-//                return;
-//            }
-//            // Unknown keystroke, ignore
-//            parse_STATE = STATE_START;
-//            return;
-            
         case STATE_MOUSE_START:
             if (ch == 32) {
                 parse_STATE = STATE_MOUSE_DOWN_LEFT;
@@ -260,7 +246,7 @@ public class InputBytesEventParser {
              }
              parsed_row = ch - 33;
 
-             eventBus.raiseEvent( new MouseEvent(this, mouse_action, new Position.Simple(parsed_row, parsed_col)));
+             eventBus.raiseEvent( new RawParsedFromConsoleMouseEvent(this, mouse_action, new Position.Simple(parsed_row, parsed_col)));
 
              mouse_action = null;
              parsed_row = -1;

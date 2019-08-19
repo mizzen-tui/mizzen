@@ -17,11 +17,14 @@ import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
+import dtb.terminalIO.util.Logging;
 
 public class SparklineTest {
     
     public static void main(String[] args) throws IOException {
 
+        Logging.setEnabled(true);
+        
         new TUIApp(args)
                 .setCanvasSize(24, 100)
                 .setEmptyChar(' ')

@@ -91,6 +91,11 @@ public interface ConditionalEventHandler extends EventHandler {
         }   
     }
     
+    /**
+     * Wraps an eventHandler.  Useful base class for 
+     * decorating the behaviour of an eventBus.
+     *
+     */
     public static class Delegate extends AbstractDelegate {
 
         private ConditionalEventHandler handler;
@@ -104,5 +109,37 @@ public interface ConditionalEventHandler extends EventHandler {
             return handler;
         }
 
+    }
+    
+    /**
+     * A {@link Delegate} handler that will handle one event
+     * and then remove itself from the {@link EventBus} 
+     * 
+     * <p/>
+     * 
+     * For this to be effective, this must be attached directly to
+     * the eventBus.  Otherwise it will not die.
+     *
+     */
+    public static class HandleOnceHandler extends Delegate {
+
+        int counter = 0;
+        
+        public HandleOnceHandler(ConditionalEventHandler handler) {
+            super(handler);
+        }
+        
+        public void handle(TerminalEvent<?> te) {
+            counter++;
+            // sanity check ..
+            if (counter>1) {
+                throw new IllegalStateException("Executing handler more than once! Class: " + this.getClass().getName());
+            }
+            
+            super.handle(te);
+            // would be better if we could know for sure where this handler lives.
+            te.getEventBus().removeEventHandler(HandleOnceHandler.this);
+        }
+        
     }
 }

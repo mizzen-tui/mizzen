@@ -18,7 +18,7 @@ import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.InputEventsProducer;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
-import dtb.terminalIO.events.mouse.MouseEvent;
+import dtb.terminalIO.events.mouse.RawParsedFromConsoleMouseEvent;
 import dtb.terminalIO.util.Stty;
 
 /**
@@ -130,7 +130,7 @@ public class KeyInputEventsProducerTest {
                     public void handle(TerminalEvent<?> te) {
 
                         
-                        if (te instanceof MouseEvent) {
+                        if (te instanceof RawParsedFromConsoleMouseEvent) {
                             status1Displayer.accept(  String.valueOf(te) );
                             
                             return;
@@ -196,7 +196,7 @@ public class KeyInputEventsProducerTest {
                     public EventHandler canHandle(TerminalEvent<?> te) {
                         if (te.getType().equals(TYPE.KEYPRESS))
                             return this;
-                        if (te.getType().equals(TYPE.MOUSE))
+                        if (te.getType().equals(TYPE.RAW_MOUSE))
                             return this;
                         if (te.getType().equals(TYPE.DSR_REPORT))
                             return this;

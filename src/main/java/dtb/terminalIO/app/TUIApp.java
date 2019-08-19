@@ -27,6 +27,7 @@ import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.InputEventsProducer;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
+import dtb.terminalIO.events.mouse.MouseEventOrchestrator;
 import dtb.terminalIO.events.resize.TerminalResizeDetection;
 import dtb.terminalIO.examples.TestsCommon;
 import dtb.terminalIO.geom.Dimension;
@@ -40,7 +41,8 @@ public class TUIApp {
     BiConsumer<TUIApp, TerminalEvent<?>> exceptionHandler = new DefaultExceptionAction();
     Exception lastException = null;
     Consumer<TUIApp> terminateAction = new DefaultTerminateAction();
-
+    MouseEventOrchestrator mouseEventOchestrator;
+    
     Consumer<TUIApp> onReadyStartAction = null;
     BiConsumer<TUIApp, Dimension> onResizeAction = null;
     
@@ -53,6 +55,8 @@ public class TUIApp {
     KeyStroke noGraphicsToggleHotKey = Keys.CTRL_X_KEYSTROKE;
     
     ChildComponentManager<?> mainApplicationPanel;
+    
+    boolean useMouse = true;
     
     boolean started = false;
 
@@ -237,6 +241,14 @@ public class TUIApp {
 
         screen.add(ControlCode.HIDE_CURSOR);
         screen.refresh();
+        
+        mouseEventOchestrator = new MouseEventOrchestrator(screen, getCanvas(), eventBus);
+        
+        if (useMouse) {
+            mouseEventOchestrator.enableMouseHandling();
+        } else {
+            mouseEventOchestrator.disableMouseHandling();
+        }
 
         eventBus.appendEventHandler(new KeyInputEventHandler(terminateAppHotKey,
                                                              (te) -> onClick_terminateAppHotKey(te) ));
