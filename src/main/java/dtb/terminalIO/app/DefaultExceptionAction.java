@@ -11,6 +11,7 @@ public class DefaultExceptionAction implements BiConsumer<TUIApp, TerminalEvent<
     @Override
     public void accept(TUIApp tApp, TerminalEvent<?> te) {
         tApp.getEventBus().stopConsuming();
+        tApp.getScreen().add( ControlCode.DISABLE_MOUSE_TRACKING );
         tApp.getScreen().add(ControlCode.SHOW_CURSOR);
         tApp.getScreen().refresh();
 

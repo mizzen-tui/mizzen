@@ -10,6 +10,7 @@ public class DefaultTerminateAction implements Consumer<TUIApp> {
     @Override
     public void accept(TUIApp tApp) {
         tApp.getEventBus().stopConsuming();
+        tApp.getScreen().add( ControlCode.DISABLE_MOUSE_TRACKING );
         tApp.getScreen().add(ControlCode.SHOW_CURSOR);
         tApp.getScreen().refresh();
 

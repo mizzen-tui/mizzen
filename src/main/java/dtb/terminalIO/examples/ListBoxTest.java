@@ -119,7 +119,10 @@ public class ListBoxTest {
         
         Canvas master_canvas = new Canvas(screen);
 
-        master_canvas.setSize(listBoxesPanel.getHeight()+anchorPoint.getRow()+2+4, listBoxesPanel.getWidth()+ anchorPoint.getCol()+ 10);
+        Dimension desiredCanvasSize = new Dimension.Simple(listBoxesPanel.getHeight()+anchorPoint.getRow()+2+4, listBoxesPanel.getWidth()+ anchorPoint.getCol()+ 10);
+        Dimension terminalSize = TestsCommon.terminalSize();
+                
+        master_canvas.setSize(terminalSize.contains(desiredCanvasSize)?desiredCanvasSize:terminalSize);
         master_canvas.setEmptyChar(' ');
 
         Composite mainPanel = new Composite(master_canvas.getTextColor());

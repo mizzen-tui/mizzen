@@ -55,20 +55,20 @@ public class TUIApp {
     KeyStroke noGraphicsToggleHotKey = Keys.CTRL_X_KEYSTROKE;
     
     ChildComponentManager<?> mainApplicationPanel;
-    
+
     boolean useMouse = true;
-    
+
     boolean started = false;
 
     public TUIApp() {
         super();
     }
-    
+
     public TUIApp(String[] args) {
         this();
         initFromArgs(args);
     }
-    
+
     public TUIApp initFromArgs(String[] args) {
         screen = TestsCommon.getTerminalScreenForTesting(args);
         master_canvas = TestsCommon.getMasterCanvasForTesting(screen);
@@ -110,6 +110,25 @@ public class TUIApp {
     }
 
     public TUIApp setMainApplicationPanel(ChildComponentManager<?> mainApplicationPanel) {
+        
+        if (started) {
+            throw new IllegalStateException("You must only call setMainApplicationPanel() before calling setOnReadyStart() and before calling start()");
+        }
+        
+        // make sure size is not too large
+        if ( ! this.getCanvas().asRectangle().contains(mainApplicationPanel)) {
+            if (mainApplicationPanel instanceof CanResize) {
+                Dimension newDimension = new Dimension.Simple(Math.min(mainApplicationPanel.getHeight(), getCanvas().getHeight()),
+                                                              Math.min(mainApplicationPanel.getWidth() , getCanvas().getWidth()));
+                
+                ((CanResize)mainApplicationPanel).resize(newDimension);
+            } else {
+                throw new IllegalStateException("You have attempted to assign a mainApplicationPanel "
+                                                + "that is larger than the canvas and does not implement CanResize. "
+                                                + "Class = " + mainApplicationPanel.getClass().getName());
+            }
+        }
+        
         this.mainApplicationPanel = mainApplicationPanel;
         return this;
     }
@@ -121,19 +140,19 @@ public class TUIApp {
     public ChildComponentManager<?> getMainApplicationPanel() {
         return this.mainApplicationPanel;
     }
-    
+
     public TUIApp confirmOnExit(String confirmApplicationExitMessage) {
         if (this.mainApplicationPanel == null) {
-            throw new IllegalStateException("Cannot call confirmOnExit() yet.  First call TUIApp.setMainApplicationPanel()");
+            throw new IllegalStateException("Cannot call confirmOnExit() yet.  First call TUIApp.setMainApplicationPanel(..) or .. TUIApp.setDefaultMainApplicationPanel()");
         }
         this.confirmApplicationExitMessage = confirmApplicationExitMessage;
         return this;
     }
-    
+
     public TUIApp confirmOnExit() {
         return this.confirmOnExit("Exit application?");
     }
-    
+
     public void setUpdateCanvas(Function<TUIApp, Boolean> updateCanvas) {
         this.updateCanvas = updateCanvas;
     }
@@ -180,7 +199,10 @@ public class TUIApp {
     }
 
     public TUIApp setCanvasSize(int height, int width) {
-        return setCanvasSize(new Dimension.Simple(height, width));
+        Dimension desiredDimension = new Dimension.Simple(height, width);
+        Dimension terminalDimension = TestsCommon.terminalSize();
+        
+        return setCanvasSize(terminalDimension.contains(desiredDimension)?desiredDimension:terminalDimension);
     }
     
     public TUIApp clearCanvas() {
@@ -192,7 +214,7 @@ public class TUIApp {
         this.getCanvas().setEmptyChar(emptyChar);
         return this;
     }
-    
+
     private void makeRefreshCanvasIfModified() {
         refreshCanvasIfModified = () -> {
             boolean result = (updateCanvas == null) ? true : updateCanvas.apply(this);
@@ -208,7 +230,7 @@ public class TUIApp {
         }
         refreshCanvasIfModified.run();
     }
-    
+
     // this gets call when user hits terminate app hot key -- usually CTRL-C
     private void onClick_terminateAppHotKey(TerminalEvent<?> te) {
         EventHandler raiseTerminateEvent = (e)-> e.getEventBus().raiseEvent(new TerminalEvent<Void>(e.getEventBus(), TYPE.TERMINATE, null));
@@ -241,9 +263,9 @@ public class TUIApp {
 
         screen.add(ControlCode.HIDE_CURSOR);
         screen.refresh();
-        
+
         mouseEventOchestrator = new MouseEventOrchestrator(screen, getCanvas(), eventBus);
-        
+
         if (useMouse) {
             mouseEventOchestrator.enableMouseHandling();
         } else {
@@ -310,9 +332,9 @@ public class TUIApp {
         // Do we have an onResizeAction defined? If no - let's make one
         // TODO:  this needs a LOT of work - try out ButtonBar test to see what I mean..
         if (this.onResizeAction == null  && mainApplicationPanel != null && mainApplicationPanel instanceof CanResize) {
-            
+
             CanResize __mainPanel = (CanResize) mainApplicationPanel;
-            
+
             this.setOnResizeAction( (tApp, size)->{
 
                 tApp.clearCanvas();
@@ -332,7 +354,7 @@ public class TUIApp {
                 }
             } );
         }
-        
+
         eventBus.appendEventHandler(new OnResizeEventHandler() {
             @Override
             public void handleResize(Dimension size) {
@@ -359,7 +381,6 @@ public class TUIApp {
                 }
             }));
         }
-
     }
 
 }

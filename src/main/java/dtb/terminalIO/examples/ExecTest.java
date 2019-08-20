@@ -13,6 +13,7 @@ import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.ElapsedTime;
+import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.linuxproc.ExecUtil;
 import dtb.terminalIO.util.linuxproc.LinuxProcessWatcher;
 
@@ -168,17 +169,11 @@ public class ExecTest {
         resizeAction.accept(app, TestsCommon.terminalSize());
         
         app.setOnReadyStart((tApp)->{
-            
-            
             DefaultFocusManager focusManager = new DefaultFocusManager(Keys.TAB_KEYSTROKE);
-            
             focusManager.addFocusable(lprocViewer, tApp.getEventBus() );
 
             focusManager.addFocusable(lprocViewer2, tApp.getEventBus() );
-            
             tApp.getEventBus().appendEventHandler(focusManager);
-            
-            
             String fileToTail = fileNameToTail(args);
 
             LinuxProcessWatcher linuxProc = null;
@@ -214,7 +209,7 @@ public class ExecTest {
         });
         
         app.start();
-        
+        Logging.setEnabled(true);
         
     }
 

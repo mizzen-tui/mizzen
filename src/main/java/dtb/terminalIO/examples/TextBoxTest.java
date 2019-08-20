@@ -39,14 +39,15 @@ public class TextBoxTest {
         TerminalScreen screen = TestsCommon.getTerminalScreenForTesting(args);
 
         Canvas master_canvas = TestsCommon.getMasterCanvasForTesting(screen);
-        master_canvas.setSize(20, 90);
+        Dimension desiredCanvasSize = new Dimension.Simple(20, 90);
+        Dimension terminalSize = TestsCommon.terminalSize();
+        master_canvas.setSize(terminalSize.contains(desiredCanvasSize)?desiredCanvasSize:terminalSize);
         
         master_canvas.setEmptyChar(' ');
         
         master_canvas.t("Some text");
         
         master_canvas.refresh();
-        
         
         VerticalPanel panel1 = new VerticalPanel();
         

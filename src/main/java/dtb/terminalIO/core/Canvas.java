@@ -83,8 +83,14 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
         this(new ScreenCanvasBackend(screen));
     }
 
+    public Canvas setSize(Dimension canvasSize) {
+        return setSize(canvasSize.getHeight(), canvasSize.getWidth());
+    }
     public Canvas setSize(int height, int width) {
         synchronized(this) {
+           // TODO:  should not set size to be bigger than actual terminal
+           // FIXME: add code to check actual screen size and max out to that size
+            
            if (getSegmentsBuffer().getSegments().size()>0) {
                clearCanvas();
                
@@ -247,8 +253,8 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
             backend.showCursorAt(last_RequestShowCursorPosition);
         }
     }
-    
-    
+
+
     public synchronized Canvas refresh() {
 
         if (segmentsBuffer.isEmpty()) {
@@ -261,7 +267,7 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
             hideCursorRequested = false;
             backend.hideCursor(); // this takes effect on next back end refresh 
         }
-        
+
         List<ScreenLineSegment> mergedRow = new ArrayList<ScreenLineSegment>();
         Iterator<ScreenLineSegment> sortedI = segmentsBuffer.iterator();
         ScreenLineSegment prev_sc = sortedI.next();
