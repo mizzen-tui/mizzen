@@ -314,7 +314,7 @@ public class MessageBox {
 
         eventBus.raiseEvent( new RequestUpdateCanvasEvent(dialog));
 
-        eventBus.raiseEvent( new RequestFocusEvent(yes.asFocusable()));
+        eventBus.raiseEvent( new RequestFocusEvent(yes));
 
     }
 

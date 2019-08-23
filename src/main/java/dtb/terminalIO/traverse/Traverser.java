@@ -45,6 +45,7 @@ public class Traverser<T> {
         
     }
     
+
     static class SimpleNodeVisitor<T> implements NodeVisitor<T> {
 
         Visitor<T> visitNode;
@@ -73,13 +74,21 @@ public class Traverser<T> {
         }
         
     }
+
+    private HasChildrenAdapter<T> hasChildrenAdapter;
     
-    @SuppressWarnings("unchecked")
+    public Traverser(HasChildrenAdapter<T> toHasChildren) {
+        super();
+        this.hasChildrenAdapter = toHasChildren;
+    }
+
+    public Traverser() {
+        this(new HasChildrenAdapter.Simple<T>());
+    }
+
+
     private Collection<? extends T> getChildren(T o) {
-       if (o instanceof HasChildren) {
-           return ((HasChildren<T>)o).getChildren();
-       }
-       return Collections.emptyList();
+       return this.hasChildrenAdapter.asHasChildren(o).getChildren();
     }
     
     

@@ -1,5 +1,8 @@
 package dtb.terminalIO.components.scroll;
 
+import java.util.Arrays;
+import java.util.Collection;
+
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.CanResize;
@@ -656,6 +659,11 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
     @Override
     public Focusable getCurrentChildFocus() {
         return currentFocusable;
+    }
+
+    @Override
+    public Collection<Focusable> getChildFocusables() {
+        return Arrays.asList( new Focusable[] {viewer, footerControls} );
     }
 
 }

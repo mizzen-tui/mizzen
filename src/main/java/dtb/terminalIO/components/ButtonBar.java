@@ -1,6 +1,7 @@
 package dtb.terminalIO.components;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import dtb.terminalIO.components.input.Button;
@@ -166,11 +167,48 @@ public class ButtonBar extends Composite implements FocusManager {
 
         return handler;
     }
+    
+    @Override
+    public Composite add(Component<?> component) {
+        
+        // special-case - this should only ever happen during the constructor ( see constructor )
+        if (component == this.horizontalPanel) {
+            return super.add(component);
+        }
+        
+        
+        KeyStroke hotKey = null;
+        EventHandler eventHandler = null;
+        
+        if (component instanceof HasHotKey) {
+            hotKey = ((HasHotKey) component).getHotKey();
+        }
+        
+        if (component instanceof EventHandler) {
+            eventHandler = ((EventHandler) component);
+        }
+        
+        if (eventHandler == null && component instanceof ToFocusable) {
+            eventHandler = ((ToFocusable) component).asFocusable();
+        }
+        
+        addComponent(component, hotKey, eventHandler);
 
-    public Button addButton(String buttonText, KeyStroke hotKey, EventHandler handler) {
-        Button theButton = new Button(this.getColor(), buttonText);
+        return this;
+    }
+
+    public Composite add(int offsetRow, int offsetCol, Component<?> component) {
+        throw new IllegalArgumentException("ButtonBar cannot place components at specific locations");
+    }
+
+    public Button addButton(Color buttonColor, String buttonText, KeyStroke hotKey, EventHandler handler) {
+        Button theButton = new Button(buttonColor, buttonText);
         addComponent(theButton, hotKey, handler);
         return theButton;
+    }
+    
+    public Button addButton(String buttonText, KeyStroke hotKey, EventHandler handler) {
+        return addButton(this.getColor(), buttonText, hotKey, handler);
     }
 
     private List<Focusable> eventConsumers = new ArrayList<Focusable>();
@@ -356,6 +394,11 @@ public class ButtonBar extends Composite implements FocusManager {
             };
         }
         return meAsFocusable;
+    }
+
+    @Override
+    public Collection<Focusable> getChildFocusables() {
+        return eventConsumers;
     }
 
 }

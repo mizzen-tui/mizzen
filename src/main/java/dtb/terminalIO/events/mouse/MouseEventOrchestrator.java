@@ -89,7 +89,7 @@ public class MouseEventOrchestrator {
 
                           if (this.canvas.asRectangle().containsPosition(applicationMousePosition)) {
                               // (4) raise an ApplicationMouseEvent event only if within canvas rectangle
-                              ApplicationMouseEvent aMe = new ApplicationMouseEvent( rme.getSource() , rme.getMouseActionI(), applicationMousePosition);
+                              ApplicationMouseEvent aMe = new ApplicationMouseEvent( rme.getSource() , rme.getMouseAction(), applicationMousePosition);
                               te2.getEventBus().raiseEvent( aMe );
                               Logging.info("app mouse info:: " + String.valueOf(aMe));
                           }

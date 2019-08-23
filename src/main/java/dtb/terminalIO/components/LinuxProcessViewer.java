@@ -17,6 +17,7 @@ import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.mouse.GetComponentAtOffset;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
@@ -26,7 +27,7 @@ import dtb.terminalIO.util.formatters.TextLineFormatter;
 import dtb.terminalIO.util.linuxproc.LinuxProcessWatcher;
 
 public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxProcessViewer>>
-        implements ParentContainer, FocusManager {
+        implements ParentContainer, FocusManager, GetComponentAtOffset {
 
     ScrollableComponent scrollView;
     public TextComponent textView;
@@ -246,6 +247,16 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
         segments.clearAndMerge(this.scrollView.getSegmentsBuffer().getSegments());
     }
 
+    public Component<?> getComponentAtOffset(Position offset) {
+        Component<?> component = this.scrollView.getComponentAtOffset(offset);
+        if (component == this.scrollView) {
+            return this;
+        }
+        return component;
+    }
+    
+    
+    
     @Override
     public Collection<? extends Component<?>> getChildren() {
         return Collections.singleton(this.scrollView);
@@ -291,6 +302,12 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
     @Override
     public Focusable getCurrentChildFocus() {
         return this.scrollView;
+    }
+
+    @Override
+    public Collection<Focusable> getChildFocusables() {
+        // TODO Auto-generated method stub
+        return Collections.singleton(getCurrentChildFocus());
     }
 
 }

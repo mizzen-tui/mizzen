@@ -6,28 +6,30 @@ import java.util.Collections;
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
-import dtb.terminalIO.components.DirtyFlag;
 import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.RequestHideCursorEvent;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
+import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.ToFocusable;
 import dtb.terminalIO.events.keyboard.HasHotKey;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
+import dtb.terminalIO.events.mouse.GetComponentAtOffset;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.StringUtils;
 
-public class Button extends BoundedComponent<Button> implements HasValue<Boolean>, ToFocusable, HasHotKey, ParentContainer   {
+public class Button extends BoundedComponent<Button> implements HasValue<Boolean>, Focusable, HasHotKey, ParentContainer , GetComponentAtOffset  {
 
     String buttonText;
     Composite container;
@@ -38,6 +40,7 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
     boolean displayHotKey = false;
     boolean toggleButton = false;
     boolean useCursor = true;
+    Focusable meAsFocusable;
     
     private KeyStroke hotKey;  // not used yet .. soon
     
@@ -64,7 +67,7 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
         this.renderedText = new TextComponent(color, "");
         this.container = new Composite(color);
         this.container.add(renderedText);
-        this.container.setParentContainer(null);
+        this.container.setParentContainer(this);
         this.setButtonTextAndResize(buttonText);
     }
 
@@ -212,7 +215,11 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
         eventBus.raiseEvent(new RequestHideCursorEvent(this));
     }
 
-    public Focusable asFocusable() {
+    private Focusable asFocusable() {
+        
+        if (meAsFocusable != null) {
+            return meAsFocusable;
+        }
         
         ChainedEventHandler chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
         
@@ -222,7 +229,7 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
             chainedHandler.appendEventHandler(new KeyInputEventHandler(getHotKey(),(te)->buttonPressed(te.getEventBus())));
         }
 
-        return new DefaultFocusableBehaviour.Simple(this, chainedHandler.asConditionalEventHandler()) {
+        meAsFocusable = new DefaultFocusableBehaviour.Simple(this, chainedHandler.asConditionalEventHandler()) {
  
             @Override
             public void setFocus(boolean focus, EventBus eventBus) {
@@ -237,11 +244,45 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
             }
 
         };
+        return meAsFocusable;
     }
 
     @Override
+    public EventHandler canHandle(TerminalEvent<?> te) {
+        if (asFocusable().canHandle(te) != null) {
+            return this;
+        }
+        return null;
+    }
+
+    @Override
+    public void handle(TerminalEvent<?> te) {
+        asFocusable().handle(te);
+    }
+
+    @Override
+    public boolean hasFocus() {
+        return asFocusable().hasFocus();
+    }
+
+    @Override
+    public void setFocus(boolean focus, EventBus eventBus) {
+        asFocusable().setFocus(focus, eventBus);
+    }
+    
+    @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
         segments.merge(this.container.getSegmentsBuffer());
+    }
+
+    
+    @Override
+    public Component<?> getComponentAtOffset(Position offset) {
+        Component<?> component = this.container.getComponentAtOffset(offset);
+        if (component == this.container) {
+            return this;
+        }
+        return component;
     }
 
     public boolean hasBorder() {
@@ -270,5 +311,6 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
     public void childResized(Component<?> child) {
         this.resize((Dimension)child);
     }
+
 
 }

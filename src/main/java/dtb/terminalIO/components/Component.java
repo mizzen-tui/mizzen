@@ -132,7 +132,7 @@ public interface Component<T extends Component<?>> extends IScreenLineSegmentsBu
             return false;
         }
 
-        
+        // useful for debugging
         static public String pathToCanvasAsString(Component<?> component) {
             List<Component<?>> path = pathToCanvas(component);
             StringJoiner sj = new StringJoiner(" -> ");

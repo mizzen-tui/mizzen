@@ -1,6 +1,7 @@
 package dtb.terminalIO.components;
 
 import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegment;
@@ -20,6 +21,13 @@ public class SegmentComponent extends AbstractComponent<SegmentComponent> {
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
         segments.add(this.scs);
+    }
+    
+    public Component<?> getComponentAtOffset(Position offset) {
+        if (this.containsPosition(offset)) {
+            return this;
+        }
+        return null;
     }
     
     @Override

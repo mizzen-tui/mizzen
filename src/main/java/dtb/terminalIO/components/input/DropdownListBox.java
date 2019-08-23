@@ -20,12 +20,14 @@ import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.mouse.GetComponentAtOffset;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 
-public class DropdownListBox<T> extends AbstractComponent<DropdownListBox<T>>  implements HasValue<T>, Focusable, ParentContainer{
+public class DropdownListBox<T> extends AbstractComponent<DropdownListBox<T>>  
+        implements HasValue<T>, Focusable, ParentContainer, GetComponentAtOffset {
 
     private VerticalPanel container;
     private ListBox<T> listBox;
@@ -212,8 +214,6 @@ public class DropdownListBox<T> extends AbstractComponent<DropdownListBox<T>>  i
             }
             Focusable lisBoxFocusable = this.listBox.asFocusable();
 
-            Focusable buttonFocusable = this.button.asFocusable();
-            
             ChainedEventHandler chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
 
             chainedHandler.appendEventHandler(lisBoxFocusable); 
@@ -230,13 +230,13 @@ public class DropdownListBox<T> extends AbstractComponent<DropdownListBox<T>>  i
                 public void setFocus(boolean focus, EventBus eventBus) {
                     super.setFocus(focus, eventBus);
                     if (focus) {
-                        buttonFocusable.setFocus(focus, eventBus);
+                        button.setFocus(focus, eventBus);
                         lisBoxFocusable.setFocus(focus, eventBus);
                         setSelectedOntoTextView();
                         Component.UTIL.bringToFront(DropdownListBox.this);
                     } else {
                         if (!focus) {
-                            buttonFocusable.setFocus(focus, eventBus);
+                            button.setFocus(focus, eventBus);
                             lisBoxFocusable.setFocus(focus, eventBus);
                             setSelectedOntoTextView();
                        }
@@ -258,6 +258,15 @@ public class DropdownListBox<T> extends AbstractComponent<DropdownListBox<T>>  i
         segments.merge(this.getVisibleChild().getSegmentsBuffer());
     }
 
+    public Component<?> getComponentAtOffset(Position offset) {
+        Component<?> component = this.container.getComponentAtOffset(offset);
+        if (component == this.container) {
+            return this;
+        }
+        return component;
+    }
+    
+    
     @Override
     protected Rectangle getRectangleForClearAndFill() {
         return getVisibleChild();

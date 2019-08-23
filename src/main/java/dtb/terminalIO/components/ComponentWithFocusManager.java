@@ -12,6 +12,7 @@ import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.mouse.GetComponentAtOffset;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
@@ -24,7 +25,7 @@ import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
  * 
  */
 public class ComponentWithFocusManager extends AbstractComponent<ComponentWithFocusManager> 
-     implements ParentContainer, HasTitleAndBorder<ComponentWithFocusManager>, CanResize, FocusManager {
+     implements ParentContainer, HasTitleAndBorder<ComponentWithFocusManager>, CanResize, FocusManager, GetComponentAtOffset {
     
     private Composite container;
     private FocusManager focusManager;
@@ -93,6 +94,14 @@ public class ComponentWithFocusManager extends AbstractComponent<ComponentWithFo
         segments.merge(this.container.getSegmentsBuffer());
     }
 
+    public Component<?> getComponentAtOffset(Position offset) {
+        Component<?> component = this.container.getComponentAtOffset(offset);
+        if (component == this.container) {
+            return this;
+        }
+        return component;
+    }
+    
     @Override
     public Collection<? extends Component<?>> getChildren() {
         return Collections.singleton(this.container);
@@ -213,6 +222,11 @@ public class ComponentWithFocusManager extends AbstractComponent<ComponentWithFo
     @Override
     protected Rectangle getRectangleForClearAndFill() {
         return container.getRectangleForClearAndFill();
+    }
+
+    @Override
+    public Collection<Focusable> getChildFocusables() {
+        return focusManager.getChildFocusables();
     }
     
 }

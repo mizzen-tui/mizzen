@@ -165,6 +165,11 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
         if (parentContainer != null && this.getParentContainer() != null && this.getParentContainer() != parentContainer) {
             throw new IllegalStateException("Parent container already set to another component");
         }
+        
+        if (parentContainer == this) {
+            throw new IllegalArgumentException("Parent container and be assigned to itself!");
+        }
+        
         this.parentContainer = parentContainer;
         
         Component.UTIL.markParentDirtyIfChildDirty(this);

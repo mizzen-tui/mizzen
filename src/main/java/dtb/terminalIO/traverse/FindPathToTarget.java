@@ -5,6 +5,18 @@ import java.util.List;
 import java.util.Stack;
 
 public class FindPathToTarget<T> {
+    
+    
+    private HasChildrenAdapter<T> hasChildrenAdapter;
+
+    public FindPathToTarget(HasChildrenAdapter<T> toHasChildren) {
+        this.hasChildrenAdapter = toHasChildren;
+    }
+
+    public FindPathToTarget() {
+        this.hasChildrenAdapter = null;
+    }
+    
 
     /**
      * Find a path of related objects (parent/child/grandchild/..) relationship
@@ -14,7 +26,7 @@ public class FindPathToTarget<T> {
      */
     public List<T> findPath(T root, T target) {
 
-        Traverser<T> objectTraverser = new Traverser<T>();
+        Traverser<T> objectTraverser = hasChildrenAdapter!=null? new Traverser<T>(hasChildrenAdapter) : new Traverser<T>();
         
         int depth[] = new int[1];
         depth[0] = 0;

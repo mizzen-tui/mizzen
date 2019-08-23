@@ -14,7 +14,7 @@ public class AbstractMouseEvent extends TerminalEvent<Position> {
         this.mouseAction = action;
     }
     
-    public MOUSE_ACTION getMouseActionI() {
+    public MOUSE_ACTION getMouseAction() {
         return this.mouseAction;
     }
  

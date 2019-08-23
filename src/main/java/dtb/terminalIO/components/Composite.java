@@ -3,12 +3,14 @@ package dtb.terminalIO.components;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.events.mouse.GetComponentAtOffset;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
@@ -19,7 +21,7 @@ import dtb.terminalIO.textsegments.ScreenLineSegment;
  * A component with child components
  */
 public class Composite extends AbstractComponent<Composite>
-        implements ChildComponentManager<Composite>, HasTitleAndBorder<Composite>, CanResize {
+        implements ChildComponentManager<Composite>, HasTitleAndBorder<Composite>, CanResize, GetComponentAtOffset {
 
     private SimpleBorder border;
     protected boolean boundsFixed = false;
@@ -322,6 +324,9 @@ public class Composite extends AbstractComponent<Composite>
         if (child != null) {
             throw new IllegalArgumentException("Component add failure:  Duplicate !");
         }
+        if (component == this) {
+            throw new IllegalArgumentException("Component add failure:  Cannot add component as a child of itself!");
+        }
         addComponentWithOffset(offset, component);
         fullrecalcDim();
         markAsDirty();
@@ -597,6 +602,32 @@ public class Composite extends AbstractComponent<Composite>
             return findChildOrFail(child, "getPositionRelativeToParent").offset.offsetAdd(1, 1);
         }
         return findChildOrFail(child, "getPositionRelativeToParent").offset;
+    }
+    
+    @Override
+    public Component<?> getComponentAtOffset(Position offset) {
+        if ( ! this.containsPosition(offset)) {
+            return null;
+        }
+        
+
+        if (this.hasBorder()) {
+            offset = offset.offsetAdd(-1, -1);
+        }
+
+        
+        ListIterator<ComponentWithOffset> li = childrenInZOrder.listIterator(childrenInZOrder.size());
+        while (li.hasPrevious()) {
+            ComponentWithOffset child = li.previous();
+            if (child.containsPosition(offset)) {
+                if (child.component instanceof GetComponentAtOffset) {
+                    Position relativeOffset =  offset.offsetAdd(child.offset.negate());
+                    return ((GetComponentAtOffset)child.component).getComponentAtOffset(relativeOffset);
+                }
+                return child.component;
+            }
+        }
+        return this;
     }
 
     @Override

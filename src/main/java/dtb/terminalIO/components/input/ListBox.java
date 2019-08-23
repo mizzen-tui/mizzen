@@ -26,13 +26,14 @@ import dtb.terminalIO.events.focus.ToFocusable;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
+import dtb.terminalIO.events.mouse.GetComponentAtOffset;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.StringUtils;
 
-public class ListBox<T> extends AbstractComponent<ListBox<T>>  implements HasValue<T>, ToFocusable, ParentContainer {
+public class ListBox<T> extends AbstractComponent<ListBox<T>>  implements HasValue<T>, ToFocusable, ParentContainer, GetComponentAtOffset {
     
     List<ListItem> items = new ArrayList<ListItem>();
     VerticalPanel  itemsContainer;
@@ -519,6 +520,15 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>  implements HasVal
         }
     }
 
+    @Override
+    public Component<?> getComponentAtOffset(Position offset) {
+        Component<?> component = this.itemsContainer.getComponentAtOffset(offset);
+        if (component == this.itemsContainer) {
+            return this;
+        }
+        return component;
+    }
+    
     public Focusable asFocusable() {
 
         ChainedEventHandler chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();

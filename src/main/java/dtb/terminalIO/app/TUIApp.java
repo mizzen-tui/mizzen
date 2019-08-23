@@ -51,6 +51,7 @@ public class TUIApp {
     Runnable refreshCanvasIfModified;
 
     KeyStroke terminateAppHotKey = Keys.CTRL_C_KEYSTROKE;
+    KeyInputEventHandler terminateAppHotKeyEventHandler;
 
     KeyStroke noGraphicsToggleHotKey = Keys.CTRL_X_KEYSTROKE;
     
@@ -151,6 +152,10 @@ public class TUIApp {
 
     public TUIApp confirmOnExit() {
         return this.confirmOnExit("Exit application?");
+    }
+    
+    public KeyInputEventHandler getTerminateAppHotKeyEventHandler() {
+        return terminateAppHotKeyEventHandler;
     }
 
     public void setUpdateCanvas(Function<TUIApp, Boolean> updateCanvas) {
@@ -272,8 +277,8 @@ public class TUIApp {
             mouseEventOchestrator.disableMouseHandling();
         }
 
-        eventBus.appendEventHandler(new KeyInputEventHandler(terminateAppHotKey,
-                                                             (te) -> onClick_terminateAppHotKey(te) ));
+        terminateAppHotKeyEventHandler = new KeyInputEventHandler(terminateAppHotKey, (te) -> onClick_terminateAppHotKey(te) );
+        eventBus.appendEventHandler(terminateAppHotKeyEventHandler);
 
         makeRefreshCanvasIfModified();
 

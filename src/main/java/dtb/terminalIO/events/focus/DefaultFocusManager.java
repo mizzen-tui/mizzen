@@ -383,4 +383,9 @@ public class DefaultFocusManager implements FocusManager, HasChildren<Focusable>
     public String toString() {
         return "FocusManager [eventConsumers size =" + eventConsumers.size() + "]";
     }
+
+    @Override
+    public Collection<Focusable> getChildFocusables() {
+        return eventConsumers;
+    }
 }

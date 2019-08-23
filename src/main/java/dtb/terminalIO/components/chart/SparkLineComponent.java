@@ -79,6 +79,14 @@ public class SparkLineComponent extends AbstractComponent<SparkLineComponent> im
         this.markAsDirty();
     }
 
+    public Component<?> getComponentAtOffset(Position offset) {
+        Component<?> component = this.container.getComponentAtOffset(offset);
+        if (component == this.container) {
+            return this;
+        }
+        return component;
+    }
+    
     @Override
     public Collection<? extends Component<?>> getChildren() {
         return Collections.singleton(container);
