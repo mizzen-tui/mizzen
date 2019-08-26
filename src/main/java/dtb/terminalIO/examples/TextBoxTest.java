@@ -26,9 +26,10 @@ import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
-import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.InputEventsProducer;
+import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
+import dtb.terminalIO.events.mouse.MouseEventOrchestrator;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.util.Stty;
 
@@ -92,8 +93,12 @@ public class TextBoxTest {
 
         topPanel.add(2,1, horizontalPanel);
         
-        ComponentWithFocusManager sc_1_component = new ComponentWithFocusManager(panel1);
-        ScrollableComponent sc_1 = new ScrollableComponent(Colors.Blu, new Dimension.Simple(panel1.getHeight()+1, 50), sc_1_component);
+        //ComponentWithFocusManager sc_1_component = new ComponentWithFocusManager(panel1);
+        // ScrollableComponent sc_1 = new ScrollableComponent(Colors.Blu, new Dimension.Simple(panel1.getHeight()+1, 50), sc_1_component);
+
+        ComponentWithFocusManager sc_1_component = new ComponentWithFocusManager( new VerticalPanel()); // <-- here to stop compiler complaints
+        ScrollableComponent sc_1 = new ScrollableComponent(Colors.Blu, new Dimension.Simple(panel1.getHeight()+1, 50), panel1);
+
         SearchFunctionForScrollableComponent.addFinderToScrollable(sc_1);
         horizontalPanel.add(sc_1);
         horizontalPanel.add(panel2);
@@ -179,11 +184,26 @@ public class TextBoxTest {
         eventBus.appendEventHandler(master_canvas.asShowCursorEventHandler());
         eventBus.appendEventHandler(master_canvas.asHideCursorEventHandler());
 
+        MouseEventOrchestrator mouser = new MouseEventOrchestrator(screen, master_canvas, eventBus);
+        mouser.enableMouseHandling(topPanel);
+        
+        
         eventBus.appendEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
         // eventBus.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
         eventBus.appendEventHandler(new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
         
-        DefaultFocusManager focusManager = new DefaultFocusManager(Keys.TAB_KEYSTROKE).setNavKeysFirst(false);
+        DefaultFocusManager focusManager = new DefaultFocusManager(Keys.TAB_KEYSTROKE) {
+            @Override
+            public void handle(TerminalEvent<?> te) {
+                super.handle(te);
+            }
+            @Override
+            public EventHandler canHandle(TerminalEvent<?> te) {
+                return super.canHandle(te);
+            }
+        };
+        
+        focusManager.setNavKeysFirst(false);
         
         DefaultFocusManager focusManager1 = new DefaultFocusManager().setNavKeysFirst(false);
         DefaultFocusManager focusManager2 = new DefaultFocusManager().setNavKeysFirst(false);
@@ -191,17 +211,23 @@ public class TextBoxTest {
         sc_1_component.setFocusManager(focusManager1);
 
         // sc_1.asEventHandler(); // TODO: this should not need to be done
-        
+/*        
         focusManager1.addFocusable(ti, eventBus);
         focusManager1.addFocusable(ti_2, eventBus);
         focusManager1.addFocusable(cb_1, eventBus);
         focusManager1.addFocusable(b_1, eventBus);
         focusManager1.addFocusable(b_2, eventBus);
+*/
+        focusManager1.addFocusable(ti);
+        focusManager1.addFocusable(ti_2);
+        focusManager1.addFocusable(cb_1);
+        focusManager1.addFocusable(b_1);
+        focusManager1.addFocusable(b_2);
         
-        focusManager2.addFocusable(ti_3, eventBus);
-        focusManager2.addFocusable(ti_4, eventBus); 
+        focusManager2.addFocusable(ti_3);
+        focusManager2.addFocusable(ti_4); 
 
-        focusManager.addFocusable(sc_1, eventBus);
+        focusManager.addFocusable(sc_1);
         
         
         //sc_1.prependEventHandler(focusManager1);
@@ -219,7 +245,7 @@ public class TextBoxTest {
         
         eventBus.appendEventHandler( new HasValue.OnValueChangedEventHandler<String>(ti) {
             @Override
-            public void valueChanged(HasValue<String> source) {
+            public void valueChanged(TerminalEvent<?> te, HasValue<String> source) {
                 String newValue = source.getValue();
                 eventDisplayer.setText(newValue);
                 renderComponents.run();
@@ -228,7 +254,7 @@ public class TextBoxTest {
         
         eventBus.appendEventHandler( new HasValue.OnValueChangedEventHandler<Boolean>(b_1) {
             @Override
-            public void valueChanged(HasValue<Boolean> source) {
+            public void valueChanged(TerminalEvent<?> te,HasValue<Boolean> source) {
                 Boolean newValue = source.getValue();
                 eventDisplayer.setText("(1) Pressed = "+newValue);
                 renderComponents.run();
@@ -244,7 +270,7 @@ public class TextBoxTest {
             }
 
             @Override
-            public void valueChanged(HasValue<Boolean> source) {
+            public void valueChanged(TerminalEvent<?> te,HasValue<Boolean> source) {
                 Boolean newValue = source.getValue();
                 eventDisplayer.setText("(2) Pressed = "+newValue);
             }

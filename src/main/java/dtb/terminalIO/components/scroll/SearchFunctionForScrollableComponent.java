@@ -140,7 +140,7 @@ public class SearchFunctionForScrollableComponent extends HorizontalPanel {
 
             updateTitleOnTextChangedHandler = new HasValue.TimerControlledOnValueChangedEventHandler<String>(findTextInput) {
                 @Override
-                public void valueChanged(HasValue<String> source) {
+                public void valueChanged(TerminalEvent<?> te,  HasValue<String> source) {
                     String newValue = source.getValue();
                     viewComp.setTitle(newValue);
 

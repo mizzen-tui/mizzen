@@ -2,10 +2,13 @@ package dtb.terminalIO.components;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.ListIterator;
 
+import dtb.terminalIO.components.Composite.ComponentWithOffset;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.events.mouse.GetComponentAtOffset;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
@@ -18,7 +21,7 @@ import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
  * render its contents
  */
 public class BorderedComponent extends BoundedComponent<BorderedComponent> 
-        implements Rectangle, HasTitleAndBorder<BorderedComponent>, CanResize, ParentContainer {
+        implements Rectangle, HasTitleAndBorder<BorderedComponent>, CanResize, ParentContainer, GetComponentAtOffset {
 
     private SimpleBorder      border;
     private Component<?>      component;
@@ -44,6 +47,22 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
                 return Position.ZERO;
         }
         return componentPosition;
+    }
+    
+    @Override
+    public Component<?> getComponentAtOffset(Position offset) {
+        if ( ! this.containsPosition(offset)) {
+            return null;
+        }
+
+        offset = offset.offsetAdd(componentPosition.negate());
+        if (this.component.containsPosition(offset)) {
+            if (this.component instanceof GetComponentAtOffset) {
+                return ((GetComponentAtOffset)component).getComponentAtOffset(offset);
+            }
+            return this.component;
+        }
+        return this;
     }
     
     @Override

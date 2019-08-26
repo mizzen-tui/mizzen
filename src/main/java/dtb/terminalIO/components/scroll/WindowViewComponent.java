@@ -13,6 +13,7 @@ import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.mouse.GetComponentAtOffset;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
@@ -24,7 +25,7 @@ import dtb.terminalIO.textsegments.ScreenLineSegmentsView;
  *
  */
 public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
-        implements Hiliter, Focusable, ParentContainer {
+        implements Hiliter, Focusable, ParentContainer, GetComponentAtOffset {
 
     private IScreenLineSegmentsBuffer.Provider viewSource;
     private ScreenLineSegmentsView segmentsViewBuffer;
@@ -121,6 +122,30 @@ public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
         markAsDirty();
     }
 
+    @Override
+    public Component<?> getComponentAtOffset(Position offset) {
+        if ( ! this.containsPosition(offset)) {
+            return null;
+        }
+        
+        if (!(viewSource instanceof Component)) {
+            return this;
+        }
+        
+        Component<?> viewSourceComponent = (Component<?>) viewSource;
+        
+        offset = offset.offsetAdd( this.getPositionRelativeToParent(viewSourceComponent).negate());
+
+        if (viewSourceComponent.containsPosition(offset)) {
+            if (viewSourceComponent instanceof GetComponentAtOffset) {
+                return ((GetComponentAtOffset)viewSourceComponent).getComponentAtOffset(offset);
+            }
+            return viewSourceComponent;
+        }
+        return this;
+    }
+    
+    
     @Override
     public EventHandler canHandle(TerminalEvent<?> te) {
         if (viewSource instanceof ConditionalEventHandler) {

@@ -133,6 +133,7 @@ public class ExecTest {
         hPanel.add(lprocViewer2);
         //hPanel.setTitle("Proc viewers");
         
+        app.enableMouseHandling(hPanel);
         
         app.setUpdateCanvas((tApp)->{
             if (!hPanel.isDirty()) {

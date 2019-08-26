@@ -52,6 +52,8 @@ public class CharacterViewerTest {
         ScrollableComponent scrollPanel = new ScrollableComponent(Colors.Blu, scrollPanelDim, dataToView);
 
         scrollPanel.setTitle(Colors.IGre, " ASCII VIEWER ");
+        
+        app.enableMouseHandling(scrollPanel);
 
         app.setUpdateCanvas((theApp) -> {
             theApp.getCanvas().addComponentSegments(3, 5, scrollPanel);

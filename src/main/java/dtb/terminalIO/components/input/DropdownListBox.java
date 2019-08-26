@@ -220,7 +220,7 @@ public class DropdownListBox<T> extends AbstractComponent<DropdownListBox<T>>
             
             chainedHandler.appendEventHandler( new HasValue.OnValueChangedEventHandler<T>(this.listBox) {
                 @Override
-                public void valueChanged(HasValue<T> source) {
+                public void valueChanged(TerminalEvent<?> te, HasValue<T> source) {
                     setSelectedOntoTextView();
                 }
             });

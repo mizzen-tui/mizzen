@@ -13,6 +13,7 @@ import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.VerticalPanel;
 import dtb.terminalIO.components.chart.SparkLineComponent;
+import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.events.ConditionalEventHandler;
@@ -99,61 +100,69 @@ public class SparklineTest {
                     
                     tApp.getEventBus().appendEventHandler(  mainFocusManager );
                     
-                    tApp.getEventBus().appendEventHandler( new ConditionalEventHandler() {
-
-                        IS_Event_TYPE appMouseType = new IS_Event_TYPE(TYPE.APPLICATION_MOUSE);
-                        
-                        @Override
-                        public EventHandler canHandle(TerminalEvent<?> te) {
-                            if (appMouseType.test(te)) {
-                                return this;
-                            }
-                            return null;
-                        }
-
-                        @Override
-                        public void handle(TerminalEvent<?> te) {
-                            ApplicationMouseEvent appMouseEvent = (ApplicationMouseEvent) te;
-
-                            if (appMouseEvent.getMouseAction() != MOUSE_ACTION.DOWN_LEFT) {
-                                return;
-                            }
-
-                            Position canvasPosition = appMouseEvent.getEventData();
-                            
-                            Component<?> componentClicked = GetComponentAtOffset.UTIL.getComponentAtOffset( (Component<?>)tApp.getMainApplicationPanel(), canvasPosition );
-                            
-                            // componentClicked - might not be a Focusable .. so go up its ancestors
-                            // and find an ancestor that is focusable
-                            
-                            while ( componentClicked!= null && 
-                                    !(componentClicked instanceof Focusable) &&
-                                    !(componentClicked instanceof ToFocusable)) {
-                                componentClicked = (Component<?>)componentClicked.getParentContainer();
-                            }
-                            
-                            if (componentClicked == null) {
-                                return;
-                            }
-
-                            Focusable focusComponent = null;
-                            
-                            if (componentClicked instanceof Focusable) {
-                                focusComponent = (Focusable)componentClicked;
-                            } else if (componentClicked instanceof ToFocusable) {
-                                focusComponent = ((ToFocusable) componentClicked).asFocusable();
-                            }
-                            
-                            if (focusComponent != null) {
-                                tApp.getEventBus().raiseEvent( new RequestFocusEvent(focusComponent));
-                            }
-                            
-
-                            
-                        }
-
-                        
-                    });
+//                    tApp.getEventBus().appendEventHandler( new ConditionalEventHandler() {
+//
+//                        IS_Event_TYPE appMouseType = new IS_Event_TYPE(TYPE.APPLICATION_MOUSE);
+//                        
+//                        @Override
+//                        public EventHandler canHandle(TerminalEvent<?> te) {
+//                            if (appMouseType.test(te)) {
+//                                return this;
+//                            }
+//                            return null;
+//                        }
+//
+//                        @Override
+//                        public void handle(TerminalEvent<?> te) {
+//                            ApplicationMouseEvent appMouseEvent = (ApplicationMouseEvent) te;
+//
+//                            if (appMouseEvent.getMouseAction() != MOUSE_ACTION.DOWN_LEFT) {
+//                                return;
+//                            }
+//
+//                            Position canvasPosition = appMouseEvent.getEventData();
+//                            
+//                            Component<?> componentClicked = GetComponentAtOffset.UTIL.getComponentAtOffset( (Component<?>)tApp.getMainApplicationPanel(), canvasPosition );
+//                            
+//                            // componentClicked - might not be a Focusable .. so go up its ancestors
+//                            // and find an ancestor that is focusable
+//                            
+//                            while ( componentClicked!= null && 
+//                                    !(componentClicked instanceof Focusable) &&
+//                                    !(componentClicked instanceof ToFocusable)) {
+//                                componentClicked = (Component<?>)componentClicked.getParentContainer();
+//                            }
+//                            
+//                            if (componentClicked == null) {
+//                                return;
+//                            }
+//
+//                            Focusable focusComponent = null;
+//                            
+//                            if (componentClicked instanceof Focusable) {
+//                                focusComponent = (Focusable)componentClicked;
+//                            } else if (componentClicked instanceof ToFocusable) {
+//                                focusComponent = ((ToFocusable) componentClicked).asFocusable();
+//                            }
+//                            
+//                            if (focusComponent != null) {
+//                                tApp.getEventBus().raiseEvent( new RequestFocusEvent(focusComponent));
+//                                if (focusComponent instanceof Button) {
+//                                    Button clickable = (Button)focusComponent;
+//                                    tApp.getEventBus().appendEventHandler( new OnIdleEventEventHandler.OneTime((te2)-> {
+//                                        if (clickable.hasFocus()) {
+//                                            clickable.onClick( te2.getEventBus() );
+//                                        }
+//                                    })); 
+//                                }
+//                            }
+//                            
+//
+//                            
+//                        }
+//
+//                        
+//                    });
                     
                     
                     tApp.getEventBus().appendEventHandler( new OnIdleEventEventHandler.RepeatingInterval(100, (te)-> {

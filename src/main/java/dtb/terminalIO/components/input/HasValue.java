@@ -9,15 +9,16 @@ import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 
 /**
- * A container that has a value.   It just allows for an extra level of indirection.
+ * A container that has a value. It just allows for an extra level of
+ * indirection.
  *
  * @param <V>
  */
 public interface HasValue<V> {
-    
+
     V getValue();
 
-    public static class ValueChangedEvent<V> extends  TerminalEvent<HasValue<V>> {
+    public static class ValueChangedEvent<V> extends TerminalEvent<HasValue<V>> {
 
         private static final long serialVersionUID = 4544682502113778402L;
 
@@ -26,101 +27,98 @@ public interface HasValue<V> {
         }
     }
 
-    
-    public abstract class OnValueChangedEventHandler<V>  implements ConditionalEventHandler {
+    public abstract class OnValueChangedEventHandler<V> implements ConditionalEventHandler {
 
         static Predicate<TerminalEvent<?>> valueChangedPredicate = new IS_Event_TYPE(TerminalEvent.TYPE.VALUE_CHANGED);
 
-        HasValue<V>  targetSource;
-        
+        HasValue<V> targetSource;
+
         Object[] valuesOfInterest;
-        
-        public OnValueChangedEventHandler(HasValue<V>  targetSource, V[] valuesOfInterest) {
+
+        public OnValueChangedEventHandler(HasValue<V> targetSource, V[] valuesOfInterest) {
             this.targetSource = targetSource;
             this.valuesOfInterest = valuesOfInterest;
         }
-        
-        public OnValueChangedEventHandler(HasValue<V>  targetSource, V valueOfInterest) {
+
+        public OnValueChangedEventHandler(HasValue<V> targetSource, V valueOfInterest) {
             this.targetSource = targetSource;
-            this.valuesOfInterest = new Object[] {valueOfInterest};
+            this.valuesOfInterest = new Object[] { valueOfInterest };
         }
-        
-        public OnValueChangedEventHandler(HasValue<V>  targetSource) {
+
+        public OnValueChangedEventHandler(HasValue<V> targetSource) {
             this.targetSource = targetSource;
             this.valuesOfInterest = null;
         }
-        
-        
+
         @SuppressWarnings("unchecked")
         @Override
         public EventHandler canHandle(TerminalEvent<?> te) {
-            if ( ! valueChangedPredicate.test(te) ) {
-                return null ; //  null means - can't handle.
+            if (!valueChangedPredicate.test(te)) {
+                return null; // null means - can't handle.
             }
-            
-            HasValue<V> source = (HasValue<V>)te.getEventData();
-            
-            if ( ! source.equals(targetSource)) {
+
+            HasValue<V> source = (HasValue<V>) te.getEventData();
+
+            if (!source.equals(targetSource)) {
                 return null;
             }
-            
+
             if (valuesOfInterest == null || valuesOfInterest.length == 0) {
-                return this; //  listener doesn't care about value - usual case
+                return this; // listener doesn't care about value - usual case
             }
-            
+
             V value = source.getValue();
-            
-            for (int i=0 ; i < valuesOfInterest.length; i++) {
+
+            for (int i = 0; i < valuesOfInterest.length; i++) {
                 if (valuesOfInterest[i] != null && valuesOfInterest[i].equals(value)) {
-                    return this;  
+                    return this;
                 }
             }
-            return null;   // no match!
+            return null; // no match!
         }
-        
+
         @SuppressWarnings("unchecked")
         @Override
         public void handle(TerminalEvent<?> te) {
-            valueChanged((HasValue<V>)te.getEventData());
+            valueChanged(te, (HasValue<V>) te.getEventData());
         }
 
-        abstract public void valueChanged(HasValue<V> source);
-        
-        
+        abstract public void valueChanged(TerminalEvent<?> te, HasValue<V> source);
+
     }
-    
-    public static abstract class TimerControlledOnValueChangedEventHandler<V>  extends OnValueChangedEventHandler<V> {
 
-	private AbstractTimedRequestedController timer;
-	private V lastValue;
-	private V currentValue;
-	
-	public TimerControlledOnValueChangedEventHandler(HasValue<V> targetSource) {
-	    super(targetSource);
-	    makeTimer();
-	}
-	
-	private void makeTimer() {
-	    timer = new AbstractTimedRequestedController(()->{
-		 valueChanged( targetSource );
-	    } ) {
+    public static abstract class TimerControlledOnValueChangedEventHandler<V> extends OnValueChangedEventHandler<V> {
 
-		@Override
-		protected boolean isRequestDifferentFromPrevious() {
-		    if (lastValue == null && currentValue == null) {
-			return false;
-		    }
-		    if (lastValue != null && lastValue.equals(currentValue)) {
-			return false;
-		    }
-		    if (currentValue != null && currentValue.equals(lastValue)) {
-			return false;
-		    }
-	            lastValue = currentValue;
-		    return true;
-		}
-	    };
-	}
+        private AbstractTimedRequestedController timer;
+        private V lastValue;
+        private V currentValue;
+
+        public TimerControlledOnValueChangedEventHandler(HasValue<V> targetSource) {
+            super(targetSource);
+            makeTimer();
+        }
+
+        private void makeTimer() {
+            timer = new AbstractTimedRequestedController(() -> {
+                valueChanged(null, targetSource);
+            }) {
+
+                @Override
+                protected boolean isRequestDifferentFromPrevious() {
+                    if (lastValue == null && currentValue == null) {
+                        return false;
+                    }
+                    if (lastValue != null && lastValue.equals(currentValue)) {
+                        return false;
+                    }
+                    if (currentValue != null && currentValue.equals(lastValue)) {
+                        return false;
+                    }
+                    lastValue = currentValue;
+                    return true;
+                }
+            };
+        }
 
         @SuppressWarnings("unchecked")
         @Override
@@ -128,10 +126,9 @@ public interface HasValue<V> {
             this.lastValue = this.currentValue;
             this.currentValue = ((HasValue<V>) te.getEventData()).getValue();
             timer.onRequest(te.getEventBus());
-            valueChanged((HasValue<V>) te.getEventData());
+            valueChanged(te, (HasValue<V>) te.getEventData());
         }
 
     }
-    
-    
+
 }

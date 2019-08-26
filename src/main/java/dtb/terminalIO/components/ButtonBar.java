@@ -6,6 +6,8 @@ import java.util.List;
 
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.input.DefaultFocusableBehaviour;
+import dtb.terminalIO.components.input.HasValue;
+import dtb.terminalIO.components.input.HasValue.OnValueChangedEventHandler;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.events.ChainedEventHandler;
@@ -203,6 +205,17 @@ public class ButtonBar extends Composite implements FocusManager {
 
     public Button addButton(Color buttonColor, String buttonText, KeyStroke hotKey, EventHandler handler) {
         Button theButton = new Button(buttonColor, buttonText);
+        
+        OnValueChangedEventHandler<Boolean> buttonONCLICK = new HasValue.OnValueChangedEventHandler<Boolean>(theButton) {
+            @Override
+            public void valueChanged(TerminalEvent<?> te,HasValue<Boolean> source) {
+                handler.handle(te);
+                //eventDisplayer.setText("(1) Pressed = "+newValue);
+                //renderComponents.run();
+            }
+        };
+        
+        
         addComponent(theButton, hotKey, handler);
         return theButton;
     }

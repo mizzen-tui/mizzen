@@ -135,6 +135,9 @@ public interface FocusManager extends Focusable {
                 focusableContainer.add(((ToFocusable)component).asFocusable());
                 return;
             }
+            
+            // component is not a focusable - maybe it has children and maybe some 
+            // of them are focusable's
             if (component instanceof HasChildren) {
                 for (Object o : ((HasChildren<?>)component).getChildren()) {
                     addFocusableChildren(focusableContainer, o);
@@ -142,6 +145,11 @@ public interface FocusManager extends Focusable {
             }
         }
         
+        /**
+         * Given component ( which could represent a graph of components ), we will build
+         * a focusmanager that manages the graph of components within Component
+         * @return
+         */
         public static FocusManager buildFocusManagerFromComponent(Object component, EventBus eventBus) {
             if (component instanceof FocusManager) {
                 return (FocusManager) component;

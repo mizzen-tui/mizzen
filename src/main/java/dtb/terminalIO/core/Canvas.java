@@ -409,4 +409,10 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
             }
         };
     }
+    
+    public Position getLastRequestCursorPosition() {
+        return !this.showCursorRequested ? null : this.last_RequestShowCursorPosition;
+    }
+    
+    
 }

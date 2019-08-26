@@ -56,6 +56,7 @@ public class TUIApp {
     KeyStroke noGraphicsToggleHotKey = Keys.CTRL_X_KEYSTROKE;
     
     ChildComponentManager<?> mainApplicationPanel;
+    Component<?>  rootPanelForMouseEvents;   // usually rootPanelForMouseEvents and mainApplicationPanel are the same
 
     boolean useMouse = true;
 
@@ -251,6 +252,17 @@ public class TUIApp {
         }
     }
 
+    public TUIApp enableMouseHandling() {
+        this.useMouse = true;
+        return this;
+    }
+
+    public TUIApp enableMouseHandling(Component<?> rootPanelForMouseEvents) {
+        this.useMouse = true;
+        this.rootPanelForMouseEvents = rootPanelForMouseEvents;
+        return this;
+    }
+    
     public void start() {
 
         this.started = true;
@@ -273,6 +285,16 @@ public class TUIApp {
 
         if (useMouse) {
             mouseEventOchestrator.enableMouseHandling();
+            if (rootPanelForMouseEvents == null) {
+                if (mainApplicationPanel != null && mainApplicationPanel instanceof Component) {
+                    rootPanelForMouseEvents = (Component<?>)mainApplicationPanel;
+                }
+            }
+
+            if (rootPanelForMouseEvents != null) {
+                mouseEventOchestrator.appendApplicationMouseEventToClickable(rootPanelForMouseEvents, null);
+            }
+            
         } else {
             mouseEventOchestrator.disableMouseHandling();
         }

@@ -196,7 +196,7 @@ public class ListBoxTest {
            StringDisplayValue[]  currentList = weird;
            
            @Override
-           public void valueChanged(HasValue<String> source) {
+           public void valueChanged(TerminalEvent<?> te, HasValue<String> source) {
                String newValue = source.getValue();
                eventDisplayer.setTextAndResize("Pressed = "+newValue);
                
@@ -229,7 +229,7 @@ public class ListBoxTest {
        eventBus.appendEventHandler( new HasValue.OnValueChangedEventHandler<String>(lb2) {
 
            @Override
-           public void valueChanged(HasValue<String> source) {
+           public void valueChanged(TerminalEvent<?> te, HasValue<String> source) {
                String newValue = source.getValue();
                eventDisplayer.setTextAndResize("Pressed = "+newValue);
                renderComponents.run();

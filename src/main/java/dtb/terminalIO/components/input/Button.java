@@ -17,6 +17,7 @@ import dtb.terminalIO.events.RequestHideCursorEvent;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.focus.RequestFocusEvent;
 import dtb.terminalIO.events.focus.ToFocusable;
 import dtb.terminalIO.events.keyboard.HasHotKey;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
@@ -39,7 +40,7 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
     Boolean pressed = false;
     boolean displayHotKey = false;
     boolean toggleButton = false;
-    boolean useCursor = true;
+    boolean useCursor = false;
     Focusable meAsFocusable;
     
     private KeyStroke hotKey;  // not used yet .. soon
@@ -192,6 +193,14 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
         return pressed;
     }
  
+    public void onClick(EventBus eventBus) {
+        if (!hasFocus()) {
+            // focus manager should have already put focus here - but just in case ..
+            eventBus.raiseEvent(new RequestFocusEvent(this));
+        }
+        buttonPressed(eventBus);
+    }
+    
     protected void buttonPressed(EventBus eventBus) {
         Button.this.setValue( (toggleButton? !pressed :true) );  // toggle the value
         renderedText.setText(getTextForRendering(true));

@@ -646,7 +646,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         if (focusable == null) {
             return;
         }
-        if (footerControls != focusable && viewer != focusable ) {
+        if (! getChildFocusables().contains(focusable)) {
             throw new IllegalStateException(
                     String.valueOf(focusable) + " is not the footer control or the viewer for this scrollable");
         }
@@ -661,9 +661,33 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         return currentFocusable;
     }
 
+    Collection<Focusable> childFocusables = null;
+    
+    private Collection<Focusable> buildChildFocusablesIfNeeded() {
+        if (childFocusables != null) {
+            return childFocusables;
+        }
+        if (componentBeingViewed instanceof FocusManager) {
+            childFocusables = Arrays.asList( new Focusable[] {(FocusManager)componentBeingViewed, footerControls} );
+            return childFocusables;
+        }
+        
+        FocusManager componentFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(componentBeingViewed, null);
+        
+        if (componentFocusManager != null) {
+            childFocusables = Arrays.asList( new Focusable[] {componentFocusManager, footerControls} );
+            return childFocusables;
+        }
+        
+        childFocusables = Arrays.asList( new Focusable[] {viewer, footerControls} );
+        return childFocusables;
+
+    }
+    
+    
     @Override
     public Collection<Focusable> getChildFocusables() {
-        return Arrays.asList( new Focusable[] {viewer, footerControls} );
+        return buildChildFocusablesIfNeeded();
     }
 
 }
