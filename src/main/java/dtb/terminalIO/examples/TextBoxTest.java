@@ -2,6 +2,7 @@ package dtb.terminalIO.examples;
 
 import java.io.IOException;
 
+import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.ComponentWithFocusManager;
 import dtb.terminalIO.components.Composite;
@@ -12,6 +13,8 @@ import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.input.CheckBoxInput;
 import dtb.terminalIO.components.input.HasValue;
 import dtb.terminalIO.components.input.TextInput;
+import dtb.terminalIO.components.input.tree.TreeView;
+import dtb.terminalIO.components.input.tree.TreeViewModel.HasChildrenTreeViewModel;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
 import dtb.terminalIO.controlcodes.Colors;
@@ -40,7 +43,7 @@ public class TextBoxTest {
         TerminalScreen screen = TestsCommon.getTerminalScreenForTesting(args);
 
         Canvas master_canvas = TestsCommon.getMasterCanvasForTesting(screen);
-        Dimension desiredCanvasSize = new Dimension.Simple(20, 90);
+        Dimension desiredCanvasSize = new Dimension.Simple(40, 120);
         Dimension terminalSize = TestsCommon.terminalSize();
         master_canvas.setSize(terminalSize.contains(desiredCanvasSize)?desiredCanvasSize:terminalSize);
         
@@ -92,6 +95,14 @@ public class TextBoxTest {
         horizontalPanel.setHorizontalSpacer(5);
 
         topPanel.add(2,1, horizontalPanel);
+        
+        TreeView<Component<?>>  tv2 = new TreeView<Component<?>>(Colors.IBlu, new Dimension.Simple(90,60), (node)->node.getClass().getSimpleName()  );
+        tv2.setModel( new HasChildrenTreeViewModel<Component<?>>(topPanel));
+        
+        ScrollableComponent scrollingTreeview = new ScrollableComponent(Colors.BIGre, new Dimension.Simple(20,40), new BorderedComponent(tv2));
+        
+        topPanel.add(2, 73, scrollingTreeview);
+        
         
         //ComponentWithFocusManager sc_1_component = new ComponentWithFocusManager(panel1);
         // ScrollableComponent sc_1 = new ScrollableComponent(Colors.Blu, new Dimension.Simple(panel1.getHeight()+1, 50), sc_1_component);
@@ -163,10 +174,14 @@ public class TextBoxTest {
         };
         
         
+        MouseEventOrchestrator mouser = new MouseEventOrchestrator(screen, master_canvas, eventBus);
+        mouser.enableMouseHandling(topPanel);
+        
         EventHandler terminate = new EventHandler() {
 
             @Override
             public void handle(TerminalEvent<?> te) {
+                mouser.disableMouseHandling();
                 stopThePresses.run();
                 if (te.getType().equals(TYPE.EXCEPTION)) {
                     System.out.println("\n");
@@ -184,9 +199,6 @@ public class TextBoxTest {
         eventBus.appendEventHandler(master_canvas.asShowCursorEventHandler());
         eventBus.appendEventHandler(master_canvas.asHideCursorEventHandler());
 
-        MouseEventOrchestrator mouser = new MouseEventOrchestrator(screen, master_canvas, eventBus);
-        mouser.enableMouseHandling(topPanel);
-        
         
         eventBus.appendEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
         // eventBus.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
@@ -235,6 +247,8 @@ public class TextBoxTest {
         //focusManager.addFocusable(focusManager1, eventBus);
         
         focusManager.addFocusable(focusManager2, eventBus);
+        
+        focusManager.addFocusable(scrollingTreeview);
 
         
         eventBus.appendEventHandler(focusManager);
