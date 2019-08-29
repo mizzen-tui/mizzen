@@ -1,5 +1,6 @@
 package dtb.terminalIO.components.scroll;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -420,9 +421,9 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         ConditionalEventHandler handler = new ConditionalEventHandler.Delegate(eventHandler) {
             @Override
             public void handle(TerminalEvent<?> te) {
-                if (eventHandler != footerControls && !ScrollableComponent.this.viewer.hasFocus()) {
-                    ScrollableComponent.this.viewer.setFocus(true, te.getEventBus());
-                }
+//                if (eventHandler != footerControls && !ScrollableComponent.this.viewer.hasFocus()) {
+//                    ScrollableComponent.this.viewer.setFocus(true, te.getEventBus());
+//                }
                 super.handle(te);
                 updateCanvas(te.getEventBus());
             }
@@ -475,9 +476,9 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
                 if (footerControls == null) {
                     return;
                 }
-                if (viewer.hasFocus()) {  // TODO:  is this wise?
-                    viewer.setFocus(false, te.getEventBus());
-                }
+//                if (viewer.hasFocus()) {  // TODO:  is this wise?
+//                    viewer.setFocus(false, te.getEventBus());
+//                }
                 footerControls.handle(te);
             }
         });
@@ -508,12 +509,13 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
 
         conditionalEventHandler = chainedEventHandler.asConditionalEventHandler();
         
-        if (viewer instanceof ConditionalEventHandler) {
-            // careful .. doing a small recursion here ( follow prependEventHandler() to see what I mean)
-            //            because conditionalEventHandler is not null - we don't come in here infinitely
-            prependEventHandler(viewer);
-        }
-
+        Collection<Focusable> focusables = getChildFocusables();
+        for (Focusable focusable : focusables) {
+            if (focusable != footerControls ) { /* footer control special case and handled above */
+                prependEventHandler(focusable);
+            }
+         }
+        
         return conditionalEventHandler;
     }
 
@@ -557,9 +559,11 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         } else {
             this.unHilite();
         }
-        this.viewer.setFocus(focus, eventBus);
-        if (footerControls != null) {
-            footerControls.setFocus(focus, eventBus);
+        
+        Collection<Focusable> focusables = getChildFocusables();
+        
+        for (Focusable focusable : focusables) {
+            focusable.setFocus(focus, eventBus);
         }
         updateCanvas(eventBus);
     }
@@ -662,24 +666,42 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
     }
 
     Collection<Focusable> childFocusables = null;
-    
+
+    // try very hard to build a list of child focusables from componentBeingViewed and FooterControls
     private Collection<Focusable> buildChildFocusablesIfNeeded() {
         if (childFocusables != null) {
             return childFocusables;
         }
+        
         if (componentBeingViewed instanceof FocusManager) {
-            childFocusables = Arrays.asList( new Focusable[] {(FocusManager)componentBeingViewed, footerControls} );
+            childFocusables = new ArrayList<Focusable>();
+            childFocusables.add((FocusManager)componentBeingViewed);
+            if (footerControls != null) {
+                childFocusables.add(footerControls);
+            }
             return childFocusables;
         }
         
-        FocusManager componentFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(componentBeingViewed, null);
+        FocusManager componentBeingViewedFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(componentBeingViewed, null);
         
-        if (componentFocusManager != null) {
-            childFocusables = Arrays.asList( new Focusable[] {componentFocusManager, footerControls} );
+        if (componentBeingViewedFocusManager != null) {
+            childFocusables = new ArrayList<Focusable>();
+            childFocusables.add(componentBeingViewedFocusManager);
+            if (footerControls != null) {
+                childFocusables.add(footerControls);
+            }
             return childFocusables;
         }
         
-        childFocusables = Arrays.asList( new Focusable[] {viewer, footerControls} );
+        childFocusables = new ArrayList<Focusable>();
+        
+        if (componentBeingViewed instanceof Focusable) {
+            childFocusables.add((Focusable)componentBeingViewed);
+            if (footerControls != null) {
+                childFocusables.add(footerControls);
+            }
+        }
+        
         return childFocusables;
 
     }

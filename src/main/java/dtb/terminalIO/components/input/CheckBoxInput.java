@@ -16,6 +16,7 @@ import dtb.terminalIO.events.RequestShowCursorEvent;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.focus.RequestFocusEvent;
 import dtb.terminalIO.events.focus.ToFocusable;
 import dtb.terminalIO.events.keyboard.KeyEvent;
 import dtb.terminalIO.events.keyboard.Keys;
@@ -24,7 +25,7 @@ import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.StringUtils;
 
-public class CheckBoxInput extends BoundedComponent<CheckBoxInput> implements HasValue<Boolean>, ParentContainer, ToFocusable   {
+public class CheckBoxInput extends BoundedComponent<CheckBoxInput> implements HasValue<Boolean>, ParentContainer, ToFocusable, Clickable   {
 
     private TextComponent textRenderer;
     
@@ -136,9 +137,31 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput> implements Ha
         eventBus.raiseEvent(new RequestHideCursorEvent(this));
     }
     
+    protected void checkBoxPressed(EventBus eventBus) {
+        boolean newValue = !  CheckBoxInput.this.getValue();  // toggle the value
+        CheckBoxInput.this.setValue(  newValue  );  
+        eventBus.raiseEvent(new HasValue.ValueChangedEvent<>(CheckBoxInput.this) );
+        eventBus.raiseEvent(new RequestUpdateCanvasEvent(this));
+    }
+    
+    
+    public void onClick(EventBus eventBus) {
+        if (!asFocusable().hasFocus()) {
+            // focus manager should have already put focus here - but just in case ..
+            eventBus.raiseEvent(new RequestFocusEvent(asFocusable()));
+        }
+        checkBoxPressed(eventBus);
+    }
+    
+    Focusable meAsFocusable;
+    
     public Focusable asFocusable() {
         
-        return new DefaultFocusableBehaviour.ComponentHiliterFocusableBehaviour(this) {
+        if (meAsFocusable != null) {
+            return meAsFocusable;
+        }
+        
+        meAsFocusable = new DefaultFocusableBehaviour.ComponentHiliterFocusableBehaviour(this) {
 
             @Override
             public void setFocus(boolean focus, EventBus eventBus) {
@@ -162,9 +185,7 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput> implements Ha
                 KeyEvent ke = (KeyEvent) te; 
                 
                 if (ke.isKeyStroke( Keys.ENTER_KEYSTROKE )  || ke.isKeyStroke(Keys.SPACE_KEYSTROKE)) {
-                    CheckBoxInput.this.setValue(  !  CheckBoxInput.this.getValue()  );  // toggle the value
-                    te.getEventBus().raiseEvent(new HasValue.ValueChangedEvent<>(CheckBoxInput.this) );
-                    te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(this));
+                    checkBoxPressed(te.getEventBus());
                 }
             }
 
@@ -183,6 +204,7 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput> implements Ha
             }
             
         };
+        return meAsFocusable;
     }
 
     @Override

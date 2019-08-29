@@ -25,7 +25,7 @@ import dtb.terminalIO.textsegments.ScreenLineSegmentsView;
  *
  */
 public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
-        implements Hiliter, Focusable, ParentContainer, GetComponentAtOffset {
+        implements  ParentContainer, GetComponentAtOffset {
 
     private IScreenLineSegmentsBuffer.Provider viewSource;
     private ScreenLineSegmentsView segmentsViewBuffer;
@@ -88,19 +88,6 @@ public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
         return segmentsViewBuffer.getOffsetIntoSource();
     }
 
-    @Override
-    public void hilite() {
-        if (viewSource instanceof Hiliter) {
-            ((Hiliter) viewSource).hilite();
-        }
-    }
-
-    @Override
-    public void unHilite() {
-        if (viewSource instanceof Hiliter) {
-            ((Hiliter) viewSource).unHilite();
-        }
-    }
 
     @SuppressWarnings("unchecked")
     @Override
@@ -146,34 +133,5 @@ public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
     }
     
     
-    @Override
-    public EventHandler canHandle(TerminalEvent<?> te) {
-        if (viewSource instanceof ConditionalEventHandler) {
-            return ((ConditionalEventHandler) viewSource).canHandle(te);
-        }
-        return null;
-    }
 
-    @Override
-    public void handle(TerminalEvent<?> te) {
-        if (viewSource instanceof EventHandler) {
-            ((EventHandler) viewSource).handle(te);
-        }
-    }
-
-    @Override
-    public boolean hasFocus() {
-        if (viewSource instanceof Focusable) {
-            return ((Focusable) viewSource).hasFocus();
-        }
-        return false;
-    }
-
-    @Override
-    public void setFocus(boolean focus, EventBus eventBus) {
-        if (viewSource instanceof Focusable) {
-            ((Focusable) viewSource).setFocus(focus, eventBus);
-            return;
-        }
-    }
 }

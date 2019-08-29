@@ -30,7 +30,7 @@ import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.StringUtils;
 
-public class Button extends BoundedComponent<Button> implements HasValue<Boolean>, Focusable, HasHotKey, ParentContainer , GetComponentAtOffset  {
+public class Button extends BoundedComponent<Button> implements HasValue<Boolean>, Focusable, HasHotKey, Clickable, ParentContainer , GetComponentAtOffset  {
 
     String buttonText;
     Composite container;

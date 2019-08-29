@@ -2,6 +2,7 @@ package dtb.terminalIO.events.mouse;
 
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.input.Button;
+import dtb.terminalIO.components.input.Clickable;
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.TerminalScreen;
@@ -70,7 +71,7 @@ public class MouseEventOrchestrator {
         // full console row/col coordinates of the mouse click..
         // then we need to map that row/col to the row/col within the application canvas - this is 
         // referred to as the applicationMousePosition ..  if the canvas is not full screen, then 
-        // applicationMousePosition will be different from console row/col position.
+        // resulting applicationMousePosition will be different from console row/col position.
 
         IS_Event_TYPE canHandleRAWMouseEventPredicate = new IS_Event_TYPE(TYPE.RAW_MOUSE);
 
@@ -221,18 +222,17 @@ public class MouseEventOrchestrator {
                 
                 if (focusComponent != null) {
                     eventBus.raiseEvent( new RequestFocusEvent(focusComponent));
-                    if (focusComponent instanceof Button) {
-                        Button clickable = (Button)focusComponent;
+                    if (componentClicked instanceof Clickable) {
+                        Clickable clickable = (Clickable)componentClicked;
+                        Focusable focusableClickable = focusComponent;
                         eventBus.appendEventHandler( new OnIdleEventEventHandler.OneTime((te2)-> {
-                            if (clickable.hasFocus()) {
+                            if (focusableClickable.hasFocus()) {
                                 clickable.onClick( te2.getEventBus() );
                             }
                         })); 
                     }
                 }
-                
             }
-
         };
         
         eventBus.appendEventHandler(appMouseToFocusableComponent);
