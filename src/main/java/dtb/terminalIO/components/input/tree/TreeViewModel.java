@@ -2,7 +2,7 @@ package dtb.terminalIO.components.input.tree;
 
 import java.util.Collection;
 
-import dtb.terminalIO.traverse.HasChildren;
+import dtb.terminalIO.traverse.HasChildrenAdapter;
 
 public interface TreeViewModel<T> {
     public T getRoot();
@@ -16,11 +16,20 @@ public interface TreeViewModel<T> {
     public static class HasChildrenTreeViewModel<NODE> implements TreeViewModel<NODE> {
         
         NODE root;
+        HasChildrenAdapter<NODE> hasChildrenAdapter;
+
+        public HasChildrenTreeViewModel(NODE root, HasChildrenAdapter<NODE> hasChildrenAdapter) {
+            super();
+            this.root = root;
+            this.hasChildrenAdapter = hasChildrenAdapter;
+        }
 
         public HasChildrenTreeViewModel(NODE root) {
             super();
             this.root = root;
+            this.hasChildrenAdapter = new HasChildrenAdapter.Simple<NODE>();
         }
+
 
         @Override
         public NODE getRoot() {
@@ -28,12 +37,7 @@ public interface TreeViewModel<T> {
         }
         
         private Collection<? extends NODE> getChildren(NODE parent) {
-            if ( ! (parent instanceof HasChildren<?>)) {
-                return null;
-            }
-            @SuppressWarnings("unchecked")
-            Collection<? extends NODE> children = ((HasChildren<NODE>)parent).getChildren();
-            return children;
+            return this.hasChildrenAdapter.asHasChildren(parent).getChildren();
         }
         
         
@@ -83,8 +87,6 @@ public interface TreeViewModel<T> {
             }
             return -1;
         }
-        
-        
     }
 
 }

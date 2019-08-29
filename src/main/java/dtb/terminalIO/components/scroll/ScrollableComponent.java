@@ -461,17 +461,6 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         // hookup footer controls event handling
         chainedEventHandler.appendEventHandler(new ConditionalEventHandler() {
             @Override
-            public void handle(TerminalEvent<?> te) {
-                if (footerControls == null) {
-                    return;
-                }
-                if (viewer.hasFocus()) {
-                    viewer.setFocus(false, te.getEventBus());
-                }
-                footerControls.handle(te);
-            }
-
-            @Override
             public EventHandler canHandle(TerminalEvent<?> te) {
                 if (footerControls == null) {
                     return null;
@@ -480,6 +469,16 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
                     return null;
                 }
                 return this;
+            }
+            @Override
+            public void handle(TerminalEvent<?> te) {
+                if (footerControls == null) {
+                    return;
+                }
+                if (viewer.hasFocus()) {  // TODO:  is this wise?
+                    viewer.setFocus(false, te.getEventBus());
+                }
+                footerControls.handle(te);
             }
         });
 
@@ -512,7 +511,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         if (viewer instanceof ConditionalEventHandler) {
             // careful .. doing a small recursion here ( follow prependEventHandler() to see what I mean)
             //            because conditionalEventHandler is not null - we don't come in here infinitely
-            prependEventHandler((ConditionalEventHandler) viewer);
+            prependEventHandler(viewer);
         }
 
         return conditionalEventHandler;
@@ -651,9 +650,10 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
                     String.valueOf(focusable) + " is not the footer control or the viewer for this scrollable");
         }
 
-        currentFocusable = focusable;
 
-        FocusManager.UTIL.setNewFocusable(currentFocusable, null, eventBus, null);
+        FocusManager.UTIL.setNewFocusable(focusable, currentFocusable, eventBus, null);
+
+        currentFocusable = focusable;
     }
 
     @Override

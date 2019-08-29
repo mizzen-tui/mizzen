@@ -16,7 +16,7 @@ import java.util.function.Consumer;
 public class Traverser<T> {
     
     /**
-     * Returned by visitor to indicate continue travers
+     * Returned by visitor to indicate continue traverse
      */
     public static int CONTINUE_TRAVERSE = 1;
 

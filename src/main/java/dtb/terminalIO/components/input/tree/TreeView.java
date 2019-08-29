@@ -27,6 +27,8 @@ public class TreeView<T> extends BoundedComponent<TextComponent> {
 
     public void setModel(TreeViewModel<T> model) {
         this.model = model;
+        this.clear();
+        this.markAsDirty();
     }
 
     private int drawNode(Color color, IScreenLineSegmentsBuffer segments, T node, int depth, int callCount,

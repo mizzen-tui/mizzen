@@ -247,10 +247,10 @@ public class ButtonBar extends Composite implements FocusManager {
 
         if (hotKey != null && handler != null) {
             
-            EventHandler componentHandler = handler;
+            EventHandler componentHotKeyHandler = handler;
             
            if (component instanceof Focusable) {
-               componentHandler = (te) -> {
+               componentHotKeyHandler = (te) -> {
                    setChildAsCurrentFocus(((Focusable) component), te.getEventBus());
                    //((Focusable) component).setFocus(true, te.getEventBus());
                    handler.handle(te);
@@ -260,7 +260,7 @@ public class ButtonBar extends Composite implements FocusManager {
            } else {
                if (component instanceof ToFocusable) {
                    Focusable focusable = ((ToFocusable) component).asFocusable();
-                   componentHandler = (te) -> {
+                   componentHotKeyHandler = (te) -> {
                        //focusable.setFocus(true, te.getEventBus());
                        setChildAsCurrentFocus(focusable, te.getEventBus());
                        handler.handle(te);
@@ -270,7 +270,7 @@ public class ButtonBar extends Composite implements FocusManager {
                }
            }
  
-           ConditionalEventHandler rememberHandlerSoWeCanRemove = addEventHandlerWithCanvasUpdate(new KeyInputEventHandler(hotKey, componentHandler ));
+           ConditionalEventHandler rememberHandlerSoWeCanRemove = addEventHandlerWithCanvasUpdate(new KeyInputEventHandler(hotKey, componentHotKeyHandler ));
         }
 
         horizontalPanel.add(component);

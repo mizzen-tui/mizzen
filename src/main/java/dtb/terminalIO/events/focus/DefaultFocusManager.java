@@ -321,12 +321,21 @@ public class DefaultFocusManager implements FocusManager, HasChildren<Focusable>
         });
     }
 
+    public void removeFocusable(Focusable focusable) {
+        if (!eventConsumers.contains(focusable)) {
+            throw new IllegalArgumentException("Trying to remove a focusable that is not in the list of focusables!");
+        }
+        if (current == focusable) {
+            current = null;
+        }
+        eventConsumers.remove(focusable);
+    }
+
     public void addFocusable(Focusable focusable) {
         if (eventConsumers.contains(focusable)) {
             throw new IllegalArgumentException("Duplicate add error: Focusable already added to this FocusManager.");
         }
         eventConsumers.add(focusable);
-        
     }
     
     public void addFocusable(Focusable focusable, EventBus eventBus) {
