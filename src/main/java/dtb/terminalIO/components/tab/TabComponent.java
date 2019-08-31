@@ -6,40 +6,45 @@ import dtb.terminalIO.components.HorizontalLine;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.VerticalLine;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.focus.ToFocusable;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.textsegments.CleanString;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 
-public class TabComponent extends BoundedComponent<TabComponent> {
+/**
+ * A TabComponent is part of the TabPanel.
+ * 
+ * It is one of the Tab 'button's rendered at the top of the TabPanel
+ * 
+ *     +-----------------+
+ *     | Sample Tab Text |
+ *     +---------------- +
+ * 
+ * @author dbalme
+ *
+ */
+public class TabComponent extends BoundedComponent<TabComponent> implements ToFocusable  {
 
-    //
-    // +-----------------+
-    // | Sample Tab Text |
-    // -+ +-
-
+    // implementation note:  Its important that TabComponenet implement ToFocusable and that
+    // ToFocusable points to its TabAction - which is a focusable managed by the TabPanel FocusManager
+    //  in this way when focus is requested of a TabComponent - it will properly travel up
+    //  the FocusManager tree because it will first switch to the TabAction ( which is in the tree)
+    
+    
     boolean active = false;
-    String tabText;
+    CleanString tabText;
     Color textActiveTabColor;
+    TabAction tabAction;
 
-    public TabComponent(Color color, String tabText, boolean active) {
+    TabComponent(Color color, String tabText, boolean active, TabAction tabAction) {
         super(color, new Dimension.Simple(3, tabText.length() + 4));
         this.active = active;
-        this.tabText = tabText;
+        this.tabText = new CleanString.Simple(tabText);
         this.textActiveTabColor = color.bold();
-    }
-
-    public TabComponent(Color color, Position position, String tabText, boolean active) {
-        super(color, position, new Dimension.Simple(3, tabText.length() + 4));
-        this.active = active;
-        this.tabText = tabText;
-    }
-
-    public TabComponent(Color color, Color textActiveTabColor, Position position, String tabText, boolean active) {
-        super(color, position, new Dimension.Simple(3, tabText.length() + 4));
-        this.active = active;
-        this.tabText = tabText;
-        this.textActiveTabColor = textActiveTabColor;
+        this.tabAction = tabAction;
     }
 
     @Override
@@ -91,13 +96,17 @@ public class TabComponent extends BoundedComponent<TabComponent> {
         this.markAsDirty();
     }
 
-    public String getTabText() {
+    public CleanString getTabText() {
         return tabText;
     }
 
     public void setTabText(String tabText) {
+        setTabText(new CleanString.Simple(tabText) );
+    }
+
+    public void setTabText(CleanString tabText) {
         Rectangle new_rect = new Rectangle.Simple(new Position.Simple(this.getRow(), this.getCol()),
-                new Dimension.Simple(3, tabText.length() + 4));
+                                                  new Dimension.Simple(3, tabText.length() + 4));
         this.setRectangle(new_rect);
         this.tabText = tabText;
         this.markAsDirty();
@@ -111,4 +120,8 @@ public class TabComponent extends BoundedComponent<TabComponent> {
         this.textActiveTabColor = colortextActiveTabColor;
     }
 
+    @Override
+    public Focusable asFocusable() {
+        return tabAction;
+    }
 }

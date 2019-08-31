@@ -509,7 +509,6 @@ public class Composite extends AbstractComponent<Composite>
         Position delta = this.offsetTo(row, col);
         bounds.moveDelta(delta.getRow(), delta.getCol());
         fullrecalcDim();
-
     }
 
     public void clearAndRemoveAllChildren() {

@@ -20,6 +20,11 @@ public interface CleanString {
         String alreadyCleanedString = getText().substring(beginIndex);
         return new KnownCleanString(alreadyCleanedString);
     }
+
+    default boolean contains(String s) {
+        return getText().contains(s);
+    }
+    
     
     default int length() {
         return getText().length();
@@ -39,6 +44,9 @@ public interface CleanString {
             return cleanedStr;
         }
 
+        public String toString() {
+            return getText();
+        }
     }
     
     
@@ -123,7 +131,11 @@ public interface CleanString {
             return cleanedStr;
         }
         
+        public String toString() {
+            return getText();
+        }
+        
     }
-    
+
 
 }

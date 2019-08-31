@@ -6,20 +6,23 @@ import java.util.function.Function;
 
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.ComponentInspector;
 import dtb.terminalIO.components.Composite;
+import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.VerticalPanel;
+import dtb.terminalIO.components.tab.TabAction;
 import dtb.terminalIO.components.tab.TabPanel;
-import dtb.terminalIO.components.tab.TabPanel.TabAction;
 import dtb.terminalIO.components.tab.TabPanel.TabContext;
 import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandlerContainer;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
-import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.examples.BarChartTest.BarChartDemo;
@@ -50,7 +53,7 @@ public class TabPanelTest {
                     demo.resize(tabContext.getBounds());
                 }
 
-                public void activateComponent(TerminalEvent<?> te, TabContext tabContext) {
+                public void activateComponent(EventBus eventBus, TabContext tabContext) {
                     if (!firstSetup) {
                         firstSetup = true;
                         demo.setUpDemo(demoInTabEventHandlers, tabContext.getBounds(),
@@ -59,15 +62,15 @@ public class TabPanelTest {
                     // setupDemo populated demoInTabEventHandlers with eventHandlers specific to the
                     // demo in the tab
                     // now let's copy those to the actual eventBus
-                    demoInTabEventHandlers.prependTo(te.getEventBus());
+                    demoInTabEventHandlers.prependTo(eventBus);
                 }
 
                 @Override
-                public void deactivateComponent(TerminalEvent<?> te, TabContext tabContext) {
+                public void deactivateComponent(EventBus eventBus, TabContext tabContext) {
                     // demo.tearDownDemo(te.getEventBus());
                     // on Tab deactivate, we will disable (remove) all eventHandlers related to the
                     // demo
-                    demoInTabEventHandlers.removeFrom(te.getEventBus());
+                    demoInTabEventHandlers.removeFrom(eventBus);
                 }
 
                 @Override
@@ -101,7 +104,8 @@ public class TabPanelTest {
         Dimension sizeOfTabPanelWindow = new Dimension() {
             @Override
             public int getWidth() {
-                return tabPanelDemoApp.getCanvas().getWidth() - 4;
+                int onethird = tabPanelDemoApp.getCanvas().getWidth() / 3;
+                return tabPanelDemoApp.getCanvas().getWidth() - onethird;
             }
 
             @Override
@@ -109,6 +113,19 @@ public class TabPanelTest {
                 return tabPanelDemoApp.getCanvas().getHeight() - 8;
             }
         };
+
+        Dimension sizeOfInspectorWindow = new Dimension() {
+            @Override
+            public int getWidth() {
+                return tabPanelDemoApp.getCanvas().getWidth() - (sizeOfTabPanelWindow.getWidth() + 3);
+            }
+
+            @Override
+            public int getHeight() {
+                return sizeOfTabPanelWindow.getHeight();
+            }
+        };
+
 
         Dimension sizeOfDebugWindow = new Dimension() {
             @Override
@@ -132,8 +149,22 @@ public class TabPanelTest {
         tb.setBorder(false);
         tb.setEmptyChar(emptyChar);
         tb.setEmptyColor(emptyColor);
-        vPanel.add(tb);
+        
+        HorizontalPanel hp = new HorizontalPanel();
+        hp.add(tb);
+        
+        vPanel.add(hp);
 
+        DefaultFocusManager focusManager = new DefaultFocusManager(Keys.LEFT_KEYSTROKE, Keys.RIGHT_KEYSTROKE);
+        
+        ComponentInspector inspector = new ComponentInspector(Colors.BIGre, sizeOfInspectorWindow, vPanel, focusManager);
+        
+        hp.add(inspector);
+        
+        focusManager.addFocusable(tb);
+        focusManager.addFocusable(inspector);
+        
+        
         TextComponent debugSTATs = new TextComponent(Colors.IYel, "");
         Composite debugWindow = new Composite(Colors.IGre).setBounds(sizeOfDebugWindow);
         debugWindow.setTitle(new FGBGColors(Colors.BYel, Colors.On_Gre), "DEBUG");
@@ -142,6 +173,8 @@ public class TabPanelTest {
 
         AtomicInteger counter = new AtomicInteger(0);
 
+        tabPanelDemoApp.enableMouseHandling();
+        
         tabPanelDemoApp.setUpdateCanvas((tApp) -> {
             if (!topFrame.isDirty()) {
                 return false; // false means no GUI change to update
@@ -183,12 +216,12 @@ public class TabPanelTest {
             }
 
             @Override
-            public void activateComponent(TerminalEvent<?> te, TabContext tabCtx) {
+            public void activateComponent(EventBus eventBus, TabContext tabCtx) {
                 resize(tabCtx);
             }
 
             @Override
-            public void deactivateComponent(TerminalEvent<?> te, TabContext tabCtx) {
+            public void deactivateComponent(EventBus eventBus, TabContext tabCtx) {
                 // nothing to do ..
             }
 
@@ -220,14 +253,23 @@ public class TabPanelTest {
             tApp.getCanvas().setSize(size.getHeight(), size.getWidth());
             tApp.getCanvas().clearCanvas();
             tb.resize(sizeOfTabPanelWindow);
+            inspector.resize(sizeOfInspectorWindow);
+            hp.fullrecalcDim();
+            vPanel.fullrecalcDim();
             debugWindow.resize(sizeOfDebugWindow);
         });
 
+        tabPanelDemoApp.setMainApplicationPanel(topFrame);
+        tabPanelDemoApp.confirmOnExit();
+        
         tabPanelDemoApp.setOnReadyStart((tApp) -> {
-            tApp.setMainApplicationPanel(topFrame);
-            tApp.confirmOnExit();
 
-            tApp.getEventBus().appendEventHandler(tb);
+            tApp.getEventBus().appendEventHandler(inspector.refreshEventHandler());
+
+            tApp.getEventBus().appendEventHandler(inspector.toggleViewEventHandler());
+            
+            
+            tApp.getEventBus().appendEventHandler(focusManager);
 
             // select first tab once eventBus is rdy to go
             tApp.getEventBus().appendEventHandler(
@@ -243,7 +285,8 @@ public class TabPanelTest {
         
                         te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(tApp));
             }));
-
+            
+            
         });
 
         tabPanelDemoApp.start();

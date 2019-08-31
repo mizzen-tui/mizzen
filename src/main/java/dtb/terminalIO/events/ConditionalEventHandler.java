@@ -25,6 +25,16 @@ public interface ConditionalEventHandler extends EventHandler {
         };
     }
     
+    public static final ConditionalEventHandler NOOP = new ConditionalEventHandler() {
+        @Override
+        public void handle(TerminalEvent<?> te) {
+            // do thing
+        }
+        @Override
+        public EventHandler canHandle(TerminalEvent<?> te) {
+            return null;
+        }
+    };
     
     class Impl implements ConditionalEventHandler {
     

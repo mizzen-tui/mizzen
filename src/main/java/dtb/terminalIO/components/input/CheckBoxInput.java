@@ -12,7 +12,6 @@ import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.RequestHideCursorEvent;
-import dtb.terminalIO.events.RequestShowCursorEvent;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.Focusable;
@@ -25,12 +24,13 @@ import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.StringUtils;
 
-public class CheckBoxInput extends BoundedComponent<CheckBoxInput> implements HasValue<Boolean>, ParentContainer, ToFocusable, Clickable   {
+public class CheckBoxInput extends BoundedComponent<CheckBoxInput> 
+             implements HasValue<Boolean>, ParentContainer, ToFocusable, Clickable   {
 
     private TextComponent textRenderer;
     
     boolean value = false;
-    
+
     public CheckBoxInput(Color color, int width) {
         super(color, new Dimension.Simple(1, width));
         init();
@@ -211,6 +211,5 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput> implements Ha
     public Collection<? extends Component<?>> getChildren() {
         return Collections.singleton(this.textRenderer);
     }
-    
-    
+
 }

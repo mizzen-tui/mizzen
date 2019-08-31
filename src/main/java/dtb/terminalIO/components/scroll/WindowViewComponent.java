@@ -21,7 +21,7 @@ import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegmentsView;
 
 /**
- * Used exclusively by the ScrollableComponent.  It is the View into the content.
+ * Used exclusively by the ScrollableComponent.  It is the View into the scrollable content.
  *
  */
 public class WindowViewComponent extends BoundedComponent<WindowViewComponent>

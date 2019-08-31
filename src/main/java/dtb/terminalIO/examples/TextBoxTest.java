@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.ComponentInspector;
 import dtb.terminalIO.components.ComponentWithFocusManager;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.HorizontalPanel;
@@ -99,12 +100,11 @@ public class TextBoxTest {
 
         topPanel.add(2,1, horizontalPanel);
         
-        TreeView<Component<?>>  tvComponents = new TreeView<Component<?>>(Colors.IBlu, new Dimension.Simple(90,60), (node)->node.getClass().getSimpleName()  );
-        tvComponents.setModel( new HasChildrenTreeViewModel<Component<?>>(topPanel));
+//        TreeView<Component<?>>  tvComponents = new TreeView<Component<?>>(Colors.IBlu, new Dimension.Simple(90,60), (node)->node.getClass().getSimpleName()  );
+//        tvComponents.setModel( new HasChildrenTreeViewModel<Component<?>>(topPanel));
+//        
+//        ScrollableComponent scrollingTreeview = new ScrollableComponent(Colors.BIGre, new Dimension.Simple(20,40), new BorderedComponent(tvComponents));
         
-        ScrollableComponent scrollingTreeview = new ScrollableComponent(Colors.BIGre, new Dimension.Simple(20,40), new BorderedComponent(tvComponents));
-        
-        topPanel.add(2, 73, scrollingTreeview);
         
         
         //ComponentWithFocusManager sc_1_component = new ComponentWithFocusManager(panel1);
@@ -222,6 +222,11 @@ public class TextBoxTest {
         
         focusManager.setNavKeysFirst(false);
         
+        ComponentInspector componentInspector = new ComponentInspector(Colors.BIGre, new Dimension.Simple(20,40), topPanel, focusManager);
+        topPanel.add(2, 73, componentInspector);
+
+        
+        
         DefaultFocusManager focusManager1 = new DefaultFocusManager().setNavKeysFirst(false);
         DefaultFocusManager focusManager2 = new DefaultFocusManager().setNavKeysFirst(false);
 
@@ -253,50 +258,50 @@ public class TextBoxTest {
         
         focusManager.addFocusable(focusManager2, eventBus);
         
-        focusManager.addFocusable(scrollingTreeview);
+        focusManager.addFocusable(componentInspector);
 
+//        
+//        
+//        
+//        tvComponents.setModel( new HasChildrenTreeViewModel<Component<?>>(topPanel));
+//
+//        TreeView<Focusable> tvFocusable = new TreeView<Focusable>(tvComponents.getColor(), 
+//                                                                  (Dimension)tvComponents, 
+//                                                                  (node)->node.hasFocus()? new FGBGColors(Colors.BIBlu, Colors.On_Yel).asString()+ node.getClass().getSimpleName() + ControlCode.RCol.asString()
+//                                                                                         : node.getClass().getSimpleName());
+//        
+//        tvFocusable.setModel( new HasChildrenTreeViewModel<Focusable>(focusManager, new FocusManagerHasChildrenAdapter())  );
+//        
+//        
+//        //tvComponents.setModel( new HasChildrenTreeViewModel<Object>(focusManager) );
+//        ScrollableComponent[] scrollingArea = new ScrollableComponent[] {scrollingTreeview};
+//        boolean[] flag = new boolean[] {true};
+//        
+//        eventBus.appendEventHandler( new KeyInputEventHandler(Keys.CTRL_T_KEYSTROKE, (te)-> {
+//            //ScrollableComponent scrollingTreeview = new ScrollableComponent(Colors.BIGre, new Dimension.Simple(20,40), new BorderedComponent(tvComponents));
+//            topPanel.remove(scrollingArea[0]);
+//            // todo - remove scrollable from master focusmanager
+//            focusManager.removeFocusable(scrollingArea[0]);
+//            flag[0] = !flag[0];
+//            if (flag[0]) {
+//                tvComponents.setParentContainer(null);
+//                
+//                scrollingArea[0] = new ScrollableComponent(Colors.BIGre, new Dimension.Simple(20,40), new BorderedComponent(tvComponents));
+//            } else {
+//                tvFocusable.setParentContainer(null);
+//                scrollingArea[0] = new ScrollableComponent(Colors.BIGre, new Dimension.Simple(20,40), new BorderedComponent(tvFocusable));
+//            }
+//            // todo add scrollable to master focusmanager
+//            topPanel.add(2, 73, scrollingArea[0]);
+//            focusManager.addFocusable(scrollingArea[0], te.getEventBus());
+//            renderComponents.run();
+//        }));
         
-        
-        
-        tvComponents.setModel( new HasChildrenTreeViewModel<Component<?>>(topPanel));
-
-        TreeView<Focusable> tvFocusable = new TreeView<Focusable>(tvComponents.getColor(), 
-                                                                  (Dimension)tvComponents, 
-                                                                  (node)->node.hasFocus()? new FGBGColors(Colors.BIBlu, Colors.On_Yel).asString()+ node.getClass().getSimpleName() + ControlCode.RCol.asString()
-                                                                                         : node.getClass().getSimpleName());
-        
-        tvFocusable.setModel( new HasChildrenTreeViewModel<Focusable>(focusManager, new FocusManagerHasChildrenAdapter())  );
-        
-        
-        //tvComponents.setModel( new HasChildrenTreeViewModel<Object>(focusManager) );
-        ScrollableComponent[] scrollingArea = new ScrollableComponent[] {scrollingTreeview};
-        boolean[] flag = new boolean[] {true};
-        
-        eventBus.appendEventHandler( new KeyInputEventHandler(Keys.CTRL_T_KEYSTROKE, (te)-> {
-            //ScrollableComponent scrollingTreeview = new ScrollableComponent(Colors.BIGre, new Dimension.Simple(20,40), new BorderedComponent(tvComponents));
-            topPanel.remove(scrollingArea[0]);
-            // todo - remove scrollable from master focusmanager
-            focusManager.removeFocusable(scrollingArea[0]);
-            flag[0] = !flag[0];
-            if (flag[0]) {
-                tvComponents.setParentContainer(null);
-                
-                scrollingArea[0] = new ScrollableComponent(Colors.BIGre, new Dimension.Simple(20,40), new BorderedComponent(tvComponents));
-            } else {
-                tvFocusable.setParentContainer(null);
-                scrollingArea[0] = new ScrollableComponent(Colors.BIGre, new Dimension.Simple(20,40), new BorderedComponent(tvFocusable));
-            }
-            // todo add scrollable to master focusmanager
-            topPanel.add(2, 73, scrollingArea[0]);
-            focusManager.addFocusable(scrollingArea[0], te.getEventBus());
-            renderComponents.run();
-        }));
-        
-        eventBus.appendEventHandler( new KeyInputEventHandler(Keys.CTRL_R_KEYSTROKE, (te)-> {
-            tvFocusable.markAsDirty();
-            tvComponents.markAsDirty();
-            renderComponents.run();
-        }));
+//        eventBus.appendEventHandler( new KeyInputEventHandler(Keys.CTRL_R_KEYSTROKE, (te)-> {
+//            tvFocusable.markAsDirty();
+//            tvComponents.markAsDirty();
+//            renderComponents.run();
+//        }));
         
         eventBus.appendEventHandler(focusManager);
         

@@ -1,40 +1,42 @@
 package dtb.terminalIO.components.tab;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
+import java.util.Collections;
 
+import dtb.terminalIO.components.AbstractComponent;
 import dtb.terminalIO.components.BlockChars;
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.CanResize;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
+import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.ConditionalEventHandler;
+import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.EventHandlerContainer;
 import dtb.terminalIO.events.TerminalEvent;
-import dtb.terminalIO.events.keyboard.HasHotKey;
+import dtb.terminalIO.events.focus.DefaultFocusManager;
+import dtb.terminalIO.events.focus.FocusManager;
+import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
+import dtb.terminalIO.events.mouse.GetComponentAtOffset;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 
-public class TabPanel extends Composite implements CanResize, ConditionalEventHandler {
+public class TabPanel extends AbstractComponent<TabPanel> 
+                      implements CanResize, FocusManager, ParentContainer, GetComponentAtOffset {
 
-    List<TabAction> tabActions = new ArrayList<TabAction>();
+    private DefaultFocusManager focusManager;
 
-    private ChainedEventHandler chainedEventHandler;
-    private ConditionalEventHandler chainedEventHandlerAsConditionalEventHandler;
-
-    TabAction active_tabAction = null;
-
-    TabContext tabContext;
-
+    private Composite mainPanel;
     private BorderedComponent workAreaBorder;
     private Composite workArea;
 
@@ -42,21 +44,43 @@ public class TabPanel extends Composite implements CanResize, ConditionalEventHa
 
     private String prevNextHelp = "";
 
+    private ChainedEventHandler chainedEventHandler;
+
     public TabPanel(Color color, Dimension bounds) {
         super(color);
-        this.setBounds(bounds);
+        mainPanel = new Composite(color).setBounds(bounds);
         workArea = new Composite().setBounds(new Dimension.Simple(bounds.getHeight()-4, bounds.getWidth()-2));
         workAreaBorder = new BorderedComponent(color, workArea);
-        this.add(new Position.Simple(2, 0), workAreaBorder);
+        this.mainPanel.add(new Position.Simple(2, 0), workAreaBorder);
+        this.mainPanel.setParentContainer(this);
     }
 
     public TabPanel(Color color, Color textActiveTabColor, Dimension bounds) {
         this(color, bounds);
         this.textActiveTabColor = textActiveTabColor;
     }
+    
+    public TabPanel setBorder(boolean hasBorder) {
+        this.mainPanel.setBorder(hasBorder);
+        this.markAsDirty();
+        return this;
+    }
+
+    @Override
+    public Position getPositionRelativeToParent(Component<?> child) {
+        if (child == this.mainPanel) {
+            return Position.ZERO;
+        }
+        return null;
+    }
+    
+    @Override
+    public void childResized(Component<?> child) {
+        this.markAsDirty();
+    }
 
     public void resize(Dimension size) {
-        super.resize(size);
+        this.mainPanel.resize(size);
         this.workAreaBorder.resize(new Dimension.Simple(size.getHeight()-2, size.getWidth()));
         this.workArea.resize(new Dimension.Simple(workAreaBorder.getHeight() - 2, workAreaBorder.getWidth() - 2));
 
@@ -68,21 +92,73 @@ public class TabPanel extends Composite implements CanResize, ConditionalEventHa
         drawHelpText();
     }
 
-    private void buildEventHandler() {
+    private void buildFocusManager() {
+        
         chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
-        chainedEventHandlerAsConditionalEventHandler = chainedEventHandler.asConditionalEventHandler();
-
-        appendEventHandler(new KeyInputEventHandler(Keys.SHIFT_TAB_KEYSTROKE, (te) -> selectPrevAsActive(te)));
-
-        appendEventHandler(new KeyInputEventHandler(Keys.TAB_KEYSTROKE, (te) -> selectNextAsActive(te)));
+        ConditionalEventHandler chainedEventHandlerAsConditionalEventHandler = chainedEventHandler.asConditionalEventHandler();
+        focusManager = new DefaultFocusManager(Keys.SHIFT_TAB_KEYSTROKE, Keys.TAB_KEYSTROKE) {
+            
+            @Override
+            public void setChildAsCurrentFocus(Focusable focusable, EventBus eventBus) {
+                // before?
+                
+                Focusable currentChildFocus = this.getCurrentChildFocus();
+                if (currentChildFocus != null && currentChildFocus instanceof TabAction) {
+                    TabAction curTabAction = (TabAction) currentChildFocus;
+                    curTabAction.deactivate(eventBus, getTabContext());
+                    TabPanel.this.workArea.remove(curTabAction.getComponent(getTabContext()));
+                }
+                /**/
+                
+                if (focusable != null && focusable instanceof TabAction) {
+                    TabAction newTabAction =  (TabAction) focusable;
+                    newTabAction.activate(eventBus, getTabContext()); 
+                    Component<?> newActiveComponent = newTabAction.getComponent(getTabContext());
+                    if (newActiveComponent == null) {
+                        throw new NullPointerException("tabAction.getComponent() returned null - cannot render!");
+                    }
+                    workArea.add(newActiveComponent);
+                }
+                
+                // some of this might be redundant - because of the activity above
+                super.setChildAsCurrentFocus(focusable, eventBus);
+            }
+            
+            @Override
+            public EventHandler canHandle(TerminalEvent<?> te) {
+                if (super.canHandle(te) != null) {
+                    return this;
+                }
+                if (chainedEventHandlerAsConditionalEventHandler.canHandle(te) != null) {
+                    return this;
+                }
+                return null;
+            }
+            
+            @Override
+            public void handle(TerminalEvent<?> te) {
+                if (super.canHandle(te)  == this) {
+                    super.handle(te);
+                }
+                chainedEventHandlerAsConditionalEventHandler.handle(te);
+            }
+        };
+        
 
     }
 
     private EventHandlerContainer getEventHandlerContainer() {
         if (chainedEventHandler == null) {
-            buildEventHandler();
+            buildFocusManager();
         }
         return this.chainedEventHandler;
+    }
+    
+    private DefaultFocusManager getFocusManager() {
+        if (focusManager == null) {
+            buildFocusManager();
+        }
+        return focusManager;
     }
 
     private void appendEventHandler(ConditionalEventHandler eventHandler) {
@@ -91,27 +167,30 @@ public class TabPanel extends Composite implements CanResize, ConditionalEventHa
 
     @Override
     public void handle(TerminalEvent<?> te) {
-        if (chainedEventHandlerAsConditionalEventHandler == null) {
+        if (focusManager == null) {
             return;
         }
-        chainedEventHandlerAsConditionalEventHandler.handle(te);
+        focusManager.handle(te);
     }
 
     @Override
     public EventHandler canHandle(TerminalEvent<?> te) {
-        if (chainedEventHandlerAsConditionalEventHandler == null) {
+        if (focusManager == null) {
             return null;
         }
-        if (chainedEventHandlerAsConditionalEventHandler.canHandle(te) == null) {
+        if (focusManager.canHandle(te) == null) {
             return null;
         }
         return this;
     }
 
     TabAction findTabActionByHotKey(KeyStroke hotKey) {
-        for (TabAction ta : tabActions) {
-            if (hotKey.equals(ta.getHotKey())) {
-                return ta;
+        for (Focusable focusable : getChildFocusables()) {
+            if (focusable instanceof TabAction) {
+                KeyStroke tabActionHotKey = ((TabAction) focusable).getHotKey();
+                if ( hotKey.equals(tabActionHotKey)) {
+                    return (TabAction) focusable;
+                }
             }
         }
         return null;
@@ -121,8 +200,20 @@ public class TabPanel extends Composite implements CanResize, ConditionalEventHa
         return findTabActionByHotKey(ta.getHotKey());
     }
 
+    public void selectAsActive(TerminalEvent<?> te, KeyStroke hotKey) {
+        TabAction tabAction = findTabActionByHotKey(hotKey);
+        if (tabAction != null) {
+            getFocusManager().setChildAsCurrentFocus(tabAction, te.getEventBus());
+        }
+    }
+    
+    
     TabAction getActiveTabAction() {
-        return active_tabAction;
+        Focusable focusable = getFocusManager().getCurrentChildFocus();
+        if (focusable != null && focusable instanceof TabAction) {
+            return (TabAction) focusable;
+        }
+        return null;
     }
 
     int offsetRow = 0;
@@ -163,11 +254,11 @@ public class TabPanel extends Composite implements CanResize, ConditionalEventHa
 
         if (this.tcHelp == null) {
             this.tcHelp = new TextComponent(workAreaBorder.getColor(), prevNextHelp);
-            this.add(new Position.Simple(2, 0).offsetAdd(workAreaBorder).offsetAdd(workAreaBorder.getBottomMostRow(),
-                    workAreaBorder.getRightMostCol() - prevNextHelpLen - 2), tcHelp);
+            this.mainPanel.add(new Position.Simple(2, 0).offsetAdd(workAreaBorder).offsetAdd(workAreaBorder.getBottomMostRow(),
+                               workAreaBorder.getRightMostCol() - prevNextHelpLen - 2), tcHelp);
         } else {
-            this.moveChildTo(new Position.Simple(2, 0).offsetAdd(workAreaBorder).offsetAdd(
-                    workAreaBorder.getBottomMostRow(), workAreaBorder.getRightMostCol() - prevNextHelpLen - 2), tcHelp);
+            this.mainPanel.moveChildTo(new Position.Simple(2, 0).offsetAdd(workAreaBorder).offsetAdd(
+                                       workAreaBorder.getBottomMostRow(), workAreaBorder.getRightMostCol() - prevNextHelpLen - 2), tcHelp);
         }
     }
 
@@ -192,13 +283,17 @@ public class TabPanel extends Composite implements CanResize, ConditionalEventHa
 
         buildFooterHelpIfNeeded();
 
-        tabActions.add(tabAction);
+        getFocusManager().addFocusable(tabAction);
+        
+        // tabActions.add(tabAction);
 
-        this.add(offsetRow, offsetCol, tabAction.getTabComponent());
+        // why am I not using workArea ( is it needed? )
+        this.mainPanel.add(offsetRow, offsetCol, tabAction.getTabComponent());
 
         offsetCol += tabAction.getTabComponent().getWidth();
 
-        appendEventHandler(new KeyInputEventHandler(tabAction.getHotKey(), (te) -> selectAsActive(te, tabAction)));
+        // appendEventHandler(new KeyInputEventHandler(tabAction.getHotKey(), (te) -> selectAsActive(te, tabAction)));
+        appendEventHandler(new KeyInputEventHandler(tabAction.getHotKey(), (te) -> getFocusManager().setChildAsCurrentFocus(tabAction, te.getEventBus())));
 
     }
 
@@ -218,66 +313,6 @@ public class TabPanel extends Composite implements CanResize, ConditionalEventHa
         };
     }
 
-    public void deactivateActive(TerminalEvent<?> te) {
-        if (active_tabAction == null) {
-            return;
-        }
-
-        active_tabAction.deactivate(te, getTabContext());
-
-        this.workArea.remove(active_tabAction.getComponent(getTabContext()));
-
-        active_tabAction = null;
-
-    }
-
-    public void selectAsActive(TerminalEvent<?> te, TabAction tabAction) {
-        TabAction ta = findTabAction(tabAction);
-        if (ta == null || ta != tabAction) {
-            throw new IllegalStateException("Error in selectAsActive():  ta == null || ta != tabAction");
-        }
-        deactivateActive(te);
-        active_tabAction = ta;
-
-        active_tabAction.activate(te, getTabContext());
-
-        Component<?> newActiveComponent = active_tabAction.getComponent(getTabContext());
-        if (newActiveComponent == null) {
-            throw new NullPointerException("active_tabAction.getComponent() returned null - cannot render!");
-        }
-
-        workArea.add(active_tabAction.getComponent(getTabContext()));
-
-    }
-
-    public void selectAsActive(TerminalEvent<?> te, KeyStroke hotKey) {
-        selectAsActive(te, findTabActionByHotKey(hotKey));
-    }
-
-    public void selectNextAsActive(TerminalEvent<?> te) {
-        selectAsActive(te, getNextTab(active_tabAction));
-    }
-
-    public void selectPrevAsActive(TerminalEvent<?> te) {
-        selectAsActive(te, getPrevTab(active_tabAction));
-    }
-
-    protected TabAction getNextTab(TabAction tabAction) {
-        if (tabAction == null) {
-            return tabActions.size() > 0 ? tabActions.get(0) : null;
-        }
-        int idx = tabActions.indexOf(tabAction);
-        return idx >= tabActions.size() - 1 ? tabActions.get(0) : tabActions.get(idx + 1);
-    }
-
-    protected TabAction getPrevTab(TabAction tabAction) {
-        if (tabAction == null) {
-            return tabActions.size() > 0 ? tabActions.get(tabActions.size() - 1) : null;
-        }
-        int idx = tabActions.indexOf(tabAction);
-        return idx <= 0 ? tabActions.get(tabActions.size() - 1) : tabActions.get(idx - 1);
-    }
-
     public static interface TabContext {
 
         Color getColor();
@@ -286,53 +321,74 @@ public class TabPanel extends Composite implements CanResize, ConditionalEventHa
 
     }
 
-    public static abstract class TabAction implements HasHotKey {
+    @Override
+    public boolean hasFocus() {
+        return focusManager.hasFocus();
+    }
 
-        KeyStroke hotKey;
-        String tabText;
-        TabComponent tabComponent;
+    @Override
+    public void setFocus(boolean focus, EventBus eventBus) {
+        focusManager.setFocus(focus, eventBus);
+    }
 
-        public TabAction(KeyStroke hotKey, String tabText) {
-            this.hotKey = hotKey;
-            this.tabText = tabText;
-            this.tabComponent = new TabComponent(ControlCode.DEFAULT_COLOR, tabText, false);
-        }
+    @Override
+    public int getCol() {
+        return this.mainPanel.getCol();
+    }
 
-        public abstract Component<?> getComponent(TabContext tabContext);
+    @Override
+    public int getRow() {
+        return this.mainPanel.getRow();
+    }
 
-        abstract public void resize(TabContext tabContext);
+    @Override
+    public int getWidth() {
+        return this.mainPanel.getWidth();
+    }
 
-        final void activate(TerminalEvent<?> te, TabContext tabContext) {
-            getTabComponent().setActive(true);
-            activateComponent(te, tabContext);
-            resize(tabContext);
-        }
+    @Override
+    public int getHeight() {
+        return this.mainPanel.getHeight();
+    }
 
-        TabComponent getTabComponent() {
-            return tabComponent;
-        }
+    @Override
+    public void moveTo(int row, int col) {
+        this.mainPanel.moveTo(row, col);
+    }
 
-        final void deactivate(TerminalEvent<?> te, TabContext tabContext) {
-            getTabComponent().setActive(false);
-            deactivateComponent(te, tabContext);
-        }
+    @Override
+    public void setChildAsCurrentFocus(Focusable focusableChild, EventBus eventBus) {
+        getFocusManager().setChildAsCurrentFocus(focusableChild, eventBus);
+    }
 
-        public KeyStroke getHotKey() {
-            return hotKey;
-        }
+    @Override
+    public Focusable getCurrentChildFocus() {
+        return getFocusManager().getCurrentChildFocus();
+    }
 
-        public Color getTextActiveTabColor() {
-            return tabComponent.getTextActiveTabColor();
-        }
+    @Override
+    public Collection<Focusable> getChildFocusables() {
+        return getFocusManager().getChildFocusables();
+    }
 
-        public void setTextActiveTabColor(Color textActiveTabColor) {
-            this.tabComponent.setTextActiveTabColor(textActiveTabColor);
-        }
+    @Override
+    protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
+        segments.merge(this.mainPanel.getSegmentsBuffer());
+    }
 
-        abstract public void activateComponent(TerminalEvent<?> te, TabContext tabContext);
+    @Override
+    protected Rectangle getRectangleForClearAndFill() {
+        return mainPanel;
+    }
+    
+    @Override
+    public Collection<? extends Component<?>> getChildren() {
+        return Collections.singleton(this.mainPanel);
+    }
 
-        abstract public void deactivateComponent(TerminalEvent<?> te, TabContext tabContext);
-
+    @Override
+    public Component<?> getComponentAtOffset(Position offset) {
+        return this.mainPanel.getComponentAtOffset(offset);
     }
 
 }
