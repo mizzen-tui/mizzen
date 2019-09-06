@@ -35,7 +35,6 @@ public interface FocusManager extends Focusable {
      * Sets current event handler focus to focusableChild
      */
     public void setChildAsCurrentFocus(Focusable focusableChild, EventBus eventBus);
-    
 
     /**
      * @return child focusable that has current focus. null if none defined.
@@ -123,7 +122,6 @@ public interface FocusManager extends Focusable {
         }
         
 
-        
         private static void addFocusableChildren(List<Focusable> focusableContainer, Object component) {
             if (component instanceof Focusable) {
                 focusableContainer.add((Focusable)component);
@@ -161,12 +159,12 @@ public interface FocusManager extends Focusable {
             if (focusables.size()==1 && focusables.get(0) instanceof FocusManager) {
                 return (FocusManager) focusables.get(0);
             }
-            
+
             DefaultFocusManager focusManager = new DefaultFocusManager();
             for (Focusable focusable : focusables) {
                 focusManager.addFocusable(focusable, eventBus);
             }
-            
+
             return focusManager;
         }
 
@@ -285,6 +283,5 @@ public interface FocusManager extends Focusable {
 
         }
     }
-    
 
 }

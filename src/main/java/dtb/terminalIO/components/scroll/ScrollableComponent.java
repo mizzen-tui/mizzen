@@ -1,7 +1,6 @@
 package dtb.terminalIO.components.scroll;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 
 import dtb.terminalIO.components.BorderedComponent;
@@ -17,6 +16,7 @@ import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.EventHandlerContainer;
+import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.OnRequestScrollToViewEventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
@@ -209,7 +209,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         footerControls.removeChildren();
 
         if (footerTextComponent != null) {
-            footerControls.addComponent(footerTextComponent, null, null);
+            footerControls.addComponent(footerTextComponent);
         }
 
         addFooterButton("^",    Keys.UP_KEYSTROKE,    (te) -> ScrollableComponent.this.up(1));
@@ -583,7 +583,9 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
             ScrollableComponent.this.borderedComponent.hilite();
             // copy color from border
             vScrollBar.setColor(borderedComponent.getBorderColor());
+            vScrollBar.hilite();
             hScrollBar.setColor(borderedComponent.getBorderColor());
+            hScrollBar.hilite();
 
             if (footerControls != null) {
                 footerControls.hilite();
@@ -596,7 +598,9 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         public void unHilite() {
             ScrollableComponent.this.borderedComponent.unHilite();
             vScrollBar.setColor(borderedComponent.getBorderColor());
+            vScrollBar.unHilite();
             hScrollBar.setColor(borderedComponent.getBorderColor());
+            hScrollBar.unHilite();
             if (footerControls != null) {
                 footerControls.unHilite();
             }
@@ -631,7 +635,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
             throw new IllegalStateException("FooterControls object is null! Cannot add button control yet!");
         }
 
-        footerControls.addComponent(componentForButtonBar, hotKey, handler);
+     //   footerControls.addComponent(componentForButtonBar, hotKey, handler);
 
         positionFooterText();
 

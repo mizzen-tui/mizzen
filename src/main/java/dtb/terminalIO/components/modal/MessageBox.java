@@ -94,10 +94,10 @@ public class MessageBox {
                                      ChildComponentManager<?> parentPanel,
                                      String message,
                                      KeyStroke onPressedKeyStroke,
-                                     EventHandler  onPressed) {
+                                     EventHandler onPressed) {
 
         Color dialogColor = new FGBGColors(Colors.Bla,Colors.On_Whi);
-        dialogColor.setBoldTransform((c)-> Colors.BIRed);
+        dialogColor.setBoldTransform((c)-> new FGBGColors(Colors.BIWhi, Colors.On_Bla));
         dialogColor.setInvertTransform((c)-> new FGBGColors(Colors.BIWhi, Colors.On_Bla));
 
         Composite dialog = new Composite( dialogColor );
@@ -229,7 +229,7 @@ public class MessageBox {
                                        EventHandler onYesAction) {
 
         Color dialogColor = new FGBGColors(Colors.Bla,Colors.On_Whi);
-        dialogColor.setBoldTransform((c)-> Colors.BIRed);
+        dialogColor.setBoldTransform((c)-> new FGBGColors(Colors.BIWhi, Colors.On_Bla));
         dialogColor.setInvertTransform((c)-> new FGBGColors(Colors.BIWhi, Colors.On_Bla));
         
         Composite dialog = new Composite( dialogColor );
@@ -265,16 +265,19 @@ public class MessageBox {
         buttons.setEmptyColor(dialogColor);
         buttons.setNoBorderChars();
         buttons.setHorizontalSpacer(3);
-        Button yes = buttons.addButton("Yes", null, null).setBorder(true);
-        buttons.addButton("No", null, null).setBorder(true);
+        Button yes = new Button(dialog.getColor(), "Yes").setBorder(true);
+        buttons.addComponent(yes);
+        //buttons.addButton("No", null, null).setBorder(true);
+        Button no = new Button(dialog.getColor(),"No").setBorder(true);
+        buttons.addComponent(no);
         
         int buttonPositionCol = (dialog.getWidth() - buttons.getWidth()) / 2 ;
         if (buttonPositionCol < 0) {
             buttonPositionCol = messageTextPosition.getCol();
         }
-        
+
         Position positionOfButtons = messageTextPosition.offsetAdd(new Position.Simple(messagePanel.getHeight()+2,buttonPositionCol));
-        
+
         dialog.add( positionOfButtons, buttons );
 
         Position positionOfDialog = Position.ZERO;
@@ -288,28 +291,28 @@ public class MessageBox {
 
         //  -- bind dialog events to modalDialogEvents which in 
         //     turn is prepended to the eventBus --
-        
+
         ModalEventHandler modalDialogEvents = new ModalEventHandler(eventBus);
-        
+
         EventHandler removeDialog = (te)->{
             parentPanel.remove(dialog);
             te.getEventBus().removeEventHandler(modalDialogEvents);
             te.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(dialog)  );
         };
-        
-        EventHandler yesHandler = (te)-> {
+
+        no.setActionHandler((te)->removeDialog.handle(te));
+        no.addKeyStroke('n');
+        no.addKeyStroke('N');
+        no.addKeyStroke(Keys.ESC_KEYSTROKE);
+
+        yes.setActionHandler((te)->{
             removeDialog.handle(te);
             te.getEventBus().appendEventHandler( new OnIdleEventEventHandler.OneTime(onYesAction) );
-        };
-
-        EventHandler noHandler = (te)-> {
-            removeDialog.handle(te);
-        };
+        });
         
-        modalDialogEvents.appendEventHandler(new KeyInputEventHandler(noHandler, 'n','N' ) );
-        modalDialogEvents.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, noHandler ) );
+        yes.addKeyStroke('y');
+        yes.addKeyStroke('Y');
 
-        modalDialogEvents.appendEventHandler(new KeyInputEventHandler(yesHandler,'y','Y' ) );
         modalDialogEvents.appendEventHandler(buttons);
 
         eventBus.raiseEvent( new RequestUpdateCanvasEvent(dialog));

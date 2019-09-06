@@ -37,7 +37,7 @@ public class ButtonBarTest {
 
                     tApp.getMainApplicationPanel().add(new PositionVerticalRelative(bbar1, 3), statusMSGs);
 
-                    bbar1.addComponent(new BorderedComponent(new TextComponent("Text area")), null, null);
+                    bbar1.addComponent(new BorderedComponent(new TextComponent("Text area")));
 
                     bbar1.addButton("F1", Keys.F1_KEYSTROKE, (te) -> {
                                         statusMSGs.setText("F1 Pressed");

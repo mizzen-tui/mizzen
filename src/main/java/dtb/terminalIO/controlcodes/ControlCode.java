@@ -467,7 +467,19 @@ public abstract class ControlCode implements Renderer {
     public static final Color RCol                = new Color() {
                                                             @Override
                                                             protected int[] buildControlCodes() {
+                                                                boldTransform = (c)-> new Color() {
+                                                                    protected int[] buildControlCodes() {
+                                                                        return new int[] {0,1};
+                                                                    }
+                                                                };
+                                                                invertTransform = ColorTransform.NULL_colorTransform;
                                                                 return new int[] { 0 };
+                                                            }
+                                                            public Color setInvertTransform(ColorTransform invertTransform) {
+                                                                throw new IllegalStateException("Cannot change DEFAULT color!");
+                                                            }
+                                                            public Color setBoldTransform(ColorTransform boldTransform ) {
+                                                                throw new IllegalStateException("Cannot change DEFAULT color!");
                                                             }
                                                         };
 

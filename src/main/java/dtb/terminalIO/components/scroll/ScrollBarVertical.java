@@ -1,6 +1,9 @@
 package dtb.terminalIO.components.scroll;
 
+import dtb.terminalIO.components.BlockChars;
+import dtb.terminalIO.components.BlockChars.BlockHiliter;
 import dtb.terminalIO.components.BoundedComponent;
+import dtb.terminalIO.components.Hiliter;
 import dtb.terminalIO.components.VerticalLine;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.geom.Dimension;
@@ -10,14 +13,16 @@ import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 /**
  * A ScrollBar in the Vertical orientation.
  */
-public class ScrollBarVertical extends BoundedComponent<ScrollBarVertical> {
+public class ScrollBarVertical extends BoundedComponent<ScrollBarVertical> implements Hiliter {
 
+    private boolean hilited = false;
     Position offset;
     Dimension viewedSize;
     Dimension viewerSize;
+    private BlockHiliter blockHiliter = new BlockChars.BlockHiliter();
 
     // ▒
-    // '░'
+    // [░░▒]  [▒░░]
     
     public ScrollBarVertical(Color color, Position pos, int len) {
         super(color, pos, new Dimension.Simple(len, 1));
@@ -92,4 +97,30 @@ public class ScrollBarVertical extends BoundedComponent<ScrollBarVertical> {
             segments.merge(makeChildComponent(()->new VerticalLine(color, this.getRow()+a_height+b_height, this.getCol(), c_height )).getSegmentsBuffer());
         }
     }
+    
+    public BlockChars getBlockChars() {
+        return blockHiliter.getBlockChars();
+    }
+    
+    
+    @Override
+    public void hilite() {
+        if ( ! this.hilited) {
+            markAsDirty();
+        }
+        //colorHiliter.hilite();
+        blockHiliter.hilite();
+        this.hilited = true;
+    }
+
+    @Override
+    public void unHilite() {
+        if (this.hilited) {
+            markAsDirty();
+        }
+        //colorHiliter.unHilite();
+        blockHiliter.unHilite();
+        this.hilited = false;
+    }
+    
 }

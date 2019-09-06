@@ -109,7 +109,7 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
             sb.append(" ");
         }
         sb.append(this.fillPolicy);
-            
+
         return sb.toString();
     }
     
@@ -157,26 +157,29 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
     public void setCanvasOffset(Position canvasOffset) {
         this.canvasOffset = canvasOffset;
     }
-    
+
     abstract protected Rectangle getRectangleForClearAndFill();
 
     @Override
     public void setParentContainer(ParentContainer parentContainer) {
         if (parentContainer != null && this.getParentContainer() != null && this.getParentContainer() != parentContainer) {
-            throw new IllegalStateException("Parent container already set to another component");
+            throw new IllegalStateException( this.getClass().getSimpleName()+
+                                             ".setParentContainer("+ parentContainer.getClass().getSimpleName()+
+                                             ") :Parent container already set to another component ("+this.getParentContainer().getClass().getSimpleName()+")");
         }
-        
+
         if (parentContainer == this) {
-            throw new IllegalArgumentException("Parent container and be assigned to itself!");
+            throw new IllegalArgumentException(this.getClass().getSimpleName()+
+                                               ".setParentContainer(): Parent container cannot be assigned to itself!");
         }
-        
+
         this.parentContainer = parentContainer;
-        
+
         Component.UTIL.markParentDirtyIfChildDirty(this);
     }
-    
+
     public ParentContainer getParentContainer() {
         return this.parentContainer;
     }
-    
+
 }

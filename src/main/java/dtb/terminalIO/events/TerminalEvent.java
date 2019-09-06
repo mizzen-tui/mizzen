@@ -13,7 +13,7 @@ import java.util.function.Predicate;
  * 
  * <p/>
  * 
- * The Event gets sent to an {@link EventBus} which distributes the event
+ * The Event gets sent to an {@link EventBusImpl} which distributes the event
  * to the {@link EventHandler}(s) that can handle the event.
  * 
  * @param <T> type of data attached to event, ie a KeyStroke

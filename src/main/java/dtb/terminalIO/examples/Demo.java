@@ -3,11 +3,11 @@ package dtb.terminalIO.examples;
 import java.util.ArrayList;
 import java.util.List;
 
+import dtb.terminalIO.components.ChildComponentManager;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventHandlerContainer;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
-import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer.Provider;
 
 public interface Demo {
@@ -18,7 +18,7 @@ public interface Demo {
 
     void flushOutput();
 
-    void setUpDemo(EventHandlerContainer eventBus, Rectangle bounds, IScreenLineSegmentsBuffer.Provider segmentsBufferProvider);
+    void setUpDemo(EventHandlerContainer eventBus, Rectangle drawingArea);
 
     void tearDownDemo(EventHandlerContainer eventBus);
 
@@ -63,7 +63,7 @@ public interface Demo {
 
 
         @Override
-        abstract public void setUpDemo(EventHandlerContainer eventBus, Rectangle bounds, Provider segmentsBufferProvider);
+        abstract public void setUpDemo(EventHandlerContainer eventBus, Rectangle drawingArea);
 
         public void tearDownDemo(EventHandlerContainer eventBus) {
             removeAllEventHandlers(eventBus);

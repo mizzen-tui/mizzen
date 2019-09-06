@@ -102,8 +102,7 @@ public class GridBrailleTest {
             return brailleComponent;
         }
 
-        public void setUpDemo(EventHandlerContainer eventBus, Rectangle bounds,
-                IScreenLineSegmentsBuffer.Provider segmentsBufferProvider) {
+        public void setUpDemo(EventHandlerContainer eventBus, Rectangle bounds) {
 
             brailleComponent = new Composite();
             brailleComponent.setBounds(bounds.getHeight() - 4, bounds.getWidth() - 4);
@@ -186,13 +185,13 @@ public class GridBrailleTest {
                     shapes.draw(pointPlotter);
                     grid.markAsDirty();
 
-                    if (segmentsBufferProvider != null) {
-                        // remove / erase rectangle where grid will be copied into
-                        segmentsBufferProvider.getSegmentsBuffer().removeRect(brailleComponent);
-
-                        // copy grid contents into segmentsBufferProvider ( the parent component)
-                        segmentsBufferProvider.getSegmentsBuffer().mergeAt(2, 2, brailleComponent.getSegmentsBuffer());
-                    }
+//                    if (segmentsBufferProvider != null) {
+//                        // remove / erase rectangle where grid will be copied into
+//                        segmentsBufferProvider.getSegmentsBuffer().removeRect(brailleComponent);
+//
+//                        // copy grid contents into segmentsBufferProvider ( the parent component)
+//                        segmentsBufferProvider.getSegmentsBuffer().mergeAt(2, 2, brailleComponent.getSegmentsBuffer());
+//                    }
 
                     //
                     flushOutput();
@@ -370,7 +369,7 @@ public class GridBrailleTest {
             // set to size of canvas
             ((Composite)app.getMainApplicationPanel()).resize(app.getCanvas());
             
-            brailleDemo.setUpDemo(tApp.getEventBus(), bounds, null);
+            brailleDemo.setUpDemo(tApp.getEventBus(), bounds);
             
             Component<?> brailleComponent = brailleDemo.getBrailleComponent();
             

@@ -1,10 +1,13 @@
 package dtb.terminalIO.components.tab;
 
+import dtb.terminalIO.components.BlockChars;
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.CharComponent;
+import dtb.terminalIO.components.Hiliter;
 import dtb.terminalIO.components.HorizontalLine;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.VerticalLine;
+import dtb.terminalIO.components.BlockChars.BlockHiliter;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.ToFocusable;
@@ -26,7 +29,7 @@ import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
  * @author dbalme
  *
  */
-public class TabComponent extends BoundedComponent<TabComponent> implements ToFocusable  {
+public class TabComponent extends BoundedComponent<TabComponent> implements ToFocusable, Hiliter  {
 
     // implementation note:  Its important that TabComponenet implement ToFocusable and that
     // ToFocusable points to its TabAction - which is a focusable managed by the TabPanel FocusManager
@@ -34,10 +37,13 @@ public class TabComponent extends BoundedComponent<TabComponent> implements ToFo
     //  the FocusManager tree because it will first switch to the TabAction ( which is in the tree)
     
     
+    private boolean hilited = false;
     boolean active = false;
     CleanString tabText;
     Color textActiveTabColor;
     TabAction tabAction;
+    private BlockHiliter blockHiliter = new BlockChars.BlockHiliter();
+
 
     TabComponent(Color color, String tabText, boolean active, TabAction tabAction) {
         super(color, new Dimension.Simple(3, tabText.length() + 4));
@@ -87,12 +93,21 @@ public class TabComponent extends BoundedComponent<TabComponent> implements ToFo
                                 .getSegmentsBuffer());
     }
 
+    public BlockChars getBlockChars() {
+        return blockHiliter.getBlockChars();
+    }
+    
     public boolean isActive() {
         return active;
     }
 
     public void setActive(boolean active) {
         this.active = active;
+        if (active) {
+            hilite();
+        } else {
+            unHilite();
+        }
         this.markAsDirty();
     }
 
@@ -124,4 +139,25 @@ public class TabComponent extends BoundedComponent<TabComponent> implements ToFo
     public Focusable asFocusable() {
         return tabAction;
     }
+
+    @Override
+    public void hilite() {
+        if ( ! this.hilited) {
+            markAsDirty();
+        }
+        //colorHiliter.hilite();
+        blockHiliter.hilite();
+        this.hilited = true;
+    }
+
+    @Override
+    public void unHilite() {
+        if (this.hilited) {
+            markAsDirty();
+        }
+        //colorHiliter.unHilite();
+        blockHiliter.unHilite();
+        this.hilited = false;
+    }
+
 }

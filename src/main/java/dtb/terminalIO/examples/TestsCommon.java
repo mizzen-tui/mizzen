@@ -22,19 +22,18 @@ import dtb.terminalIO.util.TerminalDimensions;
 
 public class TestsCommon {
 
-    
     private static boolean isNOGRAPHICS(String[] args) {
         if (args == null || args.length == 0) {
             return false;
         }
-        for (int i=0; i<args.length; i++) {
+        for (int i = 0; i < args.length; i++) {
             if ("NOGRAPHICS".equalsIgnoreCase(args[i])) {
                 return true;
             }
         }
         return false;
     }
-    
+
     public static TerminalScreen getTerminalScreenForTesting(String[] args) {
         if (isNOGRAPHICS(args)) {
             return getNoGraphicsTerminalScreenForTesting(args);
@@ -47,25 +46,23 @@ public class TestsCommon {
         screen.setPrintStream(getOutputStream(args));
         return screen;
     }
-    
+
     public static MapChars buildNOGraphicsMapChar() {
         MapChars mapChars = new MapChars();
-        mapChars.mapAll(BlockChars.UTIL.getNICE_TO_BASIC()  );
+        mapChars.mapAll(BlockChars.UTIL.getNICE_TO_BASIC());
         mapChars.mapAll(BrailleUtils.getBrailleToAsciiMapChars());
-        
-        mapChars.mapAll(SparkLine.UTIL.getSparklineToAsciiMapChars());
-        
-        
-        mapChars.map('┈','~');
-        mapChars.map('┊','!');
-        mapChars.map('░','#');
-        mapChars.map('▫','o');
-        mapChars.map('■','*');
-        mapChars.map('◍','*');
-        mapChars.map('□','o');
-        mapChars.map('◌','o');
 
-        
+        mapChars.mapAll(SparkLine.UTIL.getSparklineToAsciiMapChars());
+
+        mapChars.map('┈', '~');
+        mapChars.map('┊', '!');
+        mapChars.map('░', '#');
+        mapChars.map('▫', 'o');
+        mapChars.map('■', '*');
+        mapChars.map('◍', '*');
+        mapChars.map('□', 'o');
+        mapChars.map('◌', 'o');
+
         return mapChars;
     }
 
@@ -75,37 +72,35 @@ public class TestsCommon {
         return screen;
     }
 
-    static boolean mappedChars_toggle = false; 
-    
+    static boolean mappedChars_toggle = false;
+
     public static TerminalScreen setNoGraphicsOnTerminal(TerminalScreen screen) {
-        screen.setMappedCharacters( buildNOGraphicsMapChar() );
+        screen.setMappedCharacters(buildNOGraphicsMapChar());
         mappedChars_toggle = true;
         return screen;
     }
-    
+
     public static void addNoGraphicsToggleEvent(EventBus eventBus, TerminalScreen screen, Runnable updateScreen) {
-        eventBus.appendEventHandler( new KeyInputEventHandler(Keys.CTRL_X_KEYSTROKE,
-                                    new EventHandler() {
-                                        @Override
-                                        public void handle(TerminalEvent<?> te) {
-                                            if (!mappedChars_toggle) {
-                                                setNoGraphicsOnTerminal(screen);
-                                            } else {
-                                                screen.removeMappedChars();
-                                                mappedChars_toggle = false;
-                                            }
-                                            if (updateScreen != null) {
-                                                updateScreen.run();
-                                            }
-                                        }
-                                    }
-                                   ) );
+        eventBus.appendEventHandler(new KeyInputEventHandler(Keys.CTRL_X_KEYSTROKE, new EventHandler() {
+            @Override
+            public void handle(TerminalEvent<?> te) {
+                if (!mappedChars_toggle) {
+                    setNoGraphicsOnTerminal(screen);
+                } else {
+                    screen.removeMappedChars();
+                    mappedChars_toggle = false;
+                }
+                if (updateScreen != null) {
+                    updateScreen.run();
+                }
+            }
+        }));
     }
-    
+
     public static void addNoGraphicsToggleEvent(EventBus eventBus, TerminalScreen screen) {
         addNoGraphicsToggleEvent(eventBus, screen, null);
     }
-    
+
     public static Dimension terminalSize() {
         Dimension size = null;
         try {
@@ -119,7 +114,7 @@ public class TestsCommon {
     public static Canvas getMasterCanvasForTesting(TerminalScreen screen) {
         Dimension size = terminalSize();
         Canvas master_canvas = new Canvas(screen);
-        master_canvas.setSize(size.getHeight() , size.getWidth() );
+        master_canvas.setSize(size.getHeight(), size.getWidth());
         return master_canvas;
     }
 
@@ -184,29 +179,27 @@ public class TestsCommon {
 
     public static void renderScreenDEBUG(Canvas master_canvas, TerminalScreen screen, EventBus eventBus) {
 
+        if (showScreen_DEBUGINFO == null && eventBus != null) {
+            showScreen_DEBUGINFO = new boolean[] { false };
+            eventBus.appendEventHandler(new KeyInputEventHandler(Keys.CTRL_N_KEYSTROKE, (te) -> {
 
-    if (showScreen_DEBUGINFO == null && eventBus != null) {
-        showScreen_DEBUGINFO = new boolean[]{false};
-        eventBus.appendEventHandler(  new KeyInputEventHandler(  Keys.CTRL_N_KEYSTROKE  , 
-            (te)-> { 
-            
-            showScreen_DEBUGINFO[0] = ! showScreen_DEBUGINFO[0]; 
-                             
+                showScreen_DEBUGINFO[0] = !showScreen_DEBUGINFO[0];
+                
             }
-            
+
             ));
-    }
-    
+        }
+
         if (showScreen_DEBUGINFO != null && showScreen_DEBUGINFO[0]) {
             int master_canvas_height = master_canvas.getHeight();
-            
-            for (int i = 0; i< master_canvas_height; i++) {
-                master_canvas.t(i,0, String.format("|  %03d  |", i));
+
+            for (int i = 0; i < master_canvas_height; i++) {
+                master_canvas.t(i, 0, String.format("|  %03d  |", i));
             }
-            
-            master_canvas.t(0,10, "linecounter =    " + screen.getEmitter().DEBUGCTR());
+
+            master_canvas.t(0, 10, "linecounter =    " + screen.getEmitter().DEBUGCTR());
         }
-    
+
     }
 
 }

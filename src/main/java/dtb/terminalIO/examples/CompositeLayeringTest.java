@@ -11,10 +11,11 @@ import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.TerminalScreen;
 import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.EventBusImpl;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
-import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.InputEventsProducer;
+import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Position;
@@ -90,7 +91,7 @@ public class CompositeLayeringTest {
         renderComponents.run();
 
         
-       EventBus eventBus = new EventBus();
+       EventBus eventBus = new EventBusImpl();
        InputEventsProducer keyInputEventsProducer = null;
        try {
            keyInputEventsProducer = new InputEventsProducer(eventBus);

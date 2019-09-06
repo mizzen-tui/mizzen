@@ -23,7 +23,8 @@ import dtb.terminalIO.util.Logging;
 
 /**
  * Enables/disables tracking of raw console mouse events and then translating them
- * to ApplicationMouseEvents 
+ * to ApplicationMouseEvents and then mapping these mouse clicks to "Focusable" components
+ * on the canvas.
  */
 public class MouseEventOrchestrator {
     
@@ -149,25 +150,22 @@ public class MouseEventOrchestrator {
     }
 
     ConditionalEventHandler appMouseToFocusableComponent = null;
-    
-    
-    
+
     public void appendApplicationMouseEventToClickable(Component<?> mainApplicationPanel, MOUSE_ACTION mouseAction) {
         // for now add to eventbus - but later - instead add to chained event handler
-    
+
         if (appMouseToFocusableComponent != null) {
             return; // TODO: throw an exception?  illeglState?
         }
-        
+
         if (mainApplicationPanel == null) {
             throw new IllegalArgumentException("mainApplicationPanel null - cannot append ApplicationMouseEventHandler");
         }
-        
+
         if (mouseAction == null) {
             mouseAction = MOUSE_ACTION.DOWN_LEFT;
         }
-        
-        
+
         ConditionalEventHandler appMouseToFocusableComponent = new ConditionalEventHandler() {
 
             IS_Event_TYPE appMouseType = new IS_Event_TYPE(TYPE.APPLICATION_MOUSE);

@@ -15,6 +15,7 @@ import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.EventHandlerContainer;
+import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.RequestHideCursorEvent;
 import dtb.terminalIO.events.RequestShowCursorEvent;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;

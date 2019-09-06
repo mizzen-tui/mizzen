@@ -11,6 +11,7 @@ import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.RequestHideCursorEvent;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;

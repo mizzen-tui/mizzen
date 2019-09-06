@@ -5,6 +5,7 @@ import java.util.StringJoiner;
 import dtb.terminalIO.events.CPREvent;
 import dtb.terminalIO.events.DSREvent;
 import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.keyboard.Keys.KeyStrokeFindResult;
 import dtb.terminalIO.events.mouse.MOUSE_ACTION;
@@ -30,7 +31,7 @@ import dtb.terminalIO.geom.Position;
  * 
  * <p/>
  * 
- * Main entry point method is: {@link #parseInput(byte[], int, EventBus)}
+ * Main entry point method is: {@link #parseInput(byte[], int, EventBusImpl)}
  * 
  */
 public class InputBytesEventParser {

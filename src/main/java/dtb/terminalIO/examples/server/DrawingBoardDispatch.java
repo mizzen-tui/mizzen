@@ -13,6 +13,7 @@ import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.EventBusImpl;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
@@ -169,7 +170,7 @@ public class DrawingBoardDispatch {
     
     public static void test1(String[] args) throws Exception {
 
-        DrawingBoardDispatch dispatch = new DrawingBoardDispatch(new EventBus());
+        DrawingBoardDispatch dispatch = new DrawingBoardDispatch(new EventBusImpl());
         
         StringBuffer sb = new StringBuffer();
         
@@ -240,7 +241,7 @@ public class DrawingBoardDispatch {
         // System.out.println("Hello world");
         int i = 10;
 
-        DrawingBoardDispatch dispatch = new DrawingBoardDispatch(new EventBus());
+        DrawingBoardDispatch dispatch = new DrawingBoardDispatch(new EventBusImpl());
 
         dispatch.dispatch(new String[] { "clear" });
 
@@ -401,7 +402,7 @@ public class DrawingBoardDispatch {
         //System.out.println("HELLOW WORLD!!!!!!!!!!!");
         if (args!=null && args.length == 2 && args[0].equalsIgnoreCase("PIPE")) {
             //System.out.println("Reading from pipe "+args[1]);
-            EventBus eventBus = new EventBus();
+            EventBus eventBus = new EventBusImpl();
             new InputEventsProducer(eventBus);
             new DrawingBoardDispatch(eventBus).readFromNamedPipe(args[1]);
         } else {

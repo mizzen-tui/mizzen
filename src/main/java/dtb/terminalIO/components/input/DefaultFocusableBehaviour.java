@@ -77,16 +77,17 @@ public abstract class DefaultFocusableBehaviour  implements Focusable {
             super(component, hiliteEmptyColor);
             this.eventHandler = (ConditionalEventHandler) component;
         }
+
+        @Override
+        public EventHandler canHandle(TerminalEvent<?> te) {
+            return eventHandler.canHandle(te);
+        }
         
         @Override
         public void handle(TerminalEvent<?> te) {
             eventHandler.handle(te);
         }
 
-        @Override
-        public EventHandler canHandle(TerminalEvent<?> te) {
-            return eventHandler.canHandle(te);
-        }
     }
 
 }

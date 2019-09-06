@@ -30,7 +30,7 @@ import dtb.terminalIO.util.Stty;
  * 
  * If there is no input generated within a time-interval (usually 50 ms) then
  * a timerEvent is generated and enqueued onto the eventBus.  Any Idle event handlers
- * in the {@link EventBus} can subsequently process the timer event. 
+ * in the {@link EventBusImpl} can subsequently process the timer event. 
  * 
  */
 public class InputEventsProducer implements Runnable {

@@ -23,6 +23,31 @@ public interface Dimension {
         return this.getWidth() == other.getWidth() && this.getHeight() == other.getHeight();
     }
 
+    
+    public static class Delegate implements Dimension {
+        Dimension size;
+
+        public Delegate(Dimension size) {
+            super();
+            if (size == null) {
+                throw new NullPointerException("Null for size parameter in new Dimension.Delegate(size)!");
+            }
+            this.size = size;
+        }
+
+        @Override
+        public int getWidth() {
+            return size.getWidth();
+        }
+
+        @Override
+        public int getHeight() {
+            return size.getHeight();
+        }
+
+
+    }
+    
     /**
      * Simple implementation of {@link Dimension}
      */

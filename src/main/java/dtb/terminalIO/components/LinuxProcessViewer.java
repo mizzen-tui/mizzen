@@ -11,6 +11,7 @@ import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.OnTerminateEventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;

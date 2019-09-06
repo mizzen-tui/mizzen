@@ -123,7 +123,7 @@ public interface ConditionalEventHandler extends EventHandler {
     
     /**
      * A {@link Delegate} handler that will handle one event
-     * and then remove itself from the {@link EventBus} 
+     * and then remove itself from the {@link EventBusImpl} 
      * 
      * <p/>
      * 

@@ -133,6 +133,9 @@ public class TextComponent extends BoundedComponent<TextComponent> {
     }
 
     public void setText(CleanString text) {
+        if (text == null) {
+            throw new NullPointerException("attempting to set null text on TextComponent!");
+        }
         this.cleanText = text;
         this.text = null;
         this.hasColorCodes = false;
@@ -141,6 +144,9 @@ public class TextComponent extends BoundedComponent<TextComponent> {
     }
 
     public void setText(String text) {
+        if (text == null) {
+            throw new NullPointerException("attempting to set null text on TextComponent!");
+        }
         this.hasColorCodes = ControlCode.hasColorCodes(text);
         if (! this.hasColorCodes && CleanString.UTIL.isClean(text)) {
             setText( new CleanString.Simple(text) );

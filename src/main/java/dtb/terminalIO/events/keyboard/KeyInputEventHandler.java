@@ -1,6 +1,8 @@
 package dtb.terminalIO.events.keyboard;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.function.Predicate;
 
 import dtb.terminalIO.events.ConditionalEventHandler;
@@ -45,6 +47,15 @@ public class KeyInputEventHandler extends ConditionalEventHandler.Impl {
                 chKeys[i] = new KeyStroke(ch[i]);
             }
             onKeyStrokes = chKeys;
+        }
+        
+        public void addKeyStroke(KeyStroke keyStroke) {
+            List<KeyStroke> keyStrokes = new ArrayList<KeyStroke>( Arrays.asList(onKeyStrokes));
+            if (keyStrokes.contains(keyStroke)) {
+                throw new IllegalArgumentException(String.valueOf(keyStroke));
+            }
+            keyStrokes.add(keyStroke);
+            this.onKeyStrokes = keyStrokes.toArray(new KeyStroke[] {});
         }
 
         @Override
@@ -93,6 +104,16 @@ public class KeyInputEventHandler extends ConditionalEventHandler.Impl {
                                 EventHandler handler) {
         super(new KeyStrokePredicate(onKeyStroke).and(canHandlePredicate), handler);
         this.filterOnKeyEvtType = new IS_Event_TYPE(TerminalEvent.TYPE.KEYPRESS);
+    }
+    
+    public void addKeyStroke(KeyStroke keyStroke) {
+        Predicate<TerminalEvent<?>> predicate = this.getCanHandlePredicate();
+        if (predicate instanceof KeyStrokePredicate) {
+            KeyStrokePredicate keyStrokePredicate = (KeyStrokePredicate) predicate;
+            keyStrokePredicate.addKeyStroke(keyStroke);
+            return;
+        }
+        throw new IllegalStateException("Can only append keystroke to handler with simple keysstroke predicate");
     }
 
     @Override

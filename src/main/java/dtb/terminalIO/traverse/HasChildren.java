@@ -13,8 +13,6 @@ public interface HasChildren<T> {
         public Collection<? extends T> getChildren() {
             return Collections.emptyList();
         }
-        
     }
-    
 
 }

@@ -13,12 +13,12 @@ import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.RequestHideCursorEvent;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.RequestFocusEvent;
-import dtb.terminalIO.events.focus.ToFocusable;
 import dtb.terminalIO.events.keyboard.HasHotKey;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
@@ -42,8 +42,9 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
     boolean toggleButton = false;
     boolean useCursor = false;
     Focusable meAsFocusable;
+    ChainedEventHandler chainedHandler;
     
-    private KeyStroke hotKey;  // not used yet .. soon
+    private KeyStroke hotKey;
     
     @FunctionalInterface
     public static interface Action {
@@ -90,6 +91,7 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
 
     public Button setHotKey(KeyStroke hotKey) {
         this.hotKey = hotKey;
+        this.markAsDirty();
         return this;
     }
 
@@ -178,7 +180,7 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
         this.pressed = value;
         this.markAsDirty();
     }
-    
+
     public void markAsDirty() {
         if (isDirty()) {
             return;
@@ -187,7 +189,7 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
        this.renderedText.markAsDirty();
        this.container.markAsDirty();
     }
-    
+
     @Override
     public Boolean getValue() {
         return pressed;
@@ -198,21 +200,38 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
             // focus manager should have already put focus here - but just in case ..
             eventBus.raiseEvent(new RequestFocusEvent(this));
         }
-        buttonPressed(eventBus);
-    }
-    
-    protected void buttonPressed(EventBus eventBus) {
         Button.this.setValue( (toggleButton? !pressed :true) );  // toggle the value
         renderedText.setText(getTextForRendering(true));
         eventBus.raiseEvent( new HasValue.ValueChangedEvent<>(Button.this) );
         eventBus.raiseEvent( new RequestUpdateCanvasEvent(this));
     }
 
+
+    OnValueChangedEventHandler<Boolean> actionOnChangeHandler;
+
+    public void setActionHandler(EventHandler handler) {
+
+        if (actionOnChangeHandler != null) {
+            getchainedHandler().removeEventHandler(actionOnChangeHandler);
+        }
+
+        if (handler == null) {
+            return;
+        }
+        actionOnChangeHandler = new HasValue.OnValueChangedEventHandler<Boolean>(this) {
+            @Override
+            public void valueChanged(TerminalEvent<?> te, HasValue<Boolean> source) {
+                handler.handle(te);
+            }
+        };
+        getchainedHandler().appendEventHandler(actionOnChangeHandler);
+    }
+
     public Button setUseCursor(boolean use) {
         this.useCursor = use;
         return this;
     }
-    
+
     private void requestShowCursorAtComponent(EventBus eventBus) {
         if (!useCursor) return;
 
@@ -224,19 +243,44 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
         eventBus.raiseEvent(new RequestHideCursorEvent(this));
     }
 
-    private Focusable asFocusable() {
+    
+    private ChainedEventHandler getchainedHandler() {
+        if (chainedHandler == null) {
+            asFocusable();
+        }
+        return chainedHandler;
+    }
+
+    KeyInputEventHandler keyInputEventHandler;
+    
+    public void addKeyStroke(KeyStroke keyStroke) {
+        if (keyInputEventHandler == null) {
+            asFocusable();
+        }
+        keyInputEventHandler.addKeyStroke(keyStroke);
+    }
+
+    public void addKeyStroke(char ch) {
+        addKeyStroke(new KeyStroke(ch));
+    }
+
         
+    private Focusable asFocusable() {
+
         if (meAsFocusable != null) {
             return meAsFocusable;
         }
-        
-        ChainedEventHandler chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
-        
-        chainedHandler.appendEventHandler(new KeyInputEventHandler(Keys.ENTER_KEYSTROKE,(te)->buttonPressed(te.getEventBus()))); 
 
+        chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
+        
+        KeyStroke[] actionKeys = new KeyStroke[getHotKey()!=null?2:1];
+        actionKeys[0] = Keys.ENTER_KEYSTROKE;
         if (getHotKey() != null) {
-            chainedHandler.appendEventHandler(new KeyInputEventHandler(getHotKey(),(te)->buttonPressed(te.getEventBus())));
+            actionKeys[1] = getHotKey();
         }
+
+        keyInputEventHandler = new KeyInputEventHandler((te)->onClick(te.getEventBus()),actionKeys);
+        chainedHandler.appendEventHandler(keyInputEventHandler); 
 
         meAsFocusable = new DefaultFocusableBehaviour.Simple(this, chainedHandler.asConditionalEventHandler()) {
  
@@ -278,13 +322,12 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
     public void setFocus(boolean focus, EventBus eventBus) {
         asFocusable().setFocus(focus, eventBus);
     }
-    
+
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
         segments.merge(this.container.getSegmentsBuffer());
     }
 
-    
     @Override
     public Component<?> getComponentAtOffset(Position offset) {
         Component<?> component = this.container.getComponentAtOffset(offset);
@@ -320,6 +363,4 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
     public void childResized(Component<?> child) {
         this.resize((Dimension)child);
     }
-
-
 }

@@ -3,8 +3,8 @@ package dtb.terminalIO.events.resize;
 import java.util.concurrent.atomic.AtomicLong;
 
 import dtb.terminalIO.core.TerminalScreen;
-import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.util.TerminalDimensions;

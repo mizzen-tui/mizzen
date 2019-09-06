@@ -9,13 +9,14 @@ import dtb.terminalIO.events.CPREvent;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.DSREvent;
 import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.EventBusImpl;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
+import dtb.terminalIO.events.keyboard.InputEventsProducer;
 import dtb.terminalIO.events.keyboard.KeyEvent;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
-import dtb.terminalIO.events.keyboard.InputEventsProducer;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.events.mouse.RawParsedFromConsoleMouseEvent;
@@ -64,7 +65,7 @@ public class KeyInputEventsProducerTest {
         
         master_canvas.refresh();
         
-        EventBus eventBus = new EventBus();
+        EventBus eventBus = new EventBusImpl();
         try {
             InputEventsProducer keyInputEventsProducer = null;
             try {

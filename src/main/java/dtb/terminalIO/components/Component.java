@@ -73,6 +73,10 @@ public interface Component<T extends Component<?>> extends IScreenLineSegmentsBu
             
         }
         
+        /**
+         * Hopefully method name says it all?
+         * @param child
+         */
         public static void markParentDirtyIfChildDirty(Component<?> child) {
             if (child.getParentContainer() == null) {
                 return;

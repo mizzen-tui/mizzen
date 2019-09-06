@@ -2,10 +2,9 @@ package dtb.terminalIO.examples;
 
 import java.io.IOException;
 
-import dtb.terminalIO.components.BorderedComponent;
+import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.ComponentInspector;
-import dtb.terminalIO.components.ComponentWithFocusManager;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.TextComponent;
@@ -14,25 +13,21 @@ import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.input.CheckBoxInput;
 import dtb.terminalIO.components.input.HasValue;
 import dtb.terminalIO.components.input.TextInput;
-import dtb.terminalIO.components.input.tree.TreeView;
-import dtb.terminalIO.components.input.tree.TreeViewModel.HasChildrenTreeViewModel;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
 import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.TerminalScreen;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.EventBusImpl;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
-import dtb.terminalIO.events.focus.FocusManager.FocusManagerHasChildrenAdapter;
-import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.keyboard.InputEventsProducer;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
@@ -100,17 +95,6 @@ public class TextBoxTest {
 
         topPanel.add(2,1, horizontalPanel);
         
-//        TreeView<Component<?>>  tvComponents = new TreeView<Component<?>>(Colors.IBlu, new Dimension.Simple(90,60), (node)->node.getClass().getSimpleName()  );
-//        tvComponents.setModel( new HasChildrenTreeViewModel<Component<?>>(topPanel));
-//        
-//        ScrollableComponent scrollingTreeview = new ScrollableComponent(Colors.BIGre, new Dimension.Simple(20,40), new BorderedComponent(tvComponents));
-        
-        
-        
-        //ComponentWithFocusManager sc_1_component = new ComponentWithFocusManager(panel1);
-        // ScrollableComponent sc_1 = new ScrollableComponent(Colors.Blu, new Dimension.Simple(panel1.getHeight()+1, 50), sc_1_component);
-
-        ComponentWithFocusManager sc_1_component = new ComponentWithFocusManager( new VerticalPanel()); // <-- here to stop compiler complaints
         ScrollableComponent sc_1 = new ScrollableComponent(Colors.Blu, new Dimension.Simple(panel1.getHeight()+1, 50), panel1);
 
         SearchFunctionForScrollableComponent.addFinderToScrollable(sc_1);
@@ -119,8 +103,36 @@ public class TextBoxTest {
         
         TextComponent eventDisplayer = new TextComponent("                                       ");
 
-        EventBus eventBus = new EventBus();
+        EventBus eventBus = new EventBusImpl();
         
+        ButtonBar bannerMenu = new ButtonBar().setHorizontalSpacer(1);
+        bannerMenu.setNoBorderChars();
+        
+        Button toggleTreeviewButton = new Button(Colors.BIGre,"");
+        toggleTreeviewButton.setHotKey( Keys.CTRL_T_KEYSTROKE );
+        toggleTreeviewButton.setDisplayHotKey(true);
+        bannerMenu.addComponent(toggleTreeviewButton);
+        
+        bannerMenu.add(new TextComponent(" switch Treeview Components/Focusables  "));
+
+        Button refreshTreeviewButton = new Button(Colors.BIGre," ");
+        refreshTreeviewButton.setHotKey(Keys.CTRL_R_KEYSTROKE);
+        refreshTreeviewButton.setDisplayHotKey(true);
+        bannerMenu.add(refreshTreeviewButton);
+        
+        bannerMenu.add(new TextComponent(" refresh Treeview"));
+        
+        Button quitButton = new Button(Colors.BIGre,"Quit");
+        quitButton.setHotKey(Keys.CTRL_C_KEYSTROKE);
+        quitButton.setDisplayHotKey(true);
+        bannerMenu.add(quitButton);
+        
+        VerticalPanel applicationPanel = new VerticalPanel().setVerticalSpacer(1);
+        
+        applicationPanel.add(bannerMenu);
+        applicationPanel.add(topPanel);
+        
+
         Runnable renderComponents = () -> {
             
             if (! topPanel.isDirty()) {
@@ -129,11 +141,7 @@ public class TextBoxTest {
             
             master_canvas.clearCanvas();
             
-            master_canvas.t(2,1,String.valueOf(Component.UTIL.getCanvasOffsetFor(ti)) );
-            master_canvas.addTextHandleColors(" "+Colors.BIGre.asString()+"CTRL-T"+ControlCode.RCol.asString()+" switch Treeview Components/Focusables  "+Colors.BIGre.asString()+"CTRL-R"+ControlCode.RCol.asString()+" refresh Treeview");
-            master_canvas.addTextHandleColors("  "+Colors.BIGre.asString()+"CTRL-C"+ControlCode.RCol.asString()+" Quit");
-
-            master_canvas.addComponentSegments(5,5, topPanel);
+            master_canvas.addComponentSegments(3,5, applicationPanel);
 
             master_canvas.addComponentSegments(master_canvas.getHeight()-2, 2, eventDisplayer);
             
@@ -179,8 +187,9 @@ public class TextBoxTest {
         };
         
         
+        
         MouseEventOrchestrator mouser = new MouseEventOrchestrator(screen, master_canvas, eventBus);
-        mouser.enableMouseHandling(topPanel);
+        mouser.enableMouseHandling(applicationPanel);
         
         EventHandler terminate = new EventHandler() {
 
@@ -206,7 +215,7 @@ public class TextBoxTest {
 
         
         eventBus.appendEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
-        // eventBus.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
+
         eventBus.appendEventHandler(new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
         
         DefaultFocusManager focusManager = new DefaultFocusManager(Keys.TAB_KEYSTROKE) {
@@ -225,21 +234,14 @@ public class TextBoxTest {
         ComponentInspector componentInspector = new ComponentInspector(Colors.BIGre, new Dimension.Simple(20,40), topPanel, focusManager);
         topPanel.add(2, 73, componentInspector);
 
+        quitButton.setActionHandler(terminate);
+        toggleTreeviewButton.setActionHandler( componentInspector.toggleViewEventHandler() );
+        refreshTreeviewButton.setActionHandler(componentInspector.refreshEventHandler());
         
         
         DefaultFocusManager focusManager1 = new DefaultFocusManager().setNavKeysFirst(false);
         DefaultFocusManager focusManager2 = new DefaultFocusManager().setNavKeysFirst(false);
 
-        sc_1_component.setFocusManager(focusManager1);
-
-        // sc_1.asEventHandler(); // TODO: this should not need to be done
-/*        
-        focusManager1.addFocusable(ti, eventBus);
-        focusManager1.addFocusable(ti_2, eventBus);
-        focusManager1.addFocusable(cb_1, eventBus);
-        focusManager1.addFocusable(b_1, eventBus);
-        focusManager1.addFocusable(b_2, eventBus);
-*/
         focusManager1.addFocusable(ti);
         focusManager1.addFocusable(ti_2);
         focusManager1.addFocusable(cb_1);
@@ -249,62 +251,19 @@ public class TextBoxTest {
         focusManager2.addFocusable(ti_3);
         focusManager2.addFocusable(ti_4); 
 
+        focusManager.addFocusable(bannerMenu);
+        
         focusManager.addFocusable(sc_1);
         
-        
-        //sc_1.prependEventHandler(focusManager1);
-        
-        //focusManager.addFocusable(focusManager1, eventBus);
         
         focusManager.addFocusable(focusManager2, eventBus);
         
         focusManager.addFocusable(componentInspector);
 
-//        
-//        
-//        
-//        tvComponents.setModel( new HasChildrenTreeViewModel<Component<?>>(topPanel));
-//
-//        TreeView<Focusable> tvFocusable = new TreeView<Focusable>(tvComponents.getColor(), 
-//                                                                  (Dimension)tvComponents, 
-//                                                                  (node)->node.hasFocus()? new FGBGColors(Colors.BIBlu, Colors.On_Yel).asString()+ node.getClass().getSimpleName() + ControlCode.RCol.asString()
-//                                                                                         : node.getClass().getSimpleName());
-//        
-//        tvFocusable.setModel( new HasChildrenTreeViewModel<Focusable>(focusManager, new FocusManagerHasChildrenAdapter())  );
-//        
-//        
-//        //tvComponents.setModel( new HasChildrenTreeViewModel<Object>(focusManager) );
-//        ScrollableComponent[] scrollingArea = new ScrollableComponent[] {scrollingTreeview};
-//        boolean[] flag = new boolean[] {true};
-//        
-//        eventBus.appendEventHandler( new KeyInputEventHandler(Keys.CTRL_T_KEYSTROKE, (te)-> {
-//            //ScrollableComponent scrollingTreeview = new ScrollableComponent(Colors.BIGre, new Dimension.Simple(20,40), new BorderedComponent(tvComponents));
-//            topPanel.remove(scrollingArea[0]);
-//            // todo - remove scrollable from master focusmanager
-//            focusManager.removeFocusable(scrollingArea[0]);
-//            flag[0] = !flag[0];
-//            if (flag[0]) {
-//                tvComponents.setParentContainer(null);
-//                
-//                scrollingArea[0] = new ScrollableComponent(Colors.BIGre, new Dimension.Simple(20,40), new BorderedComponent(tvComponents));
-//            } else {
-//                tvFocusable.setParentContainer(null);
-//                scrollingArea[0] = new ScrollableComponent(Colors.BIGre, new Dimension.Simple(20,40), new BorderedComponent(tvFocusable));
-//            }
-//            // todo add scrollable to master focusmanager
-//            topPanel.add(2, 73, scrollingArea[0]);
-//            focusManager.addFocusable(scrollingArea[0], te.getEventBus());
-//            renderComponents.run();
-//        }));
-        
-//        eventBus.appendEventHandler( new KeyInputEventHandler(Keys.CTRL_R_KEYSTROKE, (te)-> {
-//            tvFocusable.markAsDirty();
-//            tvComponents.markAsDirty();
-//            renderComponents.run();
-//        }));
         
         eventBus.appendEventHandler(focusManager);
         
+        // this is a shitty way to keep screen updated ..  should not need a timer,
         eventBus.appendEventHandler( new OnIdleEventEventHandler.RepeatingInterval(100, (te) -> {
                                           renderComponents.run();                       
                                      }));

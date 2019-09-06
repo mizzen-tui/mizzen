@@ -1,10 +1,13 @@
 package dtb.terminalIO.examples;
 
+import java.util.function.Function;
+
 import dtb.terminalIO.app.TUIApp;
-import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
-import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.chart.BarChart;
+import dtb.terminalIO.components.input.Button;
+import dtb.terminalIO.components.modal.MessageBox;
 import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.events.EventHandler;
@@ -12,10 +15,11 @@ import dtb.terminalIO.events.EventHandlerContainer;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.focus.FocusManager;
+import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.examples.Demo.SimpleDemo;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
-import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer.Provider;
 
 /**
  * Demos a barchart
@@ -33,18 +37,15 @@ public class BarChartTest {
         }
 
         @Override
-        public void setUpDemo(EventHandlerContainer eventBus, Rectangle bounds, Provider segmentsBufferProvider) {
+        public void setUpDemo(EventHandlerContainer eventBus, Rectangle drawingArea) {
 
-            this.bc = buildBarChart(bounds);
-
-            OnIdleEventEventHandler updaterTask = buildBarChartUpdaterTask(bc, segmentsBufferProvider);
+            this.bc = buildBarChart(drawingArea);
+            
+            OnIdleEventEventHandler updaterTask = buildBarChartUpdaterTask(bc);
+            
 
             addAndRememberEventHandler(eventBus, updaterTask);
 
-        }
-
-        public void setUpDemo(EventHandlerContainer eventBus, Rectangle bounds) {
-            setUpDemo(eventBus, bounds, null);
         }
 
         BarChart buildBarChart(Rectangle drawingArea) {
@@ -77,7 +78,7 @@ public class BarChartTest {
         String[] bc_DATALabels = new String[] { "Lumber", "Metal", "Fish", "Beef", "Lamb", "Liquor", "Milk", "Butter",
                 "Cherries" };
 
-        OnIdleEventEventHandler buildBarChartUpdaterTask(BarChart bc, Provider segmentsBufferProvider) {
+        OnIdleEventEventHandler buildBarChartUpdaterTask(BarChart bc) {
 
             return new OnIdleEventEventHandler.RepeatingInterval(500, new EventHandler() {
 
@@ -93,21 +94,6 @@ public class BarChartTest {
                         bc.addData(d, bc_DATALabels[i]);
                     }
 
-                    if (segmentsBufferProvider != null) {
-                        // remove / erase rectangle where grid will be copied into
-                        segmentsBufferProvider.getSegmentsBuffer().removeRect(bc);
-
-                        // copy grid contents into segmentsBufferProvider ( the parent component)
-                        // this technique is utterly useless for segmentsBufferProvider's that are compoonents because
-                        // components clear their buffer before doing a draw operation
-                        segmentsBufferProvider.getSegmentsBuffer().mergeAt(0, 0, bc.getSegmentsBuffer());
-
-                        if (segmentsBufferProvider instanceof Component) {
-                            ((Component)segmentsBufferProvider).markAsDirty();
-                        }
-
-                    }
-                    //
                     flushOutput();
 
                 }
@@ -130,7 +116,40 @@ public class BarChartTest {
                 app.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(this));
             }
         };
+        
+        Button info = new Button(Colors.BIWhi,"Barchart DEMO");
+        info.setActionHandler((te)-> MessageBox.showInfoDialog( te.getEventBus() , app.getMainApplicationPanel(), "Powered by dtbTerminalIO ") );
 
+        Button quit = new Button(Colors.BIGre,"Quit");
+        quit.setHotKey(Keys.CTRL_C_KEYSTROKE);
+        quit.setActionHandler((te)->app.getTerminateAppHotKeyEventHandler().handle(te));
+        
+        HorizontalPanel hPanel = new HorizontalPanel().setHorizontalSpacer(5);
+        hPanel.add(info);
+        hPanel.add(quit);
+
+        app.getMainApplicationPanel().add( 0, 1, hPanel);
+        
+        Function<Dimension, Dimension> barchartSize = new Function<Dimension, Dimension>() {
+
+            @Override
+            public Dimension apply(Dimension size) {
+                return new Dimension() {
+                    @Override
+                    public int getWidth() {
+                        return size.getWidth();
+                    }
+
+                    @Override
+                    public int getHeight() {
+                        return size.getHeight()-2;
+                    }
+                };
+            }
+            
+        };
+                
+        
         app.setOnResizeAction( (tApp, size) -> {
 
             tApp.clearCanvas();
@@ -139,7 +158,7 @@ public class BarChartTest {
             ((Composite)tApp.getMainApplicationPanel()).resize(size);
             
             if (barChartDemo.bc != null) {
-                barChartDemo.resize(size);
+                barChartDemo.resize(barchartSize.apply(tApp.getMainApplicationPanel()));
             }
 
         });
@@ -147,12 +166,12 @@ public class BarChartTest {
                 
         app.setOnReadyStart((tApp) -> {
 
-                    tApp.getMainApplicationPanel().add( 1, 1, new TextComponent("Braille Characters used for plotting"));
+                    barChartDemo.setUpDemo(tApp.getEventBus(), new Rectangle.Simple(barchartSize.apply(tApp.getMainApplicationPanel())));
+
+                    tApp.getMainApplicationPanel().add(2,0,barChartDemo.getBarChart());
                     
-                    barChartDemo.setUpDemo(tApp.getEventBus(), tApp.getMainApplicationPanel());
-                    
-                    ((Composite)tApp.getMainApplicationPanel()).add( barChartDemo.getBarChart()  );
-                    
+                    FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),tApp.getEventBus());
+                    tApp.getEventBus().appendEventHandler(  mainFocusManager );
                     
                 });
 

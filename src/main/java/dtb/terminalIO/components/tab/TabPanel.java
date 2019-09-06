@@ -9,8 +9,10 @@ import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.CanResize;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
+import dtb.terminalIO.components.Hiliter;
 import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.events.ChainedEventHandler;
@@ -32,7 +34,7 @@ import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 
 public class TabPanel extends AbstractComponent<TabPanel> 
-                      implements CanResize, FocusManager, ParentContainer, GetComponentAtOffset {
+                      implements CanResize, FocusManager, ParentContainer, GetComponentAtOffset, Hiliter {
 
     private DefaultFocusManager focusManager;
 
@@ -285,8 +287,6 @@ public class TabPanel extends AbstractComponent<TabPanel>
 
         getFocusManager().addFocusable(tabAction);
         
-        // tabActions.add(tabAction);
-
         // why am I not using workArea ( is it needed? )
         this.mainPanel.add(offsetRow, offsetCol, tabAction.getTabComponent());
 
@@ -329,6 +329,11 @@ public class TabPanel extends AbstractComponent<TabPanel>
     @Override
     public void setFocus(boolean focus, EventBus eventBus) {
         focusManager.setFocus(focus, eventBus);
+        if (focus) {
+            this.hilite();
+        } else {
+            this.unHilite();
+        }
     }
 
     @Override
@@ -391,4 +396,47 @@ public class TabPanel extends AbstractComponent<TabPanel>
         return this.mainPanel.getComponentAtOffset(offset);
     }
 
+    public Hiliter getHiliter() {
+        return hiliter;
+    }
+    
+    public void setHiliter(Hiliter hiliter) {
+        this.hiliter = hiliter;
+    }
+    
+    private Hiliter hiliter = new Hiliter() {
+
+        @Override
+        public void hilite() {
+            TabPanel.this.workAreaBorder.hilite();
+            if (TabPanel.this.getActiveTabAction() != null) {
+                TabAction active = TabPanel.this.getActiveTabAction();
+                active.getTabComponent().hilite();
+            }
+            TabPanel.this.markAsDirty();
+        }
+
+        @Override
+        public void unHilite() {
+            TabPanel.this.workAreaBorder.unHilite();
+            if (TabPanel.this.getActiveTabAction() != null) {
+                TabAction active = TabPanel.this.getActiveTabAction();
+                active.getTabComponent().unHilite();
+            }
+            TabPanel.this.markAsDirty();
+        }
+
+    };
+
+    @Override
+    public void hilite() {
+        hiliter.hilite();
+    }
+
+    @Override
+    public void unHilite() {
+        hiliter.unHilite();
+    }
+    
+    
 }

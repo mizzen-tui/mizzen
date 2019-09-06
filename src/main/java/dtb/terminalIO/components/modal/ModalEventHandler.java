@@ -10,7 +10,7 @@ import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 
 /**
  * A Modal eventHandler ( to be effective ) should be prepended to 
- * the {@link EventBus} so that it is in front of all the other eventHandlers.
+ * the {@link EventBusImpl} so that it is in front of all the other eventHandlers.
  * 
  * <p/>
  * 

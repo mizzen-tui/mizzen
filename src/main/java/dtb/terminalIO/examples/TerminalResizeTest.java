@@ -12,12 +12,13 @@ import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.TerminalScreen;
 import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.EventBusImpl;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.OnResizeEventHandler;
 import dtb.terminalIO.events.TerminalEvent;
-import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.InputEventsProducer;
+import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.events.resize.TerminalResizeDetection;
 import dtb.terminalIO.geom.Dimension;
@@ -82,7 +83,7 @@ public class TerminalResizeTest {
 //        
 //        master_canvas.refresh();
         
-        EventBus eventBus = new EventBus();
+        EventBus eventBus = new EventBusImpl();
         InputEventsProducer keyInputEventsProducer = null;
         try {
             keyInputEventsProducer = new InputEventsProducer(eventBus);

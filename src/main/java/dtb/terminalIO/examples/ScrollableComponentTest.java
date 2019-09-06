@@ -17,6 +17,7 @@ import dtb.terminalIO.core.TerminalScreen;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.EventBusImpl;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.EventHandlerContainer;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
@@ -26,8 +27,8 @@ import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
-import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.InputEventsProducer;
+import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.events.resize.TerminalResizeDetection;
 import dtb.terminalIO.examples.BarChartTest.BarChartDemo;
@@ -171,7 +172,7 @@ public class ScrollableComponentTest {
          
         // sets up a braille demo using the source component both for size as well as 
         // the place where grid segments will be copied on a render iteration
-        brailleDemo.setUpDemo(eventBus, sourceComponentContainingBrailleDemo, null);
+        brailleDemo.setUpDemo(eventBus, sourceComponentContainingBrailleDemo);
          
         Component<?> brailleComponent = brailleDemo.getBrailleComponent();
          
@@ -238,7 +239,7 @@ public class ScrollableComponentTest {
 
         ScrollableComponent viewComp1 = testWindowViewer1(sizeOfWindow);
         
-        EventBus eventBus = new EventBus();
+        EventBus eventBus = new EventBusImpl();
         try {
             new InputEventsProducer(eventBus);
         } catch (Exception e) {
@@ -412,10 +413,10 @@ public class ScrollableComponentTest {
                 
         eventBus.appendEventHandler(new OnRequestUpdateCanvasEventHandler(updateCanvas));
         
-        lineChartDemo.setUpDemo(eventBus, new Rectangle.Simple(lineChartDemoContainer), lineChartDemoContainer);
+        lineChartDemo.setUpDemo(eventBus, lineChartDemoContainer);
         lineChartDemo.setFlushDemoOutput(updateCanvas);
         
-        barChartDemo.setUpDemo(eventBus, new Rectangle.Simple(barChartDemoContainer), barChartDemoContainer);
+        barChartDemo.setUpDemo(eventBus, barChartDemoContainer);
         barChartDemo.setFlushDemoOutput(updateCanvas);
 
         

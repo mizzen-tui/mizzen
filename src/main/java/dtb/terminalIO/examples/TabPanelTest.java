@@ -19,6 +19,7 @@ import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.EventBusImpl;
 import dtb.terminalIO.events.EventHandlerContainer;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
@@ -37,11 +38,11 @@ public class TabPanelTest {
     static class DemoInTab {
         Demo demo;
         boolean firstSetup = false;
-        Function<TabContext, Component<?>> componentSupplier;
+        Function<TabContext, Component<?>> retrieveComponentForTabFunction;
 
-        public DemoInTab(Demo demo, Function<TabContext, Component<?>> component) {
+        public DemoInTab(Demo demo, Function<TabContext, Component<?>> retrieveComponentFunction) {
             this.demo = demo;
-            this.componentSupplier = component;
+            this.retrieveComponentForTabFunction = retrieveComponentFunction;
         }
 
         TabAction getTabAction(KeyStroke hotKey, String tabText) {
@@ -56,8 +57,7 @@ public class TabPanelTest {
                 public void activateComponent(EventBus eventBus, TabContext tabContext) {
                     if (!firstSetup) {
                         firstSetup = true;
-                        demo.setUpDemo(demoInTabEventHandlers, tabContext.getBounds(),
-                                componentSupplier.apply(tabContext));
+                        demo.setUpDemo(demoInTabEventHandlers, tabContext.getBounds() );
                     }
                     // setupDemo populated demoInTabEventHandlers with eventHandlers specific to the
                     // demo in the tab
@@ -75,7 +75,7 @@ public class TabPanelTest {
 
                 @Override
                 public Component<?> getComponent(TabContext tabContext) {
-                    return componentSupplier.apply(tabContext);
+                    return retrieveComponentForTabFunction.apply(tabContext);
                 }
             };
         }
@@ -156,15 +156,14 @@ public class TabPanelTest {
         vPanel.add(hp);
 
         DefaultFocusManager focusManager = new DefaultFocusManager(Keys.LEFT_KEYSTROKE, Keys.RIGHT_KEYSTROKE);
-        
+
         ComponentInspector inspector = new ComponentInspector(Colors.BIGre, sizeOfInspectorWindow, vPanel, focusManager);
-        
+
         hp.add(inspector);
-        
+
         focusManager.addFocusable(tb);
         focusManager.addFocusable(inspector);
-        
-        
+
         TextComponent debugSTATs = new TextComponent(Colors.IYel, "");
         Composite debugWindow = new Composite(Colors.IGre).setBounds(sizeOfDebugWindow);
         debugWindow.setTitle(new FGBGColors(Colors.BYel, Colors.On_Gre), "DEBUG");
@@ -241,8 +240,9 @@ public class TabPanelTest {
         tb.addTab(new DemoInTab(barChartDemo, (tc) -> barChartDemo.getBarChart(tc.getBounds()))
                 .getTabAction(Keys.F6_KEYSTROKE, "BarChart Example"));
 
+        
         LineChartDemo lineChartDemo = new LineChartDemo();
-        tb.addTab(new DemoInTab(lineChartDemo, (tc) -> lineChartDemo.getLineChart()).getTabAction(Keys.F7_KEYSTROKE,
+        tb.addTab(new DemoInTab(lineChartDemo, (tc) -> lineChartDemo.getLineChartPanelComponent()).getTabAction(Keys.F7_KEYSTROKE,
                 "LineChart Example"));
 
         BrailleDemo brailleDemo = new BrailleDemo();
@@ -261,14 +261,13 @@ public class TabPanelTest {
 
         tabPanelDemoApp.setMainApplicationPanel(topFrame);
         tabPanelDemoApp.confirmOnExit();
-        
+
         tabPanelDemoApp.setOnReadyStart((tApp) -> {
 
             tApp.getEventBus().appendEventHandler(inspector.refreshEventHandler());
 
             tApp.getEventBus().appendEventHandler(inspector.toggleViewEventHandler());
-            
-            
+
             tApp.getEventBus().appendEventHandler(focusManager);
 
             // select first tab once eventBus is rdy to go
@@ -279,14 +278,13 @@ public class TabPanelTest {
                         int count = counter.incrementAndGet();
                         debugSTATs.setTextAndResize(
                                 "IDLE task invoke counter = " + count + 
-                                "   \n" + tApp.getEventBus().statsAsStr() + 
+                                "   \n" + ((EventBusImpl)tApp.getEventBus()).statsAsStr() + 
                                 "\n" + 
                                 "Text segments on screen: " + tApp.getCanvas().segmentsSize() + "  ");
         
                         te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(tApp));
             }));
-            
-            
+
         });
 
         tabPanelDemoApp.start();

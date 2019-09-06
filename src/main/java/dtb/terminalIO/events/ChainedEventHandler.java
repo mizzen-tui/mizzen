@@ -125,8 +125,17 @@ public class ChainedEventHandler implements EventHandler, EventHandlerContainer 
         }
     }
     
+    private void notNull(String errMsg, Object o) {
+        if (o == null) {
+            throw new IllegalStateException("Null object! : " + errMsg);
+        }
+    }
+    
     @Override
     public ChainedEventHandler prependEventHandler(ConditionalEventHandler eventHandler) {
+        
+        notNull("prependEventHandler()", eventHandler);
+        
         if (!eventHandlers.contains(eventHandler)) {
             synchronized (preppendList) {
                 if (!preppendList.contains(eventHandler)) {
@@ -139,6 +148,9 @@ public class ChainedEventHandler implements EventHandler, EventHandlerContainer 
     }
 
     public ChainedEventHandler appendEventHandler(ConditionalEventHandler eventHandler) {
+        
+        notNull("appendEventHandler()", eventHandler);
+        
         if (!eventHandlers.contains(eventHandler)) {
             synchronized (appendList) {
                 if (!appendList.contains(eventHandler)) {
@@ -151,6 +163,9 @@ public class ChainedEventHandler implements EventHandler, EventHandlerContainer 
     }
 
     public ChainedEventHandler removeEventHandler(ConditionalEventHandler eventHandler) {
+        
+        notNull("removeEventHandler()", eventHandler);
+        
         if (eventHandlers.contains(eventHandler)) {
             synchronized (removeList) {
                 if (!removeList.contains(eventHandler)) {

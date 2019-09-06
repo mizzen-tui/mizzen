@@ -14,6 +14,7 @@ import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.TerminalScreen;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.EventBusImpl;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.OnRequestUpdateCanvasEventHandler;
@@ -23,8 +24,8 @@ import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
-import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.InputEventsProducer;
+import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.events.mouse.MouseEventOrchestrator;
@@ -178,7 +179,7 @@ public class TUIApp {
     }
 
     private void makeEventBus() {
-        eventBus = new EventBus();
+        eventBus = new EventBusImpl();
         try {
             new InputEventsProducer(eventBus);
         } catch (Exception e) {
