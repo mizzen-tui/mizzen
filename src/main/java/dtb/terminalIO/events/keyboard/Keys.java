@@ -88,7 +88,7 @@ public class Keys {
         for (int i = 0; i < keySequences.length; i++) {
             keystrokesSet.add(new KeySetEntry(ks,keySequences[i]));
         }
-        
+
         return ks;
     }
 

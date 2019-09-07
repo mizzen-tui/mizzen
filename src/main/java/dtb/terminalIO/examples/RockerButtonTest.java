@@ -18,6 +18,7 @@ public class RockerButtonTest {
                                      .confirmOnExit();
 
         ButtonBar buttons = new ButtonBar(Colors.BIBlu);
+        buttons.setNoBorderChars();
 
         buttons.setHorizontalSpacer(2);
         
