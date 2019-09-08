@@ -31,7 +31,7 @@ import dtb.terminalIO.examples.GridBrailleTest.BrailleDemo;
 import dtb.terminalIO.examples.LineChartTest.LineChartDemo;
 import dtb.terminalIO.examples.sampledata.ReadSampleFiles;
 import dtb.terminalIO.geom.Dimension;
-import dtb.terminalIO.geom.Position;
+import dtb.terminalIO.geom.position.Position;
 
 public class TabPanelTest {
 

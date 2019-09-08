@@ -1,8 +1,8 @@
 package dtb.terminalIO.components;
 
 import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.geom.Position;
-import dtb.terminalIO.geom.PositionHorizontalRelative;
+import dtb.terminalIO.geom.position.Position;
+import dtb.terminalIO.geom.position.PositionHorizontalRelative;
 
 public class HorizontalPanel extends Composite {
 

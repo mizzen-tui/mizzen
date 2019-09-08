@@ -8,8 +8,8 @@ import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.VerticalPanel;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.core.Canvas;
-import dtb.terminalIO.geom.Position;
-import dtb.terminalIO.geom.PositionVerticalRelative;
+import dtb.terminalIO.geom.position.Position;
+import dtb.terminalIO.geom.position.PositionVerticalRelative;
 
 public class HorizontalPanelTest {
 

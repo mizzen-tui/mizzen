@@ -4,7 +4,7 @@ import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.CanvasBackend;
 import dtb.terminalIO.geom.Dimension;
-import dtb.terminalIO.geom.Position;
+import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 
 /**

@@ -1,9 +1,12 @@
-package dtb.terminalIO.geom;
+package dtb.terminalIO.geom.position;
 
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.TreeSet;
 
+import dtb.terminalIO.geom.Dimension;
+import dtb.terminalIO.geom.Movable;
+import dtb.terminalIO.geom.Relation;
 import dtb.terminalIO.geom.Relation.LeftRight;
 import dtb.terminalIO.geom.Relation.OverUnder;
 

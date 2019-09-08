@@ -18,7 +18,7 @@ import dtb.terminalIO.events.keyboard.InputEventsProducer;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
-import dtb.terminalIO.geom.Position;
+import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.util.Stty;
 
 public class CompositeLayeringTest {

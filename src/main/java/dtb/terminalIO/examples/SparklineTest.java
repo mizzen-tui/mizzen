@@ -31,7 +31,7 @@ import dtb.terminalIO.events.mouse.ApplicationMouseEvent;
 import dtb.terminalIO.events.mouse.GetComponentAtOffset;
 import dtb.terminalIO.events.mouse.MOUSE_ACTION;
 import dtb.terminalIO.geom.Dimension;
-import dtb.terminalIO.geom.Position;
+import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.util.Logging;
 
 public class SparklineTest {

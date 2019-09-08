@@ -18,7 +18,7 @@ import dtb.terminalIO.events.TerminalEvent.TYPE;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.RequestFocusEvent;
 import dtb.terminalIO.events.focus.ToFocusable;
-import dtb.terminalIO.geom.Position;
+import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.util.Logging;
 
 /**

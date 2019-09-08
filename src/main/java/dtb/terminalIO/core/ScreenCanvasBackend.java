@@ -1,7 +1,7 @@
 package dtb.terminalIO.core;
 
 import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.geom.Position;
+import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.ScreenLineSegment;
 import dtb.terminalIO.util.Logging;
 

@@ -1,6 +1,6 @@
 package dtb.terminalIO.events;
 
-import dtb.terminalIO.geom.Position;
+import dtb.terminalIO.geom.position.Position;
 
 public class RequestHideCursorEvent extends TerminalEvent<Position> {
 

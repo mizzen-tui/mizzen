@@ -4,9 +4,11 @@ import java.util.Collection;
 import java.util.Collections;
 
 import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.geom.Align;
 import dtb.terminalIO.geom.Dimension;
-import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.geom.position.Position;
+import dtb.terminalIO.geom.position.PositionRelativeFactory;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 
 /**
@@ -21,9 +23,12 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>
         implements HasTitleAndBorder<SimpleBorder>, ParentContainer {
 
     private RectangleComponent border;
+    private TextComponent titleComponent;
     private String title = null;
     private Color titleColor;
     private boolean hilited = false;
+    Position titlePosition;
+    Align    titleAlign;
 
     public SimpleBorder(Color color, Rectangle rect) {
         super(color, rect);
@@ -75,9 +80,13 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
         segments.merge(this.border.getSegmentsBuffer());
         if (this.getTitle() != null) {
-            segments.merge(
-                    makeChildComponent(() -> new TextComponent(getTitleColor(), getRow(), getCol() + 1, getTitle()))
-                            .getSegmentsBuffer());
+            if (titleComponent == null) {
+                titleComponent = makeChildComponent(() -> new TextComponent(getTitleColor(), getTitle()));
+                if (titlePosition == null) {
+                    titlePosition = PositionRelativeFactory.fromAlign(this.titleAlign, this, titleComponent, 1);
+                }
+            }
+            segments.mergeAt(titlePosition, titleComponent.getSegmentsBuffer());
         }
     }
 
@@ -93,19 +102,21 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>
         return tColor;
     }
 
-    public SimpleBorder setTitle(Color titleColor, String title) {
+    public SimpleBorder setTitle(Color titleColor, String title, Align titleAlign) {
         titleColor = titleColor != null ? titleColor : getColor();
         titleColor = titleColor.mergeWith(getColor());
         this.titleColor = titleColor;
-//        if (title != null) {  <-- breaks color codes in title - because it appears trim remove control-codes as well as whitespace!!!!!
-//                title = title.trim();
-////                if (title.length() > getWidth() - 2) {
-////                        int rightIDX=
-////                        title = title.substring(0, getWidth() - 2);
-////                }
-//        }
+
         this.title = title;
+        this.titleAlign = titleAlign;
+        this.titlePosition = null;
+        this.titleComponent = null;
         this.markAsDirty();
+        return this;
+    }
+    
+    public SimpleBorder setTitle(Color titleColor, String title) {
+        setTitle(titleColor, title, titleAlign == null ? Align.LEFT : titleAlign);
         return this;
     }
 

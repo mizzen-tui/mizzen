@@ -7,8 +7,8 @@ import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.geom.Dimension;
-import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegment;
 import dtb.terminalIO.textsegments.ScreenLineSegmentsBuffer;
@@ -252,7 +252,7 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
             this(new Rectangle.Simple(0, 0, height, width));
         }
 
-        public DONOTHING(dtb.terminalIO.geom.Position position, Dimension dimension) {
+        public DONOTHING(dtb.terminalIO.geom.position.Position position, Dimension dimension) {
             this(new Rectangle.Simple(position, dimension));
 	}
 

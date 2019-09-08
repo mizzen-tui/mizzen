@@ -6,7 +6,7 @@ import java.util.List;
 import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.components.plot.PointPlotter.PointPlot;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.geom.Position;
+import dtb.terminalIO.geom.position.Position;
 
 /**
  * Given a set of points (defined in {@link PointPlot} objects),

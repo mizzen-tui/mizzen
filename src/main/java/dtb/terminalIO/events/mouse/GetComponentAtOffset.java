@@ -1,7 +1,7 @@
 package dtb.terminalIO.events.mouse;
 
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.geom.Position;
+import dtb.terminalIO.geom.position.Position;
 
 public interface GetComponentAtOffset {
     public Component<?> getComponentAtOffset(Position offset);

@@ -1,6 +1,6 @@
 package dtb.terminalIO.core;
 
-import dtb.terminalIO.geom.Position;
+import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.ScreenLineSegment;
 
 /**

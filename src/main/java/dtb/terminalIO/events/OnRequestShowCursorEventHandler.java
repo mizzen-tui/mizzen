@@ -3,7 +3,7 @@ package dtb.terminalIO.events;
 import java.util.function.Predicate;
 
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
-import dtb.terminalIO.geom.Position;
+import dtb.terminalIO.geom.position.Position;
 
 public abstract class OnRequestShowCursorEventHandler implements ConditionalEventHandler {
 

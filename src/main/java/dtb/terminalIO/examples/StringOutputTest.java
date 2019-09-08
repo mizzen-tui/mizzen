@@ -13,7 +13,7 @@ import dtb.terminalIO.components.plot.shape.CircleAlgorithm.DonutCircleAlgorithm
 import dtb.terminalIO.components.plot.shape.Triangle;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.TerminalScreen;
-import dtb.terminalIO.geom.Position;
+import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.util.MapChars;
 import dtb.terminalIO.util.StringUtils;
 

@@ -5,6 +5,7 @@ import java.util.Comparator;
 
 import dtb.terminalIO.geom.Relation.LeftRight;
 import dtb.terminalIO.geom.Relation.OverUnder;
+import dtb.terminalIO.geom.position.Position;
 
 /**
  * Represents a rectangle which means a location ({@link Position} (row/col) ) and

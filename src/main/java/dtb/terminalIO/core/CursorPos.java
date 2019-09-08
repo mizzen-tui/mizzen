@@ -1,6 +1,6 @@
 package dtb.terminalIO.core;
 
-import dtb.terminalIO.geom.Position;
+import dtb.terminalIO.geom.position.Position;
 
 /**
  * Just a Position object -- do I really need it? I think not! delete please!!

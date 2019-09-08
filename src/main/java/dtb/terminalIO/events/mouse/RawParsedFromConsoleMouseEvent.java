@@ -1,6 +1,6 @@
 package dtb.terminalIO.events.mouse;
 
-import dtb.terminalIO.geom.Position;
+import dtb.terminalIO.geom.position.Position;
 
 /**
  * Do not use ( or handle ) this event directly.  Instead handle

@@ -1,7 +1,7 @@
 package dtb.terminalIO.components.plot;
 
-import dtb.terminalIO.geom.Position;
-import dtb.terminalIO.geom.PositionTransform;
+import dtb.terminalIO.geom.position.Position;
+import dtb.terminalIO.geom.position.PositionTransform;
 
 /**
  * A {@link PointPlotter} that transforms the x, y coordinates (before plotting) using a

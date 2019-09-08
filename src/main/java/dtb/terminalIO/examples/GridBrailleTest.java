@@ -3,16 +3,16 @@ package dtb.terminalIO.examples;
 import java.util.Comparator;
 
 import dtb.terminalIO.app.TUIApp;
+import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.braille.BrailleGrid;
+import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.plot.PathPlotter.CirclePathPlotter;
-import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.components.plot.TransformPointPlotter;
 import dtb.terminalIO.components.plot.XYTranslate;
 import dtb.terminalIO.components.plot.shape.Circle;
-import dtb.terminalIO.components.plot.shape.Circle.DrawCircleAlgorithm;
 import dtb.terminalIO.components.plot.shape.CircleAlgorithm.CircleCounterClockwise_SORT;
 import dtb.terminalIO.components.plot.shape.CircleAlgorithm.DonutCircleAlgorithm;
 import dtb.terminalIO.components.plot.shape.CompositeShape;
@@ -31,13 +31,15 @@ import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.examples.Demo.SimpleDemo;
+import dtb.terminalIO.geom.Align;
 import dtb.terminalIO.geom.Dimension;
-import dtb.terminalIO.geom.Position;
-import dtb.terminalIO.geom.PositionTransform;
-import dtb.terminalIO.geom.PositionTransform.RotateAroundFixedPoint;
-import dtb.terminalIO.geom.PositionTransform.Translate;
 import dtb.terminalIO.geom.Rectangle;
-import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.geom.VAlign;
+import dtb.terminalIO.geom.position.Position;
+import dtb.terminalIO.geom.position.PositionRelativeFactory;
+import dtb.terminalIO.geom.position.PositionTransform;
+import dtb.terminalIO.geom.position.PositionTransform.RotateAroundFixedPoint;
+import dtb.terminalIO.geom.position.PositionTransform.Translate;
 
 public class GridBrailleTest {
 
@@ -71,7 +73,6 @@ public class GridBrailleTest {
         public void handle(TerminalEvent<?> te) {
             circlePath.plotOnePointFromPath();
         }
-
     }
 
 
@@ -185,15 +186,6 @@ public class GridBrailleTest {
                     shapes.draw(pointPlotter);
                     grid.markAsDirty();
 
-//                    if (segmentsBufferProvider != null) {
-//                        // remove / erase rectangle where grid will be copied into
-//                        segmentsBufferProvider.getSegmentsBuffer().removeRect(brailleComponent);
-//
-//                        // copy grid contents into segmentsBufferProvider ( the parent component)
-//                        segmentsBufferProvider.getSegmentsBuffer().mergeAt(2, 2, brailleComponent.getSegmentsBuffer());
-//                    }
-
-                    //
                     flushOutput();
                 }
             };
@@ -258,38 +250,52 @@ public class GridBrailleTest {
                 }
             }));
 
-            addAndRememberEventHandler(eventBus, new KeyInputEventHandler(KEY_MOVE_UP, new EventHandler() {
+            
+            // brailleComponent
+            ButtonBar movementKeys = new ButtonBar(brailleComponent.getColor());
+            movementKeys.setBorder(true);
+            movementKeys.setNoBorderChars();
+            
+            Button upButton = new Button("UP");
+            upButton.setHotKey(KEY_MOVE_UP);
+            upButton.setActionHandler((te)->{
+                pointPlotter.setyDelta(pointPlotter.getyDelta() - 1);
+                drawIt.run();
+            });
 
-                @Override
-                public void handle(TerminalEvent<?> te) {
-                    pointPlotter.setyDelta(pointPlotter.getyDelta() - 1);
-                    drawIt.run();
-                }
-            }));
+            Button downButton = new Button("DOWN");
+            downButton.setHotKey(KEY_MOVE_DOWN);
+            downButton.setActionHandler((te)->{
+                pointPlotter.setyDelta(pointPlotter.getyDelta() + 1);
+                drawIt.run();
+            });
+            
 
-            addAndRememberEventHandler(eventBus, new KeyInputEventHandler(KEY_MOVE_DOWN, new EventHandler() {
-                @Override
-                public void handle(TerminalEvent<?> te) {
-                    pointPlotter.setyDelta(pointPlotter.getyDelta() + 1);
-                    drawIt.run();
-                }
-            }));
+            Button leftButton = new Button("LEFT");
+            leftButton.setHotKey(KEY_MOVE_LEFT);
+            leftButton.setActionHandler((te)->{
+                pointPlotter.setxDelta(pointPlotter.getxDelta() - 1);
+                drawIt.run();
+            });
+            
+            Button rightButton = new Button("RIGHT");
+            rightButton.setHotKey(KEY_MOVE_RIGHT);
+            rightButton.setActionHandler((te)->{
+                pointPlotter.setxDelta(pointPlotter.getxDelta() + 1);
+                drawIt.run();
+            });
+            
+            
+            movementKeys.add(upButton);
+            movementKeys.add(downButton);
+            movementKeys.add(leftButton);
+            movementKeys.add(rightButton);
+            
+            Position movementKeysPosition = PositionRelativeFactory.fromAlign(VAlign.BOTTOM, 3, Align.MIDDLE, 0,  brailleComponent, movementKeys);
+            brailleComponent.add(movementKeysPosition, movementKeys);
 
-            addAndRememberEventHandler(eventBus, new KeyInputEventHandler(KEY_MOVE_LEFT, new EventHandler() {
-                @Override
-                public void handle(TerminalEvent<?> te) {
-                    pointPlotter.setxDelta(pointPlotter.getxDelta() - 1);
-                    drawIt.run();
-                }
-            }));
-
-            addAndRememberEventHandler(eventBus, new KeyInputEventHandler(KEY_MOVE_RIGHT, new EventHandler() {
-                @Override
-                public void handle(TerminalEvent<?> te) {
-                    pointPlotter.setxDelta(pointPlotter.getxDelta() + 1);
-                    drawIt.run();
-                }
-            }));
+            addAndRememberEventHandler(eventBus, movementKeys);
+            
         }
 
         private KeyStroke KEY_MOVE_UP = Keys.UP_KEYSTROKE;
@@ -368,15 +374,15 @@ public class GridBrailleTest {
 
             // set to size of canvas
             ((Composite)app.getMainApplicationPanel()).resize(app.getCanvas());
-            
+
             brailleDemo.setUpDemo(tApp.getEventBus(), bounds);
-            
+
             Component<?> brailleComponent = brailleDemo.getBrailleComponent();
             
             ((Composite)app.getMainApplicationPanel()).add(brailleComponent);
 
             ((Composite)app.getMainApplicationPanel()).add(tc_status);
-            
+
         });
 
 

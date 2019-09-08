@@ -14,7 +14,7 @@ import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
-import dtb.terminalIO.geom.PositionVerticalRelative;
+import dtb.terminalIO.geom.position.PositionVerticalRelative;
 
 public class ButtonBarTest {
 

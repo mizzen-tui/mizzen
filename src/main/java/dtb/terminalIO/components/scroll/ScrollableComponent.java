@@ -25,8 +25,8 @@ import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
-import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.traverse.FindPathToTarget;
 
@@ -162,9 +162,6 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
 
     public Composite setBorderColor(Color borderColors) {
         this.borderedComponent.setBorderColor(borderColors);
-//        if (this.borderedComponent.getTitle() != null) {
-//            this.borderedComponent.setTitle(borderColors, this.borderedComponent.getTitle())
-//        }
         this.footerControls.setColor(borderColors);
         vScrollBar.setColor(this.borderedComponent.getBorderColor());
         hScrollBar.setColor(this.borderedComponent.getBorderColor());
@@ -293,20 +290,6 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         if (r > (componentBeingViewed.getBottomMostRow() + 1)  || 
             c > (componentBeingViewed.getRightMostCol()  + 1)  )
             return; // too large
-//        if (r > (componentBeingViewed.getBottomMostRow() - viewer.getHeight() + 2)  || 
-//                c > (componentBeingViewed.getRightMostCol()  - viewer.getWidth()  + 2)  ) {
-//                
-//                return; // too large
-//        }
-  
-//        if (r > (componentBeingViewed.getBottomMostRow() - viewer.getHeight() + 1)) {
-//            r = componentBeingViewed.getBottomMostRow() + 1;
-//        }
-//        
-//        if (c > (componentBeingViewed.getRightMostCol()  - viewer.getWidth()  + 1)) {
-//            c = componentBeingViewed.getRightMostCol()  + 1;
-//        }
-        
         
         markAsDirty();
         Position offset = new Position.Simple(r, c);
@@ -685,7 +668,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
             }
             return childFocusables;
         }
-        
+
         FocusManager componentBeingViewedFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(componentBeingViewed, null);
         
         if (componentBeingViewedFocusManager != null) {
@@ -696,7 +679,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
             }
             return childFocusables;
         }
-        
+
         childFocusables = new ArrayList<Focusable>();
         
         if (componentBeingViewed instanceof Focusable) {
@@ -705,12 +688,11 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
                 childFocusables.add(footerControls);
             }
         }
-        
+
         return childFocusables;
 
     }
-    
-    
+
     @Override
     public Collection<Focusable> getChildFocusables() {
         return buildChildFocusablesIfNeeded();

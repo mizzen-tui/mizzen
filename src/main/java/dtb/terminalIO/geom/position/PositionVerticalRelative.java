@@ -1,5 +1,6 @@
-package dtb.terminalIO.geom;
+package dtb.terminalIO.geom.position;
 
+import dtb.terminalIO.geom.Rectangle;
 
 public class PositionVerticalRelative implements Position {
 

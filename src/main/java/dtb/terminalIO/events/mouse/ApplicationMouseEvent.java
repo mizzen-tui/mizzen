@@ -1,6 +1,6 @@
 package dtb.terminalIO.events.mouse;
 
-import dtb.terminalIO.geom.Position;
+import dtb.terminalIO.geom.position.Position;
 
 public class ApplicationMouseEvent extends AbstractMouseEvent {
 

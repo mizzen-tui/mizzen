@@ -12,7 +12,7 @@ import dtb.terminalIO.controlcodes.Renderer.TextRenderer;
 import dtb.terminalIO.core.CLIEmitter.DelegateEmitter;
 import dtb.terminalIO.core.CLIEmitter.MapCharsEmitter;
 import dtb.terminalIO.core.CLIEmitter.PrintStreamEmitter;
-import dtb.terminalIO.geom.Position;
+import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.util.MapChars;
 import dtb.terminalIO.util.Stty;
 

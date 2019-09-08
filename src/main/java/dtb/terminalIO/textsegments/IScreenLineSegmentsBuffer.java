@@ -4,8 +4,8 @@ import java.util.Collection;
 import java.util.Iterator;
 
 import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.geom.position.Position;
 
 /**
  * Container for {@link ScreenLineSegment} objects

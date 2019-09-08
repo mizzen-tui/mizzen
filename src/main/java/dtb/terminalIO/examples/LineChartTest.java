@@ -37,8 +37,8 @@ import dtb.terminalIO.events.resize.TerminalResizeDetection;
 import dtb.terminalIO.events.resize.TerminalResizeEventGenerator;
 import dtb.terminalIO.examples.Demo.SimpleDemo;
 import dtb.terminalIO.geom.Dimension;
-import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.util.Stty;
 import dtb.terminalIO.util.TerminalDimensions;
 

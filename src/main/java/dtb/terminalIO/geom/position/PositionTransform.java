@@ -1,4 +1,4 @@
-package dtb.terminalIO.geom;
+package dtb.terminalIO.geom.position;
 
 /**
  * Transforms Position objects from one location to another.

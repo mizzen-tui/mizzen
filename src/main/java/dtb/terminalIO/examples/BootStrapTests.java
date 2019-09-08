@@ -15,8 +15,8 @@ import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.LayeredCanvasBackend;
 import dtb.terminalIO.core.TerminalScreen;
 import dtb.terminalIO.geom.Dimension;
-import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.geom.position.Position;
 
 public class BootStrapTests {
 

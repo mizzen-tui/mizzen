@@ -5,7 +5,7 @@ import dtb.terminalIO.controlcodes.ControlCodeContext;
 import dtb.terminalIO.controlcodes.Renderer;
 import dtb.terminalIO.controlcodes.ControlCode.BaseTextControlCode;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors.HasRowChange;
-import dtb.terminalIO.geom.Position;
+import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.util.Logging;
 
 /**

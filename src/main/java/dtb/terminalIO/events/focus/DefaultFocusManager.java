@@ -231,25 +231,40 @@ public class DefaultFocusManager implements FocusManager, HasChildren<Focusable>
                 KeyEvent ke = (KeyEvent) te;
 
                 if (prevKeyStroke != null && ke.isKeyStroke(prevKeyStroke)) {
-                    Focusable prev = getPrev(te.getEventBus());
-                    if (prev != null) {
-                        setChildAsCurrentFocus(prev, te.getEventBus());
+                    if (setPreviousAsCurrentFocus(te.getEventBus())) {
                         return;
                     }
                 } else if (nextKeyStroke != null && ke.isKeyStroke(nextKeyStroke)) {
-                    Focusable next = getNext(te.getEventBus());
-                    if (next != null) {
-                        setChildAsCurrentFocus(next, te.getEventBus());
+                    if (setNextAsCurrentFocus(te.getEventBus())) {
                         return;
                     }
                 }
             }
-
+            
+            // not a navigation key so forward event to current focusable
             Focusable focusable = getCurrentOrSet(te.getEventBus());
             if (focusable != null) {
                 focusable.handle(te);
             }
         });
+    }
+
+    public boolean setPreviousAsCurrentFocus(EventBus eventBus) {
+        Focusable prev = getPrev(eventBus);
+        if (prev != null) {
+            setChildAsCurrentFocus(prev, eventBus);
+            return true;
+        }
+        return false;
+    }
+
+    public boolean setNextAsCurrentFocus(EventBus eventBus) {
+        Focusable next = getNext(eventBus);
+        if (next != null) {
+            setChildAsCurrentFocus(next, eventBus);
+            return true;
+        }
+        return false;
     }
 
 
@@ -291,7 +306,7 @@ public class DefaultFocusManager implements FocusManager, HasChildren<Focusable>
             
             Focusable focusable = getCurrentOrSet(te.getEventBus());
             if (focusable != null) {
-                // ARG have to test again (is this 3 tests now!!!!)
+                // ARG have to test again (is this 3 tests now !?!?)
                 //                         very inefficient)
                 //                      - might have to fix this
                 if (focusable.canHandle(te)!=null) {
@@ -304,15 +319,11 @@ public class DefaultFocusManager implements FocusManager, HasChildren<Focusable>
                 KeyEvent ke = (KeyEvent) te;
 
                 if (prevKeyStroke != null && ke.isKeyStroke(prevKeyStroke)) {
-                    Focusable prev = getPrev(te.getEventBus());
-                    if (prev != null) {
-                        setChildAsCurrentFocus(prev, te.getEventBus());
+                    if (setPreviousAsCurrentFocus(te.getEventBus())) {
                         return;
                     }
                 } else if (nextKeyStroke != null && ke.isKeyStroke(nextKeyStroke)) {
-                    Focusable next = getNext(te.getEventBus());
-                    if (next != null) {
-                        setChildAsCurrentFocus(next, te.getEventBus());
+                    if (setNextAsCurrentFocus(te.getEventBus())) {
                         return;
                     }
                 }

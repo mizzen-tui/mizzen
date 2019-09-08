@@ -1,7 +1,7 @@
 package dtb.terminalIO.components;
 
-import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.geom.position.Position;
 
 public interface ChildComponentManager<T extends ChildComponentManager<?>> extends ParentContainer, Rectangle {
 

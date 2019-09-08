@@ -7,8 +7,8 @@ import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.components.plot.shape.LinePlotter;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.geom.Dimension;
-import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.CleanString;
 
 public class BrailleGrid extends Composite {

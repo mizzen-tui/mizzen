@@ -1,4 +1,4 @@
-package dtb.terminalIO.geom;
+package dtb.terminalIO.geom.position;
 
 public class PositionRelativeUsingTransform implements Position {
 

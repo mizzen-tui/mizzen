@@ -3,7 +3,7 @@ package dtb.terminalIO.examples.server;
 import java.io.IOException;
 
 import dtb.terminalIO.geom.Dimension;
-import dtb.terminalIO.geom.Position;
+import dtb.terminalIO.geom.position.Position;
 
 public interface DrawingBoard {
 

@@ -10,7 +10,7 @@ import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.keyboard.Keys.KeyStrokeFindResult;
 import dtb.terminalIO.events.mouse.MOUSE_ACTION;
 import dtb.terminalIO.events.mouse.RawParsedFromConsoleMouseEvent;
-import dtb.terminalIO.geom.Position;
+import dtb.terminalIO.geom.position.Position;
 
 // TODO and CRITICAL!!!:   This code is not properly handling when keyboard input is coming in fast..
 

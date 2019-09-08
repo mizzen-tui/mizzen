@@ -5,7 +5,7 @@ import java.util.Comparator;
 import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.components.plot.shape.Circle.DrawCircleAlgorithm;
 import dtb.terminalIO.components.plot.shape.math.TrigUtil;
-import dtb.terminalIO.geom.Position;
+import dtb.terminalIO.geom.position.Position;
 
 /**
  * Draws a circle using specified {@link DrawCircleAlgorithm}

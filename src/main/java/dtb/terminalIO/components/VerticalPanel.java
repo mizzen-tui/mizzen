@@ -1,8 +1,8 @@
 package dtb.terminalIO.components;
 
 import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.geom.Position;
-import dtb.terminalIO.geom.PositionVerticalRelative;
+import dtb.terminalIO.geom.position.Position;
+import dtb.terminalIO.geom.position.PositionVerticalRelative;
 
 public class VerticalPanel extends Composite {
     

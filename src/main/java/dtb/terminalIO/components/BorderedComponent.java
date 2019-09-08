@@ -9,9 +9,10 @@ import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.events.mouse.GetComponentAtOffset;
+import dtb.terminalIO.geom.Align;
 import dtb.terminalIO.geom.Dimension;
-import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 
 // todo dropshadow component
@@ -186,11 +187,11 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
         return border.getTitle();
     }
 
-    public BorderedComponent setTitle(FGBGColors titleColor, String title) {
-        border.setTitle(titleColor, title);
+    public BorderedComponent setTitle(Color titleColor, String title, Align titleAlign) {
+        border.setTitle(titleColor, title, titleAlign);
         return this;
     }
-
+    
     public BorderedComponent setTitle(String title) {
         border.setTitle(title);
         return this;

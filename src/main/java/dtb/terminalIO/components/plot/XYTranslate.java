@@ -1,6 +1,6 @@
 package dtb.terminalIO.components.plot;
 
-import dtb.terminalIO.geom.PositionTransform;
+import dtb.terminalIO.geom.position.PositionTransform;
 
 /**
  * A {@link TransformPointPlotter} that 'moves' any x,y coordinates

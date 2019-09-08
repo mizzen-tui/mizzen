@@ -14,9 +14,9 @@ import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.ColorColorSegmentBuilder;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.core.CursorPos;
-import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.Relation.LeftRight;
+import dtb.terminalIO.geom.position.Position;
 
 /**
  * This object is the fundamental building block for all text objects that can

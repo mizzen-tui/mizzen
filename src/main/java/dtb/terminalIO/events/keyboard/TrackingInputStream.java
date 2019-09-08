@@ -3,11 +3,11 @@ package dtb.terminalIO.events.keyboard;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
 
 import dtb.terminalIO.util.Logging;
 
+
+//  delete? was previously used for debugging stdin
 public class TrackingInputStream extends FileInputStream {
 
     public TrackingInputStream(FileDescriptor fdObj) {

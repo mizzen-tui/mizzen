@@ -4,15 +4,15 @@ import java.util.Collection;
 import java.util.Collections;
 
 import dtb.terminalIO.components.AbstractComponent;
-import dtb.terminalIO.components.BlockChars;
 import dtb.terminalIO.components.BorderedComponent;
+import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.CanResize;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.Hiliter;
+import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.ParentContainer;
-import dtb.terminalIO.components.TextComponent;
-import dtb.terminalIO.components.scroll.ScrollableComponent;
+import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.events.ChainedEventHandler;
@@ -28,9 +28,12 @@ import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.events.mouse.GetComponentAtOffset;
+import dtb.terminalIO.geom.Align;
 import dtb.terminalIO.geom.Dimension;
-import dtb.terminalIO.geom.Position;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.geom.VAlign;
+import dtb.terminalIO.geom.position.Position;
+import dtb.terminalIO.geom.position.PositionRelativeFactory;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 
 public class TabPanel extends AbstractComponent<TabPanel> 
@@ -41,10 +44,11 @@ public class TabPanel extends AbstractComponent<TabPanel>
     private Composite mainPanel;
     private BorderedComponent workAreaBorder;
     private Composite workArea;
+    private Button previousButton;
+    private Button nextButton;
+    private ButtonBar navControls;
 
     Color textActiveTabColor = ControlCode.DEFAULT_COLOR.bold();
-
-    private String prevNextHelp = "";
 
     private ChainedEventHandler chainedEventHandler;
 
@@ -55,6 +59,7 @@ public class TabPanel extends AbstractComponent<TabPanel>
         workAreaBorder = new BorderedComponent(color, workArea);
         this.mainPanel.add(new Position.Simple(2, 0), workAreaBorder);
         this.mainPanel.setParentContainer(this);
+        
     }
 
     public TabPanel(Color color, Color textActiveTabColor, Dimension bounds) {
@@ -91,14 +96,16 @@ public class TabPanel extends AbstractComponent<TabPanel>
             ta.resize(getTabContext());
         }
 
-        drawHelpText();
     }
 
     private void buildFocusManager() {
         
+        KeyStroke previousTabHotKey = Keys.SHIFT_TAB_KEYSTROKE;
+        KeyStroke nextTabHotKey = Keys.TAB_KEYSTROKE;
+        
         chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
         ConditionalEventHandler chainedEventHandlerAsConditionalEventHandler = chainedEventHandler.asConditionalEventHandler();
-        focusManager = new DefaultFocusManager(Keys.SHIFT_TAB_KEYSTROKE, Keys.TAB_KEYSTROKE) {
+        focusManager = new DefaultFocusManager(previousTabHotKey, nextTabHotKey) {
             
             @Override
             public void setChildAsCurrentFocus(Focusable focusable, EventBus eventBus) {
@@ -145,6 +152,30 @@ public class TabPanel extends AbstractComponent<TabPanel>
                 chainedEventHandlerAsConditionalEventHandler.handle(te);
             }
         };
+        
+        if (navControls == null) {
+            navControls = new ButtonBar( workAreaBorder.getBorderColor() ).setHorizontalSpacer(2);
+            
+            previousButton = new Button("<-");
+            previousButton.setHotKey(previousTabHotKey);
+            previousButton.setDisplayHotKey(true);
+            previousButton.setActionHandler((te)-> focusManager.setPreviousAsCurrentFocus( te.getEventBus() ));
+            navControls.add(previousButton);
+            
+            nextButton = new Button("->");
+            nextButton.setHotKey(nextTabHotKey);
+            nextButton.setDisplayHotKey(true);
+            nextButton.setActionHandler((te)-> focusManager.setNextAsCurrentFocus( te.getEventBus() ));
+            navControls.add(nextButton);
+            
+            // TODO:  change navButtons to a button bar
+            //  because not attached to a focusManager - will I have problems processing a mouse?  .. I think so
+            chainedEventHandler.appendEventHandler(navControls);
+            //chainedEventHandler.appendEventHandler(nextButton);
+            
+            Position navControlsPosition = PositionRelativeFactory.fromAlign(VAlign.BOTTOM, Align.RIGHT,  this.mainPanel, this.navControls);
+            mainPanel.add(navControlsPosition, navControls);
+        }
         
 
     }
@@ -221,48 +252,7 @@ public class TabPanel extends AbstractComponent<TabPanel>
     int offsetRow = 0;
     int offsetCol = 1;
 
-    boolean helpFooterBuilt = false;
-
-    private TextComponent tcHelp;
-
-    private void buildFooterHelpIfNeeded() {
-
-        if (helpFooterBuilt) {
-            return;
-        }
-
-        helpFooterBuilt = true;
-
-        BlockChars blockChars = workAreaBorder.getBlockChars();
-        String prevArrow = " <- ";
-        String nextArrow = " -> ";
-
-        this.prevNextHelp = blockChars.getVERTICAL_LEFT() + " " + Keys.SHIFT_TAB_KEYSTROKE.getName() + prevArrow;
-
-        this.prevNextHelp += blockChars.getVERTICAL_RIGHT() + "" + blockChars.getHORIZONTAL_LINE() + ""
-                + blockChars.getHORIZONTAL_LINE() + "" + blockChars.getHORIZONTAL_LINE() + ""
-                + blockChars.getVERTICAL_LEFT() + "" + " " + Keys.TAB_KEYSTROKE.getName() + nextArrow
-                + blockChars.getVERTICAL_RIGHT();
-
-        drawHelpText();
-
-    }
-
-    private void drawHelpText() {
-        if (this.prevNextHelp == null) {
-            return;
-        }
-        int prevNextHelpLen = this.prevNextHelp.length();
-
-        if (this.tcHelp == null) {
-            this.tcHelp = new TextComponent(workAreaBorder.getColor(), prevNextHelp);
-            this.mainPanel.add(new Position.Simple(2, 0).offsetAdd(workAreaBorder).offsetAdd(workAreaBorder.getBottomMostRow(),
-                               workAreaBorder.getRightMostCol() - prevNextHelpLen - 2), tcHelp);
-        } else {
-            this.mainPanel.moveChildTo(new Position.Simple(2, 0).offsetAdd(workAreaBorder).offsetAdd(
-                                       workAreaBorder.getBottomMostRow(), workAreaBorder.getRightMostCol() - prevNextHelpLen - 2), tcHelp);
-        }
-    }
+    boolean helpFooterBuilt = true;
 
     public void addTab(final TabAction tabAction) {
 
@@ -282,8 +272,6 @@ public class TabPanel extends AbstractComponent<TabPanel>
             // hmm... I wonder if this will cause grief down the road ..
             tabAction.setTextActiveTabColor(this.textActiveTabColor);
         }
-
-        buildFooterHelpIfNeeded();
 
         getFocusManager().addFocusable(tabAction);
         
@@ -437,6 +425,5 @@ public class TabPanel extends AbstractComponent<TabPanel>
     public void unHilite() {
         hiliter.unHilite();
     }
-    
-    
+
 }
