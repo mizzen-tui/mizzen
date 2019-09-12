@@ -158,7 +158,7 @@ public class TerminalScreen implements ControlCodeContext {
     public LineTrackingCLIEmmitter getEmitter() {
 	return this.out;
     }
-    
+
     public void showCursorAt(Position showCursorPosition) {
         out.showCursorAt(showCursorPosition);
     }
@@ -170,7 +170,5 @@ public class TerminalScreen implements ControlCodeContext {
     public void hideCursor() {
         add( ControlCode.HIDE_CURSOR);
     }
-    
-    
 
 }

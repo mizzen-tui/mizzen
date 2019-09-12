@@ -26,6 +26,7 @@ public class ColorsTest {
             tApp.getMainApplicationPanel().add(0,10, new TextComponent("   Named Colors"));
             
             Composite colorsOfTheRainbow = new HorizontalPanel().setHorizontalSpacer(1);
+            colorsOfTheRainbow.setFillOnClear(false);
             
             int maxName = -1;
             
@@ -58,6 +59,7 @@ public class ColorsTest {
             //VerticalPanel combinedColors = new VerticalPanel().setVerticalSpacer(1);
             
             Composite combinedColors = new Composite();
+            combinedColors.setFillOnClear(false);
             
             combinedColors.setBulkAdd(true);
             sb = new StringBuilder();
@@ -72,6 +74,7 @@ public class ColorsTest {
                     TextComponent coloredText = new TextComponent(combinedColor, text);
                     combinedColors.add(colorRow, colorCol, coloredText);
                     colorCol += 1 + coloredText.getWidth();
+                    coloredText.setFillOnClear(false);
                 }
                 colorRow +=3 ;
             }
@@ -80,6 +83,7 @@ public class ColorsTest {
             colorsOfTheRainbow.add(combinedColors);
             
             ScrollableComponent sc = new ScrollableComponent(Colors.Whi, tApp.getMainApplicationPanel(), colorsOfTheRainbow);
+            sc.setFillOnClear(false);
             
             sc.resize(  new Dimension.Simple(sc.getHeight()-1, sc.getWidth()));
             

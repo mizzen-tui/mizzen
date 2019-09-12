@@ -97,7 +97,7 @@ public class LineChartTest {
 
                         @Override
                         public int getHeight() {
-                            return size.getHeight()-2;
+                            return size.getHeight();
                         }
                     };
                 }

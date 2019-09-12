@@ -130,7 +130,8 @@ public class ButtonBar extends Composite implements FocusManager, EventHandlerCo
         // needed
         chainedEventHandler = null;
         chainedEventHandlerAsConditionalEventHandler = null;
-
+        meAsFocusable = null;
+        eventConsumers.clear();
         current = null;
     }
 
@@ -228,7 +229,7 @@ public class ButtonBar extends Composite implements FocusManager, EventHandlerCo
             if (lastDivider != null) {
                 horizontalPanel.remove(lastDivider);
             }
-            if (this.middleBorderChar > 0) {
+            if (count > 0 && this.middleBorderChar > 0) {
                 horizontalPanel.add(new CharComponent(this.getColor(), this.middleBorderChar));
             }
         }

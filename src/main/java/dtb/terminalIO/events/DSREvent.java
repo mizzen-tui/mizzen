@@ -1,5 +1,13 @@
 package dtb.terminalIO.events;
 
+/**
+ * Device Status Report (DSR) event
+ * 
+ * <p/>
+ * 
+ * Created when stdin is parsed to have an incoming DSR byte sequence
+ *
+ */
 public class DSREvent extends TerminalEvent<Integer> {
 
     private static final long serialVersionUID = -1219719615636946728L;

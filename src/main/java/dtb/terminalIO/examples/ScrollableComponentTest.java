@@ -30,6 +30,7 @@ import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.keyboard.InputEventsProducer;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
+import dtb.terminalIO.events.mouse.MouseEventOrchestrator;
 import dtb.terminalIO.events.resize.TerminalResizeDetection;
 import dtb.terminalIO.examples.BarChartTest.BarChartDemo;
 import dtb.terminalIO.examples.GridBrailleTest.BrailleDemo;
@@ -37,6 +38,7 @@ import dtb.terminalIO.examples.LineChartTest.LineChartDemo;
 import dtb.terminalIO.examples.sampledata.ReadSampleFiles;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.geom.Rectangle.Simple;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.util.StringUtils;
 import dtb.terminalIO.util.Stty;
@@ -91,8 +93,6 @@ public class ScrollableComponentTest {
                                 largeText = StringUtils.addLineNumbers(largeText);
                                 
                                 __srcOfText.setTextAndResize(largeText);
-                                
-                                
                                 
                             } catch (IOException e) {
                                 e.printStackTrace();
@@ -191,6 +191,7 @@ public class ScrollableComponentTest {
             public void handle(TerminalEvent<?> te) {
                 eventBus.stopConsuming();
                 screen.add(ControlCode.SHOW_CURSOR);
+                screen.add(ControlCode.DISABLE_MOUSE_TRACKING);
                 screen.refresh();
 
                 try {
@@ -372,13 +373,19 @@ public class ScrollableComponentTest {
         lineChartDemoContainer.setBounds(sizeOfLineChartWindow);
         lineChartDemoContainer.setBorder(true);
         LineChartDemo lineChartDemo = new LineChartDemo();
+        Rectangle clippedAreaForLinechart = new Rectangle.Simple(Position.ZERO, new Dimension.Simple(lineChartDemoContainer.getHeight()-2, lineChartDemoContainer.getWidth()-2));
+        lineChartDemo.setUpDemo(eventBus, clippedAreaForLinechart);
+        lineChartDemoContainer.add(lineChartDemo.getLineChartPanelComponent());
         
         Composite barChartDemoContainer = new ContainerForDemo();
         barChartDemoContainer.setBounds(sizeOfBarChartWindow);
         barChartDemoContainer.setBorder(true);
         BarChartDemo barChartDemo = new BarChartDemo();
+        Rectangle clippedAreaForBarchart = new Rectangle.Simple(Position.ZERO, new Dimension.Simple(barChartDemoContainer.getHeight()-2, barChartDemoContainer.getWidth()-2));
 
-        
+        barChartDemo.setUpDemo(eventBus, clippedAreaForBarchart);
+        barChartDemoContainer.add(barChartDemo.getBarChart(clippedAreaForBarchart));
+
         Runnable updateCanvas = new Runnable() {
             
             long lastRun = 0;
@@ -442,18 +449,25 @@ public class ScrollableComponentTest {
 
                 lineChartDemoContainer.clear();
                 lineChartDemoContainer.resize(sizeOfLineChartWindow);
-                lineChartDemo.resize(sizeOfLineChartWindow);
+
+                lineChartDemo.resize(new Dimension.Simple(sizeOfLineChartWindow.getHeight()-2, sizeOfBarChartWindow.getWidth()-2));
 
                 barChartDemoContainer.clear();
+
                 barChartDemoContainer.resize(sizeOfBarChartWindow);
-                barChartDemo.resize(sizeOfBarChartWindow);
+                barChartDemo.resize(new Dimension.Simple(barChartDemoContainer.getHeight()-2, barChartDemoContainer.getWidth()-2));
                 
                 updateCanvas.run();
             }
         });
 
-        
+
         setUpTerminateHandler(screen, master_canvas, eventBus);
+        
+//        MouseEventOrchestrator mOrch = new MouseEventOrchestrator(screen, master_canvas, eventBus);
+//        
+//        mOrch.enableMouseHandling();
+//        mOrch.enableMouseHandling(rootComponent);
 
         return ;
     }

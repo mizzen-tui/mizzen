@@ -13,7 +13,6 @@ import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
-import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.RequestHideCursorEvent;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
@@ -33,7 +32,7 @@ import dtb.terminalIO.util.StringUtils;
 public class Button extends BoundedComponent<Button> implements HasValue<Boolean>, Focusable, HasHotKey, Clickable, ParentContainer , GetComponentAtOffset  {
 
     String buttonText;
-    Composite container;
+    Composite container;  // <-- having a composite for something as simple as a button seems a bit heavy
     TextComponent renderedText;
     String leftSelectedBracket = "[";
     String rightSelectedBracket = "]";

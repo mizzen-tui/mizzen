@@ -254,32 +254,37 @@ public class GridBrailleTest {
             // brailleComponent
             ButtonBar movementKeys = new ButtonBar(brailleComponent.getColor());
             movementKeys.setBorder(true);
-            movementKeys.setNoBorderChars();
+            movementKeys.setLeftMostBorderChar((char) 0);
+            movementKeys.setRightMostBorderChar((char) 0);
             
-            Button upButton = new Button("UP");
+            Button upButton = new Button("^");
             upButton.setHotKey(KEY_MOVE_UP);
+            upButton.setDisplayHotKey(true);
             upButton.setActionHandler((te)->{
                 pointPlotter.setyDelta(pointPlotter.getyDelta() - 1);
                 drawIt.run();
             });
 
-            Button downButton = new Button("DOWN");
+            Button downButton = new Button("v");
             downButton.setHotKey(KEY_MOVE_DOWN);
+            downButton.setDisplayHotKey(true);
             downButton.setActionHandler((te)->{
                 pointPlotter.setyDelta(pointPlotter.getyDelta() + 1);
                 drawIt.run();
             });
             
 
-            Button leftButton = new Button("LEFT");
+            Button leftButton = new Button("«");
             leftButton.setHotKey(KEY_MOVE_LEFT);
+            leftButton.setDisplayHotKey(true);
             leftButton.setActionHandler((te)->{
                 pointPlotter.setxDelta(pointPlotter.getxDelta() - 1);
                 drawIt.run();
             });
             
-            Button rightButton = new Button("RIGHT");
+            Button rightButton = new Button("»");
             rightButton.setHotKey(KEY_MOVE_RIGHT);
+            rightButton.setDisplayHotKey(true);
             rightButton.setActionHandler((te)->{
                 pointPlotter.setxDelta(pointPlotter.getxDelta() + 1);
                 drawIt.run();

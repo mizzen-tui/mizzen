@@ -225,16 +225,25 @@ public class MouseEventOrchestrator {
                         Focusable focusableClickable = focusComponent;
                         eventBus.appendEventHandler( new OnIdleEventEventHandler.OneTime((te2)-> {
                             if (focusableClickable.hasFocus()) {
-                                clickable.onClick( te2.getEventBus() );
+                                // map mouse position as an offset into the clicked component
+                                // and pass the component a mouse event with this offset
+                                Position clickableOffsetOnCanvas = Component.UTIL.getCanvasOffsetFor((Component<?>)clickable);
+                                if (clickableOffsetOnCanvas != null) {
+                                    Position mouseOffsetIntoClickable = clickableOffsetOnCanvas.offsetTo(canvasPosition);
+                                    ApplicationMouseEvent newMouseEvent = new ApplicationMouseEvent(appMouseEvent.getSource(), appMouseEvent.getMouseAction(), mouseOffsetIntoClickable);
+                                    newMouseEvent.setEventBus(te2.getEventBus());
+                                    clickable.onClick(newMouseEvent);
+                                    return;
+                                }
+                                // can't map to an offset into component so just send the eventbus
+                                clickable.onClick( appMouseEvent.getEventBus() );
                             }
                         })); 
                     }
                 }
             }
         };
-        
         eventBus.appendEventHandler(appMouseToFocusableComponent);
-        
     }
     
 }

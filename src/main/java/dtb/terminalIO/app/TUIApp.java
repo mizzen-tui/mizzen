@@ -123,7 +123,6 @@ public class TUIApp {
             if (mainApplicationPanel instanceof CanResize) {
                 Dimension newDimension = new Dimension.Simple(Math.min(mainApplicationPanel.getHeight(), getCanvas().getHeight()),
                                                               Math.min(mainApplicationPanel.getWidth() , getCanvas().getWidth()));
-                
                 ((CanResize)mainApplicationPanel).resize(newDimension);
             } else {
                 throw new IllegalStateException("You have attempted to assign a mainApplicationPanel "
@@ -131,7 +130,7 @@ public class TUIApp {
                                                 + "Class = " + mainApplicationPanel.getClass().getName());
             }
         }
-        
+
         this.mainApplicationPanel = mainApplicationPanel;
         return this;
     }
@@ -275,12 +274,12 @@ public class TUIApp {
         // you want the canvas position just below last prompt on the terminal
         getCanvas().refresh();
 
+        screen.add(ControlCode.HIDE_CURSOR);
+        screen.refresh();
+
         if (this.eventBus == null) {
             makeEventBus();
         }
-
-        screen.add(ControlCode.HIDE_CURSOR);
-        screen.refresh();
 
         mouseEventOchestrator = new MouseEventOrchestrator(screen, getCanvas(), eventBus);
 

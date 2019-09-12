@@ -107,6 +107,23 @@ public class TabPanel extends AbstractComponent<TabPanel>
         ConditionalEventHandler chainedEventHandlerAsConditionalEventHandler = chainedEventHandler.asConditionalEventHandler();
         focusManager = new DefaultFocusManager(previousTabHotKey, nextTabHotKey) {
             
+            public boolean setPreviousAsCurrentFocus(EventBus eventBus) {
+                boolean result = super.setPreviousAsCurrentFocus(eventBus);
+                if (result && navControls != null) {
+                    navControls.setChildAsCurrentFocus(previousButton, eventBus);
+                }
+                return result;
+            }
+
+            public boolean setNextAsCurrentFocus(EventBus eventBus) {
+                boolean result = super.setNextAsCurrentFocus(eventBus);
+                if (result && navControls != null) {
+                    navControls.setChildAsCurrentFocus(nextButton, eventBus);
+                }
+                return result;
+            }
+            
+            
             @Override
             public void setChildAsCurrentFocus(Focusable focusable, EventBus eventBus) {
                 // before?
@@ -148,6 +165,7 @@ public class TabPanel extends AbstractComponent<TabPanel>
             public void handle(TerminalEvent<?> te) {
                 if (super.canHandle(te)  == this) {
                     super.handle(te);
+                    return;
                 }
                 chainedEventHandlerAsConditionalEventHandler.handle(te);
             }
@@ -171,7 +189,6 @@ public class TabPanel extends AbstractComponent<TabPanel>
             // TODO:  change navButtons to a button bar
             //  because not attached to a focusManager - will I have problems processing a mouse?  .. I think so
             chainedEventHandler.appendEventHandler(navControls);
-            //chainedEventHandler.appendEventHandler(nextButton);
             
             Position navControlsPosition = PositionRelativeFactory.fromAlign(VAlign.BOTTOM, Align.RIGHT,  this.mainPanel, this.navControls);
             mainPanel.add(navControlsPosition, navControls);
