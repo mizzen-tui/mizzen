@@ -64,7 +64,7 @@ import dtb.terminalIO.events.keyboard.InputEventsProducer;
  */
 public class EventBusImpl implements EventHandlerContainer, EventBus {
 
-    private static final int EVENT_Q_CAPACITY = 100; // number picked out of my hat!
+    private static final int EVENT_Q_CAPACITY = 512; // number picked out of my hat!
                                                      // -- increase as needed
 
     // main events handler chain
@@ -123,22 +123,26 @@ public class EventBusImpl implements EventHandlerContainer, EventBus {
                         // we can loop and test (isActive()) to see if we need to terminate
                         TerminalEvent<?> te = queue.poll(1, TimeUnit.SECONDS);
                         if (te != null) {
-                            te.setEventBus(EventBusImpl.this);
-                            eventsHandlerChain.handle(te);
-                            te.setEventBus(null);
+                            handleEvent(te);
                         }
                     } catch (Exception e) {
-                        eventsHandlerChain.handle(new TerminalEvent<Exception>(EventBusImpl.this, TerminalEvent.TYPE.EXCEPTION, e).setEventBus(EventBusImpl.this));
+                        handleEvent(new TerminalEvent<Exception>(EventBusImpl.this, TerminalEvent.TYPE.EXCEPTION, e).setEventBus(EventBusImpl.this));
                         // hmm... should I really be looping after an exception.. or should I
                         // terminate..
                         // for now .. letting the application make the decision.
                     }
                 }
-                eventsHandlerChain.handle(new TerminalEvent<Exception>(EventBusImpl.this, TerminalEvent.TYPE.TERMINATE, null, EventBusImpl.this).setEventBus(EventBusImpl.this));
+                handleEvent(new TerminalEvent<Exception>(EventBusImpl.this, TerminalEvent.TYPE.TERMINATE, null, EventBusImpl.this).setEventBus(EventBusImpl.this));
             }
         };
 
         new Thread(consumerTask, "EventBus-Thread-" + nextThreadNum()).start();
+    }
+    
+    protected void handleEvent(TerminalEvent<?> te) {
+        te.setEventBus(EventBusImpl.this);
+        eventsHandlerChain.handle(te);
+        te.setEventBus(null);
     }
 
     /* (non-Javadoc)
@@ -179,7 +183,11 @@ public class EventBusImpl implements EventHandlerContainer, EventBus {
         if (queue.size() < EVENT_Q_CAPACITY) { // todo: make configurable - or block?
             queue.add(te);
         } else {
-            // throw new IllegalStateException("Full queue");
+            try {
+                queue.put(te);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         }
         return this;
     }

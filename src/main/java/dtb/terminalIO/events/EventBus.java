@@ -24,10 +24,86 @@ public interface EventBus extends EventHandlerContainer {
 
     void disableIdleEvents();
 
+    
+    public static class Delegate implements EventBus {
+        protected EventBus delegate;
+        
+        public Delegate(EventBus delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public void stopConsuming() {
+            delegate.stopConsuming();
+        }
+
+        @Override
+        public boolean isActive() {
+            return delegate.isActive();
+        }
+
+        @Override
+        public boolean isEmptyQueue() {
+            return delegate.isEmptyQueue();
+        }
+
+        @Override
+        public EventBus raiseEvent(TerminalEvent<?> te) {
+            delegate.raiseEvent(te);
+            return this;
+        }
+
+        @Override
+        public <T> EventBus raiseEvent(Object source, TYPE type, T eventData) {
+            delegate.raiseEvent(source, type, eventData);
+            return this;
+        }
+
+        @Override
+        public EventBus appendIdleEventHandler(OnIdleEventEventHandler onIdleEventHandler) {
+            delegate.appendIdleEventHandler(onIdleEventHandler);
+            return this;
+        }
+
+        @Override
+        public EventBus appendTerminateEventHandler(OnTerminateEventHandler terminateHandler) {
+            delegate.appendEventHandler(terminateHandler);
+            return this;
+        }
+
+        @Override
+        public void enableIdleEvents() {
+            delegate.enableIdleEvents();
+        }
+
+        @Override
+        public void disableIdleEvents() {
+            delegate.disableIdleEvents();
+        }
+
+        @Override
+        public EventHandlerContainer prependEventHandler(ConditionalEventHandler eventHandler) {
+            delegate.prependEventHandler(eventHandler);
+            return this;
+        }
+
+        @Override
+        public EventHandlerContainer appendEventHandler(ConditionalEventHandler eventHandler) {
+            delegate.appendEventHandler(eventHandler);
+            return this;
+        }
+
+        @Override
+        public EventHandlerContainer removeEventHandler(ConditionalEventHandler eventHandler) {
+            delegate.removeEventHandler(eventHandler);
+            return this;
+        }
+    }
+    
     /**
      * A do nothing eventBus
      */
-    public static final EventBus STUBBED = new EventBus() {
+    public static class STUBBED implements EventBus {
 
         @Override
         public EventHandlerContainer prependEventHandler(ConditionalEventHandler eventHandler) {
@@ -44,13 +120,16 @@ public interface EventBus extends EventHandlerContainer {
             return this;
         }
 
+        boolean active = true;
+        
         @Override
         public void stopConsuming() {
+            active = false;
         }
 
         @Override
         public boolean isActive() {
-            return false;
+            return active;
         }
 
         @Override
@@ -86,7 +165,6 @@ public interface EventBus extends EventHandlerContainer {
         public void disableIdleEvents() {
         }
         
-    };
+    }
     
-
 }

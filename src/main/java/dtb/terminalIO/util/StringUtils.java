@@ -229,6 +229,83 @@ public class StringUtils {
         return sj.toString();
     }
 
+    public static int indexOfNextWord(int curIndex, String sentence) {
+
+        if (sentence == null) {
+            throw new NullPointerException("null sentence passed to indexOfNextWord()");
+        }
+        
+        int STATE_SEARCH_FOR_WORD=1;
+        int STATE_SEARCH_FOR_NON_WORD=2;
+
+        int len = sentence.length();
+
+        if (curIndex >= len) {  // already at end of sentence
+            return -1;
+        }
+
+        if (curIndex < 0) {
+            curIndex = 0;
+        }
+
+        char ch = sentence.charAt(curIndex);
+
+        int state = Character.isWhitespace(ch) ? STATE_SEARCH_FOR_WORD : STATE_SEARCH_FOR_NON_WORD;
+
+        for (int i=curIndex+1; i < len; i++) {
+            ch = sentence.charAt(i);
+            if (state == STATE_SEARCH_FOR_WORD) {
+                if (Character.isAlphabetic(ch)) {
+                    return i;
+                }
+            } else {
+                if ( ! Character.isAlphabetic(ch)) {
+                    return i;
+                }
+            }
+        }
+        
+        return -1;
+    }
+
+    public static int indexOfPrevWord(int curIndex, String sentence) {
+
+        if (sentence == null) {
+            throw new NullPointerException("null sentence passed to indexOfNextWord()");
+        }
+        
+        int STATE_SEARCH_FOR_WORD=1;
+        int STATE_SEARCH_FOR_NON_WORD=2;
+
+        int len = sentence.length();
+
+        if (curIndex <= 0) {  // already at end of sentence
+            return -1;
+        }
+
+        if (curIndex > len-1) {
+            curIndex = len-1;
+        }
+        
+        char ch = sentence.charAt(curIndex);
+
+        int state = Character.isAlphabetic(ch) ? STATE_SEARCH_FOR_NON_WORD : STATE_SEARCH_FOR_WORD;
+
+        for (int i=curIndex-1; i > 0; i--) {
+            ch = sentence.charAt(i);
+            if (state == STATE_SEARCH_FOR_WORD) {
+                if (Character.isAlphabetic(ch)) {
+                    return i;
+                }
+            } else {
+                if ( ! Character.isAlphabetic(ch)) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+    
     // This class take from :
     // https://sourceforge.net/p/drjava/git_repo/ci/master/tree/drjava/src/edu/rice/cs/util/ArgumentTokenizer.java#l132
     static public class ArgumentTokenizer {
@@ -249,6 +326,8 @@ public class StringUtils {
             return tokenize(arguments, false);
         }
 
+
+        
         /**
          * Tokenizes the given String into String tokens.
          * 

@@ -135,10 +135,9 @@ public class ScrollableComponentTest {
                 viewComp1.markAsDirty();
             }
         }));
-        
-        
+
         SearchFunctionForScrollableComponent.addFinderToScrollable(viewComp1);
-        
+
         return viewComp1;
     }
 
@@ -169,13 +168,13 @@ public class ScrollableComponentTest {
                                       Keys.CTRL_V_KEYSTROKE,    // down
                                       Keys.CTRL_F_KEYSTROKE,    // left
                                       Keys.CTRL_G_KEYSTROKE);   // right
-         
+
         // sets up a braille demo using the source component both for size as well as 
         // the place where grid segments will be copied on a render iteration
         brailleDemo.setUpDemo(eventBus, sourceComponentContainingBrailleDemo);
-         
+
         Component<?> brailleComponent = brailleDemo.getBrailleComponent();
-         
+
         sourceComponentContainingBrailleDemo.add(brailleComponent);
 
         SearchFunctionForScrollableComponent.addFinderToScrollable(viewComp1);

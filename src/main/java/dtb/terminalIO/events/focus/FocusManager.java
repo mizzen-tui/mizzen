@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
@@ -148,6 +149,13 @@ public interface FocusManager extends Focusable {
          * @return
          */
         public static FocusManager buildFocusManagerFromComponent(Object component, EventBus eventBus) {
+            return buildFocusManagerFromComponent(component, eventBus, ()-> new DefaultFocusManager());
+        }
+
+        
+        public static FocusManager buildFocusManagerFromComponent(Object component, 
+                                                                  EventBus eventBus, 
+                                                                  Supplier<DefaultFocusManager> defaultFocusManagerBuilder ) {
             if (component instanceof FocusManager) {
                 return (FocusManager) component;
             }
@@ -160,7 +168,7 @@ public interface FocusManager extends Focusable {
                 return (FocusManager) focusables.get(0);
             }
 
-            DefaultFocusManager focusManager = new DefaultFocusManager();
+            DefaultFocusManager focusManager = defaultFocusManagerBuilder.get();
             for (Focusable focusable : focusables) {
                 focusManager.addFocusable(focusable, eventBus);
             }

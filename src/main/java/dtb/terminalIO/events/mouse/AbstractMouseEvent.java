@@ -17,6 +17,10 @@ public class AbstractMouseEvent extends TerminalEvent<Position> {
     public MOUSE_ACTION getMouseAction() {
         return this.mouseAction;
     }
+    
+    public Position getMousePosition() {
+        return (Position) this.getEventData();
+    }
  
     @Override
     public String toString() {

@@ -46,7 +46,7 @@ public class TextComponent extends BoundedComponent<TextComponent> {
     }
 
     static private Dimension calcDimentionOfText(String text) {
-	return Dimension.UTIL.stringToDimension(text);
+        return Dimension.UTIL.stringToDimension(text);
     }
 
     static private Dimension calcDimentionOfText(CleanString text) {

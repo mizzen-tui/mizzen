@@ -20,7 +20,7 @@ public interface ControlCodeContext {
     void write(String s);
 
     default void write(BaseTextControlCode cc) {
-	write(cc.getControlCode());
+        write(cc.getControlCode());
     }
     
     boolean  isRaw();
@@ -127,6 +127,10 @@ public interface ControlCodeContext {
         
         public String toString() {
             return sb.toString();
+        }
+        
+        public void clear() {
+            sb = new StringBuffer();
         }
 
 	@Override

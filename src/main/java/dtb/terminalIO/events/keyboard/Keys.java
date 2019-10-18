@@ -143,6 +143,9 @@ public class Keys {
     public static final KeyStroke LEFT_KEYSTROKE      = createAndStoreNewKeyStroke(new int[][] {{ 27, 91, 68 },{ 27, 79, 68 }}, "Left");
     public static final KeyStroke RIGHT_KEYSTROKE     = createAndStoreNewKeyStroke(new int[][] {{ 27, 91, 67 },{ 27, 79, 67 }}, "Right");
 
+    public static final KeyStroke CTRL_LEFT_KEYSTROKE = createAndStoreNewKeyStroke(new int[][] {{ 27, 91, 49, 59, 53, 68 }}, "CTRL-Left");
+    public static final KeyStroke CTRL_RIGHT_KEYSTROKE= createAndStoreNewKeyStroke(new int[][] {{ 27, 91, 49, 59, 53, 67 }}, "CTRL-Right");
+    
     public static final KeyStroke PGUP_KEYSTROKE      = createAndStoreNewKeyStroke(new int[] { 27, 91, 53, 126 }, "PgUp");
     public static final KeyStroke PGDN_KEYSTROKE      = createAndStoreNewKeyStroke(new int[] { 27, 91, 54, 126 }, "PgDn");
 
@@ -166,11 +169,11 @@ public class Keys {
 
     public static final KeyStroke SPACE_KEYSTROKE     = createAndStoreNewKeyStroke(' ', "SPACE");
     
-    public static final KeyStroke A_KEYSTROKE         = createAndStoreNewKeyStroke('A', "A");
+//    public static final KeyStroke A_KEYSTROKE         = createAndStoreNewKeyStroke('A', "A");
 
-    public static final KeyStroke a_KEYSTROKE         = createAndStoreNewKeyStroke('a', "a");
+//    public static final KeyStroke a_KEYSTROKE         = createAndStoreNewKeyStroke('a', "a");
 
-    public static final KeyStroke B_KEYSTROKE         = createAndStoreNewKeyStroke('B', "B");
+//    public static final KeyStroke B_KEYSTROKE         = createAndStoreNewKeyStroke('B', "B");
 
     public static final KeyStroke CTRL_A_KEYSTROKE    = controlCharKeyStrokeAndStore(1);
     public static final KeyStroke CTRL_B_KEYSTROKE    = controlCharKeyStrokeAndStore(2);
@@ -184,7 +187,7 @@ public class Keys {
     public static final KeyStroke CTRL_J_KEYSTROKE    = controlCharKeyStrokeAndStore(10);
     public static final KeyStroke CTRL_K_KEYSTROKE    = controlCharKeyStrokeAndStore(11);
     public static final KeyStroke CTRL_L_KEYSTROKE    = controlCharKeyStrokeAndStore(12);
-    public static final KeyStroke CTRL_M_KEYSTROKE    = controlCharKeyStrokeAndStore(13);
+    public static final KeyStroke CTRL_M_KEYSTROKE    = ENTER_KEYSTROKE;  // controlCharKeyStrokeAndStore(13);
     public static final KeyStroke CTRL_N_KEYSTROKE    = controlCharKeyStrokeAndStore(14);
     public static final KeyStroke CTRL_O_KEYSTROKE    = controlCharKeyStrokeAndStore(15);
     public static final KeyStroke CTRL_P_KEYSTROKE    = controlCharKeyStrokeAndStore(16);
@@ -327,7 +330,7 @@ public class Keys {
             return makeNullResult.get();
         }
         byte newBuf[] = new byte[readIn - foundMatchingKeySequence.getLength()];
-        System.arraycopy(buffer, 0, newBuf, 0, newBuf.length);
+        System.arraycopy(buffer, foundMatchingKeySequence.getLength(), newBuf, 0, newBuf.length);
         return new KeyStrokeFindResult(foundKeyStroke, newBuf);
     }
 

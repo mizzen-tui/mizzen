@@ -11,6 +11,7 @@ import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
+import dtb.terminalIO.util.ElapsedTime;
 
 /**
  * IScreenLineSegmentsBuffer that has a view into a 'source'
@@ -139,8 +140,12 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
         segmentsUpToDate = false;
     }
 
+    public static String DEBUG_STATS = "";
+    
     private void populateViewFromSource() {
 
+        DEBUG_STATS = "";
+        
         this.clear();
         Rectangle bounds = rectangeFromOffsetAndDimension();
 
@@ -149,14 +154,17 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
         if (segments instanceof TreeSet) {
             TreeSet<ScreenLineSegment> ts = (TreeSet<ScreenLineSegment>) segments;
             ScreenLineSegment first = ScreenLineSegment.UTIL.getAtCol(ts, bounds.getRow(), bounds.getCol());
+            //ScreenLineSegment first = null;
             if (first != null) {
                 ScreenLineSegment last = ScreenLineSegment.UTIL.getAtCol(ts, bounds.getBottomMostRow(),
                         bounds.getRightMostCol());
                 if (last != null) {
-                    long bStart = System.currentTimeMillis();
                     // throw new IllegalStateException("WORKED!!!");
                     // really slow!!!! need to find another way to get subset
+                    ElapsedTime e1 = new ElapsedTime();
                     segments = ts.subSet(first, true, last, true);
+                    DEBUG_STATS = " ts size: " + ts.size()  + " ts.subset: " + segments.size();
+                    DEBUG_STATS += " elapsed: " + e1.elapsed() ;
                 }
             }
         }
@@ -173,6 +181,8 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
         int leftCol = bounds.getCol();
         int rightCol = bounds.getRightMostCol();
 
+        ElapsedTime e2 = new ElapsedTime();
+        
         for (ScreenLineSegment sourceSegment : segments) {
             int segmentRow = sourceSegment.getRow();
             if (segmentRow < topRow) {
@@ -195,6 +205,8 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
             // }
         }
         segmentsUpToDate = true;
+        
+        DEBUG_STATS += " loop : "+ e2.toString();
 
     }
 
@@ -302,6 +314,7 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
             int rightCol = sourceSegment.getRightMostCol(); // - ScreenLineSegmentsView.this.offsetIntoSource.getCol();
             int viewerRightCol = ScreenLineSegmentsView.this.getRightMostCol();
             String sourceText = sourceSegment.getText();
+            
             if (rightCol >= sourceText.length()) {
                 rightCol = sourceText.length();
             } else {
@@ -312,7 +325,7 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
             }
             if (start < 0 || start > rightCol)
                 return "";
-            String clippedText = sourceSegment.getText().substring(start, rightCol);
+            String clippedText = sourceText.substring(start, rightCol);
             _clippedText = clippedText;
             return clippedText;
         }

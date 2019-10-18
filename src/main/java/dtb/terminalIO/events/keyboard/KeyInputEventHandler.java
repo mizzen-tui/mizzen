@@ -122,6 +122,8 @@ public class KeyInputEventHandler extends ConditionalEventHandler.Impl {
             if (getCanHandlePredicate() == null) {
                 return this;
             }
+            // we have a predicate object so let the super eval the 
+            // predicate and decide if we are handling the event
             return super.canHandle(te);
         }
         return null;

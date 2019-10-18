@@ -5,7 +5,7 @@ import java.util.StringJoiner;
 import dtb.terminalIO.events.CPREvent;
 import dtb.terminalIO.events.DSREvent;
 import dtb.terminalIO.events.EventBus;
-import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.EventBusImpl;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.keyboard.Keys.KeyStrokeFindResult;
 import dtb.terminalIO.events.mouse.MOUSE_ACTION;

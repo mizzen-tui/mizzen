@@ -52,7 +52,7 @@ public class RockerButton extends AbstractComponentWithContainerAndFocusManager<
         this.setLabelText();
         this.toggleValue = value;
         
-        this.toggleState(value, EventBus.STUBBED);
+        this.toggleState(value, new EventBus.STUBBED());
     }
     
     public RockerButton(Color color, String label, String onText, String offText) {

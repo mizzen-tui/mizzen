@@ -1,0 +1,64 @@
+package dtb.terminalIO.core;
+
+import dtb.terminalIO.controlcodes.ControlCode;
+import dtb.terminalIO.controlcodes.ControlCodeContext;
+import dtb.terminalIO.controlcodes.ControlCodeContext.StringContext;
+import dtb.terminalIO.controlcodes.Renderer.RendererBuffer;
+import dtb.terminalIO.geom.position.Position;
+import dtb.terminalIO.textsegments.ScreenLineSegment;
+
+public class StringCanvasBackEnd implements CanvasBackend {
+
+    RendererBuffer renderer = new RendererBuffer();
+    
+    StringContext ctx = new StringContext();
+    
+    String contentAsString;
+    
+    
+    @Override
+    public void writeToBackend(ScreenLineSegment sc) {
+        renderer.append(sc.getColors());
+        renderer.append(sc.getText());
+    }
+
+    @Override
+    public void signal_eol() {
+        renderer.append(ControlCode.RCol);
+        
+    }
+
+    @Override
+    public void refresh() {
+        renderer.render(ctx);
+        this.contentAsString = ctx.toString();
+        ctx.clear();
+        renderer.clear();
+    }
+
+    @Override
+    public void cr() {
+        renderer.append( ControlCode.CR );
+        
+    }
+
+    @Override
+    public void showCursorAt(Position showCursorPosition) {
+        // do nothing
+    }
+
+    @Override
+    public void hideCursor() {
+        // do nothing
+    }
+
+    @Override
+    public void showCursor() {
+        // do nothing
+    }
+    
+    public String toString() {
+        return contentAsString != null ? contentAsString : "";
+    }
+
+}

@@ -65,7 +65,7 @@ public class LineTrackingCLIEmmitterTest {
         
         assertEQ(lt.getLineCounter(),0);
         
-        testStr = "Hello\n\n\n\nddd";
+        testStr = "RAW-MODE\nHello\n\n\n\nddd";
         
         lt.print(testStr);
         

@@ -156,18 +156,11 @@ public class ListBoxTest {
             master_canvas.refresh();
         };
         
-        renderComponents.run();
+        // renderComponents.run();
 
         screen.add(ControlCode.HIDE_CURSOR);
         
        EventBus eventBus = new EventBusImpl();
-       InputEventsProducer keyInputEventsProducer = null;
-       try {
-           keyInputEventsProducer = new InputEventsProducer(eventBus);
-       } catch (Exception e) {
-           eventBus.stopConsuming();
-           return;
-       }
 
        EventHandler terminate = new EventHandler() {
 
@@ -276,6 +269,15 @@ public class ListBoxTest {
        eventBus.appendEventHandler(fm);
        
        eventBus.appendIdleEventHandler( new OnIdleEventEventHandler.RepeatingInterval(200, (te)-> renderComponents.run() ));
+       
+       InputEventsProducer keyInputEventsProducer = null;
+       try {
+           keyInputEventsProducer = new InputEventsProducer(eventBus);
+       } catch (Exception e) {
+           eventBus.stopConsuming();
+           return;
+       }
+       
 
     }
     

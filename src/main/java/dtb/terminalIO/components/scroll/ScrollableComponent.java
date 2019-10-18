@@ -2,6 +2,7 @@ package dtb.terminalIO.components.scroll;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.function.Supplier;
 
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.ButtonBar;
@@ -16,10 +17,11 @@ import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.EventHandlerContainer;
-import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.OnRequestScrollToViewEventHandler;
+import dtb.terminalIO.events.RequestScrollToView;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.keyboard.KeyStroke;
@@ -66,8 +68,16 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
     Focusable currentFocusable;
 
     public ScrollableComponent(Color color, Dimension d, Component<?> componentBeingViewed) {
+        this(color, d, componentBeingViewed, null);
+    }
+    public ScrollableComponent(Color color, Dimension d, Component<?> componentBeingViewed, Supplier<DefaultFocusManager> defaultFocusManagerBuilder) {
 
         super(color);
+        
+        if (defaultFocusManagerBuilder != null) {
+            setDefaultFocusManagerBuilder(defaultFocusManagerBuilder);
+        }
+        
         this.componentBeingViewed = componentBeingViewed;
         viewer = new WindowViewComponent(color, new Dimension.Simple(d.getHeight() - 2, d.getWidth() - 2),
                 this.componentBeingViewed);
@@ -468,23 +478,32 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
 
         // hookup scroll to view requests
         chainedEventHandler.appendEventHandler(new OnRequestScrollToViewEventHandler((te) -> { // Predicate
-            Component<?> componentToScrollTo = (Component<?>) te.getEventData();
+            Component<?> componentToScrollTo = (Component<?>) ((RequestScrollToView)te).getScrollToComponent();
             // if a path from viewer to component exists, then return true
             return new FindPathToTarget<Component<?>>().exists(ScrollableComponent.this.viewer, componentToScrollTo);
         }, (te) -> { // Action
-            Component<?> componentToScrollTo = (Component<?>) te.getEventData();
+            Component<?> componentToScrollTo = (Component<?>) ((RequestScrollToView)te).getScrollToComponent();
 
             Position offset = Component.UTIL.getOffsetFromComponentContainer(componentToScrollTo,
-                    ScrollableComponent.this.viewer);
-            
+                                                                             ScrollableComponent.this.viewer);
+
             Position offsetIntoSource = ScrollableComponent.this.viewer.getOffsetIntoSource();
             if ( ! offsetIntoSource.isSamePosition(Position.ZERO)) {
                 //offset = offset.offsetAdd( new Position.Simple(offsetIntoSource.getRow()*-1, offsetIntoSource.getCol()*-1) );
+                
                 offset = offset.offsetAdd( offsetIntoSource);
             }
 
             if (offset != null) {
-                ScrollableComponent.this.scrollToView(new Rectangle.Simple(offset, (Dimension) componentToScrollTo));
+                
+                Rectangle offsetRectangle = ((RequestScrollToView)te).getScrollToOffsetRectangle();
+                
+                if (offsetRectangle != null) {
+                    offsetRectangle = new Rectangle.Simple(offsetRectangle.offsetAdd(offset), (Dimension)offsetRectangle);
+                    ScrollableComponent.this.scrollToView(offsetRectangle);
+                } else {
+                   ScrollableComponent.this.scrollToView(new Rectangle.Simple(offset, (Dimension) componentToScrollTo));
+                }
                 updateCanvas( te.getEventBus() );
             }
 
@@ -641,7 +660,6 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
                     String.valueOf(focusable) + " is not the footer control or the viewer for this scrollable");
         }
 
-
         FocusManager.UTIL.setNewFocusable(focusable, currentFocusable, eventBus, null);
 
         currentFocusable = focusable;
@@ -669,7 +687,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
             return childFocusables;
         }
 
-        FocusManager componentBeingViewedFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(componentBeingViewed, null);
+        FocusManager componentBeingViewedFocusManager = buildFocusManagerFromComponent();
         
         if (componentBeingViewedFocusManager != null) {
             childFocusables = new ArrayList<Focusable>();
@@ -691,6 +709,22 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
 
         return childFocusables;
 
+    }
+    
+    private Supplier<DefaultFocusManager> defaultFocusManagerBuilder = ()-> new DefaultFocusManager();
+    
+    public ScrollableComponent setDefaultFocusManagerBuilder(Supplier<DefaultFocusManager> defaultFocusManagerBuilder) {
+        this.defaultFocusManagerBuilder = defaultFocusManagerBuilder;
+        return this;
+    }
+    
+    
+
+    private FocusManager buildFocusManagerFromComponent() {
+        FocusManager componentBeingViewedFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(componentBeingViewed, 
+                                                                                                         null,
+                                                                                                         defaultFocusManagerBuilder);
+        return componentBeingViewedFocusManager;
     }
 
     @Override

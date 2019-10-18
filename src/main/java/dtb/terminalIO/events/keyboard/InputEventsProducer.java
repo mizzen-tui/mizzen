@@ -3,12 +3,10 @@ package dtb.terminalIO.events.keyboard;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
 
 import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.EventBusImpl;
 import dtb.terminalIO.events.OnIdleEvent;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
 import dtb.terminalIO.util.Stty;
@@ -33,7 +31,7 @@ import dtb.terminalIO.util.Stty;
  * in the {@link EventBusImpl} can subsequently process the timer event. 
  * 
  */
-public class InputEventsProducer implements Runnable {
+public class InputEventsProducer implements Runnable { 
 
     private InputStream   inputStream;
     private EventBus      eventBus;
@@ -47,11 +45,12 @@ public class InputEventsProducer implements Runnable {
         return threadInitNumber++;
     }
     
-    
+    // TrackingInputStream
     public InputEventsProducer(InputStream input, EventBus eventBus) throws UnsupportedEncodingException {
         this.eventBus = eventBus;
         if (input == null) {
-            inputStream = new FileInputStream(FileDescriptor.in);
+             inputStream = new FileInputStream(FileDescriptor.in);
+            //inputStream = new TrackingInputStream(FileDescriptor.in);
             try {
                 Stty.setRaw();
             } catch (Exception e) {
@@ -66,6 +65,10 @@ public class InputEventsProducer implements Runnable {
         readThread = new Thread(this, "KeyInputEvents-Thread"+nextThreadNum());
         readThread.start();
 
+    }
+    
+    public Thread getReaderThread() {
+        return readThread;
     }
 
     public InputEventsProducer(EventBus eventBus) throws UnsupportedEncodingException {
@@ -85,13 +88,16 @@ public class InputEventsProducer implements Runnable {
         byte[] buffer = new byte[127];
         boolean isEOF = false;
 
+        boolean inputStreamHasMoreData = false;
+        
         while (eventBus.isActive() && !isEOF) {
-
+            inputStreamHasMoreData = false;
             try {
-
                 int available = this.inputStream.available();
                 if (available > 0) {
                     int readIn = inputStream.read(buffer, 0, buffer.length);
+                    
+                    inputStreamHasMoreData = readIn < available;
 
                     isEOF = readIn == -1;
                     if (!isEOF) {
@@ -123,7 +129,7 @@ public class InputEventsProducer implements Runnable {
             }
 
             try {
-                Thread.sleep(50);
+                Thread.sleep(inputStreamHasMoreData ? 1 : 50);
             } catch (InterruptedException e) {
                 // Ignoring intentionally
             }
@@ -137,7 +143,7 @@ public class InputEventsProducer implements Runnable {
     }
 
     private boolean idle() {
-	return readerParser.idle(eventBus);
+        return readerParser.idle(eventBus);
     }
 
     private void handleReaderInput(byte[] buffer, int readIn) {
