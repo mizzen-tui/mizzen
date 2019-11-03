@@ -29,34 +29,39 @@ public abstract class AbstractTimedRequestedController {
      * Signal a request to do some action.
      */
     public void onRequest(EventBus eventBus) {
-	if ( ! isRequestDifferentFromPrevious())
-	    return;
-	
-	lastTimeRequestChange = System.currentTimeMillis();
-	if (timerInterval == null) {
-	    timerInterval = new OnChangeInterval();
-	    eventBus.appendEventHandler(timerInterval);
-	}
+        if (!isRequestDifferentFromPrevious())
+            return;
+
+        lastTimeRequestChange = System.currentTimeMillis();
+        if (timerInterval == null) {
+            timerInterval = new OnChangeInterval();
+            eventBus.appendEventHandler(timerInterval);
+        }
     }
 
     private final class OnChangeInterval extends OneTimeAfterInterval {
-	
-	OnChangeInterval() {
-	    super(new EventHandler() {
-		@Override
-		public void handle(TerminalEvent<?> te) {
-	            final long currentTime = System.currentTimeMillis();
-	            if ((currentTime - lastTimeRequestChange) < timerDelayMillis) {
-	        	timerInterval = new OnChangeInterval();
-	    	        te.getEventBus().appendEventHandler(timerInterval);
-	    	        return;
-	            }
-	            onRequestCommand.run();
-	            timerInterval = null;
-		}
-		
-	    }, timerDelayMillis);
-	}
-  }
-    
+
+        OnChangeInterval() {
+            super(new EventHandler() {
+                @Override
+                public void handle(TerminalEvent<?> te) {
+                    final long currentTime = System.currentTimeMillis();
+                    // check if last request was too recent..
+                    if ((currentTime - lastTimeRequestChange) < timerDelayMillis) {
+                        // last request was too recnt so lets re-add the
+                        // handler onto the eventBus
+                        timerInterval = new OnChangeInterval();
+                        te.getEventBus().appendEventHandler(timerInterval);
+                        return;
+                    }
+                    // last request was not too long ago .. so finally
+                    // lets invoke the request
+                    onRequestCommand.run();
+                    timerInterval = null;
+                }
+
+            }, timerDelayMillis);
+        }
+    }
+
 }
