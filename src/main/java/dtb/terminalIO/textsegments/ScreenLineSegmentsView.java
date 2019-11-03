@@ -135,9 +135,13 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
         return new Position.Simple(rowOffset, colOffset);
     }
 
-    public void setOffsetIntoSource(Position offsetIntoSource) {
+    public boolean setOffsetIntoSource(Position offsetIntoSource) {
+        if (offsetIntoSource!=null && offsetIntoSource.isSamePosition(this.offsetIntoSource)) {
+            return false;
+        }
         this.offsetIntoSource = offsetIntoSource;
         segmentsUpToDate = false;
+        return true;
     }
 
     public static String DEBUG_STATS = "";

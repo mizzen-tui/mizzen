@@ -152,8 +152,7 @@ public interface Component<T extends Component<?>> extends IScreenLineSegmentsBu
             
             return sj.toString();
         }
-        
-        
+
         public static void requestShowCursorAtComponent(Component<?> component, Position offset, EventBus eventBus) {
 
             Position canvasOffset = Component.UTIL.getCanvasOffsetFor(component);

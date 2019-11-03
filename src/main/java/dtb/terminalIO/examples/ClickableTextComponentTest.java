@@ -53,9 +53,9 @@ public class ClickableTextComponentTest {
                     super.draw(color, segments);
                 }
             };
-            
+
             colorsOfTheRainbow.setFillOnClear(false);
-            
+
             ScrollableComponent sc = new ScrollableComponent(Colors.Whi, (Dimension)tApp.getMainApplicationPanel(), colorsOfTheRainbow);
             sc.setFillOnClear(false);
             
@@ -74,20 +74,19 @@ public class ClickableTextComponentTest {
                     return false; // false means no gui update
                 }
 
-                
+
                 tApp.getCanvas().addComponentSegments( (Component<?>)tApp.getMainApplicationPanel() );
  
                 return true; // true means updated
             });
-            
-            
+
             tApp.setOnResizeAction((tSameApp, size)->{
                 tApp.clearCanvas();
                 tApp.setCanvasSize(size);
-                
+
                 ((Composite)tApp.getMainApplicationPanel()).resize(size);
                 sc.resize(  new Dimension.Simple(size.getHeight()-1, size.getWidth()));
-                
+
             });
             
 
@@ -128,7 +127,6 @@ public class ClickableTextComponentTest {
             
             TerminalScreen screen = new TerminalScreen();
             screen.setPrintStream(ps);
-//            screen.setControlCodesEnabled(false);
 
             Canvas master_canvas = new Canvas(screen);
             master_canvas.setSize(25, 50);
@@ -142,7 +140,7 @@ public class ClickableTextComponentTest {
                 String outputString = new String(bytes);
                 return outputString;
             }
-            
+
             Component<?> colorsOfTheRainBow = ColorsTest.buildColorsPanel();
 
             master_canvas.addComponentSegments(colorsOfTheRainBow);

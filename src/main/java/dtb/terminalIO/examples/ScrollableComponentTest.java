@@ -405,7 +405,7 @@ public class ScrollableComponentTest {
                 master_canvas.addComponentSegments(lineChartPosition, lineChartDemoContainer);
                 master_canvas.addComponentSegments(barChartPosition, barChartDemoContainer);
                 master_canvas.t(master_canvas.getHeight()-1,1,"[Rendering stats | Rendering time :" + updateTaskTime + " | Wait time between updates: " + updateTaskDuration + "]     " );
-                
+
                 TestsCommon.renderScreenDEBUG(master_canvas, screen, eventBus);
 
                 master_canvas.refresh();
@@ -455,7 +455,7 @@ public class ScrollableComponentTest {
 
                 barChartDemoContainer.resize(sizeOfBarChartWindow);
                 barChartDemo.resize(new Dimension.Simple(barChartDemoContainer.getHeight()-2, barChartDemoContainer.getWidth()-2));
-                
+
                 updateCanvas.run();
             }
         });

@@ -20,6 +20,9 @@ public interface Position {
     public int getRow(); // y
 
     public default boolean isSamePosition(Position other) {
+    if (other == null) {
+        return false;
+    }
 	return this.getCol() == other.getCol() && 
 	       this.getRow() == other.getRow();
     }
@@ -121,7 +124,7 @@ public interface Position {
 
 	@Override
 	public String toString() {
-	    return this.getClass().getSimpleName()+" [row=" + row + ", col=" + col + "]";
+	    return "Position [row=" + row + ", col=" + col + "]";
 	}
 
 	public static Position withOffset(Position position, Position offset) {

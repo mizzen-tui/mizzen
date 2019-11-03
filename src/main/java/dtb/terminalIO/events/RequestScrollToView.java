@@ -26,4 +26,10 @@ public class RequestScrollToView extends TerminalEvent<Rectangle> {
         return offsetRectangle;
     }
 
+    @Override
+    public String toString() {
+       return "RequestScrollToView [ eventData ="+  getScrollToComponent() + "rect="+String.valueOf(offsetRectangle)+" ]";
+    }
+
+    
 }

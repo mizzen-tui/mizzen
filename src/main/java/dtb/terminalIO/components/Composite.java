@@ -106,6 +106,10 @@ public class Composite extends AbstractComponent<Composite>
             this.component = component;
             calcBounds();
         }
+        
+        protected Component<?> getComponent() {
+            return this.component;
+        }
 
         public void setOffset(Position offset) {
             this.offset = offset;

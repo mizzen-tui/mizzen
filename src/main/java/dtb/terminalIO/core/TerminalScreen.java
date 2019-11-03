@@ -160,6 +160,11 @@ public class TerminalScreen implements ControlCodeContext {
     }
 
     public void showCursorAt(Position showCursorPosition) {
+        if (showCursorPosition == null ||
+            showCursorPosition.getRow()<0 || 
+            showCursorPosition.getCol()<0) {
+            throw new IllegalStateException("showCursor request illegal " + String.valueOf(showCursorPosition));
+        }
         out.showCursorAt(showCursorPosition);
     }
 

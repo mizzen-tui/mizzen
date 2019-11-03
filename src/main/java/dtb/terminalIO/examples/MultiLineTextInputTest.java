@@ -9,7 +9,6 @@ import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
-import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.util.Logging;
@@ -27,7 +26,7 @@ public class MultiLineTextInputTest {
         .confirmOnExit()
         .setOnReadyStart((tApp)-> {
 
-            MultiLineTextInput mTextBox = new MultiLineTextInput(new Dimension.Simple(60,110));
+            MultiLineTextInput mTextBox = new MultiLineTextInput();
 
             mTextBox.setColor(  new FGBGColors( Colors.BBlu, Colors.On_IYel  )  );
 
@@ -35,7 +34,7 @@ public class MultiLineTextInputTest {
                                                              (Dimension)tApp.getMainApplicationPanel(), 
                                                              mTextBox,
                                                              ()-> new DefaultFocusManager(Keys.SHIFT_TAB_KEYSTROKE, Keys.TAB_KEYSTROKE)
-                                                                       .setNavKeysFirst(false));
+                                                                                          .setNavKeysFirst(false));
             sc.setFillOnClear(false);
             
             sc.resize(  new Dimension.Simple(sc.getHeight()-2, sc.getWidth()));

@@ -75,13 +75,16 @@ public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
         segments.merge(segmentsViewBuffer);
     }
 
-    public void setViewOffset(int r, int c) {
-        setViewOffset(new Position.Simple(r, c));
+    public boolean setViewOffset(int r, int c) {
+        return setViewOffset(new Position.Simple(r, c));
     }
 
-    public void setViewOffset(Position offset) {
-        markAsDirty();
-        segmentsViewBuffer.setOffsetIntoSource(offset);
+    public boolean setViewOffset(Position offset) {
+        boolean changed = segmentsViewBuffer.setOffsetIntoSource(offset);
+        if (changed) {
+           markAsDirty();
+        }
+        return changed;
     }
 
     Position getOffsetIntoSource() {

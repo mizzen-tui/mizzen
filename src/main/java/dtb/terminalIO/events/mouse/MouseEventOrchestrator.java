@@ -1,7 +1,6 @@
 package dtb.terminalIO.events.mouse;
 
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.input.Clickable;
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.core.Canvas;
@@ -95,13 +94,13 @@ public class MouseEventOrchestrator {
                           CPREvent cpr = (CPREvent) te2;
                           
                           // (3) now we have the Cursor Position Report (CPR) ( note: CPR reports 1,1 as top-left )
-                          //  let's map the raw mouse position to the application position 
+                          // let's map the raw mouse position to the application position 
                           Position applicationMousePosition = cpr.getEventData().offsetAdd(-1, -1).negate().offsetAdd( rme.getEventData() );
 
-                          Logging.info("------ mouse captured: ---------------");
-                          Logging.info("mouse info: " + String.valueOf(rme));
-                          Logging.info("current cursor pos: " + String.valueOf(cpr));
-                          Logging.info("current app mouse pos: " + String.valueOf(applicationMousePosition));
+//                          Logging.info("------ mouse captured: ---------------");
+//                          Logging.info("mouse info: " + String.valueOf(rme));
+//                          Logging.info("current cursor pos: " + String.valueOf(cpr));
+//                          Logging.info("current app mouse pos: " + String.valueOf(applicationMousePosition));
                           
                           if (lastRequestedCursorPosition != null) {
                               screen.showCursorAt(lastRequestedCursorPosition);
@@ -127,23 +126,23 @@ public class MouseEventOrchestrator {
     }
 
     public void disableMouseHandling()  {
-        
+
         // disable event handlers
         screen.add( ControlCode.DISABLE_MOUSE_TRACKING );
         screen.refresh();
-        
+
         if (mouseTrackingEventHandler != null) {
-            
+
             eventBus.removeEventHandler(mouseTrackingEventHandler);
             mouseTrackingEventHandler = null;
-            
+
             return;
         }
         if (appMouseToFocusableComponent != null) {
             
             eventBus.removeEventHandler(appMouseToFocusableComponent);
             appMouseToFocusableComponent = null;
-            
+
             return;
         }
         
@@ -187,37 +186,37 @@ public class MouseEventOrchestrator {
                 }
 
                 Position canvasPosition = appMouseEvent.getEventData();
-                
+
                 // mainApplicationPanel is not always at 0,0 ..always need to account for that
                 Position panelOffsetOnCanvas = Component.UTIL.getCanvasOffsetFor(mainApplicationPanel);
                 if (panelOffsetOnCanvas == null) {
                     throw new IllegalStateException("mainApplicationPanel used to map mouse events is not attached (directly or indirectly) to the canvas!");
                 }
                 Position mousePositionAdjustedForPanel = canvasPosition.offsetAdd( panelOffsetOnCanvas.negate());
-                
+
                 Component<?> componentClicked = GetComponentAtOffset.UTIL.getComponentAtOffset( mainApplicationPanel, mousePositionAdjustedForPanel );
-                
+
                 // componentClicked - might not be a Focusable .. so go up its ancestors
                 // and find an ancestor that is focusable
-                
+
                 while ( componentClicked!= null && 
                         !(componentClicked instanceof Focusable) &&
                         !(componentClicked instanceof ToFocusable)) {
                     componentClicked = (Component<?>)componentClicked.getParentContainer();
                 }
-                
+
                 if (componentClicked == null) {
                     return;
                 }
 
                 Focusable focusComponent = null;
-                
+
                 if (componentClicked instanceof Focusable) {
                     focusComponent = (Focusable)componentClicked;
                 } else if (componentClicked instanceof ToFocusable) {
                     focusComponent = ((ToFocusable) componentClicked).asFocusable();
                 }
-                
+
                 if (focusComponent != null) {
                     eventBus.raiseEvent( new RequestFocusEvent(focusComponent));
                     if (componentClicked instanceof Clickable) {
@@ -245,5 +244,5 @@ public class MouseEventOrchestrator {
         };
         eventBus.appendEventHandler(appMouseToFocusableComponent);
     }
-    
+
 }

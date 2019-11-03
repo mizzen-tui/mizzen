@@ -294,30 +294,32 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         lastFooterWidth = footerControls.getWidth();
     }
 
-    public void setViewOffset(int r, int c) {
+    public boolean setViewOffset(int r, int c) {
         if (r < 0 || c < 0)
-            return; // too small
+            return false; // too small
         if (r > (componentBeingViewed.getBottomMostRow() + 1)  || 
             c > (componentBeingViewed.getRightMostCol()  + 1)  )
-            return; // too large
+            return false; // too large
         
-        markAsDirty();
         Position offset = new Position.Simple(r, c);
-        viewer.setViewOffset(offset);
-        this.vScrollBar.setOffset(offset);
-        this.hScrollBar.setOffset(offset);
+        boolean changedOffset = viewer.setViewOffset(offset);
+        if (changedOffset) {
+            markAsDirty();
+            this.vScrollBar.setOffset(offset);
+            this.hScrollBar.setOffset(offset);
+        }
+        return changedOffset;
     }
 
-    public void scrollToView(Rectangle targetToView) {
+    public boolean scrollToView(Rectangle targetToView) {
 
         Position offset = viewer.calculateScrollToViewOffset(targetToView);
 
-        Position oldcurOffset = viewer.getOffsetIntoSource();
-        
         if (offset != null) {
-            setViewOffset(offset.getRow(), offset.getCol());
+            return setViewOffset(offset.getRow(), offset.getCol());
+        } else {
+            return false;
         }
-        Position curOffset = viewer.getOffsetIntoSource();
     }
 
     @Override
@@ -500,11 +502,14 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
                 
                 if (offsetRectangle != null) {
                     offsetRectangle = new Rectangle.Simple(offsetRectangle.offsetAdd(offset), (Dimension)offsetRectangle);
-                    ScrollableComponent.this.scrollToView(offsetRectangle);
+                    if (ScrollableComponent.this.scrollToView(offsetRectangle)) {
+                        updateCanvas( te.getEventBus() );
+                    }
                 } else {
-                   ScrollableComponent.this.scrollToView(new Rectangle.Simple(offset, (Dimension) componentToScrollTo));
+                    if ( ScrollableComponent.this.scrollToView(new Rectangle.Simple(offset, (Dimension) componentToScrollTo))) {
+                        updateCanvas( te.getEventBus() );
+                    }
                 }
-                updateCanvas( te.getEventBus() );
             }
 
         }));

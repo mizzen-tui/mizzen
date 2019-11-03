@@ -10,7 +10,8 @@ import java.util.StringJoiner;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import dtb.terminalIO.components.BoundedComponent;
+import dtb.terminalIO.components.AbstractComponent;
+import dtb.terminalIO.components.CanResize;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
@@ -22,6 +23,7 @@ import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.EventHandlerContainer;
+import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.RequestHideCursorEvent;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
@@ -32,23 +34,25 @@ import dtb.terminalIO.events.keyboard.KeyEvent;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.events.mouse.ApplicationMouseEvent;
+import dtb.terminalIO.events.mouse.MOUSE_ACTION;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.StringUtils;
 
 
-public class MultiLineTextInput extends BoundedComponent<MultiLineTextInput>
+public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
         implements HasValue<String>, ParentContainer, Focusable, EventHandlerContainer,
-        Clickable {
+        Clickable, CanResize {
 
     private TextComponent textRenderer;
     private boolean textRendererNeedsUpdate = false;
     private List<StringBuffer> buffer;
     private Position caret = Position.ZERO;
-    private int maxTextWidth;
-    private boolean multiLine = false; // TODO: multi-line not implemented yet
+    private int maxTextWidth = 1000;
+    private boolean multiLine = true;
 
     ConditionalEventHandler eventHandler;
     ChainedEventHandler chainedEventHandler;  // test
@@ -56,29 +60,16 @@ public class MultiLineTextInput extends BoundedComponent<MultiLineTextInput>
     Focusable focusable;
 
     private boolean modeOverite = false; // true means insertMode
-    private int maxHeight;
+//    private int maxHeight;
 
-    public MultiLineTextInput(Color color, int length) {
-        this(color, new Dimension.Simple(1, length));
-    }
-
-    public MultiLineTextInput(int length) {
-        this(ControlCode.DEFAULT_COLOR, length);
-    }
-
-    public MultiLineTextInput(Dimension d) {
-        super(ControlCode.DEFAULT_COLOR, d);
+    public MultiLineTextInput(Color color) {
+        super(color);
         init();
+        //, new Dimension.Simple(1, length));
     }
 
-    public MultiLineTextInput(Color color, Dimension d) {
-        super(color, d);
-        init();
-    }
-
-    public MultiLineTextInput(Color color, Position p, Dimension d) {
-        super(color, p, d);
-        init();
+    public MultiLineTextInput() {
+        this(ControlCode.DEFAULT_COLOR);
     }
 
     @Override
@@ -113,8 +104,7 @@ public class MultiLineTextInput extends BoundedComponent<MultiLineTextInput>
         this.buffer.add(new StringBuffer());
         this.caret = new Position.Simple(0, 0);
         this.setFillOnClear(true);
-        this.textRenderer = makeChildComponent(() -> new TextComponent(MultiLineTextInput.this.getColor(),
-                MultiLineTextInput.this.getRectangle(), ""));
+        this.textRenderer = new TextComponent(this.getColor(),"");
         this.textRendererNeedsUpdate = false;
     }
 
@@ -137,12 +127,23 @@ public class MultiLineTextInput extends BoundedComponent<MultiLineTextInput>
         this.markAsDirty();
     }
 
+    @Override
+    public void resize(Dimension d) {
+        // TODO Auto-generated method stub
+        
+    }
+    
     public void setText(String text) {
         if (text == null) {
             text = "";
         }
         this.__setText(text);
         setCaretPosition(new Position.Simple(this.buffer.size() - 1, this.buffer.get(this.buffer.size() - 1).length()));
+    }
+    
+    public void setText(EventBus eventBus, String text) {
+        setText(text);
+        raiseEventOnChanged(eventBus, ()-> true);
     }
 
     private void __setText(String text) {
@@ -151,13 +152,10 @@ public class MultiLineTextInput extends BoundedComponent<MultiLineTextInput>
         this.textRendererNeedsUpdate = true;
         int textMaxWidth = this.buffer.stream().max(Comparator.comparing(StringBuffer::length)).get().length();
         this.maxTextWidth = Math.max(this.getWidth(), textMaxWidth);
-        this.maxHeight = Math.max(this.buffer.size(), this.getHeight());
+//        this.maxHeight = Math.max(this.buffer.size(), this.getHeight());
         this.markAsDirty();
     }
 
-    public String getTextXX() {
-        return this.buffer.toString();
-    }
 
     public String getValue() {
         concatAndSetRendererTextIfNeeded();
@@ -170,25 +168,26 @@ public class MultiLineTextInput extends BoundedComponent<MultiLineTextInput>
             for (StringBuffer sb : this.buffer) {
                 sj.add(sb);
             }
-            if (this.textRenderer == null) {
-                this.textRenderer = makeChildComponent(() -> new TextComponent(MultiLineTextInput.this.getColor(),
-                        MultiLineTextInput.this.getRectangle()));
-            }
-            this.textRenderer.setText(sj.toString());
+            this.textRenderer.setTextAndResize(sj.toString());
             this.textRendererNeedsUpdate = false;
+            textUpdated();
         }
     }
-
-    public void resize(Dimension d) {
-        setRectangle(new Rectangle.Simple(this.getPostion_TopLeft(), d));
-        markAsDirty();
+    
+    protected void textUpdated() {
+        // default - do nothing
     }
 
+//    public void resize(Dimension d) {
+//        setRectangle(new Rectangle.Simple(this.getPostion_TopLeft(), d));
+//        markAsDirty();
+//    }
+
     void setCaretPosition(Position newRequestedPosition) {
-        
+
         int newRow = 0;
         int newCol = 0;
-        
+
         if (newRequestedPosition.getRow()>0) {
             if (newRequestedPosition.getRow()<this.buffer.size()-1) {
                 newRow = newRequestedPosition.getRow();
@@ -207,7 +206,7 @@ public class MultiLineTextInput extends BoundedComponent<MultiLineTextInput>
         }
 
         this.caret = new Position.Simple(newRow, newCol);
-        markAsDirty();
+        // markAsDirty();
     }
     
     boolean caretHome() {
@@ -290,7 +289,7 @@ public class MultiLineTextInput extends BoundedComponent<MultiLineTextInput>
             setCaretPosition(new Position.Simple(this.caret.getRow(), newCol));
             return true;
         }
-        
+
         return caretLeft();
     }
 
@@ -479,15 +478,17 @@ public class MultiLineTextInput extends BoundedComponent<MultiLineTextInput>
 
     private void updateCursorPositionAndRefreshCanvas(EventBus eventBus) {
         requestShowCursor(eventBus);
-        eventBus.raiseEvent(new RequestUpdateCanvasEvent(this));
+        //eventBus.raiseEvent(new RequestUpdateCanvasEvent(this));
     }
 
     AbstractTimedRequestedController timedOnChangeRequestController = null;
     
     AbstractTimedRequestedController buildTimedOnChangeController(EventBus eventBus) {
         return new AbstractTimedRequestedController(()->{
+            Logging.info("ON-REQUEST-START");
             eventBus.raiseEvent(new HasValue.ValueChangedEvent<>(MultiLineTextInput.this));
             updateCursorPositionAndRefreshCanvas(eventBus);
+            Logging.info("ON-REQUEST-END");
         }) {
             @Override
             protected boolean isRequestDifferentFromPrevious() {
@@ -653,15 +654,23 @@ public class MultiLineTextInput extends BoundedComponent<MultiLineTextInput>
     }
 
     protected void requestShowCursor(EventBus eventBus) {
+
+        // ensure desired cursor location will be in view
         new ShowComponentOnFocus().onFocus(MultiLineTextInput.this, 
                                            new Rectangle.Simple(caret, new Dimension.Simple(1,1)),  
                                            eventBus);
-
-        Component.UTIL.requestShowCursorAtComponent(this, caret, eventBus);
+        // now move cursor to caret and then request a canvas update
+        eventBus.appendEventHandler( new OnIdleEventEventHandler.OneTime(()-> {
+                                            Component.UTIL.requestShowCursorAtComponent(MultiLineTextInput.this, caret, eventBus);
+                                            MultiLineTextInput.this.markAsDirty();
+                                            eventBus.raiseEvent(new RequestUpdateCanvasEvent(MultiLineTextInput.this));
+                                          }
+                                   ));
     }
 
     private void requestHideCursor(EventBus eventBus) {
         eventBus.raiseEvent(new RequestHideCursorEvent(MultiLineTextInput.this));
+        eventBus.raiseEvent(new RequestUpdateCanvasEvent(MultiLineTextInput.this));
     }
 
     private Focusable asFocusable() {
@@ -671,7 +680,7 @@ public class MultiLineTextInput extends BoundedComponent<MultiLineTextInput>
                 public void setFocus(boolean focus, EventBus eventBus) {
                     super.setFocus(focus, eventBus);
                     if (focus) {
-                        new ShowComponentOnFocus().onFocus(MultiLineTextInput.this, 
+                        new ShowComponentOnFocus().onFocus(MultiLineTextInput.this,
                                                            eventBus);
                         requestShowCursor(eventBus);
                     } else {
@@ -702,17 +711,17 @@ public class MultiLineTextInput extends BoundedComponent<MultiLineTextInput>
 
     @Override
     public String toString() {
-        return "TextInput [buffer=" + buffer.toString() + "]" + "[row=" + getRow() + ", lcol" + getCol() + ", rcol="
-                + getRightMostCol() + " width=" + getWidth() + ", height=" + getHeight() + "]";
+        return "MultiLineTextInput ]";
     }
 
+    @Override
     public void onClick(ApplicationMouseEvent appMouseEvent) {
-        
-        setCaretPosition(appMouseEvent.getMousePosition());
-        
-        raiseEventOnChanged(appMouseEvent.getEventBus(), ()-> true);
+        if (MOUSE_ACTION.DOWN_LEFT.equals(appMouseEvent.getMouseAction())) {
+            setCaretPosition(appMouseEvent.getMousePosition());
+            raiseEventOnChanged(appMouseEvent.getEventBus(), ()-> true);
+        }
     }
-    
+
     @Override
     public void onClick(EventBus eventBus) {
         if (!hasFocus()) {
@@ -720,5 +729,36 @@ public class MultiLineTextInput extends BoundedComponent<MultiLineTextInput>
             eventBus.raiseEvent(new RequestFocusEvent(this));
         }
     }
+
+    @Override
+    public int getCol() {
+        return this.textRenderer.getCol();
+    }
+
+    @Override
+    public int getRow() {
+        return this.textRenderer.getRow();
+    }
+
+    @Override
+    public int getWidth() {
+        return this.maxTextWidth;
+    }
+
+    @Override
+    public int getHeight() {
+        return this.buffer.size();
+    }
+
+    @Override
+    protected Rectangle getRectangleForClearAndFill() {
+        return this.textRenderer;
+    }
+
+    @Override
+    public void moveTo(int row, int col) {
+        this.textRenderer.moveTo(row, col);
+    }
+
 
 }

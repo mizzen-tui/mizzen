@@ -391,12 +391,15 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
         return new OnRequestShowCursorEventHandler() {
             @Override
             protected void handleRequestShowCursorAt(Position position) {
-                //showCursorRequested =  last_RequestShowCursorPosition == null && hideCursorRequested==false;
-                Canvas.this.showCursorRequested = true;
-                Canvas.this.last_RequestShowCursorPosition = position;
-                Canvas.this.hideCursorRequested = false;
+                Canvas.this.showCursorAt(position);
             }
         };
+    }
+    
+    public void showCursorAt(Position position) {
+        this.showCursorRequested = true;
+        this.last_RequestShowCursorPosition = position;
+        this.hideCursorRequested = false;
     }
 
     public OnRequestHideCursorEventHandler asHideCursorEventHandler() {
@@ -413,6 +416,4 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
     public Position getLastRequestCursorPosition() {
         return !this.showCursorRequested ? null : this.last_RequestShowCursorPosition;
     }
-    
-    
 }

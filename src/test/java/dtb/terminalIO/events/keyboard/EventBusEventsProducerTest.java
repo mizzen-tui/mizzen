@@ -26,9 +26,9 @@ public class EventBusEventsProducerTest extends TestCase {
     
     
     private String runTest(String inputSource) throws Exception {
-        
+ 
         boolean[] stopFlag = new boolean[] {false};
-        
+
         ByteArrayInputStream inputStream = new ByteArrayInputStream(inputSource.getBytes()) {
             
             public int available()  {

@@ -86,7 +86,7 @@ public class TerminalEvent<T> extends EventObject {
 
     @Override
     public String toString() {
-	return "TerminalEvent [type=" + type + ", eventData=" + eventData + "]";
+       return "TerminalEvent [type=" + type + ", eventData=" + eventData + "]";
     }
 
     public TerminalEvent<T> setEventBus(EventBus eventBus) {

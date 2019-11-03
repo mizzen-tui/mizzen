@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import dtb.terminalIO.components.AbstractComponent;
 import dtb.terminalIO.components.BorderedComponent;
@@ -21,20 +22,25 @@ import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.EventBus;
-import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.focus.RequestFocusEvent;
 import dtb.terminalIO.events.focus.ToFocusable;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
+import dtb.terminalIO.events.mouse.ApplicationMouseEvent;
 import dtb.terminalIO.events.mouse.GetComponentAtOffset;
+import dtb.terminalIO.events.mouse.MOUSE_ACTION;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.StringUtils;
 
-public class ListBox<T> extends AbstractComponent<ListBox<T>>  implements HasValue<T>, ToFocusable, ParentContainer, GetComponentAtOffset {
+public class ListBox<T> extends AbstractComponent<ListBox<T>>  
+                                implements HasValue<T>, ToFocusable, 
+                                           ParentContainer, GetComponentAtOffset,
+                                           Clickable {
     
     List<ListItem> items = new ArrayList<ListItem>();
     VerticalPanel  itemsContainer;
@@ -183,7 +189,6 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>  implements HasVal
                         component.setBorder(false);
                         component.setSelectedBullet();
                     }
-                     
                  };
              }
 
@@ -210,7 +215,6 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>  implements HasVal
                         getComponent().setColor(selectedColor);
                         ((Composite)getComponent()).setBorder(false);
                     }
-                     
                  };
              }
              return new ItemComponent(component) {
@@ -263,7 +267,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>  implements HasVal
         public T getValue() {
             return getHasValue().getValue();
         }
-        
+
     }
     
     public ListBox(Color color) {
@@ -292,7 +296,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>  implements HasVal
         this(color);
         setItems(Arrays.asList(listItems), displayItemToComponent);
     }
-    
+
     public ListBox(Color color, DisplayableValue<T>[] listItems) {
         this(color);
         setItems(Arrays.asList(listItems), DEFAULT_COMPONENT_FACTORY);
@@ -323,9 +327,9 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>  implements HasVal
 
         @Override
         public Component<?> makeComponentFromdisplayableItem(Color color, int maxWidthStr, DisplayableValue<T> displayableItem) {
-            
+ 
             Dimension d = new Dimension.Simple(Dimension.UTIL.stringToDimension(displayableItem.getDisplayValue()).getHeight(), maxWidthStr);
-            
+  
             TextComponent tc = new TextComponent(color, d, StringUtils.padRight(displayableItem.getDisplayValue(),maxWidthStr)) ;
             return tc;
         }
@@ -347,8 +351,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>  implements HasVal
         int padding = 2;
         
         for (DisplayableValue<T> displayableItem : displayableItems) {
-            
-            
+
             Component<?> component = displayItemToComponent.makeComponentFromdisplayableItem(this.getColor(), maxWidthStr, displayableItem);
             if (component instanceof Composite) {
                 padding = 4;
@@ -367,6 +370,48 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>  implements HasVal
     
     public void setItems( List<DisplayableValue<T>> displayableItems) {
         setItems(displayableItems, DEFAULT_COMPONENT_FACTORY);
+    }
+    
+    public int indexOf(ListItem item) {
+        if (item == null) {
+            throw new NullPointerException("item paramater null!");
+        }
+        if (this.items == null) {
+            return -1;
+        }
+        
+        return this.items.indexOf(item);
+    }
+    
+    
+    public int indexOf(T value) {
+        if (value == null) {
+            throw new NullPointerException("value paramater null!");
+        }
+        if (this.items == null) {
+            return -1;
+        }
+        Optional<ListBox<T>.ListItem> itemO = this.items.stream().filter((item)-> value.equals(item.hasValue.getValue())).findFirst();
+        if (itemO.isPresent()) {
+            // inefficient - traversing twice - there are fancy techniques to avoid this. 
+            return indexOf(itemO.get());
+        }
+        return -1;
+    }
+
+    public int indexOf(Component<?> childComponent) {
+        if (childComponent == null) {
+            throw new NullPointerException("childComponent paramater null!");
+        }
+        if (this.items == null) {
+            return -1;
+        }
+        Optional<ListBox<T>.ListItem> itemO = this.items.stream().filter((item)-> childComponent == item.itemComponent.getComponent()).findFirst();
+        if (itemO.isPresent()) {
+            // inefficient - traversing twice - there are fancy techniques to avoid this. 
+            return indexOf(itemO.get());
+        }
+        return -1;
     }
 
     public ListBox<T> setColor(Color drawingcolor) {
@@ -530,7 +575,18 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>  implements HasVal
         return component;
     }
     
+    private Focusable focusable;
+    
     public Focusable asFocusable() {
+        if (focusable != null) {
+            return focusable;
+        }
+        focusable = makeFocusable();
+        return focusable;
+    }
+     
+    
+    private Focusable makeFocusable() {
 
         ChainedEventHandler chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
 
@@ -636,6 +692,43 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>  implements HasVal
     @Override
     public void childResized(Component<?> child) {
         this.markAsDirty();
+    }
+
+    @Override
+    public void onClick(EventBus eventBus) {
+        if (! asFocusable().hasFocus()) {
+            // focus manager should have already put focus here - but just in case ..
+            eventBus.raiseEvent(new RequestFocusEvent(asFocusable()));
+        }
+    }
+
+    @Override
+    public void onClick(ApplicationMouseEvent appMouseEvent) {
+        if (MOUSE_ACTION.DOWN_LEFT.equals(appMouseEvent.getMouseAction())) {
+            
+            // first find child component , clicked on
+            Component<?> componentClicked = getComponentAtOffset(appMouseEvent.getMousePosition() );
+
+            // now travel up its parents until we hit a child component of verticalPanel (itemsContainer)
+            // as this will map directly to one of the ListItem's
+            while ( componentClicked != null && 
+                    componentClicked != this &&
+                    componentClicked != itemsContainer &&
+                    componentClicked.getParentContainer() != itemsContainer) {
+                componentClicked = (Component<?>)componentClicked.getParentContainer();
+            }
+            if (componentClicked != null && componentClicked.getParentContainer() == itemsContainer) {
+                // itemsContainer child component found  so find out its index and then select it
+                int selectIDX = indexOf(componentClicked);
+                if (selectIDX > -1) {
+                    this.setSelected(selectIDX);
+                    // now let's the rest of the app know that changes have happened to this ListBox
+                    appMouseEvent.getEventBus().raiseEvent(  new HasValue.ValueChangedEvent<>(ListBox.this) );
+                    raiseEventRequestShowSelected(appMouseEvent.getEventBus());
+                }
+            }
+
+        }
     }
 
 }

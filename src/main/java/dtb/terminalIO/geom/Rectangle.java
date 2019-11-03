@@ -193,7 +193,7 @@ public interface Rectangle extends Position, Dimension, Movable {
 
         @Override
         public String toString() {
-            return "Simple [row=" + row + ", lcol" + col + ", rcol=" + getRightMostCol() + " width=" + getWidth() + ", height=" + getHeight() + "]";
+            return "Rectangle [row=" + row + ", lcol" + col + ", rcol=" + getRightMostCol() + " width=" + getWidth() + ", height=" + getHeight() + "]";
         }
 
         int col;
