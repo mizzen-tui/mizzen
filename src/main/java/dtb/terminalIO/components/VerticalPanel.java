@@ -93,12 +93,12 @@ public class VerticalPanel extends Composite {
 
         ComponentWithOffset anchor;
         boolean needsRectangleCalc = false;
-        
+
         public RectangleFromAnchor(ComponentWithOffset anchor) {
             super(anchor == null ? Rectangle.ZERO : new Rectangle.Simple(anchor.getRectangleForLayout()));
             this.anchor = anchor;
         }
-        
+
         public void reCalcRectangle() {
             needsRectangleCalc = true;
         }
@@ -113,7 +113,5 @@ public class VerticalPanel extends Composite {
         }
         
     }
-    
-
 
 }
