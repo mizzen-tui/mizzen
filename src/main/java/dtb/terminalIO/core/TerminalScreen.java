@@ -145,7 +145,7 @@ public class TerminalScreen implements ControlCodeContext {
     }
 
     public TerminalScreen cr() {
-        return add(Renderer.CR);
+        return add(ControlCode.CR);
     }
 
     public TerminalScreen clear() {

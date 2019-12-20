@@ -78,7 +78,7 @@ public class LineTrackingCLIEmmitter implements CLIEmitter {
 
     protected void CR() {
         output(ControlCode.ERASE_END_OF_LINE);
-        output(Renderer.CR);
+        output(ControlCode.CR);
         nextOutputIncsLineCounter = true;
     }
 

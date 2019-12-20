@@ -35,6 +35,21 @@ import dtb.terminalIO.events.mouse.MouseEventOrchestrator;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.util.Stty;
 
+/**
+ * 
+ * <pre>
+ * 
+ * This example uses the 'old' style of using this library..
+ * 
+ * ie .. it does not use a TUIApp object to orchestrate building the
+ *       UI environment.    I highly suggest not building UI apps in this style.
+ *                          instead take a look at SparkLineTest
+ * 
+ * </pre>
+ * 
+ * @author dbalme
+ *
+ */
 public class TextBoxTest {
 
     public static void main(String[] args) throws IOException {

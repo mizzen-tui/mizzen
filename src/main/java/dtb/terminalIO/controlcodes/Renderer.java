@@ -111,24 +111,5 @@ public interface Renderer {
         
     }
 
-    // TODO - should this be moved to ControlCode class?
-    public static Renderer CR = new Renderer() {
-
-        TextRenderer cooked_CR = new TextRenderer("\n");
-        Renderer raw_CR = new RendererBuffer().append(ControlCode.CURSOR_LEFT ).append( new CursorDown(1));
-        
-        @Override
-        public void render(ControlCodeContext ctx) {
-            if (ctx.isRaw()) {
-                raw_CR.render(ctx);
-            } else {
-                cooked_CR.render(ctx);
-            }
-        }
-        
-    };
-    
-
-    public static TextRenderer LF = new TextRenderer("\r");
 
 }

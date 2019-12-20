@@ -6,6 +6,12 @@ import dtb.terminalIO.components.chart.DonutChart;
 import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 
+/**
+ * Demo's a donut chart
+ * 
+ * @author dbalme
+ *
+ */
 public class DonutChartTest {
     
     public static void main(String args[]) {

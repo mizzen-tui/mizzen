@@ -6,6 +6,8 @@ import java.util.function.Supplier;
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.LinuxProcessViewer;
+import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.components.VerticalPanel;
 import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.keyboard.Keys;
@@ -13,10 +15,14 @@ import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.ElapsedTime;
-import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.linuxproc.ExecUtil;
 import dtb.terminalIO.util.linuxproc.LinuxProcessWatcher;
 
+/**
+ * Demo's running child processes and displaying output in ScrollableComponents
+ * @author dbalme
+ *
+ */
 public class ExecTest {
 
     static String execTop() {
@@ -29,15 +35,6 @@ public class ExecTest {
     }
 
     static boolean simple = true;
-
-    public static void testTail() throws Exception {
-        String fileToTail = "/var/log/example-server.log";
-
-        LinuxProcessWatcher watcher = LinuxProcessWatcher.tailFile(fileToTail, (line) -> System.out.println(line));
-
-        System.out.println(" result =  " + watcher.getLastResult());
-
-    }
 
     private static String fileNameToTail(String[] args) {
         for (int i = 0; i < args.length - 1; i++) {
@@ -131,16 +128,23 @@ public class ExecTest {
         
         hPanel.add(lprocViewer);
         hPanel.add(lprocViewer2);
-        //hPanel.setTitle("Proc viewers");
         
-        app.enableMouseHandling(hPanel);
+        VerticalPanel mainPanel = new VerticalPanel();
+        
+        mainPanel.setVerticalSpacer(1);
+        
+        mainPanel.add(new TextComponent("CTRL-C to quit:     Demo's running a child-process and viewing output in Scrollable windows"));
+        
+        mainPanel.add(hPanel);
+        
+        app.enableMouseHandling(mainPanel);
         
         app.setUpdateCanvas((tApp)->{
             if (!hPanel.isDirty()) {
                 return false; // false means no gui update
             }
 
-            TimeAndCount elapsed = TimeAndCount.onRun(()->tApp.getCanvas().addComponentSegments(view1OffsetOnCanvas, hPanel), lprocViewer.textView);
+            TimeAndCount elapsed = TimeAndCount.onRun(()->tApp.getCanvas().addComponentSegments(view1OffsetOnCanvas, mainPanel), lprocViewer.textView);
 
             tApp.getCanvas().t(lprocViewer.getBottomMostRow()+5, 0, "elapsed = "+elapsed);
 
@@ -197,7 +201,7 @@ public class ExecTest {
                     }
                 } else {
                     linuxProc = new LinuxProcessWatcher();
-                    linuxProc.setInvokeScript("/home/dbalme/workspace/dtbTerminalIO/slowRunner.sh testme");
+                    linuxProc.setInvokeScript("./slowRunner.sh testme");
                 }
             }
             
@@ -205,12 +209,12 @@ public class ExecTest {
                 lprocViewer.setLinuxProcessWatcher(linuxProc);
                 lprocViewer.invoke(tApp.getEventBus());
             }
-            lprocViewer2.setLinuxProcessWatcher( new LinuxProcessWatcher().setInvokeScript("/home/dbalme/workspace/dtbTerminalIO/slowRunner.sh testme")  );
+            lprocViewer2.setLinuxProcessWatcher( new LinuxProcessWatcher().setInvokeScript("./slowRunner.sh testme")  );
             lprocViewer2.invoke(tApp.getEventBus());
         });
         
         app.start();
-        Logging.setEnabled(true);
+        // Logging.setEnabled(true);
         
     }
 

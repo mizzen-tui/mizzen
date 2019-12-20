@@ -33,6 +33,36 @@ import dtb.terminalIO.events.resize.TerminalResizeDetection;
 import dtb.terminalIO.examples.TestsCommon;
 import dtb.terminalIO.geom.Dimension;
 
+/**
+ * 
+ * Simplifies using this library GREATLY if you instantiate a TUIApp object
+ * and interact with the components and the eventBus via this object.
+ * 
+ * <p/>
+ * 
+ * This library is finicky and the order in which things are set up matter.
+ * 
+ * <p/>
+ * 
+ * By using this class, it tries to help coerce the developer to do UI setups in the correct order.  (still a work in progress! :) )
+ * 
+ * <p/>
+ * 
+ * For some examples of its use.. check out:
+ * 
+ * </p>
+ * 
+ * <li>  SparklineTest
+ * <li>  BarChartTest
+ * <li>  CharacterViewerTest
+ * <li>  RockerButtonTest
+ * <li>  TabPanelTest
+ * 
+ * etc
+ * 
+ * @author dbalme
+ *
+ */
 public class TUIApp {
 
     EventBus eventBus;

@@ -150,6 +150,12 @@ public class MouseEventOrchestrator {
 
     ConditionalEventHandler appMouseToFocusableComponent = null;
 
+    /**
+     * Builds an eventHandler that accepts ApplicationMouseEvent events and tries very hard to
+     * map this event to an appropriate Component object somewhere on the mainApplicationPanel.
+     * It determines the clicked component by mapping row/col mouse event with component row/col
+     * and if the component is clickable.
+     */
     public void appendApplicationMouseEventToClickable(Component<?> mainApplicationPanel, MOUSE_ACTION mouseAction) {
         // for now add to eventbus - but later - instead add to chained event handler
 
@@ -225,7 +231,7 @@ public class MouseEventOrchestrator {
                         eventBus.appendEventHandler( new OnIdleEventEventHandler.OneTime((te2)-> {
                             if (focusableClickable.hasFocus()) {
                                 // map mouse position as an offset into the clicked component
-                                // and pass the component a mouse event with this offset
+                                // and pass the component a new mouse event with this offset
                                 Position clickableOffsetOnCanvas = Component.UTIL.getCanvasOffsetFor((Component<?>)clickable);
                                 if (clickableOffsetOnCanvas != null) {
                                     Position mouseOffsetIntoClickable = clickableOffsetOnCanvas.offsetTo(canvasPosition);

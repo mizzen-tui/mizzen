@@ -6,7 +6,10 @@ import java.util.StringJoiner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import dtb.terminalIO.controlcodes.ControlCode.CursorDown;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors.HasRowChange;
+import dtb.terminalIO.controlcodes.Renderer.RendererBuffer;
+import dtb.terminalIO.controlcodes.Renderer.TextRenderer;
 import dtb.terminalIO.textsegments.CleanString;
 
 
@@ -512,6 +515,32 @@ public abstract class ControlCode implements Renderer {
     // x,y is the cursor location.
     public static final ControlCode CPR = new BaseTextControlCode(escape_CHR + "[6n");
     
+    
+    static Renderer make_CR() {
+        
+        final TextRenderer cooked_CR = new TextRenderer("\n");
+        final Renderer raw_CR = new RendererBuffer().append(ControlCode.CURSOR_LEFT ).append( new CursorDown(1));
+        
+        Renderer the_CR = new Renderer() {
+
+            @Override
+            public void render(ControlCodeContext ctx) {
+                if (ctx.isRaw()) {
+                    raw_CR.render(ctx);
+                } else {
+                    cooked_CR.render(ctx);
+                }
+            }
+        };
+        
+        return the_CR;
+     }
+    
+    
+    // TODO - should this be moved to ControlCode class?
+    public static Renderer CR = make_CR();
+    public static TextRenderer LF = new TextRenderer("\r");
+    
     protected static class CursorMovementWithCount extends BaseTextControlCode {
 
         protected int count;
@@ -585,9 +614,9 @@ public abstract class ControlCode implements Renderer {
             for (int i = 0; i < nLines; i++) {
                 // rb.append("|");
                 rb.append(ERASE_END_OF_LINE);
-                rb.append(Renderer.CR); // todo - should I create and use a
-                                        // movedown renderer? .. might be
-                                        // smarter
+                rb.append(ControlCode.CR); // todo - should I create and use a
+                                           // movedown renderer? .. might be
+                                           // smarter
             }
             rb.append(new CursorUp(nLines));
             rb.render(ctx);

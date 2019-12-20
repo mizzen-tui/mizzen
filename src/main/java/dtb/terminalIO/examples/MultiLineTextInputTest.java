@@ -17,7 +17,7 @@ public class MultiLineTextInputTest {
 
     public static void main(String[] args) throws IOException {
 
-        Logging.setEnabled(true);
+        // Logging.setEnabled(true);
         
         new TUIApp(args)
         .setCanvasSize(24, 100)
@@ -28,7 +28,7 @@ public class MultiLineTextInputTest {
 
             MultiLineTextInput mTextBox = new MultiLineTextInput();
 
-            mTextBox.setColor(  new FGBGColors( Colors.BBlu, Colors.On_IYel  )  );
+            mTextBox.setColor(  new FGBGColors( Colors.BBlu, Colors.On_Bla  )  );
 
             ScrollableComponent sc = new ScrollableComponent(Colors.Whi, 
                                                              (Dimension)tApp.getMainApplicationPanel(), 

@@ -17,6 +17,10 @@ import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.util.MapChars;
 import dtb.terminalIO.util.StringUtils;
 
+/**
+ * Demo's using this library to send output to a string instead of to the terminal
+ *
+ */
 public class StringOutputTest {
 
     

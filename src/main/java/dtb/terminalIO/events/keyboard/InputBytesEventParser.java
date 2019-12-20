@@ -57,6 +57,10 @@ public class InputBytesEventParser {
     private String accumulatedDigits;
 
     private long last_ESC_PRESSED_TIME = Integer.MAX_VALUE;
+    
+    // only turn this on when you are introducing new input events
+    // and you need to debug.. Once done - turn this flag off again
+    private static final boolean LOG_DEBUG_EVENTS = false;
 
     public class InputBytesDEBUGEvent extends TerminalEvent<String> {
         private static final long serialVersionUID = 1L;
@@ -87,7 +91,9 @@ public class InputBytesEventParser {
      */
     public void parseInput(byte[] buffer, int readIn, EventBus eventBus) {
 
-        eventBus.raiseEvent(new InputBytesDEBUGEvent(buffer, readIn));
+        if (LOG_DEBUG_EVENTS) {
+             eventBus.raiseEvent(new InputBytesDEBUGEvent(buffer, readIn));
+        }
 
         boolean lookForKnownKeys = true;
 
