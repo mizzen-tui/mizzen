@@ -74,6 +74,9 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>
     @Override
     public void childResized(Component<?> child) {
         this.markAsDirty();
+        if (this.getParentContainer() != null) {
+            this.getParentContainer().childResized(this);
+        }
     }
 
     @Override

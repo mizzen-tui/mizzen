@@ -14,6 +14,7 @@ import dtb.terminalIO.components.plot.PointPlotter.PointPlot;
 import dtb.terminalIO.components.plot.shape.Circle;
 import dtb.terminalIO.components.plot.shape.CircleAlgorithm.DonutCircleAlgorithm;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
@@ -37,7 +38,18 @@ public class DonutChart extends AbstractComponent<DonutChart> implements ParentC
         this.setData(100, 100, "100%");
     }
     
-
+    @Override
+    public DonutChart setColor(Color drawingcolor) {
+        super.setColor(drawingcolor);
+        this.grid.setColor(drawingcolor);
+        return this;
+    }
+    
+    public DonutChart setTextColor(Color drawingcolor) {
+       this.stats.setColor(drawingcolor);
+        return this;
+    }
+    
     @Override
     public void hilite() {
         grid.hilite();
@@ -94,6 +106,9 @@ public class DonutChart extends AbstractComponent<DonutChart> implements ParentC
     @Override
     public void childResized(Component<?> child) {
         markAsDirty();
+        if (this.getParentContainer() != null) {
+            this.getParentContainer().childResized(this);
+        }
     }
 
     int shift90(int angle) {

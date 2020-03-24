@@ -33,8 +33,7 @@ public class MultiLineTextInputTest {
             ScrollableComponent sc = new ScrollableComponent(Colors.Whi, 
                                                              (Dimension)tApp.getMainApplicationPanel(), 
                                                              mTextBox,
-                                                             ()-> new DefaultFocusManager(Keys.SHIFT_TAB_KEYSTROKE, Keys.TAB_KEYSTROKE)
-                                                                                          .setNavKeysFirst(false));
+                                                             ()-> new DefaultFocusManager(Keys.SHIFT_TAB_KEYSTROKE, Keys.TAB_KEYSTROKE).setNavKeysFirst(false));
             sc.setFillOnClear(false);
             
             sc.resize(  new Dimension.Simple(sc.getHeight()-2, sc.getWidth()));
@@ -46,7 +45,7 @@ public class MultiLineTextInputTest {
             mTextBox.setText("Hello World!\n");
 
         }).start();
-        
+
     }
     
     

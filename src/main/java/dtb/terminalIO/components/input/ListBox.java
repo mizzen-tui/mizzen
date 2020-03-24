@@ -372,6 +372,14 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         setItems(displayableItems, DEFAULT_COMPONENT_FACTORY);
     }
     
+    public void setSelectedValue(T value) {
+        int idx = indexOf(value);
+        if (idx == -1) {
+            throw new IllegalArgumentException("Attempted to set to a value of "+String.valueOf(value));
+        }
+        setSelected(idx);
+    }
+    
     public int indexOf(ListItem item) {
         if (item == null) {
             throw new NullPointerException("item paramater null!");
@@ -619,6 +627,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
                         setSelected(curSelected);
                     } else {
                         setSelected(0);
+                        eventBus.raiseEvent(  new HasValue.ValueChangedEvent<>(ListBox.this) );
                     }
                     raiseEventRequestShowSelected(eventBus);
                 } else {
@@ -692,6 +701,9 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
     @Override
     public void childResized(Component<?> child) {
         this.markAsDirty();
+        if (this.getParentContainer() != null) {
+            this.getParentContainer().childResized(this);
+        }
     }
 
     @Override

@@ -7,32 +7,17 @@ import java.util.function.Function;
 
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.ButtonBar;
-import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.VerticalPanel;
 import dtb.terminalIO.components.chart.SparkLineComponent;
-import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.events.ConditionalEventHandler;
-import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
-import dtb.terminalIO.events.TerminalEvent;
-import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
-import dtb.terminalIO.events.TerminalEvent.TYPE;
 import dtb.terminalIO.events.focus.FocusManager;
-import dtb.terminalIO.events.focus.Focusable;
-import dtb.terminalIO.events.focus.RequestFocusEvent;
-import dtb.terminalIO.events.focus.ToFocusable;
 import dtb.terminalIO.events.keyboard.Keys;
-import dtb.terminalIO.events.mouse.ApplicationMouseEvent;
-import dtb.terminalIO.events.mouse.GetComponentAtOffset;
-import dtb.terminalIO.events.mouse.MOUSE_ACTION;
 import dtb.terminalIO.geom.Dimension;
-import dtb.terminalIO.geom.position.Position;
-import dtb.terminalIO.util.Logging;
 
 public class SparklineTest {
     

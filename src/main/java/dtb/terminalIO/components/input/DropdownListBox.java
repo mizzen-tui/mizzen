@@ -1,79 +1,96 @@
 package dtb.terminalIO.components.input;
 
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
-import dtb.terminalIO.components.AbstractComponent;
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.components.ParentContainer;
+import dtb.terminalIO.components.ComponentWithFocusManager;
 import dtb.terminalIO.components.VerticalPanel;
 import dtb.terminalIO.components.input.DisplayableValue.BooleanDisplayValue;
 import dtb.terminalIO.components.input.DisplayableValue.StringDisplayValue;
 import dtb.terminalIO.components.input.ListBox.ComponentItemFactory;
+import dtb.terminalIO.controlcodes.Colors;
+import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
-import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.EventBus;
-import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
-import dtb.terminalIO.events.focus.Focusable;
-import dtb.terminalIO.events.mouse.GetComponentAtOffset;
+import dtb.terminalIO.events.focus.DefaultFocusManager;
+import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
+import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
-import dtb.terminalIO.geom.position.Position;
-import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.util.Logging;
+import dtb.terminalIO.util.StringUtils;
 
-public class DropdownListBox<T> extends AbstractComponent<DropdownListBox<T>>  
-        implements HasValue<T>, Focusable, ParentContainer, GetComponentAtOffset {
+public class DropdownListBox<T> extends ComponentWithFocusManager  
+        implements HasValue<T> , Clickable {
 
-    private VerticalPanel container;
     private ListBox<T> listBox;
     private Button button;
     
-    private Focusable meAsFocusable = null;
     private int maxItemWidth = 10;
     
     protected DropdownListBox(Color color) {
-        super(color);
+        super(color, new VerticalPanel());
         
-        this.container = new VerticalPanel();
-        this.container.setParentContainer(this);
-
         this.button = new Button(color, "");
-        this.button.setBorder(true);
-        this.container.add(this.button);
+        this.getContainer().add(this.button);
         
         this.listBox = new ListBox<T>(color);
         this.listBox.setBorder(true);
+
+        DefaultFocusManager fm = new DefaultFocusManager(Keys.UP_KEYSTROKE, Keys.DOWN_KEYSTROKE).setNavKeysFirst(false).setCycling(false);
+        this.setFocusManager( fm );
+        fm.addFocusable(button);
+        fm.addFocusable(listBox);
+        setSelectedOntoTextView();
+
+        appendEventHandler( new HasValue.OnValueChangedEventHandler<T>(this.listBox) {
+            @Override
+            public void valueChanged(TerminalEvent<?> te, HasValue<T> source) {
+                setSelectedOntoTextView();
+                te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(DropdownListBox.this));
+                // let everyone else know that our value has been modified.
+                te.getEventBus().raiseEvent(new HasValue.ValueChangedEvent<>(DropdownListBox.this));
+            }
+        });
+
+        appendEventHandler( new KeyInputEventHandler(Keys.ENTER_KEYSTROKE, (te)-> { showListBox(); }));
     }
-    
+
     public DropdownListBox() {
         this(FGBGColors.NO_COLOR_SPECIFIED);
     }
 
+    private void calcAndSetMaxItemWidth(List<DisplayableValue<T>> displayableItems) {
+        setMaxItemWidth( 4 + displayableItems.stream().map( (li) -> Dimension.UTIL.stringToDimension( li.toString() ).getWidth()).max( Integer::compareTo).get());
+    }
+    
     public DropdownListBox(DisplayableValue<T>[] listItems) {
         this();
         setItems(Arrays.asList(listItems));
+        calcAndSetMaxItemWidth(Arrays.asList(listItems));
     }
     
     public DropdownListBox(Color color, DisplayableValue<T>[] listItems, ComponentItemFactory<T> displayItemToComponent) {
         this(color);
         setItems(Arrays.asList(listItems), displayItemToComponent);
+        calcAndSetMaxItemWidth(Arrays.asList(listItems));
     }
 
     public DropdownListBox(DisplayableValue<T>[] listItems, ComponentItemFactory<T> displayItemToComponent) {
         this();
         setItems(Arrays.asList(listItems), displayItemToComponent);
-        maxItemWidth = 1 + Stream.of(listItems).map( (li) -> Dimension.UTIL.stringToDimension( li.toString() ).getWidth()).max( Integer::compareTo).get();
+        setMaxItemWidth( Stream.of(listItems).map( (li) -> Dimension.UTIL.stringToDimension( li.toString() ).getWidth()).max( Integer::compareTo).get());
     }
 
     public DropdownListBox(Color color, DisplayableValue<T>[] listItems) {
         this(color);
         setItems(Arrays.asList(listItems));
-        maxItemWidth = 1 + Stream.of(listItems).map( (li) -> Dimension.UTIL.stringToDimension( li.toString() ).getWidth()).max( Integer::compareTo).get();
+        calcAndSetMaxItemWidth(Arrays.asList(listItems));
     }
 
     public static DropdownListBox<String> fromStrings(String[] listItems) {
@@ -111,6 +128,11 @@ public class DropdownListBox<T> extends AbstractComponent<DropdownListBox<T>>
     public static DropdownListBox<Boolean> yesNoDropDown() {
         return yesNoDropDown(FGBGColors.NO_COLOR_SPECIFIED);
     }
+    
+    private void setMaxItemWidth(int maxItemWidth) {
+        this.maxItemWidth = maxItemWidth;
+        setSelectedOntoTextView();
+    }
 
     public void setItems(List<DisplayableValue<T>> displayableItems) {
         this.listBox.setItems(displayableItems);
@@ -126,172 +148,87 @@ public class DropdownListBox<T> extends AbstractComponent<DropdownListBox<T>>
         return this.button;
     }
 
-    protected Component<?> getVisibleChild() {
-        boolean listBoxVisible = this.container.containsChild(listBox);
-        if (asFocusable().hasFocus()) {
-            if (!listBoxVisible) {
-                synchronized(this) {
-                    if ( ! this.container.containsChild(listBox)) { // check again
-                        this.container.add(this.listBox);
-                    }
-                }
-            }
-        } else {
-            if (listBoxVisible) {
-                synchronized(this) {
-                    if (this.container.containsChild(listBox)) { // check again
-                        this.container.remove(this.listBox);
-                    }
-                }
-            }
-        }
-        return container;
+    public void setSelectedValue(T value) {
+        this.listBox.setSelectedValue(value);
+        setSelectedOntoTextView();
     }
-
-    @Override
-    public Collection<? extends Component<?>> getChildren() {
-        return Collections.singleton(getVisibleChild());
-    }
-
-    @Override
-    public int getCol() {
-        return getVisibleChild().getCol();
-    }
-
-    @Override
-    public int getRow() {
-        return getVisibleChild().getRow();
-    }
-
-    @Override
-    public int getWidth() {
-        return getVisibleChild().getWidth();
-    }
-
-    @Override
-    public int getHeight() {
-        return getVisibleChild().getHeight();
-    }
-
-    @Override
-    public void moveTo(int row, int col) {
-        getVisibleChild().moveTo(row, col);
-    }
-
-    @Override
-    public Position getPositionRelativeToParent(Component<?> child) {
-        return Position.ZERO;
-    }
-
-    @Override
-    public void childResized(Component<?> child) {
-        this.markAsDirty();
-    }
-
+    
+    
     private void setSelectedOntoTextView() {
+        //T selected = this.listBox.getSelectedValue();
         HasValue<T> selected = this.listBox.getSelected();
         // T  selected = this.getValue();
         // buttons resize themselves based on text.
         // so we pad text to avoid this
         String buttonText;
-        if (selected == null) {
-            buttonText = String.format("%-"+maxItemWidth+"s", " ");
+        char emptyCH = '_';
+        if (maxItemWidth < 8) {
+            if (selected == null) {
+                buttonText = String.format("%-"+(5)+"s", StringUtils.repeat(emptyCH, 5));
+            } else {
+                buttonText = String.format("%-"+(5)+"s", StringUtils.truncate((selected.toString()),5));
+            }
         } else {
-            buttonText = String.format("%-"+maxItemWidth+"s", selected.toString());
+            boolean hasFocus = hasFocus();
+            String arrow = hasFocus ? Colors.BIBla.asString() +"[v]" + ControlCode.RCol.asString() : "";
+            int padLen = maxItemWidth-(hasFocus?1:0);
+            if (selected == null) {
+                buttonText = String.format("%-"+(padLen)+"s"+arrow, StringUtils.repeat(emptyCH, padLen));
+            } else {
+                buttonText = String.format("%-"+(padLen)+"s"+arrow, StringUtils.truncate(StringUtils.padRight((selected.toString()),padLen),padLen-1));
+            }
         }
         
         this.button.setButtonText( buttonText );
     }
     
     
-    private Focusable asFocusable() {
-        if (meAsFocusable != null) {
-            return meAsFocusable;
-        }
-        synchronized (this) {
-            if (meAsFocusable != null) {
-                return meAsFocusable;
-            }
-            Focusable lisBoxFocusable = this.listBox.asFocusable();
-
-            ChainedEventHandler chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
-
-            chainedHandler.appendEventHandler(lisBoxFocusable); 
-            
-            chainedHandler.appendEventHandler( new HasValue.OnValueChangedEventHandler<T>(this.listBox) {
-                @Override
-                public void valueChanged(TerminalEvent<?> te, HasValue<T> source) {
-                    setSelectedOntoTextView();
-                }
-            });
-
-            meAsFocusable = new DefaultFocusableBehaviour.Simple(this, chainedHandler.asConditionalEventHandler()) {
-                @Override
-                public void setFocus(boolean focus, EventBus eventBus) {
-                    super.setFocus(focus, eventBus);
-                    if (focus) {
-                        button.setFocus(focus, eventBus);
-                        lisBoxFocusable.setFocus(focus, eventBus);
-                        setSelectedOntoTextView();
-                        Component.UTIL.bringToFront(DropdownListBox.this);
-                    } else {
-                        if (!focus) {
-                            button.setFocus(focus, eventBus);
-                            lisBoxFocusable.setFocus(focus, eventBus);
-                            setSelectedOntoTextView();
-                       }
-                    }
-                    markAsDirty();
-                }
-            };
-        }
-        return meAsFocusable;
-    }
 
     @Override
     public T getValue() {
         return this.listBox.getValue();
     }
 
-    @Override
-    protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
-        segments.merge(this.getVisibleChild().getSegmentsBuffer());
-    }
-
-    public Component<?> getComponentAtOffset(Position offset) {
-        Component<?> component = this.container.getComponentAtOffset(offset);
-        if (component == this.container) {
-            return this;
+    protected boolean listBoxVisible() {
+        if (this.getContainer().containsChild(listBox)) {
+            return true;
         }
-        return component;
+        return false;
     }
     
-    
-    @Override
-    protected Rectangle getRectangleForClearAndFill() {
-        return getVisibleChild();
-    }
-
-    @Override
-    public EventHandler canHandle(TerminalEvent<?> te) {
-        if (asFocusable().canHandle(te) != null) {
-            return this;
+    private void showListBox() {
+        if (listBoxVisible()) {
+            return;
         }
-        return null;
+        Logging.info("showListBox()");
+        this.getContainer().add(this.listBox);
     }
-
-    @Override
-    public void handle(TerminalEvent<?> te) {
-        asFocusable().handle(te);
+    
+    private void hideListBox() {
+        if (!listBoxVisible()) {
+            return;
+        }
+        Logging.info("hideListBox()");
+        this.getContainer().remove(this.listBox);
     }
-
-    @Override
-    public boolean hasFocus() {
-        return asFocusable().hasFocus();
-    }
-
+    
     @Override
     public void setFocus(boolean focus, EventBus eventBus) {
-        asFocusable().setFocus(focus, eventBus);
+        super.setFocus(focus, eventBus);
+        if (focus) {
+            showListBox();
+        } 
+        
+        if (!focus) {
+            hideListBox();
+        }
+        setSelectedOntoTextView();
+        Component.UTIL.bringToFront(DropdownListBox.this);
     }
+
+    @Override
+    public void onClick(EventBus eventBus) {
+        this.setFocus(true, eventBus);
+    }
+
 }

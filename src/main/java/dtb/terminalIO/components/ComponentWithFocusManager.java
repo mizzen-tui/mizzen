@@ -6,8 +6,11 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.events.ChainedEventHandler;
+import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.EventHandlerContainer;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
@@ -25,10 +28,13 @@ import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
  * 
  */
 public class ComponentWithFocusManager extends AbstractComponent<ComponentWithFocusManager> 
-     implements ParentContainer, HasTitleAndBorder<ComponentWithFocusManager>, CanResize, FocusManager, GetComponentAtOffset {
+     implements ParentContainer, HasTitleAndBorder<ComponentWithFocusManager>, CanResize, 
+                FocusManager, GetComponentAtOffset, EventHandlerContainer {
     
     private Composite container;
     private FocusManager focusManager;
+    private ChainedEventHandler chainedEventHandler;
+    private ConditionalEventHandler chainedEventHandlerAsConditionalEventHandler;
 
     private Function<EventBus, FocusManager> focusManagerBuilder;
 
@@ -89,6 +95,14 @@ public class ComponentWithFocusManager extends AbstractComponent<ComponentWithFo
         return this.focusManager;
     }
     
+    private ChainedEventHandler getOrBuildChainedEventHandler() {
+        if (chainedEventHandler == null) {
+            chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
+            chainedEventHandlerAsConditionalEventHandler = chainedEventHandler.asConditionalEventHandler();
+        }
+        return chainedEventHandler;
+    }
+    
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
         segments.merge(this.container.getSegmentsBuffer());
@@ -101,7 +115,7 @@ public class ComponentWithFocusManager extends AbstractComponent<ComponentWithFo
         }
         return component;
     }
-    
+
     @Override
     public Collection<? extends Component<?>> getChildren() {
         return Collections.singleton(this.container);
@@ -115,6 +129,9 @@ public class ComponentWithFocusManager extends AbstractComponent<ComponentWithFo
     @Override
     public void childResized(Component<?> child) {
         this.markAsDirty();
+        if (this.getParentContainer() != null) {
+            this.getParentContainer().childResized(this);
+        }
     }
 
     @Override
@@ -124,20 +141,48 @@ public class ComponentWithFocusManager extends AbstractComponent<ComponentWithFo
 
     @Override
     public void setFocus(boolean focus, EventBus eventBus) {
+        // I'm avoiding an obscure bug in FocusManager
+        if (getFocusManager(eventBus).getChildFocusables().size()<1) {
+            return;
+        }
         getFocusManager(eventBus).setFocus(focus, eventBus);
     }
 
     @Override
     public EventHandler canHandle(TerminalEvent<?> te) {
+        // I'm avoiding an obscure bug in FocusManager
+        if (getFocusManager(te.getEventBus()).getChildFocusables().size()<1) {
+            return null;
+        }
         if (focusManager.canHandle(te)!=null) {
             return this;
         }
-        return null;
+        if (chainedEventHandlerAsConditionalEventHandler == null) {
+            return null;
+        }
+        if (chainedEventHandlerAsConditionalEventHandler.canHandle(te) == null) {
+            return null;
+        }
+        return this;
     }
 
     @Override
     public void handle(TerminalEvent<?> te) {
-        focusManager.handle(te);
+        // I'm avoiding an obscure bug in FocusManager
+        if (getFocusManager(te.getEventBus()).getChildFocusables().size()<1) {
+            return;
+        }
+        if (focusManager.canHandle(te)!=null) {
+            focusManager.handle(te);
+            return;
+        }
+
+        if (chainedEventHandlerAsConditionalEventHandler == null) {
+            return;
+        }
+        if (chainedEventHandlerAsConditionalEventHandler.canHandle(te) != null) {
+            chainedEventHandlerAsConditionalEventHandler.handle(te);
+        }
     }
 
     @Override
@@ -226,7 +271,25 @@ public class ComponentWithFocusManager extends AbstractComponent<ComponentWithFo
 
     @Override
     public Collection<Focusable> getChildFocusables() {
+        if (focusManager == null) {
+            return Collections.emptyList();
+        }
         return focusManager.getChildFocusables();
     }
-    
+
+    @Override
+    public EventHandlerContainer prependEventHandler(ConditionalEventHandler eventHandler) {
+        return getOrBuildChainedEventHandler().prependEventHandler(eventHandler);
+    }
+
+    @Override
+    public EventHandlerContainer appendEventHandler(ConditionalEventHandler eventHandler) {
+        return getOrBuildChainedEventHandler().appendEventHandler(eventHandler);
+    }
+
+    @Override
+    public EventHandlerContainer removeEventHandler(ConditionalEventHandler eventHandler) {
+        return getOrBuildChainedEventHandler().removeEventHandler(eventHandler);
+    }
+
 }
