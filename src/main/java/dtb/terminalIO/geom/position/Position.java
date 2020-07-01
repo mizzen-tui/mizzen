@@ -13,11 +13,7 @@ import dtb.terminalIO.geom.Relation.OverUnder;
 /**
  * Represents a location ( row/col ) on a Canvas, or component.
  */
-public interface Position {
-
-    public int getCol(); // x
-
-    public int getRow(); // y
+public interface Position extends Row, Column{
 
     public default boolean isSamePosition(Position other) {
     if (other == null) {

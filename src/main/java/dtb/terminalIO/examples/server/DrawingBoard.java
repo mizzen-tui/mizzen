@@ -28,7 +28,5 @@ public interface DrawingBoard {
     void refresh();
 
     void pipeTextFromCommand(String name, String[] cmd) throws IOException;
-    
-    
-    
+
 }

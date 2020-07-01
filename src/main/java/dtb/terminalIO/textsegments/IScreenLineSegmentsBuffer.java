@@ -37,13 +37,13 @@ public interface IScreenLineSegmentsBuffer extends Rectangle , Iterable<ScreenLi
 
 	public abstract void mergeAt(int row, int col, IScreenLineSegmentsBuffer segmentsBuffer);
 
-        public default void mergeAt(Position position, IScreenLineSegmentsBuffer segmentsBuffer) {
+    public default void mergeAt(Position position, IScreenLineSegmentsBuffer segmentsBuffer) {
             mergeAt(position.getRow(), position.getCol(), segmentsBuffer);
-        }
+    }
 
-        public abstract void merge(Collection<ScreenLineSegment> segments);
+    public abstract void merge(Collection<ScreenLineSegment> segments);
 
-        public abstract void clearAndMerge(Collection<ScreenLineSegment> segments);
+    public abstract void clearAndMerge(Collection<ScreenLineSegment> segments);
 
 	public abstract ScreenLineSegment getAtCol(int row, int col);
 

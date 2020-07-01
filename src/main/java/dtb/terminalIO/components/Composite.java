@@ -29,8 +29,8 @@ public class Composite extends AbstractComponent<Composite>
     private List<ComponentWithOffset> children = new ArrayList<ComponentWithOffset>();
     private List<ComponentWithOffset> childrenInZOrder = new ArrayList<ComponentWithOffset>();
     private OnResizeService onResizeService = new OnResizeService();
-    
-    
+
+
     protected static class ComponentWithOffset implements Rectangle {
         private Position offset;
         private Component<?> component;

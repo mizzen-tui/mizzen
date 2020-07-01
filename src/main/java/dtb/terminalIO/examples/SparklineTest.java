@@ -24,7 +24,7 @@ public class SparklineTest {
     public static void main(String[] args) throws IOException {
 
         // Logging.setEnabled(true);
-        
+
         new TUIApp(args)
                 .setCanvasSize(24, 100)
                 .setEmptyChar(' ')

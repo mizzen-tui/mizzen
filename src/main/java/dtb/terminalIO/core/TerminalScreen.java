@@ -155,6 +155,16 @@ public class TerminalScreen implements ControlCodeContext {
         return this;
     }
     
+    /**
+     * Move cursor to screen's to its top-left (0,0) position
+     */
+    public TerminalScreen home() {
+        boolean erasePreviousContent = false;
+        this.getEmitter().clearLastTrackedLines(erasePreviousContent);
+        return this;
+    }
+
+    
     public LineTrackingCLIEmmitter getEmitter() {
 	return this.out;
     }

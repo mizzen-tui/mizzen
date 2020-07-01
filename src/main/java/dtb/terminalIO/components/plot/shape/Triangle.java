@@ -50,6 +50,15 @@ public class Triangle implements Shape {
         this(x1, y1, x2, y2, x3, y3, null);
     }
 
+    
+    public Color getColor() {
+        return color;
+    }
+
+    public void setColor(Color color) {
+        this.color = color;
+    }
+
     @Override
     public void draw(PointPlotter pointPlotter) {
         Polygon polygon = new Polygon();

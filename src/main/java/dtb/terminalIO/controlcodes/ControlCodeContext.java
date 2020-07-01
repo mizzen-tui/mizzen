@@ -3,7 +3,7 @@ package dtb.terminalIO.controlcodes;
 import dtb.terminalIO.controlcodes.ControlCode.BaseTextControlCode;
 
 /**
- * Represents the context and where a ContolCode (or more generally a Renderer)
+ * Represents the context where a ContolCode (or more generally a Renderer)
  * will output its contents to via the {@link #write(String)} method.
  * 
  * @author david

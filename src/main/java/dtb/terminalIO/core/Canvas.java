@@ -83,6 +83,10 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
         this(new ScreenCanvasBackend(screen));
     }
 
+    public CanvasBackend getCanvasBackend() {
+        return this.backend;
+    }
+    
     public Canvas setSize(Dimension canvasSize) {
         return setSize(canvasSize.getHeight(), canvasSize.getWidth());
     }
@@ -99,6 +103,7 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
            this.height = height;
            this.width = width;
            meAsARectangle = null;
+           this.backend.setSize(height, width);
            
         }
         // TODO - if already rendered -- should reflect by changing buffer and by
@@ -163,14 +168,31 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
 
     public Canvas t(String s) {
 
+        if (s == null || s.length() ==0) {
+            return this;
+        }
+        
         SegmentsFromStringResult result = ScreenLineSegment.UTIL.textSegmentsFromString(s, cursorPos.getRow(), cursorPos.getCol(), this.asRectangle(),
                 (p, txt) -> createScreenObject(color, p, txt));
+
         if (result.size() == 0) {
+            // special case trailing \n because ScreenLineSegment.UTIL.textSegmentsFromString does not handle it
+            moveCURSORForTrailingCRs(s);
             return this;
         }
         segmentsBuffer.merge(result.ts);
         moveToCursor(result.pos.offsetAdd(0, 1));
+        // special case trailing \n because ScreenLineSegment.UTIL.textSegmentsFromString does not handle it
+        moveCURSORForTrailingCRs(s);
         return this;
+    }
+    
+    private void moveCURSORForTrailingCRs(String s) {
+        int i=s.length()-1;
+        while (i>=0 && s.charAt(i)=='\n') {
+            moveToCursor(cursorPos.getRow()+1,0);
+            i--;
+        }
     }
 
     public Canvas addTextHandleColors(String s) {
@@ -179,6 +201,7 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
             return t(s);
         }
         
+        // TODO: not handling trailing CR's
         SegmentsFromStringResult result = ScreenLineSegment.UTIL.textSegmentsFromStringWithEmbeddedColor(s, cursorPos.getRow(), cursorPos.getCol(), this.asRectangle(),
                 (strColor, p, txt) -> new SegmentImpl( strColor != null ? strColor : color, p, -1, txt));
 

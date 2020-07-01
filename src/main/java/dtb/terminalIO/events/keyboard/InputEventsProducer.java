@@ -44,7 +44,7 @@ public class InputEventsProducer implements Runnable {
     private static synchronized int nextThreadNum() {
         return threadInitNumber++;
     }
-    
+
     // TrackingInputStream
     public InputEventsProducer(InputStream input, EventBus eventBus) throws UnsupportedEncodingException {
         this.eventBus = eventBus;
@@ -96,7 +96,7 @@ public class InputEventsProducer implements Runnable {
                 int available = this.inputStream.available();
                 if (available > 0) {
                     int readIn = inputStream.read(buffer, 0, buffer.length);
-                    
+
                     inputStreamHasMoreData = readIn < available;
 
                     isEOF = readIn == -1;
@@ -105,13 +105,7 @@ public class InputEventsProducer implements Runnable {
                     }
 
                 } else {
-                    boolean idleHandled = idle();
-                    if (!idleHandled) {
-                	// no pending keyboard keys handled - lets generate a timerEvent
-                        if (eventBus.isEmptyQueue()) {
-                          eventBus.raiseEvent(new OnIdleEvent(this));
-                        }
-                    }
+                    generateIdleEventIfNeeded();
                 }
 
             } catch (Throwable e) {  // Warning .. dangerous to catch Throwable (I know) - but I have 
@@ -140,6 +134,26 @@ public class InputEventsProducer implements Runnable {
             terminateReads();
         }
 
+    }
+
+    long lastIdleEventTime = 0;
+    
+    private void generateIdleEventIfNeeded() {
+        boolean idleHandled = idle();
+        if (!idleHandled) {
+            // no pending keyboard keys handled - lets generate a timerEvent
+            if (eventBus.isEmptyQueue()) {
+              eventBus.raiseEvent(new OnIdleEvent(this));
+              lastIdleEventTime = System.currentTimeMillis();
+            }
+        } else {
+            // we will do an idle event if too much time has elapsed
+            long elapsed = System.currentTimeMillis() - lastIdleEventTime;
+            if (elapsed > 100) {
+                    eventBus.raiseEvent(new OnIdleEvent(this));
+                    lastIdleEventTime = System.currentTimeMillis();
+            }
+        }
     }
 
     private boolean idle() {

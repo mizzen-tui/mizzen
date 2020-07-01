@@ -123,18 +123,18 @@ public class ExecTest {
 
         HorizontalPanel hPanel = new HorizontalPanel();
         hPanel.setBounds(sizeOfPanel);
-        
+
         hPanel.setHorizontalSpacer(6);
-        
+
         hPanel.add(lprocViewer);
         hPanel.add(lprocViewer2);
-        
+
         VerticalPanel mainPanel = new VerticalPanel();
-        
+
         mainPanel.setVerticalSpacer(1);
-        
+
         mainPanel.add(new TextComponent("CTRL-C to quit:     Demo's running a child-process and viewing output in Scrollable windows"));
-        
+
         mainPanel.add(hPanel);
         
         app.enableMouseHandling(mainPanel);

@@ -53,7 +53,7 @@ public interface CleanString {
     public static class UTIL {
         
         public static CleanString EMPTY_CLEAN_STRING = new Simple("");
-        
+        public static CleanString ONE_SPACE_CLEAN_STRING = new Simple(" ");
         
         public static boolean isClean(char ch) {
             return (ch > 27);

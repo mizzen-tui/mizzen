@@ -14,7 +14,8 @@ public class CanvasComponent implements Component<CanvasComponent>, CanResize {
 
     Canvas canvas;
     Position pos;
-    
+    boolean hasDrawn = false;
+
     CanvasBackend backend;
     private ParentContainer parentContainer;
     
@@ -86,16 +87,19 @@ public class CanvasComponent implements Component<CanvasComponent>, CanResize {
 
     public CanvasComponent t(int row, int col, String s) {
         this.canvas.t(row, col,s);
+        this.markAsDirty();
         return this;
     }
 
     public CanvasComponent addTextHandleColors(String s) {
         this.canvas.addTextHandleColors(s);
+        this.markAsDirty();
         return this;
     }    
 
     public CanvasComponent t(String s) {
         this.canvas.t(s);
+        this.markAsDirty();
         return this;
     }
     
@@ -105,10 +109,12 @@ public class CanvasComponent implements Component<CanvasComponent>, CanResize {
 
     public void addComponentSegments(Position offset, Component<?> component) {
         this.canvas.addComponentSegments(offset, component);
+        this.markAsDirty();
     }
 
     public void addComponentSegments(Component<?> component) {
         this.canvas.addComponentSegments(component);
+        this.markAsDirty();
     }
     
     public int segmentsSize() {
@@ -116,9 +122,9 @@ public class CanvasComponent implements Component<CanvasComponent>, CanResize {
     }
     
     
-    
     @Override
     public IScreenLineSegmentsBuffer getSegmentsBuffer() {
+        hasDrawn = true;
         return canvas.getSegmentsBuffer();
     }
 
@@ -156,6 +162,7 @@ public class CanvasComponent implements Component<CanvasComponent>, CanResize {
     @Override
     public CanvasComponent setColor(Color drawingcolor) {
         this.canvas.setTextColor(drawingcolor);
+        this.markAsDirty();
         return this;
     }
 
@@ -164,14 +171,31 @@ public class CanvasComponent implements Component<CanvasComponent>, CanResize {
         this.canvas.clearCanvas();
     }
 
-    @Override
-    public void markAsDirty() {
-        // do nothing for now - this might have to change
-    }
+    
     
     public boolean isDirty() {
-        return false; // todo: need to fix!!
+        return !this.hasDrawn;
     }
+    
+    public void markAsDirty() {
+        if (isDirty()) {
+            Component.UTIL.markParentDirtyIfChildDirty(this);
+            return;
+        }
+        this.hasDrawn = false;
+
+        // if parent exists, then mark it as dirty as well
+        Component.UTIL.markParentDirtyIfChildDirty(this);
+    }
+    
+//    @Override
+//    public void markAsDirty() {
+//        // do nothing for now - this might have to change
+//    }
+//    
+//    public boolean isDirty() {
+//        return false; // todo: need to fix!!
+//    }
     
 
 }

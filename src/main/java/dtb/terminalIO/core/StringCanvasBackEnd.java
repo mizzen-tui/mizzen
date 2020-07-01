@@ -61,4 +61,10 @@ public class StringCanvasBackEnd implements CanvasBackend {
         return contentAsString != null ? contentAsString : "";
     }
 
+    @Override
+    public void setSize(int height, int width) {
+        // do nothing
+        
+    }
+
 }

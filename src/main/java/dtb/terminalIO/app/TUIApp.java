@@ -79,7 +79,7 @@ public class TUIApp {
     
     String confirmApplicationExitMessage = null;  
 
-    Runnable refreshCanvasIfModified;
+    Runnable refreshCanvasIfModifiedAction;
 
     KeyStroke terminateAppHotKey = Keys.CTRL_C_KEYSTROKE;
     KeyInputEventHandler terminateAppHotKeyEventHandler;
@@ -206,7 +206,12 @@ public class TUIApp {
         this.onResizeAction = resizeAction;
         return this;
     }
+    
+    public BiConsumer<TUIApp, Dimension> getResizeAction() {
+        return this.onResizeAction;
+    }
 
+    
     private void makeEventBus() {
         eventBus = new EventBusImpl();
         try {
@@ -251,8 +256,8 @@ public class TUIApp {
         return this;
     }
 
-    private void makeRefreshCanvasIfModified() {
-        refreshCanvasIfModified = () -> {
+    private void makeRefreshCanvasIfModifiedAction() {
+        refreshCanvasIfModifiedAction = () -> {
             boolean result = (updateCanvas == null) ? true : updateCanvas.apply(this);
             if (result) {
                 getCanvas().refresh();
@@ -261,10 +266,10 @@ public class TUIApp {
     }
 
     public void doRefreshCanvasIfModified() {
-        if (this.refreshCanvasIfModified == null) {
-            makeRefreshCanvasIfModified();
+        if (this.refreshCanvasIfModifiedAction == null) {
+            makeRefreshCanvasIfModifiedAction();
         }
-        refreshCanvasIfModified.run();
+        refreshCanvasIfModifiedAction.run();
     }
 
     // this gets call when user hits terminate app hot key -- usually CTRL-C
@@ -332,15 +337,15 @@ public class TUIApp {
         terminateAppHotKeyEventHandler = new KeyInputEventHandler(terminateAppHotKey, (te) -> onClick_terminateAppHotKey(te) );
         eventBus.appendEventHandler(terminateAppHotKeyEventHandler);
 
-        makeRefreshCanvasIfModified();
+        makeRefreshCanvasIfModifiedAction();
 
         // if updateCanvas not specified by client app, then let's try to make our own
         if (updateCanvas == null && mainApplicationPanel != null && mainApplicationPanel instanceof Component) {
             Component<?> __mainPanel = (Component<?>) mainApplicationPanel;
 
             this.setUpdateCanvas((tApp)->{
-                if (!__mainPanel.isDirty()) {
-                    return false; // false means no gui update
+                if ( ! __mainPanel.isDirty() ) {
+                    return false; // false means no GUI update
                 }
 
                 tApp.getCanvas().addComponentSegments( __mainPanel );
@@ -362,10 +367,11 @@ public class TUIApp {
         eventBus.appendEventHandler(master_canvas.asShowCursorEventHandler());
         eventBus.appendEventHandler(master_canvas.asHideCursorEventHandler());
 
+        // setup event handlers to deal with terminal resizes
         TerminalResizeDetection.initiate(screen, eventBus);
 
         if (this.updateCanvas != null) {
-            eventBus.appendEventHandler(new OnRequestUpdateCanvasEventHandler(refreshCanvasIfModified));
+            eventBus.appendEventHandler(new OnRequestUpdateCanvasEventHandler(refreshCanvasIfModifiedAction));
         }
 
         if (terminateAction != null) {
@@ -373,7 +379,7 @@ public class TUIApp {
         }
 
         if (this.updateCanvas != null) {
-            eventBus.appendEventHandler(new OnIdleEventEventHandler.OneTime(refreshCanvasIfModified));
+            eventBus.appendEventHandler(new OnIdleEventEventHandler.OneTime(refreshCanvasIfModifiedAction));
         }
 
         if (exceptionHandler != null) {
@@ -421,15 +427,17 @@ public class TUIApp {
                 }
 
                 if (!size.contains(getCanvas())) {
-                    // canvas too big (onResizeAction didn't adjust it properly) - let's fix
+                    // canvas too big (custom onResizeAction didn't adjust it properly) 
+                    // - let's fix - otherwise the screen output will be messed up!
                     master_canvas.setSize(size.getHeight(), size.getWidth());
                 }
-
+                // asynchronously tell the rest of the system, its time to do a screen refresh
                 eventBus.raiseEvent(new RequestUpdateCanvasEvent(TUIApp.this));
             }
         });
 
         if (this.onReadyStartAction != null) {
+            // asynchronously run the application custom startup code
             eventBus.appendIdleEventHandler(new OnIdleEventEventHandler.OneTime(new EventHandler() {
                 @Override
                 public void handle(TerminalEvent<?> te) {

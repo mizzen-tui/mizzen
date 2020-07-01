@@ -25,8 +25,19 @@ import dtb.terminalIO.geom.position.Position;
 public interface PointPlotter {
 
     void plot(int x, int y);
+    
+    default void plot(PointPlot p) {
+        plot(p.x, p.y);
+    }
 
+    default void plot(Position p) {
+        plot(p.getCol(), p.getRow());
+    }
+    
+    
     Color setColor(Color color);
+    
+    void clearPlots();
 
     public static class Delegate implements PointPlotter {
 
@@ -53,6 +64,11 @@ public interface PointPlotter {
         @Override
         public Color setColor(Color color) {
             return this.getPointPlotter().setColor(color);
+        }
+
+        @Override
+        public void clearPlots() {
+            this.getPointPlotter().clearPlots();
         }
 
 //	@Override
@@ -143,11 +159,12 @@ public interface PointPlotter {
 
         @Override
         public void plot(int x, int y) {
-            getPlots().add(new PointPlot(y, x));
+            plot(x, y, currentColor);
+//            getPlots().add(new PointPlot(y, x));
         }
 
         public void plot(int x, int y, Color color) {
-            getPlots().add(new PointPlot(y, x, color != null ? color : currentColor));
+            getPlots().add(new PointPlot(x, y, color != null ? color : currentColor));
         }
 
         public int size() {
@@ -163,6 +180,11 @@ public interface PointPlotter {
             Color prevColor = currentColor;
             currentColor = color;
             return prevColor;
+        }
+
+        @Override
+        public void clearPlots() {
+            getPlots().clear();
         }
 
     }

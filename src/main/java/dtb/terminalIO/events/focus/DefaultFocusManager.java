@@ -46,6 +46,14 @@ public class DefaultFocusManager implements FocusManager, HasChildren<Focusable>
         this.nextKeyStroke = nextKeyStroke;
     }
 
+    public void setPrevKeyStroke(KeyStroke prevKeyStroke) {
+        this.prevKeyStroke = prevKeyStroke;
+    }
+
+    public void setNextKeyStroke(KeyStroke nextKeyStroke) {
+        this.nextKeyStroke = nextKeyStroke;
+    }
+
     public DefaultFocusManager(KeyStroke nextKeyStroke) {
         this(null, nextKeyStroke);
     }

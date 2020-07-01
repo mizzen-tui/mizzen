@@ -21,7 +21,7 @@ import java.util.function.Predicate;
 public class TerminalEvent<T> extends EventObject {
 
     private static final long serialVersionUID = -8117805332275225370L;
-    
+
     public static enum TYPE {
         KEYPRESS,
         RAW_MOUSE,
@@ -42,9 +42,16 @@ public class TerminalEvent<T> extends EventObject {
         DEBUG
     }
     
+    public static enum Q_FULL_POLICY {
+        WAIT,
+        OFFER
+    }
+    
+    
     TYPE type;
     T eventData;
     transient EventBus eventBus;
+    private Q_FULL_POLICY queueFullPolicy;
     
     public static class IS_Event_TYPE implements Predicate<TerminalEvent<?>> {
 
@@ -61,15 +68,24 @@ public class TerminalEvent<T> extends EventObject {
 
     }
     
-    public TerminalEvent(Object source, TYPE type, T eventData, EventBus eventBus) {
+    public TerminalEvent(Object source, TYPE type, T eventData, EventBus eventBus, Q_FULL_POLICY queueFullPolicy) {
         super(source);
         this.type = type;
         this.eventData = eventData;
         this.eventBus = eventBus;
+        this.queueFullPolicy = queueFullPolicy;
     }
     
+    public TerminalEvent(Object source, TYPE type, T eventData, EventBus eventBus) {
+        this(source, type, eventData, eventBus, Q_FULL_POLICY.WAIT);
+    }
+    
+    public TerminalEvent(Object source, TYPE type, T eventData, Q_FULL_POLICY queueFullPolicy) {
+        this(source, type, eventData, null, queueFullPolicy);
+    }
+
     public TerminalEvent(Object source, TYPE type, T eventData) {
-        this(source, type, eventData, null);
+        this(source, type, eventData, null, Q_FULL_POLICY.WAIT);
     }
 
     public TYPE getType() {
@@ -80,6 +96,10 @@ public class TerminalEvent<T> extends EventObject {
         return eventData;
     }
     
+    public Q_FULL_POLICY getQueueFullPolicy() {
+        return queueFullPolicy;
+    }
+
     protected void setEventData(T eventData) {
         this.eventData = eventData;
     }

@@ -27,6 +27,7 @@ public class BrailleGrid extends Composite {
         this(color, new Dimension.Simple(height, width));
     }
 
+
     public void resize(Dimension d) {
         this.plotter.resize(d);
         gridRectangle = BrailleUtils.componentRectangleToGridRectangle(plotter);
@@ -142,6 +143,11 @@ public class BrailleGrid extends Composite {
                 Color prevColor = BrailleGrid.this.getPlotColor();
                 BrailleGrid.this.setPlotColor(color);
                 return prevColor;
+            }
+
+            @Override
+            public void clearPlots() {
+                BrailleGrid.this.clearPlots();
             }
 
         };

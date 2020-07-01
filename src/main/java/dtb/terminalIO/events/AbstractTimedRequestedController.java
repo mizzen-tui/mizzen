@@ -48,7 +48,7 @@ public abstract class AbstractTimedRequestedController {
                     final long currentTime = System.currentTimeMillis();
                     // check if last request was too recent..
                     if ((currentTime - lastTimeRequestChange) < timerDelayMillis) {
-                        // last request was too recnt so lets re-add the
+                        // last request was too recent so lets re-add the
                         // handler onto the eventBus
                         timerInterval = new OnChangeInterval();
                         te.getEventBus().appendEventHandler(timerInterval);

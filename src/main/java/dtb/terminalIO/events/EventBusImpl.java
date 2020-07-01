@@ -188,7 +188,8 @@ public class EventBusImpl implements EventHandlerContainer, EventBus {
             queue.add(te);
         } else {
             try {
-                queue.put(te);
+                //queue.put(te);
+                queue.offer(te,25, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }

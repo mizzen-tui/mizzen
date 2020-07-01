@@ -17,18 +17,24 @@ public class CompositeShape implements Shape {
 
     Collection<Shape> shapes = new ArrayList<Shape>();
 
-    public void addShape(Shape shape) {
+    public CompositeShape addShape(Shape shape) {
         shapes.add(shape);
+        return this;
     }
 
-    public void removeShape(Shape shape) {
+    public CompositeShape removeShape(Shape shape) {
         shapes.remove(shape);
+        return this;
     }
 
+    protected void drawChild(Shape childShape, PointPlotter pointPlotter) {
+        childShape.draw(pointPlotter);
+    }
+    
     @Override
     public void draw(PointPlotter pointPlotter) {
         for (Shape shape : shapes) {
-            shape.draw(pointPlotter);
+            drawChild(shape, pointPlotter);
         }
     }
 

@@ -132,4 +132,10 @@ public class LayeredCanvasBackend implements CanvasBackend, Rectangle {
 
     }
 
+    @Override
+    public void setSize(int height, int width) {
+        // TODO Auto-generated method stub
+        
+    }
+
 }

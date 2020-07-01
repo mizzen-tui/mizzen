@@ -22,6 +22,7 @@ import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.RequestFocusEvent;
 import dtb.terminalIO.events.focus.ToFocusable;
@@ -485,6 +486,8 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
             }
         }
         
+        this.markAsDirty();
+        
         return true;
     }
     
@@ -571,6 +574,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         if (curSelected>-1) {
             ItemComponent curSelectedComponent = getItemComponentAt(curSelected);
             new ShowComponentOnFocus().onFocus(curSelectedComponent.getComponent(), eventBus);
+            eventBus.raiseEvent(new RequestUpdateCanvasEvent(this));
         }
     }
 
@@ -734,7 +738,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
                 int selectIDX = indexOf(componentClicked);
                 if (selectIDX > -1) {
                     this.setSelected(selectIDX);
-                    // now let's the rest of the app know that changes have happened to this ListBox
+                    // now let the rest of the app know that changes have happened to this ListBox
                     appMouseEvent.getEventBus().raiseEvent(  new HasValue.ValueChangedEvent<>(ListBox.this) );
                     raiseEventRequestShowSelected(appMouseEvent.getEventBus());
                 }

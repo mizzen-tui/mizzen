@@ -10,7 +10,7 @@ public class AbstractMouseEvent extends TerminalEvent<Position> {
     private MOUSE_ACTION mouseAction;
     
     protected AbstractMouseEvent(Object source, TYPE theType, MOUSE_ACTION action, Position eventData) {
-        super(source, theType, eventData);
+        super(source, theType, eventData, Q_FULL_POLICY.OFFER);
         this.mouseAction = action;
     }
     

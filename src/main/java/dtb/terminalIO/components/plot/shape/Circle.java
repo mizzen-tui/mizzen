@@ -105,6 +105,11 @@ public class Circle implements Shape {
         this(middle.x, middle.y, radius);
     }
 
+    public Circle(PointPlot middle, int radius, Color color) {
+        this(middle.x, middle.y, radius);
+        this.color = color;
+    }
+
     public Circle(int x, int y, int radius, Color color) {
         this.x = x;
         this.y = y;

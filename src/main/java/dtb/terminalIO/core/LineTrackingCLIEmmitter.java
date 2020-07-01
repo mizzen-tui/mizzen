@@ -88,21 +88,30 @@ public class LineTrackingCLIEmmitter implements CLIEmitter {
     }
 
     // used?
-    public void moveUpToLastKnownTopRow() {
-        if (lineCounter < 1) {
-            resetLineCounter();
-            return;
-        }
-        output(new ControlCode.CursorUp(lineCounter - 1));
-        resetLineCounter();
-    }
+//    public void moveUpToLastKnownTopRow() {
+//        if (lineCounter < 1) {
+//            resetLineCounter();
+//            return;
+//        }
+//        output(new ControlCode.CursorUp(lineCounter - 1));
+//        resetLineCounter();
+//    }
 
-    public void clearLastTrackedLines() {
-        boolean erasePreviousContent = true;
-        clearLastTrackedLines(erasePreviousContent);
-    }
+//    public void clearLastTrackedLines() {
+//        boolean erasePreviousContent = true;
+//        clearLastTrackedLines(erasePreviousContent);
+//    }
 
     int lastLoggedLineCounter = -1;
+    int cursorUpdateAdjustment = -1;
+    
+    void setCursorAdjustmentOn(boolean on) {
+        if (on) {
+            cursorUpdateAdjustment = -1;
+        } else {
+            cursorUpdateAdjustment = 0;
+        }
+    }
 
     private void logStats() {
         if (lastLoggedLineCounter != lineCounter) {
@@ -126,9 +135,9 @@ public class LineTrackingCLIEmmitter implements CLIEmitter {
             output(ControlCode.ERASE_LINE); // erase current line
         if (lineCounter > 1) {
             if (erasePreviousContent)
-                output(new ControlCode.CursorUpAndClearLines(lineCounter - 1));
+                output(new ControlCode.CursorUpAndClearLines(lineCounter + cursorUpdateAdjustment));
             else
-                output(new ControlCode.CursorUp(lineCounter - 1));
+                output(new ControlCode.CursorUp(lineCounter + cursorUpdateAdjustment));
         }
         resetLineCounter();
     }
@@ -199,9 +208,15 @@ public class LineTrackingCLIEmmitter implements CLIEmitter {
 
         output(ControlCode.CURSOR_LEFT);
 
-        output(ControlCode.moveToDeltaRow(delta.getRow()));
+        if (delta.getRow() != 0) {
+           output(ControlCode.moveToDeltaRow(delta.getRow()));
+        }
 
-        output(new ControlCode.CursorForward(delta.getCol()));
+        if (delta.getCol() > 0) {
+            output(new ControlCode.CursorForward(delta.getCol()));
+        } else if (delta.getCol() < 0) {
+            output(new ControlCode.CursorBackward(delta.getCol()));
+        }
 
         lastShowCursorPosition = showCursorPosition;
     }

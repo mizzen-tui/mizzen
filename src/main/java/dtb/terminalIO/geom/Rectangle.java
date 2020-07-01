@@ -462,6 +462,33 @@ public interface Rectangle extends Position, Dimension, Movable {
             return result;
         }
 
+        public static Rectangle calcDimensionsFromPositions(Collection<? extends Position> positions) {
+            if (positions == null || positions.size() == 0) {
+                return Rectangle.ZERO;
+            }
+            return calcDimensionsFromPositions(positions.toArray(new Position[] {}));
+        }
+        
+        public static Rectangle calcDimensionsFromPositions(Position ... positions) {
+            if (positions == null || positions.length == 0) {
+                return Rectangle.ZERO;
+            }
+
+            int minCol = Integer.MAX_VALUE;
+            int maxCol = Integer.MIN_VALUE;
+            int minRow = Integer.MAX_VALUE;
+            int maxRow = Integer.MIN_VALUE;
+
+            for (Position position : positions) {
+                minCol = Math.min(minCol, position.getCol());
+                maxCol = Math.max(maxCol, position.getCol());
+                minRow = Math.min(minRow, position.getRow());
+                maxRow = Math.max(maxRow, position.getRow());
+            }
+            return new Rectangle.Simple(minRow,minCol, (maxRow - minRow)+1  ,(maxCol - minCol)+1);
+        }
+
+        
         /**
          * returns true if rectangle r1 overlaps r2
          * @param r1

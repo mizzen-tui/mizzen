@@ -7,6 +7,7 @@ import dtb.terminalIO.events.DSREvent;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventBusImpl;
 import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.TerminalEvent.Q_FULL_POLICY;
 import dtb.terminalIO.events.keyboard.Keys.KeyStrokeFindResult;
 import dtb.terminalIO.events.mouse.MOUSE_ACTION;
 import dtb.terminalIO.events.mouse.RawParsedFromConsoleMouseEvent;
@@ -66,7 +67,7 @@ public class InputBytesEventParser {
         private static final long serialVersionUID = 1L;
 
         public InputBytesDEBUGEvent(byte[] buffer, int readIn) {
-            super(InputBytesEventParser.this, TYPE.DEBUG, null);
+            super(InputBytesEventParser.this, TYPE.DEBUG, null, Q_FULL_POLICY.OFFER);
             StringBuffer sb = new StringBuffer();
             StringJoiner sj = new StringJoiner(",");
             for (int i = 0; i < readIn; i++) {

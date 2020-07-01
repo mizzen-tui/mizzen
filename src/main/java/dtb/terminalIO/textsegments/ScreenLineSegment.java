@@ -5,8 +5,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.BiFunction;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import dtb.terminalIO.controlcodes.ControlCode;
@@ -17,6 +19,7 @@ import dtb.terminalIO.core.CursorPos;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.Relation.LeftRight;
 import dtb.terminalIO.geom.position.Position;
+import dtb.terminalIO.textsegments.ScreenLineSegment.SegmentImpl;
 
 /**
  * This object is the fundamental building block for all text objects that can
@@ -165,7 +168,12 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
             }
             if (cmp != 0)
                 return cmp;
-            return so1.getText().compareTo(so2.getText());
+            cmp = so1.getText().compareTo(so2.getText());
+            if (cmp != 0)
+                return cmp;
+            
+            cmp = ControlCode.COLOR_COMPARE.compare(so1.getColors(), so2.getColors());
+            return cmp;
         }
     }
 
@@ -212,7 +220,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
         /**
          * We make the collection of ScreenLineSegment's a TreeSet such that it
          * naturally sorts itself by row/col in order that when we traverse the
-         * collection we visit elements (ScreenLineSegment) from topLeft (0,0) to bottom
+         * collection, we visit elements (ScreenLineSegment) from topLeft (0,0) to bottom
          * right (height,width) order.
          */
         public static TreeSet<ScreenLineSegment> makeCollection(Collection<ScreenLineSegment> scs) {
@@ -320,7 +328,45 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
             }
         }
 
+        public static void addToVersionDOESNTWORKBUTWHY(Collection<ScreenLineSegment> ts, ScreenLineSegment sc) {
+            if (! (ts instanceof TreeSet)) {
+                addTo(ts, sc);
+                 return;
+            }
+            TreeSet<ScreenLineSegment> treeS = (TreeSet<ScreenLineSegment>) ts;
+            
+            ScreenLineSegment start = treeS.floor(sc);
+            if (start == null) {
+                treeS.add(sc);
+                return;
+            }
+            
+            ScreenLineSegment scEnd = new SegmentImpl(Color.DEFAULT_COLOR, sc.getRow()+1, sc.getRightMostCol()+1, -1, CleanString.UTIL.ONE_SPACE_CLEAN_STRING);
+            
+            ScreenLineSegment end = treeS.ceiling(scEnd);
+            if (end == null) {
+                treeS.add(sc);
+                return;
+            }
+            
+            SortedSet<ScreenLineSegment> subSet = treeS.subSet(start, true, end, true);
+            
+            List<ScreenLineSegment> overlaps = subSet.stream().filter(s -> s.getRow() == sc.getRow() && sc.overlapsWith(s))
+                    .collect(Collectors.toList());
+            
+            
+            //List<ScreenLineSegment> overlaps = ts.stream().filter(s -> s.getRow() == sc.getRow() && sc.overlapsWith(s))
+//                    .collect(Collectors.toList());
+            for (ScreenLineSegment overlap : overlaps) {
+                ts.remove(overlap);
+                Collection<ScreenLineSegment> chunks = sc.split_on_overlap(overlap);
+                ts.addAll(chunks);
+            }
+            ts.add(sc);
+        }
+
         public static void addTo(Collection<ScreenLineSegment> ts, ScreenLineSegment sc) {
+            // very inefficient - scans the full list
             List<ScreenLineSegment> overlaps = ts.stream().filter(s -> s.getRow() == sc.getRow() && sc.overlapsWith(s))
                     .collect(Collectors.toList());
             for (ScreenLineSegment overlap : overlaps) {
@@ -349,6 +395,106 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
                 removeRect(ts, r);
             }
         }
+
+        public static TreeSet<ScreenLineSegment> subtract(Collection<ScreenLineSegment> tree1, Collection<ScreenLineSegment> tree2) {
+            TreeSet<ScreenLineSegment> diffResult = makeCollection(null);
+            List<ScreenLineSegment> segmentsInTree1NotInTree2 = tree1.stream().filter(s -> !tree2.contains(s)).collect(Collectors.toList());
+            diffResult.addAll(segmentsInTree1NotInTree2);
+            return diffResult;
+        }
+
+
+        public static TreeSet<ScreenLineSegment> subtractAggressive(Collection<ScreenLineSegment> tree1, TreeSet<ScreenLineSegment> tree2) {
+            
+            tree1 = subtract(tree1, tree2);
+            
+            TreeSet<ScreenLineSegment> diffResult = makeCollection(null);
+            if (tree1.isEmpty()) {
+                return diffResult;
+            }
+            StringBuffer srcText = new StringBuffer();
+            int srcCurCol = -1;
+            int srcCurRow = -1;
+            Color srcColor = null;
+            int srcIDX=-1;
+            int seg2Col = -1;
+            int seg2Len = -1;
+            ScreenLineSegment tree2Seg  = null;
+            boolean isSameColor = false;
+            int seg2IDX = -1;
+
+            for (ScreenLineSegment src : tree1) {
+                srcCurCol = src.getCol();
+                srcCurRow = src.getRow();
+                srcColor = src.getColors();
+                srcIDX=0;
+                int srcLen=src.getWidth();
+                if (tree2Seg == null || srcCurRow != tree2Seg.getRow() || !tree2Seg.containsCol(srcCurCol)) {
+                    tree2Seg = getAtCol(tree2,srcCurRow, srcCurCol);
+                    if (tree2Seg!=null) {
+                        seg2Col = tree2Seg.getCol();
+                        seg2Len = tree2Seg.getWidth();
+                        seg2IDX = 0;
+                    }
+                }
+                while (srcIDX < srcLen) {
+                    if (tree2Seg == null) {
+                        srcText.append(src.charAt(srcIDX));
+                        srcIDX++;
+                    } else {
+
+                        isSameColor = ControlCode.COLOR_COMPARE.compare(tree2Seg.getColors(), srcColor) == 0;
+
+                        while ((srcCurCol+srcIDX)<seg2Col) {
+                            srcText.append(src.charAt(srcIDX));
+                            srcIDX++;
+                        }
+
+                        if (!isSameColor) {
+                            while (seg2IDX < seg2Len && srcIDX < srcLen) {
+                                char srcCHR = src.charAt(srcIDX)       ;  srcIDX++;
+                                seg2IDX++;
+                                srcText.append(srcCHR);
+                            }
+                        }
+
+                        while (seg2IDX < seg2Len && srcIDX < srcLen) {
+                            char srcCHR = src.charAt(srcIDX)       ;  srcIDX++;
+                            char seg2CHR = tree2Seg.charAt(seg2IDX);  seg2IDX++;
+
+                            if (srcCHR == seg2CHR) {
+                                if (srcText.length()>0) {
+                                    ScreenLineSegment srcSegment = new SegmentImpl(srcColor, srcCurRow, srcCurCol, -1, srcText.toString());
+                                    diffResult.add(srcSegment);
+                                    srcCurCol = srcCurCol + srcSegment.getWidth();
+                                    srcText = new StringBuffer();
+                                } 
+                                srcCurCol++;  // skip past srcCHR
+                            } else {
+                                srcText.append(srcCHR);
+                            }
+                        }
+                        if (srcIDX < srcLen && seg2IDX >= seg2Len) {
+                            tree2Seg = getAtCol(tree2,srcCurRow, srcCurCol);
+                            if (tree2Seg!=null) {
+                                seg2Col = tree2Seg.getCol();
+                                seg2Len = tree2Seg.getWidth();
+                                seg2IDX = 0;
+                            }
+                        }
+                    }
+                } /*while*/
+
+                if (srcText.length()>0) {
+                    ScreenLineSegment srcSegment = new SegmentImpl(srcColor, srcCurRow, srcCurCol, -1, srcText.toString());
+                    diffResult.add(srcSegment);
+                    srcText = new StringBuffer();
+                }
+            }
+            return diffResult;
+        }
+        
+
 
         public static void addSegmentBounded(Rectangle bounds, Collection<ScreenLineSegment> ts, ScreenLineSegment sc) {
             if (bounds.contains(sc)) {
@@ -661,6 +807,72 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
             return textSegmentsFromStringWithEmbeddedColor(s, offSetCol, offSetCol, boundingRectangle, (color, p,
                     txt) -> new SegmentImpl(color != null ? color : FGBGColors.NO_COLOR_SPECIFIED, p, -1, txt));
         }
+        
+        /**
+         * this is not a for production use method .. It is a sanity test that can be intermitantly
+         * injected into code to ensure that the segment contents are in 'good shape'
+         * 
+         * If 2 equal positions are found in the collection, then an IllegalStateException is thrown 
+         * 
+         */
+        public static void assertUniquePositionsInSegments(Collection<ScreenLineSegment> segments ) {
+            Comparator<ScreenLineSegment> NoSamePositionComparator = new Comparator<ScreenLineSegment>() {
+
+                @Override
+                public int compare(ScreenLineSegment so1, ScreenLineSegment so2) {
+                    if (so1 == so2)
+                        return 0;
+
+                    int cmp = Position.UTIL.POS_COMPARE.compare(so1, so2);
+                    if (cmp != 0)
+                        return cmp;
+                    throw new IllegalStateException("so1:'"+so1 + "' same position with '"+so2+"'");
+                }
+                
+            };
+            
+            List<ScreenLineSegment> myVerifyList = new ArrayList<ScreenLineSegment>( segments.size() );
+            myVerifyList.addAll(segments);
+            myVerifyList.sort(NoSamePositionComparator);
+        }
+
+        /**
+         * this is not a for production use method .. It is a sanity test that can be intermitantly
+         * injected into code to ensure that the segment contents are in 'good shape'
+         * 
+         * If 2 overlapping segments are found in the collection, then an IllegalStateException is thrown 
+         * 
+         */
+        public static void assertNoOverlapsInSegments(Collection<ScreenLineSegment> segments ) {
+            
+            Comparator<ScreenLineSegment> NoSamePositionComparator = new Comparator<ScreenLineSegment>() {
+
+                @Override
+                public int compare(ScreenLineSegment so1, ScreenLineSegment so2) {
+                    if (so1 == so2)
+                        return 0;
+
+                    int cmp = Position.UTIL.POS_COMPARE.compare(so1, so2);
+                    if (cmp == 0)
+                        throw new IllegalStateException("so1:'"+so1 + "' same position with '"+so2+"'");
+                    
+                    if (so1.overlapsWith(so2)) {
+                        throw new IllegalStateException("so1:'"+so1 + "' overlaps with '"+so2+"'");
+                    }
+                    cmp = so1.getText().compareTo(so2.getText());
+                    if (cmp != 0)
+                        return cmp;
+                    
+                    cmp = ControlCode.COLOR_COMPARE.compare(so1.getColors(), so2.getColors());
+                    return cmp;
+                }
+                
+            };
+            
+            List<ScreenLineSegment> myVerifyList = new ArrayList<ScreenLineSegment>( segments.size() );
+            myVerifyList.addAll(segments);
+            myVerifyList.sort(NoSamePositionComparator);
+        }
 
     }
 
@@ -705,6 +917,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
             return new SegmentImpl(getColor(), Position.Simple.withOffset(getCursorPos(), offset), getId(),
                     this.simpleText);
         }
+        
 
     }
 

@@ -1,16 +1,15 @@
 package dtb.terminalIO.controlcodes;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.StringJoiner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import dtb.terminalIO.controlcodes.ControlCode.CursorDown;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors.HasRowChange;
-import dtb.terminalIO.controlcodes.Renderer.RendererBuffer;
-import dtb.terminalIO.controlcodes.Renderer.TextRenderer;
 import dtb.terminalIO.textsegments.CleanString;
+import dtb.terminalIO.util.IntArrayComparator;
 
 
 /**
@@ -19,6 +18,10 @@ import dtb.terminalIO.textsegments.CleanString;
  * manipulate either cursor position,  color of subsequent
  * text output. etc ..  It is the fundamental building block
  * used in this library to manipulate the the Linux Terminal
+ * 
+ * <p/>
+ * 
+ * Think VT100 Terminal Escape Codes. 
  * 
  * @author david
  *
@@ -142,6 +145,23 @@ public abstract class ControlCode implements Renderer {
     }
     
     
+    public static class ColorComparator implements Comparator<Color> {
+
+        @Override
+        public int compare(Color c1, Color c2) {
+            if (c1 == c2) {
+                return 0;
+            }
+
+            int[] c1codes = c1.buildControlCodes();
+            int[] c2codes = c2.buildControlCodes();
+            return IntArrayComparator.INTARRAY_COMPARE.compare(c1codes, c2codes);
+        }
+        
+    }
+    
+    public static final ColorComparator COLOR_COMPARE = new ColorComparator();
+    
     public static class ColorFromCodes extends Color {
 
         int[] codes;
@@ -154,7 +174,6 @@ public abstract class ControlCode implements Renderer {
         protected int[] buildControlCodes() {
             return codes;
         }
-        
     }
     
     public static class ColorFromString extends Color {

@@ -76,6 +76,14 @@ public class Line implements Shape {
     public void setY2(int y2) {
         this.y2 = y2;
     }
+    
+    public Color getColor() {
+        return this.color;
+    }
+
+    public void setColor(Color color) {
+        this.color = color;
+    }
 
     @Override
     public void draw(PointPlotter pointPlotter) {

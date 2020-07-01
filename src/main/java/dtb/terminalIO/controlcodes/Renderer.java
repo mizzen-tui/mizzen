@@ -99,6 +99,9 @@ public interface Renderer {
         }
 
         public void clear() {
+            if (this.renderers == null) {
+                return;
+            }
             renderers.clear();
         }
 

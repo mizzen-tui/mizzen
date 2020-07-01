@@ -83,8 +83,7 @@ public class MouseEventOrchestrator {
                       Position lastRequestedCursorPosition = canvas.getLastRequestCursorPosition();
                       
                       // (1) now let's move the screen cursor position to its top-left ( its 0,0 )
-                      boolean erasePreviousContent = false;
-                      screen.getEmitter().clearLastTrackedLines(erasePreviousContent);
+                      screen.home();
 
                       // (2) now let's ask the terminal its current cursor position - we get the result
                       // in an event-handler ( HandleOnceCPREvent )

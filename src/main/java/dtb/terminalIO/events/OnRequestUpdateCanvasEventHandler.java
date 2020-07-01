@@ -26,14 +26,37 @@ public class OnRequestUpdateCanvasEventHandler implements ConditionalEventHandle
         static final Predicate<TerminalEvent<?>> canHandleCanvasUpdate = new IS_Event_TYPE(TerminalEvent.TYPE.REQUEST_UPDATE_CANVAS);
         
         AbstractTimedRequestedController timedOnChangeRequestController = null;
+        
+
+        Runnable timedCanvasUpdater = null;
+
 
         public OnRequestUpdateCanvasEventHandler(Runnable canvasUpdater) {
+            
             timedOnChangeRequestController = buildTimedUpdateCanvasController(canvasUpdater);
             timedOnChangeRequestController.setTimerDelayMillis(50);
         }
         
         AbstractTimedRequestedController buildTimedUpdateCanvasController(Runnable canvasUpdater) {
-            return new AbstractTimedRequestedController(canvasUpdater) {
+            
+            timedCanvasUpdater = ()-> {
+                
+                long start = System.currentTimeMillis();
+                canvasUpdater.run();
+                long elapsed = System.currentTimeMillis() - start;
+                
+                if (OnRequestUpdateCanvasEventHandler.this.timedOnChangeRequestController != null &&
+                    elapsed <= 1500 &&  // ignore really long times .. hopefully just an anomaly
+                    (elapsed)>OnRequestUpdateCanvasEventHandler.this.timedOnChangeRequestController.getTimerDelayMillis()) {
+                    OnRequestUpdateCanvasEventHandler.this.timedOnChangeRequestController.setTimerDelayMillis((int)elapsed);
+                } else {
+                    if (elapsed*2 < OnRequestUpdateCanvasEventHandler.this.timedOnChangeRequestController.getTimerDelayMillis()) {
+                        OnRequestUpdateCanvasEventHandler.this.timedOnChangeRequestController.setTimerDelayMillis((int)elapsed);
+                    }
+                }
+            };
+            
+            return new AbstractTimedRequestedController(timedCanvasUpdater) {
                 @Override
                 protected boolean isRequestDifferentFromPrevious() {
                     return true;

@@ -7,7 +7,7 @@ public class RequestShowCursorEvent extends TerminalEvent<Position> {
     private static final long serialVersionUID = -1373775889825384714L;
 
     public RequestShowCursorEvent(Object source, Position showCursorPosition) {
-        super(source, TYPE.REQUEST_SHOW_CURSOR, showCursorPosition);
+        super(source, TYPE.REQUEST_SHOW_CURSOR, showCursorPosition, Q_FULL_POLICY.OFFER);
         
         if (showCursorPosition == null    ||
             showCursorPosition.getRow()<0 || 

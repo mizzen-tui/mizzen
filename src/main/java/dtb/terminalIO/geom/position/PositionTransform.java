@@ -14,7 +14,7 @@ public interface PositionTransform {
 
 
     /** 
-     * Perform transforms in a FofG like manner..
+     * Perform transforms in a FofG (F of G ) like manner..
      * 
      * Useful when you want to make complex transforms from simple transforms.
      *
@@ -77,7 +77,7 @@ public interface PositionTransform {
 	@Override
 	public Position transform(Position position) {
 	    return new Position.Simple(position.getRow()+getRowDelta(), 
-		                       position.getCol()+getColDelta());
+		                           position.getCol()+getColDelta());
 	}
 
     }
@@ -134,7 +134,7 @@ public interface PositionTransform {
 	    // This transform will translate position relative to origin,
 	    // then perform the rotate and then translate back to fixed point
 	    positionTransform = new FofG(new Translate(fixedPoint),
-		                 new FofG(new Rotate(theta),new Translate(fixedPoint.negate()) ));
+		                    new FofG(new Rotate(theta),new Translate(fixedPoint.negate()) ));
 	}
 	
 

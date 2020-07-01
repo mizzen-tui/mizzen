@@ -1,7 +1,9 @@
 package dtb.terminalIO.examples.server;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
@@ -9,6 +11,8 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
+import dtb.terminalIO.app.TUIApp;
+import dtb.terminalIO.components.Component;
 import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.events.ConditionalEventHandler;
@@ -18,27 +22,29 @@ import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
+import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.InputEventsProducer;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.util.StringUtils;
 import dtb.terminalIO.util.Stty;
+import dtb.terminalIO.util.linuxproc.LinuxProcessWatcher;
+import dtb.terminalIO.util.linuxproc.ExecUtil.StreamLineGobbler;
 
 public class DrawingBoardDispatch {
 
     DrawingBoard drawingBoard;
-    
+
     EventBus eventBus;
-    
+
     Runnable terminateTask;
-    
-    public DrawingBoardDispatch(EventBus eventBus) {
-        drawingBoard = new DrawingBoardImpl(eventBus);
+
+    public DrawingBoardDispatch(EventBus eventBus, Consumer<Component<?>> refreshAction) {
+        drawingBoard = new DrawingBoardImpl(eventBus, refreshAction);
         this.eventBus = eventBus;
-        
-        
+
         terminateTask = new Runnable() {
-            
+
             @Override
             public void run() {
                 eventBus.stopConsuming();
@@ -56,7 +62,7 @@ public class DrawingBoardDispatch {
 
             @Override
             public void handle(TerminalEvent<?> te) {
-                
+
                 terminateTask.run();
 
                 if (te.getType().equals(TYPE.EXCEPTION)) {
@@ -70,15 +76,18 @@ public class DrawingBoardDispatch {
                 return;
             }
         };
-        
+
         eventBus.appendEventHandler(new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), terminateEventHandler));
-        
-        
+
     }
 
+    public DrawingBoardDispatch(EventBus eventBus) {
+        this(eventBus, null);
+    }
+    
     static int DISPATCH_CONTINUE=1;
     static int DISPATCH_STOP=2;
-    
+
     public int dispatch(String args[]) {
 
         if (args == null || args.length == 0) {
@@ -94,7 +103,7 @@ public class DrawingBoardDispatch {
         }
 
         // System.out.println("Got here! "+ args[0]);
-        
+
         // canvas_box MSGAREA 1 1 20 10
         if (args.length == 6 && args[0].equalsIgnoreCase("box")) {
             String name = args[1];
@@ -122,7 +131,7 @@ public class DrawingBoardDispatch {
             String name = args[1];
             drawingBoard.componentClear(name);
         }
-        
+
         // feed_pipe canvas_auto_refresh on
         if (args.length == 2 && args[0].equalsIgnoreCase("auto_refresh")) {
             boolean flag = "on".equalsIgnoreCase(args[1]) || "true".equalsIgnoreCase(args[1]) || "yes".equalsIgnoreCase(args[1]);
@@ -146,8 +155,7 @@ public class DrawingBoardDispatch {
         if (args.length == 1 && args[0].equalsIgnoreCase("refresh")) {
             drawingBoard.refresh();
         }
-        
-        
+
         return DISPATCH_CONTINUE;
     }
 
@@ -167,13 +175,13 @@ public class DrawingBoardDispatch {
 //    while (m.find())
 //        list.add(m.group(1)); // Add .replace("\"", "") to remove surrounding quotes.
 //    
-    
+
     public static void test1(String[] args) throws Exception {
 
         DrawingBoardDispatch dispatch = new DrawingBoardDispatch(new EventBusImpl());
-        
+
         StringBuffer sb = new StringBuffer();
-        
+
         Consumer<String[]> buildStream = new Consumer<String[]>() {
 
             @Override
@@ -189,7 +197,6 @@ public class DrawingBoardDispatch {
                     sb.append(" ");
                 }
                 sb.append("\n");
-                
             }
             
         };
@@ -197,49 +204,49 @@ public class DrawingBoardDispatch {
         //buildStream.accept(new String[] { "clear" });
 
         //buildStream.accept(new String[] { "
-            buildStream.accept(new String[] { "canvas_clear" });
-            
-            buildStream.accept(new String[] { "canvas_box","MSGAREA","1","1","10", "60" });
-            
-            
+        buildStream.accept(new String[] { "canvas_clear" });
+
+        buildStream.accept(new String[] { "canvas_box","MSGAREA","1","1","10", "60" });
+
+
             //buildStream.accept(new String[] { "canvas_title MSGAREA "\"${Red}My first title\"" 
 
-            buildStream.accept(new String[] { "canvas_title", "MSGAREA", "My first title" });
+        buildStream.accept(new String[] { "canvas_title", "MSGAREA", "My first title" });
             
             //#sleep 1
             
-            buildStream.accept(new String[] { "canvas_append_text","MSGAREA", "\\n   The rain in ${Blu}spain${RCol} stays mainly on the plain\\nNewline testS"});
+        buildStream.accept(new String[] { "canvas_append_text","MSGAREA", "\\n   The rain in ${Blu}spain${RCol} stays mainly on the plain\\nNewline testS"});
             
             //#sleep 1
             
-            buildStream.accept(new String[] { "canvas_append_text","MSGAREA","\\nAnd where is that blasted plain?"});
-            
-            // #sleep 1
-            
-            buildStream.accept(new String[] { "canvas_append_text", "MSGAREA", "\\nIn Spain .."});
-            
-            //#sleep 1
-            
-            buildStream.accept(new String[] { "canvas_append_text", "MSGAREA", "In Spain .." });
-            
-            //#sleep 1        
-            buildStream.accept(new String[] { "canvas_printf", "MSGAREA", "Window size= $(tput lines) $(tput cols)"});
-            
-            //#sleep 1
-            
-            buildStream.accept(new String[] { "canvas_piped_text", "MSGAREA", "/bin/bash -c 'ls -l'"});
+        buildStream.accept(new String[] { "canvas_append_text","MSGAREA","\\nAnd where is that blasted plain?"});
 
-            buildStream.accept(new String[] { "canvas_ok_msg", "Here is a popup message"});
-        
-            buildStream.accept(new String[] { "canvas_STOP!" });
-            
-            dispatch.parseInputStream( new BufferedReader(new StringReader( sb.toString() ))  );
-        
+            // #sleep 1
+
+        buildStream.accept(new String[] { "canvas_append_text", "MSGAREA", "\\nIn Spain .."});
+
+            //#sleep 1
+
+        buildStream.accept(new String[] { "canvas_append_text", "MSGAREA", "In Spain .." });
+
+            //#sleep 1        
+        buildStream.accept(new String[] { "canvas_printf", "MSGAREA", "Window size= $(tput lines) $(tput cols)"});
+
+            //#sleep 1
+
+        buildStream.accept(new String[] { "canvas_piped_text", "MSGAREA", "/bin/bash -c 'ls -l'"});
+
+        buildStream.accept(new String[] { "canvas_ok_msg", "Here is a popup message"});
+
+        buildStream.accept(new String[] { "canvas_STOP!" });
+
+        dispatch.parseInputStream( new BufferedReader(new StringReader( sb.toString() ))  );
+
     }
-    
+
     public static void test(String[] args) throws IOException {
         // System.out.println("Hello world");
-        int i = 10;
+        int i = 1011;
 
         DrawingBoardDispatch dispatch = new DrawingBoardDispatch(new EventBusImpl());
 
@@ -289,10 +296,8 @@ public class DrawingBoardDispatch {
         dispatch.dispatch(new String[] { "append_text", "MSGAREA", "13 and 14 and\n15" });
         dispatch.dispatch(new String[] { "append_text", "MSGAREA", " " });
       //  dispatch.dispatch(new String[] { "append_text", "MSGAREA", Colors.BCya.asString() + "[DONE!]" });
-        
-        
+
         dispatch.parseInputStream( new BufferedReader(new StringReader(demoString() ))  );
-        
     }
 
     
@@ -305,10 +310,10 @@ public class DrawingBoardDispatch {
     static Pattern argsPattern = Pattern.compile("([^\"]\\S*|\".+?\")\\s*");
     
     private String[] parseStrToARGS(String msg) {
-        
+
         StringUtils.ArgumentTokenizer tkn = new StringUtils.ArgumentTokenizer();
         List<String> argsList = tkn.tokenize(msg);
-        
+
 //        
 //        List<String> argsList = new ArrayList<String>();
 //        Matcher m = argsPattern.matcher(msg);
@@ -348,12 +353,12 @@ public class DrawingBoardDispatch {
                 }
                 return DISPATCH_CONTINUE;
             }
-            
+
             String line = convertEscapes(msg);
             if (line.length()==0 || !line.startsWith("canvas_")) {
                 continue;
             }
-            
+
             String args[] = parseStrToARGS(line);
             int result = dispatch(args);
             if (result == DISPATCH_STOP) {
@@ -363,25 +368,46 @@ public class DrawingBoardDispatch {
         return DISPATCH_CONTINUE;
     }
     
+    protected int parseAndDispatchLine(String line) {
+        line = convertEscapes(line);
+        if (line.length()==0 || !line.startsWith("canvas_")) {
+            return DISPATCH_CONTINUE;
+        }
+
+        String args[] = parseStrToARGS(line);
+        int result = dispatch(args);
+        if (result == DISPATCH_STOP) {
+            return result;
+        }
+        return DISPATCH_CONTINUE;
+    }
+    
+
     // TODO:   This should be enqueing to a QUEUE  ...
     //         also break the parse from the dispatch logic
     //         and have a separate thread for all GUI activities
-    //         this allows separate (piped /spawnded) tasks from
+    //         this allows separate (piped /spawned) tasks from
     //         processing input and enqueu renderig changes to the queue
     //         similat to an SwingUtils invokerLater .. idea.
     
     public void readFromNamedPipe(String pipeName) throws IOException {
         File pipeFile = new File(pipeName);
-        int result = DISPATCH_CONTINUE;
-        
-        FileReader in = new FileReader(pipeFile);
+        int[] result = new int[] {DISPATCH_CONTINUE};
 
-        BufferedReader b_in = new BufferedReader(in);
+        FileInputStream in = new FileInputStream(pipeFile);
+
+        BufferedInputStream b_in = new BufferedInputStream(in);
+
+        Thread outputGobbler = new Thread(new StreamLineGobbler(b_in, 
+                                                                (line)->result[0] = parseAndDispatchLine(line), 
+                                                                ()-> result[0] == DISPATCH_CONTINUE),"DrawingboardDispatchReader");
         
-        while (result == DISPATCH_CONTINUE) {
-            result = parseInputStream(b_in);
+        throw new IllegalStateException("Disabled - have to fix b_in ");
+/*        
+        while (result[0] == DISPATCH_CONTINUE) {
+            result[0] = parseInputStream(b_in);
             
-            if (result == DISPATCH_CONTINUE) {
+            if (result[0] == DISPATCH_CONTINUE) {
                 try {
                     Thread.sleep(100);
                 } catch (InterruptedException e) {
@@ -391,15 +417,15 @@ public class DrawingBoardDispatch {
             }
         }
         cleanupTasks();
+*/        
     }
     
     public void cleanupTasks() {
         terminateTask.run();
     }
     
-
-    public static void main(String[] args) throws Exception {
-        //System.out.println("HELLOW WORLD!!!!!!!!!!!");
+    public static void mainOLD(String[] args) throws Exception {
+        System.out.println("HELLOW WORLD!!!!!!!!!!!");
         if (args!=null && args.length == 2 && args[0].equalsIgnoreCase("PIPE")) {
             //System.out.println("Reading from pipe "+args[1]);
             EventBus eventBus = new EventBusImpl();
@@ -409,5 +435,63 @@ public class DrawingBoardDispatch {
             test1(args);
         }
     }
+
+    public static void mainNEW(String[] args) throws Exception {
+        System.out.println("HELLOW WORLD NEW !!!!!!!!!!!");
+        if (args!=null && args.length == 2 && args[0].equalsIgnoreCase("PIPE")) {
+            
+            TUIApp app = new TUIApp(args).setEmptyChar(' ')
+                    .setDefaultMainApplicationPanel()
+                    .confirmOnExit();
+            
+            app.setOnReadyStart((tApp)->{
+
+                FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),tApp.getEventBus());
+                
+                if (mainFocusManager != null) {
+                   tApp.getEventBus().appendEventHandler(  mainFocusManager );
+                }
+
+                final boolean[] drawingBoardAddedToAppPanel = new boolean[]{false};
+                DrawingBoardDispatch drawingBooardDispatcher = new DrawingBoardDispatch(tApp.getEventBus(), (drawingBoardComponent)-> {
+                    if ( ! drawingBoardAddedToAppPanel[0]) {
+                        drawingBoardAddedToAppPanel[0] = true;
+                        tApp.getMainApplicationPanel().add(drawingBoardComponent);
+                        if (mainFocusManager == null) {
+                            FocusManager mainFocusManager2 = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),tApp.getEventBus());
+                            if (mainFocusManager2 != null) {
+                               tApp.getEventBus().appendEventHandler(  mainFocusManager2 );
+                            }
+                         }
+                    }
+                    tApp.doRefreshCanvasIfModified();
+                });
+                
+                try {
+                    drawingBooardDispatcher.readFromNamedPipe(args[1]);
+                    tApp.getCanvas().t(10,10,"started ..");
+                    tApp.getCanvas().refresh();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                
+            });
+
+            app.start();
+
+            
+//            //System.out.println("Reading from pipe "+args[1]);
+//            EventBus eventBus = new EventBusImpl();
+//            new InputEventsProducer(eventBus);
+        } else {
+            test1(args);
+        }
+    }
+    
+    public static void main(String[] args) throws Exception {
+        //mainOLD(args);
+        mainNEW(args);
+    }
+
 
 }

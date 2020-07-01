@@ -78,6 +78,35 @@ public interface CLIEmitter {
         }
     }
 
+    public static class CountOutputEmitter extends DelegateEmitter {
+
+        private int characterCount;
+
+        public CountOutputEmitter(CLIEmitter baseEmitter) {
+            super(baseEmitter);
+            this.characterCount = 0;
+        }
+
+        public void print(String s) {
+            characterCount += (s!=null) ? s.length() : 0;
+            super.print(s);
+        }
+
+        public void println(String s) {
+            characterCount += (s!=null) ? s.length()+1 : 0;  // +1 to account for implicit '\n'
+            super.println(s);
+        }
+        
+        public int getCharacterCount() {
+            return characterCount;
+        }
+
+        @Override
+        public String toString() {
+            return "CountOutputEmitter  [characterCount=" + characterCount + "]";
+        }
+    }
+
     public static class PrintStreamEmitter extends AbstractCLIEmitter {
         PrintStream out;
 

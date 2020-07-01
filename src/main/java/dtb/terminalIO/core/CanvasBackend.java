@@ -26,6 +26,8 @@ public interface CanvasBackend {
 
     void showCursor();
     
+    void setSize(int height, int width);
+    
     
     public static class NullCanvasBackEnd implements CanvasBackend {
         
@@ -62,7 +64,14 @@ public interface CanvasBackend {
             // TODO Auto-generated method stub
             
         }
+
+        @Override
+        public void setSize(int height, int width) {
+            // TODO Auto-generated method stub
+            
+        }
     }
-    
+
+
     
 }
