@@ -14,8 +14,21 @@ public class RectangleShape implements Shape {
         this.color = color;
     }
 
+    public Color getColor() {
+        return color;
+    }
+
+    public void setColor(Color color) {
+        this.color = color;
+    }
+
     public RectangleShape(Rectangle rect) {
         this(rect, null);
+    }
+    
+
+    public Rectangle getRectangle() {
+        return rectangle;
     }
 
     @Override

@@ -186,6 +186,10 @@ public interface PointPlotter {
         public void clearPlots() {
             getPlots().clear();
         }
+        
+        public void addAll(PointPlotterList other) {
+            plots.addAll(other.getPlots());
+        }
 
     }
 

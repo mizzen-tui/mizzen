@@ -14,6 +14,7 @@ import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
+import dtb.terminalIO.events.keyboard.HasHotKey;
 import dtb.terminalIO.events.keyboard.KeyEvent;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
@@ -62,14 +63,12 @@ public class DefaultFocusManager implements FocusManager, HasChildren<Focusable>
         this.navKeysFirst = navKeysFirst;
         return this;
     }
-    
+
     public DefaultFocusManager setOnFocusChanged(BiConsumer<Focusable, EventBus> onFocusChanged) {
         this.onFocusChanged = onFocusChanged;
         return this;
     }
 
-    
-    
     public DefaultFocusManager setCycling(boolean cycling) {
         this.cycling = cycling;
         return this;
@@ -127,7 +126,7 @@ public class DefaultFocusManager implements FocusManager, HasChildren<Focusable>
         }
         if (size() < 2) {
             return null;
-        } 
+        }
         int index = eventConsumers.indexOf(getCurrentOrSet(eventBus));
         if (index < 0 || index == size() - 1) {
             if (cycling) {
@@ -228,7 +227,31 @@ public class DefaultFocusManager implements FocusManager, HasChildren<Focusable>
                 // FocusManager cannot handle directly - what about its focus child?
                 Focusable focusable = getCurrentOrSet(te.getEventBus());
                 if (focusable != null) {
-                    return focusable.canHandle(te) != null;
+                    if (focusable.canHandle(te) != null) {
+                        return true;
+                    }
+                }
+
+                // at this point let's look at hot keys..
+
+                if (!IS_KEYPRESS.test(te)) {
+                    return false; // not a keyboard event, so not a hotkey
+                }
+
+                KeyStroke pressedKey = ((KeyEvent) te).getKeyStroke();
+
+                for (Focusable focuableOther : eventConsumers) {
+                    if (focuableOther == focusable) {
+                        continue;
+                    }
+
+                    Collection<KeyStroke> hotKeys = HasHotKey.UTIL.getAllHotKeys(focuableOther);
+                    if (hotKeys.contains(pressedKey)) {
+                        setChildAsCurrentFocus(focuableOther, te.getEventBus());
+                        if (focuableOther.canHandle(te) != null) {
+                            return true;
+                        }
+                    }
                 }
                 return false;
             }

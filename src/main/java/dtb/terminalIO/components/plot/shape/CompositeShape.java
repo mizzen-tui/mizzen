@@ -30,7 +30,7 @@ public class CompositeShape implements Shape {
     protected void drawChild(Shape childShape, PointPlotter pointPlotter) {
         childShape.draw(pointPlotter);
     }
-    
+
     @Override
     public void draw(PointPlotter pointPlotter) {
         for (Shape shape : shapes) {

@@ -9,6 +9,7 @@ import java.util.function.Supplier;
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
+import dtb.terminalIO.components.CompositeWithFocusManager;
 import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.VerticalPanel;
@@ -17,14 +18,15 @@ import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.input.DisplayableValue;
 import dtb.terminalIO.components.input.HasValue;
 import dtb.terminalIO.components.input.ListBox;
-import dtb.terminalIO.components.plot.TransformPointPlotter;
 import dtb.terminalIO.components.plot.XYTranslate;
 import dtb.terminalIO.components.plot.shape.Circle;
 import dtb.terminalIO.components.plot.shape.Line;
 import dtb.terminalIO.components.plot.shape.Shape;
 import dtb.terminalIO.components.plot.shape.Triangle;
 import dtb.terminalIO.controlcodes.Colors;
+import dtb.terminalIO.events.AbstractTimedRequestedController;
 import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.OnIdleEventEventHandler.RepeatingInterval;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
@@ -37,30 +39,38 @@ import dtb.terminalIO.geom.position.PositionVerticalRelative;
 
 public class TestScale {
 
-    
-    
-    
-    
-    static Component buttons(EventHandler upAction,
+
+
+    static Component<?> buttons(EventHandler upAction,
                              EventHandler downAction,
                              EventHandler leftAction,
                              EventHandler rightAction) {
-        Composite buttonPanel = new Composite();
-        
+        CompositeWithFocusManager buttonPanel = new CompositeWithFocusManager();
+        buttonPanel.getFocusManager().setNextKeyStroke(Keys.DOWN_KEYSTROKE);
+        buttonPanel.getFocusManager().setPrevKeyStroke(Keys.UP_KEYSTROKE);
+
         Button up = new Button("^");
+        up.setHotKey(Keys.CTRL_T_KEYSTROKE);
         up.setBorder(true);
+        up.setDisplayHotKey(true);
         up.setActionHandler(upAction);
-        
+
         Button down = new Button("v");
+        down.setHotKey(Keys.CTRL_V_KEYSTROKE);
         down.setBorder(true);
+        down.setDisplayHotKey(true);
         down.setActionHandler(downAction);
-        
+
         Button left = new Button("«");
+        left.setHotKey(Keys.CTRL_F_KEYSTROKE);
         left.setBorder(true);
+        left.setDisplayHotKey(true);
         left.setActionHandler(leftAction);
 
         Button right = new Button("»");
+        right.setHotKey(Keys.CTRL_G_KEYSTROKE);
         right.setBorder(true);
+        right.setDisplayHotKey(true);
         right.setActionHandler(rightAction);
 
         Position upVPosition = Position.ZERO;
@@ -81,17 +91,14 @@ public class TestScale {
 
         return buttonPanel;
     }
-    
-    
-    
-    
+
     static ListBox<Shape> shapeChooser() {
         
         List<DisplayableValue<Shape>> choices = new ArrayList<DisplayableValue<Shape>>();
 
-        choices.add(new ShapeDisplayValue("Circle", new Circle(10, 10, 5)));
-        choices.add(new ShapeDisplayValue("Line", new Line(2, 2, 15, 15)));
-        choices.add(new ShapeDisplayValue("Triange", new Triangle(10, 2, 2, 12, 20, 15)  ));
+        choices.add(new ShapeDisplayValue("Circle", new Circle(20, 20, 20)));
+        choices.add(new ShapeDisplayValue("Line", new Line(2, 2, 35, 35)));
+        choices.add(new ShapeDisplayValue("Triange", new Triangle(20, 2, 2, 32, 40, 45)  ));
         ListBox<Shape> shapes = new ListBox<Shape>();
         shapes.setBorder(true);
         shapes.setItems(choices);
@@ -106,29 +113,26 @@ public class TestScale {
                .setDefaultMainApplicationPanel()
                .confirmOnExit()
                .setOnReadyStart((tApp)->{
-                   
-                   
+
                    XYTranslate xyTranslatePlotter = new XYTranslate(null, 0, 0);
-                   
+
                    TextComponent msgArea = new TextComponent(" ");
-                   
+
                    Consumer<String> msg = (s) -> msgArea.setTextAndResize("MSG: " + s);
-                   
-                   
+
                    ListBox<Shape> shapesChoiceComponent = shapeChooser();
-                   
-                   
+
                    Supplier<Dimension> computeGridSize = ()-> {
                        return new Dimension.Simple(tApp.getMainApplicationPanel().getHeight()-10,
                                                    tApp.getMainApplicationPanel().getWidth()-shapesChoiceComponent.getWidth()-20);
                    };
-                   
+
                    Dimension gridSize = computeGridSize.get();
 
                    BrailleGrid grid = new BrailleGrid(Colors.BGre, gridSize);
 
                    grid.setTitle(Colors.BPur, " Shape : ");
-                   
+
                    xyTranslatePlotter.setPointPlotter(grid.asPointPlotter());
 
                    Consumer<Shape> drawShape = (shape)-> {
@@ -140,7 +144,7 @@ public class TestScale {
                        shape.draw(xyTranslatePlotter);
                        grid.markAsDirty();
                    };
-                   
+
                    tApp.getEventBus().appendEventHandler( new HasValue.OnValueChangedEventHandler<Shape>(shapesChoiceComponent) {
                        @Override
                        public void valueChanged(TerminalEvent<?> te, HasValue<Shape> source) {
@@ -149,64 +153,84 @@ public class TestScale {
                            drawShape.accept(source.getValue());
                        }
                    });
-                   
-                   
+
+                   AbstractTimedRequestedController delayedDraw = new AbstractTimedRequestedController(()->{
+                       drawShape.accept(shapesChoiceComponent.getSelectedValue());
+                   }) {
+                       @Override
+                       protected boolean isRequestDifferentFromPrevious() {
+                           return true;
+                       }
+
+                   };                   
+                   delayedDraw.setTimerDelayMillis(75);
+
                    HorizontalPanel hp = new HorizontalPanel();
                    hp.add(buttons(
                                       (e)->{    
                                               xyTranslatePlotter.setyDelta(xyTranslatePlotter.getyDelta()-1) ;
-                                              drawShape.accept(shapesChoiceComponent.getSelectedValue());
+                                              //drawShape.accept(shapesChoiceComponent.getSelectedValue());
+                                              delayedDraw.onRequest(tApp.getEventBus());
                                               msg.accept("Up  "+xyTranslatePlotter.getyDelta());
                                             },
                                       (e)->{    
                                               xyTranslatePlotter.setyDelta(xyTranslatePlotter.getyDelta()+1) ;
-                                              drawShape.accept(shapesChoiceComponent.getSelectedValue());
+                                              //drawShape.accept(shapesChoiceComponent.getSelectedValue());
+                                              delayedDraw.onRequest(tApp.getEventBus());
                                               msg.accept("Down  "+xyTranslatePlotter.getyDelta());
                                             },
                                       (e)->{    
                                               xyTranslatePlotter.setxDelta(xyTranslatePlotter.getxDelta()-1) ;
-                                              drawShape.accept(shapesChoiceComponent.getSelectedValue());
+                                              //drawShape.accept(shapesChoiceComponent.getSelectedValue());
+                                              delayedDraw.onRequest(tApp.getEventBus());
                                               msg.accept("Left  "+xyTranslatePlotter.getxDelta());
                                            },
                                       (e)->{    
                                               xyTranslatePlotter.setxDelta(xyTranslatePlotter.getxDelta()+1) ;
-                                              drawShape.accept(shapesChoiceComponent.getSelectedValue());
+                                              //drawShape.accept(shapesChoiceComponent.getSelectedValue());
+                                              delayedDraw.onRequest(tApp.getEventBus());
                                               msg.accept("Right  "+xyTranslatePlotter.getxDelta());
                                            }
                                   ));
-                   
+
                    hp.add(shapesChoiceComponent);
-                   
-                   
-                   
+
                    hp.add(grid);
-                   
+
                    VerticalPanel vp = new VerticalPanel().setVerticalSpacer(5);
-                   
+
                    vp.add(hp);
                    vp.add(msgArea);
-                   
+
+                   long counter[] = new long[] {0};
+                   TextComponent counterText = new TextComponent("0");
+
+                   vp.add(counterText);
+
                    tApp.getMainApplicationPanel().add(vp);
-                   
+
+                   tApp.getEventBus().appendIdleEventHandler(new RepeatingInterval(75,
+                           (e)-> {
+                                counter[0]++;
+                                counterText.setTextAndResize(counter[0]+"");
+                                tApp.doRefreshCanvasIfModified();
+                           }));
+
                    ((Composite)tApp.getMainApplicationPanel()).setBorder(true);
-                   
+
                    DefaultFocusManager mainFocusManager = (DefaultFocusManager)FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),tApp.getEventBus());
-                   
+
                    mainFocusManager.setPrevKeyStroke(Keys.SHIFT_TAB_KEYSTROKE);
                    mainFocusManager.setNextKeyStroke(Keys.TAB_KEYSTROKE);
-                   
-                   
-                   
+
                    tApp.getEventBus().appendEventHandler(  mainFocusManager );
-                   
-                   
+
                }).start();
         
     }
-    
-    
+
     static class ShapeDisplayValue implements DisplayableValue<Shape> {
-        
+
         String name;
         Shape shape;
         

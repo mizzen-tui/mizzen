@@ -6,12 +6,12 @@ import dtb.terminalIO.geom.position.PositionTransform;
 /**
  * A {@link PointPlotter} that transforms the x, y coordinates (before plotting) using a
  * {@link PositionTransform} object.
- * 
+ *
  * <p/>
- * 
+ *
  * This is useful when you want to translate or rotate x,y coordinates when
  * performing plots of said x,y coordinates.
- * 
+ *
  */
 public class TransformPointPlotter extends PointPlotter.Delegate {
 

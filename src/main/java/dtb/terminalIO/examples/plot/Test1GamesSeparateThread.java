@@ -24,6 +24,7 @@ import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.events.OnIdleEventEventHandler.OneTimeAfterInterval;
 import dtb.terminalIO.events.OnIdleEventEventHandler.RepeatingInterval;
+import dtb.terminalIO.events.TerminalEvent.TYPE;
 import dtb.terminalIO.events.OnResizeEventHandler;
 import dtb.terminalIO.events.OnTerminateEventHandler;
 import dtb.terminalIO.geom.Dimension;
@@ -45,7 +46,7 @@ public class Test1GamesSeparateThread {
                 return new Dimension.Simple(tApp.getMainApplicationPanel().getHeight()-3,
                                             tApp.getMainApplicationPanel().getWidth()-3);
             };
-            
+
             Dimension gridSize = computeGridSize.get();
 
             BrailleGrid grid = new BrailleGrid(Colors.BGre, gridSize);
@@ -59,32 +60,29 @@ public class Test1GamesSeparateThread {
             tApp.getMainApplicationPanel().add(grid);
 
             PointPlotterList gamePlayPointsPlotter = new PointPlotterList();
-            
-            
+
             tApp.getEventBus().appendIdleEventHandler(new RepeatingInterval(150, (te)-> {
                 grid.clearPlots();
                 List<PointPlot> l = new ArrayList<PointPlot>(gamePlayPointsPlotter.getPlots());
-                
+
                 PointPlotter ppGrid = grid.asPointPlotter();
-                
-                
+
                 for (PointPlot pp  : l) {
                     ppGrid.setColor(pp.color);
                     ppGrid.plot(pp.x, pp.y);
                 }
-                
+
                 grid.markAsDirty();
                 tApp.doRefreshCanvasIfModified();
             }));
 
             tApp.getEventBus().appendIdleEventHandler(new OneTimeAfterInterval((te)-> {
-                spawnGameLoop(()->tApp.getEventBus().isActive(), ()->grid.getGridRectangle(), gamePlayPointsPlotter);
+                spawnGameLoop(tApp, ()->tApp.getEventBus().isActive(), ()->grid.getGridRectangle(), gamePlayPointsPlotter);
             },200));
-            
-            
+
             BiConsumer<TUIApp, Dimension> defaultOnResizeAction = 
                       tApp.getResizeAction()!=null ? tApp.getResizeAction() : (t,s)->{};
-            
+
             tApp.setOnResizeAction((tApp2, newSize)->{
                 // do default behaviour
                 defaultOnResizeAction.accept(tApp2, newSize);
@@ -99,8 +97,8 @@ public class Test1GamesSeparateThread {
         
     }
 
-    static void spawnGameLoop(Supplier<Boolean> isActive, Supplier<Rectangle> size, PointPlotter pointPlotter) {
-        
+    static void spawnGameLoop(TUIApp tApp, Supplier<Boolean> isActive, Supplier<Rectangle> size, PointPlotter pointPlotter) {
+
         Position gridMidpoint = new Position() {
             @Override
             public int getCol() {
@@ -112,17 +110,15 @@ public class Test1GamesSeparateThread {
             }
         }; 
 
-        
         RotateAroundFixedPoint gridPointRotator = new RotateAroundFixedPoint(0, gridMidpoint);
         TransformPointPlotter gridRotatingPlotter = new TransformPointPlotter(null, gridPointRotator);
-        
+
         XYTranslate pPrime1 = new XYTranslate(pointPlotter, 10, 10);
         XYTranslate pPrime2 = new XYTranslate(pointPlotter, 70, 0);
         XYTranslate pPrime3 = new XYTranslate(pointPlotter, 35, 70);
-        
+
         new Thread(()->{
-            
-            
+
             Consumer<Integer> renderAction = (i)->{
                 pointPlotter.clearPlots();
 
@@ -145,38 +141,33 @@ public class Test1GamesSeparateThread {
 
                 gridRotatingPlotter.setPointPlotter(pPrime3);
                 plotEnemyONE(enemies[2], gridRotatingPlotter);
-                
+
                 //iLabel.setText("i = "+i);
 
                 //pPrime2 = new 
-                
             };
-            
+
             while (isActive.get()) {
                 for (int i = 0; i < 220; i++) {
-                    
                     if (!isActive.get()) {
                         return ;
                     }
-                    
-                    if (i % 3 == 0) {
-                        renderAction.accept(i);
-                    }
-
                     try {
+
+                        if (i % 3 == 0) {
+                            renderAction.accept(i);
+                        }
+
                         Thread.sleep(25);
-                    } catch (InterruptedException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
+                    } catch (Exception e) {
+                        tApp.getEventBus().raiseEvent(Thread.currentThread(), TYPE.EXCEPTION, e);
                     }
                 }
             }
-            
-            System.out.println("DONE!");
-            
+
+
         }).start();
-        
-        
+
     }
     
     static Shape[] enemies = new Shape[]{ 
@@ -188,22 +179,19 @@ public class Test1GamesSeparateThread {
         _enemyONE.draw(pointPlotter);
     }
 
-    static class EnemyOneShape implements Shape {
+    static class EnemyOneShape extends Sprite {
 
         CompositeShape componentShapes;
         Line l1;
         Line l2;
         Line l3;
         Line l4;
-
-        Position midPoint = new Position.Simple(6, 6);
-        RotateAroundFixedPoint pointRotator = new RotateAroundFixedPoint(0, midPoint);
-        TransformPointPlotter rotatingPlotter = new TransformPointPlotter(null, pointRotator);
-
-        int drawCounter = 0;
+        Rectangle boundingRectangle;
 
         public EnemyOneShape() {
+            boundingRectangle = new Rectangle.Simple(0,0,9,18);
             this.componentShapes = new CompositeShape();
+            Position midPoint = spriteMidPoint();
             componentShapes.addShape(this.l1 = new Line(-3, -3, midPoint.getRow(), midPoint.getCol(), Colors.BBlu));
             componentShapes.addShape(this.l2 = new Line(midPoint.getRow(), midPoint.getCol(), 15, -3, Colors.BCya));
             componentShapes.addShape(this.l3 = new Line(-5, 3, midPoint.getRow(), midPoint.getCol(), Colors.BBlu));
@@ -218,25 +206,35 @@ public class Test1GamesSeparateThread {
             }
             return Colors.BBlu;
         }
-
-        @Override
-        public void draw(PointPlotter pointPlotter) {
-            drawCounter++;
+        
+        protected Shape getCurrentShape() {
+            return this.componentShapes;
+        }
+        
+        public void drawShape(int drawCounter, Shape currentShape, PointPlotter pointPlotter) {
             if (drawCounter % 6 == 0) {
                 l1.setColor(getLineColor(l1));
                 l2.setColor(getLineColor(l2));
                 l3.setColor(getLineColor(l3));
                 l4.setColor(getLineColor(l4));
             }
-            
-            rotatingPlotter.setPointPlotter(pointPlotter);
-            pointRotator.setTheta(drawCounter*10);
-            //pointRotator.setTheta(270);
-            
-            this.componentShapes.draw(rotatingPlotter);
+            setTheta(drawCounter*10);
+            currentShape.draw(pointPlotter);
         }
-    };
-    static class EnemyTwoShape implements Shape {
+
+
+        @Override
+        Rectangle calcBoundingRect() {
+            if (boundingRectangle == null) {
+                boundingRectangle = new Rectangle.Simple(0,0,9,18);
+
+            }
+            return boundingRectangle;
+        }
+
+    }
+
+    static class EnemyTwoShape  extends Sprite {
 
         CompositeShape componentShapes;
         Triangle t1;
@@ -245,14 +243,15 @@ public class Test1GamesSeparateThread {
         TransformPointPlotter rotatingPlotter;
 
         int drawCounter = 0;
+        Rectangle boundingRect;
 
         public EnemyTwoShape() {
-            
+
             Position p1 = new PointPlot(0, 0);
             Position p2 = new PointPlot(30, 0);
             Position p3 = new PointPlot(15, 30);
 
-            Rectangle boundingRect = Rectangle.UTIL.calcDimensionsFromPositions(p1,p2,p3);
+            boundingRect = Rectangle.UTIL.calcDimensionsFromPositions(p1,p2,p3);
             Position midPoint = boundingRect.centerPosition();
 
             pointRotator = new RotateAroundFixedPoint(0, midPoint);
@@ -272,10 +271,9 @@ public class Test1GamesSeparateThread {
                     rotatingPlotter.setPointPlotter(pointPlotter);
                     pointRotator.setTheta(drawCounter * 3);
                     childShape.draw(rotatingPlotter);
-                    
                 }
             };
-            
+
             componentShapes.addShape(new Circle(midPoint.getRow(), midPoint.getCol(), 5, Colors.BGre));
             componentShapes.addShape(new Circle(midPoint.getRow(), midPoint.getCol(), 1, Colors.BRed));
 
@@ -300,8 +298,25 @@ public class Test1GamesSeparateThread {
             if (drawCounter % 6 == 0) {
                 t1.setColor(getLineColor(t1));
             }
-
             this.componentShapes.draw(pointPlotter);
+        }
+
+        @Override
+        protected Shape getCurrentShape() {
+            return this.componentShapes;
+        }
+
+        @Override
+        public void drawShape(int drawCounter, Shape currentShape, PointPlotter pointPlotter) {
+            if (drawCounter % 6 == 0) {
+                t1.setColor(getLineColor(t1));
+            }
+            currentShape.draw(pointPlotter);
+        }
+
+        @Override
+        Rectangle calcBoundingRect() {
+            return boundingRect;
         }
     };
     

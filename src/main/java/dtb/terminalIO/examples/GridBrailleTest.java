@@ -1,5 +1,6 @@
 package dtb.terminalIO.examples;
 
+
 import java.util.Comparator;
 
 import dtb.terminalIO.app.TUIApp;
@@ -27,7 +28,6 @@ import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.EventHandlerContainer;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.TerminalEvent;
-import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.examples.Demo.SimpleDemo;
@@ -47,31 +47,24 @@ public class GridBrailleTest {
     // this would work well as a handler for an idle event
     static class CirclePathEventHandler implements EventHandler {
         CirclePathPlotter circlePath;
+        XYTranslate pointsPlotter;
 
         public CirclePathEventHandler(int x, int y, int radius, Comparator<Position> pointsSorter,
                 XYTranslate pointsPlotter) {
-            circlePath = new CirclePathPlotter(x, y, radius, pointsSorter) {
-                @Override
-                protected void plotOnePoint(Position curPos) {
-                    pointsPlotter.setxDelta(curPos.getCol());
-                    pointsPlotter.setyDelta(curPos.getRow());
-                }
-            };
+            this.pointsPlotter = pointsPlotter;
+            circlePath = new CirclePathPlotter(x, y, radius, pointsSorter);
         }
 
         public CirclePathEventHandler(int x, int y, int radius, XYTranslate pointsPlotter) {
-            circlePath = new CirclePathPlotter(x, y, radius) {
-                @Override
-                protected void plotOnePoint(Position curPos) {
-                    pointsPlotter.setxDelta(curPos.getCol());
-                    pointsPlotter.setyDelta(curPos.getRow());
-                }
-            };
+            this.pointsPlotter = pointsPlotter;
+            circlePath = new CirclePathPlotter(x, y, radius);
         }
 
         @Override
         public void handle(TerminalEvent<?> te) {
-            circlePath.plotOnePointFromPath();
+            Position curPos = circlePath.nextPosition();
+            pointsPlotter.setxDelta(curPos.getCol());
+            pointsPlotter.setyDelta(curPos.getRow());
         }
     }
 
@@ -289,18 +282,17 @@ public class GridBrailleTest {
                 pointPlotter.setxDelta(pointPlotter.getxDelta() + 1);
                 drawIt.run();
             });
-            
-            
+
             movementKeys.add(upButton);
             movementKeys.add(downButton);
             movementKeys.add(leftButton);
             movementKeys.add(rightButton);
-            
+
             Position movementKeysPosition = PositionRelativeFactory.fromAlign(VAlign.BOTTOM, 3, Align.MIDDLE, 0,  brailleComponent, movementKeys);
             brailleComponent.add(movementKeysPosition, movementKeys);
 
             addAndRememberEventHandler(eventBus, movementKeys);
-            
+
         }
 
         private KeyStroke KEY_MOVE_UP = Keys.UP_KEYSTROKE;
@@ -331,7 +323,7 @@ public class GridBrailleTest {
             _style = "TINY";
         }
         String style = _style;
-        
+
         TUIApp app = new TUIApp(args).setEmptyChar(' ')
                                      .setMainApplicationPanel(new Composite().setEmptyChar(' '))
                                      .confirmOnExit();
@@ -383,7 +375,7 @@ public class GridBrailleTest {
             brailleDemo.setUpDemo(tApp.getEventBus(), bounds);
 
             Component<?> brailleComponent = brailleDemo.getBrailleComponent();
-            
+
             ((Composite)app.getMainApplicationPanel()).add(brailleComponent);
 
             ((Composite)app.getMainApplicationPanel()).add(tc_status);
@@ -392,8 +384,7 @@ public class GridBrailleTest {
 
 
         app.start();
-        
+
     }
-    
 
 }

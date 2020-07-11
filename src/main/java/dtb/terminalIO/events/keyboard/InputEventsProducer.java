@@ -91,6 +91,7 @@ public class InputEventsProducer implements Runnable {
         boolean inputStreamHasMoreData = false;
         
         while (eventBus.isActive() && !isEOF) {
+            generateStarvedIdleEvent();
             inputStreamHasMoreData = false;
             try {
                 int available = this.inputStream.available();
@@ -147,12 +148,16 @@ public class InputEventsProducer implements Runnable {
               lastIdleEventTime = System.currentTimeMillis();
             }
         } else {
-            // we will do an idle event if too much time has elapsed
-            long elapsed = System.currentTimeMillis() - lastIdleEventTime;
-            if (elapsed > 100) {
-                    eventBus.raiseEvent(new OnIdleEvent(this));
-                    lastIdleEventTime = System.currentTimeMillis();
-            }
+            generateStarvedIdleEvent();
+        }
+    }
+
+    private void generateStarvedIdleEvent() {
+        // we will do an idle event if too much time has elapsed
+        long elapsed = System.currentTimeMillis() - lastIdleEventTime;
+        if (elapsed > 60) {
+                eventBus.raiseEvent(new OnIdleEvent(this));
+                lastIdleEventTime = System.currentTimeMillis();
         }
     }
 

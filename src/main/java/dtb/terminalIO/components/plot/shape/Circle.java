@@ -152,6 +152,14 @@ public class Circle implements Shape {
         this.radius = radius;
     }
 
+    public Color getColor() {
+        return color;
+    }
+
+    public void setColor(Color color) {
+        this.color = color;
+    }
+
     public void draw(PointPlotter pointPlotter) {
         Color lastColor = null;
         if (color != null) {
