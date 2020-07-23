@@ -1,8 +1,13 @@
 package dtb.terminalIO.traverse;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
+
+import dtb.terminalIO.events.keyboard.HasHotKey;
+import dtb.terminalIO.events.keyboard.KeyStroke;
 
 /**
  * Provides the ability to traverse (visit) an object and all its children.
@@ -59,8 +64,7 @@ public class Traverser<T> {
         public SimpleNodeVisitor(Visitor<T> visitNode) {
             this(visitNode, null);
         }
-        
-        
+
         @Override
         public int visit(T o) {
             return this.visitNode.visit(o);
@@ -90,8 +94,7 @@ public class Traverser<T> {
     private Collection<? extends T> getChildren(T o) {
        return this.hasChildrenAdapter.asHasChildren(o).getChildren();
     }
-    
-    
+
     /**
      * Performs a pre-order tree traversal of the object o and all its child objects and executes 
      * the visitor on each object.
@@ -117,7 +120,7 @@ public class Traverser<T> {
     public void traverse(T o, NodeVisitor<T> visitor) {
         _traverseObject(o, visitor);
      }
-    
+
     /**
      * Performs a pre-order tree traversal of the object o and all its child objects and executes 
      * the visitor on each object.
@@ -140,5 +143,23 @@ public class Traverser<T> {
        traverse(o, new SimpleNodeVisitor<T>(visitor, visitAfterChildrenVisited));
     }
 
-    
+    public static <T> List<T> asList(T parent, Predicate<T> filter) {
+        List<T> objectsTraversed = new ArrayList<T>();
+
+        Traverser<T> objectTraverser = new Traverser<T>();
+
+        objectTraverser.traverse(parent, new Traverser.Visitor<T>() {
+
+            @Override
+            public int visit(T c) {
+                if ( filter.test(c) && !objectsTraversed.contains(c) ) {
+                    objectsTraversed.add(c); 
+                }
+                return Traverser.CONTINUE_TRAVERSE;
+            }
+        });
+
+        return objectsTraversed;
+    }
+
 }

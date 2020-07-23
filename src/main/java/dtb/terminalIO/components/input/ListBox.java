@@ -79,9 +79,9 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
 
             Dimension tcDim = new Dimension.Simple( strDim.getHeight(), maxWidthStr ); 
             tc = new TextComponent(this.getColor(), tcDim, displayableItem.getDisplayValue());
-            
+
             bullet = new CharComponent( this.getColor() , '-');
-            
+
             this.add( 0,0, bullet);
             this.add( 0,2, tc);
         }
@@ -490,7 +490,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         
         return true;
     }
-    
+
     // returns true if we can select a 'previous' item
     private boolean canSetSelectedPrev() {
         int selected = getSelectedIndex();
@@ -586,9 +586,9 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         }
         return component;
     }
-    
+
     private Focusable focusable;
-    
+
     public Focusable asFocusable() {
         if (focusable != null) {
             return focusable;
@@ -596,8 +596,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         focusable = makeFocusable();
         return focusable;
     }
-     
-    
+
     private Focusable makeFocusable() {
 
         ChainedEventHandler chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
@@ -610,7 +609,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
                                 raiseEventRequestShowSelected(te.getEventBus());
                             }
                         }));
-        
+
         chainedHandler.appendEventHandler(new KeyInputEventHandler(this.keystrokeNext, 
                 (te)->  canSetSelectedNext(),
                 (te)->  {
@@ -619,7 +618,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
                                 raiseEventRequestShowSelected(te.getEventBus());
                             }
                         }));
-        
+
         return new DefaultFocusableBehaviour.Simple(this, chainedHandler.asConditionalEventHandler()) {
 
             @Override

@@ -106,28 +106,28 @@ public interface Component<T extends Component<?>> extends IScreenLineSegmentsBu
         }
         
         static public List<Component<?>> pathToCanvas(Component<?> component) {
-            
+
             if (component == null) {
                 throw new NullPointerException("pathToCanvas() ERROR: component parameter null!");
             }
-            
+
             if (isAttachedDirectlyToCanvas(component)) {
                 return Collections.singletonList(component);
             }
 
             List<Component<?>> path = new ArrayList<Component<?>>();
             path.add(component);
-            
+
             // we don't have an offset, so travel up component's ancestors
             ParentContainer parentContainer = component.getParentContainer();
-            
+
             if (parentContainer != null && parentContainer instanceof Component<?>) {
                 path.addAll(pathToCanvas((Component<?>)parentContainer));
             }
-            
+
             return path;
         }
-        
+
         static public boolean isAttacheToCanvas(Component<?> component) {
             List<Component<?>> path = pathToCanvas(component);
             if ( isAttachedDirectlyToCanvas(path.get(path.size()-1))) {

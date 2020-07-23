@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import dtb.terminalIO.components.Component;
 import dtb.terminalIO.traverse.Traverser;
 
 public interface HasHotKey {

@@ -15,16 +15,18 @@ import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.FocusManager;
+import dtb.terminalIO.events.focus.FocusManager.FocusManagerHasChildrenAdapter;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
+import dtb.terminalIO.events.mouse.GetComponentAtOffset;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 
 public class ComponentInspector extends AbstractComponent<ComponentInspector>
-        implements CanResize, ParentContainer, FocusManager {
+        implements CanResize, ParentContainer, FocusManager, GetComponentAtOffset {
 
     static enum VIEW_TYPE {
         COMPONENT_VIEW, FOCUSABLE_VIEW
@@ -36,14 +38,16 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
 
     VIEW_TYPE currentViewType = VIEW_TYPE.COMPONENT_VIEW;
 
-    public ComponentInspector(Color color, Dimension d, Component<?> componentToInspect,
-            FocusManager focusManagerToInspect) {
+    public ComponentInspector(Color color, 
+                              Dimension d, 
+                              Component<?> componentToInspect,
+                              FocusManager focusManagerToInspect) {
         super(color);
 
         this.componentToInspect = componentToInspect;
         this.focusManagerToInspect = focusManagerToInspect;
         this.currentViewType = VIEW_TYPE.COMPONENT_VIEW;
-        setView(d);
+        __setView(d);
     }
 
     private void toggleViewType() {
@@ -51,7 +55,7 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
                 : VIEW_TYPE.COMPONENT_VIEW;
     }
 
-    private void setView(Dimension d) {
+    private void __setView(Dimension d) {
         if (currentViewType == VIEW_TYPE.COMPONENT_VIEW) {
             TreeView<Component<?>> tvComponents = new TreeView<Component<?>>(Colors.IBlu, new Dimension.Simple(90, 60),
                     (node) -> node.getClass().getSimpleName());
@@ -68,7 +72,7 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
                             : node.getClass().getName());
 
             tvFocusable.setModel(new HasChildrenTreeViewModel<Focusable>(focusManagerToInspect,
-                    new FocusManagerHasChildrenAdapter()));
+                                                                         new FocusManagerHasChildrenAdapter()));
 
             scrollingArea = new ScrollableComponent(Colors.BIGre, d, new BorderedComponent(tvFocusable));
             scrollingArea.setParentContainer(this);
@@ -93,7 +97,7 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
         return new KeyInputEventHandler(Keys.CTRL_T_KEYSTROKE, (te) -> {
             Dimension currentSize = ComponentInspector.this.scrollingArea;
             toggleViewType();
-            setView(currentSize);
+            __setView(currentSize);
             te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(this));
         });
     }
@@ -152,6 +156,8 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
         this.scrollingArea.moveTo(row, col);
     }
 
+    
+    
     @Override
     public void setChildAsCurrentFocus(Focusable focusableChild, EventBus eventBus) {
         if (focusableChild != this.scrollingArea) {
@@ -197,5 +203,12 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
     protected Rectangle getRectangleForClearAndFill() {
         return this.scrollingArea.getRectangleForClearAndFill();
     }
+
+    @Override
+    public Component<?> getComponentAtOffset(Position offset) {
+        return this.scrollingArea.getComponentAtOffset(offset);
+    }
+
+
 
 }

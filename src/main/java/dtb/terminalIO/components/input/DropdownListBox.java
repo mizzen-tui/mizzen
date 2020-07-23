@@ -42,10 +42,21 @@ public class DropdownListBox<T> extends ComponentWithFocusManager
         this.listBox = new ListBox<T>(color);
         this.listBox.setBorder(true);
 
+        //VerticalPanel container = (VerticalPanel)this.getContainer();
+        /*
+        container.getFocusManager().setPrevKeyStroke(Keys.UP_KEYSTROKE)
+                                   .setNextKeyStroke(Keys.DOWN_KEYSTROKE)
+                                   .setNavKeysFirst(false)
+                                   .setCycling(false);
+        this.setFocusManager( container.getFocusManager() );
+        container.getFocusManager().addFocusable(button);
+        container.getFocusManager().addFocusable(listBox);
+         */
         DefaultFocusManager fm = new DefaultFocusManager(Keys.UP_KEYSTROKE, Keys.DOWN_KEYSTROKE).setNavKeysFirst(false).setCycling(false);
         this.setFocusManager( fm );
         fm.addFocusable(button);
         fm.addFocusable(listBox);
+
         setSelectedOntoTextView();
 
         appendEventHandler( new HasValue.OnValueChangedEventHandler<T>(this.listBox) {
@@ -196,7 +207,7 @@ public class DropdownListBox<T> extends ComponentWithFocusManager
         return false;
     }
     
-    private void showListBox() {
+    public void showListBox() {
         if (listBoxVisible()) {
             return;
         }
@@ -204,7 +215,7 @@ public class DropdownListBox<T> extends ComponentWithFocusManager
         this.getContainer().add(this.listBox);
     }
     
-    private void hideListBox() {
+    public void hideListBox() {
         if (!listBoxVisible()) {
             return;
         }

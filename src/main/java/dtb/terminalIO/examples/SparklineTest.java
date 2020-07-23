@@ -7,6 +7,7 @@ import java.util.function.Function;
 
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.ButtonBar;
+import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.TextComponent;
@@ -96,13 +97,16 @@ public class SparklineTest {
 
                         sparkLine1.renderPoints(data);
                         sparkLine2.renderPoints(data);
-                        
+
                         dataPoints.setTextAndResize( Arrays.deepToString(data) );
-                        
+
                         tApp.doRefreshCanvasIfModified();
                         
                     } ));
-                    
+
+                    // sanity check
+                    FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
+
 
                 }).start();
     }

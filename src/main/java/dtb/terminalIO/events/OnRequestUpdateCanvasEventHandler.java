@@ -16,7 +16,7 @@ import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
  * <p/>
  * 
  * This is to avoid executing canvas updates in scenarios where canvas updates occur in rapid fire which
- * will slow down the over performance of the application.
+ * will slow down the overall performance of the application.
  * 
  * @author dbalme
  *

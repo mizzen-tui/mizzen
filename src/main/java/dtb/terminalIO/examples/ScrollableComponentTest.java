@@ -27,6 +27,7 @@ import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
+import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.InputEventsProducer;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
@@ -462,6 +463,7 @@ public class ScrollableComponentTest {
 
 
         setUpTerminateHandler(screen, master_canvas, eventBus);
+
         
 //        MouseEventOrchestrator mOrch = new MouseEventOrchestrator(screen, master_canvas, eventBus);
 //        

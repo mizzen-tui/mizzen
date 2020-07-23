@@ -3,10 +3,13 @@ package dtb.terminalIO.events.focus;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.StringJoiner;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
+import dtb.terminalIO.components.Component;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.TerminalEvent;
@@ -14,6 +17,7 @@ import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.traverse.FindPathToTarget;
 import dtb.terminalIO.traverse.HasChildren;
 import dtb.terminalIO.traverse.HasChildrenAdapter;
+import dtb.terminalIO.traverse.Traverser;
 
 /**
  * A FocusManager is basically a 'Focusable' eventHandler that routes 
@@ -44,7 +48,11 @@ public interface FocusManager extends Focusable {
     
     public Collection<Focusable> getChildFocusables();
     
-    
+    /**
+     * Adapts a FocusManager to look like a HasChildren object.
+     * - useful when we want to use our generic traverse methods to
+     * - traverse the Focusable's within a FocusManager 
+     */
     static class FocusManagerToHasChildren implements HasChildren<Focusable> {
 
         FocusManager focusManager;
@@ -69,12 +77,16 @@ public interface FocusManager extends Focusable {
             }
             return new HasChildren.Empty<Focusable>();
         }
-        
+
     }
-    
-    
+
+
     /**
-     * Utility focus methods helpful when setting or unsetting focus
+     * Utility focus methods helpful when .. 
+     * 
+     *   setting or unSetting focus
+     *   building focusManagers from components
+     *   
      *
      */
     public static class UTIL {
@@ -121,38 +133,32 @@ public interface FocusManager extends Focusable {
 
             return pathToTarget;
         }
-        
 
         private static void addFocusableChildren(List<Focusable> focusableContainer, Object component) {
-            if (component instanceof Focusable) {
-                focusableContainer.add((Focusable)component);
+
+            if (ToFocusable.UTIL.isFocusable(component)) {
+                focusableContainer.add( ToFocusable.UTIL.toFocusable(component) );
                 return;
             }
 
-            if (component instanceof ToFocusable) {
-                focusableContainer.add(((ToFocusable)component).asFocusable());
-                return;
-            }
-            
             // component is not a focusable - maybe it has children and maybe some 
-            // of them are focusable's
+            // of them are focusable's - let's recursively find out add them if yes
             if (component instanceof HasChildren) {
                 for (Object o : ((HasChildren<?>)component).getChildren()) {
                     addFocusableChildren(focusableContainer, o);
                 }
             }
         }
-        
+
         /**
          * Given component ( which could represent a graph of components ), we will build
-         * a focusmanager that manages the graph of components within Component
+         * a focusManager that manages the graph of components within Component
          * @return
          */
         public static FocusManager buildFocusManagerFromComponent(Object component, EventBus eventBus) {
             return buildFocusManagerFromComponent(component, eventBus, ()-> new DefaultFocusManager());
         }
 
-        
         public static FocusManager buildFocusManagerFromComponent(Object component, 
                                                                   EventBus eventBus, 
                                                                   Supplier<DefaultFocusManager> defaultFocusManagerBuilder ) {
@@ -175,6 +181,67 @@ public interface FocusManager extends Focusable {
 
             return focusManager;
         }
+
+        public static Focusable findOrBuildFocusableFromComponent(Object component, EventBus eventBus) {
+            return findOrBuildFocusableFromComponent(component, eventBus, ()-> new DefaultFocusManager());
+        }
+
+        public static Focusable findOrBuildFocusableFromComponent(Object component, EventBus eventBus, Supplier<DefaultFocusManager> defaultFocusManagerBuilder) {
+            
+            if ( ToFocusable.UTIL.isFocusable(component) ) {
+                return ToFocusable.UTIL.toFocusable(component);
+            }
+
+            List<Focusable> focusables = new ArrayList<Focusable>();
+            addFocusableChildren(focusables, component);
+            if (focusables.size()==0) {
+                return null;
+            }
+            if (focusables.size()==1) {
+                return (Focusable) focusables.get(0);
+            }
+
+            DefaultFocusManager focusManager = defaultFocusManagerBuilder.get();
+            for (Focusable focusable : focusables) {
+                focusManager.addFocusable(focusable, eventBus);
+            }
+            return focusManager;
+        }
+
+        public static void verifyPathsToFocusables(FocusManager focusManager, Component<?> component) {
+
+            List<Focusable> focusables = Traverser.asList(component, (c)-> ToFocusable.UTIL.isFocusable(c) )
+                                                  .stream()
+                                                  .map((c)-> ToFocusable.UTIL.toFocusable(c))
+                                                  .collect(Collectors.toList());
+
+            if (focusables.isEmpty()) {
+                return;
+            }
+
+            List<String> failedOn = new ArrayList<String>();
+
+            for (Focusable f : focusables) {
+                List<Focusable> paths = findTargetAsPath(focusManager, f);
+                if (paths == null || paths.size()==0) {
+                    if (f instanceof Component<?>) {
+                        paths = findTargetAsPath(focusManager, f);
+                        String fAsComponentPathStr = Component.UTIL.pathToCanvasAsString((Component<?>) f);
+                        failedOn.add(fAsComponentPathStr);
+                    } else {
+                        failedOn.add("failed on " + f);
+                    }
+                }
+            }
+
+            if (failedOn.size()>0) {
+                StringJoiner sj = new StringJoiner("\n");
+                failedOn.forEach((s)-> sj.add(s));
+                throw new IllegalStateException("Failed to find focus path for:\n"+sj.toString());
+            }
+
+        }
+
 
         /**
          * Builds a focus event handler for a FocusManager to handle
@@ -248,7 +315,7 @@ public interface FocusManager extends Focusable {
                 if ( ! focusManager.hasFocus()) {
                     // FIXME: dont know how to deal with this scenario yet
                 } 
-                
+
                 // sanity check
                 if (pathToTarget.get(0) != focusManager) {
                     throw new IllegalStateException("pathToTarget does not start with root focusManager");

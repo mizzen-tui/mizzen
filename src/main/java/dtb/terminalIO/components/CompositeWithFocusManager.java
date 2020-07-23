@@ -2,6 +2,7 @@ package dtb.terminalIO.components;
 
 import java.util.Collection;
 
+import dtb.terminalIO.components.Composite.ComponentWithOffset;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
@@ -9,11 +10,11 @@ import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
-import dtb.terminalIO.events.focus.ToFocusable;
+import dtb.terminalIO.events.focus.HasFocusManager;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.position.Position;
 
-public class CompositeWithFocusManager  extends Composite implements FocusManager
+public class CompositeWithFocusManager  extends Composite implements FocusManager, HasFocusManager
 {
 
     DefaultFocusManager focusManager;
@@ -30,21 +31,65 @@ public class CompositeWithFocusManager  extends Composite implements FocusManage
 
     public DefaultFocusManager getFocusManager() {
         if (focusManager == null) {
-            this.focusManager = new DefaultFocusManager(Keys.TAB_KEYSTROKE);
+            this.focusManager = buildFocusManager();
+            populateFocusManagerWithFocusablesFromChildren();
         }
         return focusManager;
     }
+    
+    public DefaultFocusManager buildFocusManager() {
+        DefaultFocusManager focusManager = new DefaultFocusManager(Keys.TAB_KEYSTROKE);
+        focusManager.setNavKeysFirst(false);
+        return focusManager;
+    }
+    
+    // only call this once
+    private void populateFocusManagerWithFocusablesFromChildren() {
+        for (Component<?> child : getChildren()) {
+            addFocusableFromChildComponent(child);
+        }
+    }
 
+    private void addFocusableFromChildComponent(Component<?> component) {
+
+        ComponentWithOffsetWithFocusable child = (ComponentWithOffsetWithFocusable)findChildOrFail(component, "addFocusableFromChildComponent");
+        // add as a focusable if relevant
+        
+        Focusable asFocusable = FocusManager.UTIL.findOrBuildFocusableFromComponent(component, null);
+        
+        if (asFocusable != null) {
+            addFocusable(asFocusable);
+            child.asFocusable = asFocusable;
+        }
+        
+    }
+
+    static class ComponentWithOffsetWithFocusable extends ComponentWithOffset {
+
+        Focusable asFocusable;
+        
+        public ComponentWithOffsetWithFocusable(Position offset, Component<?> component) {
+            super(offset, component);
+        }
+        
+    }
+
+    protected ComponentWithOffset buildCompositeWithOffset(Position offset, Component<?> component) {
+        return new ComponentWithOffsetWithFocusable(offset, component);
+    }
+    
+
+    
     @Override
     protected ComponentWithOffset addComponentWithOffset(Position offset, Component<?> component) {
         ComponentWithOffset result = super.addComponentWithOffset(offset, component);
-        if (component instanceof Focusable) {
-            addFocusable((Focusable) component);
-        } else if (component instanceof ToFocusable) {
-            addFocusable(((ToFocusable) component).asFocusable());
+        if (focusManager == null) {
+            return result;
         }
+        addFocusableFromChildComponent(component);
         return result;
     }
+
 
     public void addFocusable(Focusable focusable) {
         getFocusManager().addFocusable(focusable);
@@ -56,9 +101,10 @@ public class CompositeWithFocusManager  extends Composite implements FocusManage
 
     @Override
     public Composite remove(Component<?> component) {
+        ComponentWithOffsetWithFocusable child = (ComponentWithOffsetWithFocusable)findChildOrFail(component, "remove");
         Composite result = super.remove(component);
-        if (component instanceof Focusable) {
-            removeFocusable((Focusable) component);
+        if (child.asFocusable != null) {
+            removeFocusable(child.asFocusable);
         }
         return result;
     }

@@ -44,9 +44,9 @@ public class Composite extends AbstractComponent<Composite>
             this.setComponent(component);
         }
 
-        public ComponentWithOffset(Component<?> component) {
-            this(Position.ZERO, component);
-        }
+//        public ComponentWithOffset(Component<?> component) {
+//            this(Position.ZERO, component);
+//        }
 
         protected void calcBounds() {
             if (this.offset == null || this.component == null) {
@@ -313,8 +313,12 @@ public class Composite extends AbstractComponent<Composite>
         childrenInZOrder.remove(componentWithOffset);
     }
     
+    protected ComponentWithOffset buildCompositeWithOffset(Position offset, Component<?> component) {
+        return new ComponentWithOffset(offset, component);
+    }
+    
     protected ComponentWithOffset addComponentWithOffset(Position offset, Component<?> component) {
-        ComponentWithOffset componentWithOffset = new ComponentWithOffset(offset, component);
+        ComponentWithOffset componentWithOffset = buildCompositeWithOffset(offset, component);
         addChild(componentWithOffset);
         component.setParentContainer(this);
         return componentWithOffset;

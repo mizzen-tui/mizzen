@@ -121,7 +121,7 @@ public class ChainedEventHandler implements EventHandler, EventHandlerContainer 
             return;
         }
         if (eventHandler instanceof OnIdleEventEventHandler) {
-            throw new IllegalArgumentException("Cannot attached an OnIdleEventHandler to this type of ChainedEventHandler!");
+            throw new IllegalArgumentException("Cannot attach an OnIdleEventHandler to this type of ChainedEventHandler!");
         }
     }
     

@@ -42,9 +42,9 @@ public class TestScale {
 
 
     static Component<?> buttons(EventHandler upAction,
-                             EventHandler downAction,
-                             EventHandler leftAction,
-                             EventHandler rightAction) {
+                                EventHandler downAction,
+                                EventHandler leftAction,
+                                EventHandler rightAction) {
         CompositeWithFocusManager buttonPanel = new CompositeWithFocusManager();
         buttonPanel.getFocusManager().setNextKeyStroke(Keys.DOWN_KEYSTROKE);
         buttonPanel.getFocusManager().setPrevKeyStroke(Keys.UP_KEYSTROKE);
@@ -162,7 +162,7 @@ public class TestScale {
                            return true;
                        }
 
-                   };                   
+                   };
                    delayedDraw.setTimerDelayMillis(75);
 
                    HorizontalPanel hp = new HorizontalPanel();
@@ -224,6 +224,8 @@ public class TestScale {
                    mainFocusManager.setNextKeyStroke(Keys.TAB_KEYSTROKE);
 
                    tApp.getEventBus().appendEventHandler(  mainFocusManager );
+                   
+                   FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
 
                }).start();
         

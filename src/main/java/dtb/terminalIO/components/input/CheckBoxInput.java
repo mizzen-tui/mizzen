@@ -174,8 +174,7 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
                     requestHideCursor(eventBus);
                 }
             }
-            
-            
+
             @Override
             public void handle(TerminalEvent<?> te) {
                 
@@ -195,9 +194,9 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
                 if (!(te instanceof KeyEvent)) {
                     return null;
                 }
-                
+
                 KeyEvent ke = (KeyEvent) te; 
-                
+
                 if (ke.isKeyStroke( Keys.ENTER_KEYSTROKE )  || ke.isKeyStroke(Keys.SPACE_KEYSTROKE)) {
                     return this;
                 }

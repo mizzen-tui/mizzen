@@ -42,32 +42,14 @@ public class ComponentWithFocusManager extends AbstractComponent<ComponentWithFo
         super(color);
         this.container = container;
         this.container.setParentContainer(this);
-        this.focusManager = new DefaultFocusManager();
+        this.focusManager = FocusManager.UTIL.buildFocusManagerFromComponent(this.container, null);
     }
 
     public ComponentWithFocusManager(Composite container) {
         this(container.getColor(), container);
     }
 
-    public ComponentWithFocusManager(Color color, Composite container, Function<EventBus, FocusManager> focusManagerBuilder) {
-        super(color);
-        this.container = container;
-        this.container.setParentContainer(this);
-        this.focusManagerBuilder = focusManagerBuilder;
-    }
-    
-    public ComponentWithFocusManager(Color color, Composite container, FocusManager focusManager) {
-        super(color);
-        this.container = container;
-        this.container.setParentContainer(this);
-        this.focusManager = focusManager;
-    }
 
-    public ComponentWithFocusManager(Color color) {
-        this(color, new Composite(color));
-    }
-    
-    
     public Composite getContainer() {
         return container;
     }
@@ -94,7 +76,7 @@ public class ComponentWithFocusManager extends AbstractComponent<ComponentWithFo
         }
         return this.focusManager;
     }
-    
+
     private ChainedEventHandler getOrBuildChainedEventHandler() {
         if (chainedEventHandler == null) {
             chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
@@ -102,7 +84,7 @@ public class ComponentWithFocusManager extends AbstractComponent<ComponentWithFo
         }
         return chainedEventHandler;
     }
-    
+
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
         segments.merge(this.container.getSegmentsBuffer());

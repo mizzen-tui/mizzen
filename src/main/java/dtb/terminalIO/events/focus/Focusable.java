@@ -60,5 +60,4 @@ public interface Focusable extends ConditionalEventHandler {
     }
 
 
-    
 }

@@ -5,12 +5,14 @@ import java.io.IOException;
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.ButtonBar;
+import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.modal.MessageBox;
 import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
+import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
@@ -64,8 +66,9 @@ public class ButtonBarTest {
                                         "Exit app using "+ Keys.CTRL_C_KEYSTROKE.getName()+ " ");
                                 tApp.doRefreshCanvasIfModified();
                             }));
-                    
 
+                    // sanity check
+                    FocusManager.UTIL.verifyPathsToFocusables(bbar1, (Component<?>)tApp.getMainApplicationPanel());
 
                 }).start();
 

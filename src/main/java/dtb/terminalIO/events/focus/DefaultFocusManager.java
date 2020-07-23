@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import dtb.terminalIO.components.input.DefaultFocusableBehaviour;
@@ -47,12 +49,14 @@ public class DefaultFocusManager implements FocusManager, HasChildren<Focusable>
         this.nextKeyStroke = nextKeyStroke;
     }
 
-    public void setPrevKeyStroke(KeyStroke prevKeyStroke) {
+    public DefaultFocusManager setPrevKeyStroke(KeyStroke prevKeyStroke) {
         this.prevKeyStroke = prevKeyStroke;
+        return this;
     }
 
-    public void setNextKeyStroke(KeyStroke nextKeyStroke) {
+    public DefaultFocusManager setNextKeyStroke(KeyStroke nextKeyStroke) {
         this.nextKeyStroke = nextKeyStroke;
+        return this;
     }
 
     public DefaultFocusManager(KeyStroke nextKeyStroke) {
@@ -203,6 +207,28 @@ public class DefaultFocusManager implements FocusManager, HasChildren<Focusable>
         };
     }
 
+    private boolean handleHotkeyPressed(KeyEvent te) {
+        KeyStroke pressedKey = ((KeyEvent) te).getKeyStroke();
+
+        Focusable focusable = getCurrentOrSet(te.getEventBus());
+        
+        for (Focusable focusableOther : eventConsumers) {
+            if (focusableOther == focusable) {
+                continue;
+            }
+
+            Collection<KeyStroke> hotKeys = HasHotKey.UTIL.getAllHotKeys(focusableOther);
+            if (hotKeys.contains(pressedKey)) {
+                setChildAsCurrentFocus(focusableOther, te.getEventBus());
+                if (focusableOther.canHandle(te) != null) {
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    }
+    
     /**
      * Builds a keyStroke eventHandler.
      */
@@ -237,23 +263,29 @@ public class DefaultFocusManager implements FocusManager, HasChildren<Focusable>
                 if (!IS_KEYPRESS.test(te)) {
                     return false; // not a keyboard event, so not a hotkey
                 }
+                
+                boolean handled = handleHotkeyPressed((KeyEvent) te);
 
+                return handled;
+                
+                /*
                 KeyStroke pressedKey = ((KeyEvent) te).getKeyStroke();
 
-                for (Focusable focuableOther : eventConsumers) {
-                    if (focuableOther == focusable) {
+                for (Focusable focusableOther : eventConsumers) {
+                    if (focusableOther == focusable) {
                         continue;
                     }
 
-                    Collection<KeyStroke> hotKeys = HasHotKey.UTIL.getAllHotKeys(focuableOther);
+                    Collection<KeyStroke> hotKeys = HasHotKey.UTIL.getAllHotKeys(focusableOther);
                     if (hotKeys.contains(pressedKey)) {
-                        setChildAsCurrentFocus(focuableOther, te.getEventBus());
-                        if (focuableOther.canHandle(te) != null) {
+                        setChildAsCurrentFocus(focusableOther, te.getEventBus());
+                        if (focusableOther.canHandle(te) != null) {
                             return true;
                         }
                     }
                 }
                 return false;
+                */
             }
         };
 
@@ -322,6 +354,12 @@ public class DefaultFocusManager implements FocusManager, HasChildren<Focusable>
 
                 if (IS_KEYPRESS.test(te)) {
                     KeyEvent ke = (KeyEvent) te;
+                    
+                    // at this point let's look at hot keys..
+                    if ( handleHotkeyPressed((KeyEvent) te)) {
+                        return true;
+                    }
+                    
                     if (prevKeyStroke != null && ke.isKeyStroke(prevKeyStroke) && getPrev(te.getEventBus()) != null) {
                         return true;
                     } else if (nextKeyStroke != null && ke.isKeyStroke(nextKeyStroke) && getNext(te.getEventBus()) != null) {
@@ -448,4 +486,21 @@ public class DefaultFocusManager implements FocusManager, HasChildren<Focusable>
     public Collection<Focusable> getChildFocusables() {
         return eventConsumers;
     }
+
+    public static boolean applyIfDefaultFocusManager(Object o, Consumer<DefaultFocusManager> apply) {
+        if (o == null) {
+            throw new NullPointerException("null object (o) passed to applyIfDefaultFocusManager()");
+        }
+        if (o instanceof DefaultFocusManager) {
+            apply.accept((DefaultFocusManager)o);
+            return true;
+        }
+        if (o instanceof HasFocusManager) {
+            return applyIfDefaultFocusManager(((HasFocusManager)o).getFocusManager(), apply);
+        }
+        
+        return false;
+    }
+    
+    
 }

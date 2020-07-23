@@ -4,7 +4,7 @@ import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.geom.position.PositionHorizontalRelative;
 
-public class HorizontalPanel extends Composite {
+public class HorizontalPanel extends Composite/*WithFocusManager*/ {
 
     int horizontalSpacer = 1;
     

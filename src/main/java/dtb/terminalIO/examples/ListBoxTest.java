@@ -30,6 +30,7 @@ import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
+import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.InputEventsProducer;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
@@ -271,30 +272,20 @@ public class ListBoxTest {
                return;
            }
        };
-       
+
        eventBus.appendEventHandler(new OnRequestUpdateCanvasEventHandler(renderComponents));
-       
-       
+
+
        eventBus.appendEventHandler( new HasValue.OnValueChangedEventHandler<String>(lb1) {
-           
+
            StringDisplayValue[]  currentList = weird;
-           
+
            @Override
            public void valueChanged(TerminalEvent<?> te, HasValue<String> source) {
                String newValue = source.getValue();
                eventDisplayer.setTextAndResize("Pressed = "+newValue);
-               
-//               if ("WAY!".equals(newValue)) {
-//                   MessageBox.showInfoDialog( eventBus , mainPanel, "Way to go Joe!");
-//               }
-//               if ("Blue Suede Shoes".equals(newValue)) {
-//                   MessageBox.showErrorDialog( eventBus , mainPanel, "Don't step on my Blue Suede shoes!");
-//               }
-//               
-//               if ("Pink Flamingos".equals(newValue)) {
-//                   MessageBox.showWarningDialog( eventBus , mainPanel, "Not in my front lawn!\nTOO TACKY!!");
-//               }
-               
+
+
                StringDisplayValue[]  newList = currentList;
 
                if (newValue.contains("Claus")) {
@@ -309,7 +300,7 @@ public class ListBoxTest {
                renderComponents.run();
            }
        });
-       
+
        eventBus.appendEventHandler( new HasValue.OnValueChangedEventHandler<String>(lb2) {
 
            @Override
@@ -319,7 +310,7 @@ public class ListBoxTest {
                renderComponents.run();
            }
        });
-       
+
        eventBus.appendEventHandler(
                new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), new EventHandler() {
                    @Override
@@ -329,7 +320,6 @@ public class ListBoxTest {
                    }
                }));
 
-       
        eventBus.appendEventHandler(master_canvas.asShowCursorEventHandler());
        eventBus.appendEventHandler(master_canvas.asHideCursorEventHandler());
 
@@ -340,33 +330,37 @@ public class ListBoxTest {
                                           "  Exit application?  ",
                                           (e)->terminate.handle(te));
 
-
        };
 
        eventBus.appendEventHandler(new KeyInputEventHandler(confirmTerminate, Keys.CTRL_C_KEYSTROKE, Keys.ESC_KEYSTROKE));
 
        TestsCommon.addNoGraphicsToggleEvent(eventBus, screen, renderComponents);
-       
+
        DefaultFocusManager fm = new DefaultFocusManager(Keys.LEFT_KEYSTROKE, Keys.RIGHT_KEYSTROKE).setOnFocusChanged((f,e)->renderComponents.run());
        fm.addFocusable( lb1_sc, eventBus );
        fm.addFocusable( lb2.asFocusable(), eventBus  );
        fm.addFocusable( lb3, eventBus  );
        fm.addFocusable( lb4, eventBus  );
-       
+
        lb1_sc.prependEventHandler( lb1.asFocusable() );
        SearchFunctionForScrollableComponent.addFinderToScrollable(lb1_sc);
 
        eventBus.appendEventHandler(fm);
-       
+
        eventBus.appendIdleEventHandler( new OnIdleEventEventHandler.RepeatingInterval(200, (te)-> renderComponents.run() ));
-       
+
        InputEventsProducer keyInputEventsProducer = null;
        try {
+           // sanity check
+           FocusManager.UTIL.verifyPathsToFocusables(fm, mainPanel);
+
            keyInputEventsProducer = new InputEventsProducer(eventBus);
        } catch (Exception e) {
            eventBus.stopConsuming();
            return;
        }
+       
+       
        
 
     }

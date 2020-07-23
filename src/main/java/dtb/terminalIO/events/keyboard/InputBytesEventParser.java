@@ -142,7 +142,7 @@ public class InputBytesEventParser {
 
         // mouse pattern = 27   ,91  ,77 ,    35    ,  45
         //                 ESC  , ]  , M , (col+33) ,  (row+33)
-        
+
         // CPR pattern   = 27   ,91  , 49 ,    59   , 49 , 82
         //                 ESC  , ]  , 1  ,    ;    , 1  , R
         
@@ -161,7 +161,6 @@ public class InputBytesEventParser {
                 resetTo_STATE_START();
                 return;
             }
-            
 
             if (ch >= 0x20) {
                 // Normal character

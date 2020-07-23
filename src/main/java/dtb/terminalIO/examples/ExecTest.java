@@ -4,12 +4,14 @@ import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 import dtb.terminalIO.app.TUIApp;
+import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.LinuxProcessViewer;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.VerticalPanel;
 import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
+import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
@@ -211,6 +213,11 @@ public class ExecTest {
             }
             lprocViewer2.setLinuxProcessWatcher( new LinuxProcessWatcher().setInvokeScript("./slowRunner.sh testme")  );
             lprocViewer2.invoke(tApp.getEventBus());
+            
+            
+            
+            FocusManager.UTIL.verifyPathsToFocusables(focusManager, (Component<?>)tApp.getMainApplicationPanel());
+            
         });
         
         app.start();

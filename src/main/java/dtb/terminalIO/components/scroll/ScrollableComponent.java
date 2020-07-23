@@ -693,7 +693,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         }
 
         FocusManager componentBeingViewedFocusManager = buildFocusManagerFromComponent();
-        
+
         if (componentBeingViewedFocusManager != null) {
             childFocusables = new ArrayList<Focusable>();
             childFocusables.add(componentBeingViewedFocusManager);
@@ -704,26 +704,25 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         }
 
         childFocusables = new ArrayList<Focusable>();
-        
+
         if (componentBeingViewed instanceof Focusable) {
             childFocusables.add((Focusable)componentBeingViewed);
-            if (footerControls != null) {
-                childFocusables.add(footerControls);
-            }
+        }
+        if (footerControls != null) {
+            childFocusables.add(footerControls);
         }
 
         return childFocusables;
 
     }
-    
+
     private Supplier<DefaultFocusManager> defaultFocusManagerBuilder = ()-> new DefaultFocusManager();
-    
+
     public ScrollableComponent setDefaultFocusManagerBuilder(Supplier<DefaultFocusManager> defaultFocusManagerBuilder) {
         this.defaultFocusManagerBuilder = defaultFocusManagerBuilder;
         return this;
     }
-    
-    
+
 
     private FocusManager buildFocusManagerFromComponent() {
         FocusManager componentBeingViewedFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(componentBeingViewed, 

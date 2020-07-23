@@ -39,26 +39,25 @@ public class FindPathToTarget<T> {
 
             @Override
             public int visit(T o) {
-                
+
                 depth[0]++;
-                
+
                 theSTACK.push(o);
-                
+
                 if (o == target) {
                     found[0] = true;
                     return Traverser.STOP_TRAVERSE;
                 }
-                
+
                 return Traverser.CONTINUE_TRAVERSE;
             }
             
         }, (o)->{depth[0]--;  if (!found[0]) theSTACK.pop(); });
 
-        
         if (! found[0]) {
             return null;
         }
-        
+
         return new ArrayList<T>(theSTACK);
     }
     

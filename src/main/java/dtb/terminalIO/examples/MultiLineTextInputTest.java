@@ -3,15 +3,16 @@ package dtb.terminalIO.examples;
 import java.io.IOException;
 
 import dtb.terminalIO.app.TUIApp;
+import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.input.MultiLineTextInput;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
+import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
-import dtb.terminalIO.util.Logging;
 
 public class MultiLineTextInputTest {
 
@@ -35,14 +36,16 @@ public class MultiLineTextInputTest {
                                                              mTextBox,
                                                              ()-> new DefaultFocusManager(Keys.SHIFT_TAB_KEYSTROKE, Keys.TAB_KEYSTROKE).setNavKeysFirst(false));
             sc.setFillOnClear(false);
-            
+
             sc.resize(  new Dimension.Simple(sc.getHeight()-2, sc.getWidth()));
-            
+
             tApp.getMainApplicationPanel().add(2,0, sc);
 
             tApp.getEventBus().appendEventHandler( sc );
 
             mTextBox.setText("Hello World!\n");
+
+            FocusManager.UTIL.verifyPathsToFocusables(sc, (Component<?>)tApp.getMainApplicationPanel());
 
         }).start();
 

@@ -4,11 +4,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.geom.position.PositionVerticalRelative;
 
-public class VerticalPanel extends Composite {
+public class VerticalPanel extends Composite /*WithFocusManager*/ {
 
     private int verticalSpacer = 0;
 
@@ -31,6 +32,13 @@ public class VerticalPanel extends Composite {
         fullrecalcDim();
         return this;
     }
+    
+    public DefaultFocusManager buildFocusManager() {
+        DefaultFocusManager focusManager = new DefaultFocusManager();
+        focusManager.setNavKeysFirst(false);
+        return focusManager;
+    }
+
 
     public Composite add(Component<?> component) {
 
@@ -51,9 +59,9 @@ public class VerticalPanel extends Composite {
             anchor = getChildrenComponentsWithOffset().get(childrenSize-1);
         }
 
-        return super.add(  makeOffsetForChild(anchor, verticalSpacer) , component);     
+        return super.add(makeOffsetForChild(anchor, verticalSpacer) , component);
     }
-    
+
     public Composite remove(Component<?> component) {
         ComponentWithOffset child = findChildOrFail(component, "remove");
         super.remove(component);

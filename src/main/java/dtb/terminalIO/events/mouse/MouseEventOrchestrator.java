@@ -1,5 +1,8 @@
 package dtb.terminalIO.events.mouse;
 
+import java.util.function.BiFunction;
+import java.util.function.Function;
+
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.input.Clickable;
 import dtb.terminalIO.controlcodes.ControlCode;
@@ -204,30 +207,43 @@ public class MouseEventOrchestrator {
                 // componentClicked - might not be a Focusable .. so go up its ancestors
                 // and find an ancestor that is focusable
 
-                while ( componentClicked!= null && 
-                        !(componentClicked instanceof Focusable) &&
-                        !(componentClicked instanceof ToFocusable)) {
-                    componentClicked = (Component<?>)componentClicked.getParentContainer();
-                }
+                BiFunction<Component<?>,Boolean,Component<?>> findFocusableParent = (c,isClickableRequired) -> {
+                    while ( c != null ) {
+                        if (ToFocusable.UTIL.isFocusable(c)) {
+                            if ( ! isClickableRequired ) {
+                                return c;
+                            }
+                            if (c instanceof Clickable) {
+                                return c;
+                            }
+                        }
+                        c = (Component<?>)c.getParentContainer();
+                    }
+                    return c;
+                };
+                
 
+                componentClicked = findFocusableParent.apply(componentClicked, false);
+                
                 if (componentClicked == null) {
                     return;
                 }
 
-                Focusable focusComponent = null;
-
-                if (componentClicked instanceof Focusable) {
-                    focusComponent = (Focusable)componentClicked;
-                } else if (componentClicked instanceof ToFocusable) {
-                    focusComponent = ((ToFocusable) componentClicked).asFocusable();
-                }
+                Focusable focusComponent = ToFocusable.UTIL.toFocusable(componentClicked);
 
                 if (focusComponent != null) {
                     eventBus.raiseEvent( new RequestFocusEvent(focusComponent));
+                    componentClicked = findFocusableParent.apply(componentClicked, true);
                     if (componentClicked instanceof Clickable) {
                         Clickable clickable = (Clickable)componentClicked;
-                        Focusable focusableClickable = focusComponent;
+                        Focusable focusableClickable = ToFocusable.UTIL.toFocusable(componentClicked);
+                        if (focusableClickable == null) {
+                            return;
+                        }
                         eventBus.appendEventHandler( new OnIdleEventEventHandler.OneTime((te2)-> {
+                            if (focusComponent.hasFocus()) {
+                                int x = 2;
+                            }
                             if (focusableClickable.hasFocus()) {
                                 // map mouse position as an offset into the clicked component
                                 // and pass the component a new mouse event with this offset
