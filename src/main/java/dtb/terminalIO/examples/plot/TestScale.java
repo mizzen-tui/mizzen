@@ -124,11 +124,11 @@ public class TestScale {
                    ListBox<Shape> shapesChoiceComponent = shapeChooser();
 
                    Supplier<Dimension> computeGridSize = ()-> {
-                       return new Dimension.Simple(tApp.getMainApplicationPanel().getHeight()-10,
+                       return new Dimension.Simple(tApp.getMainApplicationPanel().getHeight()-15,
                                                    tApp.getMainApplicationPanel().getWidth()-shapesChoiceComponent.getWidth()-20);
                    };
 
-                   Dimension gridSize = computeGridSize.get();
+                   Dimension gridSize = new Dimension.SupplierAsDimension(computeGridSize);
 
                    BrailleGrid grid = new BrailleGrid(Colors.BGre, gridSize);
 
@@ -144,6 +144,7 @@ public class TestScale {
                        grid.clearPlots();
                        shape.draw(xyTranslatePlotter);
                        grid.markAsDirty();
+                       tApp.doRefreshCanvasIfModified();
                    };
 
                    tApp.getEventBus().appendEventHandler( new HasValue.OnValueChangedEventHandler<Shape>(shapesChoiceComponent) {
@@ -164,7 +165,7 @@ public class TestScale {
                        }
 
                    };
-                   delayedDraw.setTimerDelayMillis(75);
+                   delayedDraw.setTimerDelayMillis(15);
 
                    HorizontalPanel hp = new HorizontalPanel();
                    hp.add(navButtonsPanel(
@@ -205,13 +206,10 @@ public class TestScale {
                    intervalFormContainer.add(new TextComponent("Idle-key wait time: "));
                    intervalFormContainer.add(intervalControl);
 
-                   tApp.getEventBus().appendEventHandler(new HasValue.OnValueChangedEventHandler<Integer>(intervalControl) {
-                       @Override
-                       public void valueChanged(TerminalEvent<?> te, HasValue<Integer> value) {
-                           msg.accept("NBR  "+ value.getValue());
-                           if (value.getValue() != null && value.getValue()>1) {
-                               InputEventsProducer.IDLE_INTERVAL = value.getValue(); 
-                           }
+                   intervalControl.onChange((te,newValue)-> {
+                       msg.accept("NBR  "+ newValue);
+                       if (newValue != null && newValue > 1) {
+                           InputEventsProducer.IDLE_INTERVAL = newValue;
                        }
                    });
                    
@@ -225,14 +223,14 @@ public class TestScale {
                    vp.add(counterText);
 
                    tApp.getMainApplicationPanel().add(vp);
-
+/*
                    tApp.getEventBus().appendIdleEventHandler(new RepeatingInterval(75,
                            (e)-> {
                                 counter[0]++;
                                 counterText.setTextAndResize(counter[0]+"");
                                 tApp.doRefreshCanvasIfModified();
                            }));
-
+*/
                    ((Composite)tApp.getMainApplicationPanel()).setBorder(true);
 
                    DefaultFocusManager mainFocusManager = (DefaultFocusManager)FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),tApp.getEventBus());

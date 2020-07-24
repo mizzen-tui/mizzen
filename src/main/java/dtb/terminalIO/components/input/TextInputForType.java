@@ -2,6 +2,7 @@ package dtb.terminalIO.components.input;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import dtb.terminalIO.components.BoundedComponent;
@@ -24,6 +25,7 @@ public class TextInputForType<T>  extends BoundedComponent<TextInputForType<T>> 
     private Function<String,Boolean> validate;
     private Function<String, T> translateToType;
     private ConditionalEventHandler eventHandler;
+    private ChainedEventHandler chainedHandler;
     
     
     public TextInputForType(Color color, int length, 
@@ -41,6 +43,16 @@ public class TextInputForType<T>  extends BoundedComponent<TextInputForType<T>> 
             }
         };
         this.textInput.setParentContainer(this);
+        
+        this.textInput.onChange((te, s)->{
+            if (getValue() == null) {
+                return;
+            }
+            // re-emit a new ValueChangedEvent event indicating that the 'typed' value of this 
+            // outer component has changed  
+            te.getEventBus().raiseEvent(new HasValue.ValueChangedEvent<T>(TextInputForType.this));
+        });
+        
     }
 
     @Override
@@ -52,34 +64,31 @@ public class TextInputForType<T>  extends BoundedComponent<TextInputForType<T>> 
         this.textInput.setText(text);
     }
 
+    HasValue.OnValueChangedEventHandler<T> onChangeHandler;
+    
+    public void onChange(BiConsumer<TerminalEvent<?>, T> consumeChange) {
+
+        onChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, onChangeHandler, getChainedEventHandler(), consumeChange);
+
+    }
+    
     private ConditionalEventHandler getEventHandler() {
         if (this.eventHandler != null) {
             return this.eventHandler;
         }
         
-        // an event handler that routes most incoming events to the internal textInput and
-        // additionally captures and 'handles' ValueChangedEvent's emitted from textInput
-        
-        ChainedEventHandler chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
-
-        // external listeners don't care if the contents of 'this.textInput' are changed..
-        // but the listeners do care when the value of this component has changed
-        chainedHandler.appendEventHandler(new OnValueChangedEventHandler<String>(this.textInput) {
-            @Override
-            public void valueChanged(TerminalEvent<?> te, HasValue<String> source) {
-                if (getValue() == null) {
-                    return;
-                }
-                // re-emit a new ValueChangedEvent event indicating that the 'typed' value of this 
-                // outer component has changed  
-                te.getEventBus().raiseEvent(new HasValue.ValueChangedEvent<T>(TextInputForType.this));
-            }
-        });
-        chainedHandler.appendEventHandler(this.textInput);
-        
-        this.eventHandler = chainedHandler.asConditionalEventHandler();
+        this.eventHandler = getChainedEventHandler().asConditionalEventHandler();
         
         return this.eventHandler;
+    }
+    
+    private ChainedEventHandler getChainedEventHandler() {
+        if (this.chainedHandler != null) {
+            return this.chainedHandler;
+        }
+        this.chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
+        chainedHandler.appendEventHandler(this.textInput);
+        return this.chainedHandler;
     }
 
     

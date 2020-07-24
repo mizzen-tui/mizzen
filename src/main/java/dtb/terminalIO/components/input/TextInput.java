@@ -2,6 +2,7 @@ package dtb.terminalIO.components.input;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 import dtb.terminalIO.components.BoundedComponent;
@@ -14,10 +15,7 @@ import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
-import dtb.terminalIO.events.EventHandlerContainer;
-import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.RequestHideCursorEvent;
-import dtb.terminalIO.events.RequestShowCursorEvent;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.Focusable;
@@ -391,7 +389,7 @@ public class TextInput extends BoundedComponent<TextInput>
             }
         }, (te) -> {
             // then probably a simple char - so lets see if its ascii
-            // TODO: I have discovered an problem ( try CTRL-UP ) it generates
+            // TODO: I have discovered a problem ( try CTRL-UP ) it generates
             // multiple keystroke events - which is incorrect - issue with key input parser
             // dont try to handle this bug here - do it in the parser
             // String name = ke.getEventData().getName();
@@ -437,6 +435,14 @@ public class TextInput extends BoundedComponent<TextInput>
         return focusable;
     }
 
+    HasValue.OnValueChangedEventHandler<String> onChangeHandler;
+    
+    public void onChange(BiConsumer<TerminalEvent<?>, String> consumeChange) {
+
+        onChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, onChangeHandler, getChainedEventHandler(), consumeChange);
+
+    }
+    
     @Override
     public Collection<? extends Component<?>> getChildren() {
         return Collections.singleton(this.textRenderer);

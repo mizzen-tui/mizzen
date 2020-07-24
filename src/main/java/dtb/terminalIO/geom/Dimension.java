@@ -2,6 +2,7 @@ package dtb.terminalIO.geom;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.function.Supplier;
 
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.textsegments.CleanString;
@@ -24,7 +25,22 @@ public interface Dimension {
     }
 
     
-    public static class Delegate implements Dimension {
+    public static abstract class AbstractDelegate implements Dimension {
+        
+        abstract protected Dimension getSize();
+        
+        @Override
+        public int getWidth() {
+            return getSize().getWidth();
+        }
+
+        @Override
+        public int getHeight() {
+            return getSize().getHeight();
+        }
+        
+    }
+    public static class Delegate extends AbstractDelegate {
         Dimension size;
 
         public Delegate(Dimension size) {
@@ -36,17 +52,28 @@ public interface Dimension {
         }
 
         @Override
-        public int getWidth() {
-            return size.getWidth();
+        protected Dimension getSize() {
+            return this.size;
+        }
+
+    }
+    
+    public static class SupplierAsDimension extends AbstractDelegate {
+        
+        Supplier<Dimension> derivedDimension;
+        
+        public SupplierAsDimension(Supplier<Dimension> derivedDimension) {
+            this.derivedDimension = derivedDimension;
         }
 
         @Override
-        public int getHeight() {
-            return size.getHeight();
+        protected Dimension getSize() {
+            return derivedDimension.get();
         }
-
-
+        
     }
+
+    
     
     /**
      * Simple implementation of {@link Dimension}

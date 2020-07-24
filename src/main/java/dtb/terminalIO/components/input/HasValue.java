@@ -1,10 +1,12 @@
 package dtb.terminalIO.components.input;
 
+import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
 import dtb.terminalIO.events.AbstractTimedRequestedController;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.EventHandlerContainer;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 
@@ -131,4 +133,28 @@ public interface HasValue<V> {
 
     }
 
+    public static class UTIL {
+        public static <T> HasValue.OnValueChangedEventHandler<T> bindConsumerAsOnValueChangedHandler(HasValue<T> hasValueContainer, 
+                                                                              HasValue.OnValueChangedEventHandler<T> previousOnChangeHandler,
+                                                                              EventHandlerContainer eventHandlerContainer,
+                                                                              BiConsumer<TerminalEvent<?>, T> consumeChange) {
+            // build new handler
+            HasValue.OnValueChangedEventHandler<T> newOnChange = new HasValue.OnValueChangedEventHandler<T>(hasValueContainer) {
+                @Override
+                public void valueChanged(TerminalEvent<?> te, HasValue<T> valueContainer) {
+                    consumeChange.accept(te, valueContainer.getValue());
+                }
+            };
+            
+            // remove old
+            if (previousOnChangeHandler != null) {
+                eventHandlerContainer.removeEventHandler(previousOnChangeHandler);
+            }
+            
+            // attach new
+            eventHandlerContainer.appendEventHandler(newOnChange);
+            return newOnChange;
+        }
+    }
+    
 }
