@@ -32,7 +32,7 @@ import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 
 public class TextInput extends BoundedComponent<TextInput>
-        implements HasValue<String>, ParentContainer, Focusable, EventHandlerContainer {
+        implements HasValue<String>, ParentContainer, Focusable /*, EventHandlerContainer*/ {
 
     private TextComponent textRenderer;
     private StringBuffer buffer;
@@ -124,15 +124,21 @@ public class TextInput extends BoundedComponent<TextInput>
         if (text == null) {
             text = "";
         }
-        this.__setText(text);
+        this.setTextOnControl(text);
         this.caret = new Position.Simple(caret.getRow(), this.getText().length());
         this.maxTextWidth = Math.max(this.getWidth(), this.getText().length());
     }
 
-    private void __setText(String text) {
-        this.buffer = new StringBuffer(text);
-        this.textRenderer.setText(this.buffer.toString());
-        this.markAsDirty();
+    protected boolean validateText(String newText) {
+        return true;
+    }
+
+    protected void setTextOnControl(String text) {
+        if (validateText(text)) {
+            this.buffer = new StringBuffer(text);
+            this.textRenderer.setText(this.buffer.toString());
+            this.markAsDirty();
+        }
     }
 
     public String getText() {
@@ -202,8 +208,12 @@ public class TextInput extends BoundedComponent<TextInput>
             } else if (caret.getCol() >= currentText.length()) { // ABCDE[]
                 currentText = currentText + ch;
             }
+            if ( ! validateText(currentText)) {
+                return false;
+            }
+            
             caretOffsetAdd(0, 1);
-            this.__setText(currentText);
+            this.setTextOnControl(currentText);
             return true;
         }
     }
@@ -220,10 +230,13 @@ public class TextInput extends BoundedComponent<TextInput>
             } else if (caret.getCol() >= currentText.length()) { // ABCDE[]
                 currentText = currentText.substring(0, currentText.length() - 1);
             }
+            if ( ! validateText(currentText)) {
+                return false;
+            }
             if (caret.getCol() > 0) {
                 caretOffsetAdd(0, -1);
             }
-            this.__setText(currentText);
+            this.setTextOnControl(currentText);
             return true;
         }
     }
@@ -240,7 +253,10 @@ public class TextInput extends BoundedComponent<TextInput>
                 } else {
                     currentText = currentText.substring(0, caret.getCol()) + currentText.substring(caret.getCol() + 1);
                 }
-                this.__setText(currentText);
+                if ( ! validateText(currentText)) {
+                    return false;
+                }
+                this.setTextOnControl(currentText);
                 return true;
             }
         }
@@ -272,20 +288,20 @@ public class TextInput extends BoundedComponent<TextInput>
         return this;
     }
 
-    public TextInput prependEventHandler(ConditionalEventHandler eventHandler) {
-        this.getChainedEventHandler().prependEventHandler(eventHandler);
-        return this;
-    }
+//    public TextInput prependEventHandler(ConditionalEventHandler eventHandler) {
+//        this.getChainedEventHandler().prependEventHandler(eventHandler);
+//        return this;
+//    }
 
     public TextInput appendEventHandler(ConditionalEventHandler eventHandler) {
         this.getChainedEventHandler().appendEventHandler(eventHandler);
         return this;
     }
-
-    public TextInput removeEventHandler(ConditionalEventHandler eventHandler) {
-        this.getChainedEventHandler().removeEventHandler(eventHandler);
-        return this;
-    }
+//
+//    public TextInput removeEventHandler(ConditionalEventHandler eventHandler) {
+//        this.getChainedEventHandler().removeEventHandler(eventHandler);
+//        return this;
+//    }
 
     @Override
     public void setFocus(boolean focus, EventBus eventBus) {

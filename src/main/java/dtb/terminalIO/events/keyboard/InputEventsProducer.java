@@ -33,6 +33,8 @@ import dtb.terminalIO.util.Stty;
  */
 public class InputEventsProducer implements Runnable { 
 
+    public static int IDLE_INTERVAL = 60;
+    
     private InputStream   inputStream;
     private EventBus      eventBus;
 //    private Reader        input;
@@ -155,7 +157,7 @@ public class InputEventsProducer implements Runnable {
     private void generateStarvedIdleEvent() {
         // we will do an idle event if too much time has elapsed
         long elapsed = System.currentTimeMillis() - lastIdleEventTime;
-        if (elapsed > 60) {
+        if (elapsed > IDLE_INTERVAL) {
                 eventBus.raiseEvent(new OnIdleEvent(this));
                 lastIdleEventTime = System.currentTimeMillis();
         }

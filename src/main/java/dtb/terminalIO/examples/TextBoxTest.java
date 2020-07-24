@@ -53,15 +53,15 @@ public class TextBoxTest {
             
             VerticalPanel panel2 = new VerticalPanel();
             panel2.setTitle("Panel 2");
-            
+
             TextInput ti = new TextInput(10);
-            
+
             panel1.add(ti);
-                    
+
             ti.setText("Test");
-            
+
             TextInput ti_2 = new TextInput(15);
-            
+
             ti_2.setText("Test 2");
             panel1.add(ti_2);
             

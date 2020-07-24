@@ -18,6 +18,7 @@ import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.input.DisplayableValue;
 import dtb.terminalIO.components.input.HasValue;
 import dtb.terminalIO.components.input.ListBox;
+import dtb.terminalIO.components.input.TextInputInteger;
 import dtb.terminalIO.components.plot.XYTranslate;
 import dtb.terminalIO.components.plot.shape.Circle;
 import dtb.terminalIO.components.plot.shape.Line;
@@ -30,6 +31,7 @@ import dtb.terminalIO.events.OnIdleEventEventHandler.RepeatingInterval;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
+import dtb.terminalIO.events.keyboard.InputEventsProducer;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
@@ -40,11 +42,10 @@ import dtb.terminalIO.geom.position.PositionVerticalRelative;
 public class TestScale {
 
 
-
-    static Component<?> buttons(EventHandler upAction,
-                                EventHandler downAction,
-                                EventHandler leftAction,
-                                EventHandler rightAction) {
+    static Component<?> navButtonsPanel(EventHandler upAction,
+                                        EventHandler downAction,
+                                        EventHandler leftAction,
+                                        EventHandler rightAction) {
         CompositeWithFocusManager buttonPanel = new CompositeWithFocusManager();
         buttonPanel.getFocusManager().setNextKeyStroke(Keys.DOWN_KEYSTROKE);
         buttonPanel.getFocusManager().setPrevKeyStroke(Keys.UP_KEYSTROKE);
@@ -166,7 +167,7 @@ public class TestScale {
                    delayedDraw.setTimerDelayMillis(75);
 
                    HorizontalPanel hp = new HorizontalPanel();
-                   hp.add(buttons(
+                   hp.add(navButtonsPanel(
                                       (e)->{    
                                               xyTranslatePlotter.setyDelta(xyTranslatePlotter.getyDelta()-1) ;
                                               //drawShape.accept(shapesChoiceComponent.getSelectedValue());
@@ -199,7 +200,23 @@ public class TestScale {
 
                    VerticalPanel vp = new VerticalPanel().setVerticalSpacer(5);
 
+                   TextInputInteger intervalControl = new TextInputInteger(3);
+                   HorizontalPanel intervalFormContainer = new HorizontalPanel();
+                   intervalFormContainer.add(new TextComponent("Idle-key wait time: "));
+                   intervalFormContainer.add(intervalControl);
+
+                   tApp.getEventBus().appendEventHandler(new HasValue.OnValueChangedEventHandler<Integer>(intervalControl) {
+                       @Override
+                       public void valueChanged(TerminalEvent<?> te, HasValue<Integer> value) {
+                           msg.accept("NBR  "+ value.getValue());
+                           if (value.getValue() != null && value.getValue()>1) {
+                               InputEventsProducer.IDLE_INTERVAL = value.getValue(); 
+                           }
+                       }
+                   });
+                   
                    vp.add(hp);
+                   vp.add(intervalFormContainer);
                    vp.add(msgArea);
 
                    long counter[] = new long[] {0};
@@ -225,7 +242,7 @@ public class TestScale {
 
                    tApp.getEventBus().appendEventHandler(  mainFocusManager );
                    
-                   FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
+                 //  FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
 
                }).start();
         
