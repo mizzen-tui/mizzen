@@ -206,7 +206,8 @@ public class TestScale {
                    intervalFormContainer.add(new TextComponent("Idle-key wait time: "));
                    intervalFormContainer.add(intervalControl);
 
-                   intervalControl.onChange((te,newValue)-> {
+                   intervalControl.onChange((te)-> {
+                       Integer newValue = intervalControl.getValue();
                        msg.accept("NBR  "+ newValue);
                        if (newValue != null && newValue > 1) {
                            InputEventsProducer.IDLE_INTERVAL = newValue;

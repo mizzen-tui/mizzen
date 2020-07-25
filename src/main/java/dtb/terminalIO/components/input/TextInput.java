@@ -436,8 +436,8 @@ public class TextInput extends BoundedComponent<TextInput>
     }
 
     HasValue.OnValueChangedEventHandler<String> onChangeHandler;
-    
-    public void onChange(BiConsumer<TerminalEvent<?>, String> consumeChange) {
+
+    public void onChange(EventHandler consumeChange) {
 
         onChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, onChangeHandler, getChainedEventHandler(), consumeChange);
 

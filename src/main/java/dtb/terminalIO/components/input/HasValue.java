@@ -137,12 +137,12 @@ public interface HasValue<V> {
         public static <T> HasValue.OnValueChangedEventHandler<T> bindConsumerAsOnValueChangedHandler(HasValue<T> hasValueContainer, 
                                                                               HasValue.OnValueChangedEventHandler<T> previousOnChangeHandler,
                                                                               EventHandlerContainer eventHandlerContainer,
-                                                                              BiConsumer<TerminalEvent<?>, T> consumeChange) {
+                                                                              EventHandler consumeChange) {
             // build new handler
             HasValue.OnValueChangedEventHandler<T> newOnChange = new HasValue.OnValueChangedEventHandler<T>(hasValueContainer) {
                 @Override
                 public void valueChanged(TerminalEvent<?> te, HasValue<T> valueContainer) {
-                    consumeChange.accept(te, valueContainer.getValue());
+                    consumeChange.handle(te);
                 }
             };
             

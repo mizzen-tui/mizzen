@@ -7,6 +7,8 @@ import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.input.DropdownListBox;
 import dtb.terminalIO.components.modal.MessageBox;
+import dtb.terminalIO.controlcodes.Colors;
+import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.Keys;
@@ -27,7 +29,7 @@ public class DropdownListBoxInButtonBarTest {
             
             Composite mainPanel = (Composite) tApp.getMainApplicationPanel();
             
-            mainPanel.setTitle("My title\nis here!");
+            mainPanel.setTitle(new FGBGColors(Colors.BGre,Colors.On_Blu), "DropDownList\nTesting     ");
             
             HorizontalPanel hpMain = new HorizontalPanel();
             
@@ -50,15 +52,15 @@ public class DropdownListBoxInButtonBarTest {
             DropdownListBox<String> ddlb2 = DropdownListBox.fromStrings(new String[] {"Silly Sally","Sold SeaShells","At the SeahShore!"});
 
             hpMain.add(bbar);
-            
+
             hpMain.add(ddlb);
-            
+
             hpMain.add(ddlb2);
-            
+
             hpMain.add(DropdownListBox.yesNoDropDown());
-            
+
             tApp.getMainApplicationPanel().add(2,2,hpMain);
-            
+
             FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),
                                                                                              tApp.getEventBus(),
                                                                                              ()-> new DefaultFocusManager().setNavKeysFirst(false).setCycling(false));

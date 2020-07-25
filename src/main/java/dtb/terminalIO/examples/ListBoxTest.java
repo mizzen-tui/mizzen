@@ -276,30 +276,29 @@ public class ListBoxTest {
        eventBus.appendEventHandler(new OnRequestUpdateCanvasEventHandler(renderComponents));
 
 
-       eventBus.appendEventHandler( new HasValue.OnValueChangedEventHandler<String>(lb1) {
-
-           StringDisplayValue[]  currentList = weird;
-
-           @Override
-           public void valueChanged(TerminalEvent<?> te, HasValue<String> source) {
-               String newValue = source.getValue();
-               eventDisplayer.setTextAndResize("Pressed = "+newValue);
-
-
-               StringDisplayValue[]  newList = currentList;
-
-               if (newValue.contains("Claus")) {
-                   newList = raindeer;
-               } else {
-                   newList = weird;
-               }
-               if (newList != currentList) {
-                  lb2.setItems(Arrays.asList(newList));
-                  currentList = newList;
-               }
-               renderComponents.run();
-           }
-       });
+       lb1.onChange(new EventHandler() {
+                   
+                StringDisplayValue[]  currentList = weird;
+        
+                @Override
+                public void handle(TerminalEvent<?> te) {
+                    String newValue = lb1.getValue();
+                    eventDisplayer.setTextAndResize("Pressed = "+newValue);
+        
+        
+                    StringDisplayValue[]  newList = currentList;
+        
+                    if (newValue.contains("Claus")) {
+                        newList = raindeer;
+                    } else {
+                        newList = weird;
+                    }
+                    if (newList != currentList) {
+                       lb2.setItems(Arrays.asList(newList));
+                       currentList = newList;
+                    }
+                    renderComponents.run();
+        }});
 
        eventBus.appendEventHandler( new HasValue.OnValueChangedEventHandler<String>(lb2) {
 

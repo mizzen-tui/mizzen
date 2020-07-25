@@ -42,16 +42,6 @@ public class DropdownListBox<T> extends ComponentWithFocusManager
         this.listBox = new ListBox<T>(color);
         this.listBox.setBorder(true);
 
-        //VerticalPanel container = (VerticalPanel)this.getContainer();
-        /*
-        container.getFocusManager().setPrevKeyStroke(Keys.UP_KEYSTROKE)
-                                   .setNextKeyStroke(Keys.DOWN_KEYSTROKE)
-                                   .setNavKeysFirst(false)
-                                   .setCycling(false);
-        this.setFocusManager( container.getFocusManager() );
-        container.getFocusManager().addFocusable(button);
-        container.getFocusManager().addFocusable(listBox);
-         */
         DefaultFocusManager fm = new DefaultFocusManager(Keys.UP_KEYSTROKE, Keys.DOWN_KEYSTROKE).setNavKeysFirst(false).setCycling(false);
         this.setFocusManager( fm );
         fm.addFocusable(button);
@@ -59,16 +49,14 @@ public class DropdownListBox<T> extends ComponentWithFocusManager
 
         setSelectedOntoTextView();
 
-        appendEventHandler( new HasValue.OnValueChangedEventHandler<T>(this.listBox) {
-            @Override
-            public void valueChanged(TerminalEvent<?> te, HasValue<T> source) {
-                setSelectedOntoTextView();
-                te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(DropdownListBox.this));
-                // let everyone else know that our value has been modified.
-                te.getEventBus().raiseEvent(new HasValue.ValueChangedEvent<>(DropdownListBox.this));
-            }
+        this.listBox.onChange((te)->{
+            // emit a new ValueChangedEvent event indicating that the 'typed' value of this 
+            // outer component has changed due to the ListBox component changing
+            setSelectedOntoTextView();
+            te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(DropdownListBox.this));
+            te.getEventBus().raiseEvent(new HasValue.ValueChangedEvent<T>(DropdownListBox.this));
         });
-
+        
         appendEventHandler( new KeyInputEventHandler(Keys.ENTER_KEYSTROKE, (te)-> { showListBox(); }));
     }
 
@@ -166,9 +154,8 @@ public class DropdownListBox<T> extends ComponentWithFocusManager
     
     
     private void setSelectedOntoTextView() {
-        //T selected = this.listBox.getSelectedValue();
+
         HasValue<T> selected = this.listBox.getSelected();
-        // T  selected = this.getValue();
         // buttons resize themselves based on text.
         // so we pad text to avoid this
         String buttonText;
@@ -189,7 +176,7 @@ public class DropdownListBox<T> extends ComponentWithFocusManager
                 buttonText = String.format("%-"+(padLen)+"s"+arrow, StringUtils.truncate(StringUtils.padRight((selected.toString()),padLen),padLen-1));
             }
         }
-        
+
         this.button.setButtonText( buttonText );
     }
     

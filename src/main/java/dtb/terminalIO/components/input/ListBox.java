@@ -22,6 +22,7 @@ import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.RequestFocusEvent;
@@ -39,8 +40,10 @@ import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.StringUtils;
 
 public class ListBox<T> extends AbstractComponent<ListBox<T>>  
-                                implements HasValue<T>, ToFocusable, 
-                                           ParentContainer, GetComponentAtOffset,
+                                implements HasValue<T>, 
+                                           ToFocusable, 
+                                           ParentContainer, 
+                                           GetComponentAtOffset,
                                            Clickable {
     
     List<ListItem> items = new ArrayList<ListItem>();
@@ -99,16 +102,6 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
             this.bullet.setChar('■');
         }
 
-        /*
-         *                         "■",
-                        "□",
-                        "▪",
-                        "▫"
-        mapChars.map('◍','*');
-        mapChars.map('◌','o');
-
-         * */
-        
     }
     
     ItemComponent itemComponentfactory(Component<?> component) {
@@ -588,6 +581,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
     }
 
     private Focusable focusable;
+    private ChainedEventHandler chainedHandler;
 
     public Focusable asFocusable() {
         if (focusable != null) {
@@ -599,25 +593,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
 
     private Focusable makeFocusable() {
 
-        ChainedEventHandler chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
-
-        chainedHandler.appendEventHandler(new KeyInputEventHandler(this.keystrokePrevious, 
-                (te)->  canSetSelectedPrev(),
-                (te)->  {
-                            if (setSelectedPrev()) {
-                                te.getEventBus().raiseEvent(  new HasValue.ValueChangedEvent<>(ListBox.this) );
-                                raiseEventRequestShowSelected(te.getEventBus());
-                            }
-                        }));
-
-        chainedHandler.appendEventHandler(new KeyInputEventHandler(this.keystrokeNext, 
-                (te)->  canSetSelectedNext(),
-                (te)->  {
-                            if (setSelectedNext()) {
-                                te.getEventBus().raiseEvent(  new HasValue.ValueChangedEvent<>(ListBox.this) );
-                                raiseEventRequestShowSelected(te.getEventBus());
-                            }
-                        }));
+        ChainedEventHandler chainedHandler = getChainedEventHandler();
 
         return new DefaultFocusableBehaviour.Simple(this, chainedHandler.asConditionalEventHandler()) {
 
@@ -647,6 +623,33 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
                 markAsDirty();
             }
         };
+    }
+
+    private ChainedEventHandler getChainedEventHandler() {
+        if (chainedHandler != null) {
+            return chainedHandler;
+        }
+        
+        chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
+
+        chainedHandler.appendEventHandler(new KeyInputEventHandler(this.keystrokePrevious, 
+                (te)->  canSetSelectedPrev(),
+                (te)->  {
+                            if (setSelectedPrev()) {
+                                te.getEventBus().raiseEvent(  new HasValue.ValueChangedEvent<>(ListBox.this) );
+                                raiseEventRequestShowSelected(te.getEventBus());
+                            }
+                        }));
+
+        chainedHandler.appendEventHandler(new KeyInputEventHandler(this.keystrokeNext, 
+                (te)->  canSetSelectedNext(),
+                (te)->  {
+                            if (setSelectedNext()) {
+                                te.getEventBus().raiseEvent(  new HasValue.ValueChangedEvent<>(ListBox.this) );
+                                raiseEventRequestShowSelected(te.getEventBus());
+                            }
+                        }));
+        return chainedHandler;
     }
 
     @Override
@@ -745,5 +748,14 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
 
         }
     }
+    
+    HasValue.OnValueChangedEventHandler<T> onChangeHandler;
+    
+    public void onChange(EventHandler consumeChange) {
+
+        onChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, onChangeHandler, getChainedEventHandler(), consumeChange);
+
+    }
+    
 
 }

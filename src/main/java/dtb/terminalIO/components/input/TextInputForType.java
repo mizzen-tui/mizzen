@@ -44,12 +44,12 @@ public class TextInputForType<T>  extends BoundedComponent<TextInputForType<T>> 
         };
         this.textInput.setParentContainer(this);
         
-        this.textInput.onChange((te, s)->{
+        this.textInput.onChange((te)->{
             if (getValue() == null) {
                 return;
             }
-            // re-emit a new ValueChangedEvent event indicating that the 'typed' value of this 
-            // outer component has changed  
+            // emit a new ValueChangedEvent event indicating that the 'typed' value of this 
+            // outer component has changed due to the innerText component changing
             te.getEventBus().raiseEvent(new HasValue.ValueChangedEvent<T>(TextInputForType.this));
         });
         
@@ -59,14 +59,14 @@ public class TextInputForType<T>  extends BoundedComponent<TextInputForType<T>> 
     public Collection<? extends Component<?>> getChildren() {
         return Collections.singletonList(this.textInput);
     }
-    
+
     protected void setText(String text) {
         this.textInput.setText(text);
     }
 
     HasValue.OnValueChangedEventHandler<T> onChangeHandler;
     
-    public void onChange(BiConsumer<TerminalEvent<?>, T> consumeChange) {
+    public void onChange(EventHandler consumeChange) {
 
         onChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, onChangeHandler, getChainedEventHandler(), consumeChange);
 
