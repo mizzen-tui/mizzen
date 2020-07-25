@@ -177,13 +177,13 @@ public class TabPanel extends AbstractComponent<TabPanel>
             previousButton = new Button("<-");
             previousButton.setHotKey(previousTabHotKey);
             previousButton.setDisplayHotKey(true);
-            previousButton.setActionHandler((te)-> focusManager.setPreviousAsCurrentFocus( te.getEventBus() ));
+            previousButton.onChange((te)-> focusManager.setPreviousAsCurrentFocus( te.getEventBus() ));
             navControls.add(previousButton);
             
             nextButton = new Button("->");
             nextButton.setHotKey(nextTabHotKey);
             nextButton.setDisplayHotKey(true);
-            nextButton.setActionHandler((te)-> focusManager.setNextAsCurrentFocus( te.getEventBus() ));
+            nextButton.onChange((te)-> focusManager.setNextAsCurrentFocus( te.getEventBus() ));
             navControls.add(nextButton);
             
             // TODO:  change navButtons to a button bar

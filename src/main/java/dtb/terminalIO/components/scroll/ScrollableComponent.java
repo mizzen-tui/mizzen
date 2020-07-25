@@ -471,9 +471,6 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
                 if (footerControls == null) {
                     return;
                 }
-//                if (viewer.hasFocus()) {  // TODO:  is this wise?
-//                    viewer.setFocus(false, te.getEventBus());
-//                }
                 footerControls.handle(te);
             }
         });
@@ -491,8 +488,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
 
             Position offsetIntoSource = ScrollableComponent.this.viewer.getOffsetIntoSource();
             if ( ! offsetIntoSource.isSamePosition(Position.ZERO)) {
-                //offset = offset.offsetAdd( new Position.Simple(offsetIntoSource.getRow()*-1, offsetIntoSource.getCol()*-1) );
-                
+
                 offset = offset.offsetAdd( offsetIntoSource);
             }
 
@@ -641,8 +637,6 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         if (footerControls == null) {
             throw new IllegalStateException("FooterControls object is null! Cannot add button control yet!");
         }
-
-     //   footerControls.addComponent(componentForButtonBar, hotKey, handler);
 
         positionFooterText();
 

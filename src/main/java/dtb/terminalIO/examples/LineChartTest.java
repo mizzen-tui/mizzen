@@ -195,7 +195,7 @@ public class LineChartTest {
                 if (seriesDemo.onKeyStroke != null) {
                     seriesRockerButton.setHotKey(seriesDemo.onKeyStroke);
                 }
-                seriesRockerButton.setActionHandler((te) -> {
+                seriesRockerButton.onChange((te) -> {
                     RockerButton currentRockerButton = (RockerButton) te.getSource();
                     seriesDemo.enabled = currentRockerButton.getValue();
                 });

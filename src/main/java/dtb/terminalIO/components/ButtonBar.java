@@ -208,7 +208,7 @@ public class ButtonBar extends Composite implements FocusManager, EventHandlerCo
     public Button addButton(Color buttonColor, String buttonText, KeyStroke hotKey, EventHandler handler) {
         Button theButton = new Button(buttonColor, buttonText);
         theButton.setHotKey(hotKey);
-        theButton.setActionHandler(handler);
+        theButton.onChange(handler);
         addComponent(theButton);
         return theButton;
     }

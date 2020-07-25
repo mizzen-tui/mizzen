@@ -31,10 +31,10 @@ public class RockerButton extends AbstractComponentWithContainerAndFocusManager<
         super(color);
 
         onButton = new Button(onText);
-        onButton.setActionHandler((te) -> toggleState(true, te.getEventBus()));
+        onButton.onChange((te) -> toggleState(true, te.getEventBus()));
 
         offButton = new Button(offText);
-        offButton.setActionHandler((te) -> toggleState(false, te.getEventBus()));
+        offButton.onChange((te) -> toggleState(false, te.getEventBus()));
 
         buttons = new ButtonBar(color);
         buttons.setNoBorderChars();
@@ -91,22 +91,10 @@ public class RockerButton extends AbstractComponentWithContainerAndFocusManager<
 
     OnValueChangedEventHandler<Boolean> actionOnChangeHandler;
 
-    public void setActionHandler(EventHandler handler) {
+    public void onChange(EventHandler handler) {
 
-        if (actionOnChangeHandler != null) {
-            this.buttons.removeEventHandler(actionOnChangeHandler);
-        }
+        actionOnChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, actionOnChangeHandler, this.buttons, handler);
 
-        if (handler == null) {
-            return;
-        }
-        actionOnChangeHandler = new HasValue.OnValueChangedEventHandler<Boolean>(this) {
-            @Override
-            public void valueChanged(TerminalEvent<?> te, HasValue<Boolean> source) {
-                handler.handle(te);
-            }
-        };
-        this.buttons.appendEventHandler(actionOnChangeHandler);
     }
 
     @Override

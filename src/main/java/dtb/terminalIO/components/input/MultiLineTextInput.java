@@ -692,6 +692,14 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
         return focusable;
     }
 
+    HasValue.OnValueChangedEventHandler<String> onChangeHandler;
+
+    public void onChange(EventHandler consumeChange) {
+
+        onChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, onChangeHandler, getChainedEventHandler(), consumeChange);
+
+    }
+    
     @Override
     public Collection<? extends Component<?>> getChildren() {
         return Collections.singleton(this.textRenderer);

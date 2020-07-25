@@ -29,7 +29,7 @@ public class RockerButtonTest {
 
         Button quit = new Button(Colors.BIGre,"Quit");
         quit.setHotKey(Keys.CTRL_C_KEYSTROKE);
-        quit.setActionHandler((te)->app.getTerminateAppHotKeyEventHandler().handle(te));
+        quit.onChange((te)->app.getTerminateAppHotKeyEventHandler().handle(te));
         buttons.add(quit);
 
         app.getMainApplicationPanel().add(buttons);

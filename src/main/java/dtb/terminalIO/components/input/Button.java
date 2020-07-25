@@ -208,22 +208,10 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
 
     OnValueChangedEventHandler<Boolean> actionOnChangeHandler;
 
-    public void setActionHandler(EventHandler handler) {
+    public void onChange(EventHandler handler) {
 
-        if (actionOnChangeHandler != null) {
-            getchainedHandler().removeEventHandler(actionOnChangeHandler);
-        }
+        actionOnChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, actionOnChangeHandler, getchainedHandler(), handler);
 
-        if (handler == null) {
-            return;
-        }
-        actionOnChangeHandler = new HasValue.OnValueChangedEventHandler<Boolean>(this) {
-            @Override
-            public void valueChanged(TerminalEvent<?> te, HasValue<Boolean> source) {
-                handler.handle(te);
-            }
-        };
-        getchainedHandler().appendEventHandler(actionOnChangeHandler);
     }
 
     public Button setUseCursor(boolean use) {
@@ -251,7 +239,7 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
     }
 
     KeyInputEventHandler keyInputEventHandler;
-    
+
     public void addKeyStroke(KeyStroke keyStroke) {
         if (keyInputEventHandler == null) {
             asFocusable();

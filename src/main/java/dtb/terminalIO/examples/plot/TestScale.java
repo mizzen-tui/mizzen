@@ -54,25 +54,25 @@ public class TestScale {
         up.setHotKey(Keys.CTRL_T_KEYSTROKE);
         up.setBorder(true);
         up.setDisplayHotKey(true);
-        up.setActionHandler(upAction);
+        up.onChange(upAction);
 
         Button down = new Button("v");
         down.setHotKey(Keys.CTRL_V_KEYSTROKE);
         down.setBorder(true);
         down.setDisplayHotKey(true);
-        down.setActionHandler(downAction);
+        down.onChange(downAction);
 
         Button left = new Button("«");
         left.setHotKey(Keys.CTRL_F_KEYSTROKE);
         left.setBorder(true);
         left.setDisplayHotKey(true);
-        left.setActionHandler(leftAction);
+        left.onChange(leftAction);
 
         Button right = new Button("»");
         right.setHotKey(Keys.CTRL_G_KEYSTROKE);
         right.setBorder(true);
         right.setDisplayHotKey(true);
-        right.setActionHandler(rightAction);
+        right.onChange(rightAction);
 
         Position upVPosition = Position.ZERO;
         Position leftHPosition =  Position.ZERO;

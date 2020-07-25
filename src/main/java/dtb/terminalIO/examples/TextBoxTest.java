@@ -80,7 +80,7 @@ public class TextBoxTest {
             
             Button b_1 = new Button("Press Me", true);
             panel1.add(b_1);
-            
+
             Button b_2 = new Button("Press Too");
             panel1.add(b_2);
 
@@ -90,7 +90,7 @@ public class TextBoxTest {
             horizontalPanel.setHorizontalSpacer(2);
 
             topPanel.add(2,1, horizontalPanel);
-            
+
             ScrollableComponent sc_1 = new ScrollableComponent(Colors.Blu, new Dimension.Simple(panel1.getHeight()+1, 50), panel1);
 
             SearchFunctionForScrollableComponent.addFinderToScrollable(sc_1);
@@ -119,7 +119,7 @@ public class TextBoxTest {
             Button quitButton = new Button(Colors.BIGre,"Quit");
             quitButton.setHotKey(Keys.CTRL_C_KEYSTROKE);
             quitButton.setDisplayHotKey(true);
-            quitButton.setActionHandler(tApp.getTerminateAppHotKeyEventHandler());
+            quitButton.onChange(tApp.getTerminateAppHotKeyEventHandler());
             bannerMenu.add(quitButton);
 
             VerticalPanel deskTopPanel = new VerticalPanel().setVerticalSpacer(1);
@@ -136,30 +136,26 @@ public class TextBoxTest {
 
 
             tApp.getEventBus().appendEventHandler(  mainFocusManager );
-            
+
             ComponentInspector componentInspector = new ComponentInspector(Colors.BIGre, new Dimension.Simple(20,40), topPanel, mainFocusManager);
             horizontalPanel.add(componentInspector);
-            
+
             DefaultFocusManager.applyIfDefaultFocusManager(mainFocusManager, (dfalt_fm)->{
                 dfalt_fm.setPrevKeyStroke(Keys.SHIFT_TAB_KEYSTROKE);
                 dfalt_fm.setNextKeyStroke(Keys.TAB_KEYSTROKE);
                 dfalt_fm.setNavKeysFirst(false);
                 dfalt_fm.addFocusable(componentInspector);
             });
-            
-            refreshTreeviewButton.setActionHandler( componentInspector.refreshEventHandler() );
-            toggleTreeviewButton.setActionHandler(componentInspector.toggleViewEventHandler());
-            
+
+            refreshTreeviewButton.onChange( componentInspector.refreshEventHandler() );
+            toggleTreeviewButton.onChange(componentInspector.toggleViewEventHandler());
+
             EventBus eventBus = tApp.getEventBus();
-            
-            eventBus.appendEventHandler( new HasValue.OnValueChangedEventHandler<String>(ti) {
-                @Override
-                public void valueChanged(TerminalEvent<?> te, HasValue<String> source) {
-                    String newValue = source.getValue();
-                    eventDisplayer.setText(newValue);
-                }
-            });
-            
+
+            ti.onChange((te)-> eventDisplayer.setText(ti.getValue()));
+
+            cb_1.onChange((te)-> eventDisplayer.setText("checkbox: "+ String.valueOf(cb_1.getValue())));
+
             eventBus.appendEventHandler( new HasValue.OnValueChangedEventHandler<Boolean>(b_1) {
                 @Override
                 public void valueChanged(TerminalEvent<?> te,HasValue<Boolean> source) {
@@ -167,8 +163,7 @@ public class TextBoxTest {
                     eventDisplayer.setText("(1) Pressed = "+newValue);
                 }
             });
-         
-            
+
             eventBus.appendEventHandler( new HasValue.OnValueChangedEventHandler<Boolean>(b_2) {
                 public void handle(TerminalEvent<?> te) {
                     super.handle(te);
@@ -180,19 +175,17 @@ public class TextBoxTest {
                     Boolean newValue = source.getValue();
                     eventDisplayer.setText("(2) Pressed = "+newValue);
                 }
-                
             });
-            
 
             try {
                 FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
             } catch (Exception e) {
                 throw e;
             }
-          
+
             // necessary?
             tApp.getScreen().add(ControlCode.SHOW_CURSOR);
-            
+
         }).start();
     }
 

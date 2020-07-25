@@ -2,6 +2,7 @@ package dtb.terminalIO.components.input;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.Predicate;
 
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.Component;
@@ -11,7 +12,6 @@ import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
-import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.RequestHideCursorEvent;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
@@ -154,6 +154,14 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
         checkBoxPressed(eventBus);
     }
     
+    OnValueChangedEventHandler<Boolean> actionOnChangeHandler;
+
+    public void onChange(EventHandler handler) {
+
+        actionOnChangeHandler = HasValue.UTIL.wrapHandlerInOnValueChangedHandler(this, handler);
+
+    }
+    
     Focusable meAsFocusable;
     
     public Focusable asFocusable() {
@@ -161,6 +169,16 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
         if (meAsFocusable != null) {
             return meAsFocusable;
         }
+        
+        Predicate<TerminalEvent<?>> canHandleOnChangeEvent = (te)-> {
+            if (this.actionOnChangeHandler == null) {
+                return false;
+            }
+            if (this.actionOnChangeHandler.canHandle(te)!=null) {
+                return true;
+            }
+            return false;
+        };
         
         meAsFocusable = new DefaultFocusableBehaviour.ComponentHiliterFocusableBehaviour(this) {
 
@@ -178,6 +196,11 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
             @Override
             public void handle(TerminalEvent<?> te) {
                 
+                if (canHandleOnChangeEvent.test(te)) {
+                    actionOnChangeHandler.handle(te);
+                    return;
+                }
+                
                 if (!(te instanceof KeyEvent)) {
                     return;
                 }
@@ -191,6 +214,12 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
 
             @Override
             public EventHandler canHandle(TerminalEvent<?> te) {
+                
+                if (canHandleOnChangeEvent.test(te)) {
+                    return this;
+                }
+                
+                
                 if (!(te instanceof KeyEvent)) {
                     return null;
                 }

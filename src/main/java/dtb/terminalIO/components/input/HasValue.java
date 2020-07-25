@@ -134,10 +134,14 @@ public interface HasValue<V> {
     }
 
     public static class UTIL {
-        public static <T> HasValue.OnValueChangedEventHandler<T> bindConsumerAsOnValueChangedHandler(HasValue<T> hasValueContainer, 
-                                                                              HasValue.OnValueChangedEventHandler<T> previousOnChangeHandler,
-                                                                              EventHandlerContainer eventHandlerContainer,
-                                                                              EventHandler consumeChange) {
+
+        public static <T> HasValue.OnValueChangedEventHandler<T> wrapHandlerInOnValueChangedHandler(HasValue<T> hasValueContainer, 
+                                                                                                    EventHandler consumeChange) {
+            
+            if (consumeChange == null) {
+                return null;
+            }
+
             // build new handler
             HasValue.OnValueChangedEventHandler<T> newOnChange = new HasValue.OnValueChangedEventHandler<T>(hasValueContainer) {
                 @Override
@@ -146,11 +150,33 @@ public interface HasValue<V> {
                 }
             };
             
+            return newOnChange;
+        }
+
+        
+        public static <T> HasValue.OnValueChangedEventHandler<T> bindConsumerAsOnValueChangedHandler(HasValue<T> hasValueContainer, 
+                                                                              HasValue.OnValueChangedEventHandler<T> previousOnChangeHandler,
+                                                                              EventHandlerContainer eventHandlerContainer,
+                                                                              EventHandler consumeChange) {
+
             // remove old
             if (previousOnChangeHandler != null) {
                 eventHandlerContainer.removeEventHandler(previousOnChangeHandler);
             }
+
+            if (consumeChange == null) {
+                return null;
+            }
             
+            
+            // build new handler
+            HasValue.OnValueChangedEventHandler<T> newOnChange = new HasValue.OnValueChangedEventHandler<T>(hasValueContainer) {
+                @Override
+                public void valueChanged(TerminalEvent<?> te, HasValue<T> valueContainer) {
+                    consumeChange.handle(te);
+                }
+            };
+
             // attach new
             eventHandlerContainer.appendEventHandler(newOnChange);
             return newOnChange;

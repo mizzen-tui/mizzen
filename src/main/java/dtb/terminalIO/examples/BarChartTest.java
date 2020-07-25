@@ -118,11 +118,11 @@ public class BarChartTest {
         };
         
         Button info = new Button(Colors.BIWhi,"Barchart DEMO");
-        info.setActionHandler((te)-> MessageBox.showInfoDialog( te.getEventBus() , app.getMainApplicationPanel(), "Powered by dtbTerminalIO ") );
+        info.onChange((te)-> MessageBox.showInfoDialog( te.getEventBus() , app.getMainApplicationPanel(), "Powered by dtbTerminalIO ") );
 
         Button quit = new Button(Colors.BIGre,"Quit");
         quit.setHotKey(Keys.CTRL_C_KEYSTROKE);
-        quit.setActionHandler((te)->app.getTerminateAppHotKeyEventHandler().handle(te));
+        quit.onChange((te)->app.getTerminateAppHotKeyEventHandler().handle(te));
         
         HorizontalPanel hPanel = new HorizontalPanel().setHorizontalSpacer(5);
         hPanel.add(info);
