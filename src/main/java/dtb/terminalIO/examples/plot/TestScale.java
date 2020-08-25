@@ -99,7 +99,7 @@ public class TestScale {
 
         choices.add(new ShapeDisplayValue("Circle", new Circle(20, 20, 20)));
         choices.add(new ShapeDisplayValue("Line", new Line(2, 2, 35, 35)));
-        choices.add(new ShapeDisplayValue("Triange", new Triangle(20, 2, 2, 32, 40, 45)  ));
+        choices.add(new ShapeDisplayValue("Triangle", new Triangle(20, 2, 2, 32, 40, 45)  ));
         ListBox<Shape> shapes = new ListBox<Shape>();
         shapes.setBorder(true);
         shapes.setItems(choices);

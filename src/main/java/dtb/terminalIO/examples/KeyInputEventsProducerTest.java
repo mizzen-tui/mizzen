@@ -60,6 +60,10 @@ public class KeyInputEventsProducerTest {
             master_canvas.refresh();
         };
         
+
+        screen.add( ControlCode.ENABLE_MOUSE_TRACKING );
+        // now flush to stdout
+        screen.refresh();
         
         master_canvas.t(1,1, "Keyboard Tester ");
         
