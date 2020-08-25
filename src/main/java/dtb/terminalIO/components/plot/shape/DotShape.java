@@ -1,7 +1,6 @@
-package dtb.terminalIO.components.plot.shape.math;
+package dtb.terminalIO.components.plot.shape;
 
 import dtb.terminalIO.components.plot.PointPlotter;
-import dtb.terminalIO.components.plot.shape.Shape;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.geom.position.Position;
 

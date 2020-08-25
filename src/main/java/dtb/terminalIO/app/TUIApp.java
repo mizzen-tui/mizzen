@@ -114,6 +114,9 @@ public class TUIApp {
     }
 
     public Canvas getCanvas() {
+        if (master_canvas == null) {
+            throw new NullPointerException("Canvas not initialized.\n  Need to first call initFromArgs(args) or new TUIApp(args)");
+        }
         return master_canvas;
     }
 
@@ -175,7 +178,7 @@ public class TUIApp {
 
     public TUIApp confirmOnExit(String confirmApplicationExitMessage) {
         if (this.mainApplicationPanel == null) {
-            throw new IllegalStateException("Cannot call confirmOnExit() yet.  First call TUIApp.setMainApplicationPanel(..) or .. TUIApp.setDefaultMainApplicationPanel()");
+            throw new IllegalStateException("Cannot call confirmOnExit() yet!\n  First call TUIApp.setMainApplicationPanel(..) or .. TUIApp.setDefaultMainApplicationPanel()");
         }
         this.confirmApplicationExitMessage = confirmApplicationExitMessage;
         return this;
@@ -223,17 +226,18 @@ public class TUIApp {
     }
 
     public TUIApp setCanvasSize(Dimension size) {
-        Dimension curSize = getCanvas().asRectangle();
+        Canvas canvas = getCanvas();
+        Dimension curSize = canvas.asRectangle();
         if (this.started && !size.contains(curSize)) { // new size is smaller - so clear
-            if (getCanvas().segmentsSize() > 0) {
-                getCanvas().clearCanvas();
-                getCanvas().refresh();
+            if (canvas.segmentsSize() > 0) {
+                canvas.clearCanvas();
+                canvas.refresh();
             }
         }
-        getCanvas().setSize(size.getHeight(), size.getWidth());
+        canvas.setSize(size.getHeight(), size.getWidth());
 
         if (this.started) {
-            getCanvas().refresh();
+            canvas.refresh();
         }
         
         return this;

@@ -38,12 +38,12 @@ public class ScreenLineSegmentsBuffer implements Rectangle, IScreenLineSegmentsB
         recalcNeeded = true;
     }
 
-    protected void doAdd(Collection<ScreenLineSegment> segments, ScreenLineSegment sc) {
+    protected void doAdd(TreeSet<ScreenLineSegment> segments, ScreenLineSegment sc) {
         // add to segments buffer (collection)
         ScreenLineSegment.UTIL.addTo(segments, sc);
     }
 
-    public Collection<ScreenLineSegment> getSegments() {
+    public TreeSet<ScreenLineSegment> getSegments() {
         return segments;
     }
 
@@ -130,7 +130,7 @@ public class ScreenLineSegmentsBuffer implements Rectangle, IScreenLineSegmentsB
 
     @Override
     public ScreenLineSegment getAtCol(int row, int col) {
-        return ScreenLineSegment.UTIL.getAtCol(segments, row, col);
+        return ScreenLineSegment.UTIL.getAtRowCol(segments, row, col);
     }
 
     @Override

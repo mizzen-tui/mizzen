@@ -24,7 +24,7 @@ import dtb.terminalIO.geom.position.Position;
  *
  * <p/>
  *
- * See uses of CirclePathPlotter for example uses.
+ * See CirclePathPlotter for example uses.
  *
  * @author dbalme
  *

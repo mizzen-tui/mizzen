@@ -1,6 +1,6 @@
 package dtb.terminalIO.components;
 
-import java.util.Collection;
+import java.util.TreeSet;
 import java.util.function.Supplier;
 
 import dtb.terminalIO.controlcodes.ControlCode;
@@ -43,7 +43,7 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
                                                  
     protected IScreenLineSegmentsBuffer createSegmentsBuffer() {
         IScreenLineSegmentsBuffer segmentsBuffer   = new ScreenLineSegmentsBuffer() {
-            protected void doAdd(Collection<ScreenLineSegment> segments, ScreenLineSegment sc) {
+            protected void doAdd(TreeSet<ScreenLineSegment> segments, ScreenLineSegment sc) {
                 // add to segments buffer (collection)
                 ScreenLineSegment.UTIL.addSegmentBounded(BoundedComponent.this.getRectangle(), segments, sc);
             }

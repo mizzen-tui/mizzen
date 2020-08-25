@@ -16,7 +16,7 @@ import dtb.terminalIO.textsegments.ScreenLineSegment.UTIL.SegmentsFromStringResu
  * 
  * <p/>
  * 
- * CR's ('\n') in the text will will be respected and will
+ * CR's ('\n') in the text will be respected and will
  * cause a multi-line component to be rendered.
  * 
  * <p/>

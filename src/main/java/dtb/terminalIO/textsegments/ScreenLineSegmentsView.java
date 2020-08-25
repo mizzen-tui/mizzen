@@ -2,7 +2,6 @@ package dtb.terminalIO.textsegments;
 
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.TreeMap;
 import java.util.TreeSet;
 
 import dtb.terminalIO.components.CanResize;
@@ -157,10 +156,10 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
 
         if (segments instanceof TreeSet) {
             TreeSet<ScreenLineSegment> ts = (TreeSet<ScreenLineSegment>) segments;
-            ScreenLineSegment first = ScreenLineSegment.UTIL.getAtCol(ts, bounds.getRow(), bounds.getCol());
+            ScreenLineSegment first = ScreenLineSegment.UTIL.getAtRowCol(ts, bounds.getRow(), bounds.getCol());
             //ScreenLineSegment first = null;
             if (first != null) {
-                ScreenLineSegment last = ScreenLineSegment.UTIL.getAtCol(ts, bounds.getBottomMostRow(),
+                ScreenLineSegment last = ScreenLineSegment.UTIL.getAtRowCol(ts, bounds.getBottomMostRow(),
                         bounds.getRightMostCol());
                 if (last != null) {
                     // throw new IllegalStateException("WORKED!!!");
@@ -223,7 +222,7 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
     boolean segmentsUpToDate = false;
 
     @Override
-    public Collection<ScreenLineSegment> getSegments() {
+    public TreeSet<ScreenLineSegment> getSegments() {
         populateViewFromSourceIfNeeded();
         return super.getSegments();
     }

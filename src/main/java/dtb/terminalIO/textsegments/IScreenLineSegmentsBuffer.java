@@ -2,6 +2,7 @@ package dtb.terminalIO.textsegments;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.TreeSet;
 
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.geom.Rectangle;
@@ -59,7 +60,7 @@ public interface IScreenLineSegmentsBuffer extends Rectangle , Iterable<ScreenLi
 
 	public abstract Iterator<ScreenLineSegment> iterator();
 
-	public Collection<ScreenLineSegment> getSegments();
+	public TreeSet<ScreenLineSegment> getSegments();
 	
 	/**
 	 * A provider (or container) of a {@link IScreenLineSegmentsBuffer}
@@ -249,7 +250,7 @@ public interface IScreenLineSegmentsBuffer extends Rectangle , Iterable<ScreenLi
         }
 
         @Override
-        public Collection<ScreenLineSegment> getSegments() {
+        public TreeSet<ScreenLineSegment> getSegments() {
             return delegate.getSegments();
         }
 

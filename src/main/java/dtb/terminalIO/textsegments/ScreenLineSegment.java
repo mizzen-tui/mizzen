@@ -60,6 +60,24 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
         else
             return 0;
     }
+    
+    public default boolean overlapsWith(ScreenLineSegment other) {
+        if (this.getRow() != other.getRow())
+            return false;
+        
+        ScreenLineSegment left = other;
+        ScreenLineSegment right = this;
+        if (this.getCol()< other.getCol()) {
+            left = this;
+            right = other;
+        }
+        
+        if (left.getRightMostCol() >= right.getCol()) {
+            return true;
+        }
+        
+        return false;
+    }
 
     public default char charAtCol(int col) {
         if (col < getCol() || col > getRightMostCol())
@@ -162,8 +180,8 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
                 return cmp;
             if (so1.overlapsWith(so2)) {
                 // NOTE: reverse sort on id !
-                // This way higher ids appear first (implies newer) and these
-                // will then be on top (TODO: I have yet to take advantage of this feature)
+                //       This way higher ids appear first (implies newer) and these
+                //       will then be on top (TODO: I have yet to take advantage of this feature)
                 cmp = Integer.compare(so2.getId(), so1.getId());
             }
             if (cmp != 0)
@@ -226,8 +244,10 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
         public static TreeSet<ScreenLineSegment> makeCollection(Collection<ScreenLineSegment> scs) {
             TreeSet<ScreenLineSegment> ts = new TreeSet<ScreenLineSegment>(SO_COMPARE);
             /*
-             * key to happiness (and screen alignment) is to ensure screenlinesegment
-             * objects have a len > 0 { -- keeping this around for posterity .. public
+             * key to happiness (and screen alignment) is to ensure ScreenLineSegment
+             * objects have a len > 0 
+             *  -- keeping this around for posterity .. 
+             *  public
              * boolean add(ScreenLineSegment scs) {
              * 
              * if (scs == null || scs.getText()==null || scs.getText().length()==0) { throw
@@ -301,8 +321,8 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
                     len);
         }
 
-        public static Collection<ScreenLineSegment> createBlankSegments(Color color, char emptyChar, Rectangle bounds) {
-            Collection<ScreenLineSegment> ts = makeCollection(null);
+        public static TreeSet<ScreenLineSegment> createBlankSegments(Color color, char emptyChar, Rectangle bounds) {
+            TreeSet<ScreenLineSegment> ts = makeCollection(null);
             int maxRow = bounds.getBottomMostRow();
             int col = bounds.getCol();
             int width = bounds.getWidth();
@@ -316,7 +336,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
         }
 
         public static void fillRectWithChar(Color color, char fillChar, Rectangle bounds,
-                Collection<ScreenLineSegment> destination) {
+                                            TreeSet<ScreenLineSegment> destination) {
             int maxRow = bounds.getBottomMostRow();
             int col = bounds.getCol();
             int width = bounds.getWidth();
@@ -328,45 +348,42 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
             }
         }
 
-        public static void addToVersionDOESNTWORKBUTWHY(Collection<ScreenLineSegment> ts, ScreenLineSegment sc) {
-            if (! (ts instanceof TreeSet)) {
-                addTo(ts, sc);
-                 return;
-            }
+        public static void addTo(TreeSet<ScreenLineSegment> ts, ScreenLineSegment sc) {
             TreeSet<ScreenLineSegment> treeS = (TreeSet<ScreenLineSegment>) ts;
-            
+
             ScreenLineSegment start = treeS.floor(sc);
             if (start == null) {
-                treeS.add(sc);
-                return;
+                start = treeS.ceiling(sc);
+                if (start == null || ! sc.overlapsWith(start)) {
+                   treeS.add(sc);
+                   return;
+                }
             }
-            
-            ScreenLineSegment scEnd = new SegmentImpl(Color.DEFAULT_COLOR, sc.getRow()+1, sc.getRightMostCol()+1, -1, CleanString.UTIL.ONE_SPACE_CLEAN_STRING);
-            
-            ScreenLineSegment end = treeS.ceiling(scEnd);
-            if (end == null) {
-                treeS.add(sc);
-                return;
+
+            ScreenLineSegment current = start;
+            boolean overlapped = false;
+            while (current != null) {
+                if (sc.overlapsWith(current)) {
+                    ts.remove(current);
+                    Collection<ScreenLineSegment> chunks = sc.split_on_overlap(current);
+                    ts.addAll(chunks);
+                    overlapped = true;
+                } else {
+                    // no overlap
+                    if (overlapped) {
+                        // we had overlaps, now we do not, so we must be done
+                        break;
+                    }
+                }
+                current = ts.higher(current);
             }
-            
-            SortedSet<ScreenLineSegment> subSet = treeS.subSet(start, true, end, true);
-            
-            List<ScreenLineSegment> overlaps = subSet.stream().filter(s -> s.getRow() == sc.getRow() && sc.overlapsWith(s))
-                    .collect(Collectors.toList());
-            
-            
-            //List<ScreenLineSegment> overlaps = ts.stream().filter(s -> s.getRow() == sc.getRow() && sc.overlapsWith(s))
-//                    .collect(Collectors.toList());
-            for (ScreenLineSegment overlap : overlaps) {
-                ts.remove(overlap);
-                Collection<ScreenLineSegment> chunks = sc.split_on_overlap(overlap);
-                ts.addAll(chunks);
-            }
+
             ts.add(sc);
         }
 
-        public static void addTo(Collection<ScreenLineSegment> ts, ScreenLineSegment sc) {
+        public static void addToSLOW(TreeSet<ScreenLineSegment> ts, ScreenLineSegment sc) {
             // very inefficient - scans the full list
+            
             List<ScreenLineSegment> overlaps = ts.stream().filter(s -> s.getRow() == sc.getRow() && sc.overlapsWith(s))
                     .collect(Collectors.toList());
             for (ScreenLineSegment overlap : overlaps) {
@@ -396,48 +413,77 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
             }
         }
 
-        public static TreeSet<ScreenLineSegment> subtract(Collection<ScreenLineSegment> tree1, Collection<ScreenLineSegment> tree2) {
+        /**
+         * returns a new TreeSet of ScreenLineSegment's that is the 
+         *         
+         *         equivalent to tree1 - tree2
+         *         
+         *         Such that elements are copied from tree1 iff the elements
+         *         are *not* also in tree2.
+         *         
+         * @param tree1
+         * @param tree2
+         * @return
+         */
+        public static TreeSet<ScreenLineSegment> subtract(TreeSet<ScreenLineSegment> tree1, 
+                                                          TreeSet<ScreenLineSegment> tree2) {
+
             TreeSet<ScreenLineSegment> diffResult = makeCollection(null);
-            List<ScreenLineSegment> segmentsInTree1NotInTree2 = tree1.stream().filter(s -> !tree2.contains(s)).collect(Collectors.toList());
+            List<ScreenLineSegment> segmentsInTree1NotInTree2 = tree1.stream()
+                                                                      .filter(s -> !tree2.contains(s))
+                                                                      .collect(Collectors.toList());
             diffResult.addAll(segmentsInTree1NotInTree2);
+
             return diffResult;
         }
 
 
-        public static TreeSet<ScreenLineSegment> subtractAggressive(Collection<ScreenLineSegment> tree1, TreeSet<ScreenLineSegment> tree2) {
+        // This method does not wor properly .. I dont want to throw away - I would 
+        // like to fix in the future.. but for now, use only the above subtract() method
+        public static TreeSet<ScreenLineSegment> subtractAggressive(TreeSet<ScreenLineSegment> tree1, 
+                                                                    TreeSet<ScreenLineSegment> tree2) {
             
             tree1 = subtract(tree1, tree2);
-            
+
+            // Above subtract is not aggressive enough.  It only subtracts like segments
+            // Its does not subtract partial segments of text that are the same color, same text and same position
+            // The following below does this.
+
+
+            // The following loops thru remaining tree1 segments (which has already had  segments removed via above subtraction) and then
+            // it builds another result (diffResult) that is a copy of tree1 - minus same text from tree2
+
             TreeSet<ScreenLineSegment> diffResult = makeCollection(null);
             if (tree1.isEmpty()) {
                 return diffResult;
             }
             StringBuffer srcText = new StringBuffer();
-            int srcCurCol = -1;
-            int srcCurRow = -1;
+            int srcCurCol  = -1;
+            int srcCurRow  = -1;
             Color srcColor = null;
-            int srcIDX=-1;
-            int seg2Col = -1;
-            int seg2Len = -1;
+            int srcIDX     = -1;
+            int seg2Col    = -1;
+            int seg2Len    = -1;
             ScreenLineSegment tree2Seg  = null;
             boolean isSameColor = false;
             int seg2IDX = -1;
 
             for (ScreenLineSegment src : tree1) {
-                srcCurCol = src.getCol();
-                srcCurRow = src.getRow();
-                srcColor = src.getColors();
-                srcIDX=0;
-                int srcLen=src.getWidth();
+                srcCurCol  = src.getCol();
+                srcCurRow  = src.getRow();
+                srcColor   = src.getColors();
+                srcIDX     = 0;
+                int srcLen = src.getWidth();
                 if (tree2Seg == null || srcCurRow != tree2Seg.getRow() || !tree2Seg.containsCol(srcCurCol)) {
-                    tree2Seg = getAtCol(tree2,srcCurRow, srcCurCol);
-                    if (tree2Seg!=null) {
+                    tree2Seg = getAtRowCol(tree2, srcCurRow, srcCurCol);
+                    if (tree2Seg != null) {
                         seg2Col = tree2Seg.getCol();
                         seg2Len = tree2Seg.getWidth();
                         seg2IDX = 0;
                     }
                 }
-                while (srcIDX < srcLen) {
+
+                while (srcIDX < srcLen) { // loop thru all chars in src segment
                     if (tree2Seg == null) {
                         srcText.append(src.charAt(srcIDX));
                         srcIDX++;
@@ -475,7 +521,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
                             }
                         }
                         if (srcIDX < srcLen && seg2IDX >= seg2Len) {
-                            tree2Seg = getAtCol(tree2,srcCurRow, srcCurCol);
+                            tree2Seg = getAtRowCol(tree2,srcCurRow, srcCurCol);
                             if (tree2Seg!=null) {
                                 seg2Col = tree2Seg.getCol();
                                 seg2Len = tree2Seg.getWidth();
@@ -496,7 +542,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
         
 
 
-        public static void addSegmentBounded(Rectangle bounds, Collection<ScreenLineSegment> ts, ScreenLineSegment sc) {
+        public static void addSegmentBounded(Rectangle bounds, TreeSet<ScreenLineSegment> ts, ScreenLineSegment sc) {
             if (bounds.contains(sc)) {
                 addTo(ts, sc);
                 return;
@@ -507,8 +553,9 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
             }
         }
 
-        public static void addSegmentsBounded(Rectangle bounds, Collection<ScreenLineSegment> destination,
-                Collection<ScreenLineSegment> segmentsToAdd) {
+        public static void addSegmentsBounded(Rectangle bounds, 
+                                              TreeSet<ScreenLineSegment> destination,
+                                              Collection<ScreenLineSegment> segmentsToAdd) {
             for (ScreenLineSegment sc : segmentsToAdd) {
                 addSegmentBounded(bounds, destination, sc);
                 // todo: should I return a list of slices add so that I can later
@@ -519,7 +566,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
         // MAX_SIZE
 
         public static void addSegmentWithOffsetBounded(Position offset, Rectangle bounds,
-                Collection<ScreenLineSegment> ts, ScreenLineSegment sc) {
+                TreeSet<ScreenLineSegment> ts, ScreenLineSegment sc) {
             if (offset == null || offset.isSamePosition(Position.ZERO)) {
                 addSegmentBounded(bounds, ts, sc);
                 return;
@@ -528,7 +575,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
         }
 
         public static void addSegmentsWithOffsetBounded(Position offset, Rectangle bounds,
-                Collection<ScreenLineSegment> destination, Collection<ScreenLineSegment> segmentsToAdd) {
+                TreeSet<ScreenLineSegment> destination, TreeSet<ScreenLineSegment> segmentsToAdd) {
             if (offset == null || offset.isSamePosition(Position.ZERO)) {
                 // no offset
                 addSegmentsBounded(bounds, destination, segmentsToAdd);
@@ -543,14 +590,16 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
         }
 
         //
-        public static void addSegmentsWithOffsetUnBounded(Position offset, Collection<ScreenLineSegment> destination,
-                Collection<ScreenLineSegment> segmentsToAdd) {
+        public static void addSegmentsWithOffsetUnBounded(Position offset, TreeSet<ScreenLineSegment> destination,
+                TreeSet<ScreenLineSegment> segmentsToAdd) {
             addSegmentsWithOffsetBounded(offset, Rectangle.MAX_SIZE, destination, segmentsToAdd);
         }
 
-        public static ScreenLineSegment getAtCol(TreeSet<ScreenLineSegment> ts, int row, int col) {
-            ScreenLineSegment srchKey = blankScreenObject(ControlCode.DEFAULT_COLOR, ' ', row, col, Integer.MIN_VALUE,
-                    1);
+        /**
+         * Returns a ScreenLineSegment within ts that overlaps row/col
+         */
+        public static ScreenLineSegment getAtRowCol(TreeSet<ScreenLineSegment> ts, int row, int col) {
+            ScreenLineSegment srchKey = blankScreenObject(ControlCode.DEFAULT_COLOR, ' ', row, col, Integer.MIN_VALUE, 1);
             ScreenLineSegment siblingGreater = ts.ceiling(srchKey);
             if (siblingGreater != null && srchKey.overlapsWith(siblingGreater)) {
                 return siblingGreater;
@@ -563,7 +612,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
         }
 
         public static String getCharAt(TreeSet<ScreenLineSegment> ts, int row, int col) {
-            ScreenLineSegment sc = getAtCol(ts, row, col);
+            ScreenLineSegment sc = getAtRowCol(ts, row, col);
             if (sc == null)
                 return null;
             int offset = col - sc.getCol();
@@ -574,7 +623,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
             if (!CleanString.UTIL.isClean(ch)) {
                 throw new IllegalStateException("Bad char to set in text segment.  Cannot be a control code");
             }
-            ScreenLineSegment sc = getAtCol(ts, row, col);
+            ScreenLineSegment sc = getAtRowCol(ts, row, col);
             if (sc == null || !sc.getColors().equals(color) || !(sc instanceof SegmentImpl)) {
                 ScreenLineSegment new_sc = new SegmentImpl(color, row, col, sc != null ? sc.getId() + 1 : 1,
                         new CleanString.Simple(ch));
@@ -810,9 +859,11 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
         
         /**
          * this is not a for production use method .. It is a sanity test that can be intermitantly
-         * injected into code to ensure that the segment contents are in 'good shape'
+         * injected into code to ensure that the segment contents are in 'good shape'.
          * 
          * If 2 equal positions are found in the collection, then an IllegalStateException is thrown 
+         * 
+         * Useful function for unit tests
          * 
          */
         public static void assertUniquePositionsInSegments(Collection<ScreenLineSegment> segments ) {

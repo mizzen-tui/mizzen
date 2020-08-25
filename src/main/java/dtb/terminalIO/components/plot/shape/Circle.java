@@ -62,7 +62,8 @@ import dtb.terminalIO.controlcodes.ControlCode.Color;
 public class Circle implements Shape {
 
     /**
-     * Specifies how to draw the circle
+     * Specifies how to draw the circle,
+     *    outline, solid, donut ..
      */
     @FunctionalInterface
     public static interface DrawCircleAlgorithm {
@@ -146,6 +147,10 @@ public class Circle implements Shape {
 
     public int getRadius() {
         return radius;
+    }
+
+    public PointPlot getMidPoint() {
+        return new PointPlot(x, y);
     }
 
     public void setRadius(int radius) {

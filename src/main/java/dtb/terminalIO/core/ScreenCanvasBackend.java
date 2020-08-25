@@ -10,6 +10,7 @@ import dtb.terminalIO.textsegments.ScreenLineSegment;
 
 /**
  * Canvas contents written to a TerminalScreen
+ * 
  * @author david
  */
 public class ScreenCanvasBackend implements CanvasBackend {
@@ -205,37 +206,43 @@ public class ScreenCanvasBackend implements CanvasBackend {
               lastColor = scColor;
             }
             
-           // screen.add( colors[iclrIdx % colors.length ] );
+            //screen.add( colors[iclrIdx % colors.length ] );
+            
             screen.t(sc.getText());
             iclrIdx++;
         }
 
         void assertNoOverlaps(TreeSet<ScreenLineSegment> segments) {
-            ScreenLineSegment.UTIL.assertNoOverlapsInSegments(segments);
+          // uncomment below when diagnosing issues - assertNoOverlapsInSegments() is expensive
+          //  ScreenLineSegment.UTIL.assertNoOverlapsInSegments(segments);
         }
-        
-        
+
+
         @Override
         public void refresh() {
             if (useFullUpdateAndCountDown()) {
                 fullUpdateStrategy.refresh();
+                lastColor = ControlCode.DEFAULT_COLOR;
             } else {
-                // optimized updates
-                // TreeSet<ScreenLineSegment> newOrModifiedsegments = ScreenLineSegment.UTIL.subtract(current, previous);
-                
+
+                // optimized updates ( send only changed/new segments to actual terminal)
+
+                lastColor = ControlCode.DEFAULT_COLOR;
                 assertNoOverlaps(current);
                 assertNoOverlaps(previous);
-                
-                TreeSet<ScreenLineSegment> newOrModifiedsegments = ScreenLineSegment.UTIL.subtractAggressive(current, previous);
+
+                // subtractAggressive() not working reliably.. I really need to diagnose (as its produces a more efficient (smaller result) than subtract())
+                //TreeSet<ScreenLineSegment> newOrModifiedsegments = ScreenLineSegment.UTIL.subtractAggressive(current, previous);
+                TreeSet<ScreenLineSegment> newOrModifiedsegments = ScreenLineSegment.UTIL.subtract(current, previous);
                 
                 assertNoOverlaps(newOrModifiedsegments);
 
-                newOrModifiedsegments = current;
-                
                 if (newOrModifiedsegments.size()>0) {
                     gotoHomePosition();
                     int curRow = 0;
                     int curCol = 0;
+                    // loop thru new/modified segments, move cursor to appropriate
+                    // locations on the terminal and output segment contents (including color)
                     for (ScreenLineSegment sc : newOrModifiedsegments) {
                         if (sc.getRow()>curRow) {
                             screen.add( new ControlCode.CursorDown(sc.getRow() - curRow ) );
@@ -266,14 +273,15 @@ public class ScreenCanvasBackend implements CanvasBackend {
         public void signal_eol() {
             if (useFullUpdate()) {
                 fullUpdateStrategy.signal_eol();
+                lastColor = ControlCode.DEFAULT_COLOR;
             }
         }
 
         @Override
         public void setSize(int height, int width) {
             
-            // Terminal resizes create havoc to this screen updater (UPDATE_CHANGED)..
-            // To alleviate this I force full screen updates (UPDATE_FULL)
+            // Terminal resizes can create havoc to this screen updater (UPDATE_CHANGED)..
+            // To alleviate this, I force full screen updates (UPDATE_FULL)
             // for the next 10 ( or so .. ) screen refresh.. this
             // should allow more than enough refresh cycles for the app to
             // fully repaint itself.. then after that, we revert to 
@@ -295,9 +303,8 @@ public class ScreenCanvasBackend implements CanvasBackend {
             gotoHomePosition();
             screen.showCursorAt(showCursorPosition);
         }
-        
-        
+
+
     };
 
-    
 }

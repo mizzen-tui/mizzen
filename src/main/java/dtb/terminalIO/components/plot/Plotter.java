@@ -4,12 +4,14 @@ import java.util.TreeSet;
 
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.controlcodes.Colors;
+import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.CleanString;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.textsegments.ScreenLineSegment.SegmentImpl;
 
 /**
  * A component that can plot a series of dots .. Useful sub-component for
@@ -66,12 +68,57 @@ public class Plotter extends BoundedComponent<Plotter> {
         return addText(row, col, text);
     }
 
-    @Override
-    protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
+    protected void drawOLD(Color color, IScreenLineSegmentsBuffer segments) {
 
         for (Plotter.Plot plot : plots) {
             segments.setCharAt(plot.pos.getRow(), plot.pos.getCol(), plot.plotChar, plot.plotColor);
         }
+    }
+
+    
+    @Override
+    protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
+
+        int lastRow = -1;
+        int lastCol = -1;
+
+        SegmentImpl lastSegment = null;
+        Position    lastSegmentPosition = null;
+
+        Color lastColor = ControlCode.DEFAULT_COLOR;
+
+        StringBuilder lastText = new StringBuilder();
+
+        // We must translate all plots into Segments.
+        //
+        // NOTE:
+        //   Each plot object only contains one character to plot.
+        //   To reduce the number of created Segments, adjacent, same colored plots
+        //   will be translated into one Segment.  This creates rendering efficiencies "down-the-road"
+
+        for (Plotter.Plot plot : plots) {
+            if (lastRow != plot.pos.getRow()     || 
+                !plot.plotColor.equals(lastColor)||
+                plot.pos.getCol() != lastCol+1) {
+                if (lastText.length() != 0) {
+                    lastSegment = new SegmentImpl(lastColor, lastSegmentPosition, -1, lastText.toString());
+                    segments.add(lastSegment);
+                    lastSegment = null;
+                    lastText = new StringBuilder();
+                }
+                lastColor = plot.plotColor;
+                lastRow = plot.pos.getRow();
+                lastSegmentPosition = plot.pos;
+            }
+            lastText.append(plot.plotChar);
+            lastCol = plot.pos.getCol();
+        }
+
+        if (lastText.length() != 0) {
+            lastSegment = new SegmentImpl(lastColor, lastSegmentPosition, -1, lastText.toString());
+            segments.add(lastSegment);
+        }
+
     }
 
     public void clearPlots() {
