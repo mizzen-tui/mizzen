@@ -137,8 +137,11 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
     }
 
     public void setFillOnClear(boolean fillOnClear) {
-        //super.setFillOnClear(fillOnClear);
-        this.viewer.setFillOnClear(fillOnClear);
+        if (this.viewer != null) {
+           this.viewer.setFillOnClear(fillOnClear);
+        } else {
+            super.setFillOnClear(fillOnClear);
+        }
     }
 
     public void setShowBorder(boolean showBorder) {

@@ -75,6 +75,7 @@ public class ClickableTextComponentTest {
                 }
 
 
+                tApp.clearCanvas();
                 tApp.getCanvas().addComponentSegments( (Component<?>)tApp.getMainApplicationPanel() );
  
                 return true; // true means updated

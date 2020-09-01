@@ -374,22 +374,25 @@ public interface Rectangle extends Position, Dimension, Movable {
 
     }
 
+    /**
+     * A Rectangle that is clipped by another Rectangle
+     */
     public static class Clipped extends Delegate {
         Rectangle clippingArea;
 
-        public Clipped(Rectangle clippingArea, Rectangle rectangle) {
-            super(rectangle);
+        public Clipped(Rectangle clippingArea, Rectangle rectangleToClip) {
+            super(rectangleToClip);
             this.clippingArea = clippingArea;
         }
 
-        public static Clipped fromPosition(Position pos, Rectangle rectangle) {
-            if (!rectangle.containsPosition(pos)) {
+        public static Clipped fromPosition(Position pos, Rectangle rectangleToClip) {
+            if (!rectangleToClip.containsPosition(pos)) {
                 return null;
             }
-            Rectangle clippingArea = new Simple(pos.getRow(), pos.getCol(), rectangle.getBottomMostRow() - pos.getRow() + 1,
-                    rectangle.getRightMostCol() - pos.getCol() + 1);
+            Rectangle clippingArea = new Simple(pos.getRow(), pos.getCol(), rectangleToClip.getBottomMostRow() - pos.getRow() + 1,
+                    rectangleToClip.getRightMostCol() - pos.getCol() + 1);
 
-            return new Clipped(clippingArea, rectangle);
+            return new Clipped(clippingArea, rectangleToClip);
         }
 
         public static Clipped fromPosition(int row, int col, Rectangle rectangle) {

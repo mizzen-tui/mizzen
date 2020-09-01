@@ -4,7 +4,6 @@ import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 
 /**
  * A RectangleComponent that renders a Box ( equal length sides)
- * @author ubuntu
  *
  */
 public class Box extends RectangleComponent {

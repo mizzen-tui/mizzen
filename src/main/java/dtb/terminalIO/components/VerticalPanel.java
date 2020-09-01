@@ -9,7 +9,7 @@ import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.geom.position.PositionVerticalRelative;
 
-public class VerticalPanel extends Composite /*WithFocusManager*/ {
+public class VerticalPanel extends Composite {
 
     private int verticalSpacer = 0;
 

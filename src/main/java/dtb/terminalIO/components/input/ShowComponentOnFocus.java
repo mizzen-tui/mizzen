@@ -11,7 +11,7 @@ public class ShowComponentOnFocus {
         
         eventBus.raiseEvent( new RequestScrollToView( componentWithFocus , componentWithFocus)  );
         
-        // TODO:  maybe have the component "bringToFront"
+        // TODO:  maybe have the component "bringToFront" ?
         
     }
 

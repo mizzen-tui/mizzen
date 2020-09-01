@@ -31,10 +31,11 @@ public class Plotter extends BoundedComponent<Plotter> {
 
     public Plotter(Color color, Dimension d) {
         super(color, d);
+        this.setFillOnClear(false);
     }
 
-    public Plotter(Color color, int row, int height) {
-        this(color, new Dimension.Simple(row, height));
+    public Plotter(Color color, int height, int width) {
+        this(color, new Dimension.Simple(height, width));
     }
 
     public Plotter addPlot(int row, int col, char plotChar, Color color) {

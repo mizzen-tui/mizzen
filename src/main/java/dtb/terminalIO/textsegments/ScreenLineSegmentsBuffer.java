@@ -84,7 +84,7 @@ public class ScreenLineSegmentsBuffer implements Rectangle, IScreenLineSegmentsB
         }
         recalcNeeded = true;
     }
-    
+
     @Override
     public void clearAndMerge(Collection<ScreenLineSegment> segments) {
         if (segments instanceof TreeSet) {

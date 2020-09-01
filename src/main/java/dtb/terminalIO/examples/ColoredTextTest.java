@@ -48,6 +48,7 @@ public class ColoredTextTest {
         app.setUpdateCanvas((tApp)-> {
             
             if (imageWithBorder.isDirty()) {
+                tApp.clearCanvas();
                 tApp.getCanvas().addComponentSegments(2, 2, imageWithBorder);
             }
             return true;

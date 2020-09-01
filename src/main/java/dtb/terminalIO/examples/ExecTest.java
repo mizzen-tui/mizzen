@@ -153,7 +153,6 @@ public class ExecTest {
             return true; // true means updated
         });
 
-        
         BiConsumer<TUIApp, Dimension> resizeAction = (tApp, size)->{
             
             if ( ! size.contains(tApp.getCanvas())) {

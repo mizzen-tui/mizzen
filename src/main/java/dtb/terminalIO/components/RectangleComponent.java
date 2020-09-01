@@ -15,31 +15,33 @@ public class RectangleComponent extends BoundedComponent<RectangleComponent> imp
     private boolean hilited = false;
     private ColorHiliter colorHiliter;
     private BlockHiliter blockHiliter = new BlockChars.BlockHiliter();
-    
+
     public RectangleComponent(Color color, int height, int width) {
         super(color, new Dimension.Simple(height, width));
         this.colorHiliter = makeColorHiliter();
+        this.setFillOnClear(false);
     }
 
     public RectangleComponent(Color color, Position p, Dimension d) {
         super(color, p, d);
         this.colorHiliter = makeColorHiliter();
+        this.setFillOnClear(false);
     }
 
     public RectangleComponent(Color color, Rectangle r) {
         super(color, r, r);
         this.colorHiliter = makeColorHiliter();
     }
-    
+
     private ColorHiliter makeColorHiliter() {
         return new ColorHiliter(()->RectangleComponent.super.getColor());
     }
-    
+
     public BlockChars getBlockChars() {
         return blockHiliter.getBlockChars();
     }
-    
-    
+
+
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
 

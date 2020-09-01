@@ -7,7 +7,6 @@ import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
-import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.HasHotKey;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;

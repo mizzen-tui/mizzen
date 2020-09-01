@@ -4,7 +4,7 @@ import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.geom.position.PositionHorizontalRelative;
 
-public class HorizontalPanel extends Composite/*WithFocusManager*/ {
+public class HorizontalPanel extends Composite {
 
     int horizontalSpacer = 1;
     
@@ -15,8 +15,6 @@ public class HorizontalPanel extends Composite/*WithFocusManager*/ {
     public HorizontalPanel(Color color) {
         super(color);
     }
-    
-    // todo - really need to introduce concept of layout managers
     
     public int getHorizontalSpacer() {
         return horizontalSpacer;

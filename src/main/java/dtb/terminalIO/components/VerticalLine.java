@@ -17,12 +17,10 @@ public class VerticalLine extends BoundedComponent<VerticalLine> {
 
     public VerticalLine(Color color, Position pos, int len) {
         super(color, pos, new Dimension.Simple(len, 1));
-        //this.setVerticalLineChar(this.getBlockChars().getVERTICAL_LINE());
     }
 
     public VerticalLine(Color color, int row, int col, int len) {
         super(color, new Position.Simple(row, col), new Dimension.Simple(len, 1));
-        //this.setVerticalLineChar(this.getBlockChars().getVERTICAL_LINE());
     }
 
     public VerticalLine setVerticalLineChar(char verticalLineChar) {

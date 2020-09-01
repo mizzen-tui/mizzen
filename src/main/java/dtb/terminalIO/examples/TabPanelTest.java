@@ -179,6 +179,7 @@ public class TabPanelTest {
                 return false; // false means no GUI change to update
             }
 
+            tApp.clearCanvas();
             tApp.getCanvas().addComponentSegments(1,2,topFrame);
 
             return true;

@@ -351,6 +351,8 @@ public class TUIApp {
                 if ( ! __mainPanel.isDirty() ) {
                     return false; // false means no GUI update
                 }
+                
+                tApp.clearCanvas();
 
                 tApp.getCanvas().addComponentSegments( __mainPanel );
  

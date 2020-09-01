@@ -15,7 +15,6 @@ import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 
-// todo dropshadow component
 
 /**
  * A Component that draws a border around itself and then has an inner BoundedComponent to
@@ -40,6 +39,7 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
         this.border.setParentContainer(this);
         showBorder = true;
         this.setRectangle( bounds );
+        this.setFillOnClear(false);
     }
     
     @Override

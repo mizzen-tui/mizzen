@@ -225,7 +225,7 @@ public class ScrollableComponentTest {
         
        // master_canvas.setSize(30, master_canvas.getWidth());
         
-        master_canvas.setEmptyChar('.');
+        master_canvas.setEmptyChar(' ');
         
         Dimension sizeOfWindow = new Dimension() {
             @Override
@@ -401,6 +401,7 @@ public class ScrollableComponentTest {
                     return;
                 }
                 lastRun = now;
+                master_canvas.clearCanvas();
                 master_canvas.addComponentSegments(viewComp1OffsetOnCanvas, viewComp1);
                 master_canvas.addComponentSegments(brailleViewComp2OffsetOnCanvas, brailleViewComp2);
                 master_canvas.addComponentSegments(lineChartPosition, lineChartDemoContainer);

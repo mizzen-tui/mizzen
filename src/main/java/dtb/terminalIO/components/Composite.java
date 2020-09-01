@@ -147,6 +147,7 @@ public class Composite extends AbstractComponent<Composite>
 
     public Composite(Color color) {
         super(color);
+        this.setFillOnClear(false);
     }
 
     public Composite() {
@@ -162,8 +163,9 @@ public class Composite extends AbstractComponent<Composite>
         Dimension previousDimension = new Rectangle.Simple(this);
         this.bounds = new Rectangle.Simple(d);
         this.boundsFixed = true;
-        if (this.border != null)
+        if (this.border != null) {
             rebuildBorder(this.bounds);
+        }
         markAsDirty();
         if (this.getParentContainer() != null && !previousDimension.isSameDimension(this)) {
             this.getParentContainer().childResized(this);
@@ -330,7 +332,7 @@ public class Composite extends AbstractComponent<Composite>
         }
         ComponentWithOffset child = findChild(component);
         if (child != null) {
-            throw new IllegalArgumentException("Component add failure:  Duplicate !");
+            throw new IllegalArgumentException("Component add failure:  Duplicate (already a child component) !");
         }
         if (component == this) {
             throw new IllegalArgumentException("Component add failure:  Cannot add component as a child of itself!");
@@ -554,7 +556,7 @@ public class Composite extends AbstractComponent<Composite>
 
         Rectangle clippedArea = bounds;
         
-        // loop thru children and draw
+        // loop thru children and draw each
         Position offset = Position.ZERO;
         if (this.hasBorder()) {
             offset = offset.offsetTo(1, 1);
@@ -606,6 +608,7 @@ public class Composite extends AbstractComponent<Composite>
             if (child == this.border) {
                 return Position.ZERO;
             }
+            // return position of child adjusting for border offset (1,1)
             return findChildOrFail(child, "getPositionRelativeToParent").offset.offsetAdd(1, 1);
         }
         return findChildOrFail(child, "getPositionRelativeToParent").offset;
@@ -613,6 +616,7 @@ public class Composite extends AbstractComponent<Composite>
     
     @Override
     public Component<?> getComponentAtOffset(Position offset) {
+
         if ( ! this.containsPosition(offset)) {
             return null;
         }
@@ -622,7 +626,6 @@ public class Composite extends AbstractComponent<Composite>
             offset = offset.offsetAdd(-1, -1);
         }
 
-        
         ListIterator<ComponentWithOffset> li = childrenInZOrder.listIterator(childrenInZOrder.size());
         while (li.hasPrevious()) {
             ComponentWithOffset child = li.previous();
@@ -651,8 +654,10 @@ public class Composite extends AbstractComponent<Composite>
     protected Rectangle getInnerRectangle() {
         if (!hasBorder())
             return bounds;
-        return new Rectangle.Simple(bounds.getRow() + 1, bounds.getCol() + 1, bounds.getHeight() - 2,
-                bounds.getWidth() - 2);
+        return new Rectangle.Simple(bounds.getRow()    + 1,
+                                    bounds.getCol()    + 1,
+                                    bounds.getHeight() - 2,
+                                    bounds.getWidth()  - 2);
     }
 
     public Composite t(int i, int j, String text) {

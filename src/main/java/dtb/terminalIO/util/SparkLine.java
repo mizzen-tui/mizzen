@@ -8,12 +8,18 @@ import java.util.Collections;
 import java.util.List;
 import java.util.StringJoiner;
 
-// taken from : https://github.com/RichardWarburton/jspark and modified to allow for multiline SparkLines
+// taken from : https://github.com/RichardWarburton/jspark and modified to allow for multi-line SparkLines
 
 public class SparkLine {
 
-    private static final List<Character> ticks = Arrays.asList('\u2581', '\u2582', '\u2583', '\u2584', '\u2585',
-            '\u2586', '\u2587', '\u2588');
+    private static final List<Character> ticks = Arrays.asList('\u2581', 
+                                                               '\u2582', 
+                                                               '\u2583', 
+                                                               '\u2584', 
+                                                               '\u2585',
+                                                               '\u2586', 
+                                                               '\u2587', 
+                                                               '\u2588');
 
     private static final int ticks_maxIndex = ticks.size() - 1;
     
@@ -60,7 +66,7 @@ public class SparkLine {
     }
 
     /**
-     * Renders an ASCII graph.
+     * Renders an ASCII sparkline graph.
      * 
      * @param values an arrays of integers to be rendered
      * @return a String containing an ascii graph of the values

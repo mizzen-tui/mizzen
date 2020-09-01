@@ -14,16 +14,15 @@ import dtb.terminalIO.textsegments.ScreenLineSegment;
  * @author david
  */
 public class ScreenCanvasBackend implements CanvasBackend {
-	
+
 	TerminalScreen screen;
 	ScreenUpdateStrategy screenUpdateStrategy;
-	
 
 	public static enum UpdateStrategy {
 	    UPDATE_FULL,
 	    UPDATE_CHANGED
 	}
-	
+
     public ScreenCanvasBackend(TerminalScreen screen, UpdateStrategy updateStrategy) {
         super();
         this.screen = screen;
@@ -36,7 +35,7 @@ public class ScreenCanvasBackend implements CanvasBackend {
 	}
 	
 	public void setUpdateStrategy(UpdateStrategy updateStrategy) {
-	    
+
 	    if (updateStrategy == null) {
 	        throw new NullPointerException("UpdateStrategy null!");
 	    }
@@ -46,16 +45,17 @@ public class ScreenCanvasBackend implements CanvasBackend {
 	    } else if (updateStrategy.equals(UpdateStrategy.UPDATE_CHANGED)) {
             this.screenUpdateStrategy = changedSegmentsUpdateStrategy;
 	    }
-	    
+
 	    screen.home();
 	    screen.clear();
-	    
+
 	}
-	
+
 	@Override
 	public void writeToBackend(ScreenLineSegment sc) {
 	    screenUpdateStrategy.writeToBackend(sc);
 	}
+
 	@Override
 	public void signal_eol() {
 	    screenUpdateStrategy.signal_eol();
@@ -287,7 +287,7 @@ public class ScreenCanvasBackend implements CanvasBackend {
             // fully repaint itself.. then after that, we revert to 
             // partial updates again.. 
             
-            previous.clear(); // forces full update on next update
+            previous.clear();   // forces full update on next update
             current.clear();
             
             counter = 5 ;     // # of full screen refreshes (UPDATE_FULL) before 

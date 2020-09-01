@@ -56,6 +56,7 @@ public class CharacterViewerTest {
         app.enableMouseHandling(scrollPanel);
 
         app.setUpdateCanvas((theApp) -> {
+            theApp.getCanvas().clearCanvas();
             theApp.getCanvas().addComponentSegments(3, 5, scrollPanel);
             return true;
         });

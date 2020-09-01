@@ -270,6 +270,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         itemsContainer = new VerticalPanel(color);
         itemsContainer.setColor(color);
         itemsContainer.setParentContainer(this);
+        this.setFillOnClear(false);
     }
     
     public ListBox() {
