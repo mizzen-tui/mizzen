@@ -73,6 +73,37 @@ public class ImageViewer {
                     .start();
     }
     
+    public static Map<String,String> imageFiles(String dir) {
+        
+        if (dir == null) {
+            dir = System.getProperty("user.dir");
+        }
+        
+        File imgDIR = new File(dir);
+        if (!imgDIR.exists() || !imgDIR.isDirectory()) {
+            throw new IllegalArgumentException(dir+" not a valid dir");
+        }
+        
+        File[] files = imgDIR.listFiles((d,f)->  f.endsWith(".jpg") || f.endsWith(".png"));
+        
+        if (files == null || files.length == 0) {
+            throw new IllegalArgumentException(dir+" does not have any jpegs or png files");
+        }
+        
+        Map<String,String> images = new HashMap<String, String>();
+        
+        for (File f : files) {
+            try {
+                images.put(f.getName(), f.getCanonicalPath());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        return images;
+        
+    }
+    
     public static void plotterTest(String[] args) {
         
         HorizontalPanel mainPanel = new HorizontalPanel();
@@ -101,17 +132,17 @@ public class ImageViewer {
                         mainPanel.add(plotter);
                         mainPanel.add(formPanel);
                         
-                        Map<String,String> images = new HashMap<String, String>();
-                        images.put("cheoyLee.png", "/home/dbalme/workspace/dtbTerminalIO/cheoyLee.png");
-                        images.put("Acme.jpg", "/home/dbalme/workspace/dtbTerminalIO/Acme.jpg");
-                        images.put("wb48.gif", "/home/dbalme/eclipse/configuration/org.eclipse.osgi/388/0/.cp/themes/purpleMesh/graphics/icons/ctool/wb48.gif");
-                        images.put("roltSmall.jpg", "/home/dbalme/workspace/dtbTerminalIO/roltSmall.jpg");
-                        images.put("r-olt-dots1.png","/home/dbalme/workspace/dtbTerminalIO/r-olt-dots1.png");
-                        images.put("smallrolt2.png", "/home/dbalme/workspace/dtbTerminalIO/smallrolt2.png");
-                        images.put("DavidHeadShot.jpg", "/home/dbalme/workspace/dtbTerminalIO/DavidHeadShot.jpg");
-                        images.put("roltLarge.jpg", "/home/dbalme/workspace/dtbTerminalIO/roltLarge.jpg");
-                        images.put("roltLargeEdgeDetection.png", "/home/dbalme/workspace/dtbTerminalIO/roltLargeEdgeDetection.png");
-                        images.put("smiley1.jpg", "/home/dbalme/workspace/dtbTerminalIO/smiley1.jpg");
+                        Map<String,String> images = imageFiles(null);
+//                        images.put("cheoyLee.png", "/home/dbalme/workspace/dtbTerminalIO/cheoyLee.png");
+//                        images.put("Acme.jpg", "/home/dbalme/workspace/dtbTerminalIO/Acme.jpg");
+//                        images.put("wb48.gif", "/home/dbalme/eclipse/configuration/org.eclipse.osgi/388/0/.cp/themes/purpleMesh/graphics/icons/ctool/wb48.gif");
+//                        images.put("roltSmall.jpg", "/home/dbalme/workspace/dtbTerminalIO/roltSmall.jpg");
+//                        images.put("r-olt-dots1.png","/home/dbalme/workspace/dtbTerminalIO/r-olt-dots1.png");
+//                        images.put("smallrolt2.png", "/home/dbalme/workspace/dtbTerminalIO/smallrolt2.png");
+//                        images.put("DavidHeadShot.jpg", "/home/dbalme/workspace/dtbTerminalIO/DavidHeadShot.jpg");
+//                        images.put("roltLarge.jpg", "/home/dbalme/workspace/dtbTerminalIO/roltLarge.jpg");
+//                        images.put("roltLargeEdgeDetection.png", "/home/dbalme/workspace/dtbTerminalIO/roltLargeEdgeDetection.png");
+//                        images.put("smiley1.jpg", "/home/dbalme/workspace/dtbTerminalIO/smiley1.jpg");
 
                         ListBox<String> imagesListbox = new ListBox<String>(StringDisplayValue.fromStringValues(images));
                         imagesListbox.setTitle("Images");
