@@ -202,6 +202,11 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
         return this;
     }
 
+    public boolean hasBorder() {
+        // see setBorder() below for reason for hard-coded true value
+        return true;
+    }
+    
     @Override
     public BorderedComponent setBorder(boolean hasBorder) {
         if (!hasBorder) 

@@ -7,6 +7,8 @@ import java.util.StringJoiner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import dtb.terminalIO.components.input.DisplayableValue;
+import dtb.terminalIO.controlcodes.ControlCode.ColorFromCodes;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors.HasRowChange;
 import dtb.terminalIO.textsegments.CleanString;
 import dtb.terminalIO.util.IntArrayComparator;
@@ -72,7 +74,16 @@ public abstract class ControlCode implements Renderer {
      */
     public static abstract class Color extends ControlCode implements ColorProvider {
 
+        protected int[] codes;
+        
         abstract protected int[] buildControlCodes();
+
+        final protected int[] getControlCodes() {
+            if (codes == null) {
+                codes = buildControlCodes();    
+            }
+            return codes;
+        }
         
         ColorTransform boldTransform = ColorTransform.NULL_colorTransform;
         ColorTransform invertTransform = ColorTransform.NULL_colorTransform;
@@ -108,7 +119,7 @@ public abstract class ControlCode implements Renderer {
         }
 
         protected String buildColorControlCode() {
-            int codes[] = buildControlCodes();
+            int codes[] = getControlCodes();
             StringJoiner sj = new StringJoiner(";");
             for (int code : codes) {
                 sj.add(code + "");
@@ -142,9 +153,23 @@ public abstract class ControlCode implements Renderer {
             return new ColorFromString(colorStr);
         }
         
+        public DisplayableValue<Color> asDisplayableValue() {
+            return new DisplayableValue<Color>() {
+                @Override
+                public Color getValue() {
+                    return Color.this;
+                }
+                @Override
+                public String getDisplayValue() {
+                    return Color.this.toString();
+                }
+            };
+        }
+        
+        
+        
     }
-    
-    
+
     public static class ColorComparator implements Comparator<Color> {
 
         @Override
@@ -153,8 +178,8 @@ public abstract class ControlCode implements Renderer {
                 return 0;
             }
 
-            int[] c1codes = c1.buildControlCodes();
-            int[] c2codes = c2.buildControlCodes();
+            int[] c1codes = c1.getControlCodes();
+            int[] c2codes = c2.getControlCodes();
             return IntArrayComparator.INTARRAY_COMPARE.compare(c1codes, c2codes);
         }
         
@@ -164,17 +189,45 @@ public abstract class ControlCode implements Renderer {
     
     public static class ColorFromCodes extends Color {
 
-        int[] codes;
         
         public ColorFromCodes(int[] codes) {
             this.codes = codes;
         }
+        
+        public ColorFromCodes(Color color) {
+            this(color.getControlCodes());
+        }
+        
+        /**
+         * Returns itself with more color codes
+         */
+        public ColorFromCodes appendCodes(int[] additionalCodes) {
+            int[] newCodes = new int[additionalCodes.length + this.codes.length];
+            
+            int i = 0;
+            for (int j=0; j<codes.length; j++) {
+                newCodes[i] = codes[j];
+                i++;
+            }
+            for (int j=0; j<additionalCodes.length; j++) {
+                newCodes[i] = additionalCodes[j];
+                i++;
+            }
+            this.codes = newCodes;
+            return this;
+        }
+        
+        public ColorFromCodes appendCodes(Color color) {
+            return appendCodes(color.getControlCodes());
+        }
+
         
         @Override
         protected int[] buildControlCodes() {
             return codes;
         }
     }
+    
     
     public static class ColorFromString extends Color {
 
@@ -311,6 +364,8 @@ public abstract class ControlCode implements Renderer {
             }
             return "[BG=" + name + "]";
         }
+        
+        
     }
 
     /**
@@ -358,8 +413,8 @@ public abstract class ControlCode implements Renderer {
                     return this.fgc.getInvertTransform(); 
                 }
                 
-                int[] fgcInvertedColorCodes = this.fgc.getInvertTransform().transform(this.fgc).buildControlCodes();
-                int[] bgcInvertedColorCodes = this.bgc.getInvertTransform().transform(this.bgc).buildControlCodes();
+                int[] fgcInvertedColorCodes = this.fgc.getInvertTransform().transform(this.fgc).getControlCodes();
+                int[] bgcInvertedColorCodes = this.bgc.getInvertTransform().transform(this.bgc).getControlCodes();
                 
                 int[] combinedCodes = new int[fgcInvertedColorCodes.length + bgcInvertedColorCodes.length];
                 System.arraycopy(fgcInvertedColorCodes, 0, combinedCodes, 0, fgcInvertedColorCodes.length);
@@ -449,8 +504,8 @@ public abstract class ControlCode implements Renderer {
 
         @Override
         protected int[] buildControlCodes() {
-            int [] fgcControlCodes = fgc != null? fgc.buildControlCodes() : new int[] {};
-            int [] bgcControlCodes = bgc != null? bgc.buildControlCodes() : new int[] {};
+            int [] fgcControlCodes = fgc != null? fgc.getControlCodes() : new int[] {};
+            int [] bgcControlCodes = bgc != null? bgc.getControlCodes() : new int[] {};
             
             int[] controlCodes = new int[fgcControlCodes.length + bgcControlCodes.length];
             int i = 0;
@@ -503,6 +558,11 @@ public abstract class ControlCode implements Renderer {
                                                             public Color setBoldTransform(ColorTransform boldTransform ) {
                                                                 throw new IllegalStateException("Cannot change DEFAULT color!");
                                                             }
+                                                            
+                                                            public String toString() {
+                                                                return "DEFAULT";
+                                                            }
+                                                            
                                                         };
 
      public static final Color DEFAULT_COLOR            = RCol ; // new FGBGColors(Colors.Whi, null);

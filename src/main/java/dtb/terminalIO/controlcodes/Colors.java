@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import dtb.terminalIO.controlcodes.ControlCode.BgColor;
+import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.ControlCode.ColorFromCodes;
 import dtb.terminalIO.controlcodes.ControlCode.FgColor;
 
 /**
@@ -116,5 +118,55 @@ public class Colors {
 	public static final BgColor On_IPur= addNamedBGColor(  "On_IPur",new BgColor(105).setInvertTransform( (c) -> Colors.getNamedFGColor("IPur") ));
 	public static final BgColor On_ICya= addNamedBGColor(  "On_ICya",new BgColor(106).setInvertTransform( (c) -> Colors.getNamedFGColor("ICya") ));
 	public static final BgColor On_IWhi= addNamedBGColor(  "On_IWhi",new BgColor(107).setInvertTransform( (c) -> Colors.getNamedFGColor("IWhi") ));
+	
+	
+    public static class RGBColor extends ColorFromCodes {
+
+        public RGBColor(int r, int g, int b) {
+            super(new int[] {38, 2, r, g, b});
+        }
+
+    }
+    
+
+	private static Map<Integer, Color> rgbMap = new HashMap<Integer, Color>();
+	
+	static int toPixelColor(int r, int g, int b) {
+	    return /* red    */      r << 16  |
+	           /* green  */      g <<  8  |
+	           /* blue   */      b        ;
+	}
+
+    static public Color fromRGBPixelColor(int pixelColor) {
+        Color rgbColor = rgbMap.get(pixelColor);
+        if (rgbColor != null) {
+            return rgbColor;
+        }
+        
+        int r = (pixelColor & 0xff0000) >> 16;
+	    int g = (pixelColor & 0xff00)   >> 8;
+        int b =  pixelColor & 0xff;
+        
+        rgbColor = new RGBColor(r,g,b);
+        rgbMap.put(pixelColor, rgbColor);
+        return rgbColor;
+        
+    }
+
+	static public Color fromRGB(int r, int g, int b) {
+	    int pixelColor = toPixelColor(r,g,b);
+	    Color rgbColor = rgbMap.get(pixelColor);
+	    if (rgbColor != null) {
+	        return rgbColor;
+	    }
+	    rgbColor = new RGBColor(r,g,b);
+	    rgbMap.put(pixelColor, rgbColor);
+	    return rgbColor;
+	}
+	
+    static public Color fromRGBToGreyScale(int r, int g, int b) {
+        int h = (r / 3 + g / 3 + b / 3);
+        return fromRGB(h, h, h);
+    }
 	
 }

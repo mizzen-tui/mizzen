@@ -258,6 +258,7 @@ public class Composite extends AbstractComponent<Composite>
         bounds = calculatedBounds;
     }
 
+    @Override
     public boolean hasBorder() {
         return border != null;
     }

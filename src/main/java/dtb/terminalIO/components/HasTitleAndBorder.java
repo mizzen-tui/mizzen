@@ -4,6 +4,8 @@ import dtb.terminalIO.controlcodes.ControlCode.Color;
 
 public interface HasTitleAndBorder<T extends Component<?>> extends Hiliter {
     
+    public boolean hasBorder();
+    
     public T setBorder(boolean hasBorder);
     
     public T setBorderColor(Color borderColors);

@@ -15,8 +15,8 @@ import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
-import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
@@ -30,6 +30,7 @@ public class DropdownListBox<T> extends ComponentWithFocusManager
 
     private ListBox<T> listBox;
     private Button button;
+    private Rectangle preferredRectangleForLayout;
     
     private int maxItemWidth = 10;
     
@@ -42,7 +43,8 @@ public class DropdownListBox<T> extends ComponentWithFocusManager
         this.listBox = new ListBox<T>(color);
         this.listBox.setBorder(true);
 
-        DefaultFocusManager fm = new DefaultFocusManager(Keys.UP_KEYSTROKE, Keys.DOWN_KEYSTROKE).setNavKeysFirst(false).setCycling(false);
+        DefaultFocusManager fm = new DefaultFocusManager(Keys.UP_KEYSTROKE, Keys.DOWN_KEYSTROKE).setNavKeysFirst(false)
+                                                                                                .setCycling(false);
         this.setFocusManager( fm );
         fm.addFocusable(button);
         fm.addFocusable(listBox);
@@ -58,6 +60,26 @@ public class DropdownListBox<T> extends ComponentWithFocusManager
         });
         
         appendEventHandler( new KeyInputEventHandler(Keys.ENTER_KEYSTROKE, (te)-> { showListBox(); }));
+        
+        this.preferredRectangleForLayout = new Rectangle.AbstractDelegate() {
+
+            @Override
+            public Rectangle getRectangle() {
+                return DropdownListBox.this.button;
+            }
+            
+            @Override
+            public int getWidth() {
+                return super.getWidth() + (hasBorder() ? 2 : 0);
+            }
+
+            @Override
+            public int getHeight() {
+                return super.getHeight() + (hasBorder() ? 2 : 0);
+            }
+            
+        };
+        
     }
 
     public DropdownListBox() {
@@ -144,7 +166,13 @@ public class DropdownListBox<T> extends ComponentWithFocusManager
     }
     
     public Rectangle getPreferredRectangleForLayout() {
-        return this.button;
+        return preferredRectangleForLayout;
+    }
+
+    public boolean setSelected(int index) {
+        boolean result = this.listBox.setSelected(index);
+        setSelectedOntoTextView();
+        return result;
     }
 
     public void setSelectedValue(T value) {
@@ -155,7 +183,7 @@ public class DropdownListBox<T> extends ComponentWithFocusManager
     
     private void setSelectedOntoTextView() {
 
-        HasValue<T> selected = this.listBox.getSelected();
+        DisplayableValue<T> selected = this.listBox.getSelected();
         // buttons resize themselves based on text.
         // so we pad text to avoid this
         String buttonText;
@@ -164,7 +192,7 @@ public class DropdownListBox<T> extends ComponentWithFocusManager
             if (selected == null) {
                 buttonText = String.format("%-"+(5)+"s", StringUtils.repeat(emptyCH, 5));
             } else {
-                buttonText = String.format("%-"+(5)+"s", StringUtils.truncate((selected.toString()),5));
+                buttonText = String.format("%-"+(5)+"s", StringUtils.truncate((selected.getDisplayValue()),5));
             }
         } else {
             boolean hasFocus = hasFocus();
@@ -173,7 +201,7 @@ public class DropdownListBox<T> extends ComponentWithFocusManager
             if (selected == null) {
                 buttonText = String.format("%-"+(padLen)+"s"+arrow, StringUtils.repeat(emptyCH, padLen));
             } else {
-                buttonText = String.format("%-"+(padLen)+"s"+arrow, StringUtils.truncate(StringUtils.padRight((selected.toString()),padLen),padLen-1));
+                buttonText = String.format("%-"+(padLen)+"s"+arrow, StringUtils.truncate(StringUtils.padRight((selected.getDisplayValue()),padLen),padLen-1));
             }
         }
 
@@ -228,5 +256,14 @@ public class DropdownListBox<T> extends ComponentWithFocusManager
     public void onClick(EventBus eventBus) {
         this.setFocus(true, eventBus);
     }
+    
+    HasValue.OnValueChangedEventHandler<T> onChangeHandler;
+    
+    public void onChange(EventHandler consumeChange) {
+
+        onChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, onChangeHandler, this, consumeChange);
+
+    }
+    
 
 }

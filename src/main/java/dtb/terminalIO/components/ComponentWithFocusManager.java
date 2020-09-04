@@ -12,7 +12,6 @@ import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.EventHandlerContainer;
 import dtb.terminalIO.events.TerminalEvent;
-import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.mouse.GetComponentAtOffset;
@@ -222,6 +221,12 @@ public class ComponentWithFocusManager extends AbstractComponent<ComponentWithFo
         return this;
     }
 
+    @Override
+    public boolean hasBorder() {
+        return container.hasBorder();
+    }
+    
+    
     @Override
     public ComponentWithFocusManager setBorder(boolean hasBorder) {
         container.setBorder(hasBorder);

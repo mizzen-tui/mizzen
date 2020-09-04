@@ -127,6 +127,12 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>
         return setTitle(titleColor, title);
     }
 
+    public boolean hasBorder() {
+        // see setBorder() below for reason for hard-coded true value
+        return true;
+    }
+    
+    
     @Override
     public SimpleBorder setBorder(boolean hasBorder) {
         if (!hasBorder)

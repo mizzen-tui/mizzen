@@ -8,7 +8,7 @@ import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegmentsBuffer;
 
-public abstract class AbstractComponent<T extends AbstractComponent<?>> implements Component<T>, EmptyAttributes<T> {
+public abstract class AbstractComponent<T extends AbstractComponent<?>> implements Component<T>, FillOnClearPolicy.Provider, EmptyAttributes<T> {
 
     private IScreenLineSegmentsBuffer segments   = new ScreenLineSegmentsBuffer();
 
@@ -123,6 +123,10 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
         return (T) this;
     }
 
+    public FillOnClearPolicy<T> getFillOnClearPolicy() {
+        return this.fillPolicy;
+    }
+    
     @Override
     public char getEmptyChar() {
         return this.fillPolicy.getEmptyChar();

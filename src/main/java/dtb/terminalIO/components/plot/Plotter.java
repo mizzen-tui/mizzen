@@ -3,6 +3,7 @@ package dtb.terminalIO.components.plot;
 import java.util.TreeSet;
 
 import dtb.terminalIO.components.BoundedComponent;
+import dtb.terminalIO.components.braille.BrailleGrid;
 import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
@@ -144,6 +145,29 @@ public class Plotter extends BoundedComponent<Plotter> {
         return found;
     }
 
+    public PointPlotter asPointPlotter() {
+        PointPlotter plot = new PointPlotter() {
+            @Override
+            public void plot(int x, int y) {
+                addPlot(y, x);
+            }
+
+            @Override
+            public Color setColor(Color color) {
+                Color prevColor = Plotter.this.getColor();
+                Plotter.this.setColor(color);
+                return prevColor;
+            }
+
+            @Override
+            public void clearPlots() {
+                Plotter.this.clearPlots();
+            }
+
+        };
+        return plot;
+    }
+    
     public static class Plot implements Position {
         Position pos;
         char plotChar;

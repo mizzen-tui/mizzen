@@ -82,6 +82,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
 
             Dimension tcDim = new Dimension.Simple( strDim.getHeight(), maxWidthStr ); 
             tc = new TextComponent(this.getColor(), tcDim, displayableItem.getDisplayValue());
+            tc.setFillOnClear(true);
 
             bullet = new CharComponent( this.getColor() , '-');
 
@@ -233,16 +234,16 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
     // DisplayValue ItemComponent pair - this is what is managed by the ListBox
     class ListItem {
         
-        private HasValue<T> hasValue;
+        private DisplayableValue<T> hasValue;
         private ItemComponent  itemComponent;
                     
-        public ListItem(HasValue<T> hasValue, Component<?> component) {
+        public ListItem(DisplayableValue<T> hasValue, Component<?> component) {
             super();
             this.hasValue = hasValue;
             this.itemComponent = itemComponentfactory(component);
         }
 
-        public HasValue<T> getHasValue() {
+        public DisplayableValue<T> getHasValue() {
             return hasValue;
         }
         
@@ -270,7 +271,8 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         itemsContainer = new VerticalPanel(color);
         itemsContainer.setColor(color);
         itemsContainer.setParentContainer(this);
-        this.setFillOnClear(false);
+        itemsContainer.setFillOnClear(true);
+        this.setFillOnClear(true);
     }
     
     public ListBox() {
@@ -440,7 +442,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
     /**
      * returns value of item at index
      */
-    public HasValue<T> indexOf(int index) {
+    public DisplayableValue<T> indexOf(int index) {
         if (index < 0 || index >= size()) {
             return null;
         }
@@ -455,6 +457,10 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         return itemComponent;
     }
     
+    /**
+     * @param index
+     * @return  true if success in selecting item referenced by index
+     */
     public boolean setSelected(int index) {
         if (index < 0 || index >= size()) {
             return false;
@@ -536,7 +542,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
     }
     
     
-    public HasValue<T> getSelected() {
+    public DisplayableValue<T> getSelected() {
         int selected = getSelectedIndex();
         if (selected < 0) {
             return null;

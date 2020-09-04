@@ -90,16 +90,6 @@ public class BrailleScratchPadTests {
         Canvas master_canvas = new Canvas(screen);
         master_canvas.setSize(size.getHeight()-2, size.getWidth()-2);
 
-//        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-//        PrintStream ps = new PrintStream(baos, true, "UTF-8");
-//
-//        TerminalScreen screen = new TerminalScreen();
-//        screen.setPrintStream(ps);
-//        screen.setControlCodesEnabled(true);
-
-//        Canvas master_canvas = new Canvas(screen);
-        //master_canvas.setSize(50, 50);
-
         screen.hideCursor();
         
         char EMPTY_CHAR = ' ';
@@ -109,6 +99,8 @@ public class BrailleScratchPadTests {
         master_canvas.t("testing 123");
 
         BrailleGrid grid = new BrailleGrid(null, master_canvas.getHeight() - 6, master_canvas.getWidth() - 10);
+        
+        grid.setFillOnClear(true);
 
         BorderedComponent bcGRID = new BorderedComponent(grid);
         bcGRID.setTitle(Colors.BPur, "Space Invaders");
@@ -153,8 +145,6 @@ public class BrailleScratchPadTests {
             
             iLabel.setText("i = "+i);
 
-            //pPrime2 = new 
-            
             
             master_canvas.addComponentSegments(4,2,bcGRID);
             master_canvas.refresh();

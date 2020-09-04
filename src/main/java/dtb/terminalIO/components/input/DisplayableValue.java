@@ -1,5 +1,9 @@
 package dtb.terminalIO.components.input;
 
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 public interface DisplayableValue<V> extends HasValue<V> {
     
     String getDisplayValue();
@@ -7,9 +11,16 @@ public interface DisplayableValue<V> extends HasValue<V> {
     public class SimpleDisplayValue<V> implements  DisplayableValue<V> {
 
         V value;
+        String displayValue;
+        
+        public SimpleDisplayValue(String displayValue, V value) {
+            this.displayValue = displayValue;
+            this.value = value;
+        }
         
         public SimpleDisplayValue(V value) {
-            this.value = value;
+            this(String.valueOf(value), value);
+            
         }
         
         @Override
@@ -19,7 +30,7 @@ public interface DisplayableValue<V> extends HasValue<V> {
 
         @Override
         public String getDisplayValue() {
-            return String.valueOf(getValue());
+            return displayValue;
         }
         
         @Override
@@ -31,6 +42,10 @@ public interface DisplayableValue<V> extends HasValue<V> {
     
     public class StringDisplayValue extends  SimpleDisplayValue<String> {
         
+        public StringDisplayValue(String displayValue, String value) {
+            super(displayValue, value);
+        }
+
         public StringDisplayValue(String value) {
             super(value);
         }
@@ -43,6 +58,25 @@ public interface DisplayableValue<V> extends HasValue<V> {
             
             for (int i=0; i<values.length; i++) {
                 displayValues[i] = new StringDisplayValue(values[i]);
+            }
+            
+            return displayValues;
+        }
+        
+        public static StringDisplayValue[] fromStringValues(Map<String,String> displayValuesMap) {
+            if (displayValuesMap == null) {
+                return null;
+            }
+            
+            int length = displayValuesMap.size();
+            StringDisplayValue[] displayValues = new StringDisplayValue[length];
+            
+            List<String> sortedKeys = displayValuesMap.keySet().stream().sorted().collect(Collectors.toList());
+            
+            int i = 0;
+            for (String key : sortedKeys) {
+                displayValues[i] = new StringDisplayValue(key, displayValuesMap.get(key));
+                i++;
             }
             
             return displayValues;

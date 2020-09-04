@@ -146,6 +146,8 @@ public class ExecTest {
                 return false; // false means no gui update
             }
 
+            tApp.clearCanvas();
+            
             TimeAndCount elapsed = TimeAndCount.onRun(()->tApp.getCanvas().addComponentSegments(view1OffsetOnCanvas, mainPanel), lprocViewer.textView);
 
             tApp.getCanvas().t(lprocViewer.getBottomMostRow()+5, 0, "elapsed = "+elapsed);
