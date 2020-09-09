@@ -258,7 +258,7 @@ public class ScrollableComponentTest {
 
         EventHandlerContainer gridBrailleEventHandlers = new EventHandlerContainer() {
             
-            ChainedEventHandler  idleEventHandlers = ChainedEventHandler.useHandleAllStrategy();
+            ChainedEventHandler  idleEventHandlers = ChainedEventHandler.useHandleAllStrategy("handle-all-gridBrailleEventHandlers");
 
             @Override
             public EventHandlerContainer appendEventHandler(ConditionalEventHandler eventHandler) {

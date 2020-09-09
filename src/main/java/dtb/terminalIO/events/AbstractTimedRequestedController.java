@@ -1,6 +1,7 @@
 package dtb.terminalIO.events;
 
 import dtb.terminalIO.events.OnIdleEventEventHandler.OneTimeAfterInterval;
+import dtb.terminalIO.util.Logging;
 
 public abstract class AbstractTimedRequestedController {
 
@@ -10,6 +11,7 @@ public abstract class AbstractTimedRequestedController {
     private long lastTimeRequestChange = -1;
     private OneTimeAfterInterval timerInterval;
     private Runnable onRequestCommand;
+    private Object mutex = new Object();
 
     public AbstractTimedRequestedController(Runnable onChangeAction) {
         this.onRequestCommand = onChangeAction;
@@ -34,34 +36,71 @@ public abstract class AbstractTimedRequestedController {
 
         lastTimeRequestChange = System.currentTimeMillis();
         if (timerInterval == null) {
-            timerInterval = new OnChangeInterval();
-            eventBus.appendEventHandler(timerInterval);
+            synchronized(mutex) {
+                if (timerInterval == null) {
+                    
+                    createAndAppendTimerHandler(eventBus);
+
+                }
+            }
         }
     }
+    
+    private void createAndAppendTimerHandler(EventBus eventBus) {
+        timerInterval = new OnChangeInterval();
+        //logBusStats("add(pre ) ", te.getEventBus());
+        boolean appendSuccess = eventBus.appendEventHandler(timerInterval) != null;
+        if (!appendSuccess) {
+            timerInterval = null;  // EventBus could be temporarily disabled ( Terminal resize causes this )
+        }
+        // logBusStats("add(post) ", te.getEventBus()); 
+        
+        return;
+    }
 
+    private static void logBusStats(String prefix, EventBus eventBus) {
+        String busStats = ((EventBusImpl)eventBus).statsAsStr();
+        Logging.info(prefix+":"+busStats);
+
+    }
+    
     private final class OnChangeInterval extends OneTimeAfterInterval {
 
         OnChangeInterval() {
             super(new EventHandler() {
                 @Override
                 public void handle(TerminalEvent<?> te) {
+                    
+                    //logBusStats("handle()1", te.getEventBus()); 
                     final long currentTime = System.currentTimeMillis();
                     // check if last request was too recent..
                     if ((currentTime - lastTimeRequestChange) < timerDelayMillis) {
+
                         // last request was too recent so lets re-add the
-                        // handler onto the eventBus
-                        timerInterval = new OnChangeInterval();
-                        te.getEventBus().appendEventHandler(timerInterval);
+                        // a new timerHandler onto the eventBus
+                        createAndAppendTimerHandler(te.getEventBus());
+                        
                         return;
                     }
                     // last request was not too long ago .. so finally
                     // lets invoke the request
-                    onRequestCommand.run();
-                    timerInterval = null;
+                    synchronized (mutex) {
+                        try {
+                             onRequestCommand.run();
+                        } finally {
+                            timerInterval = null;
+                            lastTimeRequestChange = -1;
+                        }
+                    }
                 }
 
-            }, timerDelayMillis);
+            }, AbstractTimedRequestedController.this.timerDelayMillis);
         }
+
+        public String toString() {
+            return "[OnChangeInterval]";
+        }
+
     }
 
 }

@@ -50,11 +50,9 @@ public class EventBusEventsProducerTest extends TestCase {
         BytesContainer keyboardInputBytesContainer = new BytesContainer();
         
         eventBus.appendEventHandler( new KeyInputEventHandler((te)->{
-            //System.out.println("Handler test " + te);
             return true;
             },
            (te)->{
-               //System.out.println("Handler");
                InputBytesHelper.captureAndStoreKeyEvent(keyboardInputBytesContainer,
                                                         (KeyEvent)te);
            })); 

@@ -9,6 +9,8 @@ import dtb.terminalIO.components.input.DropdownListBox;
 import dtb.terminalIO.components.modal.MessageBox;
 import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.core.ScreenCanvasBackend;
+import dtb.terminalIO.core.ScreenCanvasBackend.UpdateStrategy;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.Keys;
@@ -65,6 +67,9 @@ public class DropdownListBoxInButtonBarTest {
                                                                                              tApp.getEventBus(),
                                                                                              ()-> new DefaultFocusManager().setNavKeysFirst(false).setCycling(false));
             
+            ScreenCanvasBackend backEnd = (ScreenCanvasBackend) tApp.getCanvas().getCanvasBackend();
+            //backEnd.setUpdateStrategy(UpdateStrategy.UPDATE_CHANGED  );
+            backEnd.setUpdateStrategy(UpdateStrategy.UPDATE_FULL  );
             
             tApp.getEventBus().appendEventHandler(  mainFocusManager );
             

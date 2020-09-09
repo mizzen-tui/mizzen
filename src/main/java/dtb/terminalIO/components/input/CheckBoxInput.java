@@ -123,7 +123,7 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
         this.textRenderer.setText(buildRenderText());
         segments.merge(this.textRenderer.getSegmentsBuffer());
     }
-    
+
     protected void init() {
         this.textRenderer = new TextComponent(this.getColor(), this.getRectangle(), buildRenderText());
         this.textRenderer.setParentContainer(this);
@@ -137,7 +137,7 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
     private void requestHideCursor(EventBus eventBus) {
         eventBus.raiseEvent(new RequestHideCursorEvent(this));
     }
-    
+
     protected void checkBoxPressed(EventBus eventBus) {
         boolean newValue = !  CheckBoxInput.this.getValue();  // toggle the value
         CheckBoxInput.this.setValue(  newValue  );  
@@ -145,7 +145,7 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
         eventBus.raiseEvent(new RequestUpdateCanvasEvent(this));
     }
     
-    
+
     public void onClick(EventBus eventBus) {
         if (!asFocusable().hasFocus()) {
             // focus manager should have already put focus here - but just in case ..
@@ -153,7 +153,7 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
         }
         checkBoxPressed(eventBus);
     }
-    
+
     OnValueChangedEventHandler<Boolean> actionOnChangeHandler;
 
     public void onChange(EventHandler handler) {
@@ -161,15 +161,15 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
         actionOnChangeHandler = HasValue.UTIL.wrapHandlerInOnValueChangedHandler(this, handler);
 
     }
-    
+
     Focusable meAsFocusable;
-    
+
     public Focusable asFocusable() {
-        
+
         if (meAsFocusable != null) {
             return meAsFocusable;
         }
-        
+
         Predicate<TerminalEvent<?>> canHandleOnChangeEvent = (te)-> {
             if (this.actionOnChangeHandler == null) {
                 return false;
@@ -179,7 +179,7 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
             }
             return false;
         };
-        
+
         meAsFocusable = new DefaultFocusableBehaviour.ComponentHiliterFocusableBehaviour(this) {
 
             @Override
@@ -195,16 +195,16 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
 
             @Override
             public void handle(TerminalEvent<?> te) {
-                
+
                 if (canHandleOnChangeEvent.test(te)) {
                     actionOnChangeHandler.handle(te);
                     return;
                 }
-                
+
                 if (!(te instanceof KeyEvent)) {
                     return;
                 }
-                
+
                 KeyEvent ke = (KeyEvent) te; 
                 
                 if (ke.isKeyStroke( Keys.ENTER_KEYSTROKE )  || ke.isKeyStroke(Keys.SPACE_KEYSTROKE)) {
@@ -231,7 +231,7 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
                 }
                 return null;
             }
-            
+
         };
         return meAsFocusable;
     }

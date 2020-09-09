@@ -36,6 +36,7 @@ import dtb.terminalIO.util.Logging;
  *         TIMER,
  *         EXCEPTION,
  *         DEBUG
+ *         RAW_MOUSE
  *           :
  *          etc
  *
@@ -46,18 +47,18 @@ import dtb.terminalIO.util.Logging;
  * 
  * <p/>
  * 
- * One handler chain is used for idle events. When an idle event is generated
- * the event is passed to all idle event handlers and then each can decide to
+ * One handler chain is used for idle events. When an idle event is generated,
+ * the event is passed to all registered idle event handlers and then each can decide to
  * perform it's operation based on elapsed time since last invoked.
  * 
  * <p/>
  * 
  * The other 'main' handler is used to handle all other events ( usually
- * KeyStroke events).
+ * KeyStroke or mouse events).
  * 
  * <p/>
  * 
- * This chained handler works in a Chain-of-Responsibility style of handling.
+ * This second chained handler works in a Chain-of-Responsibility style of handling.
  * The first eventHandler that can handle the event (usually a KeyStroke) is the
  * eventHandler that handles the event. See {@link ChainedEventHandler} for more
  * details on how it works.
@@ -69,7 +70,7 @@ public class EventBusImpl implements EventHandlerContainer, EventBus {
                                                      // -- increase as needed
 
     // main events handler chain
-    private ChainedEventHandler eventsHandlerChain = ChainedEventHandler.useChainOfResponsibilityStrategy();
+    private ChainedEventHandler eventsHandlerChain = ChainedEventHandler.useChainOfResponsibilityStrategy("BUS:main");
 
     // main events handler chain
     private ChainedEventHandler terminateHandlerChain = null;
@@ -128,9 +129,9 @@ public class EventBusImpl implements EventHandlerContainer, EventBus {
                         }
                     } catch (Exception e) {
                         handleEvent(new TerminalEvent<Exception>(EventBusImpl.this, TerminalEvent.TYPE.EXCEPTION, e).setEventBus(EventBusImpl.this));
-                        // hmm... should I really be looping after an exception.. or should I
-                        // terminate..
-                        // for now .. letting the application make the decision.
+                        // hmm... Should I really be looping after an exception.. or should I
+                        //        terminate?..
+                        //        For now .. I'm letting the user application make the decision.
                     }
                 }
                 handleEvent(new TerminalEvent<Exception>(EventBusImpl.this, TerminalEvent.TYPE.TERMINATE, null, EventBusImpl.this).setEventBus(EventBusImpl.this));
@@ -212,14 +213,15 @@ public class EventBusImpl implements EventHandlerContainer, EventBus {
     @Override
     public EventBus appendIdleEventHandler(OnIdleEventEventHandler onIdleEventHandler) {
 
-        if (idleEventsSuppressed)
-            return this;
+        if (idleEventsSuppressed) {
+            return null;  // null is a signal to caller that handler was not appended
+        }
 
         if (this.idleEventsHandlerChain == null) {
             synchronized (this) {
                 if (this.idleEventsHandlerChain == null && !idleEventsSuppressed) {
                     // build a handler for all idle events
-                    this.idleEventsHandlerChain = ChainedEventHandler.useHandleAllStrategy();
+                    this.idleEventsHandlerChain = ChainedEventHandler.useHandleAllStrategy("BUS:idle");
 
                     // now build a handler on the main eventbus to dispatch to the
                     // the newly built idleEventsHandler
@@ -243,7 +245,7 @@ public class EventBusImpl implements EventHandlerContainer, EventBus {
             synchronized (this) {
                 if (this.terminateHandlerChain == null) {
                     // build a handler for all idle events
-                    ChainedEventHandler terminateHandlerAll = ChainedEventHandler.useHandleAllStrategy();
+                    ChainedEventHandler terminateHandlerAll = ChainedEventHandler.useHandleAllStrategy("BUS:terminate");
                     terminateHandlerAll.appendEventHandler( new OnTerminateEventHandler(()-> stopConsuming()) );
 
                     this.master_terminateEventHandlerBRIDGE = new ConditionalEventHandler() {
@@ -297,7 +299,7 @@ public class EventBusImpl implements EventHandlerContainer, EventBus {
         if (master_idlEventHandlerBRIDGE != null)
             return;
 
-        disableIdleEvents(); // remove master and noop idle handlers
+        disableIdleEvents(); // remove master and NOOP idle handlers
 
         idleEventsEnabled.set(true);
 
@@ -337,6 +339,10 @@ public class EventBusImpl implements EventHandlerContainer, EventBus {
                     return this;
                 }
                 return null;
+            }
+            
+            public String toString() {
+                return "BUS:master_idlEventHandlerBRIDGE";
             }
         };
 
@@ -406,8 +412,7 @@ public class EventBusImpl implements EventHandlerContainer, EventBus {
     public EventBus appendEventHandler(ConditionalEventHandler eventHandler) {
         if (eventHandler instanceof OnIdleEventEventHandler) {
 
-            appendIdleEventHandler((OnIdleEventEventHandler) eventHandler);
-            return this;
+            return appendIdleEventHandler((OnIdleEventEventHandler) eventHandler);
         }
         
         if (eventHandler instanceof OnTerminateEventHandler) {
@@ -441,11 +446,11 @@ public class EventBusImpl implements EventHandlerContainer, EventBus {
 
     public String statsAsStr() {
         StringBuffer sb = new StringBuffer();
-        sb.append("Event Bus : size=");
+        sb.append("EvtBus: Qsize:");
         sb.append(this.queue.size());
-        sb.append("  idleEventsHandler "
-                + (idleEventsHandlerChain == null ? "empty" : idleEventsHandlerChain.statsAsStr()));
-        sb.append("  handler " + eventsHandlerChain.statsAsStr());
+        sb.append(" ");
+        sb.append((idleEventsHandlerChain == null ? "BUS:idle: empty" : idleEventsHandlerChain.statsAsStr()));
+        sb.append(" "+ eventsHandlerChain.statsAsStr());
         return sb.toString();
     }
 

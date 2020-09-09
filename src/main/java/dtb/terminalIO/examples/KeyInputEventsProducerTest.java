@@ -62,6 +62,9 @@ public class KeyInputEventsProducerTest {
         
 
         screen.add( ControlCode.ENABLE_MOUSE_TRACKING );
+//        screen.add( ControlCode.SET_BTN_EVENT_MOUSE );
+//        screen.add( ControlCode.SET_ANY_EVENT_MOUSE );
+//        screen.add( ControlCode.SET_EXT_MODE_MOUSE );
         // now flush to stdout
         screen.refresh();
         

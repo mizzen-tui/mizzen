@@ -3,6 +3,7 @@ package dtb.terminalIO.events;
 import java.util.function.Predicate;
 
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
+import dtb.terminalIO.util.Logging;
 
 /**
  * Handle Canvas update requests.
@@ -41,6 +42,9 @@ public class OnRequestUpdateCanvasEventHandler implements ConditionalEventHandle
             
             timedCanvasUpdater = ()-> {
                 
+                Logging.info("OnRequestUpdateCanvasEventHandler.timedCanvasUpdater" );
+                
+                
                 long start = System.currentTimeMillis();
                 canvasUpdater.run();
                 long elapsed = System.currentTimeMillis() - start;
@@ -48,10 +52,14 @@ public class OnRequestUpdateCanvasEventHandler implements ConditionalEventHandle
                 if (OnRequestUpdateCanvasEventHandler.this.timedOnChangeRequestController != null &&
                     elapsed <= 1500 &&  // ignore really long times .. hopefully just an anomaly
                     (elapsed)>OnRequestUpdateCanvasEventHandler.this.timedOnChangeRequestController.getTimerDelayMillis()) {
+                    
                     OnRequestUpdateCanvasEventHandler.this.timedOnChangeRequestController.setTimerDelayMillis((int)elapsed);
+                    
                 } else {
                     if (elapsed*2 < OnRequestUpdateCanvasEventHandler.this.timedOnChangeRequestController.getTimerDelayMillis()) {
+                        
                         OnRequestUpdateCanvasEventHandler.this.timedOnChangeRequestController.setTimerDelayMillis((int)elapsed);
+                        
                     }
                 }
             };

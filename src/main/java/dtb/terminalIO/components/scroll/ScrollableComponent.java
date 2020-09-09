@@ -70,6 +70,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
     public ScrollableComponent(Color color, Dimension d, Component<?> componentBeingViewed) {
         this(color, d, componentBeingViewed, null);
     }
+    
     public ScrollableComponent(Color color, Dimension d, Component<?> componentBeingViewed, Supplier<DefaultFocusManager> defaultFocusManagerBuilder) {
 
         super(color);
@@ -79,26 +80,39 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         }
         
         this.componentBeingViewed = componentBeingViewed;
-        viewer = new WindowViewComponent(color, new Dimension.Simple(d.getHeight() - 2, d.getWidth() - 2),
-                this.componentBeingViewed);
+        
+        viewer = new WindowViewComponent(color, 
+                                         new Dimension.Simple(d.getHeight() - 2, d.getWidth() - 2),
+                                         this.componentBeingViewed);
+        
         borderedComponent = new BorderedComponent(color, viewer, this);
 
-        vScrollBar = new ScrollBarVertical(color, borderedComponent.getPostion_TopRight().offsetAdd(1, 0),
-                borderedComponent.getHeight() - 2);
+        vScrollBar = new ScrollBarVertical(color, 
+                                           borderedComponent.getPostion_TopRight().offsetAdd(1, 0),
+                                           borderedComponent.getHeight() - 2);
+
         vScrollBar.setOffset(Position.ZERO);
+        
         vScrollBar.setViewedSize(new Rectangle.Delegate(componentBeingViewed), new Rectangle.Delegate(viewer));
 
-        hScrollBar = new ScrollBarHorizontal(color, borderedComponent.getPostion_BottomLeft().offsetAdd(0, 1),
-                borderedComponent.getWidth() - 2);
+        hScrollBar = new ScrollBarHorizontal(color, 
+                                             borderedComponent.getPostion_BottomLeft().offsetAdd(0, 1),
+                                             borderedComponent.getWidth() - 2);
+        
         hScrollBar.setOffset(Position.ZERO);
+        
         hScrollBar.setViewedSize(new Rectangle.Delegate(componentBeingViewed), new Rectangle.Delegate(viewer));
 
         footerText = null;
+        
         this.add(borderedComponent);
 
         setShowBorder(visibleBorder()); // add border and footertext if border defined
+        
         positionFooterText();
+        
         currentFocusable = footerControls;
+        
         asEventHandler();
     }
     
@@ -185,7 +199,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         return this.borderedComponent.getBorderColor();
     }
 
-    
+
     public Composite setTitle(String title) {
         this.borderedComponent.setTitle(title);
         return this;
@@ -303,7 +317,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         if (r > (componentBeingViewed.getBottomMostRow() + 1)  || 
             c > (componentBeingViewed.getRightMostCol()  + 1)  )
             return false; // too large
-        
+
         Position offset = new Position.Simple(r, c);
         boolean changedOffset = viewer.setViewOffset(offset);
         if (changedOffset) {
@@ -329,7 +343,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
         super.draw(color, segments);
     }
-    
+
     @Override
     public void childResized(Component<?> child) {
         this.markAsDirty();
@@ -517,7 +531,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         
         Collection<Focusable> focusables = getChildFocusables();
         for (Focusable focusable : focusables) {
-            if (focusable != footerControls ) { /* footer control special case and handled above */
+            if (focusable != footerControls ) { /* footer control special case'd and handled above */
                 prependEventHandler(focusable);
             }
          }

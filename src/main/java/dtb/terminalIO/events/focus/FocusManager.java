@@ -56,18 +56,17 @@ public interface FocusManager extends Focusable {
     static class FocusManagerToHasChildren implements HasChildren<Focusable> {
 
         FocusManager focusManager;
-        
+
         FocusManagerToHasChildren(FocusManager focusManager) {
             this.focusManager = focusManager;
         }
-        
+
         @Override
         public Collection<? extends Focusable> getChildren() {
             return this.focusManager.getChildFocusables();
         }
-        
     }
-    
+
     static class FocusManagerHasChildrenAdapter implements HasChildrenAdapter<Focusable> {
 
         @Override

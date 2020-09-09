@@ -1,7 +1,6 @@
 package dtb.terminalIO.events.mouse;
 
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.input.Clickable;
@@ -29,12 +28,12 @@ import dtb.terminalIO.util.Logging;
  * on the canvas.
  */
 public class MouseEventOrchestrator {
-    
+
     private TerminalScreen screen;
     private Canvas canvas;
     private EventBus eventBus;
     private ConditionalEventHandler mouseTrackingEventHandler;
-    
+
     /**
      * MouseEventOrchestrator  
      * @param screen
@@ -56,20 +55,20 @@ public class MouseEventOrchestrator {
             super(new ConditionalEventHandler.Impl(canHandle_CPR_Event, handler));
         }
     }
-    
+
     public void enableMouseHandling(Component<?> rootComponent) {
         enableMouseHandling();
         appendApplicationMouseEventToClickable(rootComponent, null);
     }
-    
+
     public void enableMouseHandling() {
-        
+
         if (mouseTrackingEventHandler != null) {
             return;
         }
-        
+
         // setup event handlers
-        
+
         // when mouse handling is enabled, we need to capture raw console mouse events, which contain the
         // full console row/col coordinates of the mouse click..
         // then we need to map that row/col to the row/col within the application canvas - this is 
@@ -82,9 +81,9 @@ public class MouseEventOrchestrator {
         mouseTrackingEventHandler = new ConditionalEventHandler.Impl( canHandleRAWMouseEventPredicate,
                   (te)->{
                       RawParsedFromConsoleMouseEvent rme = (RawParsedFromConsoleMouseEvent) te;
-                      
+
                       Position lastRequestedCursorPosition = canvas.getLastRequestCursorPosition();
-                      
+
                       // (1) now let's move the screen cursor position to its top-left ( its 0,0 )
                       screen.home();
 
@@ -94,7 +93,7 @@ public class MouseEventOrchestrator {
                       screen.refresh();
                       te.getEventBus().appendEventHandler(new HandleOnceCPREvent((te2)->{
                           CPREvent cpr = (CPREvent) te2;
-                          
+
                           // (3) now we have the Cursor Position Report (CPR) ( note: CPR reports 1,1 as top-left )
                           // let's map the raw mouse position to the application position 
                           Position applicationMousePosition = cpr.getEventData().offsetAdd(-1, -1).negate().offsetAdd( rme.getEventData() );
@@ -103,7 +102,7 @@ public class MouseEventOrchestrator {
 //                          Logging.info("mouse info: " + String.valueOf(rme));
 //                          Logging.info("current cursor pos: " + String.valueOf(cpr));
 //                          Logging.info("current app mouse pos: " + String.valueOf(applicationMousePosition));
-                          
+
                           if (lastRequestedCursorPosition != null) {
                               screen.showCursorAt(lastRequestedCursorPosition);
                               screen.refresh();
@@ -117,7 +116,7 @@ public class MouseEventOrchestrator {
                           }
                           Logging.info("--------------------------------------");
                       }));
-                      
+
                   });
 
         eventBus.appendEventHandler( mouseTrackingEventHandler );
@@ -141,13 +140,13 @@ public class MouseEventOrchestrator {
             return;
         }
         if (appMouseToFocusableComponent != null) {
-            
+
             eventBus.removeEventHandler(appMouseToFocusableComponent);
             appMouseToFocusableComponent = null;
 
             return;
         }
-        
+
     }
 
     ConditionalEventHandler appMouseToFocusableComponent = null;
@@ -176,7 +175,7 @@ public class MouseEventOrchestrator {
         ConditionalEventHandler appMouseToFocusableComponent = new ConditionalEventHandler() {
 
             IS_Event_TYPE appMouseType = new IS_Event_TYPE(TYPE.APPLICATION_MOUSE);
-            
+
             @Override
             public EventHandler canHandle(TerminalEvent<?> te) {
                 if (appMouseType.test(te)) {
@@ -221,10 +220,9 @@ public class MouseEventOrchestrator {
                     }
                     return c;
                 };
-                
 
                 componentClicked = findFocusableParent.apply(componentClicked, false);
-                
+
                 if (componentClicked == null) {
                     return;
                 }

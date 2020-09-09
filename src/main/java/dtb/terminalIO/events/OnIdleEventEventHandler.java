@@ -40,14 +40,17 @@ public class OnIdleEventEventHandler extends ConditionalEventHandler.Impl {
 
         @Override
         public void handle(TerminalEvent<?> te) {
-            getHandler().handle(te);
-            te.getEventBus().removeEventHandler(this);
+            try {
+                super.handle(te);
+            } finally {
+                te.getEventBus().removeEventHandler(this);
+            }
         }
     }
 
     static class IntervalPredicate implements Predicate<TerminalEvent<?>> {
 
-        long afterTime;
+        protected long afterTime;
 
         IntervalPredicate(long interval) {
             this.afterTime = System.currentTimeMillis() + interval;
@@ -61,19 +64,23 @@ public class OnIdleEventEventHandler extends ConditionalEventHandler.Impl {
         public boolean test(TerminalEvent<?> t) {
             return System.currentTimeMillis() > afterTime;
         }
+        
+        
+        public String toString() {
+            return "IntervalPredicate:"+afterTime;
+        }
+        
     }
 
+    /**
+     * Executes handler one-time after a defined time-interval has passed
+     */
     public static class OneTimeAfterInterval extends OneTime {
 
         public OneTimeAfterInterval(EventHandler handler, long interval) {
             super(new IntervalPredicate(interval), handler);
         }
 
-        @Override
-        public void handle(TerminalEvent<?> te) {
-            getHandler().handle(te);
-            te.getEventBus().removeEventHandler(this);
-        }
     }
 
     public static class RepeatingInterval extends OnIdleEventEventHandler {

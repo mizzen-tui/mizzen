@@ -12,8 +12,10 @@ import java.nio.file.StandardOpenOption;
 public class Logging {
 
     // FIXME : would be better if an real logger was used..  Issue is..
-    //         dont want this lib to depend on any external libs.  But I could (should)
+    //         don't want this lib to depend on any external libs.  But I could (should)
     //         make it possible to have this point to a real logger.
+    //         Maybe make a logging "bridge" class that allows for this connection to
+    //         something like log4j
     
     
     static boolean enabled = false;

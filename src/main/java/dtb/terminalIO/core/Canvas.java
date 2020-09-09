@@ -277,6 +277,9 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
         }
     }
 
+    public boolean isEmpty() {
+        return segmentsBuffer.isEmpty();
+    }
 
     public synchronized Canvas refresh() {
 
@@ -420,6 +423,9 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
     }
     
     public void showCursorAt(Position position) {
+        // we only move the cursor to the requested position
+        // when we next do a canvas refresh().. so for now .. just 
+        // remember the move cursor request.
         this.showCursorRequested = true;
         this.last_RequestShowCursorPosition = position;
         this.hideCursorRequested = false;

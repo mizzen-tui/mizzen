@@ -581,7 +581,26 @@ public abstract class ControlCode implements Renderer {
     public static final ControlCode HIDE_CURSOR         = new BaseTextControlCode(escape_CHR + "[?25l");
     public static final ControlCode SHOW_CURSOR         = new BaseTextControlCode(escape_CHR + "[?25h");
 
-    public static final ControlCode ENABLE_MOUSE_TRACKING  = new BaseTextControlCode(escape_CHR + "[?1000h");
+    
+    /* MOUSE */
+    
+    
+    public static final ControlCode SET_X10_MOUSE               = new BaseTextControlCode(escape_CHR + "[?9h");
+    public static final ControlCode SET_VT200_MOUSE             = new BaseTextControlCode(escape_CHR + "[?1000h");
+    public static final ControlCode SET_VT200_HIGHLIGHT_MOUSE   = new BaseTextControlCode(escape_CHR + "[?1001h");
+    public static final ControlCode SET_BTN_EVENT_MOUSE         = new BaseTextControlCode(escape_CHR + "[?10021h");
+    public static final ControlCode SET_ANY_EVENT_MOUSE         = new BaseTextControlCode(escape_CHR + "[?10031h");
+
+    public static final ControlCode SET_FOCUS_EVENT_MOUSE       = new BaseTextControlCode(escape_CHR + "[?10041h");
+
+    public static final ControlCode SET_ALTERNATE_SCROLL        = new BaseTextControlCode(escape_CHR + "[?10071h");
+
+    public static final ControlCode SET_EXT_MODE_MOUSE          = new BaseTextControlCode(escape_CHR + "[?10051h");
+    public static final ControlCode SET_SGR_EXT_MODE_MOUSE      = new BaseTextControlCode(escape_CHR + "[?10061h");
+    public static final ControlCode SET_URXVT_EXT_MODE_MOUSE    = new BaseTextControlCode(escape_CHR + "[?10151h");
+    public static final ControlCode SET_PIXEL_POSITION_MOUSE    = new BaseTextControlCode(escape_CHR + "[?10161h");
+
+    public static final ControlCode ENABLE_MOUSE_TRACKING  = SET_VT200_MOUSE;
     public static final ControlCode DISABLE_MOUSE_TRACKING = new BaseTextControlCode(escape_CHR + "[?1000l");
 
     public static final String      CURSOR_FAR_LEFT_STR = escape_CHR + "[G";

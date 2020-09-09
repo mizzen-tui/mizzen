@@ -13,7 +13,7 @@ import java.util.function.Predicate;
  * <p/>
  * 
  * This object is an EventHandler itself - but it delegates the handling of an
- * event to one or all of its internal eventHandlers.
+ * event to one or all of its internally registered eventHandlers.
  * 
  * <p/>
  * 
@@ -56,6 +56,9 @@ import java.util.function.Predicate;
  */
 public class ChainedEventHandler implements EventHandler, EventHandlerContainer {
 
+    
+    private String name;
+    
     private List<ConditionalEventHandler> eventHandlers = new ArrayList<ConditionalEventHandler>();
 
     private Collection<ConditionalEventHandler> preppendList = new ArrayList<>();
@@ -70,8 +73,9 @@ public class ChainedEventHandler implements EventHandler, EventHandlerContainer 
 
     private EventHandler notfound_event_handler = EventHandler.NULL_HANDLER;
 
-    private ChainedEventHandler() {
+    private ChainedEventHandler(String name) {
         handleEventStrategy = chainOfResponsibilityHandler;
+        this.name = name;
     }
 
     private boolean isChainOfResponsibility() {
@@ -80,23 +84,27 @@ public class ChainedEventHandler implements EventHandler, EventHandlerContainer 
 
     /**
      * Builds a ChainedEventHandler that delegates incoming events to its child
-     * event handlers in a Child-of_Responsibility style.
+     * event handlers in a Child-of-Responsibility style.
      * 
      * <p/>
      * 
      * - Meaning that: it passes the incoming event only to the first child handler
-     * that claims it can handle the event.
+     *   that claims it can handle the event.
      * 
      * <p/>
      * 
-     * Useful for processing KeyEvents.appendList
+     * Useful for processing KeyEvents
      * 
      * @return ChainedEventHandler
      */
-    public static ChainedEventHandler useChainOfResponsibilityStrategy() {
-        ChainedEventHandler chainedEventHandler = new ChainedEventHandler();
+    public static ChainedEventHandler useChainOfResponsibilityStrategy(String name) {
+        ChainedEventHandler chainedEventHandler = new ChainedEventHandler(name);
         chainedEventHandler.canHandleIdle = false;
         return chainedEventHandler;
+    }
+
+    public static ChainedEventHandler useChainOfResponsibilityStrategy() {
+        return useChainOfResponsibilityStrategy("chainOfResponseibility");
     }
 
     /**
@@ -106,10 +114,14 @@ public class ChainedEventHandler implements EventHandler, EventHandlerContainer 
      * 
      * @return ChainedEventHandler
      */
-    public static ChainedEventHandler useHandleAllStrategy() {
-        ChainedEventHandler chainedEventHandler = new ChainedEventHandler();
+    public static ChainedEventHandler useHandleAllStrategy(String name) {
+        ChainedEventHandler chainedEventHandler = new ChainedEventHandler(name);
         chainedEventHandler.handleEventStrategy = chainedEventHandler.handleAllHandler;
         return chainedEventHandler;
+    }
+
+    public static ChainedEventHandler useHandleAllStrategy() {
+        return useHandleAllStrategy("handleAll");
     }
 
     public ChainedEventHandler(EventHandler notfound_event_handler) {
@@ -301,7 +313,11 @@ public class ChainedEventHandler implements EventHandler, EventHandlerContainer 
     }
 
     public String statsAsStr() {
-        return "ChainedEventHandler[eventHandlers size = " + eventHandlers.size() + "]";
+        return this.name+" [size = " + eventHandlers.size() +
+                "  p : "+preppendList.size() +
+                "  a : "+appendList.size() +
+                "  r : "+removeList.size() +
+                "]";
     }
 
 }

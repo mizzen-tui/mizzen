@@ -148,7 +148,7 @@ public class ButtonBar extends Composite implements FocusManager, EventHandlerCo
 
     private ChainedEventHandler getOrBuildChainedEventHandler() {
         if (chainedEventHandler == null) {
-            chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
+            chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy("ButtonBar");
             chainedEventHandlerAsConditionalEventHandler = chainedEventHandler.asConditionalEventHandler();
 
             chainedEventHandler.appendEventHandler(buildRequestFocusEventHandler());

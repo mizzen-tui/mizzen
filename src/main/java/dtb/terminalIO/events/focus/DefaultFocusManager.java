@@ -164,7 +164,7 @@ public class DefaultFocusManager implements FocusManager, HasChildren<Focusable>
 
     private ConditionalEventHandler buildEventHandler() {
 
-        ChainedEventHandler chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
+        ChainedEventHandler chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy("DefaultFocusManager");
 
         chainedEventHandler.appendEventHandler(buildRequestFocusEventHandler());
         chainedEventHandler.appendEventHandler(buildKeyStrokeEventHandler());
