@@ -22,11 +22,9 @@ public class MultiLineTextInputTest {
 
     public static void main(String[] args) throws IOException {
 
-        Logging.setEnabled(true);
-
         new TUIApp(args)
         .setCanvasSize(24, 100)
-        .setEmptyChar(' ')
+        .setEmptyChar('*')
         .setMainApplicationPanel(new Composite().setBounds(30, 120).setEmptyChar('X').setBorder(false))
         .confirmOnExit()
         .setOnReadyStart((tApp)-> {
@@ -45,34 +43,11 @@ public class MultiLineTextInputTest {
 
             tApp.getMainApplicationPanel().add(2,0, sc);
 
-//            tApp.getMainApplicationPanel().add(2,0, mTextBox);
-
-
-            //mTextBox.setText("Hello World!");
-
-            ScreenCanvasBackend backEnd = (ScreenCanvasBackend) tApp.getCanvas().getCanvasBackend();
-            //backEnd.setUpdateStrategy(UpdateStrategy.UPDATE_CHANGED  );
-            backEnd.setUpdateStrategy(UpdateStrategy.UPDATE_FULL  );
-
             FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),
                     tApp.getEventBus(),
                     ()-> new DefaultFocusManager().setNavKeysFirst(false).setCycling(false));
 
             tApp.getEventBus().appendEventHandler( mainFocusManager );
-
-            AtomicInteger counter = new AtomicInteger(0);
-
-//            tApp.getEventBus().appendEventHandler(new OnIdleEventEventHandler.RepeatingInterval(1000, (te) -> {
-//                int count = counter.incrementAndGet();
-//                String stats =  "\n------------------------\n"+
-//                                "IDLE task invoke counter = " + count + 
-//                                "   \n" + ((EventBusImpl)tApp.getEventBus()).statsAsStr() + 
-//                                "\n" + 
-//                                "Text segments on screen: " + tApp.getCanvas().segmentsSize() ;
-//
-//                Logging.info(stats);
-//            
-//             }));
 
             FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
 
