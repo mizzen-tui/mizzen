@@ -50,16 +50,16 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
         void buttonPressed( boolean toggleOn);
     }
     
-    public Button(Color color, String buttonText, boolean toggle, Action onPressed1) {
-        super(color, Rectangle.ZERO);
-        this.toggleButton = toggle;
-        this.buttonText = buttonText;
-        this.renderedText = new TextComponent(color, "");
-        this.container = new Composite(color);
-        this.container.add(renderedText);
-        this.container.setParentContainer(this);
-        this.setButtonTextAndResize(buttonText);
-    }
+//    public Button(Color color, String buttonText, boolean toggle, Action onPressed1) {
+//        super(color, Rectangle.ZERO);
+//        this.toggleButton = toggle;
+//        this.buttonText = buttonText;
+//        this.renderedText = new TextComponent(color, "");
+//        this.container = new Composite(color);
+//        this.container.add(renderedText);
+//        this.container.setParentContainer(this);
+//        this.setButtonTextAndResize(buttonText);
+//    }
 
     public Button(Color color, String buttonText, boolean toggle) {
         super(color, Rectangle.ZERO);

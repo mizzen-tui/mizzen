@@ -11,6 +11,10 @@ public interface CleanString {
         return getText().charAt(index);
     }
     
+    default CleanString append(CleanString s) {
+        return new KnownCleanString(getText()+s.getText());
+    }
+
     default CleanString substring(int beginIndex, int endIndex) {
         String alreadyCleanedString = getText().substring(beginIndex, endIndex);
         return new KnownCleanString(alreadyCleanedString);
@@ -36,7 +40,7 @@ public interface CleanString {
         String cleanedStr;
         
         private KnownCleanString(String s) {
-            this.cleanedStr = UTIL.clean(s);
+            this.cleanedStr = s;
         }
 
         @Override

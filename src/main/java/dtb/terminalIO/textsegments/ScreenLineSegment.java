@@ -781,36 +781,74 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
                     (p, txt) -> new SegmentImpl(FGBGColors.NO_COLOR_SPECIFIED, p, -1, txt));
         }
 
-        private static int clipStrWithEmbeddedColors(final Collection<ScreenLineSegment> ts, String colorCodedStr,
-                int width, Position offset, CreateSegmentWithColor createSegment) {
-            int[] curlength = new int[] { 0 };
+        private static int clipStrWithEmbeddedColors(final Collection<ScreenLineSegment> ts, 
+                                                     String colorCodedStr,
+                                                     int width, 
+                                                     Position offset, 
+                                                     CreateSegmentWithColor createSegment) {
+            int[] curlengthCreated = new int[] { 0 };
+            Color[] lastColor = new Color[] {ControlCode.DEFAULT_COLOR};
+            CleanString[] lastSimpleText = new CleanString[] {null};
 
             ControlCode.parseColorsAndBuildResult(colorCodedStr, new ColorColorSegmentBuilder() {
                 @Override
                 public boolean newColorSegment(Color color, CleanString simpleText) {
+                    color = color == null ? lastColor[0] : color;
                     if (simpleText == null) {
                         simpleText = CleanString.UTIL.EMPTY_CLEAN_STRING;
                     }
+
+                    if (lastSimpleText[0] != null && 
+                        lastSimpleText[0].length()>0 && 
+                        ControlCode.COLOR_COMPARE.compare(lastColor[0], color) != 0) {
+                        ScreenLineSegment segment = createSegment.create(lastColor[0], 
+                                                                         offset.offsetAdd(0, curlengthCreated[0]),
+                                                                         lastSimpleText[0]);
+                        curlengthCreated[0] += lastSimpleText[0].length();
+                        ts.add(segment);
+                    } else {
+                        if (lastSimpleText[0] != null && 
+                            lastSimpleText[0].length()>0) {
+                            simpleText = lastSimpleText[0].append(simpleText);
+                            lastSimpleText[0] = null;
+                        }
+                    }
+
                     boolean continueParsing = true;
                     // if (s.length() > width)
-                    if (curlength[0] + simpleText.length() > width) {
+                    if (curlengthCreated[0] + simpleText.length() > width) {
                         // TODO: not doing a length check!! fixme!
-                        simpleText = simpleText.substring(0, width - curlength[0]); // clip(simpleText, width -
+                        simpleText = simpleText.substring(0, width - curlengthCreated[0]); // clip(simpleText, width -
                                                                                     // curlength[0]);
                         continueParsing = false;
                     }
 
                     if (simpleText.length() > 0) {
-                        ScreenLineSegment segment = createSegment.create(color, offset.offsetAdd(0, curlength[0]),
-                                simpleText);
-                        curlength[0] += simpleText.length();
-                        ts.add(segment);
+                        if (!continueParsing) {
+                            ScreenLineSegment segment = createSegment.create(color, 
+                                                                             offset.offsetAdd(0, curlengthCreated[0]),
+                                                                             simpleText);
+                            curlengthCreated[0] += simpleText.length();
+                            ts.add(segment);
+                        } else {
+                            lastColor[0] = color;
+                            lastSimpleText[0] = simpleText;
+                        }
                     }
 
                     return continueParsing;
                 }
             });
-            return curlength[0];
+            
+            if (lastSimpleText[0] != null && lastSimpleText[0].length()>0) {
+                ScreenLineSegment segment = createSegment.create(lastColor[0], 
+                                                                 offset.offsetAdd(0, curlengthCreated[0]),
+                                                                 lastSimpleText[0]);
+                curlengthCreated[0] += lastSimpleText[0].length();
+                ts.add(segment);
+            }
+            
+            return curlengthCreated[0];
         }
 
         public static SegmentsFromStringResult textSegmentsFromStringWithEmbeddedColor(String multiLineString,

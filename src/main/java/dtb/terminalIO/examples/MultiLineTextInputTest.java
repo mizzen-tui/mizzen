@@ -24,7 +24,7 @@ public class MultiLineTextInputTest {
 
         new TUIApp(args)
         .setCanvasSize(24, 100)
-        .setEmptyChar('*')
+        .setEmptyChar(' ')
         .setMainApplicationPanel(new Composite().setBounds(30, 120).setEmptyChar('X').setBorder(false))
         .confirmOnExit()
         .setOnReadyStart((tApp)-> {

@@ -778,124 +778,128 @@ public abstract class ControlCode implements Renderer {
 
     
     public static interface ColorColorSegmentBuilder {
-	boolean newColorSegment(Color color, CleanString simpleText);
+        boolean newColorSegment(Color color, CleanString simpleText);
     }
-    
+
     @FunctionalInterface
     public static interface ColorProvider {
         Color getColor();
     }
 
-    public static void parseColorsAndBuildResult(String colorCodedStr, ColorColorSegmentBuilder colorColorSegmentBuilder) {
-        
-        int PARSE_STATE=PARSE_TEXT;
+    public static void parseColorsAndBuildResult(String colorCodedStr,
+            ColorColorSegmentBuilder colorColorSegmentBuilder) {
+
+        int PARSE_STATE = PARSE_TEXT;
         int codesBuffer[] = new int[50];
-        int codesBufferLen=0;
-        
+        int codesBufferLen = 0;
+
         StringBuffer sb = new StringBuffer(50);
         sb.setLength(0);
         CleanString simpleText = null;
         Color color = null;
         int colorCodedStrLength = colorCodedStr.length();
-        for (int i=0; i<colorCodedStrLength; i++) {
-            
+        for (int i = 0; i < colorCodedStrLength; i++) {
+
             char ch = colorCodedStr.charAt(i);
-            
+
             switch (PARSE_STATE) {
-	    case PARSE_TEXT:
+            case PARSE_TEXT:
                 if (ch == '\u001B') {
                     simpleText = new CleanString.Simple(sb.toString());
                     boolean continueParsing = colorColorSegmentBuilder.newColorSegment(color, simpleText);
-                    if (!continueParsing) return;
-                    //result.add( new  ColorParseSegment(color, simpleText) ); 
+                    if (!continueParsing)
+                        return;
+                    // result.add( new ColorParseSegment(color, simpleText) );
                     PARSE_STATE = PARSE_COLOR_START;
                     simpleText = null;
-                    color = null; 
+                    color = null;
                     sb = new StringBuffer();
                     sb.append(ch);
                 } else {
                     sb.append(ch);
                 }
-		break;
+                break;
 
-	    case PARSE_COLOR_START:
+            case PARSE_COLOR_START:
                 if (ch == '[') {
-                    break;  // ignore
+                    break; // ignore
                 } else {
                     if (Character.isDigit(ch)) {
-                	PARSE_STATE = PARSE_COLOR_CODE;
-                	codesBufferLen=0;
-                	sb = new StringBuffer();
+                        PARSE_STATE = PARSE_COLOR_CODE;
+                        codesBufferLen = 0;
+                        sb = new StringBuffer();
                     } else {
                         PARSE_STATE = PARSE_TEXT;
                     }
                     sb.append(ch);
                 }
-		break;
+                break;
 
-	    case PARSE_COLOR_CODE:
+            case PARSE_COLOR_CODE:
                 if (ch == ';' || ch == 'm') {
                     String num = sb.toString();
                     sb.append(ch);
-                    if (num.length()==0) {
-                	PARSE_STATE = PARSE_TEXT;
-                	break;
+                    if (num.length() == 0) {
+                        PARSE_STATE = PARSE_TEXT;
+                        break;
                     }
-                    int code=Integer.parseInt(num);
+                    int code = Integer.parseInt(num);
                     codesBuffer[codesBufferLen] = code;
                     codesBufferLen++;
                     sb = new StringBuffer();
                     if (ch == 'm' || codesBufferLen >= codesBuffer.length) {
-                	PARSE_STATE = PARSE_COLOR_END;
+                        PARSE_STATE = PARSE_COLOR_END;
                     }
                 } else {
                     sb.append(ch);
-                    if (! Character.isDigit(ch)) {
-                	PARSE_STATE = PARSE_TEXT;
+                    if (!Character.isDigit(ch)) {
+                        PARSE_STATE = PARSE_TEXT;
                     }
                 }
-		break;
+                break;
 
-	    case PARSE_COLOR_END:
-		int[] codes = new int[codesBufferLen];
-		System.arraycopy(codesBuffer, 0, codes, 0, codesBufferLen);
-		color = new ColorFromCodes(codes);
-		PARSE_STATE = PARSE_TEXT;
-                
-		if (ch == '\u001B') { // this can happen if we have color codes back to back.
+            case PARSE_COLOR_END:
+                int[] codes = new int[codesBufferLen];
+                System.arraycopy(codesBuffer, 0, codes, 0, codesBufferLen);
+                color = new ColorFromCodes(codes);
+                PARSE_STATE = PARSE_TEXT;
+
+                if (ch == '\u001B') { // this can happen if we have color codes back to back.
                     simpleText = new CleanString.Simple(sb.toString());
-                    boolean continueParsing = colorColorSegmentBuilder.newColorSegment(color, CleanString.UTIL.EMPTY_CLEAN_STRING);
-                    if (!continueParsing) return;
+                    boolean continueParsing = colorColorSegmentBuilder.newColorSegment(color,
+                            CleanString.UTIL.EMPTY_CLEAN_STRING);
+                    if (!continueParsing)
+                        return;
                     PARSE_STATE = PARSE_COLOR_START;
                     simpleText = null;
-                    color = null; 
+                    color = null;
                     sb = new StringBuffer();
                 }
-		
-		sb.append(ch);
-		break;
 
-	    default:
-		throw new IllegalStateException("Should not get here!");
-	    }
+                sb.append(ch);
+                break;
+
+            default:
+                throw new IllegalStateException("Should not get here!");
+            }
         }
-        
-      if (sb.length()>0) {
-	  colorColorSegmentBuilder.newColorSegment(color, new CleanString.Simple(sb.toString()));
-      }
+
+        if (sb.length() > 0) {
+            colorColorSegmentBuilder.newColorSegment(color, new CleanString.Simple(sb.toString()));
+        }
     }
-    
+
     public static List<ColorParseSegment> parseColors(String colorCodedStr) {
         final List<ColorParseSegment> result = new ArrayList<ColorParseSegment>();
-        
+
         parseColorsAndBuildResult(colorCodedStr, new ColorColorSegmentBuilder() {
-	    @Override
-	    public boolean newColorSegment(Color color, CleanString simpleText) {
-		result.add(new ColorParseSegment(color, simpleText));
-		return true; // true means keep parsing
-	    }
+            @Override
+            public boolean newColorSegment(Color color, CleanString simpleText) {
+                result.add(new ColorParseSegment(color, simpleText));
+                return true; // true means keep parsing
+            }
         });
-        
+
         return result;
 
     }
