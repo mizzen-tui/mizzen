@@ -49,7 +49,7 @@ public interface DisplayableValue<V> extends HasValue<V> {
         public StringDisplayValue(String value) {
             super(value);
         }
-        
+
         public static StringDisplayValue[] fromStringValues(String[] values) {
             if (values == null) {
                 return null;
@@ -62,7 +62,7 @@ public interface DisplayableValue<V> extends HasValue<V> {
             
             return displayValues;
         }
-        
+
         public static StringDisplayValue[] fromStringValues(Map<String,String> displayValuesMap) {
             if (displayValuesMap == null) {
                 return null;
@@ -83,7 +83,7 @@ public interface DisplayableValue<V> extends HasValue<V> {
         }
         
     }
-    
+
     public class BooleanDisplayValue extends  SimpleDisplayValue<Boolean> {
         
         String displayValue;

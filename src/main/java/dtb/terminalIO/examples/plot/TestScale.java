@@ -42,71 +42,6 @@ import dtb.terminalIO.geom.position.PositionVerticalRelative;
 public class TestScale {
 
 
-    static Component<?> navButtonsPanel(EventHandler upAction,
-                                        EventHandler downAction,
-                                        EventHandler leftAction,
-                                        EventHandler rightAction) {
-        CompositeWithFocusManager buttonPanel = new CompositeWithFocusManager();
-        buttonPanel.getFocusManager().setNextKeyStroke(Keys.DOWN_KEYSTROKE);
-        buttonPanel.getFocusManager().setPrevKeyStroke(Keys.UP_KEYSTROKE);
-
-        Button up = new Button("^");
-        up.setHotKey(Keys.CTRL_T_KEYSTROKE);
-        up.setBorder(true);
-        up.setDisplayHotKey(true);
-        up.onChange(upAction);
-
-        Button down = new Button("v");
-        down.setHotKey(Keys.CTRL_V_KEYSTROKE);
-        down.setBorder(true);
-        down.setDisplayHotKey(true);
-        down.onChange(downAction);
-
-        Button left = new Button("«");
-        left.setHotKey(Keys.CTRL_F_KEYSTROKE);
-        left.setBorder(true);
-        left.setDisplayHotKey(true);
-        left.onChange(leftAction);
-
-        Button right = new Button("»");
-        right.setHotKey(Keys.CTRL_G_KEYSTROKE);
-        right.setBorder(true);
-        right.setDisplayHotKey(true);
-        right.onChange(rightAction);
-
-        Position upVPosition = Position.ZERO;
-        Position leftHPosition =  Position.ZERO;
-
-        Position upPosition  = new PositionDelegate(upVPosition, new PositionHorizontalRelative(left,1));
-        Position leftPosition = new PositionDelegate(new PositionVerticalRelative(up, 0), leftHPosition);
-        
-        Position rightPosition = new PositionDelegate(leftPosition, 
-                                                      ()-> up.getWidth() + left.getWidth() + leftPosition.getCol() + 2);
-        
-        Position downPosition =  new PositionDelegate(()->upVPosition.getRow()+up.getHeight()+ left.getHeight(),
-                                                      upPosition);
-        buttonPanel.add(leftPosition, left);
-        buttonPanel.add(upPosition, up);
-        buttonPanel.add(rightPosition, right);
-        buttonPanel.add(downPosition, down);
-
-        return buttonPanel;
-    }
-
-    static ListBox<Shape> shapeChooser() {
-        
-        List<DisplayableValue<Shape>> choices = new ArrayList<DisplayableValue<Shape>>();
-
-        choices.add(new ShapeDisplayValue("Circle", new Circle(20, 20, 20)));
-        choices.add(new ShapeDisplayValue("Line", new Line(2, 2, 35, 35)));
-        choices.add(new ShapeDisplayValue("Triangle", new Triangle(20, 2, 2, 32, 40, 45)  ));
-        ListBox<Shape> shapes = new ListBox<Shape>();
-        shapes.setBorder(true);
-        shapes.setItems(choices);
-        
-        return shapes;
-    }
-    
     public static void main(String[] args) throws IOException {
         
         new TUIApp(args)
@@ -246,6 +181,96 @@ public class TestScale {
                }).start();
         
     }
+    
+    
+    /**
+     * Builds the nav button panel and attaches the up,down, left, right action handlers to it
+     *
+     * 
+     * <pre>
+     *             ^
+     *             |
+     *       <--        -->
+     *             |
+     *             V
+     *      
+     * </pre> 
+     *       
+     * @param upAction
+     * @param downAction
+     * @param leftAction
+     * @param rightAction
+     * @return
+     */
+    static Component<?> navButtonsPanel(EventHandler upAction,
+                                        EventHandler downAction,
+                                        EventHandler leftAction,
+                                        EventHandler rightAction) {
+        CompositeWithFocusManager buttonPanel = new CompositeWithFocusManager();
+        buttonPanel.getFocusManager().setNextKeyStroke(Keys.DOWN_KEYSTROKE);
+        buttonPanel.getFocusManager().setPrevKeyStroke(Keys.UP_KEYSTROKE);
+
+        Button up = new Button("^");
+        up.setHotKey(Keys.CTRL_T_KEYSTROKE);
+        up.setBorder(true);
+        up.setDisplayHotKey(true);
+        up.onChange(upAction);
+
+        Button down = new Button("v");
+        down.setHotKey(Keys.CTRL_V_KEYSTROKE);
+        down.setBorder(true);
+        down.setDisplayHotKey(true);
+        down.onChange(downAction);
+
+        Button left = new Button("«");
+        left.setHotKey(Keys.CTRL_F_KEYSTROKE);
+        left.setBorder(true);
+        left.setDisplayHotKey(true);
+        left.onChange(leftAction);
+
+        Button right = new Button("»");
+        right.setHotKey(Keys.CTRL_G_KEYSTROKE);
+        right.setBorder(true);
+        right.setDisplayHotKey(true);
+        right.onChange(rightAction);
+
+        Position upVPosition = Position.ZERO;
+        Position leftHPosition =  Position.ZERO;
+
+        Position upPosition  = new PositionDelegate(upVPosition, new PositionHorizontalRelative(left,1));
+        Position leftPosition = new PositionDelegate(new PositionVerticalRelative(up, 0), leftHPosition);
+        
+        Position rightPosition = new PositionDelegate(leftPosition, 
+                                                      ()-> up.getWidth() + left.getWidth() + leftPosition.getCol() + 2);
+        
+        Position downPosition =  new PositionDelegate(()->upVPosition.getRow()+up.getHeight()+ left.getHeight(),
+                                                      upPosition);
+        buttonPanel.add(leftPosition, left);
+        buttonPanel.add(upPosition, up);
+        buttonPanel.add(rightPosition, right);
+        buttonPanel.add(downPosition, down);
+
+        return buttonPanel;
+    }
+
+    /**
+     * Build list box of shapes to draw 
+     * 
+     */
+    static ListBox<Shape> shapeChooser() {
+        
+        List<DisplayableValue<Shape>> choices = new ArrayList<DisplayableValue<Shape>>();
+
+        choices.add(new ShapeDisplayValue("Circle", new Circle(20, 20, 20)));
+        choices.add(new ShapeDisplayValue("Line", new Line(2, 2, 35, 35)));
+        choices.add(new ShapeDisplayValue("Triangle", new Triangle(20, 2, 2, 32, 40, 45)  ));
+        ListBox<Shape> shapes = new ListBox<Shape>();
+        shapes.setBorder(true);
+        shapes.setItems(choices);
+        
+        return shapes;
+    }
+    
 
     static class ShapeDisplayValue implements DisplayableValue<Shape> {
 

@@ -7,21 +7,29 @@ import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.ScreenLineSegment;
+import dtb.terminalIO.util.ElapsedTime;
+import dtb.terminalIO.util.Logging;
+import dtb.terminalIO.util.TerminalDimensions;
 
 /**
  * Canvas contents written to a TerminalScreen
+ * 
+ * Hide implementation detail (update strategy) on how updates to actual terminal can occur.
  * 
  * @author david
  */
 public class ScreenCanvasBackend implements CanvasBackend {
 
-	TerminalScreen screen;
-	ScreenUpdateStrategy screenUpdateStrategy;
+    TerminalScreen screen;
+    ScreenUpdateStrategy screenUpdateStrategy;
 
-	public static enum UpdateStrategy {
-	    UPDATE_FULL,
-	    UPDATE_CHANGED
-	}
+    ElapsedTime.Average    elapsedChangedRefreshTimeStats = new ElapsedTime.Average("Changed-refresh");
+    ElapsedTime.Average    elapsedFullRefreshTimeStats    = new ElapsedTime.Average("Full-refresh   ");
+    
+    public static enum UpdateStrategy {
+        UPDATE_FULL,    // 1 character change will cause the whole screen to redraw
+        UPDATE_CHANGED  // only update the line segments that have changed.
+    }
 
     public ScreenCanvasBackend(TerminalScreen screen, UpdateStrategy updateStrategy) {
         super();
@@ -30,71 +38,93 @@ public class ScreenCanvasBackend implements CanvasBackend {
     }
 
     public ScreenCanvasBackend(TerminalScreen screen) {
-		//this(screen, UpdateStrategy.UPDATE_FULL);
         this(screen, UpdateStrategy.UPDATE_CHANGED);
-	}
-	
-	public void setUpdateStrategy(UpdateStrategy updateStrategy) {
+    }
+    
 
-	    if (updateStrategy == null) {
-	        throw new NullPointerException("UpdateStrategy null!");
-	    }
+    public UpdateStrategy getScreenUpdateStrategy() {
+        return (this.screenUpdateStrategy == fullUpdateStrategy) 
+                   ? UpdateStrategy.UPDATE_FULL 
+                   : UpdateStrategy.UPDATE_CHANGED;
+    }
 
-	    if (updateStrategy.equals(UpdateStrategy.UPDATE_FULL)) {
-	        this.screenUpdateStrategy = fullUpdateStrategy;
-	    } else if (updateStrategy.equals(UpdateStrategy.UPDATE_CHANGED)) {
+    public void setUpdateStrategy(UpdateStrategy updateStrategy) {
+
+        if (updateStrategy == null) {
+            throw new NullPointerException("UpdateStrategy null!");
+        }
+
+        if (updateStrategy.equals(UpdateStrategy.UPDATE_FULL)) {
+            this.screenUpdateStrategy = fullUpdateStrategy;
+        } else if (updateStrategy.equals(UpdateStrategy.UPDATE_CHANGED)) {
             this.screenUpdateStrategy = changedSegmentsUpdateStrategy;
-	    }
+        }
 
-	    screen.home();
-	    screen.clear();
+        screen.home();
+        screen.clear();
 
-	}
+    }
 
-	@Override
-	public void writeToBackend(ScreenLineSegment sc) {
-	    screenUpdateStrategy.writeToBackend(sc);
-	}
+    @Override
+    public void writeToBackend(ScreenLineSegment sc) {
+        screenUpdateStrategy.writeToBackend(sc);
+    }
 
-	@Override
-	public void signal_eol() {
-	    screenUpdateStrategy.signal_eol();
-	}
-	
-	@Override
-	public void refresh() {
-	    screenUpdateStrategy.refresh();
-	}
+    @Override
+    public void signal_eol() {
+        screenUpdateStrategy.signal_eol();
+    }
 
-	@Override
-	public void cr() {
-	    screenUpdateStrategy.cr();
-	}
+    long refreshCounter = 0;
+
+    @Override
+    public void refresh() {
+        
+        ElapsedTime.Average refreshStats = screenUpdateStrategy == changedSegmentsUpdateStrategy 
+                                               ? elapsedChangedRefreshTimeStats
+                                               : elapsedFullRefreshTimeStats;
+        
+        if (Logging.isEnabled()) {
+            refreshStats.startTimer();
+            Logging.info("\n\nrefresh-START");
+        }
+        screenUpdateStrategy.refresh();
+        if (Logging.isEnabled()) {
+            refreshStats.stopTimer();
+            Logging.info("\nrefresh-END: "+refreshStats+ "\n\n");
+        }
+    }
+
+    @Override
+    public void cr() {
+        screenUpdateStrategy.cr();
+    }
 
     @Override
     public void showCursorAt(Position showCursorPosition) {
         screenUpdateStrategy.showCursorAt(showCursorPosition);
-        //screen.showCursorAt(showCursorPosition);
-        //Logging.info("showCursorAt " + showCursorPosition);
     }
     
     @Override
     public void showCursor() {
         screen.showCursor();
-        //Logging.info("showCursor " );
     }
 
     @Override
     public void hideCursor() {
         screen.hideCursor();
-        //Logging.info("hideCursor " );
     }
-    
+
     @Override
     public void setSize(int height, int width) {
         screenUpdateStrategy.setSize(height, width);
     }
     
+    /* 
+     * Implements how to perform screen updates
+     *   Updates can be full screen update or
+     *   only update segments that have been modified
+     */
     static interface ScreenUpdateStrategy {
 
         void writeToBackend(ScreenLineSegment sc);
@@ -110,7 +140,11 @@ public class ScreenCanvasBackend implements CanvasBackend {
         void signal_eol();
         
     }
-    
+
+    protected void simpleScreenRefresh() {
+        screen.refresh();
+    }
+
     ScreenUpdateStrategy fullUpdateStrategy = new  ScreenUpdateStrategy() {
         @Override
         public void writeToBackend(ScreenLineSegment sc) {
@@ -124,7 +158,7 @@ public class ScreenCanvasBackend implements CanvasBackend {
         
         @Override
         public void refresh() {
-            screen.refresh();
+            simpleScreenRefresh();
         }
 
         @Override
@@ -148,6 +182,9 @@ public class ScreenCanvasBackend implements CanvasBackend {
 
         int counter = 0;
         
+        int screenHeight = -1;
+        int screenWidth = -1;
+        
         boolean  useFullUpdate() {
             return previous.size()==0 || counter > 0;
         }
@@ -158,6 +195,10 @@ public class ScreenCanvasBackend implements CanvasBackend {
             }
             if (counter > 0) {
                 counter--;
+                
+                if (counter == 0) {
+                    Logging.info("REVERTING TO CHANGED SCREEN UPDATES AFTER NEXT UPDATE");
+                }
                 return true;  
             }
             return false;
@@ -176,26 +217,13 @@ public class ScreenCanvasBackend implements CanvasBackend {
             if (useFullUpdate()) {
                 fullUpdateStrategy.cr();
             }
+            // note: we only need to emit CR's on fullUpdateStrategy
         }
         
         private void gotoHomePosition() {
-            screen.getEmitter().setCursorAdjustmentOn(true); // compensates for an issue (bug?) in LineTrackingEmitter
             screen.home();
-            screen.getEmitter().setCursorAdjustmentOn(false);
         }
         
-        
-        int iclrIdx = 0;
-        ControlCode.Color colors[] = new ControlCode.Color[] {
-                Colors.On_Gre,
-                Colors.On_IWhi,
-                Colors.On_Yel,
-                Colors.On_Cya,
-                Colors.On_Pur,
-                Colors.On_Bla,
-                Colors.On_IBlu,
-                Colors.On_Whi
-        };
         
         Color lastColor = ControlCode.DEFAULT_COLOR;
         
@@ -206,10 +234,8 @@ public class ScreenCanvasBackend implements CanvasBackend {
               lastColor = scColor;
             }
             
-            //screen.add( colors[iclrIdx % colors.length ] );
-            
             screen.t(sc.getText());
-            iclrIdx++;
+            // iclrIdx++;
         }
 
         void assertNoOverlaps(TreeSet<ScreenLineSegment> segments) {
@@ -218,10 +244,16 @@ public class ScreenCanvasBackend implements CanvasBackend {
         }
 
 
+        int refreshChangedCounter = 0;
+        
         @Override
         public void refresh() {
-            if (useFullUpdateAndCountDown()) {
-                fullUpdateStrategy.refresh();
+            boolean doFullUpdate = useFullUpdateAndCountDown();
+            if (doFullUpdate) {
+                simpleScreenRefresh();
+                if (Logging.isEnabled()) {
+                   Logging.info("REFRESH: full:"+doFullUpdate+" ctr: "+counter+" rfrshChangedCtr: " + refreshChangedCounter+" seg.size:"+previous.size());
+                }
                 lastColor = ControlCode.DEFAULT_COLOR;
             } else {
 
@@ -233,10 +265,11 @@ public class ScreenCanvasBackend implements CanvasBackend {
 
                 // subtractAggressive() not working reliably.. I really need to diagnose (as its produces a more efficient (smaller result) than subtract())
                 //TreeSet<ScreenLineSegment> newOrModifiedsegments = ScreenLineSegment.UTIL.subtractAggressive(current, previous);
+                ElapsedTime subtractTime = ElapsedTime.start();
                 TreeSet<ScreenLineSegment> newOrModifiedsegments = ScreenLineSegment.UTIL.subtract(current, previous);
-                
-                assertNoOverlaps(newOrModifiedsegments);
+                subtractTime.elapsed();
 
+                ElapsedTime modifiedLoopTime = ElapsedTime.start();
                 if (newOrModifiedsegments.size()>0) {
                     gotoHomePosition();
                     int curRow = 0;
@@ -254,19 +287,37 @@ public class ScreenCanvasBackend implements CanvasBackend {
                             screen.add( new ControlCode.CursorForward(sc.getCol() - curCol) );
                         }
                         writeSegment(sc);
-                        curCol = sc.getRightMostCol()+1;
+                        if (this.screenWidth>0) {
+                            curCol = Math.min(sc.getRightMostCol()+1, this.screenWidth-1);
+                        } else {
+                            curCol = sc.getRightMostCol()+1;
+                        }
+                        //curCol = sc.getRightMostCol();
                     }
                     screen.add( ControlCode.RCol );
-                    fullUpdateStrategy.refresh();
+                    simpleScreenRefresh();
                     screen.home();
-                    //gotoHomePosition(); //screen.home();  // not sure why this is necessary - but it is..
-                    iclrIdx++;
                 }
+                if (Logging.isEnabled()) {
+                   Logging.info("newOrModifiedsegments,size:"+newOrModifiedsegments.size() + "  subtract time = "+subtractTime.elapsed()+" loop time: "+modifiedLoopTime.elapsed());
+                }
+
             }
             TreeSet<ScreenLineSegment> temp = previous;
             previous = current;
             current = temp;
             current.clear();
+            if (!doFullUpdate) {
+                if (refreshChangedCounter>10) {
+                   refreshChangedCounter = 0;
+                   revertToFullUPdateForNext_n_refreshs(1);
+                } else {
+                    refreshChangedCounter++;
+                }
+            }
+            if (Logging.isEnabled()) {
+               Logging.info("REFRESH: full:"+doFullUpdate+" ctr: "+counter+" rfrshChangedCtr: " + refreshChangedCounter+" seg.size:"+previous.size());
+            }
         }
 
         @Override
@@ -277,25 +328,37 @@ public class ScreenCanvasBackend implements CanvasBackend {
             }
         }
 
+        protected void revertToFullUPdateForNext_n_refreshs(int n) {
+            previous.clear();   // forces full update on next update
+            current.clear();
+            
+            Logging.info("REVERTING TO FULL SCREEN UPDATES:" + n);
+            
+            counter = n ;     // # of full screen refreshes (UPDATE_FULL) before 
+                              // we revert back to partial (and more optimized) screen updates
+            screen.home();
+            screen.clear();
+        }
+        
         @Override
         public void setSize(int height, int width) {
             
+            
+            TerminalDimensions termDim = TerminalDimensions.create();
+            
+            
+            screenHeight = termDim.getHeight();
+            screenWidth = termDim.getWidth();
+
             // Terminal resizes can create havoc to this screen updater (UPDATE_CHANGED)..
             // To alleviate this, I force full screen updates (UPDATE_FULL)
-            // for the next 10 ( or so .. ) screen refresh.. this
+            // for the next 5 ( or so .. ) screen refreshes.. this
             // should allow more than enough refresh cycles for the app to
             // fully repaint itself.. then after that, we revert to 
             // partial updates again.. 
             
-            previous.clear();   // forces full update on next update
-            current.clear();
+            revertToFullUPdateForNext_n_refreshs(5);
             
-            counter = 5 ;     // # of full screen refreshes (UPDATE_FULL) before 
-                              // we revert back to partial (and more optimized) screen updates
-
-            screen.home();
-            
-            screen.clear();
         }
 
         @Override
@@ -303,7 +366,6 @@ public class ScreenCanvasBackend implements CanvasBackend {
             gotoHomePosition();
             screen.showCursorAt(showCursorPosition);
         }
-
 
     };
 

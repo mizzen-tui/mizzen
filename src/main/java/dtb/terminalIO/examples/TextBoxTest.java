@@ -43,7 +43,7 @@ public class TextBoxTest {
         
         new TUIApp(args)
         .setCanvasSize(40, 130)
-        .setEmptyChar('.')
+        .setEmptyChar(' ')
         .setMainApplicationPanel(new Composite().setBounds(39, 130).setEmptyChar(' ').setBorder(true))
         .confirmOnExit()
         .setOnReadyStart((tApp)-> {

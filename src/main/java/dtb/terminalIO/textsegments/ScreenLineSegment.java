@@ -438,7 +438,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
         }
 
 
-        // This method does not wor properly .. I dont want to throw away - I would 
+        // This method does not work properly .. I dont want to throw away - I would 
         // like to fix in the future.. but for now, use only the above subtract() method
         public static TreeSet<ScreenLineSegment> subtractAggressive(TreeSet<ScreenLineSegment> tree1, 
                                                                     TreeSet<ScreenLineSegment> tree2) {
@@ -574,8 +574,13 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
             addSegmentBounded(bounds, ts, sc.fromOffset(offset));
         }
 
-        public static void addSegmentsWithOffsetBounded(Position offset, Rectangle bounds,
-                TreeSet<ScreenLineSegment> destination, TreeSet<ScreenLineSegment> segmentsToAdd) {
+        public static void addSegmentsWithOffsetBounded(Position offset, 
+                                                        Rectangle bounds,
+                                                        TreeSet<ScreenLineSegment> destination, 
+                                                        TreeSet<ScreenLineSegment> segmentsToAdd) {
+            if (destination ==  segmentsToAdd) {
+                return;
+            }
             if (offset == null || offset.isSamePosition(Position.ZERO)) {
                 // no offset
                 addSegmentsBounded(bounds, destination, segmentsToAdd);
@@ -583,9 +588,9 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
             }
             for (ScreenLineSegment sc : segmentsToAdd) {
                 addSegmentWithOffsetBounded(offset, bounds, destination, sc);
-                // todo: should I return a list of slices add so that I can later
-                // remove them? <time passes ..> removeRect seems to be smart - might not need
-                // to - need to test
+                // TODO: Should I return a list of slices add so that I can later
+                //       remove them? <time passes ..> removeRect seems to be smart - might not need
+                //       to - need to test
             }
         }
 
@@ -815,11 +820,13 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
                     }
 
                     boolean continueParsing = true;
-                    // if (s.length() > width)
-                    if (curlengthCreated[0] + simpleText.length() > width) {
-                        // TODO: not doing a length check!! fixme!
-                        simpleText = simpleText.substring(0, width - curlengthCreated[0]); // clip(simpleText, width -
-                                                                                    // curlength[0]);
+                    if (curlengthCreated[0] + simpleText.length() > width) {  // need to clip simpleText
+                        int clipLength = width - curlengthCreated[0];
+                        if (clipLength>0) {
+                           simpleText = simpleText.substring(0, clipLength);
+                        } else {
+                            simpleText = CleanString.UTIL.EMPTY_CLEAN_STRING;
+                        }
                         continueParsing = false;
                     }
 

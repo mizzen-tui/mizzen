@@ -104,6 +104,10 @@ public interface Renderer {
             }
             renderers.clear();
         }
+        
+        public int size() {
+            return this.renderers == null ? 0 : this.renderers.size();
+        }
 
         @Override
         public String toString() {

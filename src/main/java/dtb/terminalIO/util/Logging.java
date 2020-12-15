@@ -25,6 +25,10 @@ public class Logging {
         Logging.enabled = enabled;
     }
     
+    public static boolean isEnabled() {
+        return Logging.enabled ;
+    }
+    
     private static String getLoggerFileName() throws FileNotFoundException, IOException  {
         if (loggerFileName == null) {
             String pwd = System.getProperty("user.dir");

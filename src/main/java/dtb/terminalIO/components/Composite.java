@@ -44,10 +44,6 @@ public class Composite extends AbstractComponent<Composite>
             this.setComponent(component);
         }
 
-//        public ComponentWithOffset(Component<?> component) {
-//            this(Position.ZERO, component);
-//        }
-
         protected void calcBounds() {
             if (this.offset == null || this.component == null) {
                 return;
@@ -140,8 +136,6 @@ public class Composite extends AbstractComponent<Composite>
         public void moveTo(int row, int col) {
             this.offset = new Position.Simple(row, col);
             calcBounds();
-//        this.bounds = new Rectangle.Simple(offset.getRow() + component.getRow(), offset.getCol()
-//            + component.getCol(), component.getHeight(), component.getWidth());
         }
     }
 

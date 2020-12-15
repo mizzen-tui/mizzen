@@ -157,6 +157,7 @@ public class LineChart extends Composite {
         this.setBounds(d);
         this.grid = new BrailleGrid(color, __brailleGridSizeFromLineChartSize(d));
         this.add(this.grid);
+        this.grid.setFillOnClear(true);
         this.all_data = new TreeSet<ChartData>(ChartData.COMPARATOR_BY_XPOS);
     }
 

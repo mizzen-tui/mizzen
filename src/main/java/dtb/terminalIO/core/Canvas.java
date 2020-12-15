@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.TreeSet;
 
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.controlcodes.ControlCode;
@@ -23,6 +24,8 @@ import dtb.terminalIO.textsegments.ScreenLineSegment;
 import dtb.terminalIO.textsegments.ScreenLineSegment.SegmentImpl;
 import dtb.terminalIO.textsegments.ScreenLineSegment.UTIL.SegmentsFromStringResult;
 import dtb.terminalIO.textsegments.ScreenLineSegmentsBuffer;
+import dtb.terminalIO.util.ElapsedTime;
+import dtb.terminalIO.util.Logging;
 
 public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
 
@@ -245,13 +248,40 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
         Rectangle bounds = this.asRectangle();
         
         component.setCanvasOffset(offset);
+        
+        TreeSet<ScreenLineSegment> destinationCanvasSegments = this.getSegmentsBuffer().getSegments();
+        TreeSet<ScreenLineSegment> componentSegmentsToAdd = component.getSegmentsBuffer().getSegments();
 
-        ScreenLineSegment.UTIL.addSegmentsWithOffsetBounded(offset, bounds, 
-                                                           this.getSegmentsBuffer().getSegments(),
-                                                           component.getSegmentsBuffer().getSegments());
+        ScreenLineSegment.UTIL.addSegmentsWithOffsetBounded(offset, 
+                                                            bounds, 
+                                                            destinationCanvasSegments,
+                                                            componentSegmentsToAdd);
     }
 
     public void addComponentSegments(Component<?> component) {
+        addComponentSegments(Position.ZERO, component);
+    }
+
+    public void clearAndAddComponentSegments(Component<?> component) {
+        
+        boolean canvasContainsComponent = ElapsedTime.getAndTime(()->this.asRectangle().contains(component),
+                                                                 (elapsedTime)-> Logging.info("contains "+elapsedTime));
+        
+        if (canvasContainsComponent) {
+            // fast!! 
+            component.setCanvasOffset(Position.ZERO);
+            
+            ElapsedTime componentDrawTime = ElapsedTime.start();
+            TreeSet<ScreenLineSegment> componentSegments = component.getSegmentsBuffer().getSegments();
+            Logging.info("componentsDraw: "+ componentSegments.size() + "  t:" + componentDrawTime);
+            
+            ElapsedTime elapsed = ElapsedTime.onRunOf( ()-> getSegmentsBuffer().clearAndMerge(component.getSegmentsBuffer().getSegments()));
+
+            Logging.info("clearAndAddComponentSegments: fast! "+ elapsed);
+
+            return;
+        }
+        this.clearCanvas();
         addComponentSegments(Position.ZERO, component);
     }
     

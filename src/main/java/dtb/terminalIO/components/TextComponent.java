@@ -1,5 +1,7 @@
 package dtb.terminalIO.components;
 
+import java.util.TreeSet;
+
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
@@ -34,7 +36,8 @@ public class TextComponent extends BoundedComponent<TextComponent> {
     private String text;            // will be non-null only if we have color control codes.
     private CleanString cleanText;  // will be null if we have color control codes.
     private boolean hasColorCodes = false;
-    
+    TreeSet<ScreenLineSegment> parsedSegments;
+
     public TextComponent(Color color, String text) {
         super(color, calcDimentionOfText(text));
         this.setText(text);
@@ -88,6 +91,7 @@ public class TextComponent extends BoundedComponent<TextComponent> {
     @Override
     public TextComponent setColor(Color drawingcolor) {
         super.setColor(drawingcolor);
+        this.parsedSegments = null;
         return this;
     }
     
@@ -99,16 +103,25 @@ public class TextComponent extends BoundedComponent<TextComponent> {
     
     @Override
     public void draw(Color color, IScreenLineSegmentsBuffer segments) {
-        SegmentsFromStringResult result = null;
         
-        if (this.hasColorCodes) {
-            result = ScreenLineSegment.UTIL.textSegmentsFromStringWithEmbeddedColor(this.text, 0, 0, this,
-                    (strColor, p, txt) -> new SegmentImpl( strColor != null ? strColor : color, p, -1, txt));
-        }  else {
-            result = ScreenLineSegment.UTIL.textSegmentsFromString(this.getText(), 0, 0, this,  // TODO: more efficient way!
-        	                                                   (p,s)->new SegmentImpl(color, p, -1, s));
+        SegmentsFromStringResult result;
+        
+        if (parsedSegments == null) {
+            if (this.hasColorCodes) {
+                result = ScreenLineSegment.UTIL.textSegmentsFromStringWithEmbeddedColor(this.text, 0, 0, this,
+                        (strColor, p, txt) -> new SegmentImpl( strColor != null ? strColor : color, p, -1, txt));
+            }  else {
+                result = ScreenLineSegment.UTIL.textSegmentsFromString(this.getText(), 0, 0, this,  // TODO: more efficient way!
+            	                                                   (p,s)->new SegmentImpl(color, p, -1, s));
+            }
+            // keeping a copy around to avoid having to reparse the text on
+            // subsequent draw requests.  parsedSegments null'd if text is changed.
+            parsedSegments = ScreenLineSegment.UTIL.makeCollection(result.ts);
+        } else {
+            result = new SegmentsFromStringResult(ScreenLineSegment.UTIL.makeCollection(parsedSegments));
         }
-        if (result.size()!=0) {
+        
+        if (result.ts.size()!=0) {
             if ( this.isFillOnClear()) {
                 this.clear();
                 segments.merge(result.ts);
@@ -132,6 +145,11 @@ public class TextComponent extends BoundedComponent<TextComponent> {
         this.setText(text);
     }
 
+    public void resize(Dimension d) {
+        super.resize(d);
+        parsedSegments = null;
+    }
+    
     public void setText(CleanString text) {
         if (text == null) {
             throw new NullPointerException("attempting to set null text on TextComponent!");
@@ -140,6 +158,7 @@ public class TextComponent extends BoundedComponent<TextComponent> {
         this.text = null;
         this.hasColorCodes = false;
         this.clear();
+        parsedSegments = null;
         this.markAsDirty();
     }
 
@@ -155,6 +174,7 @@ public class TextComponent extends BoundedComponent<TextComponent> {
         this.text = text;
         this.cleanText = null;
         this.clear();
+        parsedSegments = null;
         this.markAsDirty();
     }
 
@@ -162,8 +182,7 @@ public class TextComponent extends BoundedComponent<TextComponent> {
     public String toString() {
         return super.toString().replace("TextComponent[","TextComponent["+getText()+"][");
     }
-    
-    
+
     @Override
     public int hashCode() {
         final int prime = 31;

@@ -16,39 +16,28 @@ import dtb.terminalIO.core.TerminalScreen;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegmentsView;
+import dtb.terminalIO.util.Logging;
 
 public class ClickableTextComponentTest {
 
     
-    static int lasrRefreshTime = 0; 
+    static int lastRefreshTime = 0; 
     
     public static void main(String args[]) {
 
 
-/*        
-        if (output != null) {
-            
-            System.out.println( Dimension.UTIL.stringToDimension(output) );
-            
-            System.out.println( "HasColor: " + StringUtils.hasColorCodes(output));
-            
-            System.out.println( output );
-            return ;
-        }
-*/
-
+        Logging.setEnabled(true);
+        
         new TUIApp(args).setEmptyChar(' ').setDefaultMainApplicationPanel().confirmOnExit().setOnReadyStart((tApp) -> {
 
-            String output = buildViewableText();
+            String viewableTextColorsOfTheRainbow = buildViewableText();
             
-            // output = StringUtils.removeColorCodes(output);
-
             TextComponent banner = new TextComponent("TEST ME");
             
             tApp.getMainApplicationPanel().add(0, 0, banner);
             ((Composite)tApp.getMainApplicationPanel()).setFillOnClear(false);
 
-            TextComponent colorsOfTheRainbow = new TextComponent(output) {
+            TextComponent colorsOfTheRainbow = new TextComponent(viewableTextColorsOfTheRainbow) {
                 public void draw(Color color, IScreenLineSegmentsBuffer segments) {
                     super.draw(color, segments);
                 }
@@ -100,7 +89,6 @@ public class ClickableTextComponentTest {
         StringCanvasBackEnd stringBackEnd = new StringCanvasBackEnd();
         
         Canvas master_canvas = new Canvas(stringBackEnd);
-        // master_canvas.setSize(25, 50);
         master_canvas.setEmptyChar(' ');
 
         Component<?> colorsOfTheRainBow = ColorsTest.buildColorsPanel();
@@ -110,10 +98,7 @@ public class ClickableTextComponentTest {
         master_canvas.addComponentSegments(colorsOfTheRainBow);
         
         
-//        master_canvas.addComponentSegments(0,1,new TextComponent(Colors.BBlu, "hello there!"));
-//        master_canvas.addComponentSegments(1,0,new TextComponent("Good bye there!"));
         master_canvas.refresh();
-        
         
         return stringBackEnd.toString();
     }

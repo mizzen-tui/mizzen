@@ -54,7 +54,7 @@ public class ExecTest {
 
         public static TimeAndCount onRun(Runnable r, Supplier<Integer> s) {
             TimeAndCount tR = new TimeAndCount();
-            tR.et = ElapsedTime.onRun(r);
+            tR.et = ElapsedTime.onRunOf(r);
             tR.count = s.get();
             return tR;
         }

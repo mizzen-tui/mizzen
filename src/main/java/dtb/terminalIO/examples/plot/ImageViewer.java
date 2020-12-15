@@ -632,7 +632,7 @@ public class ImageViewer {
                if (toPlotOrNot.test(red, green, blue)) {
                    ControlCode.Color mappedColor = colorMap.toControlCode(red, blue, green);
                    if (plotBGColor != null && plotBGColor instanceof BgColor) {
-                       mappedColor = new ColorFromCodes(mappedColor).appendCodes(plotBGColor);
+                       mappedColor = ColorFromCodes.instance(mappedColor).appendCodes(plotBGColor);
                    }
                    plotter.setColor(mappedColor);
                    plotter.plot(col, row);

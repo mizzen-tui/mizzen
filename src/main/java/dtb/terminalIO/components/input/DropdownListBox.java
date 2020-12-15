@@ -22,7 +22,6 @@ import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
-import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.StringUtils;
 
 public class DropdownListBox<T> extends ComponentWithFocusManager  
@@ -226,7 +225,6 @@ public class DropdownListBox<T> extends ComponentWithFocusManager
         if (listBoxVisible()) {
             return;
         }
-        Logging.info("showListBox()");
         this.getContainer().add(this.listBox);
     }
     
@@ -234,7 +232,6 @@ public class DropdownListBox<T> extends ComponentWithFocusManager
         if (!listBoxVisible()) {
             return;
         }
-        Logging.info("hideListBox()");
         this.getContainer().remove(this.listBox);
     }
     

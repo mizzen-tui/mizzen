@@ -170,7 +170,7 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
                 textBuffer.getForDisplayIfModified(() -> {
 
                     String rawText = textBuffer.toString();
-                    ElapsedTime elapsed = ElapsedTime.onRun(() -> textView.setTextAndResize(rawText));
+                    ElapsedTime elapsed = ElapsedTime.onRunOf(() -> textView.setTextAndResize(rawText));
 
                     int vHeight = scrollView.getHeight() - 2;
 

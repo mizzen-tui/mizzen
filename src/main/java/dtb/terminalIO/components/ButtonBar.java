@@ -31,8 +31,6 @@ public class ButtonBar extends Composite implements FocusManager, EventHandlerCo
     private char middleBorderChar;
     private char rightMostBorderChar;
 
-    private boolean useNavKeys;
-
     private int count = 0;
 
     private Component<?> lastDivider = null;
@@ -205,12 +203,15 @@ public class ButtonBar extends Composite implements FocusManager, EventHandlerCo
         throw new IllegalArgumentException("ButtonBar cannot place components at specific locations");
     }
 
-    public Button addButton(Color buttonColor, String buttonText, KeyStroke hotKey, EventHandler handler) {
-        Button theButton = new Button(buttonColor, buttonText);
+    public Button addButton(Button theButton, KeyStroke hotKey, EventHandler handler) {
         theButton.setHotKey(hotKey);
         theButton.onChange(handler);
         addComponent(theButton);
         return theButton;
+    }
+
+    public Button addButton(Color buttonColor, String buttonText, KeyStroke hotKey, EventHandler handler) {
+        return addButton( new Button(buttonColor, buttonText), hotKey, handler);
     }
 
     public Button addButton(String buttonText, KeyStroke hotKey, EventHandler handler) {

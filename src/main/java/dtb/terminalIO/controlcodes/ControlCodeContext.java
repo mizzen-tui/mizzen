@@ -3,8 +3,8 @@ package dtb.terminalIO.controlcodes;
 import dtb.terminalIO.controlcodes.ControlCode.BaseTextControlCode;
 
 /**
- * Represents the context where a ContolCode (or more generally a Renderer)
- * will output its contents to via the {@link #write(String)} method.
+ * Represents the context where a ContolCode (or more generally a Renderer) will
+ * output its contents to via the {@link #write(String)} method.
  * 
  * @author david
  *
@@ -22,9 +22,9 @@ public interface ControlCodeContext {
     default void write(BaseTextControlCode cc) {
         write(cc.getControlCode());
     }
-    
-    boolean  isRaw();
-    
+
+    boolean isRaw();
+
     boolean isCooked();
 
     public static abstract class AbstractControlCodeContext implements ControlCodeContext {
@@ -47,7 +47,6 @@ public interface ControlCodeContext {
         }
     };
 
-    
     /**
      * A {@link ControlCodeContext} that outputs to a Terminal
      */
@@ -80,19 +79,14 @@ public interface ControlCodeContext {
         }
 
         @Override
-        public void write(BaseTextControlCode cc) {
-            this.delegate.write(cc);
+        public boolean isRaw() {
+            return this.delegate.isRaw();
         }
 
-	@Override
-	public boolean isRaw() {
-	    return this.delegate.isRaw();
-	}
-
-	@Override
-	public boolean isCooked() {
-	    return this.delegate.isCooked();
-	}
+        @Override
+        public boolean isCooked() {
+            return this.delegate.isCooked();
+        }
 
     }
 
@@ -101,8 +95,8 @@ public interface ControlCodeContext {
      * 
      * <p/>
      * 
-     * Useful when you wish to just get the resulting string
-     * output of a renderer (or renderers).
+     * Useful when you wish to just get the resulting string output of a renderer
+     * (or renderers).
      * 
      */
     public static class StringContext extends AbstractControlCodeContext {
@@ -112,36 +106,36 @@ public interface ControlCodeContext {
 
         public StringContext() {
             sb = new StringBuffer();
-            isRAW=false;
+            isRAW = false;
         }
 
         public StringContext(boolean isRAW) {
             sb = new StringBuffer();
-            this.isRAW=isRAW;
+            this.isRAW = isRAW;
         }
 
         @Override
         public void write(String s) {
             sb.append(s);
         }
-        
+
         public String toString() {
             return sb.toString();
         }
-        
+
         public void clear() {
             sb = new StringBuffer();
         }
 
-	@Override
-	public boolean isRaw() {
-	    return this.isRAW;
-	}
+        @Override
+        public boolean isRaw() {
+            return this.isRAW;
+        }
 
-	@Override
-	public boolean isCooked() {
-	    return !this.isRAW;
-	}
+        @Override
+        public boolean isCooked() {
+            return !this.isRAW;
+        }
     };
 
     public static ControlCodeContext DEFAULT = new AbstractControlCodeContext() {
@@ -150,15 +144,15 @@ public interface ControlCodeContext {
             System.out.println(s);
         }
 
-	@Override
-	public boolean isRaw() {
-	    return false;
-	}
+        @Override
+        public boolean isRaw() {
+            return false;
+        }
 
-	@Override
-	public boolean isCooked() {
-	    return true;
-	}
+        @Override
+        public boolean isCooked() {
+            return true;
+        }
 
     };
 

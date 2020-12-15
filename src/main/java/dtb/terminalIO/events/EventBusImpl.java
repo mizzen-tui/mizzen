@@ -142,9 +142,6 @@ public class EventBusImpl implements EventHandlerContainer, EventBus {
     }
     
     protected void handleEvent(TerminalEvent<?> te) {
-        if ( ! te.getType().equals(TerminalEvent.TYPE.TIMER)) {
-           Logging.info("event-handled: " + String.valueOf(te));
-        }
         te.setEventBus(EventBusImpl.this);
         eventsHandlerChain.handle(te);
         te.setEventBus(null);
@@ -173,10 +170,6 @@ public class EventBusImpl implements EventHandlerContainer, EventBus {
     public boolean isEmptyQueue() {
         return queue.isEmpty();
     }
-
-//    public boolean isFullQueue() {
-//        return queue.size() == EVENT_Q_CAPACITY;
-//    }
 
     // TODO: If queue is full event wont get enqueued.. I dont tell caller - isn't
     // that a bad design?

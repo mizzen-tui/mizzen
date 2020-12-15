@@ -77,31 +77,58 @@ public interface CleanString {
             return true;
         }
         
-        public static String clean(String s) {
+        public static String cleanSLOW(String s) {
             if (s == null) {
                 return null;
             }
             int sLen = s.length();
             StringBuilder sb = new StringBuilder(sLen);
-            
             for (int i = 0; i < sLen; i++) {
                 char ch = s.charAt(i);
-                if (sb == null) {
-                    if (ch <= 27) {
-                        sb = new StringBuilder(sLen);
-                        if (i>0) {
-                            sb.append(s.substring(0, i-1));
-                        }
+                if (ch > 27) {
+                    sb.append(ch);
+                }
+            }
+            return sb.toString();
+        }
+        
+        /**
+         * Objective is to return original string if at all possible
+         */
+        public static String clean(String s) {
+            if (s == null) {
+                return null;
+            }
+            int sLen = s.length();
+            int start=-1;
+            int end=-1;
+            StringBuilder sb = null;
+            for (int i = 0; i < sLen; i++) {
+                char ch = s.charAt(i);
+                if (ch > 27) {
+                    // char good
+                    if (sb == null) {
+                       if (start == -1) {
+                           start = i;
+                       }
+                       end = i;
+                    } else {
+                      sb.append(ch);
                     }
-                } else {
-                    if (ch > 27) {
-                        sb.append(ch);
+                } else { 
+                    // char invalid
+                    if (sb == null) {
+                        sb = new StringBuilder(s.length());
+                        if (end != -1) {
+                            sb.append(s.substring(start, end+1));
+                        }
                     }
                 }
             }
-            return sb == null ? s : sb.toString();
+            return sb == null ? s
+                              : sb.toString();
         }
-        
+
     }
     
     public static class Simple implements CleanString {

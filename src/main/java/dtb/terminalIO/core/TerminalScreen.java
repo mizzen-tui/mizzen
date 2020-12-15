@@ -23,8 +23,10 @@ public class TerminalScreen implements ControlCodeContext {
     // this ctx is used simply to hold the iscolor and is controlcode enables flags
     ControlCodeContext      ctx        = ControlCodeContext.DEFAULT;
 
+    // Typically points to System.out
     CLIEmitter              baseEmitter = CLIEmitter.DEFAULT;
 
+    // An emitter that tracks # lines output to baseEmitter (System.out)
     LineTrackingCLIEmmitter out         = new LineTrackingCLIEmmitter(new TerminalContextDelegate(this) {
                                             @Override
                                             public void write(String s) {
@@ -120,8 +122,7 @@ public class TerminalScreen implements ControlCodeContext {
 
     @Override
     public void write(BaseTextControlCode cc) {
-	out.outputRenderer(cc);
-	//write(cc.getControlCode());
+        out.outputRenderer(cc);
     }
     
     public TerminalScreen add(Renderer r) {
@@ -164,7 +165,7 @@ public class TerminalScreen implements ControlCodeContext {
         return this;
     }
 
-    
+
     public LineTrackingCLIEmmitter getEmitter() {
 	return this.out;
     }
@@ -179,11 +180,11 @@ public class TerminalScreen implements ControlCodeContext {
     }
 
     public void showCursor() {
-        add( ControlCode.SHOW_CURSOR);
+        add(ControlCode.SHOW_CURSOR);
     }
 
     public void hideCursor() {
-        add( ControlCode.HIDE_CURSOR);
+        add(ControlCode.HIDE_CURSOR);
     }
 
 }

@@ -23,7 +23,6 @@ import dtb.terminalIO.geom.position.Position;
 public class LineTrackingCLIEmmitter implements CLIEmitter {
 
     int lineCounter = 0;
-    boolean nextOutputIncsLineCounter = true;
 
     Position lastShowCursorPosition = null;
 
@@ -37,35 +36,19 @@ public class LineTrackingCLIEmmitter implements CLIEmitter {
         this(ControlCodeContext.DEFAULT);
     }
 
-    public void outputRenderer(BaseTextControlCode cc) {
+    public void outputRenderer(Renderer cc) {
         if (cc instanceof HasRowChange) {
             lineCounter += ((HasRowChange) cc).deltaRow();
-            outputStr(cc.getControlCode(), false);
-            return;
+            if (lineCounter<0) {
+                lineCounter = 0;
+                throw new IllegalStateException("LineTrackingCLIEmmitter.lineCounter < 0 : "+lineCounter);
+            }
         }
-        outputStr(cc.getControlCode());
-    }
-
-    private void output(Renderer r) {
-        if (nextOutputIncsLineCounter) {
-            nextOutputIncsLineCounter = false;
-            lineCounter++;
-            // ctx.write(DEBUGCTR());
-        }
-        r.render(this.ctx);
-    }
-
-    protected void outputStr(String line, boolean incLineCounter) {
-        if (nextOutputIncsLineCounter) {
-            nextOutputIncsLineCounter = false;
-            if (incLineCounter)
-                lineCounter++;
-        }
-        ctx.write(line);
+        cc.render(this.ctx);
     }
 
     protected void outputStr(String line) {
-        outputStr(line, true);
+        ctx.write(line);
     }
 
     public String DEBUGCTR() {
@@ -77,33 +60,16 @@ public class LineTrackingCLIEmmitter implements CLIEmitter {
     }
 
     protected void CR() {
-        output(ControlCode.ERASE_END_OF_LINE);
-        output(ControlCode.CR);
-        nextOutputIncsLineCounter = true;
+        outputRenderer(ControlCode.ERASE_END_OF_LINE);
+        outputRenderer(ControlCode.CR);
     }
 
-    private void resetLineCounter() {
+    protected void resetLineCounter() {
         lineCounter = 0;
-        nextOutputIncsLineCounter = true;
     }
-
-    // used?
-//    public void moveUpToLastKnownTopRow() {
-//        if (lineCounter < 1) {
-//            resetLineCounter();
-//            return;
-//        }
-//        output(new ControlCode.CursorUp(lineCounter - 1));
-//        resetLineCounter();
-//    }
-
-//    public void clearLastTrackedLines() {
-//        boolean erasePreviousContent = true;
-//        clearLastTrackedLines(erasePreviousContent);
-//    }
 
     int lastLoggedLineCounter = -1;
-    int cursorUpdateAdjustment = -1;
+    int cursorUpdateAdjustment = 0;
     
     void setCursorAdjustmentOn(boolean on) {
         if (on) {
@@ -115,7 +81,6 @@ public class LineTrackingCLIEmmitter implements CLIEmitter {
 
     private void logStats() {
         if (lastLoggedLineCounter != lineCounter) {
-            // Logging.info("lineCounter:" + lineCounter);
             lastLoggedLineCounter = lineCounter;
         }
     }
@@ -127,17 +92,17 @@ public class LineTrackingCLIEmmitter implements CLIEmitter {
         }
         logStats();
 
-        output(ControlCode.LF); // move to start of line - goal is to get cursor
-                                // to the left
-        output(ControlCode.CURSOR_LEFT);
+        outputRenderer(ControlCode.LF); // move to start of line - goal is to get cursor
+                                        // to the left
+        outputRenderer(ControlCode.CURSOR_LEFT);
 
         if (erasePreviousContent)
-            output(ControlCode.ERASE_LINE); // erase current line
+            outputRenderer(ControlCode.ERASE_LINE); // erase current line
         if (lineCounter > 1) {
             if (erasePreviousContent)
-                output(new ControlCode.CursorUpAndClearLines(lineCounter + cursorUpdateAdjustment));
+                outputRenderer(new ControlCode.CursorUpAndClearLines(lineCounter + cursorUpdateAdjustment));
             else
-                output(new ControlCode.CursorUp(lineCounter + cursorUpdateAdjustment));
+                outputRenderer(new ControlCode.CursorUp(lineCounter + cursorUpdateAdjustment));
         }
         resetLineCounter();
     }
@@ -161,9 +126,12 @@ public class LineTrackingCLIEmmitter implements CLIEmitter {
         String[] lines = s.split("\n", -1);
         for (int i = 0; i < lines.length; i++) {
             outputStr(lines[i]);
-            if (i < lines.length) {
+            if (i < lines.length-2) {
                 CR();
             }
+        }
+        if (s.endsWith("\n")) {
+            CR();
         }
     }
 
@@ -183,11 +151,11 @@ public class LineTrackingCLIEmmitter implements CLIEmitter {
         Position curPos = new Position.Simple(currentLineCounter, 0);
         Position delta = curPos.offsetTo(showCursorPosition);
 
-        output(ControlCode.CURSOR_LEFT);
+        outputRenderer(ControlCode.CURSOR_LEFT);
 
-        output(ControlCode.moveToDeltaRow(delta.getRow() + 1));
+        outputRenderer(ControlCode.moveToDeltaRow(delta.getRow() + 1));
 
-        output(new ControlCode.CursorForward(delta.getCol()));
+        outputRenderer(new ControlCode.CursorForward(delta.getCol()));
 
         lastShowCursorPosition = showCursorPosition;
     }
@@ -200,22 +168,22 @@ public class LineTrackingCLIEmmitter implements CLIEmitter {
      */
     private void showCursorAtFromTopDown(Position showCursorPosition) {
 
-        clearLastTrackedLines(false);
+        clearLastTrackedLines(false);  // false = don't erase previous content
 
         int currentLineCounter = lineCounter;
         Position curPos = new Position.Simple(currentLineCounter, 0);
         Position delta = curPos.offsetTo(showCursorPosition);
 
-        output(ControlCode.CURSOR_LEFT);
+        outputRenderer(ControlCode.CURSOR_LEFT);
 
         if (delta.getRow() != 0) {
-           output(ControlCode.moveToDeltaRow(delta.getRow()));
+            outputRenderer(ControlCode.moveToDeltaRow(delta.getRow()));
         }
 
         if (delta.getCol() > 0) {
-            output(new ControlCode.CursorForward(delta.getCol()));
+            outputRenderer(new ControlCode.CursorForward(delta.getCol()));
         } else if (delta.getCol() < 0) {
-            output(new ControlCode.CursorBackward(delta.getCol()));
+            outputRenderer(new ControlCode.CursorBackward(delta.getCol()));
         }
 
         lastShowCursorPosition = showCursorPosition;
@@ -228,8 +196,6 @@ public class LineTrackingCLIEmmitter implements CLIEmitter {
      * @param showCursorPosition
      */
     public void showCursorAt(Position showCursorPosition) {
-
-        // showCursorAtFromBottomUP(showCursorPosition);
 
         showCursorAtFromTopDown(showCursorPosition);
 

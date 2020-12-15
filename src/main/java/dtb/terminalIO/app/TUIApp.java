@@ -32,6 +32,8 @@ import dtb.terminalIO.events.mouse.MouseEventOrchestrator;
 import dtb.terminalIO.events.resize.TerminalResizeDetection;
 import dtb.terminalIO.examples.TestsCommon;
 import dtb.terminalIO.geom.Dimension;
+import dtb.terminalIO.util.ElapsedTime;
+import dtb.terminalIO.util.Logging;
 
 /**
  * 
@@ -187,6 +189,10 @@ public class TUIApp {
 
     public KeyInputEventHandler getTerminateAppHotKeyEventHandler() {
         return terminateAppHotKeyEventHandler;
+    }
+    
+    public Function<TUIApp, Boolean> getUpdateCanvas() {
+        return this.updateCanvas;
     }
 
     public void setUpdateCanvas(Function<TUIApp, Boolean> updateCanvas) {
@@ -357,9 +363,11 @@ public class TUIApp {
                     return false; // false means no GUI update required
                 }
 
-                tApp.clearCanvas();
+                ElapsedTime canvasUpdateTime = ElapsedTime.start();
 
-                tApp.getCanvas().addComponentSegments( __mainPanel );
+                tApp.getCanvas().clearAndAddComponentSegments( __mainPanel );
+
+                Logging.info("Canvas.addComponentSegments() time: " + canvasUpdateTime.toString());
  
                 return true; // true means updated
             });
@@ -456,7 +464,7 @@ public class TUIApp {
                 public void handle(TerminalEvent<?> te) {
                     // run start up (custom setup) code
                     TUIApp.this.onReadyStartAction.accept(TUIApp.this);
-                    // paint the canvas (asynchronously)
+                    // do the first canvas paint (asynchronously)
                     eventBus.raiseEvent(new RequestUpdateCanvasEvent(TUIApp.this));
                 }
             }));

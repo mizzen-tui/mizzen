@@ -12,9 +12,9 @@ public class CompositeScrollTest {
 
 
         CompositeTest.build_bounded_pre(master_canvas);
-        
+
         CompositeTest.build_bounded_post(master_canvas);
-        
+
 
         Composite text2 = CompositeTest.build_text2(master_canvas);
 

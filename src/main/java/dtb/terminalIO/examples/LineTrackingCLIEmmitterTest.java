@@ -1,76 +1,74 @@
 package dtb.terminalIO.examples;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
+import java.util.HashSet;
+import java.util.Set;
 
-import dtb.terminalIO.core.LineTrackingCLIEmmitter;
-import dtb.terminalIO.core.TerminalScreen;
+import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.ControlCodeContext.StringContext;
-import dtb.terminalIO.geom.Dimension;
+import dtb.terminalIO.core.LineTrackingCLIEmmitter;
 
 public class LineTrackingCLIEmmitterTest {
 
     public static void main(String args[]) throws UnsupportedEncodingException {
-        
-        
-        StringContext sc = new StringContext();
-        
-        sc.setControlCodesEnabled(false);
-        
-        LineTrackingCLIEmmitter lt = new LineTrackingCLIEmmitter(sc);
-        
-        assertEQ(lt.getLineCounter(),0);
-        
-        String testStr = "Hello\n\n\n\nddd";
-        
-        lt.print(testStr);
-        
-        assertEQ(lt.getLineCounter(),Dimension.UTIL.stringToDimension(testStr).getHeight());
-        
-        System.out.println(sc.toString());
-        
-        
-        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try (PrintStream ps = new PrintStream(baos, true, "UTF-8")) {
-            
-            TerminalScreen screen = new TerminalScreen();
-            screen.setPrintStream(ps);
-            screen.setControlCodesEnabled(false);
-            
-            lt = screen.getEmitter();
-            
-            assertEQ(lt.getLineCounter(),0);
 
-            testStr = "Hello\n\n\n\nddd";
-            
-            screen.t(testStr);
-            
-            screen.refresh();
-            
-            assertEQ(lt.getLineCounter(),Dimension.UTIL.stringToDimension(testStr).getHeight());
-            
-            screen.clear();
-            
-            assertEQ(lt.getLineCounter(),0);
-            
-           System.out.println( new String(baos.toByteArray() ) );
-            
-            
-        }
+        StringContext sc = new StringContext();
+
+        sc.setControlCodesEnabled(true);
         
-        // raw mode
+        Set<Integer> labelledLines = new HashSet<Integer>();
         
-        lt = new LineTrackingCLIEmmitter(new StringContext(true));  // true means raw mode
-        
+        LineTrackingCLIEmmitter lt = new LineTrackingCLIEmmitter(sc) {
+            
+            protected void resetLineCounter() {
+                super.resetLineCounter();
+                labelledLines.clear();
+            }
+              
+            public void print(String s) {
+                int ln = this.getLineCounter();
+                if (!labelledLines.contains(ln)) {
+                    s = String.format("%3d %s", ln, s);
+                    super.print(s);
+                    labelledLines.add(ln);
+                } else {
+                    super.print(s);
+                }
+            }
+            
+            
+            protected void CR() {
+                super.CR();
+                this.print("");
+            }
+
+        };
+
         assertEQ(lt.getLineCounter(),0);
-        
-        testStr = "RAW-MODE\nHello\n\n\n\nddd";
+
+        String testStr = "Hello (0)\n\nddd (2)";
         
         lt.print(testStr);
+        lt.print(" two? ");
+        lt.print(""+lt.getLineCounter());
         
-        assertEQ(lt.getLineCounter(),Dimension.UTIL.stringToDimension(testStr).getHeight());
+       // lt.print("");
         
+        lt.outputRenderer( ControlCode.moveToDeltaRow(-2) );
+        lt.print("zero?");
+        
+        lt.outputRenderer( ControlCode.moveToDeltaRow(10) );
+        lt.print("10?");
+        
+        lt.clearLastTrackedLines(false);
+        
+        lt.outputRenderer(ControlCode.moveToDeltaRow(11));
+        lt.print("11?");
+        lt.outputRenderer(ControlCode.moveToDeltaRow(-11));
+        lt.print("Where am I? " + lt.getLineCounter());
+        
+
+        System.out.println(sc.toString());
         
         
     }

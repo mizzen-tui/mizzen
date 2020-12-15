@@ -5,7 +5,7 @@ import java.util.function.Predicate;
 
 /**
  * A TerminalEvent is an object that captures 
- * some event ( usually ) a keystroke (or a timer 'idle') event.
+ * some event ( usually ) a keystroke, mouse button press, or a timer 'idle' event.
  * 
  * <p/>
  * 

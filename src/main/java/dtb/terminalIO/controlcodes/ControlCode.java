@@ -4,11 +4,12 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.StringJoiner;
+import java.util.TreeMap;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import dtb.terminalIO.components.input.DisplayableValue;
-import dtb.terminalIO.controlcodes.ControlCode.ColorFromCodes;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors.HasRowChange;
 import dtb.terminalIO.textsegments.CleanString;
 import dtb.terminalIO.util.IntArrayComparator;
@@ -29,9 +30,6 @@ import dtb.terminalIO.util.IntArrayComparator;
  *
  */
 public abstract class ControlCode implements Renderer {
-
-    // public static final FGBGColors DEFAULT = new
-    // FGBGColors(Colors.On_Bla,Colors.Whi);
 
     public ControlCode() {
     }
@@ -62,12 +60,13 @@ public abstract class ControlCode implements Renderer {
         }
 
         protected void doRender(ControlCodeContext ctx) {
-            // ctx.write(this.getControlCode());
+            //ctx.write(this.getControlCode());
             ctx.write(this);
         }
     }
 
-    
+//    static int maxColorCodeLen = -1;
+//    static int colorCount = 0;
 
     /**
      * A {@link ControlCode} that encapsulates a Color
@@ -75,19 +74,19 @@ public abstract class ControlCode implements Renderer {
     public static abstract class Color extends ControlCode implements ColorProvider {
 
         protected int[] codes;
-        
+
         abstract protected int[] buildControlCodes();
 
         final protected int[] getControlCodes() {
             if (codes == null) {
-                codes = buildControlCodes();    
+                codes = buildControlCodes();
             }
             return codes;
         }
-        
+
         ColorTransform boldTransform = ColorTransform.NULL_colorTransform;
         ColorTransform invertTransform = ColorTransform.NULL_colorTransform;
-        
+
         public Color setBoldTransform(ColorTransform boldTransform ) {
             this.boldTransform = boldTransform;
             return this;
@@ -96,7 +95,7 @@ public abstract class ControlCode implements Renderer {
         public ColorTransform getBoldTransform() {
             return this.boldTransform;
         }
-        
+
         public ColorTransform getInvertTransform() {
             return invertTransform;
         }
@@ -109,7 +108,7 @@ public abstract class ControlCode implements Renderer {
         public Color getColor() {
             return this;
         }
-        
+
         public Color mergeWith(Color other) {
             return this; // TODO:  fix!
         }
@@ -118,7 +117,7 @@ public abstract class ControlCode implements Renderer {
             return false;
         }
 
-        protected String buildColorControlCode() {
+        final protected String buildColorControlCode() {
             int codes[] = getControlCodes();
             StringJoiner sj = new StringJoiner(";");
             for (int code : codes) {
@@ -166,7 +165,29 @@ public abstract class ControlCode implements Renderer {
             };
         }
         
+        /**
+         * Returns itself with more color codes
+         */
+        public Color appendCodes(int[] additionalCodes) {
+            int[] codes = getControlCodes();
+            int codesLength = codes.length;
+            int[] newCodes = new int[additionalCodes.length + codesLength];
+            
+            int i = 0;
+            for (int j=0; j<codesLength; j++) {
+                newCodes[i] = codes[j];
+                i++;
+            }
+            for (int j=0; j<additionalCodes.length; j++) {
+                newCodes[i] = additionalCodes[j];
+                i++;
+            }
+            return ColorFromCodes.instance(newCodes);
+        }
         
+        public Color appendCodes(Color color) {
+            return appendCodes(color.getControlCodes());
+        }
         
     }
 
@@ -186,40 +207,41 @@ public abstract class ControlCode implements Renderer {
     }
     
     public static final ColorComparator COLOR_COMPARE = new ColorComparator();
-    
+
+    static TreeMap<int[],Color> colorsCache = new TreeMap<int[],Color>(IntArrayComparator.INTARRAY_COMPARE);
+
+    public static Color getColorFromCache(int[] codes) {
+        return colorsCache.get(codes);
+    }
+
+    public static <T extends Color> T getColorFromCacheOrBuild(int[] codes, 
+                                                               Supplier<T> makeColor) {
+        T color = (T) colorsCache.get(codes);
+        if (color == null) {
+            color = makeColor.get();
+            colorsCache.put(color.getControlCodes(), color);
+        } 
+        return color;
+    }
+
     public static class ColorFromCodes extends Color {
 
+        public static Color instance(int[] codes) {
+            return getColorFromCacheOrBuild(codes, ()->new ColorFromCodes(codes));
+        }
         
-        public ColorFromCodes(int[] codes) {
+        public static Color instance(Color color) {
+            return getColorFromCacheOrBuild(color.getControlCodes(), ()->new ColorFromCodes(color));
+        }
+        
+        private ColorFromCodes(int[] codes) {
             this.codes = codes;
         }
         
-        public ColorFromCodes(Color color) {
+        private ColorFromCodes(Color color) {
             this(color.getControlCodes());
         }
         
-        /**
-         * Returns itself with more color codes
-         */
-        public ColorFromCodes appendCodes(int[] additionalCodes) {
-            int[] newCodes = new int[additionalCodes.length + this.codes.length];
-            
-            int i = 0;
-            for (int j=0; j<codes.length; j++) {
-                newCodes[i] = codes[j];
-                i++;
-            }
-            for (int j=0; j<additionalCodes.length; j++) {
-                newCodes[i] = additionalCodes[j];
-                i++;
-            }
-            this.codes = newCodes;
-            return this;
-        }
-        
-        public ColorFromCodes appendCodes(Color color) {
-            return appendCodes(color.getControlCodes());
-        }
 
         
         @Override
@@ -277,12 +299,22 @@ public abstract class ControlCode implements Renderer {
         boolean italic    = false;
         boolean underline = false;
 
-        public FgColor(int colorCode) {
+        public static FgColor instance(int colorCode) {
+            int[] codes =  __buildControlCodes(false, false, false, colorCode);
+            return getColorFromCacheOrBuild(codes, ()->new FgColor(colorCode));
+        }
+
+        public static FgColor instance(int colorCode, boolean bold, boolean italic, boolean underline) {
+            int[] codes =  __buildControlCodes(bold, italic, underline, colorCode);
+            return getColorFromCacheOrBuild(codes, ()->new FgColor(colorCode,bold, italic, underline));
+        }
+        
+        private FgColor(int colorCode) {
             super(colorCode);
             this.setBoldTransform((color)->asBold());
         }
 
-        public FgColor(int colorCode, boolean bold, boolean italic, boolean underline) {
+        private FgColor(int colorCode, boolean bold, boolean italic, boolean underline) {
             this(colorCode);
             this.bold = bold;
             this.italic = italic;
@@ -297,23 +329,30 @@ public abstract class ControlCode implements Renderer {
 
 
         public FgColor asBold() {
-            return new FgColor(colorCode, true, italic, underline);
+            return FgColor.instance(colorCode, true, italic, underline);
         }
         
         public FgColor removeBold() {
-            return new FgColor(colorCode, false, italic, underline);
+            return FgColor.instance(colorCode, false, italic, underline);
         }
 
         public FgColor asItalic() {
-            return new FgColor(colorCode, bold, true, underline);
+            return FgColor.instance(colorCode, bold, true, underline);
         }
 
         public FgColor asUnderline() {
-            return new FgColor(colorCode, bold, italic, true);
+            return FgColor.instance(colorCode, bold, italic, true);
         }
 
         @Override
         protected int[] buildControlCodes() {
+            return __buildControlCodes(bold, italic, underline, this.getColorCode());
+        }
+        
+        static int[] __buildControlCodes(boolean bold,
+                                         boolean italic,
+                                         boolean underline,
+                                         int colorCode) {
             int codes[] = new int[(bold ? 1 : 0) + (italic ? 1 : 0) + (underline ? 1 : 0) + 2];
             int idx = 0;
             codes[idx++] = 0; // reset previous attributes
@@ -323,7 +362,7 @@ public abstract class ControlCode implements Renderer {
                 codes[idx++] = 3; // conditionally set italic
             if (underline)
                 codes[idx++] = 4; // conditionally set underline
-            codes[idx] = this.getColorCode(); // now finally set the foreground
+            codes[idx] = colorCode; // now finally set the foreground
                                               // color
             return codes;
         }
@@ -343,7 +382,11 @@ public abstract class ControlCode implements Renderer {
      */
     public static class BgColor extends SimpleColor {
 
-        public BgColor(int colorCode) {
+        public static BgColor instance(int colorCode) {
+            return getColorFromCacheOrBuild(new int[] { colorCode }, ()->new BgColor(colorCode));
+        }
+        
+        private BgColor(int colorCode) {
             super(colorCode);
         }
 
@@ -634,9 +677,30 @@ public abstract class ControlCode implements Renderer {
         return the_CR;
      }
     
+    static class CarriageReturn implements Renderer , HasRowChange {
+
+
+        final TextRenderer cooked_CR = new TextRenderer("\n");
+        final Renderer raw_CR = new RendererBuffer().append(ControlCode.CURSOR_LEFT ).append( new CursorDown(1));
+        
+        @Override
+        public void render(ControlCodeContext ctx) {
+            if (ctx.isRaw()) {
+                raw_CR.render(ctx);
+            } else {
+                cooked_CR.render(ctx);
+            }
+        }
+        
+        @Override
+        public int deltaRow() {
+            return 1;
+        }
+    }
+    
     
     // TODO - should this be moved to ControlCode class?
-    public static Renderer CR = make_CR();
+    public static Renderer CR = new CarriageReturn();
     public static TextRenderer LF = new TextRenderer("\r");
     
     protected static class CursorMovementWithCount extends BaseTextControlCode {
@@ -661,7 +725,7 @@ public abstract class ControlCode implements Renderer {
 
         @Override
         public int deltaRow() {
-            return -getCount();
+            return getCount()*-1;
         }
     }
 
@@ -787,7 +851,7 @@ public abstract class ControlCode implements Renderer {
     }
 
     public static void parseColorsAndBuildResult(String colorCodedStr,
-            ColorColorSegmentBuilder colorColorSegmentBuilder) {
+                                                 ColorColorSegmentBuilder colorColorSegmentBuilder) {
 
         int PARSE_STATE = PARSE_TEXT;
         int codesBuffer[] = new int[50];
@@ -861,7 +925,7 @@ public abstract class ControlCode implements Renderer {
             case PARSE_COLOR_END:
                 int[] codes = new int[codesBufferLen];
                 System.arraycopy(codesBuffer, 0, codes, 0, codesBufferLen);
-                color = new ColorFromCodes(codes);
+                color = ColorFromCodes.instance(codes);
                 PARSE_STATE = PARSE_TEXT;
 
                 if (ch == '\u001B') { // this can happen if we have color codes back to back.

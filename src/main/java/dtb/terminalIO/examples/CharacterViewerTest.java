@@ -121,7 +121,7 @@ public class CharacterViewerTest {
             
             counter[3]++;
             
-            ElapsedTime et = ElapsedTime.onRun(()->{});
+            ElapsedTime et = ElapsedTime.onRunOf(()->{});
             boolean changed = false;
             synchronized (textSource) {
                 counter[0]++;
@@ -130,7 +130,7 @@ public class CharacterViewerTest {
                     Dimension d = Dimension.UTIL.stringToDimension(textSource.toString());
                     dataToView.resize(d);
                     dataToView.setTextAndResize(textSource.toString());
-                    et = ElapsedTime.onRun(()-> dataToView.getSegmentsBuffer().getSegments() );
+                    et = ElapsedTime.onRunOf(()-> dataToView.getSegmentsBuffer().getSegments() );
                     counter[1] = textSource.length();
                 }
 

@@ -1,7 +1,8 @@
 package dtb.terminalIO.events;
 
 /**
- * A special {@link TerminalEvent} that is raised when no activity is happening by the user.
+ * A special {@link TerminalEvent} that is raised when no activity (no keyboard, no mouse activity) 
+ * is happening by the user.
  * 
  * <p/>
  * 

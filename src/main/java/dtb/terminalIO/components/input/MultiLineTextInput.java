@@ -130,7 +130,7 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
     @Override
     public void resize(Dimension d) {
         // TODO Auto-generated method stub
-        
+        // FIXME:  implement!!!
     }
     
     public void setText(String text) {
@@ -284,7 +284,7 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
         if (newCol == -1 && caret.getCol()>0) {
             newCol = 0;
         }
-        
+
         if (newCol != -1) {
             setCaretPosition(new Position.Simple(this.caret.getRow(), newCol));
             return true;
@@ -311,7 +311,7 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
             setCaretPosition(new Position.Simple(this.caret.getRow(), newCol));
             return true;
         }
-        
+
         return caretRight();
     }
 
@@ -328,7 +328,7 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
         }
         int targetRow = this.caret.getRow() - 1;
         int strLineLen = this.buffer.get(targetRow).length();
-        
+
         setCaretPosition(new Position.Simple(targetRow, Math.min(this.caret.getCol(),strLineLen)));
         return true;
     }
@@ -485,10 +485,8 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
     
     AbstractTimedRequestedController buildTimedOnChangeController(EventBus eventBus) {
         return new AbstractTimedRequestedController(()->{
-            Logging.info("ON-REQUEST-START");
             eventBus.raiseEvent(new HasValue.ValueChangedEvent<>(MultiLineTextInput.this));
             updateCursorPositionAndRefreshCanvas(eventBus);
-            Logging.info("ON-REQUEST-END");
         }) {
             @Override
             protected boolean isRequestDifferentFromPrevious() {

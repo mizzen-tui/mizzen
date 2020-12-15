@@ -1,7 +1,6 @@
 package dtb.terminalIO.examples;
 
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.Component;
@@ -10,8 +9,6 @@ import dtb.terminalIO.components.input.MultiLineTextInput;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
-import dtb.terminalIO.core.ScreenCanvasBackend;
-import dtb.terminalIO.core.ScreenCanvasBackend.UpdateStrategy;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.Keys;
@@ -22,6 +19,8 @@ public class MultiLineTextInputTest {
 
     public static void main(String[] args) throws IOException {
 
+        Logging.setEnabled(true);
+        
         new TUIApp(args)
         .setCanvasSize(24, 100)
         .setEmptyChar(' ')
@@ -29,7 +28,7 @@ public class MultiLineTextInputTest {
         .confirmOnExit()
         .setOnReadyStart((tApp)-> {
 
-            MultiLineTextInput mTextBox = new MultiLineTextInput(); mTextBox.setText("Hello World!\n");
+            MultiLineTextInput mTextBox = new MultiLineTextInput(); mTextBox.setText("Silly Sally sold\nSeaShells at the seashore\nWhat a silly thing to do!");
 
             mTextBox.setColor(  new FGBGColors( Colors.BBlu, Colors.On_Bla  )  );
 
@@ -48,9 +47,10 @@ public class MultiLineTextInputTest {
                     ()-> new DefaultFocusManager().setNavKeysFirst(false).setCycling(false));
 
             tApp.getEventBus().appendEventHandler( mainFocusManager );
-
+            
             FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
 
+            
         }).start();
 
     }
