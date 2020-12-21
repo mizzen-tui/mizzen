@@ -17,8 +17,7 @@ import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.core.ScreenCanvasBackend;
-import dtb.terminalIO.core.ScreenCanvasBackend.UpdateStrategy;
+import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.Keys;
@@ -28,7 +27,6 @@ import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.ElapsedTime;
 import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.StringUtils;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
 
 public class ReadTextFileToScreenTest {
     public static void main(String[] args) throws Exception {
@@ -38,9 +36,9 @@ public class ReadTextFileToScreenTest {
         String fileData = getFileData(args);
         
         new TUIApp(args)
-        .setCanvasSize(24, 100)
+        //.setCanvasSize(24, 100)
         .setEmptyChar(' ')
-        .setMainApplicationPanel(new Composite().setBounds(30, 120).setEmptyChar(' ').setBorder(false))
+        .setDefaultMainApplicationPanel()
         .confirmOnExit()
         .setOnReadyStart((tApp)-> {
 
@@ -55,17 +53,17 @@ public class ReadTextFileToScreenTest {
                 }
             };
             image.setFillOnClear(false);
-            
+
             ButtonBar bannerPanel = new ButtonBar().setHorizontalSpacer(0);
             bannerPanel.setBorder(false);
             bannerPanel.setNoBorderChars();
-            
+
             bannerPanel.add(new TextComponent("Demonstrate reading color codes from text file"));
             bannerPanel.addButton(Colors.IGre,"CTRL-C",Keys.CTRL_C_KEYSTROKE, (te) -> tApp.getTerminateAppHotKeyEventHandler().handle(te)  );
             bannerPanel.add(new TextComponent(" to quit "));
 
             Button toggleColors = new Button(Colors.IGre,"No colors");
-            
+
             bannerPanel.addButton(toggleColors,Keys.CTRL_D_KEYSTROKE, (te) -> {
                 stripColorCodes.getAndSet(!stripColorCodes.get());
                 String data = fileData;
@@ -104,8 +102,7 @@ public class ReadTextFileToScreenTest {
                 baseResizeAction.accept(ptApp, newSize);
                 sc.resize(  new Dimension.Simple(newSize.getHeight()-4, newSize.getWidth()));
             } );
-            
-            
+
             FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
 
         }).start();
@@ -119,15 +116,15 @@ public class ReadTextFileToScreenTest {
         }
         
         String fileName = args[0]; 
-        
+
         if (fileName.equalsIgnoreCase("GENERATE")) {
             return genTextData();
         }
-        
+
      // TODO: validation required (file exists etc)
-        
+
         byte[] fileByteData = Files.readAllBytes(Paths.get(fileName));
-        
+
         //String fileData  =  new String(fileByteData,StandardCharsets.UTF_8);
         String fileData = new String(fileByteData,StandardCharsets.UTF_8).replace(ControlCode.ERASE_END_OF_LINE.asString(),"");
         return fileData;

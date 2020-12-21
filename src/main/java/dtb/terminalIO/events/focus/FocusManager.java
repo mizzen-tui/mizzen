@@ -118,6 +118,23 @@ public interface FocusManager extends Focusable {
             }
         }
 
+        public static Focusable findCurrentFocus(FocusManager focusManager) {
+            if ( ! focusManager.hasFocus()) {
+                return null;
+            }
+            
+            Focusable focusableChild = focusManager.getCurrentChildFocus();
+            
+            if (focusableChild == null) {
+                return focusManager;
+            }
+            
+            if (!(focusableChild instanceof FocusManager)) {
+                return focusableChild;
+            }
+            
+            return findCurrentFocus((FocusManager)focusableChild);
+        }
         
         /**
          * Traverse this object and all its child (and grand-child .. ) objects looking for
@@ -194,7 +211,7 @@ public interface FocusManager extends Focusable {
             List<Focusable> focusables = new ArrayList<Focusable>();
             addFocusableChildren(focusables, component);
             if (focusables.size()==0) {
-                return null;
+                return null; // <-- why am I doing this .. very annoying!!!
             }
             if (focusables.size()==1) {
                 return (Focusable) focusables.get(0);

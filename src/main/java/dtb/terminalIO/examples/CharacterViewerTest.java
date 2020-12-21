@@ -79,7 +79,7 @@ public class CharacterViewerTest {
         };
 
         StringBuilder textSource = new StringBuilder();
-        
+
         Runnable consumeText = () -> {
             ElapsedTime et = new ElapsedTime();
             try {
@@ -104,7 +104,7 @@ public class CharacterViewerTest {
                         textSource.append(sb.toString());
                     }
                 }
-                
+
             } catch (Exception e) {
                 synchronized (textSource) {
                     textSource.append("\n\n" + e.getMessage() + "\n");

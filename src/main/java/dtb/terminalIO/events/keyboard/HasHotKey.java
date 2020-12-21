@@ -12,6 +12,9 @@ public interface HasHotKey {
     
     public static class UTIL {
         
+        /**
+         * Recursively traverse parent + children and get a list of hotkeys
+         */
         public static Collection<KeyStroke> getAllHotKeys(Object parent) {
             Set<KeyStroke> hotKeys = new HashSet<KeyStroke>();
 

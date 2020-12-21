@@ -1,5 +1,6 @@
 package dtb.terminalIO.components;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.function.Consumer;
@@ -12,6 +13,7 @@ import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.EventHandlerContainer;
 import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.mouse.GetComponentAtOffset;
@@ -42,6 +44,9 @@ public class ComponentWithFocusManager extends AbstractComponent<ComponentWithFo
         this.container = container;
         this.container.setParentContainer(this);
         this.focusManager = FocusManager.UTIL.buildFocusManagerFromComponent(this.container, null);
+        if (this.focusManager == null) {
+            this.focusManager = new DefaultFocusManager(); // FocusManager.UTIL.buildFocusManagerFromComponent() is weird - that's why this extra call
+        }
     }
 
     public ComponentWithFocusManager(Composite container) {
@@ -55,9 +60,9 @@ public class ComponentWithFocusManager extends AbstractComponent<ComponentWithFo
 
     public void setFocusManager(FocusManager focusManager) {
         this.focusManager = focusManager;
+        DefaultFocusManager.setDefaultNameFromParentObject(focusManager, this);
     }
-
-
+    
     public void setFocusManagerBuilder(Function<EventBus, FocusManager> focusManagerBuilder) {
         if (focusManagerBuilder != null) {
             this.focusManager = null;
@@ -75,7 +80,30 @@ public class ComponentWithFocusManager extends AbstractComponent<ComponentWithFo
         }
         return this.focusManager;
     }
+    
+    protected FocusManager getFocusManager() {
+        if (this.focusManager == null) {
+            throw new NullPointerException("getFocusManager(): focusManager is null - cannot get access to a focusManager for "+ this.getClass().getName());
+        }
+        return this.focusManager;
+    }
 
+    public void addFocusable(Focusable focusable) {
+        if (this.focusManager == null) {
+            throw new NullPointerException("addFocusable(): focusManager is null - cannot get access to a focusManager for "+ this.getClass().getName());
+        }
+        // bad form here.. 
+        ((DefaultFocusManager)this.focusManager).addFocusable(focusable);
+    }
+
+    public void removeFocusable(Focusable focusable) {
+        if (this.focusManager == null) {
+            throw new NullPointerException("removeFocusable(): focusManager is null - cannot get access to a focusManager for "+ this.getClass().getName());
+        }
+        // bad form here.. 
+        ((DefaultFocusManager)this.focusManager).removeFocusable(focusable);
+    }
+    
     private ChainedEventHandler getOrBuildChainedEventHandler() {
         if (chainedEventHandler == null) {
             chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
@@ -84,6 +112,27 @@ public class ComponentWithFocusManager extends AbstractComponent<ComponentWithFo
         return chainedEventHandler;
     }
 
+    public ComponentWithFocusManager setEmptyChar(char emptyChar) {
+        super.setEmptyChar(emptyChar);
+        if (getContainer() != null) {
+            getContainer().setEmptyChar(emptyChar);
+        }
+        return this;
+    }
+
+    public ComponentWithFocusManager setEmptyColor(Color emptyColor) {
+        super.setEmptyColor(emptyColor);
+        if (getContainer() != null) {
+            getContainer().setEmptyColor(emptyColor);
+        }
+        return this;
+    }
+
+    public void markAsDirty() {
+        super.markAsDirty();
+        getContainer().markAsDirty();
+    }
+    
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
         segments.merge(this.container.getSegmentsBuffer());
@@ -244,6 +293,10 @@ public class ComponentWithFocusManager extends AbstractComponent<ComponentWithFo
         container.setTitle(titleColors, title);
         return this;
     }
+    
+    public String getTitle() {
+       return container.getTitle();
+    }
 
     @Override
     public ComponentWithFocusManager setTitle(String title) {
@@ -277,6 +330,13 @@ public class ComponentWithFocusManager extends AbstractComponent<ComponentWithFo
     @Override
     public EventHandlerContainer removeEventHandler(ConditionalEventHandler eventHandler) {
         return getOrBuildChainedEventHandler().removeEventHandler(eventHandler);
+    }
+
+    public void removeChildren() {
+        getContainer().removeChildren();
+        for (Focusable focusable : new ArrayList<Focusable>(getChildFocusables())) {
+            removeFocusable(focusable);
+        }
     }
 
 }

@@ -1,7 +1,7 @@
 package dtb.terminalIO.examples;
 
 import dtb.terminalIO.app.TUIApp;
-import dtb.terminalIO.components.ButtonBar;
+import dtb.terminalIO.components.ButtonBar2;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.TextComponent;
@@ -35,9 +35,11 @@ public class DropdownListBoxInButtonBarTest {
             
             HorizontalPanel hpMain = new HorizontalPanel();
             
-            ButtonBar bbar = new ButtonBar();
+            ButtonBar2 bbar = new ButtonBar2();
+            bbar.setPrevKeyStroke(Keys.LEFT_KEYSTROKE);
+            bbar.setNextKeyStroke(Keys.RIGHT_KEYSTROKE);
             
-            bbar.add( new TextComponent("A LABEL") );
+            bbar.addComponent( new TextComponent("A LABEL") );
             
             
             bbar.addButton("POPUP", Keys.CTRL_F_KEYSTROKE, (te)->{
@@ -65,11 +67,9 @@ public class DropdownListBoxInButtonBarTest {
 
             FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),
                                                                                              tApp.getEventBus(),
-                                                                                             ()-> new DefaultFocusManager().setNavKeysFirst(false).setCycling(false));
+                                                                                             ()-> new DefaultFocusManager().setNavKeysFirst(false).setCycling(false).setName("ApplicationFocusManager"));
             
-            ScreenCanvasBackend backEnd = (ScreenCanvasBackend) tApp.getCanvas().getCanvasBackend();
-            //backEnd.setUpdateStrategy(UpdateStrategy.UPDATE_CHANGED  );
-            backEnd.setUpdateStrategy(UpdateStrategy.UPDATE_FULL  );
+           // mainFocusManager = bbar;
             
             tApp.getEventBus().appendEventHandler(  mainFocusManager );
             

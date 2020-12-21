@@ -1,6 +1,7 @@
 package dtb.terminalIO.examples;
 
 import java.io.IOException;
+import java.util.function.BiConsumer;
 
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.ButtonBar;
@@ -20,17 +21,19 @@ import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
 import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.OnIdleEventEventHandler.RepeatingInterval;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
+import dtb.terminalIO.geom.Rectangle.Simple;
 
 /**
  * 
  * <pre>
  * 
- * Test textboxes and Focusmanagers
+ * Test textboxes and Focusmanagers and basic form handling
  * 
  * </pre>
  * 
@@ -44,7 +47,7 @@ public class TextBoxTest {
         new TUIApp(args)
         .setCanvasSize(40, 130)
         .setEmptyChar(' ')
-        .setMainApplicationPanel(new Composite().setBounds(39, 130).setEmptyChar(' ').setBorder(true))
+        .setMainApplicationPanel(new Composite().setBounds(39, 130).setEmptyChar(' ').setTitle("MainPanel").setBorder(true))
         .confirmOnExit()
         .setOnReadyStart((tApp)-> {
             
@@ -93,15 +96,17 @@ public class TextBoxTest {
 
             ScrollableComponent sc_1 = new ScrollableComponent(Colors.Blu, new Dimension.Simple(panel1.getHeight()+1, 50), panel1);
 
+            sc_1.setTitle("Scrollable with form");
+            
             SearchFunctionForScrollableComponent.addFinderToScrollable(sc_1);
             horizontalPanel.add(sc_1);
             horizontalPanel.add( new ComponentWithFocusManager(panel2));
-            
+
             TextComponent eventDisplayer = new TextComponent("                                       ");
-            
+
             ButtonBar bannerMenu = new ButtonBar().setHorizontalSpacer(1);
             bannerMenu.setNoBorderChars();
-            
+
             Button toggleTreeviewButton = new Button(Colors.BIGre,"");
             toggleTreeviewButton.setHotKey( Keys.CTRL_T_KEYSTROKE );
             toggleTreeviewButton.setDisplayHotKey(true);
@@ -123,6 +128,7 @@ public class TextBoxTest {
             bannerMenu.add(quitButton);
 
             VerticalPanel deskTopPanel = new VerticalPanel().setVerticalSpacer(1);
+            deskTopPanel.setTitle("DeskTopPanel");
 
             deskTopPanel.add(bannerMenu);
             deskTopPanel.add(topPanel);
@@ -137,7 +143,8 @@ public class TextBoxTest {
 
             tApp.getEventBus().appendEventHandler(  mainFocusManager );
 
-            ComponentInspector componentInspector = new ComponentInspector(Colors.BIGre, new Dimension.Simple(20,40), topPanel, mainFocusManager);
+            ComponentInspector componentInspector = new ComponentInspector(Colors.BIGre, new Dimension.Simple((int)(tApp.getMainApplicationPanel().getHeight()*.55),
+                                                                                                              (int)(tApp.getMainApplicationPanel().getWidth()*.35)), topPanel, mainFocusManager);
             horizontalPanel.add(componentInspector);
 
             DefaultFocusManager.applyIfDefaultFocusManager(mainFocusManager, (dfalt_fm)->{
@@ -177,11 +184,23 @@ public class TextBoxTest {
                 }
             });
 
-            try {
-                FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
-            } catch (Exception e) {
-                throw e;
-            }
+            tApp.getEventBus().appendIdleEventHandler(new RepeatingInterval(250, componentInspector.refreshEventHandler()));
+
+            BiConsumer<TUIApp, Dimension> baseResizeAction = tApp.getResizeAction();
+
+            tApp.setOnResizeAction( (ptApp, newSize) ->{
+                baseResizeAction.accept(ptApp, newSize);
+                int appHeight = tApp.getMainApplicationPanel().getHeight();
+                int appWidth = tApp.getMainApplicationPanel().getWidth();
+                
+                componentInspector.resize( new Dimension.Simple((int)(appHeight * (.50)  ),
+                                                                (int)(appWidth  * (.50) - panel2.getWidth() - 4 )));
+                
+                sc_1.resize( new Dimension.Simple( componentInspector.getHeight(), sc_1.getWidth() ) );
+                
+            } );
+            
+            FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
 
             // necessary?
             tApp.getScreen().add(ControlCode.SHOW_CURSOR);

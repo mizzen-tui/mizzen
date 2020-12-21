@@ -2,7 +2,6 @@ package dtb.terminalIO.components;
 
 import java.util.Collection;
 
-import dtb.terminalIO.components.Composite.ComponentWithOffset;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
@@ -40,6 +39,7 @@ public class CompositeWithFocusManager  extends Composite implements FocusManage
     public DefaultFocusManager buildFocusManager() {
         DefaultFocusManager focusManager = new DefaultFocusManager(Keys.TAB_KEYSTROKE);
         focusManager.setNavKeysFirst(false);
+        focusManager.setName(this.getClass().getSimpleName()+"-FocusManager");
         return focusManager;
     }
     

@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.BorderedComponent;
-import dtb.terminalIO.components.ButtonBar;
+import dtb.terminalIO.components.ButtonBar2;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.TextComponent;
@@ -32,14 +32,14 @@ public class ButtonBarTest {
                     TextComponent statusMSGs = new TextComponent(new FGBGColors(Colors.BRed, Colors.On_Yel),
                             new Dimension.Simple(1, tApp.getMainApplicationPanel().getWidth()));
 
-                    ButtonBar bbar1 = new ButtonBar(Colors.IGre);
+                    ButtonBar2 bbar1 = new ButtonBar2(Colors.IGre);
                     bbar1.setNoBorderChars();
 
                     tApp.getMainApplicationPanel().add(1, 1, bbar1);
 
                     tApp.getMainApplicationPanel().add(new PositionVerticalRelative(bbar1, 3), statusMSGs);
 
-                    bbar1.addComponent(new BorderedComponent(new TextComponent("Text area")));
+                    BorderedComponent textArea = bbar1.addComponent(new BorderedComponent(new TextComponent("Text area")));
 
                     bbar1.addButton("F1", Keys.F1_KEYSTROKE, (te) -> {
                                         statusMSGs.setText("F1 Pressed");
@@ -53,6 +53,12 @@ public class ButtonBarTest {
 
                     bbar1.addButton("F3", Keys.F3_KEYSTROKE, (te) -> {
                                         statusMSGs.setText("F3 Pressed");
+                                        if (bbar1.containsChild(textArea)) {
+                                            bbar1.remove(textArea);
+                                        } else {
+                                            //bbar1.insertComponent(3, textArea);
+                                            bbar1.addComponent(textArea);
+                                        }
                                         te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(te.getSource()));
                                     }).setBorder(true);
 

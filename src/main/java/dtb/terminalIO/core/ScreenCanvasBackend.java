@@ -263,9 +263,9 @@ public class ScreenCanvasBackend implements CanvasBackend {
                 assertNoOverlaps(current);
                 assertNoOverlaps(previous);
 
+                ElapsedTime subtractTime = ElapsedTime.start();
                 // subtractAggressive() not working reliably.. I really need to diagnose (as its produces a more efficient (smaller result) than subtract())
                 //TreeSet<ScreenLineSegment> newOrModifiedsegments = ScreenLineSegment.UTIL.subtractAggressive(current, previous);
-                ElapsedTime subtractTime = ElapsedTime.start();
                 TreeSet<ScreenLineSegment> newOrModifiedsegments = ScreenLineSegment.UTIL.subtract(current, previous);
                 subtractTime.elapsed();
 

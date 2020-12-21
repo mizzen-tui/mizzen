@@ -32,8 +32,12 @@ public class TreeView<T> extends BoundedComponent<TextComponent> {
         this.markAsDirty();
     }
 
-    private int drawNode(Color color, IScreenLineSegmentsBuffer segments, T node, int depth, int callCount,
-            List<T> ancestor) {
+    private int drawNode(Color color, 
+                         IScreenLineSegmentsBuffer segments, 
+                         T node, 
+                         int depth, 
+                         int callCount,
+                         List<T> ancestor) {
 
         int newCallCount = callCount;
 

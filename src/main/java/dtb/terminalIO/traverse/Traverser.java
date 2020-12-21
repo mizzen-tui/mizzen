@@ -6,9 +6,6 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import dtb.terminalIO.events.keyboard.HasHotKey;
-import dtb.terminalIO.events.keyboard.KeyStroke;
-
 /**
  * Provides the ability to traverse (visit) an object and all its children.
  * 
@@ -144,9 +141,13 @@ public class Traverser<T> {
     }
 
     public static <T> List<T> asList(T parent, Predicate<T> filter) {
+        return asList(parent, filter, new HasChildrenAdapter.Simple<T>());
+    }
+    
+    public static <T> List<T> asList(T parent, Predicate<T> filter, HasChildrenAdapter<T> toHasChildren) {
         List<T> objectsTraversed = new ArrayList<T>();
 
-        Traverser<T> objectTraverser = new Traverser<T>();
+        Traverser<T> objectTraverser = new Traverser<T>(toHasChildren);
 
         objectTraverser.traverse(parent, new Traverser.Visitor<T>() {
 

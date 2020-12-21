@@ -44,7 +44,7 @@ public class MultiLineTextInputTest {
 
             FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),
                     tApp.getEventBus(),
-                    ()-> new DefaultFocusManager().setNavKeysFirst(false).setCycling(false));
+                    ()-> new DefaultFocusManager().setNavKeysFirst(false).setCycling(false).setName("MainApplicationPanel-FocusManager"));
 
             tApp.getEventBus().appendEventHandler( mainFocusManager );
             

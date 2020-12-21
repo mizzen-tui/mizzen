@@ -2,7 +2,6 @@ package dtb.terminalIO.components.input;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import dtb.terminalIO.components.BoundedComponent;

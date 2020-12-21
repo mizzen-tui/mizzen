@@ -146,6 +146,9 @@ public class TextComponent extends BoundedComponent<TextComponent> {
     }
 
     public void resize(Dimension d) {
+        if (d != null && d.isSameDimension(this)) {
+            return;
+        }
         super.resize(d);
         parsedSegments = null;
     }

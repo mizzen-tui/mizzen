@@ -539,9 +539,9 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         return conditionalEventHandler;
     }
 
-    public void addStandardNavigationKeyInputEventHandlers(EventBus eventBus) {
-        eventBus.appendEventHandler(asEventHandler());
-    }
+//    public void addStandardNavigationKeyInputEventHandlers(EventBus eventBus) {
+//        eventBus.appendEventHandler(asEventHandler());
+//    }
 
     @Override
     public EventHandler canHandle(TerminalEvent<?> te) {
@@ -739,6 +739,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         FocusManager componentBeingViewedFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(componentBeingViewed, 
                                                                                                          null,
                                                                                                          defaultFocusManagerBuilder);
+        DefaultFocusManager.setDefaultNameFromParentObject(componentBeingViewedFocusManager, this);
         return componentBeingViewedFocusManager;
     }
 

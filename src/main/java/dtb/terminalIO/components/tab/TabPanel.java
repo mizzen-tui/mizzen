@@ -171,6 +171,8 @@ public class TabPanel extends AbstractComponent<TabPanel>
             }
         };
         
+        DefaultFocusManager.setDefaultNameFromParentObject(focusManager, this);
+        
         if (navControls == null) {
             navControls = new ButtonBar( workAreaBorder.getBorderColor() ).setHorizontalSpacer(2);
             

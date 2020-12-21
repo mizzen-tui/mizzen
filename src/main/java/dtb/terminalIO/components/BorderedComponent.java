@@ -130,6 +130,9 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
     
     
     public void resize(Dimension d) {
+        if (d.isSameDimension(this)) {
+            return;
+        }
         super.resize(d);
         this.border.resize(d);
         if ( this.component instanceof CanResize)
@@ -196,7 +199,7 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
         border.setTitle(title);
         return this;
     }
-
+    
     @Override
     protected Rectangle getRectangleForClearAndFill() {
         return this;

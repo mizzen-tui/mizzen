@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Predicate;
 
+import dtb.terminalIO.components.HasName;
+
 /**
  * 
  * A ChainedEventHandler maintains a list of EventHandler objects - and more
@@ -41,7 +43,7 @@ import java.util.function.Predicate;
  *             -- good example :  KeyStroke events are handled 
  *                                this way by the EventBus
  *                                
- *           NEEDS IMPROVEMENT :  Need to have a concept of
+ *           NEEDS IMPROVEMENT :  Need to have a concept of  : NOTE:  This is almost fully implemented
  *                                a focus Manager - either here or
  *                                                  somewhere else
  *                                this becomes increasingly important
@@ -54,7 +56,7 @@ import java.util.function.Predicate;
  * </pre>
  * 
  */
-public class ChainedEventHandler implements EventHandler, EventHandlerContainer {
+public class ChainedEventHandler implements EventHandler, EventHandlerContainer, HasName<ChainedEventHandler> {
 
     
     private String name;
@@ -75,7 +77,7 @@ public class ChainedEventHandler implements EventHandler, EventHandlerContainer 
 
     private ChainedEventHandler(String name) {
         handleEventStrategy = chainOfResponsibilityHandler;
-        this.name = name;
+        this.setName(name);
     }
 
     private boolean isChainOfResponsibility() {
@@ -104,7 +106,7 @@ public class ChainedEventHandler implements EventHandler, EventHandlerContainer 
     }
 
     public static ChainedEventHandler useChainOfResponsibilityStrategy() {
-        return useChainOfResponsibilityStrategy("chainOfResponseibility");
+        return useChainOfResponsibilityStrategy("chainOfResponsibility");
     }
 
     /**
@@ -284,7 +286,7 @@ public class ChainedEventHandler implements EventHandler, EventHandlerContainer 
         // expensive to do that..
         this.adjustEventHandlerListIfNeeded();
 
-        ConditionalEventHandler eventHandler = new ConditionalEventHandler.Impl(new Predicate<TerminalEvent<?>>() {
+        ConditionalEventHandler.Impl eventHandler = new ConditionalEventHandler.Impl(new Predicate<TerminalEvent<?>>() {
 
             @Override
             public boolean test(TerminalEvent<?> te) {
@@ -309,6 +311,8 @@ public class ChainedEventHandler implements EventHandler, EventHandlerContainer 
 
         });
 
+        HasName.UTIL.decorateWithParentsNamePrefix(eventHandler, ChainedEventHandler.this);
+        
         return eventHandler;
     }
 
@@ -318,6 +322,17 @@ public class ChainedEventHandler implements EventHandler, EventHandlerContainer 
                 "  a : "+appendList.size() +
                 "  r : "+removeList.size() +
                 "]";
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public ChainedEventHandler setName(String name) {
+        this.name = name;
+        return this;
     }
 
 }

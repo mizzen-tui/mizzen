@@ -3,6 +3,8 @@ package dtb.terminalIO.components;
 import java.util.Collection;
 import java.util.Collections;
 
+import dtb.terminalIO.components.input.CheckBoxInput;
+import dtb.terminalIO.components.input.HasValue;
 import dtb.terminalIO.components.input.tree.TreeView;
 import dtb.terminalIO.components.input.tree.TreeViewModel.HasChildrenTreeViewModel;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
@@ -15,7 +17,6 @@ import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.FocusManager;
-import dtb.terminalIO.events.focus.FocusManager.FocusManagerHasChildrenAdapter;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
@@ -24,6 +25,7 @@ import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.util.StringUtils;
 
 public class ComponentInspector extends AbstractComponent<ComponentInspector>
         implements CanResize, ParentContainer, FocusManager, GetComponentAtOffset {
@@ -37,6 +39,8 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
     FocusManager focusManagerToInspect;
 
     VIEW_TYPE currentViewType = VIEW_TYPE.COMPONENT_VIEW;
+    
+    Focusable currentFocus = null;
 
     public ComponentInspector(Color color, 
                               Dimension d, 
@@ -58,7 +62,7 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
     private void __setView(Dimension d) {
         if (currentViewType == VIEW_TYPE.COMPONENT_VIEW) {
             TreeView<Component<?>> tvComponents = new TreeView<Component<?>>(Colors.IBlu, new Dimension.Simple(90, 60),
-                    (node) -> node.getClass().getSimpleName());
+                    (node) -> nodeName(node));
             tvComponents.setModel(new HasChildrenTreeViewModel<Component<?>>(componentToInspect));
 
             scrollingArea = new ScrollableComponent(Colors.BIGre, d, new BorderedComponent(tvComponents));
@@ -67,9 +71,16 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
 
             TreeView<Focusable> tvFocusable = new TreeView<Focusable>(Colors.IBlu, new Dimension.Simple(90, 60),
                     (node) -> node.hasFocus()
-                            ? new FGBGColors(Colors.BIBlu, Colors.On_Yel).asString() + node.getClass().getSimpleName()
+                            ? new FGBGColors(node==currentFocus?Colors.BGre    : Colors.BBlu, 
+                                             node==currentFocus?Colors.On_IYel : Colors.On_Yel).asString() + nodeName(node)
                                     + ControlCode.RCol.asString()
-                            : node.getClass().getName());
+                            : nodeName(node)) {
+                
+                public void draw(Color color, IScreenLineSegmentsBuffer segments) {
+                    currentFocus = FocusManager.UTIL.findCurrentFocus(focusManagerToInspect);
+                    super.draw(color, segments);
+                }
+            };
 
             tvFocusable.setModel(new HasChildrenTreeViewModel<Focusable>(focusManagerToInspect,
                                                                          new FocusManagerHasChildrenAdapter()));
@@ -86,6 +97,39 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
 
     }
 
+    private String nodeName(Object node) {
+        String suffix=null;
+        if (node instanceof CheckBoxInput) {
+            suffix = null;
+        }
+        if (node instanceof HasName<?>) {
+            suffix = ((HasName<?>)node).getName();
+        }
+        if (suffix == null && node instanceof HasTitleAndBorder<?>) {
+            String title = ((HasTitleAndBorder<?>)node).getTitle();
+            if (title != null) {
+               suffix = title;
+               suffix = StringUtils.truncate(suffix, 10);
+            }
+        }
+        if (suffix == null && node instanceof HasValue<?>) {
+            Object value = ((HasValue<?>)node).getValue();
+            if (value != null) {
+               suffix = String.valueOf(value);
+               suffix = StringUtils.truncate(suffix, 10);
+            }
+        }
+        if ( suffix != null) {
+            suffix = "["+suffix+"]";
+        }
+        String output = node.getClass().getSimpleName() + (suffix!=null?suffix:"");
+        if (output == null || output.trim().length()==0) {
+            output = node.toString();
+        }
+        return output;
+    }
+    
+    
     public KeyInputEventHandler refreshEventHandler() {
         return new KeyInputEventHandler(Keys.CTRL_R_KEYSTROKE, (te) -> {
             ComponentInspector.this.scrollingArea.getComponentBeingViewed().markAsDirty();
@@ -187,11 +231,22 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
     @Override
     public void childResized(Component<?> child) {
         this.markAsDirty();
+        if (this.getParentContainer() != null) {
+            this.getParentContainer().childResized(this);
+        }
     }
 
     @Override
     public void resize(Dimension d) {
+        if (d.isSameDimension(this)) {
+            return;
+        }
+        Dimension previousDimension = new Dimension.Simple(this);
         this.scrollingArea.resize(d);
+        if (this.getParentContainer()!=null  && ! previousDimension.isSameDimension(this)) {
+            this.getParentContainer().childResized(this);
+        }
+        markAsDirty();
     }
 
     @Override

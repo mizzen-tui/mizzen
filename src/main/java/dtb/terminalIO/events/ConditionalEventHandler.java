@@ -2,6 +2,8 @@ package dtb.terminalIO.events;
 
 import java.util.function.Predicate;
 
+import dtb.terminalIO.components.HasName;
+
 /**
  * An {@link EventHandler} that processes an event only if 
  * the incoming {@link TerminalEvent} can be handled by this
@@ -36,10 +38,11 @@ public interface ConditionalEventHandler extends EventHandler {
         }
     };
     
-    class Impl implements ConditionalEventHandler {
+    class Impl implements ConditionalEventHandler,  HasName<Impl> {
     
         private Predicate<TerminalEvent<?>> canHandlePredicate;
         private EventHandler handler;
+        private String name;
     
         protected EventHandler getHandler() {
             return this.handler;
@@ -65,7 +68,7 @@ public interface ConditionalEventHandler extends EventHandler {
         @Override
         public EventHandler canHandle(TerminalEvent<?> te) {
             if (canHandlePredicate.test(te)) {
-        	return this;
+            return this;
             }
             return null;
         }
@@ -75,10 +78,22 @@ public interface ConditionalEventHandler extends EventHandler {
             this.handler = handler;
         }
 
-	@Override
-	public String toString() {
-	    return "Impl [canHandlePredicate=" + canHandlePredicate + ", handler=" + handler + "]";
-	}
+        @Override
+        public String toString() {
+            String name = this.getName()!=null ? this.getName() : "Impl";
+            return name+" [canHandlePredicate=" + canHandlePredicate + ", handler=" + handler + "]";
+        }
+    
+        @Override
+        public String getName() {
+            return name;
+        }
+    
+        @Override
+        public Impl setName(String name) {
+            this.name = name;
+            return this;
+        }
         
         
     }

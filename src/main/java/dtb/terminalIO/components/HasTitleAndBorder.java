@@ -13,5 +13,7 @@ public interface HasTitleAndBorder<T extends Component<?>> extends Hiliter {
     public T setTitle(Color titleColors, String title);
 
     public T setTitle(String title);
+    
+    public String getTitle();
 
 }

@@ -81,7 +81,7 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
     }
 
     public void resize(Dimension d) {
-        if (d.isSameDimension(this)) {
+        if (d != null && d.isSameDimension(this)) {
             return;
         }
         Dimension previousDimension = new Dimension.Simple(this);

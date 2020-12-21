@@ -231,6 +231,10 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
                 }
                 return null;
             }
+            
+            public String toString() {
+                return "ToFocusable(CheckBoxInput, value="+CheckBoxInput.this.getValue()+")";
+            }
 
         };
         return meAsFocusable;

@@ -224,6 +224,7 @@ public class ButtonBar extends Composite implements FocusManager, EventHandlerCo
     // EventHandler handler) {
     public void addComponent(Component<?> component) {
 
+        // first let's deal with injecting divider characters in between each component on this ButtonBar
         if (count == 0 && this.leftMostBorderChar > 0) {
             horizontalPanel.add(new CharComponent(this.getColor(), leftMostBorderChar));
         } else {
@@ -326,36 +327,41 @@ public class ButtonBar extends Composite implements FocusManager, EventHandlerCo
         return asFocusable().hasFocus();
     }
 
+    public int size() {
+        return eventConsumers.size();
+    }
+
+    
     @Override
     public void setFocus(boolean focus, EventBus eventBus) {
         asFocusable().setFocus(focus, eventBus);
     }
 
-    private Focusable getPrevFocusable() {
-        if (eventConsumers.size() < 1) {
-            return null;
-        }
-        int index = current == null ? 0 : eventConsumers.indexOf(current);
-        if (index < 1) {
-            return eventConsumers.get(eventConsumers.size() - 1);
-        }
-        return eventConsumers.get(index - 1);
-    }
-
-    private Focusable getNextFocusable() {
-        if (eventConsumers.size() < 1) {
-            return null;
-        }
-        if (eventConsumers.size() < 2) {
-            return null;
-        }
-
-        int index = current == null ? 0 : eventConsumers.indexOf(current);
-        if (index < 0 || index == eventConsumers.size() - 1) {
-            return eventConsumers.get(0);
-        }
-        return eventConsumers.get(index + 1);
-    }
+//    private Focusable getPrevFocusable() {
+//        if (eventConsumers.size() < 1) {
+//            return null;
+//        }
+//        int index = current == null ? 0 : eventConsumers.indexOf(current);
+//        if (index < 1) {
+//            return eventConsumers.get(eventConsumers.size() - 1);
+//        }
+//        return eventConsumers.get(index - 1);
+//    }
+//
+//    private Focusable getNextFocusable() {
+//        if (eventConsumers.size() < 1) {
+//            return null;
+//        }
+//        if (eventConsumers.size() < 2) {
+//            return null;
+//        }
+//
+//        int index = current == null ? 0 : eventConsumers.indexOf(current);
+//        if (index < 0 || index == eventConsumers.size() - 1) {
+//            return eventConsumers.get(0);
+//        }
+//        return eventConsumers.get(index + 1);
+//    }
 
     @Override
     public Focusable getCurrentChildFocus() {

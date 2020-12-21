@@ -29,6 +29,9 @@ public class BrailleGrid extends Composite {
 
 
     public void resize(Dimension d) {
+        if (d != null && d.isSameDimension(this)) {
+            return;
+        }
         this.plotter.resize(d);
         gridRectangle = BrailleUtils.componentRectangleToGridRectangle(plotter);
     }

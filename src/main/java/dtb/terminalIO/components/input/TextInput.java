@@ -148,6 +148,9 @@ public class TextInput extends BoundedComponent<TextInput>
     }
 
     public void resize(Dimension d) {
+        if (d != null && d.isSameDimension(this)) {
+            return;
+        }
         setRectangle(new Rectangle.Simple(this.getPostion_TopLeft(), d));
         markAsDirty();
     }
