@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.BorderedComponent;
-import dtb.terminalIO.components.ButtonBar2;
+import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.TextComponent;
@@ -32,7 +32,7 @@ public class ButtonBarTest {
                     TextComponent statusMSGs = new TextComponent(new FGBGColors(Colors.BRed, Colors.On_Yel),
                             new Dimension.Simple(1, tApp.getMainApplicationPanel().getWidth()));
 
-                    ButtonBar2 bbar1 = new ButtonBar2(Colors.IGre);
+                    ButtonBar bbar1 = new ButtonBar(Colors.IGre);
                     bbar1.setNoBorderChars();
 
                     tApp.getMainApplicationPanel().add(1, 1, bbar1);

@@ -1,7 +1,6 @@
 package dtb.terminalIO.core;
 
 import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.ControlCode.BaseTextControlCode;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors.HasRowChange;
 import dtb.terminalIO.controlcodes.ControlCodeContext;
 import dtb.terminalIO.controlcodes.Renderer;
@@ -52,7 +51,7 @@ public class LineTrackingCLIEmmitter implements CLIEmitter {
     }
 
     public String DEBUGCTR() {
-        return String.format("[%4d]: ", lineCounter) + "  " + String.valueOf(lastShowCursorPosition);
+        return String.format("lineCounter: [%4d]: ", lineCounter) + "  cursor: " + Position.UTIL.asString(lastShowCursorPosition);
     }
 
     public int getLineCounter() {
@@ -68,25 +67,28 @@ public class LineTrackingCLIEmmitter implements CLIEmitter {
         lineCounter = 0;
     }
 
-    int lastLoggedLineCounter = -1;
-    int cursorUpdateAdjustment = 0;
+    //int lastLoggedLineCounter = -1;
+//    int cursorUpdateAdjustment = 0;
     
-    void setCursorAdjustmentOn(boolean on) {
-        if (on) {
-            cursorUpdateAdjustment = -1;
-        } else {
-            cursorUpdateAdjustment = 0;
-        }
-    }
+//    void setCursorAdjustmentOn(boolean on) {
+//        if (on) {
+//            cursorUpdateAdjustment = -1;
+//        } else {
+//            cursorUpdateAdjustment = 0;
+//        }
+//    }
 
     private void logStats() {
-        if (lastLoggedLineCounter != lineCounter) {
-            lastLoggedLineCounter = lineCounter;
-        }
+//        if (lastLoggedLineCounter != lineCounter) {
+//            lastLoggedLineCounter = lineCounter;
+//        }
     }
 
     public void clearLastTrackedLines(boolean erasePreviousContent) {
         if (lineCounter < 1) {
+            outputRenderer(ControlCode.LF); // move to start of line - goal is to get cursor
+                                            // to the left
+            outputRenderer(ControlCode.CURSOR_LEFT);
             resetLineCounter();
             return;
         }
@@ -98,11 +100,11 @@ public class LineTrackingCLIEmmitter implements CLIEmitter {
 
         if (erasePreviousContent)
             outputRenderer(ControlCode.ERASE_LINE); // erase current line
-        if (lineCounter > 1) {
+        if (lineCounter > 0) {
             if (erasePreviousContent)
-                outputRenderer(new ControlCode.CursorUpAndClearLines(lineCounter + cursorUpdateAdjustment));
+                outputRenderer(new ControlCode.CursorUpAndClearLines(lineCounter/* + cursorUpdateAdjustment*/));
             else
-                outputRenderer(new ControlCode.CursorUp(lineCounter + cursorUpdateAdjustment));
+                outputRenderer(new ControlCode.CursorUp(lineCounter /*+ cursorUpdateAdjustment*/));
         }
         resetLineCounter();
     }
@@ -168,7 +170,7 @@ public class LineTrackingCLIEmmitter implements CLIEmitter {
      */
     private void showCursorAtFromTopDown(Position showCursorPosition) {
 
-        clearLastTrackedLines(false);  // false = don't erase previous content
+        clearLastTrackedLines(false);  // false = go to top but don't erase previous content
 
         int currentLineCounter = lineCounter;
         Position curPos = new Position.Simple(currentLineCounter, 0);

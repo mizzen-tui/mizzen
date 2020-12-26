@@ -289,7 +289,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
 
     public void refreshFooter() {
         footerControls.markAsDirty();
-        footerControls.fullrecalcDim();
+        //footerControls.fullrecalcDim();
         positionFooterText();
     }
 

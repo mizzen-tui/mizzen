@@ -1,7 +1,7 @@
 package dtb.terminalIO.components.modal;
 
 import dtb.terminalIO.components.BorderedComponent;
-import dtb.terminalIO.components.ButtonBar2;
+import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.ChildComponentManager;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
@@ -149,7 +149,7 @@ public class MessageBox {
         
         dialog.add(messageTextPosition, messagePanel);
         
-        ButtonBar2 buttons = new ButtonBar2().setCycling(true);
+        ButtonBar buttons = new ButtonBar().setCycling(true);
         buttons.setFillOnClear(true);
         buttons.setEmptyColor(dialog.getColor());
 

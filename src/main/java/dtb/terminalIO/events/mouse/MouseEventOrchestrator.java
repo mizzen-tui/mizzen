@@ -96,12 +96,12 @@ public class MouseEventOrchestrator {
 
                           // (3) now we have the Cursor Position Report (CPR) ( note: CPR reports 1,1 as top-left )
                           // let's map the raw mouse position to the application position 
-                          Position applicationMousePosition = cpr.getEventData().offsetAdd(-1, -1).negate().offsetAdd( rme.getEventData() );
+                          Position applicationMousePosition = cpr.getPosition().offsetAdd(-1, -1).negate().offsetAdd( rme.getEventData() );
 
-//                          Logging.info("------ mouse captured: ---------------");
-//                          Logging.info("mouse info: " + String.valueOf(rme));
-//                          Logging.info("current cursor pos: " + String.valueOf(cpr));
-//                          Logging.info("current app mouse pos: " + String.valueOf(applicationMousePosition));
+                          Logging.info("------ mouse captured: ---------------");
+                          Logging.info("mouse info: " + String.valueOf(rme));
+                          Logging.info("current cursor pos: " + String.valueOf(cpr));
+                          Logging.info("current app mouse pos: " + String.valueOf(applicationMousePosition));
 
                           if (lastRequestedCursorPosition != null) {
                               screen.showCursorAt(lastRequestedCursorPosition);

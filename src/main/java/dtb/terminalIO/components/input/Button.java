@@ -107,6 +107,10 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
     public void setButtonText(String buttonText) {
         setButtonTextAndResize(buttonText);
     }
+    
+    public String getButtonText() {
+        return this.buttonText;
+    }
 
     @Override
     public void resize(Dimension d) {

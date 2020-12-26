@@ -9,6 +9,7 @@ import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.components.input.DisplayableValue;
 import dtb.terminalIO.controlcodes.ControlCode.FGBGColors.HasRowChange;
 import dtb.terminalIO.textsegments.CleanString;
@@ -29,8 +30,11 @@ import dtb.terminalIO.util.IntArrayComparator;
  * @author david
  *
  */
-public abstract class ControlCode implements Renderer {
+public abstract class ControlCode implements Renderer, HasName<ControlCode> {
 
+
+    String name;
+    
     public ControlCode() {
     }
 
@@ -39,6 +43,21 @@ public abstract class ControlCode implements Renderer {
         if (ctx.isControlCodesEnabled()) {
             doRender(ctx);
         }
+    }
+    
+    @Override
+    public String getName() {
+        return name;
+    }
+    
+    @Override
+    public ControlCode setName(String name) {
+         this.name = name;
+         return this;
+    }
+    
+    public String toString() {
+        return HasName.UTIL.getName(this);
     }
 
     abstract protected void doRender(ControlCodeContext ctx);
@@ -603,7 +622,7 @@ public abstract class ControlCode implements Renderer {
                                                             }
                                                             
                                                             public String toString() {
-                                                                return "DEFAULT";
+                                                                return "RCol";
                                                             }
                                                             
                                                         };
@@ -613,48 +632,48 @@ public abstract class ControlCode implements Renderer {
                                                         
     // erasing ..
 
-    public static final ControlCode ERASE_END_OF_LINE   = new BaseTextControlCode(escape_CHR + "[K");
-    public static final ControlCode ERASE_START_OF_LINE = new BaseTextControlCode(escape_CHR + "[1K");
-    public static final ControlCode ERASE_LINE          = new BaseTextControlCode(escape_CHR + "[2K");
-    public static final ControlCode ERASE_DOWN          = new BaseTextControlCode(escape_CHR + "[J");
-    public static final ControlCode ERASE_UP            = new BaseTextControlCode(escape_CHR + "[1J");
-    public static final ControlCode ERASE_SCREEN        = new BaseTextControlCode(escape_CHR + "[2J");
+    public static final ControlCode ERASE_END_OF_LINE   = new BaseTextControlCode(escape_CHR + "[K").setName("ERASE_END_OF_LINE");
+    public static final ControlCode ERASE_START_OF_LINE = new BaseTextControlCode(escape_CHR + "[1K").setName("ERASE_START_OF_LINE");
+    public static final ControlCode ERASE_LINE          = new BaseTextControlCode(escape_CHR + "[2K").setName("ERASE_LINE");
+    public static final ControlCode ERASE_DOWN          = new BaseTextControlCode(escape_CHR + "[J").setName("ERASE_DOWN");
+    public static final ControlCode ERASE_UP            = new BaseTextControlCode(escape_CHR + "[1J").setName("ERASE_UP");
+    public static final ControlCode ERASE_SCREEN        = new BaseTextControlCode(escape_CHR + "[2J").setName("ERASE_SCREEN");
 
     // \033[?25l")
-    public static final ControlCode HIDE_CURSOR         = new BaseTextControlCode(escape_CHR + "[?25l");
-    public static final ControlCode SHOW_CURSOR         = new BaseTextControlCode(escape_CHR + "[?25h");
+    public static final ControlCode HIDE_CURSOR         = new BaseTextControlCode(escape_CHR + "[?25l").setName("HIDE_CURSOR");
+    public static final ControlCode SHOW_CURSOR         = new BaseTextControlCode(escape_CHR + "[?25h").setName("SHOW_CURSOR");
 
     
     /* MOUSE */
     
     
-    public static final ControlCode SET_X10_MOUSE               = new BaseTextControlCode(escape_CHR + "[?9h");
-    public static final ControlCode SET_VT200_MOUSE             = new BaseTextControlCode(escape_CHR + "[?1000h");
-    public static final ControlCode SET_VT200_HIGHLIGHT_MOUSE   = new BaseTextControlCode(escape_CHR + "[?1001h");
-    public static final ControlCode SET_BTN_EVENT_MOUSE         = new BaseTextControlCode(escape_CHR + "[?10021h");
-    public static final ControlCode SET_ANY_EVENT_MOUSE         = new BaseTextControlCode(escape_CHR + "[?10031h");
+    public static final ControlCode SET_X10_MOUSE               = new BaseTextControlCode(escape_CHR + "[?9h").setName("SET_X10_MOUSE");
+    public static final ControlCode SET_VT200_MOUSE             = new BaseTextControlCode(escape_CHR + "[?1000h").setName("SET_VT200_MOUSE");
+    public static final ControlCode SET_VT200_HIGHLIGHT_MOUSE   = new BaseTextControlCode(escape_CHR + "[?1001h").setName("SET_VT200_HIGHLIGHT_MOUSE");
+    public static final ControlCode SET_BTN_EVENT_MOUSE         = new BaseTextControlCode(escape_CHR + "[?10021h").setName("SET_BTN_EVENT_MOUSE");
+    public static final ControlCode SET_ANY_EVENT_MOUSE         = new BaseTextControlCode(escape_CHR + "[?10031h").setName("SET_ANY_EVENT_MOUSE");
 
-    public static final ControlCode SET_FOCUS_EVENT_MOUSE       = new BaseTextControlCode(escape_CHR + "[?10041h");
+    public static final ControlCode SET_FOCUS_EVENT_MOUSE       = new BaseTextControlCode(escape_CHR + "[?10041h").setName("SET_FOCUS_EVENT_MOUSE");
 
-    public static final ControlCode SET_ALTERNATE_SCROLL        = new BaseTextControlCode(escape_CHR + "[?10071h");
+    public static final ControlCode SET_ALTERNATE_SCROLL        = new BaseTextControlCode(escape_CHR + "[?10071h").setName("SET_ALTERNATE_SCROLL");
 
-    public static final ControlCode SET_EXT_MODE_MOUSE          = new BaseTextControlCode(escape_CHR + "[?10051h");
-    public static final ControlCode SET_SGR_EXT_MODE_MOUSE      = new BaseTextControlCode(escape_CHR + "[?10061h");
-    public static final ControlCode SET_URXVT_EXT_MODE_MOUSE    = new BaseTextControlCode(escape_CHR + "[?10151h");
-    public static final ControlCode SET_PIXEL_POSITION_MOUSE    = new BaseTextControlCode(escape_CHR + "[?10161h");
+    public static final ControlCode SET_EXT_MODE_MOUSE          = new BaseTextControlCode(escape_CHR + "[?10051h").setName("SET_EXT_MODE_MOUSE");
+    public static final ControlCode SET_SGR_EXT_MODE_MOUSE      = new BaseTextControlCode(escape_CHR + "[?10061h").setName("SET_SGR_EXT_MODE_MOUSE");
+    public static final ControlCode SET_URXVT_EXT_MODE_MOUSE    = new BaseTextControlCode(escape_CHR + "[?10151h").setName("SET_URXVT_EXT_MODE_MOUSE");
+    public static final ControlCode SET_PIXEL_POSITION_MOUSE    = new BaseTextControlCode(escape_CHR + "[?10161h").setName("SET_PIXEL_POSITION_MOUSE");
 
     public static final ControlCode ENABLE_MOUSE_TRACKING  = SET_VT200_MOUSE;
-    public static final ControlCode DISABLE_MOUSE_TRACKING = new BaseTextControlCode(escape_CHR + "[?1000l");
+    public static final ControlCode DISABLE_MOUSE_TRACKING = new BaseTextControlCode(escape_CHR + "[?1000l").setName("ERASE_END_OF_LINE");
 
     public static final String      CURSOR_FAR_LEFT_STR = escape_CHR + "[G";
-    public static final ControlCode CURSOR_LEFT         = new BaseTextControlCode(CURSOR_FAR_LEFT_STR);
+    public static final ControlCode CURSOR_LEFT         = new BaseTextControlCode(CURSOR_FAR_LEFT_STR).setName("CURSOR_LEFT");
 
     // Device status report (DSR): Answer is ESC [ 0 n (Terminal OK).
-    public static final ControlCode DSR = new BaseTextControlCode(escape_CHR + "[5n");
+    public static final ControlCode DSR = new BaseTextControlCode(escape_CHR + "[5n").setName("DSR");
 
     // Cursor position report (CPR): Answer is ESC [ y ; x R, where
     // x,y is the cursor location.
-    public static final ControlCode CPR = new BaseTextControlCode(escape_CHR + "[6n");
+    public static final ControlCode CPR = new BaseTextControlCode(escape_CHR + "[6n").setName("CPR");
     
     
     static Renderer make_CR() {
@@ -677,9 +696,10 @@ public abstract class ControlCode implements Renderer {
         return the_CR;
      }
     
-    static class CarriageReturn implements Renderer , HasRowChange {
+    static class CarriageReturn implements Renderer , HasRowChange, HasName<CarriageReturn> {
 
 
+        String name;
         final TextRenderer cooked_CR = new TextRenderer("\n");
         final Renderer raw_CR = new RendererBuffer().append(ControlCode.CURSOR_LEFT ).append( new CursorDown(1));
         
@@ -696,11 +716,27 @@ public abstract class ControlCode implements Renderer {
         public int deltaRow() {
             return 1;
         }
+
+        @Override
+        public String getName() {
+            return name;
+        }
+
+        @Override
+        public CarriageReturn setName(String name) {
+            this.name = name;
+            return this;
+        }
+        
+        public String toString() {
+            return HasName.UTIL.getName(this);
+        }
+         
     }
     
     
     // TODO - should this be moved to ControlCode class?
-    public static Renderer CR = new CarriageReturn();
+    public static Renderer CR = new CarriageReturn().setName("CR");
     public static TextRenderer LF = new TextRenderer("\r");
     
     protected static class CursorMovementWithCount extends BaseTextControlCode {

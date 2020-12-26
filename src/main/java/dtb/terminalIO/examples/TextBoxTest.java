@@ -27,7 +27,6 @@ import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
-import dtb.terminalIO.geom.Rectangle.Simple;
 
 /**
  * 
@@ -112,20 +111,20 @@ public class TextBoxTest {
             toggleTreeviewButton.setDisplayHotKey(true);
             bannerMenu.addComponent(toggleTreeviewButton);
             
-            bannerMenu.add(new TextComponent(" switch Treeview Components/Focusables  "));
+            bannerMenu.addComponent(new TextComponent(" switch Treeview Components/Focusables  "));
 
             Button refreshTreeviewButton = new Button(Colors.BIGre," ");
             refreshTreeviewButton.setHotKey(Keys.CTRL_R_KEYSTROKE);
             refreshTreeviewButton.setDisplayHotKey(true);
-            bannerMenu.add(refreshTreeviewButton);
+            bannerMenu.addComponent(refreshTreeviewButton);
             
-            bannerMenu.add(new TextComponent(" refresh Treeview"));
+            bannerMenu.addComponent(new TextComponent(" refresh Treeview"));
             
             Button quitButton = new Button(Colors.BIGre,"Quit");
             quitButton.setHotKey(Keys.CTRL_C_KEYSTROKE);
             quitButton.setDisplayHotKey(true);
             quitButton.onChange(tApp.getTerminateAppHotKeyEventHandler());
-            bannerMenu.add(quitButton);
+            bannerMenu.addComponent(quitButton);
 
             VerticalPanel deskTopPanel = new VerticalPanel().setVerticalSpacer(1);
             deskTopPanel.setTitle("DeskTopPanel");

@@ -36,7 +36,7 @@ public class CompositeWithFocusManager  extends Composite implements FocusManage
         return focusManager;
     }
     
-    public DefaultFocusManager buildFocusManager() {
+    protected DefaultFocusManager buildFocusManager() {
         DefaultFocusManager focusManager = new DefaultFocusManager(Keys.TAB_KEYSTROKE);
         focusManager.setNavKeysFirst(false);
         focusManager.setName(this.getClass().getSimpleName()+"-FocusManager");

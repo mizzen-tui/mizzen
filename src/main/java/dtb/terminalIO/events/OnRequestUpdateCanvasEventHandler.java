@@ -4,7 +4,6 @@ import java.util.function.Predicate;
 
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.util.ElapsedTime;
-import dtb.terminalIO.util.Logging;
 
 /**
  * Handle Canvas update requests.
@@ -45,7 +44,7 @@ public class OnRequestUpdateCanvasEventHandler implements ConditionalEventHandle
                 
                 long elapsed = ElapsedTime.onRunOf(canvasUpdater).elapsed();
 
-                Logging.info("OnRequestUpdateCanvasEventHandler.timedCanvasUpdater - elapsed: " + elapsed + "  tmrDELAY:  " + this.timedOnChangeRequestController.getTimerDelayMillis());
+                //Logging.info("OnRequestUpdateCanvasEventHandler.timedCanvasUpdater - elapsed: " + elapsed + "  tmrDELAY:  " + this.timedOnChangeRequestController.getTimerDelayMillis());
                 
                 if (OnRequestUpdateCanvasEventHandler.this.timedOnChangeRequestController != null &&
                     elapsed <= 1500 &&  // ignore really long times .. hopefully just an anomaly

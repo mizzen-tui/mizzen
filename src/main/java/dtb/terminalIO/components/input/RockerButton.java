@@ -1,6 +1,6 @@
 package dtb.terminalIO.components.input;
 
-import dtb.terminalIO.components.AbstractComponentWithContainerAndFocusManager;
+import dtb.terminalIO.components.AbstractWrappedComponentWithFocusManager;
 import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.controlcodes.ControlCode.Color;
@@ -12,14 +12,14 @@ import dtb.terminalIO.events.keyboard.HasHotKey;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 
-public class RockerButton extends AbstractComponentWithContainerAndFocusManager<ButtonBar>
-        implements HasHotKey, Clickable, HasValue<Boolean> {
+public class RockerButton extends    AbstractWrappedComponentWithFocusManager<ButtonBar> 
+                          implements HasHotKey, Clickable, HasValue<Boolean>,
+                          FocusManager {
 
     boolean toggleValue = false;
 
     String labelText;
     TextComponent label;
-    ButtonBar buttons;
     Button onButton;
     Button offButton;
 
@@ -27,7 +27,7 @@ public class RockerButton extends AbstractComponentWithContainerAndFocusManager<
     private KeyInputEventHandler hotKeyHandler;
 
     public RockerButton(Color color, String label, String onText, String offText, boolean value) {
-        super(color);
+        super(color, new ButtonBar(color));
 
         onButton = new Button(onText);
         onButton.onChange((te) -> toggleState(true, te.getEventBus()));
@@ -35,24 +35,23 @@ public class RockerButton extends AbstractComponentWithContainerAndFocusManager<
         offButton = new Button(offText);
         offButton.onChange((te) -> toggleState(false, te.getEventBus()));
 
-        buttons = new ButtonBar(color);
-        buttons.setNoBorderChars();
-        buttons.setHorizontalSpacer(1);
+        getWrappedComponent().setNoBorderChars();
+        getWrappedComponent().setHorizontalSpacer(1);
 
         this.labelText = label;
         this.label = new TextComponent(color, label);
 
-        buttons.addComponent(this.label);
-        buttons.add(onButton);
-        buttons.add(new TextComponent("/"));
-        buttons.add(offButton);
+        getWrappedComponent().addComponent(this.label);
+        getWrappedComponent().addComponent(onButton);
+        getWrappedComponent().addComponent(new TextComponent("/"));
+        getWrappedComponent().addComponent(offButton);
 
-        buttons.setParentContainer(this);
         this.setLabelText();
         this.toggleValue = value;
         
         this.toggleState(value, new EventBus.STUBBED());
     }
+    
     
     public RockerButton(Color color, String label, String onText, String offText) {
         this(color,  label, onText, offText, false);
@@ -72,7 +71,7 @@ public class RockerButton extends AbstractComponentWithContainerAndFocusManager<
         } else {
             this.label.setTextAndResize( this.labelText );
         }
-        this.buttons.fullrecalcDim();
+       // this.fullrecalcDim();
     }
     
 
@@ -92,7 +91,7 @@ public class RockerButton extends AbstractComponentWithContainerAndFocusManager<
 
     public void onChange(EventHandler handler) {
 
-        actionOnChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, actionOnChangeHandler, this.buttons, handler);
+        actionOnChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, actionOnChangeHandler, this.getWrappedComponent(), handler);
 
     }
 
@@ -101,24 +100,18 @@ public class RockerButton extends AbstractComponentWithContainerAndFocusManager<
         toggleState(!this.toggleValue, eventBus);
     }
 
-    @Override
-    protected ButtonBar getContainer() {
-        return buttons;
-    }
-
-    @Override
     protected FocusManager getFocusManager() {
-        return buttons;
+        return getWrappedComponent();
     }
 
     public RockerButton setHotKey(KeyStroke hotKey) {
         if (this.hotKeyHandler != null) {
-            this.buttons.removeEventHandler(hotKeyHandler);
+            this.getWrappedComponent().removeEventHandler(hotKeyHandler);
         }
         this.hotKey = hotKey;
         if (this.hotKey != null) {
             this.hotKeyHandler = new KeyInputEventHandler(this.hotKey, (te) -> onClick(te.getEventBus()));
-            this.buttons.appendEventHandler(this.hotKeyHandler);
+            this.getWrappedComponent().appendEventHandler(this.hotKeyHandler);
         }
         setLabelText();
         return this;
@@ -133,5 +126,7 @@ public class RockerButton extends AbstractComponentWithContainerAndFocusManager<
     public Boolean getValue() {
         return toggleValue;
     }
+
+
 
 }

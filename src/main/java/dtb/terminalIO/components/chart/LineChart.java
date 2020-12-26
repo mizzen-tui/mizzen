@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.TreeSet;
 
 import dtb.terminalIO.components.Composite;
+import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.components.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.components.plot.shape.ConnectedPoints;
@@ -210,9 +211,9 @@ public class LineChart extends Composite {
 
     public void setGridBounds(double y_bottomValue, double x_leftValue, double y_topValue, double x_rightValue) {
         if (y_topValue < y_bottomValue)
-            throw new IllegalArgumentException("assertion (y_topValue >= y_bottomValue) failed");
+            throw new IllegalArgumentException(HasName.UTIL.getName(this)+":assertion (y_topValue >= y_bottomValue) failed");
         if (x_rightValue < x_leftValue)
-            throw new IllegalArgumentException("assertion (x_rightValue >= x_leftValue) failed");
+            throw new IllegalArgumentException(HasName.UTIL.getName(this)+":assertion (x_rightValue >= x_leftValue) failed");
 
         this.y_topValue = y_topValue;
         this.y_bottomValue = y_bottomValue;

@@ -54,7 +54,7 @@ public class ComponentWithFocusManager extends AbstractComponent<ComponentWithFo
     }
 
 
-    public Composite getContainer() {
+    protected Composite getContainer() {
         return container;
     }
 
@@ -94,6 +94,14 @@ public class ComponentWithFocusManager extends AbstractComponent<ComponentWithFo
         }
         // bad form here.. 
         ((DefaultFocusManager)this.focusManager).addFocusable(focusable);
+    }
+
+    public void insertFocusable(int index, Focusable focusable) {
+        if (this.focusManager == null) {
+            throw new NullPointerException("addFocusable(): focusManager is null - cannot get access to a focusManager for "+ this.getClass().getName());
+        }
+        // bad form here.. 
+        ((DefaultFocusManager)this.focusManager).insertFocusable(index, focusable);
     }
 
     public void removeFocusable(Focusable focusable) {

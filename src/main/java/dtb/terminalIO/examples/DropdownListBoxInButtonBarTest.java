@@ -1,7 +1,7 @@
 package dtb.terminalIO.examples;
 
 import dtb.terminalIO.app.TUIApp;
-import dtb.terminalIO.components.ButtonBar2;
+import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.TextComponent;
@@ -35,7 +35,7 @@ public class DropdownListBoxInButtonBarTest {
             
             HorizontalPanel hpMain = new HorizontalPanel();
             
-            ButtonBar2 bbar = new ButtonBar2();
+            ButtonBar bbar = new ButtonBar();
             bbar.setPrevKeyStroke(Keys.LEFT_KEYSTROKE);
             bbar.setNextKeyStroke(Keys.RIGHT_KEYSTROKE);
             

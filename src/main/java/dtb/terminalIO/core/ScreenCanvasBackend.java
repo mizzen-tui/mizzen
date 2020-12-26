@@ -86,12 +86,12 @@ public class ScreenCanvasBackend implements CanvasBackend {
         
         if (Logging.isEnabled()) {
             refreshStats.startTimer();
-            Logging.info("\n\nrefresh-START");
+           // Logging.info("\n\nrefresh-START");
         }
         screenUpdateStrategy.refresh();
         if (Logging.isEnabled()) {
             refreshStats.stopTimer();
-            Logging.info("\nrefresh-END: "+refreshStats+ "\n\n");
+            //Logging.info("\nrefresh-END: "+refreshStats+ "\n\n");
         }
     }
 
@@ -235,7 +235,6 @@ public class ScreenCanvasBackend implements CanvasBackend {
             }
             
             screen.t(sc.getText());
-            // iclrIdx++;
         }
 
         void assertNoOverlaps(TreeSet<ScreenLineSegment> segments) {
@@ -243,7 +242,7 @@ public class ScreenCanvasBackend implements CanvasBackend {
           //  ScreenLineSegment.UTIL.assertNoOverlapsInSegments(segments);
         }
 
-
+        int MAX_PARTIAL_UPDATES=50;    // number of change partial updates in a row before doing a full update ..
         int refreshChangedCounter = 0;
         
         @Override
@@ -251,9 +250,6 @@ public class ScreenCanvasBackend implements CanvasBackend {
             boolean doFullUpdate = useFullUpdateAndCountDown();
             if (doFullUpdate) {
                 simpleScreenRefresh();
-                if (Logging.isEnabled()) {
-                   Logging.info("REFRESH: full:"+doFullUpdate+" ctr: "+counter+" rfrshChangedCtr: " + refreshChangedCounter+" seg.size:"+previous.size());
-                }
                 lastColor = ControlCode.DEFAULT_COLOR;
             } else {
 
@@ -292,31 +288,23 @@ public class ScreenCanvasBackend implements CanvasBackend {
                         } else {
                             curCol = sc.getRightMostCol()+1;
                         }
-                        //curCol = sc.getRightMostCol();
                     }
                     screen.add( ControlCode.RCol );
                     simpleScreenRefresh();
                     screen.home();
                 }
-                if (Logging.isEnabled()) {
-                   Logging.info("newOrModifiedsegments,size:"+newOrModifiedsegments.size() + "  subtract time = "+subtractTime.elapsed()+" loop time: "+modifiedLoopTime.elapsed());
-                }
-
             }
             TreeSet<ScreenLineSegment> temp = previous;
             previous = current;
             current = temp;
             current.clear();
             if (!doFullUpdate) {
-                if (refreshChangedCounter>10) {
+                if (refreshChangedCounter>MAX_PARTIAL_UPDATES) {
                    refreshChangedCounter = 0;
                    revertToFullUPdateForNext_n_refreshs(1);
                 } else {
                     refreshChangedCounter++;
                 }
-            }
-            if (Logging.isEnabled()) {
-               Logging.info("REFRESH: full:"+doFullUpdate+" ctr: "+counter+" rfrshChangedCtr: " + refreshChangedCounter+" seg.size:"+previous.size());
             }
         }
 
@@ -332,7 +320,7 @@ public class ScreenCanvasBackend implements CanvasBackend {
             previous.clear();   // forces full update on next update
             current.clear();
             
-            Logging.info("REVERTING TO FULL SCREEN UPDATES:" + n);
+//            Logging.info("REVERTING TO FULL SCREEN UPDATES:" + n);
             
             counter = n ;     // # of full screen refreshes (UPDATE_FULL) before 
                               // we revert back to partial (and more optimized) screen updates

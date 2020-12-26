@@ -265,7 +265,7 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
     public void clearAndAddComponentSegments(Component<?> component) {
         
         boolean canvasContainsComponent = ElapsedTime.getAndTime(()->this.asRectangle().contains(component),
-                                                                 (elapsedTime)-> Logging.info("contains "+elapsedTime));
+                                                                 (elapsedTime)-> {}/*Logging.info("contains "+elapsedTime)*/);
         
         if (canvasContainsComponent) {
             // fast!! 
@@ -273,11 +273,11 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
             
             ElapsedTime componentDrawTime = ElapsedTime.start();
             TreeSet<ScreenLineSegment> componentSegments = component.getSegmentsBuffer().getSegments();
-            Logging.info("componentsDraw: "+ componentSegments.size() + "  t:" + componentDrawTime);
+            //Logging.info("componentsDraw: "+ componentSegments.size() + "  t:" + componentDrawTime);
             
             ElapsedTime elapsed = ElapsedTime.onRunOf( ()-> getSegmentsBuffer().clearAndMerge(component.getSegmentsBuffer().getSegments()));
 
-            Logging.info("clearAndAddComponentSegments: fast! "+ elapsed);
+            //Logging.info("clearAndAddComponentSegments: fast! "+ elapsed);
 
             return;
         }
@@ -297,6 +297,7 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
         
         if (showCursorRequested) {
             showCursorRequested = false;
+            // append a show cursor on the next request
             backend.showCursor();
         }
 
@@ -472,7 +473,10 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
         };
     }
     
-    public Position getLastRequestCursorPosition() {
+    public Position XXXgetLastRequestCursorPosition() {
         return !this.showCursorRequested ? null : this.last_RequestShowCursorPosition;
+    }
+    public Position getLastRequestCursorPosition() {
+        return this.last_RequestShowCursorPosition;
     }
 }

@@ -6,11 +6,13 @@ import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.Focusable;
 
-public abstract class AbstractComponentWithContainerAndFocusable<T extends Composite> 
-                        extends AbstractComponentWithContainer<T> implements Focusable {
 
-    protected AbstractComponentWithContainerAndFocusable(Color color) {
-        super(color);
+public abstract class AbstractWrappedComponentAndFocusable<T extends Component<?>> 
+                        extends AbstractComponentWrappper<T> implements Focusable {
+
+
+    protected AbstractWrappedComponentAndFocusable(Color color, T container) {
+        super(color, container);
     }
 
     @Override
@@ -35,9 +37,6 @@ public abstract class AbstractComponentWithContainerAndFocusable<T extends Compo
     public void setFocus(boolean focus, EventBus eventBus) {
         asFocusable().setFocus(focus, eventBus);
     }
-
-    @Override
-    abstract protected T getContainer();
 
     abstract protected Focusable asFocusable();
 

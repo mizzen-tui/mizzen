@@ -107,7 +107,7 @@ public class DefaultFocusManager implements FocusManager,
         }
         
         if (current == null) {
-            throw new IllegalStateException("ERROR: Trying to set current focus. No focusable objects added to this FocusManager.");
+            throw new IllegalStateException("ERROR: Trying to set current focus. No focusable objects added to this FocusManager("+HasName.UTIL.getName(this)+").");
         }
         
         return this.current;
@@ -117,7 +117,8 @@ public class DefaultFocusManager implements FocusManager,
 
         if (!eventConsumers.contains(focusable)) {
             throw new IllegalArgumentException(
-                    "DefaultFocusManager:  Cannot set a focusable that has not been first aded to the DefaultFocusManager. ");
+                    "DefaultFocusManager("+getName()+"):  Cannot set a focusable ("+
+                       HasName.UTIL.getName(focusable)+") that has not been first added to the DefaultFocusManager. ");
         }
 
         FocusManager.UTIL.setNewFocusable(focusable, this.current, eventBus, onFocusChanged);
@@ -233,7 +234,7 @@ public class DefaultFocusManager implements FocusManager,
                     HasName.UTIL.setDefaultNameFromParentObject(navLastHandler, this, "evtHandler-NAVKEYS-NONE");
                     return navLastHandler;
                 } else {
-                    throw new IllegalStateException("Nav style not defined!");
+                    throw new IllegalStateException("Nav style not defined! for "+HasName.UTIL.getName(this));
                 }
             }
         };
@@ -483,7 +484,7 @@ public class DefaultFocusManager implements FocusManager,
 
     public void removeFocusable(Focusable focusable) {
         if (!eventConsumers.contains(focusable)) {
-            throw new IllegalArgumentException("Trying to remove a focusable that is not in the list of focusables!");
+            throw new IllegalArgumentException(HasName.UTIL.getName(this)+".removeFocusable("+HasName.UTIL.getName(focusable)+"): Trying to remove a focusable that is not in the list of focusables!");
         }
         if (current == focusable) {
             current = null;
@@ -491,9 +492,17 @@ public class DefaultFocusManager implements FocusManager,
         eventConsumers.remove(focusable);
     }
 
+    
+    public void insertFocusable(int index, Focusable focusable) {
+        if (eventConsumers.contains(focusable)) {
+            throw new IllegalArgumentException(HasName.UTIL.getName(this)+".insertFocusable("+HasName.UTIL.getName(focusable)+"): Duplicate add error: Focusable already added to this FocusManager.");
+        }
+        eventConsumers.add(index, focusable);
+    }
+    
     public void addFocusable(Focusable focusable) {
         if (eventConsumers.contains(focusable)) {
-            throw new IllegalArgumentException("Duplicate add error: Focusable already added to this FocusManager.");
+            throw new IllegalArgumentException(HasName.UTIL.getName(this)+".addFocusable("+HasName.UTIL.getName(focusable)+"): Duplicate add error: Focusable already added to this FocusManager.");
         }
         eventConsumers.add(focusable);
     }
@@ -570,7 +579,7 @@ public class DefaultFocusManager implements FocusManager,
 
     public static boolean applyIfDefaultFocusManager(Object o, Consumer<DefaultFocusManager> apply) {
         if (o == null) {
-            throw new NullPointerException("null object (o) passed to applyIfDefaultFocusManager()");
+            throw new NullPointerException("null object (o) passed to DefaultFocusManager.applyIfDefaultFocusManager()");
         }
         if (o instanceof DefaultFocusManager) {
             apply.accept((DefaultFocusManager)o);

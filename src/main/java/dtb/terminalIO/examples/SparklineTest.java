@@ -45,9 +45,9 @@ public class SparklineTest {
                     ButtonBar bannerPanel = new ButtonBar().setHorizontalSpacer(0);
                     bannerPanel.setBorder(false);
                     bannerPanel.setNoBorderChars();
-                    bannerPanel.add(new TextComponent("Demonstrate Sparkline Component:    "));
+                    bannerPanel.addComponent(new TextComponent("Demonstrate Sparkline Component:    "));
                     bannerPanel.addButton(Colors.IGre,"CTRL-C",Keys.CTRL_C_KEYSTROKE, (te) -> tApp.getTerminateAppHotKeyEventHandler().handle(te)  );
-                    bannerPanel.add(new TextComponent(" to quit "));
+                    bannerPanel.addComponent(new TextComponent(" to quit "));
                     bannerPanel.addButton(Colors.IGre,"UP", Keys.UP_KEYSTROKE, (te)->{
                         if (sparkLine1.getHeight()<20) {
                             sparkLine1.resize( new Dimension.Simple(sparkLine1.getHeight()+1, sparkLine1.getWidth()) );
@@ -55,14 +55,14 @@ public class SparklineTest {
                         }
                     } ); 
                     // need to bind the events below - chicken and egg situation ( forward declaration issue with sparkline1)
-                    bannerPanel.add(new TextComponent("/"));
+                    bannerPanel.addComponent(new TextComponent("/"));
                     bannerPanel.addButton(Colors.IGre,"DOWN", Keys.DOWN_KEYSTROKE, (te)->{
                         if (sparkLine1.getHeight()>1) {
                             sparkLine1.resize( new Dimension.Simple(sparkLine1.getHeight()-1, sparkLine1.getWidth()) );
                             sparkLine1Label.setText("Sparkline : \nheight="+ hiliteSparklineHeight.apply(sparkLine1.getHeight()));
                         }
                     });
-                    bannerPanel.add(new TextComponent(" increase/decrease sparkline height"));
+                    bannerPanel.addComponent(new TextComponent(" increase/decrease sparkline height"));
                     tApp.getMainApplicationPanel().add(1, 1,bannerPanel);
 
                     sparkLine1.resize(new Dimension.Simple(5, 40));

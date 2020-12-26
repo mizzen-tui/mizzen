@@ -194,7 +194,7 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
     @Override
     public void setParentContainer(ParentContainer parentContainer) {
         if (parentContainer != null && this.getParentContainer() != null && this.getParentContainer() != parentContainer) {
-            throw new IllegalStateException("Parent container already set to another component");
+            throw new IllegalStateException("Parent("+HasName.UTIL.getName(this.getParentContainer())+") container already set to another component");
         }
 
         this.parentContainer = parentContainer;

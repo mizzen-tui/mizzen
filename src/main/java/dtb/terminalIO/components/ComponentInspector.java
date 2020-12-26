@@ -3,6 +3,7 @@ package dtb.terminalIO.components;
 import java.util.Collection;
 import java.util.Collections;
 
+import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.input.CheckBoxInput;
 import dtb.terminalIO.components.input.HasValue;
 import dtb.terminalIO.components.input.tree.TreeView;
@@ -111,6 +112,9 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
                suffix = title;
                suffix = StringUtils.truncate(suffix, 10);
             }
+        }
+        if (suffix == null && node instanceof Button) {
+            suffix = ((Button)node).getButtonText();
         }
         if (suffix == null && node instanceof HasValue<?>) {
             Object value = ((HasValue<?>)node).getValue();
@@ -262,6 +266,11 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
     @Override
     public Component<?> getComponentAtOffset(Position offset) {
         return this.scrollingArea.getComponentAtOffset(offset);
+    }
+
+    public void setTitle(String title) {
+        scrollingArea.setTitle(title);
+        
     }
 
 

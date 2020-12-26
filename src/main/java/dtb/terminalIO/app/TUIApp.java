@@ -367,7 +367,7 @@ public class TUIApp {
 
                 tApp.getCanvas().clearAndAddComponentSegments( __mainPanel );
 
-                Logging.info("Canvas.addComponentSegments() time: " + canvasUpdateTime.toString());
+               // Logging.info("Canvas.addComponentSegments() time: " + canvasUpdateTime.toString());
  
                 return true; // true means updated
             });

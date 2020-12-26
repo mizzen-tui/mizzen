@@ -10,7 +10,6 @@ import java.util.function.BiConsumer;
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
@@ -58,9 +57,9 @@ public class ReadTextFileToScreenTest {
             bannerPanel.setBorder(false);
             bannerPanel.setNoBorderChars();
 
-            bannerPanel.add(new TextComponent("Demonstrate reading color codes from text file"));
+            bannerPanel.addComponent(new TextComponent("Demonstrate reading color codes from text file"));
             bannerPanel.addButton(Colors.IGre,"CTRL-C",Keys.CTRL_C_KEYSTROKE, (te) -> tApp.getTerminateAppHotKeyEventHandler().handle(te)  );
-            bannerPanel.add(new TextComponent(" to quit "));
+            bannerPanel.addComponent(new TextComponent(" to quit "));
 
             Button toggleColors = new Button(Colors.IGre,"No colors");
 

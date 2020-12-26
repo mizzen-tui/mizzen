@@ -10,6 +10,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.TerminalEvent;
@@ -253,7 +254,7 @@ public interface FocusManager extends Focusable {
             if (failedOn.size()>0) {
                 StringJoiner sj = new StringJoiner("\n");
                 failedOn.forEach((s)-> sj.add(s));
-                throw new IllegalStateException("Failed to find focus path for:\n"+sj.toString());
+                throw new IllegalStateException("FocusManager.verifyPathsToFocusables(): Failed to find focus path for:\n"+sj.toString());
             }
 
         }
@@ -334,7 +335,7 @@ public interface FocusManager extends Focusable {
 
                 // sanity check
                 if (pathToTarget.get(0) != focusManager) {
-                    throw new IllegalStateException("pathToTarget does not start with root focusManager");
+                    throw new IllegalStateException(": pathToTarget does not start with root focusManager("+HasName.UTIL.getName(focusManager)+")");
                 }
 
                 FocusManager lastFocusManager = focusManager; 

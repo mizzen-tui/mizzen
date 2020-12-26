@@ -136,7 +136,7 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>
     @Override
     public SimpleBorder setBorder(boolean hasBorder) {
         if (!hasBorder)
-            throw new IllegalStateException("Cannnot turn off border");
+            throw new IllegalStateException(HasName.UTIL.getName(this)+".setBorder(): Cannnot turn off border");
         return this;
     }
 

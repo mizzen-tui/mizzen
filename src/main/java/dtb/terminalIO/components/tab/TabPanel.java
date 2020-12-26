@@ -10,7 +10,6 @@ import dtb.terminalIO.components.CanResize;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.Hiliter;
-import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.controlcodes.ControlCode;
@@ -180,13 +179,13 @@ public class TabPanel extends AbstractComponent<TabPanel>
             previousButton.setHotKey(previousTabHotKey);
             previousButton.setDisplayHotKey(true);
             previousButton.onChange((te)-> focusManager.setPreviousAsCurrentFocus( te.getEventBus() ));
-            navControls.add(previousButton);
+            navControls.addComponent(previousButton);
             
             nextButton = new Button("->");
             nextButton.setHotKey(nextTabHotKey);
             nextButton.setDisplayHotKey(true);
             nextButton.onChange((te)-> focusManager.setNextAsCurrentFocus( te.getEventBus() ));
-            navControls.add(nextButton);
+            navControls.addComponent(nextButton);
             
             // TODO:  change navButtons to a button bar
             //  because not attached to a focusManager - will I have problems processing a mouse?  .. I think so

@@ -30,11 +30,11 @@ public class HorizontalPanel extends Composite {
         
         ComponentWithOffset child = findChild(component);
         if (child != null) {
-            throw new IllegalArgumentException("Child Component add failure:  Duplicate !");
+            throw new IllegalArgumentException(HasName.UTIL.getName(this)+":Child Component add failure:  Duplicate child("+HasName.UTIL.getName(component)+") !");
         }
-        
+
         if ( ! component.isSamePosition(Position.ZERO)) {
-            throw new IllegalArgumentException("Child Component add failure. Must not specify offet. Set to (0,0) ! Current position =" + String.valueOf(component.getPostion_TopLeft()));
+            throw new IllegalArgumentException(HasName.UTIL.getName(this)+":Child Component ("+HasName.UTIL.getName(component)+") add failure. Must not specify offet. Set to (0,0) ! Current position =" + String.valueOf(component.getPostion_TopLeft()));
         }
         
         ComponentWithOffset anchor = null;

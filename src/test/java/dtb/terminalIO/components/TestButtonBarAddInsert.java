@@ -7,11 +7,11 @@ import junit.framework.TestCase;
 public class TestButtonBarAddInsert extends TestCase {
     
     
-    ButtonBar2 bbar1;
+    ButtonBar bbar1;
     
     public void setUp() throws Exception
     {
-        bbar1 = new ButtonBar2(Colors.IGre);
+        bbar1 = new ButtonBar(Colors.IGre);
         
         bbar1.addButton("F1", Keys.F1_KEYSTROKE, (te) -> {
             // do nothing

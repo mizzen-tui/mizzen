@@ -12,6 +12,7 @@ import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.CharComponent;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
+import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.components.HiliterAdapter;
 import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
@@ -372,14 +373,14 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
     public void setSelectedValue(T value) {
         int idx = indexOf(value);
         if (idx == -1) {
-            throw new IllegalArgumentException("Attempted to set to a value of "+String.valueOf(value));
+            throw new IllegalArgumentException(HasName.UTIL.getName(this)+": Attempted to set to a value of "+String.valueOf(value));
         }
         setSelected(idx);
     }
     
     public int indexOf(ListItem item) {
         if (item == null) {
-            throw new NullPointerException("item paramater null!");
+            throw new NullPointerException(HasName.UTIL.getName(this)+": item paramater null!");
         }
         if (this.items == null) {
             return -1;
@@ -391,7 +392,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
     
     public int indexOf(T value) {
         if (value == null) {
-            throw new NullPointerException("value paramater null!");
+            throw new NullPointerException(HasName.UTIL.getName(this)+": value paramater null!");
         }
         if (this.items == null) {
             return -1;
@@ -406,7 +407,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
 
     public int indexOf(Component<?> childComponent) {
         if (childComponent == null) {
-            throw new NullPointerException("childComponent paramater null!");
+            throw new NullPointerException(HasName.UTIL.getName(this)+": childComponent paramater null!");
         }
         if (this.items == null) {
             return -1;

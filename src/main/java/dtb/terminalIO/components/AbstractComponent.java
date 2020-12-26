@@ -167,13 +167,13 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
     @Override
     public void setParentContainer(ParentContainer parentContainer) {
         if (parentContainer != null && this.getParentContainer() != null && this.getParentContainer() != parentContainer) {
-            throw new IllegalStateException( this.getClass().getSimpleName()+
-                                             ".setParentContainer("+ parentContainer.getClass().getSimpleName()+
-                                             ") :Parent container already set to another component ("+this.getParentContainer().getClass().getSimpleName()+")");
+            throw new IllegalStateException( HasName.UTIL.getName(this)+
+                                             ".setParentContainer("+ HasName.UTIL.getName(parentContainer)+
+                                             ") :Parent container already set to another component ("+HasName.UTIL.getName(this.getParentContainer())+")");
         }
 
         if (parentContainer == this) {
-            throw new IllegalArgumentException(this.getClass().getSimpleName()+
+            throw new IllegalArgumentException(HasName.UTIL.getName(this)+
                                                ".setParentContainer(): Parent container cannot be assigned to itself!");
         }
 

@@ -40,7 +40,6 @@ import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.util.Stty;
-import dtb.terminalIO.util.TerminalDimensions;
 
 public class LineChartTest {
 
@@ -199,8 +198,8 @@ public class LineChartTest {
                     RockerButton currentRockerButton = (RockerButton) te.getSource();
                     seriesDemo.enabled = currentRockerButton.getValue();
                 });
-                menuButtonBar.add(seriesRockerButton);
-                menuButtonBar.add(new TextComponent("   "));
+                menuButtonBar.addComponent(seriesRockerButton);
+                menuButtonBar.addComponent(new TextComponent("   "));
             });
 
 
