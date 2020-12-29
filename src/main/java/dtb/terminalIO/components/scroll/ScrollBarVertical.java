@@ -2,10 +2,10 @@ package dtb.terminalIO.components.scroll;
 
 import dtb.terminalIO.components.BlockChars;
 import dtb.terminalIO.components.BlockChars.BlockHiliter;
+import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.Hiliter;
 import dtb.terminalIO.components.VerticalLine;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;

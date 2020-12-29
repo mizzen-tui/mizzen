@@ -6,12 +6,8 @@ import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
-import dtb.terminalIO.controlcodes.Colors;
-import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.ControlCode.BgColor;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
-import dtb.terminalIO.controlcodes.ControlCode.FgColor;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.geom.Dimension;
 
 public class ColorsTest {
@@ -34,9 +30,9 @@ public class ColorsTest {
             TextComponent backgroundColors = new TextComponent("");
             StringBuilder sb = new StringBuilder();
             
-            for (String name : Colors.namedBackgroundColors.keySet()) {
+            for (String name : Colors.getBackgroundColorNames()) {
                 Color c = Colors.getNamedBGColor(name);
-                sb.append(c.asString() + name + ControlCode.RCol.asString());
+                sb.append(c.asString() + name + Colors.RCol.asString());
                 maxName = maxName>name.length()?maxName:name.length();
                 sb.append("\n");
             }
@@ -47,9 +43,9 @@ public class ColorsTest {
             
             TextComponent foregroundColors = new TextComponent("");
             sb = new StringBuilder();
-            for (String name : Colors.namedForgroundColors.keySet()) {
+            for (String name : Colors.getForegroundColorNames()) {
                 Color c = Colors.getNamedFGColor(name);
-                sb.append(c.asString() + name + ControlCode.RCol.asString());
+                sb.append(c.asString() + name + Colors.RCol.asString());
                 maxName = maxName>name.length()?maxName:name.length();
                 sb.append("\n");
             }
@@ -64,12 +60,12 @@ public class ColorsTest {
             combinedColors.setBulkAdd(true);
             sb = new StringBuilder();
             int colorRow = 0;
-            for (String fgName : Colors.namedForgroundColors.keySet() /* new String[] {"Red", "Blu"}*/ ) {
-                FgColor fgColor = Colors.getNamedFGColor(fgName);
+            for (String fgName : Colors.getForegroundColorNames() ) {
+                Colors.FgColor fgColor = Colors.getNamedFGColor(fgName);
                 int colorCol = 0;
-                for (String bgName : Colors.namedBackgroundColors.keySet()) {
-                    BgColor bgColor = Colors.getNamedBGColor(bgName);
-                    FGBGColors combinedColor = new FGBGColors(fgColor, bgColor);
+                for (String bgName : Colors.getBackgroundColorNames()) {
+                    Colors.BgColor bgColor = Colors.getNamedBGColor(bgName);
+                    Colors.FGBGColors combinedColor = new Colors.FGBGColors(fgColor, bgColor);
                     String text = String.format("%-"+maxName+"s\n%-"+maxName+"s",fgName, bgName);
                     TextComponent coloredText = new TextComponent(combinedColor, text);
                     combinedColors.add(colorRow, colorCol, coloredText);
@@ -115,9 +111,9 @@ public class ColorsTest {
         TextComponent backgroundColors = new TextComponent("");
         StringBuilder sb = new StringBuilder();
         
-        for (String name : Colors.namedBackgroundColors.keySet()) {
+        for (String name : Colors.getBackgroundColorNames()) {
             Color c = Colors.getNamedBGColor(name);
-            sb.append(c.asString() + name + ControlCode.RCol.asString());
+            sb.append(c.asString() + name + Colors.RCol.asString());
             maxName = maxName>name.length()?maxName:name.length();
             sb.append("\n");
         }
@@ -128,9 +124,9 @@ public class ColorsTest {
         
         TextComponent foregroundColors = new TextComponent("");
         sb = new StringBuilder();
-        for (String name : Colors.namedForgroundColors.keySet()) {
+        for (String name : Colors.getForegroundColorNames()) {
             Color c = Colors.getNamedFGColor(name);
-            sb.append(c.asString() + name + ControlCode.RCol.asString());
+            sb.append(c.asString() + name + Colors.RCol.asString());
             maxName = maxName>name.length()?maxName:name.length();
             sb.append("\n");
         }
@@ -145,12 +141,12 @@ public class ColorsTest {
         combinedColors.setBulkAdd(true);
         sb = new StringBuilder();
         int colorRow = 0;
-        for (String fgName : Colors.namedForgroundColors.keySet() /* new String[] {"Red", "Blu"}*/ ) {
-            FgColor fgColor = Colors.getNamedFGColor(fgName);
+        for (String fgName : Colors.getForegroundColorNames() ) {
+            Colors.FgColor fgColor = Colors.getNamedFGColor(fgName);
             int colorCol = 0;
-            for (String bgName : Colors.namedBackgroundColors.keySet()) {
-                BgColor bgColor = Colors.getNamedBGColor(bgName);
-                FGBGColors combinedColor = new FGBGColors(fgColor, bgColor);
+            for (String bgName : Colors.getBackgroundColorNames()) {
+                Colors.BgColor bgColor = Colors.getNamedBGColor(bgName);
+                Colors.FGBGColors combinedColor = new Colors.FGBGColors(fgColor, bgColor);
                 String text = String.format("%-"+maxName+"s\n%-"+maxName+"s",fgName, bgName);
                 TextComponent coloredText = new TextComponent(combinedColor, text);
                 combinedColors.add(colorRow, colorCol, coloredText);

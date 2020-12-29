@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 import dtb.terminalIO.components.input.Button;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
@@ -16,7 +16,7 @@ import dtb.terminalIO.events.focus.ToFocusable;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
 
-public class ButtonBar extends ComponentWithFocusManager  {
+public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
 
 
     private char leftMostBorderChar;
@@ -43,7 +43,7 @@ public class ButtonBar extends ComponentWithFocusManager  {
     }
 
     public ButtonBar() {
-        this(FGBGColors.NO_COLOR_SPECIFIED);
+        this(Colors.FGBGColors.NO_COLOR_SPECIFIED);
     }
     
     public ButtonBar setHorizontalSpacer(int horizontalSpacer) {
@@ -94,6 +94,7 @@ public class ButtonBar extends ComponentWithFocusManager  {
 
     public ButtonBar setColor(Color drawingcolor) {
         super.setColor(drawingcolor);
+        
         if (getContainer() != null) {
             getContainer().setColor(drawingcolor);
             for (Component<?> child : getChildren()) {
@@ -108,7 +109,7 @@ public class ButtonBar extends ComponentWithFocusManager  {
     }
 
 
-    public <T extends Component<?>> T addComponent(T component) {
+    public <C extends Component<?>> C addComponent(C component) {
 
         // first let's deal with injecting divider characters in between each component on this ButtonBar
         if (count == 0 && this.leftMostBorderChar > 0) {
@@ -296,5 +297,4 @@ public class ButtonBar extends ComponentWithFocusManager  {
     public Button addButton(String buttonText, KeyStroke hotKey, EventHandler handler) {
         return addButton(this.getColor(), buttonText, hotKey, handler);
     }
-
 }

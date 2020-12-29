@@ -13,8 +13,9 @@ import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.components.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.components.plot.shape.ConnectedPoints;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors;
+import dtb.terminalIO.controlcodes.color.Colors.FGBGColors;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
@@ -44,7 +45,7 @@ public class LineChart extends Composite {
     int                 axisYLabelGap   = 1;
     int                 axisXLabelGap   = 2;
     String[]            labelY;
-    Color               plotColor       = FGBGColors.NO_COLOR_SPECIFIED;
+    Color               plotColor       = Colors.FGBGColors.NO_COLOR_SPECIFIED;
     Map<String, Series> nameToSeriesMap = new HashMap<String, Series>();
 
     BrailleGrid         grid;
@@ -182,7 +183,7 @@ public class LineChart extends Composite {
     }
 
     public LineChart(Dimension d) {
-        this(FGBGColors.NO_COLOR_SPECIFIED, d);
+        this(Colors.FGBGColors.NO_COLOR_SPECIFIED, d);
     }
 
     public LineChart(int height, int width) {

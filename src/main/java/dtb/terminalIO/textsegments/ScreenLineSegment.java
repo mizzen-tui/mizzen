@@ -5,21 +5,17 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.BiFunction;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.controlcodes.ControlCode.ColorColorSegmentBuilder;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.ColorParsingUtils;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.core.CursorPos;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.Relation.LeftRight;
 import dtb.terminalIO.geom.position.Position;
-import dtb.terminalIO.textsegments.ScreenLineSegment.SegmentImpl;
 
 /**
  * This object is the fundamental building block for all text objects that can
@@ -190,7 +186,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
             if (cmp != 0)
                 return cmp;
             
-            cmp = ControlCode.COLOR_COMPARE.compare(so1.getColors(), so2.getColors());
+            cmp = Color.COLOR_COMPARE.compare(so1.getColors(), so2.getColors());
             return cmp;
         }
     }
@@ -489,7 +485,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
                         srcIDX++;
                     } else {
 
-                        isSameColor = ControlCode.COLOR_COMPARE.compare(tree2Seg.getColors(), srcColor) == 0;
+                        isSameColor = Color.COLOR_COMPARE.compare(tree2Seg.getColors(), srcColor) == 0;
 
                         while ((srcCurCol+srcIDX)<seg2Col) {
                             srcText.append(src.charAt(srcIDX));
@@ -604,7 +600,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
          * Returns a ScreenLineSegment within ts that overlaps row/col
          */
         public static ScreenLineSegment getAtRowCol(TreeSet<ScreenLineSegment> ts, int row, int col) {
-            ScreenLineSegment srchKey = blankScreenObject(ControlCode.DEFAULT_COLOR, ' ', row, col, Integer.MIN_VALUE, 1);
+            ScreenLineSegment srchKey = blankScreenObject(Colors.DEFAULT_COLOR, ' ', row, col, Integer.MIN_VALUE, 1);
             ScreenLineSegment siblingGreater = ts.ceiling(srchKey);
             if (siblingGreater != null && srchKey.overlapsWith(siblingGreater)) {
                 return siblingGreater;
@@ -783,7 +779,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
         public static SegmentsFromStringResult textSegmentsFromString(String s, int offSetRow, int offSetCol,
                 Rectangle boundingRectangle) {
             return textSegmentsFromString(s, offSetCol, offSetCol, boundingRectangle,
-                    (p, txt) -> new SegmentImpl(FGBGColors.NO_COLOR_SPECIFIED, p, -1, txt));
+                    (p, txt) -> new SegmentImpl(Colors.FGBGColors.NO_COLOR_SPECIFIED, p, -1, txt));
         }
 
         private static int clipStrWithEmbeddedColors(final Collection<ScreenLineSegment> ts, 
@@ -792,10 +788,10 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
                                                      Position offset, 
                                                      CreateSegmentWithColor createSegment) {
             int[] curlengthCreated = new int[] { 0 };
-            Color[] lastColor = new Color[] {ControlCode.DEFAULT_COLOR};
+            Color[] lastColor = new Color[] {Colors.DEFAULT_COLOR};
             CleanString[] lastSimpleText = new CleanString[] {null};
 
-            ControlCode.parseColorsAndBuildResult(colorCodedStr, new ColorColorSegmentBuilder() {
+            ColorParsingUtils.parseColorsAndBuildResult(colorCodedStr, new ColorParsingUtils.ColorColorSegmentBuilder() {
                 @Override
                 public boolean newColorSegment(Color color, CleanString simpleText) {
                     color = color == null ? lastColor[0] : color;
@@ -805,7 +801,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
 
                     if (lastSimpleText[0] != null && 
                         lastSimpleText[0].length()>0 && 
-                        ControlCode.COLOR_COMPARE.compare(lastColor[0], color) != 0) {
+                        Color.COLOR_COMPARE.compare(lastColor[0], color) != 0) {
                         ScreenLineSegment segment = createSegment.create(lastColor[0], 
                                                                          offset.offsetAdd(0, curlengthCreated[0]),
                                                                          lastSimpleText[0]);
@@ -899,7 +895,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
         public static SegmentsFromStringResult textSegmentsFromStringWithEmbeddedColor(String s, int offSetRow,
                 int offSetCol, Rectangle boundingRectangle) {
             return textSegmentsFromStringWithEmbeddedColor(s, offSetCol, offSetCol, boundingRectangle, (color, p,
-                    txt) -> new SegmentImpl(color != null ? color : FGBGColors.NO_COLOR_SPECIFIED, p, -1, txt));
+                    txt) -> new SegmentImpl(color != null ? color : Colors.FGBGColors.NO_COLOR_SPECIFIED, p, -1, txt));
         }
         
         /**
@@ -959,7 +955,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
                     if (cmp != 0)
                         return cmp;
                     
-                    cmp = ControlCode.COLOR_COMPARE.compare(so1.getColors(), so2.getColors());
+                    cmp = Color.COLOR_COMPARE.compare(so1.getColors(), so2.getColors());
                     return cmp;
                 }
                 

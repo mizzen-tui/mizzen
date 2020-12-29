@@ -11,9 +11,8 @@ import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.input.ShowComponentOnFocus;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
-import dtb.terminalIO.controlcodes.Colors;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.controlcodes.color.Colors;
+import dtb.terminalIO.controlcodes.color.Colors.FGBGColors;
 import dtb.terminalIO.core.ScreenCanvasBackend;
 import dtb.terminalIO.core.ScreenCanvasBackend.UpdateStrategy;
 import dtb.terminalIO.events.EventBus;
@@ -44,7 +43,7 @@ public class CursorMovementTest {
                     TextComponent mTextBox = new TextComponent(
                             "Silly Sally sold\nSeaShells at the seashore\nWhat a silly thing to do!");
 
-                    mTextBox.setColor(new FGBGColors(Colors.BBlu, Colors.On_Bla));
+                    mTextBox.setColor(new Colors.FGBGColors(Colors.BBlu, Colors.On_Bla));
 
                     BiConsumer<EventBus, Position> moveCursorAction = (eventBus, offset) -> {
 

@@ -1,6 +1,6 @@
 package dtb.terminalIO.components;
 
-import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.geom.position.PositionHorizontalRelative;
 
@@ -34,7 +34,7 @@ public class HorizontalPanel extends Composite {
         }
 
         if ( ! component.isSamePosition(Position.ZERO)) {
-            throw new IllegalArgumentException(HasName.UTIL.getName(this)+":Child Component ("+HasName.UTIL.getName(component)+") add failure. Must not specify offet. Set to (0,0) ! Current position =" + String.valueOf(component.getPostion_TopLeft()));
+            throw new IllegalArgumentException(HasName.UTIL.getName(this)+":Child Component ("+HasName.UTIL.getName(component)+") add failure. Must not specify Position offet. Set to (0,0) ! Current position =" + String.valueOf(component.getPostion_TopLeft()));
         }
         
         ComponentWithOffset anchor = null;

@@ -5,6 +5,7 @@ import java.util.function.BiConsumer;
 
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.ButtonBar;
+import dtb.terminalIO.components.ChildComponentManager;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.ComponentInspector;
 import dtb.terminalIO.components.ComponentWithFocusManager;
@@ -14,19 +15,26 @@ import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.VerticalPanel;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.input.CheckBoxInput;
+import dtb.terminalIO.components.input.DropdownListBox;
 import dtb.terminalIO.components.input.HasValue;
 import dtb.terminalIO.components.input.TextInput;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
-import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.OnIdleEventEventHandler.RepeatingInterval;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.Keys;
+import dtb.terminalIO.examples.BarChartTest.BarChartDemo;
+import dtb.terminalIO.examples.GridBrailleTest.BrailleDemo;
+import dtb.terminalIO.examples.plot.Test1GamesSeparateThread;
+import dtb.terminalIO.examples.plot.TestSprites;
 import dtb.terminalIO.geom.Dimension;
+import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.geom.position.Position;
 
 /**
  * 
@@ -120,6 +128,9 @@ public class TextBoxTest {
             
             bannerMenu.addComponent(new TextComponent(" refresh Treeview"));
             
+            DropdownListBox<String>  ddlbBackground =  DropdownListBox.fromStrings(new String[]{"A","B","C"});
+            bannerMenu.addComponent(ddlbBackground);
+            
             Button quitButton = new Button(Colors.BIGre,"Quit");
             quitButton.setHotKey(Keys.CTRL_C_KEYSTROKE);
             quitButton.setDisplayHotKey(true);
@@ -136,6 +147,9 @@ public class TextBoxTest {
             deskTopPanel.add(eventDisplayer);
 
             tApp.getMainApplicationPanel().add(3, 5, deskTopPanel);
+
+            //Component<?> demo = addBackGround_GridBrailleDemo(tApp);
+            Component<?> demo = addBackGround_TestSprites(tApp);
 
             FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),tApp.getEventBus());
 
@@ -199,6 +213,10 @@ public class TextBoxTest {
                 
             } );
             
+            
+            
+            ((Composite)tApp.getMainApplicationPanel()).bringToBack(demo);
+            
             FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
 
             // necessary?
@@ -206,5 +224,67 @@ public class TextBoxTest {
 
         }).start();
     }
+    
+    static Component<?> addBackGround_Test1Games(TUIApp tApp) {
+        Component<?> grid = Test1GamesSeparateThread.addTestSpritesPanel(tApp, tApp.getMainApplicationPanel());
+        return grid;
+    }
+    
+    static Component<?> addBackGround_TestSprites(TUIApp tApp) {
+        Component<?> grid = TestSprites.addTestSpritesPanel(tApp, tApp.getMainApplicationPanel());
+        return grid;
+    }
+    
+    static Component<?> addBackGround_BarChart(TUIApp tApp) {
+        
+        ChildComponentManager<?> barChartDemoContainer = tApp.getMainApplicationPanel();
+        
+        BarChartDemo barChartDemo = new BarChartDemo();
+        Rectangle clippedAreaForBarchart = new Rectangle.Simple(Position.ZERO, new Dimension.Simple(barChartDemoContainer.getHeight()-2, barChartDemoContainer.getWidth()-2));
 
+        barChartDemo.setUpDemo(tApp.getEventBus(), clippedAreaForBarchart);
+        barChartDemoContainer.add(barChartDemo.getBarChart(clippedAreaForBarchart));
+        
+        BiConsumer<TUIApp, Dimension> defaultOnResizeAction = 
+                tApp.getResizeAction()!=null ? tApp.getResizeAction() : (t,s)->{};
+
+        tApp.setOnResizeAction((tApp2, newSize)->{
+            // do default behaviour
+            defaultOnResizeAction.accept(tApp2, newSize);
+            barChartDemo.resize( newSize );
+        });
+
+        return barChartDemo.bc;
+    }
+
+    static Component<?> addBackGround_GridBrailleDemo(TUIApp tApp) {
+        
+        ChildComponentManager<?> gridBrailleDemoContainer = tApp.getMainApplicationPanel();
+        
+        BrailleDemo brailleDemo = new BrailleDemo();
+        Rectangle clippedAreaForBarchart = new Rectangle.Simple(Position.ZERO, new Dimension.Simple(gridBrailleDemoContainer.getHeight()-2, gridBrailleDemoContainer.getWidth()-2));
+
+        // this call must happen before brailleDemo.setUpDemo(..)
+        brailleDemo.setupMovementKeys(Keys.CTRL_T_KEYSTROKE,    // up
+                                      Keys.CTRL_V_KEYSTROKE,    // down
+                                      Keys.CTRL_F_KEYSTROKE,    // left
+                                      Keys.CTRL_G_KEYSTROKE);   // right
+
+        brailleDemo.setUpDemo(tApp.getEventBus(), clippedAreaForBarchart);
+        
+        gridBrailleDemoContainer.add(brailleDemo.getBrailleComponent());
+        
+        BiConsumer<TUIApp, Dimension> defaultOnResizeAction = 
+                tApp.getResizeAction()!=null ? tApp.getResizeAction() : (t,s)->{};
+
+        tApp.setOnResizeAction((tApp2, newSize)->{
+            // do default behaviour
+            defaultOnResizeAction.accept(tApp2, newSize);
+            brailleDemo.resize( newSize );
+        });
+
+        return brailleDemo.getBrailleComponent();
+    }
+    
+    
 }

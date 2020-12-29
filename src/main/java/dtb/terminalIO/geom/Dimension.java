@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.function.Supplier;
 
-import dtb.terminalIO.controlcodes.ControlCode;
+import dtb.terminalIO.controlcodes.color.ColorParsingUtils;
 import dtb.terminalIO.textsegments.CleanString;
 
 /**
@@ -130,7 +130,7 @@ public interface Dimension {
             if (s == null || s.length() == 0)
                 return ZERO;
 
-            s = ControlCode.removeColorCodes(s);
+            s = ColorParsingUtils.removeColorCodes(s);
 
             String[] lines = s.split("\n",-1);
 

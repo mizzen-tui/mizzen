@@ -2,15 +2,14 @@ package dtb.terminalIO.components.input;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
-import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
@@ -52,7 +51,7 @@ public class TextInput extends BoundedComponent<TextInput>
     }
 
     public TextInput(int length) {
-        this(ControlCode.DEFAULT_COLOR, length);
+        this(Colors.DEFAULT_COLOR, length);
     }
 
     public TextInput(Color color, Dimension d) {

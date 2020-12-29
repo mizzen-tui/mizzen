@@ -2,9 +2,9 @@ package dtb.terminalIO.components;
 
 import java.util.TreeSet;
 
-import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.ColorParsingUtils;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.CleanString;
@@ -19,7 +19,7 @@ import dtb.terminalIO.textsegments.ScreenLineSegment.UTIL.SegmentsFromStringResu
  * <p/>
  * 
  * CR's ('\n') in the text will be respected and will
- * cause a multi-line component to be rendered.
+ * cause a multi-line text component to be rendered.
  * 
  * <p/>
  *   
@@ -36,7 +36,7 @@ public class TextComponent extends BoundedComponent<TextComponent> {
     private String text;            // will be non-null only if we have color control codes.
     private CleanString cleanText;  // will be null if we have color control codes.
     private boolean hasColorCodes = false;
-    TreeSet<ScreenLineSegment> parsedSegments;
+    private TreeSet<ScreenLineSegment> parsedSegments;
 
     public TextComponent(Color color, String text) {
         super(color, calcDimentionOfText(text));
@@ -57,11 +57,11 @@ public class TextComponent extends BoundedComponent<TextComponent> {
     }
     
     public TextComponent(CleanString text) {
-        this(FGBGColors.NO_COLOR_SPECIFIED, text);
+        this(Colors.FGBGColors.NO_COLOR_SPECIFIED, text);
     }
     
     public TextComponent(String text) {
-        this(FGBGColors.NO_COLOR_SPECIFIED, text);
+        this(Colors.FGBGColors.NO_COLOR_SPECIFIED, text);
     }
     
     public TextComponent(Color color, int row, int col, String text) {
@@ -115,7 +115,7 @@ public class TextComponent extends BoundedComponent<TextComponent> {
             	                                                   (p,s)->new SegmentImpl(color, p, -1, s));
             }
             // keeping a copy around to avoid having to reparse the text on
-            // subsequent draw requests.  parsedSegments null'd if text is changed.
+            // subsequent draw requests.  parsedSegments null'd if text is changed which causes parseSegments to rebuilt.
             parsedSegments = ScreenLineSegment.UTIL.makeCollection(result.ts);
         } else {
             result = new SegmentsFromStringResult(ScreenLineSegment.UTIL.makeCollection(parsedSegments));
@@ -169,7 +169,7 @@ public class TextComponent extends BoundedComponent<TextComponent> {
         if (text == null) {
             throw new NullPointerException("attempting to set null text on TextComponent!");
         }
-        this.hasColorCodes = ControlCode.hasColorCodes(text);
+        this.hasColorCodes = ColorParsingUtils.hasColorCodes(text);
         if (! this.hasColorCodes && CleanString.UTIL.isClean(text)) {
             setText( new CleanString.Simple(text) );
             return;

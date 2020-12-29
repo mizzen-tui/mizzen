@@ -6,14 +6,13 @@ import java.util.stream.Stream;
 
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.ComponentWithFocusManager;
+import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.VerticalPanel;
 import dtb.terminalIO.components.input.DisplayableValue.BooleanDisplayValue;
 import dtb.terminalIO.components.input.DisplayableValue.StringDisplayValue;
 import dtb.terminalIO.components.input.ListBox.ComponentItemFactory;
-import dtb.terminalIO.controlcodes.Colors;
-import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
@@ -22,16 +21,18 @@ import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.util.StringUtils;
 
-public class DropdownListBox<T> extends ComponentWithFocusManager  
-        implements HasValue<T> , Clickable {
+public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBox<T>>  
+                                implements HasValue<T> , 
+                                           Clickable {
 
     private ListBox<T> listBox;
     private Button button;
     private Rectangle preferredRectangleForLayout;
     
-    private int maxItemWidth = 10;
+    private int maxItemWidth = 10;  // arbitrary default.
     
     protected DropdownListBox(Color color) {
         super(color, new VerticalPanel());
@@ -82,7 +83,7 @@ public class DropdownListBox<T> extends ComponentWithFocusManager
     }
 
     public DropdownListBox() {
-        this(FGBGColors.NO_COLOR_SPECIFIED);
+        this(Colors.FGBGColors.NO_COLOR_SPECIFIED);
     }
 
     private void calcAndSetMaxItemWidth(List<DisplayableValue<T>> displayableItems) {
@@ -136,7 +137,7 @@ public class DropdownListBox<T> extends ComponentWithFocusManager
     }
     
     public static DropdownListBox<Boolean> trueFalseDropDown() {
-        return trueFalseDropDown(FGBGColors.NO_COLOR_SPECIFIED);
+        return trueFalseDropDown(Colors.FGBGColors.NO_COLOR_SPECIFIED);
     }
 
     public static DropdownListBox<Boolean> yesNoDropDown(Color color) {
@@ -146,7 +147,7 @@ public class DropdownListBox<T> extends ComponentWithFocusManager
     }
     
     public static DropdownListBox<Boolean> yesNoDropDown() {
-        return yesNoDropDown(FGBGColors.NO_COLOR_SPECIFIED);
+        return yesNoDropDown(Colors.FGBGColors.NO_COLOR_SPECIFIED);
     }
     
     private void setMaxItemWidth(int maxItemWidth) {
@@ -195,7 +196,7 @@ public class DropdownListBox<T> extends ComponentWithFocusManager
             }
         } else {
             boolean hasFocus = hasFocus();
-            String arrow = hasFocus ? Colors.BIBla.asString() +"[v]" + ControlCode.RCol.asString() : "";
+            String arrow = hasFocus ? Colors.BIBla.asString() +"[v]" + Colors.RCol.asString() : "";
             int padLen = maxItemWidth-(hasFocus?1:0);
             if (selected == null) {
                 buttonText = String.format("%-"+(padLen)+"s"+arrow, StringUtils.repeat(emptyCH, padLen));
@@ -214,8 +215,30 @@ public class DropdownListBox<T> extends ComponentWithFocusManager
         return this.listBox.getValue();
     }
 
+    private Composite getListBoxRootPanel() {
+        
+        Component<?> rootPanel = Component.UTIL.getRootPanelOf(this);
+        if (rootPanel != null && rootPanel instanceof Composite) {
+            return (Composite) rootPanel;
+        }
+
+        return null;
+
+    }
+    
+    protected Composite getListBoxParent() {
+
+        Composite rootPanel = getListBoxRootPanel();
+        if (rootPanel != null) {
+            return rootPanel;
+        }
+
+        return this.getContainer();
+    }
+
+
     protected boolean listBoxVisible() {
-        if (this.getContainer().containsChild(listBox)) {
+        if (this.getListBoxParent().containsChild(listBox)) {
             return true;
         }
         return false;
@@ -225,14 +248,26 @@ public class DropdownListBox<T> extends ComponentWithFocusManager
         if (listBoxVisible()) {
             return;
         }
-        this.getContainer().add(this.listBox);
+        Composite listBoxParent = this.getListBoxParent();
+        if (listBoxParent == getContainer()) {
+            this.getListBoxParent().add(this.listBox);
+        } else {
+            // if we can, we place the listBox on the root panel and bring to the front..
+            // this ensures that the full drop down gets displayed without distorting
+            // internal container ( VerticalPanel ) size..
+            Position thisPositionOnRootPanel = Component.UTIL.getCanvasOffsetFor(this);
+            // I'm confused : I don't know why I need to also add -1 to row/col
+            Position listBoxPosition = thisPositionOnRootPanel.offsetAdd(this.getHeight()-1,-1);
+            listBoxParent.add(listBoxPosition, this.listBox);
+            listBoxParent.bringToFront(this.listBox);
+        }
     }
     
     public void hideListBox() {
         if (!listBoxVisible()) {
             return;
         }
-        this.getContainer().remove(this.listBox);
+        this.getListBoxParent().remove(this.listBox);
     }
     
     @Override

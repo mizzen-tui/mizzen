@@ -3,9 +3,8 @@ package dtb.terminalIO.components;
 import java.util.ArrayList;
 import java.util.List;
 
-import dtb.terminalIO.controlcodes.Colors;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
@@ -17,7 +16,7 @@ import dtb.terminalIO.textsegments.ScreenLineSegment;
 
 public class ComponentWithHilightedText extends Composite implements Focusable {
 
-    private Color                hiliteTextColor    = new FGBGColors(Colors.BBla, Colors.On_Whi);
+    private Color                hiliteTextColor    = new Colors.FGBGColors(Colors.BBla, Colors.On_Whi);
 
     private List<Component<?>>   hilightList        = new ArrayList<Component<?>>();
 

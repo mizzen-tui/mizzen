@@ -3,7 +3,7 @@ package dtb.terminalIO.components.input;
 import dtb.terminalIO.components.AbstractWrappedComponentWithFocusManager;
 import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.TextComponent;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
@@ -13,15 +13,17 @@ import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 
 public class RockerButton extends    AbstractWrappedComponentWithFocusManager<ButtonBar> 
-                          implements HasHotKey, Clickable, HasValue<Boolean>,
-                          FocusManager {
+                          implements HasHotKey, 
+                                     Clickable, 
+                                     HasValue<Boolean>,
+                                     FocusManager {
 
-    boolean toggleValue = false;
+    private boolean toggleValue = false;
 
-    String labelText;
-    TextComponent label;
-    Button onButton;
-    Button offButton;
+    private String        labelText;
+    private TextComponent label;
+    private Button        onButton;
+    private Button        offButton;
 
     private KeyStroke hotKey;
     private KeyInputEventHandler hotKeyHandler;

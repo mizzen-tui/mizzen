@@ -5,8 +5,7 @@ import java.io.IOException;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.HorizontalLine;
 import dtb.terminalIO.components.TextComponent;
-import dtb.terminalIO.controlcodes.Colors;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.core.Canvas;
 
 public class CompositeTest {
@@ -63,7 +62,7 @@ public class CompositeTest {
     public static Composite build_bounded_pre(Canvas master_canvas) {
         Composite textC = new Composite()
                                 .setBounds(5, 15 )
-                                .setTitle(new FGBGColors(Colors.Red, Colors.On_IYel), " Bounded ")
+                                .setTitle(new Colors.FGBGColors(Colors.Red, Colors.On_IYel), " Bounded ")
                                 .add(new TextComponent(null, "Silly Sally sold sea shells at the\n" + 
                                                              "seashore\n" + 
                                                              "but my - what nice hooters she\n"+
@@ -76,7 +75,7 @@ public class CompositeTest {
      public static Composite build_bounded_post(Canvas master_canvas) {
             Composite textC = new Composite()
                                     //.setBounds(6, 20 )
-                                    .setTitle(new FGBGColors(Colors.Red, Colors.On_IYel), " Pre-Bounded ")
+                                    .setTitle(new Colors.FGBGColors(Colors.Red, Colors.On_IYel), " Pre-Bounded ")
                                     .add(new TextComponent(null, "Silly Sally sold sea shells at the\n" + 
                                                                  "seashore\n" + 
                                                                  "but my - what nice hooters she\n"+
@@ -93,7 +92,7 @@ public class CompositeTest {
     public static Composite build_text3(Canvas master_canvas) {
         Composite text3 = new Composite()
                 // .setBounds(25, 50 )
-                .setTitle(new FGBGColors(Colors.Red, Colors.On_IYel), "Unbounded Frame title:before ")
+                .setTitle(new Colors.FGBGColors(Colors.Red, Colors.On_IYel), "Unbounded Frame title:before ")
                 .add(new TextComponent(null, "In Spain .. In Spain\n" + 
                                              "The Rain in \r\rSpain stays \n" + 
                                              "mainly on the plain!")).t(6,4, "Texxxxxt"); //.t("1-one\n2-two\n3-three\n!");
@@ -105,7 +104,7 @@ public class CompositeTest {
                text3.t(r,r, (r )+"-");
         }
         
-        master_canvas.addComponentSegments(2, 75, new HorizontalLine(new FGBGColors(Colors.BGre),20));
+        master_canvas.addComponentSegments(2, 75, new HorizontalLine(new Colors.FGBGColors(Colors.BGre),20));
         master_canvas.addComponentSegments(3, 75, text3);
         
         return text3;
@@ -126,11 +125,11 @@ public class CompositeTest {
                text2.t(r,r, (r )+"-");
         }
         
-        text2.setTitle(new FGBGColors(Colors.Red, Colors.On_IYel), "Unbounded Frame title:after");
+        text2.setTitle(new Colors.FGBGColors(Colors.Red, Colors.On_IYel), "Unbounded Frame title:after");
         
        // master_canvas.addComponent(2, 30, textC);
         
-        master_canvas.addComponentSegments(2, 35, new HorizontalLine(new FGBGColors(Colors.BGre),20));
+        master_canvas.addComponentSegments(2, 35, new HorizontalLine(new Colors.FGBGColors(Colors.BGre),20));
         master_canvas.addComponentSegments(3, 35, text2);
         return text2;
     }

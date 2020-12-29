@@ -9,10 +9,8 @@ import dtb.terminalIO.components.input.HasValue;
 import dtb.terminalIO.components.input.tree.TreeView;
 import dtb.terminalIO.components.input.tree.TreeViewModel.HasChildrenTreeViewModel;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
-import dtb.terminalIO.controlcodes.Colors;
-import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
@@ -21,7 +19,6 @@ import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
-import dtb.terminalIO.events.mouse.GetComponentAtOffset;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
@@ -72,9 +69,9 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
 
             TreeView<Focusable> tvFocusable = new TreeView<Focusable>(Colors.IBlu, new Dimension.Simple(90, 60),
                     (node) -> node.hasFocus()
-                            ? new FGBGColors(node==currentFocus?Colors.BGre    : Colors.BBlu, 
+                            ? new Colors.FGBGColors(node==currentFocus?Colors.BGre    : Colors.BBlu, 
                                              node==currentFocus?Colors.On_IYel : Colors.On_Yel).asString() + nodeName(node)
-                                    + ControlCode.RCol.asString()
+                                    + Colors.RCol.asString()
                             : nodeName(node)) {
                 
                 public void draw(Color color, IScreenLineSegmentsBuffer segments) {

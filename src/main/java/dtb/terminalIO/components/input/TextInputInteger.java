@@ -1,7 +1,7 @@
 package dtb.terminalIO.components.input;
 
-import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors;
 
 public class TextInputInteger  extends TextInputForType<Integer> {
 
@@ -13,7 +13,7 @@ public class TextInputInteger  extends TextInputForType<Integer> {
     }
 
     public TextInputInteger(int length) {
-          this(ControlCode.DEFAULT_COLOR, length);
+          this(Colors.DEFAULT_COLOR, length);
     }
     
     static Integer toDesiredType(String text) {

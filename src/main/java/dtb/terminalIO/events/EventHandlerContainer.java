@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Something that can add and remove ConditionalEventHandler objects
+ * Objects (like an EventBus) that can add and remove ConditionalEventHandlers.  
  */
 public interface EventHandlerContainer {
 

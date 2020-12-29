@@ -8,8 +8,8 @@ import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
-import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.RequestHideCursorEvent;
@@ -42,7 +42,7 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
     }
     
     public CheckBoxInput() {
-        this(ControlCode.DEFAULT_COLOR);
+        this(Colors.DEFAULT_COLOR);
     }
     
     

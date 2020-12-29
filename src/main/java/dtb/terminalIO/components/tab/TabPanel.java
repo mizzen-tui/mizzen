@@ -9,11 +9,12 @@ import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.CanResize;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
+import dtb.terminalIO.components.GetComponentAtOffset;
 import dtb.terminalIO.components.Hiliter;
 import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.input.Button;
-import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
@@ -26,7 +27,6 @@ import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
-import dtb.terminalIO.events.mouse.GetComponentAtOffset;
 import dtb.terminalIO.geom.Align;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
@@ -47,7 +47,7 @@ public class TabPanel extends AbstractComponent<TabPanel>
     private Button nextButton;
     private ButtonBar navControls;
 
-    Color textActiveTabColor = ControlCode.DEFAULT_COLOR.bold();
+    Color textActiveTabColor = Colors.DEFAULT_COLOR.bold();
 
     private ChainedEventHandler chainedEventHandler;
 

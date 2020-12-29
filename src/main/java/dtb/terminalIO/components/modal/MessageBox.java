@@ -8,9 +8,8 @@ import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.input.Button;
-import dtb.terminalIO.controlcodes.Colors;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
@@ -36,13 +35,13 @@ public class MessageBox {
     static Color iconToIconColor(IconStyle icon) {
         switch (icon) {
         case QUESTION:
-            return new FGBGColors(Colors.BIBla, Colors.On_IGre);
+            return new Colors.FGBGColors(Colors.BIBla, Colors.On_IGre);
         case INFO:
-            return new FGBGColors(Colors.BIBla, Colors.On_IPur);
+            return new Colors.FGBGColors(Colors.BIBla, Colors.On_IPur);
         case WARNING:
-            return new FGBGColors(Colors.BIBla, Colors.On_Yel);
+            return new Colors.FGBGColors(Colors.BIBla, Colors.On_Yel);
         case ERROR:
-            return new FGBGColors(Colors.BIWhi, Colors.On_IRed);
+            return new Colors.FGBGColors(Colors.BIWhi, Colors.On_IRed);
 
         default:
             return null;
@@ -72,19 +71,19 @@ public class MessageBox {
     
 
     private static Component<?> questionICON() {
-        return makeICON('?', new FGBGColors(Colors.BIBla, Colors.On_IGre));
+        return makeICON('?', new Colors.FGBGColors(Colors.BIBla, Colors.On_IGre));
     }
     
     private static Component<?> informationICON() {
-        return makeICON('i', new FGBGColors(Colors.BIBla, Colors.On_IPur));
+        return makeICON('i', new Colors.FGBGColors(Colors.BIBla, Colors.On_IPur));
     }
     
     private static Component<?> warningICON() {
-        return makeICON('!', new FGBGColors(Colors.BIBla, Colors.On_Yel));
+        return makeICON('!', new Colors.FGBGColors(Colors.BIBla, Colors.On_Yel));
     }
     
     private static Component<?> errorICON() {
-        return makeICON('X', new FGBGColors(Colors.BIWhi, Colors.On_IRed));
+        return makeICON('X', new Colors.FGBGColors(Colors.BIWhi, Colors.On_IRed));
     }
     
     // internal class to specify buttons that will be built in call to simpleDialog(..)
@@ -117,9 +116,9 @@ public class MessageBox {
                                      ChildComponentManager<?> parentPanel,
                                      String message) {
 
-        Color dialogColor = new FGBGColors(Colors.Bla,Colors.On_Whi);
-        dialogColor.setBoldTransform((c)-> new FGBGColors(Colors.BIWhi, Colors.On_Bla));
-        dialogColor.setInvertTransform((c)-> new FGBGColors(Colors.BIWhi, Colors.On_Bla));
+        Color dialogColor = new Colors.FGBGColors(Colors.Bla,Colors.On_Whi);
+        dialogColor.setBoldTransform((c)-> new Colors.FGBGColors(Colors.BIWhi, Colors.On_Bla));
+        dialogColor.setInvertTransform((c)-> new Colors.FGBGColors(Colors.BIWhi, Colors.On_Bla));
 
         Composite dialog = new Composite( dialogColor );
 

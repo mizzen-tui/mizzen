@@ -3,6 +3,11 @@ package dtb.terminalIO.traverse;
 import java.util.Collection;
 import java.util.Collections;
 
+/**
+ * An object that has children of type T
+ *
+ * @param <T>
+ */
 public interface HasChildren<T> {
 
     Collection<? extends T> getChildren();

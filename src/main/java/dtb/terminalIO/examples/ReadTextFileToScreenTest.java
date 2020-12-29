@@ -13,10 +13,10 @@ import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
-import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.ColorParsingUtils;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.Keys;
@@ -43,6 +43,8 @@ public class ReadTextFileToScreenTest {
 
             AtomicBoolean stripColorCodes = new AtomicBoolean(false);
 
+            Color viewerTextColor = new Colors.FGBGColors(Colors.BIYel, Colors.On_Blu);
+            
             TextComponent image = new TextComponent(fileData) {
                 @Override
                 public void draw(Color color, IScreenLineSegmentsBuffer segments) {
@@ -51,7 +53,9 @@ public class ReadTextFileToScreenTest {
                                   "  size = "+new Rectangle.Simple(this));
                 }
             };
-            image.setFillOnClear(false);
+            image.setFillOnClear(true);
+            image.setEmptyColor(viewerTextColor);
+            image.setColor(viewerTextColor);
 
             ButtonBar bannerPanel = new ButtonBar().setHorizontalSpacer(0);
             bannerPanel.setBorder(false);
@@ -67,7 +71,7 @@ public class ReadTextFileToScreenTest {
                 stripColorCodes.getAndSet(!stripColorCodes.get());
                 String data = fileData;
                 if (stripColorCodes.get()) {
-                    data = ControlCode.removeColorCodes(data);
+                    data = ColorParsingUtils.removeColorCodes(data);
                     toggleColors.setButtonText("Show colors");
                 } else {
                     toggleColors.setButtonText("No colors");
@@ -77,11 +81,12 @@ public class ReadTextFileToScreenTest {
             }  );
             
             
-            ScrollableComponent sc = new ScrollableComponent(Colors.Whi, 
+            ScrollableComponent sc = new ScrollableComponent(viewerTextColor, 
                                                              (Dimension)tApp.getMainApplicationPanel(), 
                                                              image,
                                                              ()-> new DefaultFocusManager(Keys.SHIFT_TAB_KEYSTROKE, Keys.TAB_KEYSTROKE).setNavKeysFirst(false));
-            sc.setFillOnClear(false);
+            sc.setFillOnClear(true);
+            sc.setEmptyChar('░');
 
             sc.resize(  new Dimension.Simple(sc.getHeight()-4, sc.getWidth()));
 
@@ -126,20 +131,21 @@ public class ReadTextFileToScreenTest {
 
         //String fileData  =  new String(fileByteData,StandardCharsets.UTF_8);
         String fileData = new String(fileByteData,StandardCharsets.UTF_8).replace(ControlCode.ERASE_END_OF_LINE.asString(),"");
+        fileData = fileData.replace("\t","    ");
         return fileData;
     }
     
     private static String genTextData() {
         
-        ControlCode.Color colors[] = new ControlCode.Color[] {
-                new  FGBGColors(Colors.BBlu, Colors.On_Gre),
-                new  FGBGColors(Colors.BBlu, Colors.On_IWhi),
-                new  FGBGColors(Colors.BGre, Colors.On_Yel),
-                new  FGBGColors(Colors.BYel, Colors.On_Cya),
-                new  FGBGColors(Colors.BWhi, Colors.On_Pur),
-                new  FGBGColors(Colors.BCya, Colors.On_Bla),
-                new  FGBGColors(Colors.BYel, Colors.On_IBlu),
-                new  FGBGColors(Colors.BBla, Colors.On_Whi)
+        Color colors[] = new Color[] {
+                new  Colors.FGBGColors(Colors.BBlu, Colors.On_Gre),
+                new  Colors.FGBGColors(Colors.BBlu, Colors.On_IWhi),
+                new  Colors.FGBGColors(Colors.BGre, Colors.On_Yel),
+                new  Colors.FGBGColors(Colors.BYel, Colors.On_Cya),
+                new  Colors.FGBGColors(Colors.BWhi, Colors.On_Pur),
+                new  Colors.FGBGColors(Colors.BCya, Colors.On_Bla),
+                new  Colors.FGBGColors(Colors.BYel, Colors.On_IBlu),
+                new  Colors.FGBGColors(Colors.BBla, Colors.On_Whi)
         };
         
         StringBuffer sb = new StringBuffer();
@@ -150,7 +156,7 @@ public class ReadTextFileToScreenTest {
             
             sb.append(colors[i % colors.length].asString())
               .append(StringUtils.repeat(chars.charAt(i),100))
-              .append(ControlCode.RCol.asString())
+              .append(Colors.RCol.asString())
               .append('\n');
         }
         sb.append(sb.toString());

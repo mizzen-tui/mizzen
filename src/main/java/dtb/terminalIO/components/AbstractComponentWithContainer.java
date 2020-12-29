@@ -1,7 +1,6 @@
 package dtb.terminalIO.components;
 
-import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.events.mouse.GetComponentAtOffset;
+import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.geom.position.Position;
 
 public abstract class AbstractComponentWithContainer<T extends Composite>  extends 

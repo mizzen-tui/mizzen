@@ -2,7 +2,7 @@ package dtb.terminalIO.textsegments;
 
 import java.util.TreeSet;
 
-import dtb.terminalIO.controlcodes.Colors;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.textsegments.ScreenLineSegment.SegmentImpl;
 
 /**

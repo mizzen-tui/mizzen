@@ -2,13 +2,8 @@ package dtb.terminalIO.components;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.ListIterator;
 
-import dtb.terminalIO.components.Composite.ComponentWithOffset;
-import dtb.terminalIO.components.scroll.ScrollableComponent;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
-import dtb.terminalIO.events.mouse.GetComponentAtOffset;
+import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.geom.Align;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;

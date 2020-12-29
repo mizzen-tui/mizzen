@@ -10,8 +10,8 @@ import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
-import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.TerminalScreen;
 import dtb.terminalIO.events.ChainedEventHandler;
@@ -27,11 +27,9 @@ import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
-import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.InputEventsProducer;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
-import dtb.terminalIO.events.mouse.MouseEventOrchestrator;
 import dtb.terminalIO.events.resize.TerminalResizeDetection;
 import dtb.terminalIO.examples.BarChartTest.BarChartDemo;
 import dtb.terminalIO.examples.GridBrailleTest.BrailleDemo;
@@ -39,7 +37,6 @@ import dtb.terminalIO.examples.LineChartTest.LineChartDemo;
 import dtb.terminalIO.examples.sampledata.ReadSampleFiles;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
-import dtb.terminalIO.geom.Rectangle.Simple;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.util.StringUtils;
 import dtb.terminalIO.util.Stty;
@@ -165,7 +162,7 @@ public class ScrollableComponentTest {
         };
 
         // this call must happen before brailleDemo.setUpDemo(..)
-        brailleDemo.setupMpvementKeys(Keys.CTRL_T_KEYSTROKE,    // up
+        brailleDemo.setupMovementKeys(Keys.CTRL_T_KEYSTROKE,    // up
                                       Keys.CTRL_V_KEYSTROKE,    // down
                                       Keys.CTRL_F_KEYSTROKE,    // left
                                       Keys.CTRL_G_KEYSTROKE);   // right

@@ -7,11 +7,9 @@ import java.util.List;
 import java.util.TreeSet;
 
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.ControlCode.BgColor;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
-import dtb.terminalIO.controlcodes.ControlCode.FgColor;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.ColorParsingUtils;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.OnRequestHideCursorEventHandler;
 import dtb.terminalIO.events.OnRequestShowCursorEventHandler;
 import dtb.terminalIO.events.TerminalEvent;
@@ -25,7 +23,6 @@ import dtb.terminalIO.textsegments.ScreenLineSegment.SegmentImpl;
 import dtb.terminalIO.textsegments.ScreenLineSegment.UTIL.SegmentsFromStringResult;
 import dtb.terminalIO.textsegments.ScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.ElapsedTime;
-import dtb.terminalIO.util.Logging;
 
 public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
 
@@ -42,7 +39,7 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
     private int              sc_current_id    = 0;
 
     private char             emptyChar        = '░';
-    private Color            emptyColor       = ControlCode.DEFAULT_COLOR;
+    private Color            emptyColor       = Colors.DEFAULT_COLOR;
     private static final int EMPTY_SEGMENT_ID = -67233;
 
     public void setEmptyChar(char emptyChar) {
@@ -75,10 +72,10 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
     }
 
     public Canvas(CanvasBackend backend) {
-        this(backend, ControlCode.DEFAULT_COLOR);
+        this(backend, Colors.DEFAULT_COLOR);
     }
 
-    public Canvas(TerminalScreen screen, FGBGColors color) {
+    public Canvas(TerminalScreen screen, Colors.FGBGColors color) {
         this(new ScreenCanvasBackend(screen), color);
     }
 
@@ -199,7 +196,7 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
     }
 
     public Canvas addTextHandleColors(String s) {
-        boolean hasColorCodes = ControlCode.hasColorCodes(s);
+        boolean hasColorCodes = ColorParsingUtils.hasColorCodes(s);
         if (! hasColorCodes) {
             return t(s);
         }
@@ -268,7 +265,7 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
                                                                  (elapsedTime)-> {}/*Logging.info("contains "+elapsedTime)*/);
         
         if (canvasContainsComponent) {
-            // fast!! 
+            // fast case!! 
             component.setCanvasOffset(Position.ZERO);
             
             ElapsedTime componentDrawTime = ElapsedTime.start();
@@ -406,12 +403,12 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
         backend.writeToBackend(scs);
     }
 
-    public Canvas fgc(FgColor fgc) {
+    public Canvas fgc(Colors.FgColor fgc) {
         this.color = color.newFrom(fgc);
         return this;
     }
 
-    public Canvas bgc(BgColor bgc) {
+    public Canvas bgc(Colors.BgColor bgc) {
         this.color = color.newFrom(bgc);
         return this;
     }
@@ -433,7 +430,7 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
         return this.emptyChar;
     }
 
-    public Canvas setEmptyColor(FGBGColors color) {
+    public Canvas setEmptyColor(Colors.FGBGColors color) {
         this.emptyColor = color;
         return this;
     }

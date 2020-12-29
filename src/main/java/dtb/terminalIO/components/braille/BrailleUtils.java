@@ -5,7 +5,8 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import dtb.terminalIO.components.plot.Plotter;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.controlcodes.color.Colors;
+import dtb.terminalIO.controlcodes.color.Colors.FGBGColors;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
@@ -73,7 +74,7 @@ public class BrailleUtils {
         };
     }
 
-    public static void setBraillePixel(FGBGColors color, IScreenLineSegmentsBuffer segments, Position gridPosition) {
+    public static void setBraillePixel(Colors.FGBGColors color, IScreenLineSegmentsBuffer segments, Position gridPosition) {
         Position pos = gridPosToComponentPosition(gridPosition);
         String charAtPos = segments.getCharAt(pos.getRow(), pos.getCol());
         char theCHAR = charAtPos == null ? 0 : charAtPos.charAt(0);
@@ -81,7 +82,7 @@ public class BrailleUtils {
         segments.setCharAt(pos.getRow(), pos.getCol(), theCHAR, color);
     }
 
-    public static void unsetBraillePixel(FGBGColors color, IScreenLineSegmentsBuffer segments, Position gridPosition) {
+    public static void unsetBraillePixel(Colors.FGBGColors color, IScreenLineSegmentsBuffer segments, Position gridPosition) {
         Position pos = gridPosToComponentPosition(gridPosition);
         String charAtPos = segments.getCharAt(pos.getRow(), pos.getCol());
         char theCHAR = charAtPos == null ? 0 : charAtPos.charAt(0);

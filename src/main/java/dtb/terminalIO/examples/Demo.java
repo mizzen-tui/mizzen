@@ -3,12 +3,10 @@ package dtb.terminalIO.examples;
 import java.util.ArrayList;
 import java.util.List;
 
-import dtb.terminalIO.components.ChildComponentManager;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventHandlerContainer;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
-import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer.Provider;
 
 public interface Demo {
 

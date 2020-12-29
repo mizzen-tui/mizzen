@@ -1,8 +1,8 @@
 package dtb.terminalIO.components;
 
-import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.ColorProvider;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 
@@ -28,16 +28,16 @@ public interface FillOnClearPolicy<T> extends EmptyAttributes<T> {
         // void setFillOnClearPolicy(FillOnClearPolicy fillerPolicy);
     }
 
-    public static abstract class AbstractImpl<T extends ControlCode.ColorProvider> implements FillOnClearPolicy<T> {
+    public static abstract class AbstractImpl<T extends ColorProvider> implements FillOnClearPolicy<T> {
 
         private boolean          fillOnClear      = true;
         private char             emptyChar        = ' ';
-        private Color            emptyColor       = FGBGColors.NO_COLOR_SPECIFIED;
+        private Color            emptyColor       = Colors.FGBGColors.NO_COLOR_SPECIFIED;
         private static final int EMPTY_SEGMENT_ID = -1234;
         
-        private ControlCode.ColorProvider parentColorProvider;
+        private ColorProvider parentColorProvider;
 
-        protected AbstractImpl(ControlCode.ColorProvider parentColorProvider) {
+        protected AbstractImpl(ColorProvider parentColorProvider) {
             this.parentColorProvider = parentColorProvider;
         }
         
@@ -53,7 +53,7 @@ public interface FillOnClearPolicy<T> extends EmptyAttributes<T> {
         
         public Color getParentColor() {
             if (parentColorProvider == null || parentColorProvider.getColor() == null) {
-                return FGBGColors.NO_COLOR_SPECIFIED;
+                return Colors.FGBGColors.NO_COLOR_SPECIFIED;
             }
             return parentColorProvider.getColor();
         }
@@ -64,7 +64,7 @@ public interface FillOnClearPolicy<T> extends EmptyAttributes<T> {
         }
 
         public T setEmptyColor(Color emptyColor) {
-            this.emptyColor = emptyColor==null? FGBGColors.NO_COLOR_SPECIFIED : emptyColor;
+            this.emptyColor = emptyColor==null? Colors.FGBGColors.NO_COLOR_SPECIFIED : emptyColor;
             return (T) parentColorProvider;
         }
 

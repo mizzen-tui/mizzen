@@ -11,7 +11,7 @@ import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.input.tree.TreeView;
 import dtb.terminalIO.components.input.tree.TreeViewModel;
 import dtb.terminalIO.components.input.tree.TreeViewModel.HasChildrenTreeViewModel;
-import dtb.terminalIO.controlcodes.Colors;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.geom.Dimension;
 
 public class TreeViewTest {

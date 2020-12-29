@@ -1,6 +1,5 @@
 package dtb.terminalIO.components.input;
 
-import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
 import dtb.terminalIO.events.AbstractTimedRequestedController;
@@ -16,7 +15,7 @@ import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
  *
  * @param <V>
  */
-public interface HasValue<V> {
+public interface HasValue<V> {  //TODO:  Make a SettableValue that extends this.. ( HasValue components can implement this, then later we can 'bindable' forms - bind based on 'getName')
 
     V getValue();
 

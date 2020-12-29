@@ -12,15 +12,15 @@ import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.CharComponent;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
+import dtb.terminalIO.components.GetComponentAtOffset;
 import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.components.HiliterAdapter;
 import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.VerticalPanel;
 import dtb.terminalIO.components.input.DisplayableValue.StringDisplayValue;
-import dtb.terminalIO.controlcodes.Colors;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
@@ -32,7 +32,6 @@ import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.events.mouse.ApplicationMouseEvent;
-import dtb.terminalIO.events.mouse.GetComponentAtOffset;
 import dtb.terminalIO.events.mouse.MOUSE_ACTION;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
@@ -52,7 +51,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
     int            selected;
     KeyStroke      keystrokePrevious       = Keys.UP_KEYSTROKE;
     KeyStroke      keystrokeNext           = Keys.DOWN_KEYSTROKE;
-    Color          selectedColor           = new FGBGColors(Colors.IYel);
+    Color          selectedColor           = new Colors.FGBGColors(Colors.IYel);
 
     // Components that are rendered in the list
     abstract class ItemComponent  {
@@ -277,7 +276,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
     }
     
     public ListBox() {
-        this(FGBGColors.NO_COLOR_SPECIFIED);
+        this(Colors.FGBGColors.NO_COLOR_SPECIFIED);
     }
     
     public ListBox(DisplayableValue<T>[] listItems) {

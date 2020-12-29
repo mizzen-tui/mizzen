@@ -1,6 +1,6 @@
 package dtb.terminalIO.textsegments;
 
-import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.geom.position.Position;
 
 abstract class AbstractSegment implements ScreenLineSegment {

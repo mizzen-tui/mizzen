@@ -12,6 +12,8 @@ import dtb.terminalIO.events.OnIdleEventEventHandler;
  * It detects that the terminal has resized via polling.  Intermittent calls are made 
  * to the method TerminalDimensions.create() to get current terminal dimensions.  If the dimensions
  * have changed then it fires off a TerminalEvent.TYPE.RESIZE event.
+ * 
+ * This is *not* the preferred way to detect terminal size changes.
  *  
  */
 public class TerminalResizePoller {
@@ -26,14 +28,15 @@ public class TerminalResizePoller {
     
     public static void startPollingForTerminalResize(TerminalScreen screen, EventBus eventBus, int pollingInterval) {
 	
-	if (setup) return;  
+	if (setup) return;
+	
 	setup = true;
 	
 	// uses an OnIdleEventEventHandler to watch for Terminal resizes .. if a resize is detected,
 	// it fires off TerminalEvent.TYPE.RESIZE events that other handlers can then deal with.
 
-        eventBus.appendEventHandler( new OnIdleEventEventHandler.RepeatingInterval(pollingInterval, 
-                                                                                new TerminalResizeEventGenerator(screen, eventBus).asEventHandler()));	
+    eventBus.appendEventHandler( new OnIdleEventEventHandler.RepeatingInterval(pollingInterval, 
+                                                                               new TerminalResizeEventGenerator(screen, eventBus).asEventHandler()));	
     }
 
 }

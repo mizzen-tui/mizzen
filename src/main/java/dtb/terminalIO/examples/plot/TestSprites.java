@@ -7,6 +7,8 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import dtb.terminalIO.app.TUIApp;
+import dtb.terminalIO.components.ChildComponentManager;
+import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.PathPlotter;
 import dtb.terminalIO.components.plot.PathPlotter.CirclePathPlotter;
@@ -24,10 +26,11 @@ import dtb.terminalIO.components.plot.shape.Line;
 import dtb.terminalIO.components.plot.shape.RectangleShape;
 import dtb.terminalIO.components.plot.shape.Shape;
 import dtb.terminalIO.components.plot.shape.math.TrigUtil;
-import dtb.terminalIO.controlcodes.Colors;
+import dtb.terminalIO.controlcodes.color.Colors;
+import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.OnIdleEventEventHandler.OneTimeAfterInterval;
 import dtb.terminalIO.events.OnIdleEventEventHandler.RepeatingInterval;
-import dtb.terminalIO.events.OnTerminateEventHandler;
+import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
@@ -45,67 +48,77 @@ public class TestSprites {
 
         app.setOnReadyStart((tApp)-> {
 
-            Supplier<Dimension> computeGridSize = ()-> {
-                return new Dimension.Simple(tApp.getMainApplicationPanel().getHeight()-3,
-                                            tApp.getMainApplicationPanel().getWidth()-3);
-            };
-
-            Dimension gridSize = computeGridSize.get();
-
-            BrailleGrid grid = new BrailleGrid(Colors.BGre, gridSize);
-
-            grid.setTitle(Colors.BPur, "Space Invaders");
-
-            tApp.getEventBus().appendEventHandler( new OnTerminateEventHandler(()-> {
-                
-            }));
-
-            tApp.getMainApplicationPanel().add(grid);
-
-            PointPlotterList gamePlayPointsPlotter = new PointPlotterList();
-
-            tApp.getEventBus().appendIdleEventHandler(new RepeatingInterval(150, (te)-> {
-
-                grid.clearPlots();
-
-                // copy the current plots
-                List<PointPlot> l = new ArrayList<PointPlot>(gamePlayPointsPlotter.getPlots());
-
-                PointPlotter ppGrid = grid.asPointPlotter();
-
-                for (PointPlot pp  : l) {
-                    ppGrid.setColor(pp.color);
-                    ppGrid.plot(pp.x, pp.y);
-                }
-
-                grid.markAsDirty();
-                tApp.doRefreshCanvasIfModified();
-
-            }));
-
-            tApp.getEventBus().appendIdleEventHandler(new OneTimeAfterInterval((te)-> {
-                                                       spawnGameLoop(tApp, 
-                                                                     ()-> tApp.getEventBus().isActive(), 
-                                                                     ()-> grid.getGridRectangle(), 
-                                                                     gamePlayPointsPlotter);
-                                                       },200));
-
-            BiConsumer<TUIApp, Dimension> defaultOnResizeAction = 
-                    tApp.getResizeAction()!=null ? tApp.getResizeAction() : (t,s)->{};
-
-            tApp.setOnResizeAction((tApp2, newSize)->{
-                // do default behaviour
-                defaultOnResizeAction.accept(tApp2, newSize);
-                // now resize the grid
-                Dimension newGridSize = computeGridSize.get();
-                grid.resize( newGridSize );
-            });
+            addTestSpritesPanel(tApp, tApp.getMainApplicationPanel(), true);
 
         }).start();
     }
     
+    
+    public static Component<?> addTestSpritesPanel(TUIApp tApp, ChildComponentManager<?> parentPanel) {
+        return addTestSpritesPanel(tApp, parentPanel, false);
+    }
+    
+    public static Component<?> addTestSpritesPanel(TUIApp tApp, ChildComponentManager<?> parentPanel, boolean includeTitle) {
+        
+        Supplier<Dimension> computeGridSize = ()-> {
+            return new Dimension.Simple(parentPanel.getHeight()-3,
+                    parentPanel.getWidth()-3);
+        };
 
-    static void spawnGameLoop(TUIApp tApp, Supplier<Boolean> isActive, Supplier<Rectangle> size, PointPlotter pointPlotter) {
+        Dimension gridSize = computeGridSize.get();
+
+        BrailleGrid grid = new BrailleGrid(Colors.BGre, gridSize);
+
+        if (includeTitle) {
+          grid.setTitle(Colors.BPur, "Space Invaders");
+        }
+
+        parentPanel.add(grid);
+
+        PointPlotterList gamePlayPointsPlotter = new PointPlotterList();
+
+        tApp.getEventBus().appendIdleEventHandler(new RepeatingInterval(150, (te)-> {
+
+            grid.clearPlots();
+
+            // copy the current plots
+            List<PointPlot> l = new ArrayList<PointPlot>(gamePlayPointsPlotter.getPlots());
+
+            PointPlotter ppGrid = grid.asPointPlotter();
+
+            for (PointPlot pp  : l) {
+                ppGrid.setColor(pp.color);
+                ppGrid.plot(pp.x, pp.y);
+            }
+
+            grid.markAsDirty();
+            te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(te));
+
+        }));
+
+        tApp.getEventBus().appendIdleEventHandler(new OneTimeAfterInterval((te)-> {
+                                                   spawnGameLoop(tApp.getEventBus(), 
+                                                                 ()-> tApp.getEventBus().isActive(), 
+                                                                 ()-> grid.getGridRectangle(), 
+                                                                 gamePlayPointsPlotter);
+                                                   },200));
+
+        BiConsumer<TUIApp, Dimension> defaultOnResizeAction = 
+                tApp.getResizeAction()!=null ? tApp.getResizeAction() : (t,s)->{};
+
+        tApp.setOnResizeAction((tApp2, newSize)->{
+            // do default behaviour
+            defaultOnResizeAction.accept(tApp2, newSize);
+            // now resize the grid
+            Dimension newGridSize = computeGridSize.get();
+            grid.resize( newGridSize );
+        });
+
+        return grid;
+    }
+    
+
+    static void spawnGameLoop(EventBus eventBus, Supplier<Boolean> isActive, Supplier<Rectangle> size, PointPlotter pointPlotter) {
 
 
         Supplier<PathPlotter> makePathPlotter = ()-> {
@@ -152,7 +165,7 @@ public class TestSprites {
                         }
                         Thread.sleep(15);
                     } catch (Exception e) {
-                        tApp.getEventBus().raiseEvent(Thread.currentThread(), TYPE.EXCEPTION, e);
+                        eventBus.raiseEvent(Thread.currentThread(), TYPE.EXCEPTION, e);
                     }
                 }
             }

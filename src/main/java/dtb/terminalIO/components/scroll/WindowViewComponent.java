@@ -5,15 +5,9 @@ import java.util.Collections;
 
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.components.Hiliter;
+import dtb.terminalIO.components.GetComponentAtOffset;
 import dtb.terminalIO.components.ParentContainer;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.events.ConditionalEventHandler;
-import dtb.terminalIO.events.EventBus;
-import dtb.terminalIO.events.EventHandler;
-import dtb.terminalIO.events.TerminalEvent;
-import dtb.terminalIO.events.focus.Focusable;
-import dtb.terminalIO.events.mouse.GetComponentAtOffset;
+import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;

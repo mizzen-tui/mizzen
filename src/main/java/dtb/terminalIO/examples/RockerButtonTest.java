@@ -15,17 +15,16 @@ import dtb.terminalIO.components.input.DefaultFocusableBehaviour;
 import dtb.terminalIO.components.input.RockerButton;
 import dtb.terminalIO.components.input.TextInput;
 import dtb.terminalIO.components.modal.MessageBox;
-import dtb.terminalIO.controlcodes.Colors;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.ScreenCanvasBackend;
 import dtb.terminalIO.core.ScreenCanvasBackend.UpdateStrategy;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.OnIdleEventEventHandler.RepeatingInterval;
 import dtb.terminalIO.events.RequestHideCursorEvent;
 import dtb.terminalIO.events.RequestShowCursorEvent;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
-import dtb.terminalIO.events.OnIdleEventEventHandler.RepeatingInterval;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
@@ -44,22 +43,22 @@ public class RockerButtonTest {
     public static void main(String args[]) {
 
         Logging.setEnabled(true);
-        
+
         TUIApp app = new TUIApp(args).setEmptyChar(' ')
                                      .setDefaultMainApplicationPanel()
                                      .confirmOnExit();
 
         app.getMainApplicationPanel().add(new ClickableBackground(app.getCanvas()));
-        
+
         ButtonBar buttons = new ButtonBar();
         buttons.setLeftMostBorderChar((char) 0);
         buttons.setRightMostBorderChar((char) 0);
 
         buttons.setHorizontalSpacer(2);
-        
-        TextInput tc = new TextInput(new FGBGColors(Colors.BIBlu, Colors.On_IYel), 15);
+
+        TextInput tc = new TextInput(new Colors.FGBGColors(Colors.BIBlu, Colors.On_IYel), 15);
         tc.setText("Test input");
-        
+
         RockerButton rockerButtonEdit = new RockerButton(Colors.BIGre, "Edit");
         rockerButtonEdit.setHotKey( new KeyStroke('1') );
         rockerButtonEdit.onChange((te)->{
@@ -122,7 +121,7 @@ public class RockerButtonTest {
             VerticalPanel vp = new VerticalPanel().setVerticalSpacer(1);
             vp.setEmptyChar('░');
             vp.setFillOnClear(true);
-            vp.setEmptyColor(new FGBGColors(Colors.IYel, Colors.On_Blu));
+            vp.setEmptyColor(new Colors.FGBGColors(Colors.IYel, Colors.On_Blu));
             
             ComponentInspector componentInspector = new ComponentInspector(Colors.BIGre, 
                     new Dimension.Simple((int)(app.getMainApplicationPanel().getHeight()*.55),
@@ -132,7 +131,7 @@ public class RockerButtonTest {
             
             componentInspector.setTitle("CTRL-T: Toggle inspector view");
             
-            TextComponent stats = new TextComponent(new FGBGColors(Colors.BBlu, Colors.On_Whi),"Stats");
+            TextComponent stats = new TextComponent(new Colors.FGBGColors(Colors.BBlu, Colors.On_Whi),"Stats");
             
             vp.add(componentInspector);
             vp.add(stats);
@@ -185,9 +184,6 @@ public class RockerButtonTest {
                 app.doRefreshCanvasIfModified();
                }));
 
-            
-            
-            
         });
         
         ScreenCanvasBackend canvasBackend = ((ScreenCanvasBackend)app.getCanvas().getCanvasBackend());
@@ -197,9 +193,7 @@ public class RockerButtonTest {
         app.start();
 
     }
-    
-    
-    
+
 
     public static class ClickableBackground extends DONOTHING implements Clickable, Focusable {
 

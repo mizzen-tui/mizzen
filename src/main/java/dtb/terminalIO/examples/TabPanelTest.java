@@ -14,10 +14,8 @@ import dtb.terminalIO.components.VerticalPanel;
 import dtb.terminalIO.components.tab.TabAction;
 import dtb.terminalIO.components.tab.TabPanel;
 import dtb.terminalIO.components.tab.TabPanel.TabContext;
-import dtb.terminalIO.controlcodes.Colors;
-import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventBusImpl;
 import dtb.terminalIO.events.EventHandlerContainer;
@@ -89,7 +87,7 @@ public class TabPanelTest {
         tabPanelDemoApp.initFromArgs(args);
 
         char emptyChar = '░';
-        Color emptyColor = new FGBGColors(Colors.IYel, Colors.On_IBlu);
+        Color emptyColor = new Colors.FGBGColors(Colors.IYel, Colors.On_IBlu);
         tabPanelDemoApp.getCanvas().setEmptyAttributes(emptyColor, emptyChar);
 
         Composite topFrame = new Composite();
@@ -145,7 +143,7 @@ public class TabPanelTest {
         vPanel.setVerticalSpacer(1);
         topFrame.add(vPanel);
 
-        TabPanel tb = new TabPanel(ControlCode.DEFAULT_COLOR, new FGBGColors(Colors.Blu).bold(), sizeOfTabPanelWindow);
+        TabPanel tb = new TabPanel(Colors.DEFAULT_COLOR, new Colors.FGBGColors(Colors.Blu).bold(), sizeOfTabPanelWindow);
         tb.setBorder(false);
         tb.setEmptyChar(emptyChar);
         tb.setEmptyColor(emptyColor);
@@ -166,7 +164,7 @@ public class TabPanelTest {
 
         TextComponent debugSTATs = new TextComponent(Colors.IYel, "");
         Composite debugWindow = new Composite(Colors.IGre).setBounds(sizeOfDebugWindow);
-        debugWindow.setTitle(new FGBGColors(Colors.BYel, Colors.On_Gre), "DEBUG");
+        debugWindow.setTitle(new Colors.FGBGColors(Colors.BYel, Colors.On_Gre), "DEBUG");
         debugWindow.add(debugSTATs);
         vPanel.add(debugWindow);
 

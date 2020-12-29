@@ -1,8 +1,7 @@
 package dtb.terminalIO.util.formatters;
 
-import dtb.terminalIO.controlcodes.Colors;
-import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors;
 
 public class ClippToLengthTextFormatter implements TextLineFormatter
 {
@@ -37,7 +36,7 @@ public class ClippToLengthTextFormatter implements TextLineFormatter
         
         if (line.length() > this.clipLength)
         {
-            line = line.substring(0, Math.max(this.clipLength - 5,1)) + hiliteColor.asString() + " ... " + ControlCode.RCol.asString();
+            line = line.substring(0, Math.max(this.clipLength - 5,1)) + hiliteColor.asString() + " ... " + Colors.RCol.asString();
         }
         return line;
     }

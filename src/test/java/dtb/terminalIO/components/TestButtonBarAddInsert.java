@@ -1,6 +1,6 @@
 package dtb.terminalIO.components;
 
-import dtb.terminalIO.controlcodes.Colors;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.keyboard.Keys;
 import junit.framework.TestCase;
 

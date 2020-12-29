@@ -169,11 +169,6 @@ public class Keys {
 
     public static final KeyStroke SPACE_KEYSTROKE     = createAndStoreNewKeyStroke(' ', "SPACE");
     
-//    public static final KeyStroke A_KEYSTROKE         = createAndStoreNewKeyStroke('A', "A");
-
-//    public static final KeyStroke a_KEYSTROKE         = createAndStoreNewKeyStroke('a', "a");
-
-//    public static final KeyStroke B_KEYSTROKE         = createAndStoreNewKeyStroke('B', "B");
 
     public static final KeyStroke CTRL_A_KEYSTROKE    = controlCharKeyStrokeAndStore(1);
     public static final KeyStroke CTRL_B_KEYSTROKE    = controlCharKeyStrokeAndStore(2);
@@ -232,28 +227,6 @@ public class Keys {
 
     public static KeyStroke controlCharKeyStroke(final int i) {
         return KeyStroke.CTRL_keyStroke(i);
-//        
-//        
-//        boolean alt = false;
-//        switch (i) {
-//            case 0x0D:
-//                // Carriage return --> ENTER
-//                return new KeyStroke(13, "ENTER", alt);
-//            case 0x0A:
-//                // Linefeed --> ENTER
-//                return new KeyStroke(13, "ENTER", alt);
-//            case 0x1B:
-//                // ESC
-//                return new KeyStroke(ESC, "ESC", alt);
-//            case '\t':
-//                // TAB
-//                return new KeyStroke('\t', "TAB", alt);
-//            default:
-//                // Make all other control characters come back as the alphabetic
-//                // character with the ctrl field set. So SOH would be 'A' +
-//                // ctrl.
-//                return new KeyStroke(i, "CTRL-" + ((char) ('A' + i - 1)), alt);
-//        }
     }
 
     public static KeyStroke controlCharKeyStrokeAndStore(int key) {

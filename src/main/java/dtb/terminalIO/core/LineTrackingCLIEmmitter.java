@@ -1,7 +1,7 @@
 package dtb.terminalIO.core;
 
 import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors.HasRowChange;
+import dtb.terminalIO.controlcodes.color.Colors.FGBGColors.HasRowChange;
 import dtb.terminalIO.controlcodes.ControlCodeContext;
 import dtb.terminalIO.controlcodes.Renderer;
 import dtb.terminalIO.geom.position.Position;
@@ -9,7 +9,7 @@ import dtb.terminalIO.geom.position.Position;
 /**
  * A CLIEmmitter that tracks the # of lines emitted (output) so far
  * 
- * TODO: There is a fundamental problem with the lineCounter variable .it always
+ * TODO: There is a fundamental problem with the lineCounter variable.it always
  * seems to be +1 of the actual value. This causes issues when using the
  * showCursorAtFromBottomUP(showCursorPosition) method when canvas is full
  * screen..
@@ -67,32 +67,14 @@ public class LineTrackingCLIEmmitter implements CLIEmitter {
         lineCounter = 0;
     }
 
-    //int lastLoggedLineCounter = -1;
-//    int cursorUpdateAdjustment = 0;
-    
-//    void setCursorAdjustmentOn(boolean on) {
-//        if (on) {
-//            cursorUpdateAdjustment = -1;
-//        } else {
-//            cursorUpdateAdjustment = 0;
-//        }
-//    }
-
-    private void logStats() {
-//        if (lastLoggedLineCounter != lineCounter) {
-//            lastLoggedLineCounter = lineCounter;
-//        }
-    }
-
     public void clearLastTrackedLines(boolean erasePreviousContent) {
         if (lineCounter < 1) {
             outputRenderer(ControlCode.LF); // move to start of line - goal is to get cursor
                                             // to the left
-            outputRenderer(ControlCode.CURSOR_LEFT);
+            outputRenderer(ControlCode.CURSOR_LEFT); // one of these might be superfluous
             resetLineCounter();
             return;
         }
-        logStats();
 
         outputRenderer(ControlCode.LF); // move to start of line - goal is to get cursor
                                         // to the left
@@ -102,9 +84,9 @@ public class LineTrackingCLIEmmitter implements CLIEmitter {
             outputRenderer(ControlCode.ERASE_LINE); // erase current line
         if (lineCounter > 0) {
             if (erasePreviousContent)
-                outputRenderer(new ControlCode.CursorUpAndClearLines(lineCounter/* + cursorUpdateAdjustment*/));
+                outputRenderer(new ControlCode.CursorUpAndClearLines(lineCounter));
             else
-                outputRenderer(new ControlCode.CursorUp(lineCounter /*+ cursorUpdateAdjustment*/));
+                outputRenderer(new ControlCode.CursorUp(lineCounter));
         }
         resetLineCounter();
     }
@@ -140,26 +122,6 @@ public class LineTrackingCLIEmmitter implements CLIEmitter {
     @Override
     public void println(String s) {
         print(s + "\n");
-    }
-
-    /**
-     * moves the cursor to showCursorPosition relative to the start position of this
-     * LineTrackingCLIEmitter
-     * 
-     * @param showCursorPosition
-     */
-    private void showCursorAtFromBottomUP(Position showCursorPosition) {
-        int currentLineCounter = lineCounter;
-        Position curPos = new Position.Simple(currentLineCounter, 0);
-        Position delta = curPos.offsetTo(showCursorPosition);
-
-        outputRenderer(ControlCode.CURSOR_LEFT);
-
-        outputRenderer(ControlCode.moveToDeltaRow(delta.getRow() + 1));
-
-        outputRenderer(new ControlCode.CursorForward(delta.getCol()));
-
-        lastShowCursorPosition = showCursorPosition;
     }
 
     /**

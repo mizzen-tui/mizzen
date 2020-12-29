@@ -9,7 +9,7 @@ import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.LinuxProcessViewer;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.VerticalPanel;
-import dtb.terminalIO.controlcodes.Colors;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.Keys;

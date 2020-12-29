@@ -15,8 +15,8 @@ import dtb.terminalIO.components.CanResize;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
-import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.AbstractTimedRequestedController;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.ConditionalEventHandler;
@@ -44,8 +44,12 @@ import dtb.terminalIO.util.StringUtils;
 
 
 public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
-        implements HasValue<String>, ParentContainer, Focusable, EventHandlerContainer,
-        Clickable, CanResize {
+                                implements HasValue<String>, 
+                                           ParentContainer, 
+                                           Focusable, 
+                                           EventHandlerContainer,
+                                           Clickable, 
+                                           CanResize {
 
     private TextComponent textRenderer;
     private boolean textRendererNeedsUpdate = false;
@@ -69,7 +73,7 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
     }
 
     public MultiLineTextInput() {
-        this(ControlCode.DEFAULT_COLOR);
+        this(Colors.DEFAULT_COLOR);
     }
 
     @Override

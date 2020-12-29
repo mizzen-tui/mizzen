@@ -1,7 +1,7 @@
 package dtb.terminalIO.components;
 
-import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
@@ -23,7 +23,7 @@ public class HorizontalLine extends BoundedComponent<HorizontalLine> {
     }
 
     public HorizontalLine(int len) {
-        super(FGBGColors.NO_COLOR_SPECIFIED, Position.ZERO, new Dimension.Simple(1, len));
+        super(Colors.FGBGColors.NO_COLOR_SPECIFIED, Position.ZERO, new Dimension.Simple(1, len));
     }
 
     public HorizontalLine(Color color, int row, int col, int len) {

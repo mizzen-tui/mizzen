@@ -10,7 +10,7 @@ import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
@@ -104,7 +104,6 @@ public class SparkLineComponent extends AbstractComponent<SparkLineComponent> im
 
     public void renderPoints(Integer[] data) {
         chart.setText( SparkLine.render( Arrays.asList(data), chart.getHeight())  );
-        
     }
 
 }

@@ -3,11 +3,8 @@ package dtb.terminalIO.components.plot;
 import java.util.TreeSet;
 
 import dtb.terminalIO.components.BoundedComponent;
-import dtb.terminalIO.components.braille.BrailleGrid;
-import dtb.terminalIO.controlcodes.Colors;
-import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.CleanString;
@@ -43,7 +40,7 @@ public class Plotter extends BoundedComponent<Plotter> {
         if (!this.containsPosition(new Position.Simple(row, col))) {
             // throw new IllegalArgumentException(String.format("Bad plot! row %d %d not in
             // range %s", row, col, String.valueOf(this)));
-            color = new FGBGColors(Colors.IRed);
+            color = new Colors.FGBGColors(Colors.IRed);
         }
         plots.add(new Plot(row, col, plotChar, color));
         return this;
@@ -87,7 +84,7 @@ public class Plotter extends BoundedComponent<Plotter> {
         SegmentImpl lastSegment = null;
         Position    lastSegmentPosition = null;
 
-        Color lastColor = ControlCode.DEFAULT_COLOR;
+        Color lastColor = Colors.DEFAULT_COLOR;
 
         StringBuilder lastText = new StringBuilder();
 
@@ -128,7 +125,7 @@ public class Plotter extends BoundedComponent<Plotter> {
     }
 
     public String getCharAt(int row, int col) {
-        Plot srchKey = new Plot(new Position.Simple(row, col), (char) 0, FGBGColors.NO_COLOR_SPECIFIED);
+        Plot srchKey = new Plot(new Position.Simple(row, col), (char) 0, Colors.FGBGColors.NO_COLOR_SPECIFIED);
         Plot found = plots.floor(srchKey);
         if (found == null || Position.UTIL.POS_COMPARE.compare(srchKey, found) != 0) {
             return null;
@@ -137,7 +134,7 @@ public class Plotter extends BoundedComponent<Plotter> {
     }
 
     public Plot getPlotAt(int row, int col) {
-        Plot srchKey = new Plot(new Position.Simple(row, col), (char) 0, FGBGColors.NO_COLOR_SPECIFIED);
+        Plot srchKey = new Plot(new Position.Simple(row, col), (char) 0, Colors.FGBGColors.NO_COLOR_SPECIFIED);
         Plot found = plots.floor(srchKey);
         if (found == null || Position.UTIL.POS_COMPARE.compare(srchKey, found) != 0) {
             return null;

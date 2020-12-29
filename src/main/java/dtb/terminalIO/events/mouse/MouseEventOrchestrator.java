@@ -3,6 +3,7 @@ package dtb.terminalIO.events.mouse;
 import java.util.function.BiFunction;
 
 import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.GetComponentAtOffset;
 import dtb.terminalIO.components.input.Clickable;
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.core.Canvas;

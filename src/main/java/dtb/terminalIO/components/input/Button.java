@@ -6,10 +6,11 @@ import java.util.Collections;
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
+import dtb.terminalIO.components.GetComponentAtOffset;
 import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
@@ -22,14 +23,18 @@ import dtb.terminalIO.events.keyboard.HasHotKey;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
-import dtb.terminalIO.events.mouse.GetComponentAtOffset;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.StringUtils;
 
-public class Button extends BoundedComponent<Button> implements HasValue<Boolean>, Focusable, HasHotKey, Clickable, ParentContainer , GetComponentAtOffset  {
+public class Button extends BoundedComponent<Button> implements HasValue<Boolean>, 
+                                                                Focusable, 
+                                                                HasHotKey, 
+                                                                Clickable, 
+                                                                ParentContainer, 
+                                                                GetComponentAtOffset  {
 
     String buttonText;
     Composite container;  // <-- having a composite for something as simple as a button seems a bit heavy
@@ -50,17 +55,6 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
         void buttonPressed( boolean toggleOn);
     }
     
-//    public Button(Color color, String buttonText, boolean toggle, Action onPressed1) {
-//        super(color, Rectangle.ZERO);
-//        this.toggleButton = toggle;
-//        this.buttonText = buttonText;
-//        this.renderedText = new TextComponent(color, "");
-//        this.container = new Composite(color);
-//        this.container.add(renderedText);
-//        this.container.setParentContainer(this);
-//        this.setButtonTextAndResize(buttonText);
-//    }
-
     public Button(Color color, String buttonText, boolean toggle) {
         super(color, Rectangle.ZERO);
         this.toggleButton = toggle;
@@ -77,11 +71,11 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
     }
     
     public Button(String buttonText, boolean toggle) {
-        this(FGBGColors.NO_COLOR_SPECIFIED, buttonText, toggle);
+        this(Colors.FGBGColors.NO_COLOR_SPECIFIED, buttonText, toggle);
     }
 
     public Button(String buttonText) {
-        this(FGBGColors.NO_COLOR_SPECIFIED, buttonText);
+        this(Colors.FGBGColors.NO_COLOR_SPECIFIED, buttonText);
     }
 
     public KeyStroke getHotKey() {

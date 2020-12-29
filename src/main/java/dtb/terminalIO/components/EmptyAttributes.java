@@ -1,6 +1,6 @@
 package dtb.terminalIO.components;
 
-import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.color.Color;
 
 /**
  * Attributes used when rendering

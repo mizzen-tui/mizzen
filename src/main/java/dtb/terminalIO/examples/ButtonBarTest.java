@@ -9,8 +9,7 @@ import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.modal.MessageBox;
-import dtb.terminalIO.controlcodes.Colors;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
@@ -29,7 +28,7 @@ public class ButtonBarTest {
                 .confirmOnExit()
                 .setOnReadyStart((tApp) -> {
 
-                    TextComponent statusMSGs = new TextComponent(new FGBGColors(Colors.BRed, Colors.On_Yel),
+                    TextComponent statusMSGs = new TextComponent(new Colors.FGBGColors(Colors.BRed, Colors.On_Yel),
                             new Dimension.Simple(1, tApp.getMainApplicationPanel().getWidth()));
 
                     ButtonBar bbar1 = new ButtonBar(Colors.IGre);

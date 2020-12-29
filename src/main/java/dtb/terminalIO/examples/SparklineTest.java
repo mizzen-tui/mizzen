@@ -13,8 +13,7 @@ import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.VerticalPanel;
 import dtb.terminalIO.components.chart.SparkLineComponent;
-import dtb.terminalIO.controlcodes.Colors;
-import dtb.terminalIO.controlcodes.ControlCode;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.Keys;
@@ -33,7 +32,7 @@ public class SparklineTest {
                 .confirmOnExit()
                 .setOnReadyStart((tApp)-> {
                     
-                    Function<Integer,String> hiliteSparklineHeight = (height)-> ((height==1||height==20)? Colors.IRed.asString() : Colors.IGre.asString()) + height + ControlCode.RCol.asString();
+                    Function<Integer,String> hiliteSparklineHeight = (height)-> ((height==1||height==20)? Colors.IRed.asString() : Colors.IGre.asString()) + height + Colors.RCol.asString();
                     
                     //Function<String,String> hiliteHotKey = (s)-> Colors.IGre.asString() + s + ControlCode.RCol.asString();
 

@@ -6,7 +6,7 @@ import java.util.TreeSet;
 
 import dtb.terminalIO.components.CanResize;
 import dtb.terminalIO.components.DirtyFlag;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;

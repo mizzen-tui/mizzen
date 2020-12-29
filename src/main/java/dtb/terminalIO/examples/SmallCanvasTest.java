@@ -5,8 +5,8 @@ import java.util.Collections;
 
 import dtb.terminalIO.components.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.shape.Circle;
-import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.TerminalScreen;
 import dtb.terminalIO.geom.Rectangle;

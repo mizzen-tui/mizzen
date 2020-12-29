@@ -11,10 +11,9 @@ import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.VerticalPanel;
 import dtb.terminalIO.components.chart.LineChart;
 import dtb.terminalIO.components.input.RockerButton;
-import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.TerminalScreen;
 import dtb.terminalIO.events.ConditionalEventHandler;
@@ -106,7 +105,7 @@ public class LineChartTest {
 
             lc = new LineChart(lc_bounds);
             lc.setBorder(true);
-            lc.setPlotColor(new FGBGColors(Colors.IYel));
+            lc.setPlotColor(new Colors.FGBGColors(Colors.IYel));
             lc.setSeriesColor("cos", Colors.Blu);
             lc.setTitle(" Line Chart Demo's ");
 

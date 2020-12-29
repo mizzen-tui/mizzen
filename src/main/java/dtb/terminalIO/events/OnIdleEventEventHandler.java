@@ -3,6 +3,17 @@ package dtb.terminalIO.events;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
+/**
+ * An EventHandler that can handle OnIdleEvent events.
+ * 
+ * See the various incarnations of this handler .. 
+ * 
+ *    {@link OneTime } , 
+ *    {@link OneTimeAfterInterval}
+ *    {@link RepeatingInterval}
+ *    {@link Countdown}
+ *
+ */
 public class OnIdleEventEventHandler extends ConditionalEventHandler.Impl {
 
     public OnIdleEventEventHandler(Predicate<TerminalEvent<?>> canHandlePredicate, EventHandler handler) {
@@ -24,6 +35,9 @@ public class OnIdleEventEventHandler extends ConditionalEventHandler.Impl {
         return null;
     }
 
+    /**
+     * Executes on an IdleEvent once and then removes itself from the eventBus.
+     */
     public static class OneTime extends OnIdleEventEventHandler {
 
         public OneTime(EventHandler handler) {
@@ -83,6 +97,9 @@ public class OnIdleEventEventHandler extends ConditionalEventHandler.Impl {
 
     }
 
+    /**
+     * Executes on an IdleEvent repeatedly at every defined interval
+     */
     public static class RepeatingInterval extends OnIdleEventEventHandler {
 
         long interval;
@@ -111,6 +128,11 @@ public class OnIdleEventEventHandler extends ConditionalEventHandler.Impl {
 
     }
 
+    /**
+     * Executes on an IdleEvent a defined number of times and then removes itself
+     * from the eventBus
+     * Similar to the RepeatingInterval handler but only runs a limited number of times.
+     */
     public static class Countdown extends OnIdleEventEventHandler {
 
         static class CounterHandler implements EventHandler {

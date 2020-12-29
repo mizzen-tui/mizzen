@@ -1,7 +1,7 @@
 package dtb.terminalIO.components.input;
 
-import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors;
 
 public class TextInputFloat extends TextInputForType<Float> {
 
@@ -12,7 +12,7 @@ public class TextInputFloat extends TextInputForType<Float> {
     }
 
     public TextInputFloat(int length) {
-          this(ControlCode.DEFAULT_COLOR, length);
+          this(Colors.DEFAULT_COLOR, length);
     }
     
     static Float toDesiredType(String text) {

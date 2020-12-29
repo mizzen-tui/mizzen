@@ -2,7 +2,7 @@ package dtb.terminalIO.components;
 
 public class HiliterAdapter<T> implements HasHiliter {
     
-    T source;
+    private T source;
     
     public HiliterAdapter(T source) {
         this.source = source;

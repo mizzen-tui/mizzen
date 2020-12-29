@@ -7,10 +7,8 @@ import java.util.ListIterator;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import dtb.terminalIO.controlcodes.Colors;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
-import dtb.terminalIO.events.mouse.GetComponentAtOffset;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
@@ -145,7 +143,7 @@ public class Composite extends AbstractComponent<Composite>
     }
 
     public Composite() {
-        this(FGBGColors.NO_COLOR_SPECIFIED);
+        this(Colors.FGBGColors.NO_COLOR_SPECIFIED);
     }
 
     public Composite setBounds(Dimension d) {
@@ -604,7 +602,7 @@ public class Composite extends AbstractComponent<Composite>
         drawChildren(color, segments, childrenInZOrder, boundsFixed);
     }
 
-    private static Color shadowColor = new FGBGColors(Colors.IBla, Colors.On_Bla);
+    private static Color shadowColor = new Colors.FGBGColors(Colors.IBla, Colors.On_Bla);
     private static char  shadowChar = '░';
     
     protected void drawChildren(Color color, IScreenLineSegmentsBuffer destinationSegments, List<ComponentWithOffset> children, boolean boundsFixed) {

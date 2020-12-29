@@ -1,6 +1,7 @@
-package dtb.terminalIO.controlcodes;
+package dtb.terminalIO.controlcodes.color;
 
-import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.ControlCode;
+import dtb.terminalIO.controlcodes.RendererTransform;
 
 /**
  * Transform a Color from one color to another color

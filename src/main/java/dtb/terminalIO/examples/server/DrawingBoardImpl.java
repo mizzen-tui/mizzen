@@ -17,8 +17,9 @@ import dtb.terminalIO.components.HasTitleAndBorder;
 import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors;
+import dtb.terminalIO.controlcodes.color.Colors.FGBGColors;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.TerminalScreen;
 import dtb.terminalIO.events.EventBus;
@@ -55,7 +56,7 @@ public class DrawingBoardImpl implements DrawingBoard {
         }
 
         protected CompositeWithNamedComponents() {
-            this(FGBGColors.NO_COLOR_SPECIFIED);
+            this(Colors.FGBGColors.NO_COLOR_SPECIFIED);
         }
         
         protected Component<?> getNamedComponent(String name) {
@@ -219,7 +220,7 @@ public class DrawingBoardImpl implements DrawingBoard {
     
     @Override
     public void component(String name, Position pos, Dimension d) {
-        TextComponent component = new TextComponent(FGBGColors.NO_COLOR_SPECIFIED, d, "");
+        TextComponent component = new TextComponent(Colors.FGBGColors.NO_COLOR_SPECIFIED, d, "");
         this.components.add(name, pos, component);
         autoRefresh();
     }
@@ -241,7 +242,7 @@ public class DrawingBoardImpl implements DrawingBoard {
 
         CanvasComponent childComponent = new CanvasComponent(dim);
 //        TextComponent childComponent = new TextComponent(FGBGColors.NO_COLOR_SPECIFIED, dim);
-        BorderedComponent c = new BorderedComponent(FGBGColors.NO_COLOR_SPECIFIED, childComponent);
+        BorderedComponent c = new BorderedComponent(Colors.FGBGColors.NO_COLOR_SPECIFIED, childComponent);
         c.resize(dim);
         this.components.add(name, pos, c);
         autoRefresh();

@@ -3,7 +3,7 @@ package dtb.terminalIO.examples;
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.chart.DonutChart;
-import dtb.terminalIO.controlcodes.Colors;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 
 /**

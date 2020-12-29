@@ -3,7 +3,7 @@ package dtb.terminalIO.components;
 import java.util.function.Consumer;
 
 import dtb.terminalIO.components.plot.Plotter;
-import dtb.terminalIO.controlcodes.Colors;
+import dtb.terminalIO.controlcodes.color.Colors;
 import junit.framework.TestCase;
 
 public class TestPlotterClearPreviousPlots extends TestCase {

@@ -4,8 +4,8 @@ import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.input.DefaultFocusableBehaviour;
 import dtb.terminalIO.components.input.ShowComponentOnFocus;
 import dtb.terminalIO.components.tab.TabPanel.TabContext;
-import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
@@ -24,7 +24,7 @@ public abstract class TabAction implements HasHotKey, Focusable {
     public TabAction(KeyStroke hotKey, String tabText) {
         this.hotKey = hotKey;
         this.tabText = tabText;
-        this.tabComponent = new TabComponent(ControlCode.DEFAULT_COLOR, tabText, false, this);
+        this.tabComponent = new TabComponent(Colors.DEFAULT_COLOR, tabText, false, this);
     }
 
     public abstract Component<?> getComponent(TabContext tabContext);

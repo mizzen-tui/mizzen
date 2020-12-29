@@ -3,9 +3,8 @@ package dtb.terminalIO.examples;
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.RectangleComponent;
-import dtb.terminalIO.controlcodes.Colors;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 
@@ -19,7 +18,7 @@ public class BorderedComponentTest {
 
         int[] count = new int[] {0,0};
 
-        RectangleComponent r1 = new RectangleComponent(new FGBGColors(Colors.Yel),10, 30) {
+        RectangleComponent r1 = new RectangleComponent(new Colors.FGBGColors(Colors.Yel),10, 30) {
             @Override
             protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
                 count[0] ++;
@@ -29,10 +28,10 @@ public class BorderedComponentTest {
         };
         r1.setFillOnClear(true);
         r1.setEmptyChar('*');
-        r1.setEmptyColor(new FGBGColors(Colors.BYel, Colors.On_Cya));
+        r1.setEmptyColor(new Colors.FGBGColors(Colors.BYel, Colors.On_Cya));
         
-        BorderedComponent componentBox2 = new BorderedComponent(new FGBGColors(Colors.IBlu, Colors.On_Gre),(BoundedComponent<?>) r1);
-        componentBox2.setColor(new FGBGColors(Colors.IBlu));
+        BorderedComponent componentBox2 = new BorderedComponent(new Colors.FGBGColors(Colors.IBlu, Colors.On_Gre),(BoundedComponent<?>) r1);
+        componentBox2.setColor(new Colors.FGBGColors(Colors.IBlu));
                 //.setTitle(new FGBGColors(Colors.Blu, Colors.On_IYel), "Rectangle Test");
 
         StringBuffer sbDEBUG = new StringBuffer();

@@ -8,8 +8,7 @@ import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.chart.BarChart;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.modal.MessageBox;
-import dtb.terminalIO.controlcodes.Colors;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.EventHandlerContainer;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
@@ -52,7 +51,7 @@ public class BarChartTest {
 
             BarChart bc = new BarChart(drawingArea.getHeight(), drawingArea.getWidth());
             bc.setBorder(true);
-            bc.setPlotColor(new FGBGColors(Colors.BIYel));
+            bc.setPlotColor(new Colors.FGBGColors(Colors.BIYel));
 
             bc.setTitle("| Import Percentages |");
 

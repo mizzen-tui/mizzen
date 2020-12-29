@@ -13,8 +13,8 @@ import java.util.regex.Pattern;
 
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventBusImpl;
@@ -164,7 +164,7 @@ public class DrawingBoardDispatch {
                           "\n" + 
                           "canvas_box MSGAREA 1 1 10 60\n" + 
                           "canvas_title MSGAREA \"My first title\" \n" + 
-                          "canvas_append_text MSGAREA \"The "+Colors.Blu.asString()+"rain "+ControlCode.RCol.asString()+"in spain \\nstays mainly on the plain\"\n" +
+                          "canvas_append_text MSGAREA \"The "+Colors.Blu.asString()+"rain "+Colors.RCol.asString()+"in spain \\nstays mainly on the plain\"\n" +
                           "canvas_append_text MSGAREA \"And where's that blasted plain?\"\n"+
                           "STOP!";
 

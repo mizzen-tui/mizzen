@@ -2,9 +2,9 @@ package dtb.terminalIO.core;
 
 import java.util.TreeSet;
 
-import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.ScreenLineSegment;
 import dtb.terminalIO.util.ElapsedTime;
@@ -153,7 +153,7 @@ public class ScreenCanvasBackend implements CanvasBackend {
         }
         @Override
         public void signal_eol() {
-            screen.add(ControlCode.RCol);
+            screen.add(Colors.RCol);
         }
         
         @Override
@@ -225,11 +225,11 @@ public class ScreenCanvasBackend implements CanvasBackend {
         }
         
         
-        Color lastColor = ControlCode.DEFAULT_COLOR;
+        Color lastColor = Colors.DEFAULT_COLOR;
         
         private void writeSegment(ScreenLineSegment sc) {
             Color scColor = sc.getColors();
-            if (ControlCode.COLOR_COMPARE.compare(lastColor, scColor) != 0) {
+            if (Color.COLOR_COMPARE.compare(lastColor, scColor) != 0) {
               screen.add(scColor);
               lastColor = scColor;
             }
@@ -250,12 +250,12 @@ public class ScreenCanvasBackend implements CanvasBackend {
             boolean doFullUpdate = useFullUpdateAndCountDown();
             if (doFullUpdate) {
                 simpleScreenRefresh();
-                lastColor = ControlCode.DEFAULT_COLOR;
+                lastColor = Colors.DEFAULT_COLOR;
             } else {
 
                 // optimized updates ( send only changed/new segments to actual terminal)
 
-                lastColor = ControlCode.DEFAULT_COLOR;
+                lastColor = Colors.DEFAULT_COLOR;
                 assertNoOverlaps(current);
                 assertNoOverlaps(previous);
 
@@ -289,7 +289,7 @@ public class ScreenCanvasBackend implements CanvasBackend {
                             curCol = sc.getRightMostCol()+1;
                         }
                     }
-                    screen.add( ControlCode.RCol );
+                    screen.add( Colors.RCol );
                     simpleScreenRefresh();
                     screen.home();
                 }
@@ -312,15 +312,13 @@ public class ScreenCanvasBackend implements CanvasBackend {
         public void signal_eol() {
             if (useFullUpdate()) {
                 fullUpdateStrategy.signal_eol();
-                lastColor = ControlCode.DEFAULT_COLOR;
+                lastColor = Colors.DEFAULT_COLOR;
             }
         }
 
         protected void revertToFullUPdateForNext_n_refreshs(int n) {
             previous.clear();   // forces full update on next update
             current.clear();
-            
-//            Logging.info("REVERTING TO FULL SCREEN UPDATES:" + n);
             
             counter = n ;     // # of full screen refreshes (UPDATE_FULL) before 
                               // we revert back to partial (and more optimized) screen updates
@@ -338,7 +336,7 @@ public class ScreenCanvasBackend implements CanvasBackend {
             screenHeight = termDim.getHeight();
             screenWidth = termDim.getWidth();
 
-            // Terminal resizes can create havoc to this screen updater (UPDATE_CHANGED)..
+            // Terminal resizes can create havoc to this (UPDATE_CHANGED) screen updater ..
             // To alleviate this, I force full screen updates (UPDATE_FULL)
             // for the next 5 ( or so .. ) screen refreshes.. this
             // should allow more than enough refresh cycles for the app to

@@ -3,9 +3,8 @@ package dtb.terminalIO.components;
 import java.util.TreeSet;
 import java.util.function.Supplier;
 
-import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
@@ -18,12 +17,16 @@ import dtb.terminalIO.textsegments.ScreenLineSegmentsBuffer;
  * A component that has a defined fixed rectangular size.
  */
 public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Rectangle.Delegate 
-            implements Component<T>, FillOnClearPolicy.Provider, CanResize, EmptyAttributes<T>  {
+                                                                      implements Component<T>, 
+                                                                                 FillOnClearPolicy.Provider, 
+                                                                                 CanResize, 
+                                                                                 EmptyAttributes<T> ,
+                                                                                 HasName<T> {
 
     protected IScreenLineSegmentsBuffer segments   = createSegmentsBuffer();
 
     private boolean                     hasDrawn   = false;
-    private Color                       color      = ControlCode.DEFAULT_COLOR;
+    private Color                       color      = Colors.DEFAULT_COLOR;
     private BlockChars                  blockChars = BlockChars.DEFAULT;
 
     private FillOnClearPolicy<T>    fillPolicy = new FillOnClearPolicy.AbstractImpl<T>(this) {
@@ -40,6 +43,9 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
     private ParentContainer parentContainer;
     
     private Position canvasOffset;
+    
+    private String name;
+
                                                  
     protected IScreenLineSegmentsBuffer createSegmentsBuffer() {
         IScreenLineSegmentsBuffer segmentsBuffer   = new ScreenLineSegmentsBuffer() {
@@ -134,7 +140,7 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
 
     @Override
     public T setColor(Color drawingcolor) {
-        this.color = drawingcolor == null ? FGBGColors.NO_COLOR_SPECIFIED : drawingcolor;
+        this.color = drawingcolor == null ? Colors.FGBGColors.NO_COLOR_SPECIFIED : drawingcolor;
         this.markAsDirty();
         return (T) this;
     }
@@ -212,6 +218,14 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
         return super.toString() + String.valueOf(fillPolicy.toString());
     }
     
+    public String getName() {
+        return this.name;
+    }
+    
+    public T setName(String name) {
+        this.name = name;
+        return (T) this;
+    }
     
     /**
      * Make a component that has the same empty char and empty color.
@@ -245,7 +259,7 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
     public static class DONOTHING extends BoundedComponent<DONOTHING> {
 
         public DONOTHING(Rectangle r) {
-            super(FGBGColors.NO_COLOR_SPECIFIED, r);
+            super(Colors.FGBGColors.NO_COLOR_SPECIFIED, r);
         }
 
         public DONOTHING(int height, int width) {

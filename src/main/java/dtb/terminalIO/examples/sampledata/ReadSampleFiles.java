@@ -5,8 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
-import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.ControlCode.ColorParseSegment;
+import dtb.terminalIO.controlcodes.color.ColorParsingUtils;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.ScreenLineSegment;
 import dtb.terminalIO.textsegments.ScreenLineSegment.UTIL.SegmentsFromStringResult;
@@ -32,7 +31,7 @@ public class ReadSampleFiles {
     public static String readSampleFile(String relativeFileName, boolean stripColors) throws IOException {
         String contents = readSampleFile(relativeFileName);
         if (stripColors) {
-            contents = ControlCode.removeColorCodes(contents);
+            contents = ColorParsingUtils.removeColorCodes(contents);
         }
         return contents;
     }
@@ -42,7 +41,7 @@ public class ReadSampleFiles {
         String text = readSampleFile("acme-white-200.txt", false);
         // System.out.println(text);
         long start = System.currentTimeMillis();
-        List<ColorParseSegment> result = ControlCode.parseColors(text);
+        List<ColorParsingUtils.ColorParseSegment> result = ColorParsingUtils.parseColors(text);
         long elapsed = System.currentTimeMillis() - start;
         System.out.println(result.size() + "    elapsed " + elapsed);
 

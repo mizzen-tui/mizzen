@@ -4,11 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import dtb.terminalIO.components.Composite;
-import dtb.terminalIO.controlcodes.Colors;
-import dtb.terminalIO.controlcodes.ControlCode.BgColor;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
-import dtb.terminalIO.controlcodes.ControlCode.FgColor;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
@@ -23,7 +20,7 @@ public class BarChart extends Composite {
     private List<Double> data;
     private List<String> dataLabels;
     private String[] labelY;
-    private Color plotColor = FGBGColors.NO_COLOR_SPECIFIED;
+    private Color plotColor = Colors.FGBGColors.NO_COLOR_SPECIFIED;
 
     private int labelYSpace;
     private boolean autoLabels;
@@ -35,9 +32,9 @@ public class BarChart extends Composite {
     private double topValue;
     private double scale;
     private char cellChar = ' ';
-    private BgColor barCOLOR;
+    private Colors.BgColor barCOLOR;
     private Color labelCOLOR;
-    private FgColor dataCOLOR;
+    private Colors.FgColor dataCOLOR;
 
     public BarChart(Color color, Dimension d) {
         super(color);
@@ -47,7 +44,7 @@ public class BarChart extends Composite {
         this.barWidth = 3;
         this.barGap = 1;
         barCOLOR = Colors.On_Blu;
-        labelCOLOR = new FGBGColors(Colors.BGre);
+        labelCOLOR = new Colors.FGBGColors(Colors.BGre);
         dataCOLOR = Colors.BYel;
         // this.plotter = new Plotter(color, new Dimension.Simple(d.getHeight()
         // - 3, d.getWidth() - 3));
@@ -86,7 +83,7 @@ public class BarChart extends Composite {
     }
 
     public BarChart(int height, int width) {
-        this(FGBGColors.NO_COLOR_SPECIFIED, new Dimension.Simple(height, width));
+        this(Colors.FGBGColors.NO_COLOR_SPECIFIED, new Dimension.Simple(height, width));
     }
 
     public BarChart addData(double d) {
@@ -131,7 +128,7 @@ public class BarChart extends Composite {
 
         int bottomRow = inner.getBottomMostRow();
 
-        Color c = new FGBGColors(this.barCOLOR);
+        Color c = new Colors.FGBGColors(this.barCOLOR);
 
         // render the bars
         for (int i = 0; i < this.numBar && i < dataLen; i++) {

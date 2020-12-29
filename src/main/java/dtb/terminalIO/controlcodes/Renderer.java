@@ -3,7 +3,6 @@ package dtb.terminalIO.controlcodes;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import dtb.terminalIO.controlcodes.ControlCode.CursorDown;
 import dtb.terminalIO.controlcodes.ControlCodeContext.StringContext;
 
 /**

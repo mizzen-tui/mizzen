@@ -2,7 +2,7 @@ package dtb.terminalIO.components;
 
 import java.util.function.Consumer;
 
-import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.color.Color;
 
 public class HiliterSetComponentColor implements Hiliter {
 

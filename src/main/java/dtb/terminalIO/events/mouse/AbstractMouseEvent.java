@@ -3,7 +3,7 @@ package dtb.terminalIO.events.mouse;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.geom.position.Position;
 
-public class AbstractMouseEvent extends TerminalEvent<Position> {
+class AbstractMouseEvent extends TerminalEvent<Position> {
 
     private static final long serialVersionUID = 4964184233422719L;
 

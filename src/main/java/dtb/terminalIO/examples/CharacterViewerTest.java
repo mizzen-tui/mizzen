@@ -10,8 +10,7 @@ import java.util.function.Consumer;
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
-import dtb.terminalIO.controlcodes.Colors;
-import dtb.terminalIO.controlcodes.ControlCode;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.util.ElapsedTime;
@@ -153,7 +152,7 @@ public class CharacterViewerTest {
         String blueStr = Colors.Blu.asString();
         String whiteStr = Colors.Whi.asString();
         String yellowStr = Colors.IYel.asString();
-        String rcol = ControlCode.RCol.asString();
+        String rcol = Colors.RCol.asString();
 
         for (int ch = 33; ch < 12000; ch++) {
 
@@ -171,7 +170,7 @@ public class CharacterViewerTest {
 
         }
         
-        sb.append("\n\n      --- "+Colors.BIGre.asString() +"done" + ControlCode.RCol.asString()  + "----");
+        sb.append("\n\n      --- "+Colors.BIGre.asString() +"done" + Colors.RCol.asString()  + "----");
 
         handleLine.accept(sb.toString());
     }

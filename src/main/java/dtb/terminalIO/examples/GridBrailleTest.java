@@ -20,10 +20,8 @@ import dtb.terminalIO.components.plot.shape.CompositeShape;
 import dtb.terminalIO.components.plot.shape.RectangleShape;
 import dtb.terminalIO.components.plot.shape.ShapeWithTransform;
 import dtb.terminalIO.components.plot.shape.Triangle;
-import dtb.terminalIO.controlcodes.Colors;
-import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.EventHandlerContainer;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
@@ -101,8 +99,9 @@ public class GridBrailleTest {
             brailleComponent = new Composite();
             brailleComponent.setBounds(bounds.getHeight() - 4, bounds.getWidth() - 4);
             brailleComponent.setBorder(true);
+            brailleComponent.setName("brailleComponent");
 
-            Color textCOLOR = ControlCode.DEFAULT_COLOR;
+            Color textCOLOR = Colors.DEFAULT_COLOR;
             Color textColorBOLD = textCOLOR.bold();
 
             TextComponent tcBrailleChars = new TextComponent(textCOLOR,
@@ -125,9 +124,9 @@ public class GridBrailleTest {
             brailleComponent.add(tcBrailleChars);
             brailleComponent.add(2, 0, tc);
 
-            grid = new BrailleGrid(ControlCode.DEFAULT_COLOR, new Dimension.Simple(brailleComponent.getHeight() - 4,
+            grid = new BrailleGrid(Colors.DEFAULT_COLOR, new Dimension.Simple(brailleComponent.getHeight() - 4,
                     brailleComponent.getWidth() - 4 - tc.getWidth()));
-            grid.setPlotColor(new FGBGColors(Colors.Yel));
+            grid.setPlotColor(new Colors.FGBGColors(Colors.Yel));
 
             brailleComponent.add(new Position.Simple(2, tc.getWidth() + 2), grid);
 
@@ -245,7 +244,7 @@ public class GridBrailleTest {
 
             
             // brailleComponent
-            ButtonBar movementKeys = new ButtonBar(brailleComponent.getColor());
+            ButtonBar movementKeys = new ButtonBar(brailleComponent.getColor()).setName("movementKeys");
             movementKeys.setBorder(true);
             movementKeys.setLeftMostBorderChar((char) 0);
             movementKeys.setRightMostBorderChar((char) 0);
@@ -295,13 +294,15 @@ public class GridBrailleTest {
 
         }
 
-        private KeyStroke KEY_MOVE_UP = Keys.UP_KEYSTROKE;
-        private KeyStroke KEY_MOVE_DOWN = Keys.DOWN_KEYSTROKE;
-        private KeyStroke KEY_MOVE_LEFT = Keys.LEFT_KEYSTROKE;
+        private KeyStroke KEY_MOVE_UP    = Keys.UP_KEYSTROKE;
+        private KeyStroke KEY_MOVE_DOWN  = Keys.DOWN_KEYSTROKE;
+        private KeyStroke KEY_MOVE_LEFT  = Keys.LEFT_KEYSTROKE;
         private KeyStroke KEY_MOVE_RIGHT = Keys.RIGHT_KEYSTROKE;
 
-        public void setupMpvementKeys(KeyStroke KEY_MOVE_UP, KeyStroke KEY_MOVE_DOWN, KeyStroke KEY_MOVE_LEFT,
-                KeyStroke KEY_MOVE_RIGHT) {
+        public void setupMovementKeys(KeyStroke KEY_MOVE_UP, 
+                                      KeyStroke KEY_MOVE_DOWN, 
+                                      KeyStroke KEY_MOVE_LEFT,
+                                      KeyStroke KEY_MOVE_RIGHT) {
             this.KEY_MOVE_UP = KEY_MOVE_UP;
             this.KEY_MOVE_DOWN = KEY_MOVE_DOWN;
             this.KEY_MOVE_LEFT = KEY_MOVE_LEFT;

@@ -9,9 +9,7 @@ import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.plot.Plotter;
 import dtb.terminalIO.components.plot.Plotter.Plot;
-import dtb.terminalIO.controlcodes.Colors;
-import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.geom.Dimension;
 
@@ -26,7 +24,7 @@ public class RandomPlotsTest {
 
         Composite textC = new Composite()
                                 .setBounds(25, 50 )
-                                .setTitle(new FGBGColors(Colors.Red, Colors.On_IYel), " Poem ")
+                                .setTitle(new Colors.FGBGColors(Colors.Red, Colors.On_IYel), " Poem ")
                                 .add(new TextComponent(null, "The rain in Spain\n" + 
                                                              "stays mainly on the plain\n" + 
                                                              "and where's that blasted plain?\n"+
@@ -35,7 +33,7 @@ public class RandomPlotsTest {
         
         Composite text2 = new Composite()
                 .setBounds(25, 50 )
-                .setTitle(new FGBGColors(Colors.Red, Colors.On_IYel), " Poem ")
+                .setTitle(new Colors.FGBGColors(Colors.Red, Colors.On_IYel), " Poem ")
                 .add(new TextComponent(null, "In Spain .. In Spain\n" + 
                                              "The Rain in Spain stays \n" + 
                                              "mainly on the plain!"));
@@ -46,11 +44,11 @@ public class RandomPlotsTest {
 
         Composite box = new Composite().setPosition(5, 40).add(new BoundedComponent.DONOTHING(10,20)).setBorder(true);
         
-        Plotter plotter = new Plotter(ControlCode.DEFAULT_COLOR,12,20)
+        Plotter plotter = new Plotter(Colors.DEFAULT_COLOR,12,20)
                 .addPlot(1,2)
                 .addPlot(2, 2)
                 .addPlot(3, 3)
-                .addPlot(4, 6,'+', new FGBGColors(Colors.BCya))
+                .addPlot(4, 6,'+', new Colors.FGBGColors(Colors.BCya))
                 .addPlot(5, 7);
         
         Composite box2 = new Composite()

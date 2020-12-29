@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
@@ -16,7 +16,6 @@ import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
-import dtb.terminalIO.events.mouse.GetComponentAtOffset;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
@@ -28,9 +27,14 @@ import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
  * Useful for building Composite components with focusable widgets..  ie Forms.
  * 
  */
-public class ComponentWithFocusManager extends AbstractComponent<ComponentWithFocusManager> 
-     implements ParentContainer, HasTitleAndBorder<ComponentWithFocusManager>, CanResize, 
-                FocusManager, GetComponentAtOffset, EventHandlerContainer {
+public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>> 
+                     extends AbstractComponent<T> 
+                     implements ParentContainer, 
+                                HasTitleAndBorder<T>, 
+                                CanResize, 
+                                FocusManager, 
+                                GetComponentAtOffset, 
+                                EventHandlerContainer {
     
     private Composite container;
     private FocusManager focusManager;
@@ -120,20 +124,20 @@ public class ComponentWithFocusManager extends AbstractComponent<ComponentWithFo
         return chainedEventHandler;
     }
 
-    public ComponentWithFocusManager setEmptyChar(char emptyChar) {
+    public T setEmptyChar(char emptyChar) {
         super.setEmptyChar(emptyChar);
         if (getContainer() != null) {
             getContainer().setEmptyChar(emptyChar);
         }
-        return this;
+        return (T) this;
     }
 
-    public ComponentWithFocusManager setEmptyColor(Color emptyColor) {
+    public T setEmptyColor(Color emptyColor) {
         super.setEmptyColor(emptyColor);
         if (getContainer() != null) {
             getContainer().setEmptyColor(emptyColor);
         }
-        return this;
+        return (T) this;
     }
 
     public void markAsDirty() {
@@ -273,9 +277,9 @@ public class ComponentWithFocusManager extends AbstractComponent<ComponentWithFo
         container.resize(d);
     }
 
-    public ComponentWithFocusManager setOnResize(Consumer<Dimension> onResize) {
+    public T setOnResize(Consumer<Dimension> onResize) {
         container.setOnResize(onResize);
-        return this;
+        return (T) this;
     }
 
     @Override
@@ -285,21 +289,21 @@ public class ComponentWithFocusManager extends AbstractComponent<ComponentWithFo
     
     
     @Override
-    public ComponentWithFocusManager setBorder(boolean hasBorder) {
+    public T setBorder(boolean hasBorder) {
         container.setBorder(hasBorder);
-        return this;
+        return (T) this;
     }
 
     @Override
-    public ComponentWithFocusManager setBorderColor(Color borderColors) {
+    public T setBorderColor(Color borderColors) {
         container.setBorderColor(borderColors);
-        return this;
+        return (T) this;
     }
 
     @Override
-    public ComponentWithFocusManager setTitle(Color titleColors, String title) {
+    public T setTitle(Color titleColors, String title) {
         container.setTitle(titleColors, title);
-        return this;
+        return (T) this;
     }
     
     public String getTitle() {
@@ -307,9 +311,9 @@ public class ComponentWithFocusManager extends AbstractComponent<ComponentWithFo
     }
 
     @Override
-    public ComponentWithFocusManager setTitle(String title) {
+    public T setTitle(String title) {
         container.setTitle(title);
-        return this;
+        return (T) this;
     }
 
     @Override

@@ -1,18 +1,21 @@
 package dtb.terminalIO.components;
 
-import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegmentsBuffer;
 
-public abstract class AbstractComponent<T extends AbstractComponent<?>> implements Component<T>, FillOnClearPolicy.Provider, EmptyAttributes<T> {
+public abstract class AbstractComponent<T extends AbstractComponent<?>> implements 
+                                                                         Component<T>, 
+                                                                         FillOnClearPolicy.Provider, 
+                                                                         EmptyAttributes<T>,
+                                                                         HasName<T>{
 
     private IScreenLineSegmentsBuffer segments   = new ScreenLineSegmentsBuffer();
 
-    private Color                     color      = ControlCode.DEFAULT_COLOR;
+    private Color                     color      = Colors.DEFAULT_COLOR;
 
     BlockChars                        blockChars = BlockChars.DEFAULT;
     
@@ -33,9 +36,11 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
     boolean hasDrawn = false;
 
     private Position canvasOffset;
+    
+    private String name;
 
     protected AbstractComponent(Color color) {
-        this.color = color == null? FGBGColors.NO_COLOR_SPECIFIED : color ;
+        this.color = color == null? Colors.FGBGColors.NO_COLOR_SPECIFIED : color ;
         this.setEmptyColor(this.color);
     }
 
@@ -91,7 +96,7 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
 
     @Override
     public T setColor(Color drawingcolor) {
-        this.color = drawingcolor == null ? FGBGColors.NO_COLOR_SPECIFIED : drawingcolor;
+        this.color = drawingcolor == null ? Colors.FGBGColors.NO_COLOR_SPECIFIED : drawingcolor;
         this.markAsDirty();
         return (T) this;
     }
@@ -113,6 +118,14 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
         return sb.toString();
     }
     
+    public String getName() {
+        return this.name;
+    }
+    
+    public T setName(String name) {
+        this.name = name;
+        return (T) this;
+    }
     
     public BlockChars getBlockChars() {
         return blockChars;

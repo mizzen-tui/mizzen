@@ -6,9 +6,8 @@ import java.util.function.Consumer;
 import dtb.terminalIO.components.Box;
 import dtb.terminalIO.components.RectangleComponent;
 import dtb.terminalIO.components.TextComponent;
-import dtb.terminalIO.controlcodes.Colors;
 import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.TerminalScreen;
 import dtb.terminalIO.events.EventBus;
@@ -38,12 +37,12 @@ public class TerminalResizeTest {
         
         master_canvas.setEmptyChar(' ');
 
-        FGBGColors drawingcolor = new FGBGColors(Colors.IYel, null);
+        Colors.FGBGColors drawingcolor = new Colors.FGBGColors(Colors.IYel, null);
 
         
         Box componentBox1 = new Box(drawingcolor, 10);
 
-        RectangleComponent componentBox2 = new RectangleComponent(new FGBGColors(Colors.IRed, null), 10, 20);
+        RectangleComponent componentBox2 = new RectangleComponent(new Colors.FGBGColors(Colors.IRed, null), 10, 20);
         
         TextComponent stats = new TextComponent("Size = : " + new Dimension.Simple(master_canvas).toString()+
                                                 "\n                              "+

@@ -6,7 +6,7 @@ package dtb.terminalIO.events;
  * 
  * <p/>
  * 
- * ie If there is not keyboard activity then an OnIdleEvent can be
+ * ie If there is no keyboard activity then an OnIdleEvent can be
  * raised to do something in the "background".
  * 
  * @author david

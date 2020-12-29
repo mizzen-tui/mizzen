@@ -1,9 +1,9 @@
 package dtb.terminalIO.core;
 
 import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.ControlCodeContext;
 import dtb.terminalIO.controlcodes.ControlCodeContext.StringContext;
 import dtb.terminalIO.controlcodes.Renderer.RendererBuffer;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.ScreenLineSegment;
 
@@ -24,7 +24,7 @@ public class StringCanvasBackEnd implements CanvasBackend {
 
     @Override
     public void signal_eol() {
-        renderer.append(ControlCode.RCol);
+        renderer.append(Colors.RCol);
         
     }
 

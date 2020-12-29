@@ -1,5 +1,13 @@
 package dtb.terminalIO.traverse;
 
+/**
+ * Adapts an object an implementation HasChildren.
+ * 
+ * Useful when object does not directly implement HasChildren but you want to 'adapt' (wrap) it
+ * so that the resulting wrapper does.
+ * 
+ * @param <T>
+ */
 public interface HasChildrenAdapter<T> {
     
     HasChildren<? extends T> asHasChildren(T parent);

@@ -1,6 +1,6 @@
 package dtb.terminalIO.components;
 
-import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.CanvasBackend;
 import dtb.terminalIO.geom.Dimension;

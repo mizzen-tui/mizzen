@@ -5,8 +5,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.StringJoiner;
 
-import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.ColorProvider;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.RequestShowCursorEvent;
 import dtb.terminalIO.geom.Rectangle;
@@ -28,7 +28,11 @@ import dtb.terminalIO.traverse.FindPathToTarget;
  * @author dbalme
  *
  */
-public interface Component<T extends Component<?>> extends IScreenLineSegmentsBuffer.Provider , DirtyFlag, ControlCode.ColorProvider, Rectangle {
+public interface Component<T extends Component<?>> 
+                                extends IScreenLineSegmentsBuffer.Provider , 
+                                        DirtyFlag, 
+                                        ColorProvider, 
+                                        Rectangle {
 
     T setColor(Color drawingcolor);
     
@@ -96,13 +100,24 @@ public interface Component<T extends Component<?>> extends IScreenLineSegmentsBu
             parentComponent.markAsDirty();
         }
         
-        static private boolean isAttachedDirectlyToCanvas(Component<?> component) {
+        
+        static public boolean isAttachedDirectlyToCanvas(Component<?> component) {
             Position canvasOffset = component.getCanvasOffset();
             
             if (canvasOffset != null) { // not null means attached directly to canvas
                 return true;
             }
             return false;
+        }
+        
+        static public Component<?> getRootPanelOf(Component<?> component) {
+            List<Component<?>> path = pathToCanvas(component);
+            
+            if (path == null || path.size()<1) {
+                return null;
+            }
+
+            return path.get(path.size()-1);
         }
         
         static public List<Component<?>> pathToCanvas(Component<?> component) {
@@ -136,12 +151,12 @@ public interface Component<T extends Component<?>> extends IScreenLineSegmentsBu
             return false;
         }
 
-        // useful for debugging
+        // useful for debugging and when throwing some exceptions..
         static public String pathToCanvasAsString(Component<?> component) {
             List<Component<?>> path = pathToCanvas(component);
             StringJoiner sj = new StringJoiner(" -> ");
             for (Component<?> c : path) {
-                sj.add( c.getClass().getSimpleName() );
+                sj.add( HasName.UTIL.getName(c) );
             }
             
             if ( isAttachedDirectlyToCanvas(path.get(path.size()-1))) {

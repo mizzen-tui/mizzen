@@ -11,7 +11,11 @@ import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 
 /**
- * Handles {@link KeyEvent}s
+ * Handles {@link KeyEvent}s.
+ * 
+ * When a user presses a key, a KeyEvent is raised and will be handled by 
+ * a KeyInputEventHandler.
+ * 
  */
 public class KeyInputEventHandler extends ConditionalEventHandler.Impl {
 

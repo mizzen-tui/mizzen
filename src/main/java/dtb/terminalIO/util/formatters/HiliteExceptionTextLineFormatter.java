@@ -1,9 +1,7 @@
 package dtb.terminalIO.util.formatters;
 
-import dtb.terminalIO.controlcodes.Colors;
-import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors;
 
 public class HiliteExceptionTextLineFormatter implements TextLineFormatter {
 
@@ -22,7 +20,7 @@ public class HiliteExceptionTextLineFormatter implements TextLineFormatter {
     }
 
     public HiliteExceptionTextLineFormatter() {
-        this(new FGBGColors(Colors.BIRed, Colors.On_IBla), Colors.Red);
+        this(new Colors.FGBGColors(Colors.BIRed, Colors.On_IBla), Colors.Red);
     }
 
     @Override
@@ -35,7 +33,7 @@ public class HiliteExceptionTextLineFormatter implements TextLineFormatter {
             if (line.startsWith("ERROR")) {
                 state = "ERROR";
                 colorONStr = bannerColor.asString();
-                colorOFFStr = ControlCode.RCol.asString();
+                colorOFFStr = Colors.RCol.asString();
             }
 
         } else {
@@ -50,7 +48,7 @@ public class HiliteExceptionTextLineFormatter implements TextLineFormatter {
                 if (line.contains("at ") || line.contains("Exception") || line.contains(".javaXX:")) {
                     state = "AT";
                     colorONStr = this.atColor.asString();
-                    colorOFFStr = ControlCode.RCol.asString();
+                    colorOFFStr = Colors.RCol.asString();
                 } else {
                     state = null;
                 }

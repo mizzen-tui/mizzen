@@ -8,7 +8,7 @@ import dtb.terminalIO.components.HorizontalLine;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.VerticalLine;
 import dtb.terminalIO.components.BlockChars.BlockHiliter;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.ToFocusable;
 import dtb.terminalIO.geom.Dimension;
@@ -80,13 +80,14 @@ public class TabComponent extends BoundedComponent<TabComponent> implements ToFo
         segments.merge(tc.getSegmentsBuffer());
 
         segments.merge(makeChildComponent(
-                () -> new CharComponent(tabColor, this.getRow(), this.getCol(), this.getBlockChars().getTOP_LEFT()))
-                        .getSegmentsBuffer());
+                                            () -> new CharComponent(tabColor, this.getRow(), this.getCol(), this.getBlockChars().getTOP_LEFT()))
+                                                    .getSegmentsBuffer());
         segments.merge(makeChildComponent(() -> new CharComponent(tabColor, this.getRow(), this.getRightMostCol(),
-                this.getBlockChars().getTOP_RIGHT())).getSegmentsBuffer());
+                                                    this.getBlockChars().getTOP_RIGHT())).getSegmentsBuffer());
+
         segments.merge(makeChildComponent(() -> new CharComponent(tabColor, this.getBottomMostRow(), this.getCol(),
-                active ? this.getBlockChars().getBOTTOM_RIGHT() : this.getBlockChars().getHORIZONTAL_UP()))
-                        .getSegmentsBuffer());
+                                                                    active ? this.getBlockChars().getBOTTOM_RIGHT() : this.getBlockChars().getHORIZONTAL_UP()))
+                                                                            .getSegmentsBuffer());
         segments.merge(
                 makeChildComponent(() -> new CharComponent(tabColor, this.getBottomMostRow(), this.getRightMostCol(),
                         active ? this.getBlockChars().getBOTTOM_LEFT() : this.getBlockChars().getHORIZONTAL_UP()))

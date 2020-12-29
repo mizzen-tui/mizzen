@@ -7,7 +7,7 @@ import java.util.function.Function;
 import dtb.terminalIO.components.BlockChars;
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.TextComponent;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
+import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 

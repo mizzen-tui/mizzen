@@ -7,8 +7,7 @@ import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.input.MultiLineTextInput;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
-import dtb.terminalIO.controlcodes.Colors;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.Keys;
@@ -30,7 +29,7 @@ public class MultiLineTextInputTest {
 
             MultiLineTextInput mTextBox = new MultiLineTextInput(); mTextBox.setText("Silly Sally sold\nSeaShells at the seashore\nWhat a silly thing to do!");
 
-            mTextBox.setColor(  new FGBGColors( Colors.BBlu, Colors.On_Bla  )  );
+            mTextBox.setColor(  new Colors.FGBGColors( Colors.BBlu, Colors.On_Bla  )  );
 
             ScrollableComponent sc = new ScrollableComponent(Colors.Whi, 
                                                              (Dimension)tApp.getMainApplicationPanel(), 

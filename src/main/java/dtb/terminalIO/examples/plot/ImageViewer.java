@@ -2,7 +2,6 @@ package dtb.terminalIO.examples.plot;
 
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
-import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.RenderingHints;
@@ -31,11 +30,11 @@ import dtb.terminalIO.components.input.DisplayableValue.StringDisplayValue;
 import dtb.terminalIO.components.input.DropdownListBox;
 import dtb.terminalIO.components.input.ListBox;
 import dtb.terminalIO.components.plot.PointPlotter;
-import dtb.terminalIO.controlcodes.Colors;
-import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.ControlCode.BgColor;
-import dtb.terminalIO.controlcodes.ControlCode.ColorFromCodes;
-import dtb.terminalIO.controlcodes.ControlCode.FGBGColors;
+import dtb.terminalIO.controlcodes.color.Colors;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors.BgColor;
+import dtb.terminalIO.controlcodes.color.Colors.ColorFromCodes;
+import dtb.terminalIO.controlcodes.color.Colors.FGBGColors;
 import dtb.terminalIO.core.ScreenCanvasBackend;
 import dtb.terminalIO.core.ScreenCanvasBackend.UpdateStrategy;
 import dtb.terminalIO.events.AbstractTimedRequestedController;
@@ -265,9 +264,9 @@ public class ImageViewer {
                         
                         formPanel.add(plotBackgroundsListBox);
                         
-                        List<DisplayableValue<ControlCode.Color>> backgroundColorForPlots = new ArrayList<DisplayableValue<ControlCode.Color>>();
+                        List<DisplayableValue<Color>> backgroundColorForPlots = new ArrayList<DisplayableValue<Color>>();
                         
-                        backgroundColorForPlots.add(ControlCode.RCol.asDisplayableValue());
+                        backgroundColorForPlots.add(Colors.RCol.asDisplayableValue());
                         backgroundColorForPlots.add(Colors.On_IWhi.asDisplayableValue());
                         backgroundColorForPlots.add(Colors.On_Whi.asDisplayableValue());
                         backgroundColorForPlots.add(Colors.On_Bla.asDisplayableValue());
@@ -275,9 +274,9 @@ public class ImageViewer {
                         backgroundColorForPlots.add(Colors.On_Blu.asDisplayableValue());
                         backgroundColorForPlots.add(Colors.On_IBlu.asDisplayableValue());
 
-                        ListBox<ControlCode.Color> plotFillBackgroundsListBox = new ListBox<ControlCode.Color>();
+                        ListBox<Color> plotFillBackgroundsListBox = new ListBox<Color>();
                         plotFillBackgroundsListBox.setItems(backgroundColorForPlots);
-                        plotFillBackgroundsListBox.setSelected( plotFillBackgroundsListBox.indexOf(ControlCode.RCol) );
+                        plotFillBackgroundsListBox.setSelected( plotFillBackgroundsListBox.indexOf(Colors.RCol) );
                         plotFillBackgroundsListBox.setTitle("Plot-BgColor");
                         
                         formPanel.add(plotFillBackgroundsListBox);
@@ -443,7 +442,7 @@ public class ImageViewer {
     static BufferedImage getCircle(int width, int height) {
 
         BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-        Color transparent = new Color(0x00FFFFFF, true);
+        java.awt.Color transparent = new java.awt.Color(0x00FFFFFF, true);
 
         Graphics2D g = (Graphics2D) bufferedImage.getGraphics();
         //trying to make the bufferedImage transparent 
@@ -453,7 +452,7 @@ public class ImageViewer {
         g.fillRect(0, 0, bufferedImage.getWidth(), bufferedImage.getHeight());
         //drawing the circle 
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g.setColor(Color.black);
+        g.setColor(java.awt.Color.black);
         
         g.setStroke(new BasicStroke(1));        
         g.drawOval(0, 0, 100, 100);
@@ -476,7 +475,7 @@ public class ImageViewer {
     @FunctionalInterface
     static interface RGBToAnsiColorControlCode {
         
-        ControlCode.Color toControlCode(int r,int g, int b);
+        Color toControlCode(int r,int g, int b);
         
     }
 
@@ -487,11 +486,11 @@ public class ImageViewer {
     static class PictureBackgroundImpl implements PictureBackground {
 
         char  emptyChar = ' ';
-        ControlCode.Color emptyColor = ControlCode.DEFAULT_COLOR;
+        Color emptyColor = Colors.DEFAULT_COLOR;
         boolean fillOnEmpty = false;
         String name;
         
-        public PictureBackgroundImpl(char emptyChar, dtb.terminalIO.controlcodes.ControlCode.Color emptyColor,
+        public PictureBackgroundImpl(char emptyChar, dtb.terminalIO.controlcodes.color.Color emptyColor,
                 boolean fillOnEmpty, String name) {
             super();
             this.emptyChar = emptyChar;
@@ -532,9 +531,9 @@ public class ImageViewer {
     }
     
     static PictureBackgroundImpl background_NOFILL = new PictureBackgroundImpl(' ', null, false,"None");
-    static PictureBackgroundImpl background_FILL_SOLID_WHITE = new PictureBackgroundImpl(' ', new FGBGColors(Colors.BIWhi, Colors.On_IWhi), true,"Solid white");
-    static PictureBackgroundImpl background_FILL_SOLID_BLACK = new PictureBackgroundImpl(' ', new FGBGColors(Colors.Bla, Colors.On_Bla), true, "Solid black");
-    static PictureBackgroundImpl background_FILL_SOLID_BLUE = new PictureBackgroundImpl(' ', new FGBGColors(Colors.Blu, Colors.On_Blu), true, "Solid blue");
+    static PictureBackgroundImpl background_FILL_SOLID_WHITE = new PictureBackgroundImpl(' ', new Colors.FGBGColors(Colors.BIWhi, Colors.On_IWhi), true,"Solid white");
+    static PictureBackgroundImpl background_FILL_SOLID_BLACK = new PictureBackgroundImpl(' ', new Colors.FGBGColors(Colors.Bla, Colors.On_Bla), true, "Solid black");
+    static PictureBackgroundImpl background_FILL_SOLID_BLUE = new PictureBackgroundImpl(' ', new Colors.FGBGColors(Colors.Blu, Colors.On_Blu), true, "Solid blue");
 
     static PictureBackgroundImpl background_FILL_DOTS_WHITE = new PictureBackgroundImpl('░', Colors.BIWhi, true,"Dippled white");
     static PictureBackgroundImpl background_FILL_DOTS_BLACK = new PictureBackgroundImpl('░', Colors.Bla, true, "Dippled black");
@@ -601,7 +600,7 @@ public class ImageViewer {
         }
         // orange
         if (r < 240 && g >= 170 && b < 100) {
-            return new FGBGColors(Colors.Bla, Colors.On_Yel);
+            return new Colors.FGBGColors(Colors.Bla, Colors.On_Yel);
         }
         
         return Colors.BBla;
@@ -613,7 +612,7 @@ public class ImageViewer {
                           int height, 
                           RGBToAnsiColorControlCode colorMap,
                           RGBPlotPredicate toPlotOrNot, 
-                          ControlCode.Color plotBGColor ) throws InterruptedException {
+                          Color plotBGColor ) throws InterruptedException {
 
         int[] pixels = new int[width * height];
         PixelGrabber pxGrabber = new PixelGrabber(image, 0, 0, width, height, pixels, 0, width);
@@ -630,9 +629,9 @@ public class ImageViewer {
                
                //if (pixel != -1 && pixel != 0) {
                if (toPlotOrNot.test(red, green, blue)) {
-                   ControlCode.Color mappedColor = colorMap.toControlCode(red, blue, green);
-                   if (plotBGColor != null && plotBGColor instanceof BgColor) {
-                       mappedColor = ColorFromCodes.instance(mappedColor).appendCodes(plotBGColor);
+                   Color mappedColor = colorMap.toControlCode(red, blue, green);
+                   if (plotBGColor != null && plotBGColor instanceof Colors.BgColor) {
+                       mappedColor = Colors.ColorFromCodes.instance(mappedColor).appendCodes(plotBGColor);
                    }
                    plotter.setColor(mappedColor);
                    plotter.plot(col, row);

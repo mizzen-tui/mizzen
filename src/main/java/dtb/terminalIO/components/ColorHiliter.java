@@ -1,9 +1,8 @@
 package dtb.terminalIO.components;
 
-import dtb.terminalIO.controlcodes.ColorTransform;
-import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.ControlCode.Color;
-import dtb.terminalIO.controlcodes.ControlCode.ColorProvider;
+import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.ColorProvider;
+import dtb.terminalIO.controlcodes.color.ColorTransform;
 
 /**
  * A hilite action that takes a color and transforms it to
@@ -13,10 +12,10 @@ public class ColorHiliter implements Hiliter, ColorProvider {
     
     private boolean hilited = false;
     
-    private ControlCode.ColorProvider colorToHilite;
+    private ColorProvider colorToHilite;
     private ColorTransform colorHilitedTransform = (color)->color.bold();
 
-    public ColorHiliter(ControlCode.ColorProvider colorProvider) {
+    public ColorHiliter(ColorProvider colorProvider) {
         this.colorToHilite = colorProvider;
     }
     
