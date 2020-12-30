@@ -73,6 +73,18 @@ public interface Rectangle extends Position, Dimension, Movable {
         return true;
     }
 
+    public default boolean containsPosition(int row, int col) {
+        if (col < this.getCol())
+            return false;
+        if (row < this.getRow())
+            return false;
+        if (col > this.getRightMostCol())
+            return false;
+        if (row > this.getBottomMostRow())
+            return false;
+        return true;
+    }
+
     public default boolean contains(Rectangle other) {
         if (other.getCol() < this.getCol())
             return false;

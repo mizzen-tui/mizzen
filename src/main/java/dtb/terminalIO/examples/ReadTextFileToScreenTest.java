@@ -35,7 +35,7 @@ public class ReadTextFileToScreenTest {
         String fileData = getFileData(args);
         
         new TUIApp(args)
-        //.setCanvasSize(24, 100)
+
         .setEmptyChar(' ')
         .setDefaultMainApplicationPanel()
         .confirmOnExit()
@@ -125,7 +125,7 @@ public class ReadTextFileToScreenTest {
             return genTextData();
         }
 
-     // TODO: validation required (file exists etc)
+        // TODO: validation required (file exists etc)
 
         byte[] fileByteData = Files.readAllBytes(Paths.get(fileName));
 

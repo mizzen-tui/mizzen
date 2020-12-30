@@ -30,11 +30,8 @@ import dtb.terminalIO.components.input.DisplayableValue.StringDisplayValue;
 import dtb.terminalIO.components.input.DropdownListBox;
 import dtb.terminalIO.components.input.ListBox;
 import dtb.terminalIO.components.plot.PointPlotter;
-import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.controlcodes.color.Color;
-import dtb.terminalIO.controlcodes.color.Colors.BgColor;
-import dtb.terminalIO.controlcodes.color.Colors.ColorFromCodes;
-import dtb.terminalIO.controlcodes.color.Colors.FGBGColors;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.core.ScreenCanvasBackend;
 import dtb.terminalIO.core.ScreenCanvasBackend.UpdateStrategy;
 import dtb.terminalIO.events.AbstractTimedRequestedController;
@@ -132,16 +129,6 @@ public class ImageViewer {
                         mainPanel.add(formPanel);
                         
                         Map<String,String> images = imageFiles(null);
-//                        images.put("cheoyLee.png", "/home/dbalme/workspace/dtbTerminalIO/cheoyLee.png");
-//                        images.put("Acme.jpg", "/home/dbalme/workspace/dtbTerminalIO/Acme.jpg");
-//                        images.put("wb48.gif", "/home/dbalme/eclipse/configuration/org.eclipse.osgi/388/0/.cp/themes/purpleMesh/graphics/icons/ctool/wb48.gif");
-//                        images.put("roltSmall.jpg", "/home/dbalme/workspace/dtbTerminalIO/roltSmall.jpg");
-//                        images.put("r-olt-dots1.png","/home/dbalme/workspace/dtbTerminalIO/r-olt-dots1.png");
-//                        images.put("smallrolt2.png", "/home/dbalme/workspace/dtbTerminalIO/smallrolt2.png");
-//                        images.put("DavidHeadShot.jpg", "/home/dbalme/workspace/dtbTerminalIO/DavidHeadShot.jpg");
-//                        images.put("roltLarge.jpg", "/home/dbalme/workspace/dtbTerminalIO/roltLarge.jpg");
-//                        images.put("roltLargeEdgeDetection.png", "/home/dbalme/workspace/dtbTerminalIO/roltLargeEdgeDetection.png");
-//                        images.put("smiley1.jpg", "/home/dbalme/workspace/dtbTerminalIO/smiley1.jpg");
 
                         ListBox<String> imagesListbox = new ListBox<String>(StringDisplayValue.fromStringValues(images));
                         imagesListbox.setTitle("Images");

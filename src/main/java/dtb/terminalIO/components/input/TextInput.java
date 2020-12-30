@@ -288,20 +288,10 @@ public class TextInput extends BoundedComponent<TextInput>
         return this;
     }
 
-//    public TextInput prependEventHandler(ConditionalEventHandler eventHandler) {
-//        this.getChainedEventHandler().prependEventHandler(eventHandler);
-//        return this;
-//    }
-
-    public TextInput appendEventHandler(ConditionalEventHandler eventHandler) {
+    private TextInput appendEventHandler(ConditionalEventHandler eventHandler) {
         this.getChainedEventHandler().appendEventHandler(eventHandler);
         return this;
     }
-//
-//    public TextInput removeEventHandler(ConditionalEventHandler eventHandler) {
-//        this.getChainedEventHandler().removeEventHandler(eventHandler);
-//        return this;
-//    }
 
     @Override
     public void setFocus(boolean focus, EventBus eventBus) {
@@ -390,7 +380,7 @@ public class TextInput extends BoundedComponent<TextInput>
                 return false;
             }
         }, (te) -> {
-            // then probably a simple char - so lets see if its ascii
+            // then probably a simple char - so lets see if its ASCII
             // TODO: I have discovered a problem ( try CTRL-UP ) it generates
             // multiple keystroke events - which is incorrect - issue with key input parser
             // dont try to handle this bug here - do it in the parser

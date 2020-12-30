@@ -37,7 +37,7 @@ public class Plotter extends BoundedComponent<Plotter> {
     }
 
     public Plotter addPlot(int row, int col, char plotChar, Color color) {
-        if (!this.containsPosition(new Position.Simple(row, col))) {
+        if (!this.containsPosition(row, col)) {
             // throw new IllegalArgumentException(String.format("Bad plot! row %d %d not in
             // range %s", row, col, String.valueOf(this)));
             color = new Colors.FGBGColors(Colors.IRed);

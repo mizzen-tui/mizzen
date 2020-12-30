@@ -567,6 +567,7 @@ public class Colors {
     }
     
     static public Color fromRGBToGreyScale(int r, int g, int b) {
+        // take the average of all 3 colors -> translates to grey scale.. who knew?
         int h = (r / 3 + g / 3 + b / 3);
         return fromRGB(h, h, h);
     }
