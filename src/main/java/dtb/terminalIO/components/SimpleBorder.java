@@ -20,7 +20,7 @@ import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
  *
  */
 public class SimpleBorder extends BoundedComponent<SimpleBorder>
-        implements HasTitleAndBorder<SimpleBorder>, ParentContainer {
+                          implements HasTitleAndBorder<SimpleBorder>, ParentContainer {
 
     private RectangleComponent border;
     private TextComponent titleComponent;
@@ -81,7 +81,10 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>
 
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
-        segments.merge(this.border.getSegmentsBuffer());
+        // contract:  segments have already benn cleared
+        //segments.merge(this.border.getSegmentsBuffer());
+        // do a fast add of border
+        segments.getSegments().addAll( this.border.getSegmentsBuffer().getSegments() );
         if (this.getTitle() != null) {
             if (titleComponent == null) {
                 titleComponent = makeChildComponent(() -> new TextComponent(getTitleColor(), getTitle()));
@@ -89,6 +92,7 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>
                     titlePosition = PositionRelativeFactory.fromAlign(this.titleAlign, this, titleComponent, 1);
                 }
             }
+            // need to do a "smart(slow) merge" here
             segments.mergeAt(titlePosition, titleComponent.getSegmentsBuffer());
         }
     }

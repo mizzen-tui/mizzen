@@ -1,5 +1,7 @@
 package dtb.terminalIO.components;
 
+import java.util.Collection;
+
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.core.CursorPos;
 import dtb.terminalIO.geom.Dimension;
@@ -32,9 +34,11 @@ public class VerticalLine extends BoundedComponent<VerticalLine> {
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
         int bottomRow = this.getBottomMostRow();
         String vertCharStr = String.valueOf(this.verticalLineChar != 0 ? this.verticalLineChar : this.getBlockChars().getVERTICAL_LINE());
+        Collection<ScreenLineSegment> newSegments = ScreenLineSegment.UTIL.makeCollection(null);
         for (int row = this.getRow(); row <= bottomRow; row++) {
             ScreenLineSegment dot = new SegmentImpl(color, new CursorPos(row, getCol()), -1, vertCharStr);
-            segments.add(dot);
+            newSegments.add(dot);
         }
+        segments.clearAndMerge(newSegments);
     }
 }

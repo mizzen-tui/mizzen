@@ -309,8 +309,8 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
     }
 
     @Override
-    protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
-        segments.merge(this.container.getSegmentsBuffer());
+    protected void draw(Color color, IScreenLineSegmentsBuffer mySegments) {
+        mySegments.getSegments().addAll(this.container.getSegmentsBuffer().getSegments());
     }
 
     @Override

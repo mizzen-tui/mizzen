@@ -19,7 +19,10 @@ import dtb.terminalIO.textsegments.ScreenLineSegment;
  * A component with child components
  */
 public class Composite extends AbstractComponent<Composite>
-        implements ChildComponentManager<Composite>, HasTitleAndBorder<Composite>, CanResize, GetComponentAtOffset {
+                       implements ChildComponentManager<Composite>, 
+                                  HasTitleAndBorder<Composite>, 
+                                  CanResize, 
+                                  GetComponentAtOffset {
 
     private SimpleBorder border;
     protected boolean boundsFixed = false;
@@ -385,10 +388,14 @@ public class Composite extends AbstractComponent<Composite>
     }
     
 
-    public Composite remove(Component<?> component) {
+    private void removeOneComponent(Component<?> component) {
         ComponentWithOffset child = findChildOrFail(component, "remove");
         removeChild(child);
         child.component.setParentContainer(null);
+    }
+
+    public Composite remove(Component<?> component) {
+        removeOneComponent(component);
         fullrecalcDim();
         markAsDirty();
         return this;
@@ -579,8 +586,10 @@ public class Composite extends AbstractComponent<Composite>
         List<ComponentWithOffset> copiedChildren = new ArrayList<ComponentWithOffset>(this.children);
 
         for (ComponentWithOffset child : copiedChildren) {
-            this.remove(child.component);
+            removeOneComponent(child.component);
         }
+        fullrecalcDim();
+        markAsDirty();
 
         this.clear();
     }

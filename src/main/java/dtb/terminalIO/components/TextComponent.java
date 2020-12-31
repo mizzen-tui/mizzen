@@ -109,10 +109,10 @@ public class TextComponent extends BoundedComponent<TextComponent> {
         if (parsedSegments == null) {
             if (this.hasColorCodes) {
                 result = ScreenLineSegment.UTIL.textSegmentsFromStringWithEmbeddedColor(this.text, 0, 0, this,
-                        (strColor, p, txt) -> new SegmentImpl( strColor != null ? strColor : color, p, -1, txt));
+                                                                                        (strColor, p, txt) -> new SegmentImpl( strColor != null ? strColor : color, p, -1, txt));
             }  else {
                 result = ScreenLineSegment.UTIL.textSegmentsFromString(this.getText(), 0, 0, this,  // TODO: more efficient way!
-            	                                                   (p,s)->new SegmentImpl(color, p, -1, s));
+            	                                                       (p,s)->new SegmentImpl(color, p, -1, s));
             }
             // keeping a copy around to avoid having to reparse the text on
             // subsequent draw requests.  parsedSegments null'd if text is changed which causes parseSegments to rebuilt.

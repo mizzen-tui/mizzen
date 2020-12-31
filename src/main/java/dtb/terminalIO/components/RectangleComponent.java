@@ -1,11 +1,14 @@
 package dtb.terminalIO.components;
 
+import java.util.TreeSet;
+
 import dtb.terminalIO.components.BlockChars.BlockHiliter;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.textsegments.ScreenLineSegment;
 
 /**
  * A Component that draws a rectangle
@@ -51,16 +54,34 @@ public class RectangleComponent extends BoundedComponent<RectangleComponent> imp
         VerticalLine vLeft = makeChildComponent(()->new VerticalLine(color, this.getRow()+1, this.getCol(), getHeight()-2));
         VerticalLine vRight = makeChildComponent(()->new VerticalLine(color, this.getRow()+1, this.getRightMostCol(), getHeight()-2));
         
-        // verticals!
-        segments.merge(topLine.getSegmentsBuffer());
-        segments.merge(bottomLine.getSegmentsBuffer());
-        segments.merge(vLeft.getSegmentsBuffer());
-        segments.merge(vRight.getSegmentsBuffer());
+        // none of these components overlap so its safe to use the fast treeset add methods.
+        segments.clear();
 
-        segments.merge(makeChildComponent(()->new CharComponent(color, this.getRow(), this.getCol(),this.getBlockChars().getTOP_LEFT())).getSegmentsBuffer());
-        segments.merge(makeChildComponent(()->new CharComponent(color, this.getRow(), this.getRightMostCol(),this.getBlockChars().getTOP_RIGHT())).getSegmentsBuffer());
-        segments.merge(makeChildComponent(()->new CharComponent(color, this.getBottomMostRow(), this.getCol(),this.getBlockChars().getBOTTOM_LEFT())).getSegmentsBuffer());
-        segments.merge(makeChildComponent(()->new CharComponent(color, this.getBottomMostRow(), this.getRightMostCol(),this.getBlockChars().getBOTTOM_RIGHT())).getSegmentsBuffer());
+        // update existing TreeSet in-place
+        TreeSet<ScreenLineSegment> treeSetOfSegments = segments.getSegments();
+        
+        // verticals!
+        treeSetOfSegments.addAll(topLine.getSegmentsBuffer().getSegments());
+        treeSetOfSegments.addAll(bottomLine.getSegmentsBuffer().getSegments());
+        treeSetOfSegments.addAll(vLeft.getSegmentsBuffer().getSegments());
+        treeSetOfSegments.addAll(vRight.getSegmentsBuffer().getSegments());
+
+        
+        treeSetOfSegments.addAll(makeChildComponent(()->new CharComponent(color, this.getRow(), this.getCol(),this.getBlockChars().getTOP_LEFT())).getSegmentsBuffer().getSegments());
+        treeSetOfSegments.addAll(makeChildComponent(()->new CharComponent(color, this.getRow(), this.getRightMostCol(),this.getBlockChars().getTOP_RIGHT())).getSegmentsBuffer().getSegments());
+        treeSetOfSegments.addAll(makeChildComponent(()->new CharComponent(color, this.getBottomMostRow(), this.getCol(),this.getBlockChars().getBOTTOM_LEFT())).getSegmentsBuffer().getSegments());
+        treeSetOfSegments.addAll(makeChildComponent(()->new CharComponent(color, this.getBottomMostRow(), this.getRightMostCol(),this.getBlockChars().getBOTTOM_RIGHT())).getSegmentsBuffer().getSegments());
+        
+        
+//        segments.merge(topLine.getSegmentsBuffer());
+//        segments.merge(bottomLine.getSegmentsBuffer());
+//        segments.merge(vLeft.getSegmentsBuffer());
+//        segments.merge(vRight.getSegmentsBuffer());
+
+//        segments.merge(makeChildComponent(()->new CharComponent(color, this.getRow(), this.getCol(),this.getBlockChars().getTOP_LEFT())).getSegmentsBuffer());
+//        segments.merge(makeChildComponent(()->new CharComponent(color, this.getRow(), this.getRightMostCol(),this.getBlockChars().getTOP_RIGHT())).getSegmentsBuffer());
+//        segments.merge(makeChildComponent(()->new CharComponent(color, this.getBottomMostRow(), this.getCol(),this.getBlockChars().getBOTTOM_LEFT())).getSegmentsBuffer());
+//        segments.merge(makeChildComponent(()->new CharComponent(color, this.getBottomMostRow(), this.getRightMostCol(),this.getBlockChars().getBOTTOM_RIGHT())).getSegmentsBuffer());
         
     }
 

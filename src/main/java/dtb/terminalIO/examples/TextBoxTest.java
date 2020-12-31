@@ -35,6 +35,7 @@ import dtb.terminalIO.examples.plot.TestSprites;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
+import dtb.terminalIO.util.Logging;
 
 /**
  * 
@@ -50,6 +51,8 @@ import dtb.terminalIO.geom.position.Position;
 public class TextBoxTest {
 
     public static void main(String[] args) throws IOException {
+        
+        Logging.setEnabled(true);
         
         new TUIApp(args)
         .setCanvasSize(40, 130)
@@ -146,7 +149,7 @@ public class TextBoxTest {
             deskTopPanel.add(new TextComponent("\n\n")); // cheap way to get a spacer
             deskTopPanel.add(eventDisplayer);
 
-            tApp.getMainApplicationPanel().add(3, 5, deskTopPanel);
+            tApp.getMainApplicationPanel().add(3, 5, deskTopPanel); 
 
             //Component<?> demo = addBackGround_GridBrailleDemo(tApp);
             Component<?> demo = addBackGround_TestSprites(tApp);

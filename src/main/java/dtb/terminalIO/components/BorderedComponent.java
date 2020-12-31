@@ -2,6 +2,7 @@ package dtb.terminalIO.components;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.stream.Collectors;
 
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.geom.Align;
@@ -16,7 +17,11 @@ import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
  * render its contents
  */
 public class BorderedComponent extends BoundedComponent<BorderedComponent> 
-        implements Rectangle, HasTitleAndBorder<BorderedComponent>, CanResize, ParentContainer, GetComponentAtOffset {
+                               implements Rectangle, 
+                                          HasTitleAndBorder<BorderedComponent>, 
+                                          CanResize, 
+                                          ParentContainer, 
+                                          GetComponentAtOffset {
 
     private SimpleBorder      border;
     private Component<?>      component;
@@ -136,7 +141,7 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
 
 
     public BorderedComponent setEmptyChar(char emptyChar) {
-	BorderedComponent result = super.setEmptyChar(emptyChar);
+        BorderedComponent result = super.setEmptyChar(emptyChar);
         border.setEmptyChar(emptyChar);
         return result;
     }
@@ -175,9 +180,18 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
 
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
-        segments.mergeAt(componentPosition.getRow(), componentPosition.getCol(), this.component.getSegmentsBuffer());
+        if (componentPosition.isSamePosition(Position.ZERO)) {
+            // very fast merge (not this case probably does not come up)
+            segments.getSegments().addAll(this.component.getSegmentsBuffer().getSegments());
+        } else {
+            // (SLOW)segments.mergeAt(componentPosition.getRow(), componentPosition.getCol(), this.component.getSegmentsBuffer());
+            segments.getSegments().addAll( this.component.getSegmentsBuffer().getSegments().stream().map((s)->s.fromOffset(componentPosition)).collect(Collectors.toList())  );
+        }
         if (showBorder) {
-           segments.merge(this.border.getSegmentsBuffer());
+            // because we know the border does not overlap we can leverage the fast add from treeSet rather than the slow merge
+            // from segments.merge() 
+            // (SLOW) segments.merge(this.border.getSegmentsBuffer());
+           segments.getSegments().addAll(this.border.getSegmentsBuffer().getSegments());
         }
     }
 

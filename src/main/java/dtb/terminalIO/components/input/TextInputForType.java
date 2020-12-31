@@ -141,8 +141,8 @@ public class TextInputForType<T>  extends BoundedComponent<TextInputForType<T>> 
     }
 
     @Override
-    protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
-        segments.merge(this.textInput.getSegmentsBuffer());
+    protected void draw(Color color, IScreenLineSegmentsBuffer mySegments) {
+        mySegments.clearAndMerge(this.textInput.getSegmentsBuffer().getSegments());
     }
 
 }

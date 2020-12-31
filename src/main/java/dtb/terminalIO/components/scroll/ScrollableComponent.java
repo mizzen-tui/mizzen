@@ -31,6 +31,8 @@ import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.traverse.FindPathToTarget;
+import dtb.terminalIO.util.ElapsedTime;
+import dtb.terminalIO.util.Logging;
 
 /**
  * 
@@ -341,7 +343,16 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
 
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
-        super.draw(color, segments);
+//        super.draw(color, segments);
+        
+        long elapsed = ElapsedTime.onRunOf(()->{
+            
+            super.draw(color, segments);
+            
+        }).elapsed();
+        
+        Logging.info("sc.draw() - elapsed: " + elapsed );
+        
     }
 
     @Override

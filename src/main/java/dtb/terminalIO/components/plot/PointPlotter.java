@@ -154,7 +154,7 @@ public interface PointPlotter {
         }
 
         public List<PointPlot> getPlots() {
-            return plots;
+            return plots!=null? plots : Collections.emptyList();
         }
 
         @Override

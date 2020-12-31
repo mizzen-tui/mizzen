@@ -258,17 +258,23 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
             return ts;
         }
 
-        public static ScreenLineSegment blankScreenObject(Color color, char emptyChar, int row, int col, int id,
-                int width) {
-
+        public static ScreenLineSegment blankScreenObject(Color color, char emptyChar, int row, int col, int id, int width) {
+            
             if (width < 0)
                 throw new IllegalArgumentException("width=" + width);
-
+            
             if (emptyChar <= 27) {
                 throw new IllegalStateException("!!!!");
             }
+            return __blankScreenObject(color, emptyChar, null, row, col, id, width);
+        }
+        
+        private static ScreenLineSegment __blankScreenObject(Color color, char emptyChar, String emptyText, int row, int col, int id, int width) {
 
             return new AbstractSegment(color, new CursorPos(row, col)) {
+                
+                String theText = emptyText;
+                
                 @Override
                 public int getId() {
                     return id;
@@ -280,15 +286,18 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
 
                 @Override
                 public String getText() {
-                    return new String(new char[width]).replace("\0", emptyChar + "");
+                    if (theText != null) {
+                        return theText;
+                    }
+                    this.theText = new String(new char[width]).replace("\0", emptyChar + "");
+                    return theText;
                 }
 
                 @Override
                 public ScreenLineSegment fromOffset(Position offset) {
                     Position newPos = Position.Simple.withOffset(getCursorPos(), offset);
                     // can you say recursive-ish? :-)
-                    return blankScreenObject(getColor(), emptyChar, newPos.getRow(), newPos.getCol(), getId(),
-                            getWidth());
+                    return __blankScreenObject(getColor(), emptyChar, theText, newPos.getRow(), newPos.getCol(), getId(), getWidth());
                 }
             };
         }
@@ -313,8 +322,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
             if (len < 1)
                 return null;
 
-            return blankScreenObject(color, emptyChar, lr.getRight().getRow(), lr.getLeft().getRightMostCol() + 1, -1,
-                    len);
+            return blankScreenObject(color, emptyChar, lr.getRight().getRow(), lr.getLeft().getRightMostCol() + 1, -1, len);
         }
 
         public static TreeSet<ScreenLineSegment> createBlankSegments(Color color, char emptyChar, Rectangle bounds) {
@@ -561,8 +569,10 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
         }
         // MAX_SIZE
 
-        public static void addSegmentWithOffsetBounded(Position offset, Rectangle bounds,
-                TreeSet<ScreenLineSegment> ts, ScreenLineSegment sc) {
+        public static void addSegmentWithOffsetBounded(Position offset, 
+                                                       Rectangle bounds,
+                                                       TreeSet<ScreenLineSegment> ts, 
+                                                       ScreenLineSegment sc) {
             if (offset == null || offset.isSamePosition(Position.ZERO)) {
                 addSegmentBounded(bounds, ts, sc);
                 return;
@@ -591,8 +601,9 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
         }
 
         //
-        public static void addSegmentsWithOffsetUnBounded(Position offset, TreeSet<ScreenLineSegment> destination,
-                TreeSet<ScreenLineSegment> segmentsToAdd) {
+        public static void addSegmentsWithOffsetUnBounded(Position offset, 
+                                                          TreeSet<ScreenLineSegment> destination,
+                                                          TreeSet<ScreenLineSegment> segmentsToAdd) {
             addSegmentsWithOffsetBounded(offset, Rectangle.MAX_SIZE, destination, segmentsToAdd);
         }
 
@@ -676,7 +687,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
             }
             CleanString text = source.subTextAtColumns(clipped.getCol(), clipped.getRightMostCol());
             SegmentImpl so = new SegmentImpl(source.getColors(), new CursorPos(clipped.getRow(), clipped.getCol()),
-                    source.getId(), text);
+                                             source.getId(), text);
             return so;
         }
 
@@ -697,12 +708,17 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
                                 + String.valueOf(source) + "\n" + "slice offset = " + offset + " len " + len);
             }
 
-            CleanString txt = source.substring(offset, offset + len);
-            SegmentImpl so = new SegmentImpl(source.getColors(),
-                    new CursorPos(source.getRow(), source.getCol() + offset), source.getId(), txt);
-            return so;
+            CleanString slicedText = source.substring(offset, offset + len);
+            SegmentImpl slicedSegment = new SegmentImpl(source.getColors(),
+                                                        new CursorPos(source.getRow(), source.getCol() + offset), 
+                                                        source.getId(), 
+                                                        slicedText);
+            return slicedSegment;
         }
 
+        /**
+         *  clip a string to width if length > width
+         */
         private static String clip(String s, int width) {
             if (s.length() > width) {
                 return s.substring(0, width);
@@ -745,7 +761,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
                 return new SegmentsFromStringResult(ts);
             }
             Position.Simple position = new Position.Simple(offSetRow + boundingRectangle.getRow(),
-                    offSetCol + boundingRectangle.getCol());
+                                                           offSetCol + boundingRectangle.getCol());
             Rectangle boundAndClipped = Rectangle.Clipped.fromPosition(position, boundingRectangle);
             if (boundAndClipped == null) {
                 return new SegmentsFromStringResult(ts);

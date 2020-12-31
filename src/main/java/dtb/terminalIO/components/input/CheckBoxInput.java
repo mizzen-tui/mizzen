@@ -119,9 +119,9 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
     
     
     @Override
-    protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
+    protected void draw(Color color, IScreenLineSegmentsBuffer mySegments) {
         this.textRenderer.setText(buildRenderText());
-        segments.merge(this.textRenderer.getSegmentsBuffer());
+        mySegments.clearAndMerge(this.textRenderer.getSegmentsBuffer().getSegments());
     }
 
     protected void init() {

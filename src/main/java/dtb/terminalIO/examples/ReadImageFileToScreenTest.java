@@ -24,9 +24,9 @@ import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.core.ScreenCanvasBackend;
-import dtb.terminalIO.core.ScreenCanvasBackend.UpdateStrategy;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
+import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.util.Logging;
@@ -73,8 +73,22 @@ public class ReadImageFileToScreenTest {
             bannerPanel.setBorder(false);
             bannerPanel.setNoBorderChars();
 
-            bannerPanel.addComponent(new TextComponent("Demonstrate reading color codes from text file"));
+            bannerPanel.addComponent(new TextComponent("Demonstrate reading color codes from text file   "));
+            
+            Button updateToggler = new Button(Colors.IYel,"                 ");
+            updateToggler.setHotKey(Keys.CTRL_U_KEYSTROKE);
+            updateToggler.setDisplayHotKey(true);
+            KeyInputEventHandler toggleUpdateHandler = TestsCommon.toggleScreenupStrategyKeyboardHandling(Keys.CTRL_U_KEYSTROKE, 
+                                                                                                          tApp.getCanvas(), 
+                                                                                                          tApp.getEventBus(), 
+                                                                                                          (u)->{
+                                                                                                              updateToggler.setButtonText(String.format("Update: %-20s",String.valueOf(u)));
+                                                                                                          });
+            updateToggler.onChange(toggleUpdateHandler);
+            bannerPanel.addComponent(updateToggler);
+
             bannerPanel.addButton(Colors.IGre,"CTRL-C",Keys.CTRL_C_KEYSTROKE, (te) -> tApp.getTerminateAppHotKeyEventHandler().handle(te)  );
+            
             bannerPanel.addComponent(new TextComponent(" to quit "));
 
             Button toggleColors = new Button(Colors.IGre,"No colors");

@@ -5,15 +5,20 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.function.Consumer;
 
 import dtb.terminalIO.components.BlockChars;
 import dtb.terminalIO.components.braille.BrailleUtils;
 import dtb.terminalIO.core.Canvas;
+import dtb.terminalIO.core.ScreenCanvasBackend;
+import dtb.terminalIO.core.ScreenCanvasBackend.UpdateStrategy;
 import dtb.terminalIO.core.TerminalScreen;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
+import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.util.MapChars;
@@ -165,6 +170,48 @@ public class TestsCommon {
         }
 
         return getNetCatStream();
+    }
+    
+    public static KeyInputEventHandler toggleScreenupStrategyKeyboardHandling(Canvas canvas, 
+                                                              EventBus eventBus,
+                                                              Consumer<ScreenCanvasBackend.UpdateStrategy> updateNotifier) {
+        
+        return toggleScreenupStrategyKeyboardHandling(Keys.CTRL_U_KEYSTROKE, 
+                                                      canvas, 
+                                                      eventBus, 
+                                                      updateNotifier);
+    }
+    
+    public static KeyInputEventHandler toggleScreenupStrategyKeyboardHandling(KeyStroke onKeyStroke,
+                                                              Canvas canvas, 
+                                                              EventBus eventBus,
+                                                              Consumer<ScreenCanvasBackend.UpdateStrategy> updateNotifier) {
+
+        ScreenCanvasBackend canvasBackend = ((ScreenCanvasBackend)canvas.getCanvasBackend());
+
+        //UpdateStrategy lastRememberedUpdateStrategy[] = {canvasBackend.getScreenUpdateStrategy()};
+
+         Runnable toggleScreenUpdateStrategy = ()-> {
+             if (canvasBackend.getScreenUpdateStrategy() == UpdateStrategy.UPDATE_FULL) {
+                 canvasBackend.setUpdateStrategy(UpdateStrategy.UPDATE_CHANGED);
+                 updateNotifier.accept(canvasBackend.getScreenUpdateStrategy());
+             } else {
+                 canvasBackend.setUpdateStrategy(UpdateStrategy.UPDATE_FULL);
+                 updateNotifier.accept(canvasBackend.getScreenUpdateStrategy());
+             }
+         };
+
+         KeyInputEventHandler toggleUpdateEventHandler = new KeyInputEventHandler(onKeyStroke, (te) -> {
+             toggleScreenUpdateStrategy.run();
+             te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(canvas));
+         });
+         
+        eventBus.appendEventHandler(toggleUpdateEventHandler);
+
+         canvasBackend.setUpdateStrategy(UpdateStrategy.UPDATE_CHANGED);
+         updateNotifier.accept(canvasBackend.getScreenUpdateStrategy());
+         
+         return toggleUpdateEventHandler;
     }
 
     public static void sleep(int m) {

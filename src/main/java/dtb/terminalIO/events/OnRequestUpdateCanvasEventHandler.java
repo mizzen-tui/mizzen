@@ -4,6 +4,7 @@ import java.util.function.Predicate;
 
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.util.ElapsedTime;
+import dtb.terminalIO.util.Logging;
 
 /**
  * Handle Canvas update requests.
@@ -26,6 +27,8 @@ public class OnRequestUpdateCanvasEventHandler implements ConditionalEventHandle
 
         static final Predicate<TerminalEvent<?>> canHandleCanvasUpdate = new IS_Event_TYPE(TerminalEvent.TYPE.REQUEST_UPDATE_CANVAS);
 
+        static final int MAX_WAIT = 2500;
+        
         AbstractTimedRequestedController timedOnChangeRequestController = null;
 
         Runnable timedCanvasUpdater = null;
@@ -44,10 +47,11 @@ public class OnRequestUpdateCanvasEventHandler implements ConditionalEventHandle
                 
                 long elapsed = ElapsedTime.onRunOf(canvasUpdater).elapsed();
 
-                //Logging.info("OnRequestUpdateCanvasEventHandler.timedCanvasUpdater - elapsed: " + elapsed + "  tmrDELAY:  " + this.timedOnChangeRequestController.getTimerDelayMillis());
+                Logging.info("OnRequestUpdateCanvasEventHandler.timedCanvasUpdater - elapsed: " + elapsed + "  tmrDELAY:  " + this.timedOnChangeRequestController.getTimerDelayMillis());
+                Logging.info(" ");
                 
                 if (OnRequestUpdateCanvasEventHandler.this.timedOnChangeRequestController != null &&
-                    elapsed <= 1500 &&  // ignore really long times .. hopefully just an anomaly
+                    elapsed <= MAX_WAIT &&  // ignore really long times .. hopefully just an anomaly
                     (elapsed)>OnRequestUpdateCanvasEventHandler.this.timedOnChangeRequestController.getTimerDelayMillis()) {
                     
                     OnRequestUpdateCanvasEventHandler.this.timedOnChangeRequestController.setTimerDelayMillis((int)elapsed);
@@ -59,7 +63,7 @@ public class OnRequestUpdateCanvasEventHandler implements ConditionalEventHandle
                     if (elapsed*2 < OnRequestUpdateCanvasEventHandler.this.timedOnChangeRequestController.getTimerDelayMillis()) {
                         
                         OnRequestUpdateCanvasEventHandler.this.timedOnChangeRequestController.setTimerDelayMillis((int)elapsed);
-                        int maxStarvationDelayTime = Math.min((int)elapsed * 2,1500);
+                        int maxStarvationDelayTime = Math.min((int)elapsed * 2,MAX_WAIT);
                         OnRequestUpdateCanvasEventHandler.this.timedOnChangeRequestController.setMaxStarvationTime(maxStarvationDelayTime);
                         
                     }

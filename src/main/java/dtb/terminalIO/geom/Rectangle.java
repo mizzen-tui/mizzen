@@ -61,16 +61,7 @@ public interface Rectangle extends Position, Dimension, Movable {
     }
 
     public default boolean containsPosition(Position pos) {
-        if (pos.getCol() < this.getCol())
-            return false;
-        if (pos.getRow() < this.getRow())
-            return false;
-        if (pos.getCol() > this.getRightMostCol())
-            return false;
-        //int botomRow = this.getBottomMostRow();
-        if (pos.getRow() > this.getBottomMostRow())
-            return false;
-        return true;
+        return containsPosition(pos.getRow(), pos.getCol());
     }
 
     public default boolean containsPosition(int row, int col) {
@@ -190,6 +181,38 @@ public interface Rectangle extends Position, Dimension, Movable {
         return result;
     }
 
+    /**
+     * returns intersection rectangle of this and other.
+     * If no intersection, then return null
+     */
+    public default Rectangle intersectWith(Rectangle other) {
+        int thisRow        = this.getRow();
+        int thisCol        = this.getCol();
+        int thisBottomRow  = this.getBottomMostRow();
+        int thisRightCol   = this.getRightMostCol();
+        
+        int otherRow       = other.getRow();
+        int otherCol       = other.getCol();
+        int otherBottomRow = other.getBottomMostRow();
+        int otherRightCol  = other.getRightMostCol();
+        
+        // get new corners
+        int newRow       = Math.max(thisRow, otherRow);
+        int newCol       = Math.max(thisCol, otherCol);
+        int newBottomRow = Math.min(thisBottomRow, otherBottomRow);
+        int newRightCol  = Math.min(thisRightCol, otherRightCol);
+
+        // calc new dimensions
+        int newHeight = newBottomRow - newRow + 1;
+        int newWidth  = newRightCol - newCol  + 1;
+        if (newHeight<1 || newWidth<1) {
+            return null;
+        }
+        
+        return new Simple(newRow, newCol, newHeight, newWidth);
+    }
+    
+    
     public default <T extends Rectangle> boolean overlapsWith(T other) {
         return Rectangle.UTIL.hasOverlap(this, other);
     }
@@ -279,14 +302,37 @@ public interface Rectangle extends Position, Dimension, Movable {
             setHeight(newHeight);
             setWidth(newWidth);
             
-//            
-//            setRow(Math.min(this.getRow(), other.getRow()));
-//
-//            setCol(Math.min(this.getCol(), other.getCol()));
-//
-//            setHeight(Math.max(this.getBottomMostRow(), other.getBottomMostRow()) - getRow() + 1);
-//            setWidth(Math.max(this.getRightMostCol(), other.getRightMostCol()) - getCol() + 1);
+            return this;
+        }
 
+        public Rectangle intersectWithMySelf(Rectangle other) {
+            
+            int thisRow        = this.getRow();
+            int thisCol        = this.getCol();
+            int thisBottomRow  = this.getBottomMostRow();
+            int thisRightCol   = this.getRightMostCol();
+            
+            int otherRow       = other.getRow();
+            int otherCol       = other.getCol();
+            int otherBottomRow = other.getBottomMostRow();
+            int otherRightCol  = other.getRightMostCol();
+            
+            // get new corners
+            int newRow       = Math.max(thisRow, otherRow);
+            int newCol       = Math.max(thisCol, otherCol);
+            int newBottomRow = Math.min(thisBottomRow, otherBottomRow);
+            int newRightCol  = Math.min(thisRightCol, otherRightCol);
+
+            // calc new dimensions
+            int newHeight = newBottomRow - newRow + 1;
+            int newWidth  = newRightCol - newCol  + 1;
+            
+            // now set
+            setRow(newRow);
+            setCol(newCol);
+            setHeight(newHeight);
+            setWidth(newWidth);
+            
             return this;
         }
 
@@ -401,8 +447,10 @@ public interface Rectangle extends Position, Dimension, Movable {
             if (!rectangleToClip.containsPosition(pos)) {
                 return null;
             }
-            Rectangle clippingArea = new Simple(pos.getRow(), pos.getCol(), rectangleToClip.getBottomMostRow() - pos.getRow() + 1,
-                    rectangleToClip.getRightMostCol() - pos.getCol() + 1);
+            Rectangle clippingArea = new Simple(pos.getRow(), 
+                                                pos.getCol(), 
+                                                rectangleToClip.getBottomMostRow() - pos.getRow() + 1,
+                                                rectangleToClip.getRightMostCol() - pos.getCol() + 1);
 
             return new Clipped(clippingArea, rectangleToClip);
         }

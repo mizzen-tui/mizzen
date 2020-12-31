@@ -9,7 +9,10 @@ import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.CleanString;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.textsegments.ScreenLineSegment;
 import dtb.terminalIO.textsegments.ScreenLineSegment.SegmentImpl;
+import dtb.terminalIO.util.ElapsedTime;
+import dtb.terminalIO.util.Logging;
 
 /**
  * A component that can plot a series of dots .. Useful sub-component for
@@ -77,10 +80,23 @@ public class Plotter extends BoundedComponent<Plotter> {
     
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
+        
+        long elapsed = ElapsedTime.onRunOf(()->{
+            
+            __draw(color, segments);
+            
+        }).elapsed();
+        
+        Logging.info("Plotter.draw() - elapsed: " + elapsed );
+    }
+    
+    private void __draw(Color color, IScreenLineSegmentsBuffer segments) {
 
         int lastRow = -1;
         int lastCol = -1;
 
+        Logging.info("plotter draw! start");
+        
         SegmentImpl lastSegment = null;
         Position    lastSegmentPosition = null;
 
@@ -94,6 +110,11 @@ public class Plotter extends BoundedComponent<Plotter> {
         //   Each plot object only contains one character to plot.
         //   To reduce the number of created Segments, adjacent, same colored plots
         //   will be translated into one Segment.  This creates rendering efficiencies "down-the-road"
+        
+        // Because we are building ScreenLineSegment's that do not overlap, we will use the fast TreeSet add() methods
+        // to build the tree of segments.
+        TreeSet<ScreenLineSegment> treeSetOfSegments = segments.getSegments();
+        
 
         for (Plotter.Plot plot : plots) {
             if (lastRow != plot.pos.getRow()     || 
@@ -101,7 +122,7 @@ public class Plotter extends BoundedComponent<Plotter> {
                 plot.pos.getCol() != lastCol+1) {
                 if (lastText.length() != 0) {
                     lastSegment = new SegmentImpl(lastColor, lastSegmentPosition, -1, lastText.toString());
-                    segments.add(lastSegment);
+                    treeSetOfSegments.add(lastSegment);
                     lastSegment = null;
                     lastText = new StringBuilder();
                 }
@@ -115,7 +136,7 @@ public class Plotter extends BoundedComponent<Plotter> {
 
         if (lastText.length() != 0) {
             lastSegment = new SegmentImpl(lastColor, lastSegmentPosition, -1, lastText.toString());
-            segments.add(lastSegment);
+            treeSetOfSegments.add(lastSegment);
         }
 
     }

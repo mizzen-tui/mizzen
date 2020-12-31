@@ -100,8 +100,8 @@ public class TextInput extends BoundedComponent<TextInput>
     }
 
     @Override
-    protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
-        segments.merge(this.textRenderer.getSegmentsBuffer());
+    protected void draw(Color color, IScreenLineSegmentsBuffer mySegments) {
+        mySegments.clearAndMerge(this.textRenderer.getSegmentsBuffer().getSegments());
     }
 
     @Override

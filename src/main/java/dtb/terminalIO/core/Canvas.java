@@ -23,6 +23,7 @@ import dtb.terminalIO.textsegments.ScreenLineSegment.SegmentImpl;
 import dtb.terminalIO.textsegments.ScreenLineSegment.UTIL.SegmentsFromStringResult;
 import dtb.terminalIO.textsegments.ScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.ElapsedTime;
+import dtb.terminalIO.util.Logging;
 
 public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
 
@@ -248,11 +249,16 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
         
         TreeSet<ScreenLineSegment> destinationCanvasSegments = this.getSegmentsBuffer().getSegments();
         TreeSet<ScreenLineSegment> componentSegmentsToAdd = component.getSegmentsBuffer().getSegments();
-
-        ScreenLineSegment.UTIL.addSegmentsWithOffsetBounded(offset, 
-                                                            bounds, 
-                                                            destinationCanvasSegments,
-                                                            componentSegmentsToAdd);
+         
+        Logging.info("addComponentSegments: addSegmentsWithOffsetBounded : elapsed " +
+                        ElapsedTime.onRunOf(() -> {
+                                                ScreenLineSegment.UTIL.addSegmentsWithOffsetBounded(offset, 
+                                                                                                    bounds, 
+                                                                                                    destinationCanvasSegments,
+                                                                                                    componentSegmentsToAdd);
+                                                }
+                                          ).elapsed()
+            );
     }
 
     public void addComponentSegments(Component<?> component) {
@@ -262,7 +268,7 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
     public void clearAndAddComponentSegments(Component<?> component) {
         
         boolean canvasContainsComponent = ElapsedTime.getAndTime(()->this.asRectangle().contains(component),
-                                                                 (elapsedTime)-> {}/*Logging.info("contains "+elapsedTime)*/);
+                                                                 (elapsedTime)-> { Logging.info("contains "+elapsedTime);});
         
         if (canvasContainsComponent) {
             // fast case!! 
@@ -270,15 +276,16 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
             
             ElapsedTime componentDrawTime = ElapsedTime.start();
             TreeSet<ScreenLineSegment> componentSegments = component.getSegmentsBuffer().getSegments();
-            //Logging.info("componentsDraw: "+ componentSegments.size() + "  t:" + componentDrawTime);
+            Logging.info("componentsDraw: "+ component + ": segmenents-size: "+ componentSegments.size() + "  t:" + componentDrawTime);
             
             ElapsedTime elapsed = ElapsedTime.onRunOf( ()-> getSegmentsBuffer().clearAndMerge(component.getSegmentsBuffer().getSegments()));
 
-            //Logging.info("clearAndAddComponentSegments: fast! "+ elapsed);
+            Logging.info("clearAndAddComponentSegments: fast! "+ elapsed);
 
             return;
         }
         this.clearCanvas();
+        Logging.info("clearAndAddComponentSegments:slow-path: canvas size:"+ this.asRectangle()+ "  "+component);
         addComponentSegments(Position.ZERO, component);
     }
     

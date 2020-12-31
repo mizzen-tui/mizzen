@@ -264,6 +264,7 @@ public class ScreenCanvasBackend implements CanvasBackend {
                 //TreeSet<ScreenLineSegment> newOrModifiedsegments = ScreenLineSegment.UTIL.subtractAggressive(current, previous);
                 TreeSet<ScreenLineSegment> newOrModifiedsegments = ScreenLineSegment.UTIL.subtract(current, previous);
                 subtractTime.elapsed();
+                Logging.info("ScreenLineSegment.UTIL.subtract() "+subtractTime.elapsed());
 
                 ElapsedTime modifiedLoopTime = ElapsedTime.start();
                 if (newOrModifiedsegments.size()>0) {

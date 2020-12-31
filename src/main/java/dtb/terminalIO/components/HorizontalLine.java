@@ -1,5 +1,7 @@
 package dtb.terminalIO.components;
 
+import java.util.Collection;
+
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.geom.Dimension;
@@ -41,8 +43,9 @@ public class HorizontalLine extends BoundedComponent<HorizontalLine> {
         if (getWidth() > 0) {
           char horizChar = this.horizontalLineChar != 0 ? this.horizontalLineChar : this.getBlockChars().getHORIZONTAL_LINE();
     	  ScreenLineSegment line = ScreenLineSegment.UTIL.blankScreenObject(color, horizChar, getRow(), getCol(), -1, getWidth());
-    	  segments.add(line);
-        }
+    	  // use the fast TreeSet add
+    	  segments.getSegments().add(line);
+        } 
     }
 
 }

@@ -19,6 +19,17 @@ import dtb.terminalIO.geom.Rectangle;
 
 public class ImageViewerFactory {
 
+    public static enum IMAGE_STYLE {
+        ASCII_GRADIENT1,
+        ASCII_GRADIENT2,
+        ASCII_GRADIENT3,
+        ASCII_GRADIENT_PRECOMUTE1,
+        ASCII_GRADIENT_PRECOMUTE2,
+        ASCII_GRADIENT_PRECOMUTE3
+    }
+    
+    
+    
     public static Component<?> fromImage(Image imageToView, Dimension desiredImgSizeInCharacters) throws Exception {
 
         return simpleImageToStringView(imageToView, desiredImgSizeInCharacters);
@@ -30,7 +41,7 @@ public class ImageViewerFactory {
         plotterComponent.setEmptyColor(Colors.Whi);
         plotterComponent.setEmptyChar(' ');
         plotterComponent.setFillOnClear(true);
-        PointPlotter plotter = plotterComponent.asPointPlotter();
+        //PointPlotter plotter = plotterComponent.asPointPlotter();
         
         Image image = resize(inputImage, desiredImgSizeInCharacters);
         
@@ -47,10 +58,25 @@ public class ImageViewerFactory {
 
         pxGrabber.grabPixels();
         
-        RGBPlotPredicate toPlotOrNot = PLOT_ALWAYS;
+        RGBPlotPredicate toPlotOrNot =  // PLOT_WHITE_ONLY; 
+                                        PLOT_ALWAYS;
+                                        //PLOT_BLACK_ONLY;
         
-        RGBToAnsiColorControlCode colorMap = rgbColorMapDIRECT;
+        RGBToAnsiColorControlCode colorMap =    //   rgbColorPlotBlack; 
+                                                // rgbColorPlotBlackAndGreyAsWhite; 
+                                                // rgbColorMapSimple1; 
+                                                // rgbGreyScale; 
+                                                 rgbColorMapDIRECT;
         
+        
+        String gradientStr =   SIMPLE_char_gradientStr1;
+                              //   SIMPLE_char_gradientStr2;
+                              // SIMPLE_char_gradientStr3;
+                              //"##@$%WRHGo\"~;:'. ";
+                              //"#";
+                              //"o";
+                              //".";
+                              // "@@@@OOOOoooo::::....";
         
         for (int row = 0; row < height; row++) {
             for (int col = 0; col < width; col++) {
@@ -65,7 +91,7 @@ public class ImageViewerFactory {
 
                    Color mappedColor = colorMap.toControlCode(red, blue, green);
                    
-                   char plotChar = rgbToChar(red, blue, green);
+                   char plotChar = rgbToChar(red, blue, green, gradientStr);
                    plotterComponent.addPlot(row, col, plotChar, mappedColor);
                    //plotter.setColor(mappedColor);
                    //plotter.plot(col, row);
@@ -75,16 +101,56 @@ public class ImageViewerFactory {
         return plotterComponent;
     
     }
+    
+    static Component<?> simpleImageToBrailleView(Image inputImage, Dimension desiredImgSizeInCharacters) throws Exception {
+        return null;
+    }
 
-    static String SIMPLE_char_gradient1 = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'. ";
     
-    static String SIMPLE_char_gradient3 = "ÆÑÊŒØMÉËÈÃÂWQBÅæ#NÁþEÄÀHKRŽœXgÐêqÛŠÕÔA€ßpmãâG¶øðé8ÚÜ$ëdÙýèÓÞÖåÿÒb¥FDñáZPäšÇàhû§ÝkŸ®S9žUTe6µOyxÎ¾f4õ5ôú&aü™2ùçw©Y£0VÍL±3ÏÌóC@nöòs¢u‰½¼‡zJƒ%¤Itocîrjv1lí=ïì<>i7†[¿?×}*{+()\\/»«•¬|!¡÷¦¯—^ª„”“~³º²–°­¹‹›;:’‘‚’˜ˆ¸…·¨´`";
+
+    static String SIMPLE_char_gradientStr3 = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'. ";
+
+    static String SIMPLE_char_gradientStr1 = "ÆÑÊŒØMÉËÈÃÂWQBÅæ#NÁþEÄÀHKRŽœXgÐêqÛŠÕÔA€ßpmãâG¶øðé8ÚÜ$ëdÙýèÓÞÖåÿÒb¥FDñáZPäšÇàhû§ÝkŸ®S9žUTe6µOyxÎ¾f4õ5ôú&aü™2ùçw©Y£0VÍL±3ÏÌóC@nöòs¢u‰½¼‡zJƒ%¤Itocîrjv1lí=ïì<>i7†[¿?×}*{+()\\/»«•¬|!¡÷¦¯—^ª„”“~³º²–°­¹‹›;:’‘‚’˜ˆ¸…·¨´`";
+
+    static String SIMPLE_char_gradientStr2 = new StringBuilder(" .:-=+*#%@").reverse().toString();
+
+    static char[] SIMPLE_char_gradient3 = buildCharacterGradient(SIMPLE_char_gradientStr3);
+
+    static char[] SIMPLE_char_gradient1 = buildCharacterGradient(SIMPLE_char_gradientStr1);
+
+    static char[] SIMPLE_char_gradient2 = buildCharacterGradient(SIMPLE_char_gradientStr2);
+
+    static char[] buildCharacterGradient(String greyScale) {
+        float strLen = (float) greyScale.length();
+        char[]  gradient = new char[256];
+        for (int i = 0; i<256; i++) {
+            int chrIndex = (int) Math.floor(  ((((float)i) / 255.0f) * strLen)   );
+            if (chrIndex>=strLen) {
+                chrIndex = (int) strLen - 1;
+            } else {
+                if (chrIndex<0) {
+                    chrIndex = 0;
+                }
+            }
+            gradient[i] = greyScale.charAt(chrIndex);
+        }
+        return gradient;
+    }
     
-    static String SIMPLE_char_gradient2 = new StringBuilder(" .:-=+*#%@").reverse().toString();
     
+    
+    static char rgbToChar(int r, int g, int b, char[] greyScale) {
+        int h = (int) Math.floor((r  + g  + b) / 3.0);
+        return greyScale[h];
+    }
+    
+    static char rgbToChar(int r, int g, int b) {
+        return rgbToChar(r,g,b, SIMPLE_char_gradientStr1);
+        //return rgbToChar(r,g,b, SIMPLE_char_gradient1);
+    }
+
     static char rgbToChar(int r, int g, int b, String greyScale) {
         int h = (r / 3 + g / 3 + b / 3);
-        
         float strLen = (float) greyScale.length();
         
         int chrIndex =  (int) Math.floor(  (((r / 3.0 + g / 3.0 + b / 3.0) / 255.0f) * strLen)   );
@@ -100,10 +166,6 @@ public class ImageViewerFactory {
         
         return greyScale.charAt(chrIndex);
 
-    }
-    
-    static char rgbToChar(int r, int g, int b) {
-        return rgbToChar(r,g,b, SIMPLE_char_gradient1);
     }
     
     public static Image resize(Image inputImage, Dimension d) {

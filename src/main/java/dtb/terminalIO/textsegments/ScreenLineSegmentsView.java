@@ -186,6 +186,8 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
 
         ElapsedTime e2 = new ElapsedTime();
         
+        TreeSet<ScreenLineSegment> destinationSegmentsTree = super.getSegments();
+        
         for (ScreenLineSegment sourceSegment : segments) {
             int segmentRow = sourceSegment.getRow();
             if (segmentRow < topRow) {
@@ -204,7 +206,7 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
             }
 
             // if (Rectangle.UTIL.hasOverlap(bounds, sourceSegment)) {
-            this.add(new ScreenLineSegmentView(sourceSegment));
+            destinationSegmentsTree.add(new ScreenLineSegmentView(sourceSegment));
             // }
         }
         segmentsUpToDate = true;

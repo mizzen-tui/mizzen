@@ -130,7 +130,7 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
         }
     }
     
-    protected abstract void draw(Color color, IScreenLineSegmentsBuffer segments);
+    protected abstract void draw(Color color, IScreenLineSegmentsBuffer mySegments);
 
     @Override
     public IScreenLineSegmentsBuffer getSegmentsBuffer() {

@@ -13,13 +13,16 @@ import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegmentsView;
+import dtb.terminalIO.util.ElapsedTime;
+import dtb.terminalIO.util.Logging;
 
 /**
  * Used exclusively by the ScrollableComponent.  It is the View into the scrollable content.
  *
  */
 public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
-        implements  ParentContainer, GetComponentAtOffset {
+                                 implements  ParentContainer, 
+                                             GetComponentAtOffset {
 
     private IScreenLineSegmentsBuffer.Provider viewSource;
     private ScreenLineSegmentsView segmentsViewBuffer;
@@ -66,7 +69,14 @@ public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
 
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
-        segments.merge(segmentsViewBuffer);
+        
+        long elapsed = ElapsedTime.onRunOf(()->{
+            
+            segments.clearAndMerge(segmentsViewBuffer.getSegments());
+            
+        }).elapsed();
+        
+        Logging.info("    ---- sc.viewer.draw() - elapsed: " + elapsed );
     }
 
     public boolean setViewOffset(int r, int c) {

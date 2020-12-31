@@ -33,6 +33,7 @@ import dtb.terminalIO.events.resize.TerminalResizeDetection;
 import dtb.terminalIO.examples.TestsCommon;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.util.ElapsedTime;
+import dtb.terminalIO.util.Logging;
 
 /**
  * 
@@ -366,7 +367,7 @@ public class TUIApp {
 
                 tApp.getCanvas().clearAndAddComponentSegments( __mainPanel );
 
-               // Logging.info("Canvas.addComponentSegments() time: " + canvasUpdateTime.toString());
+                Logging.info("Canvas.addComponentSegments() time: " + canvasUpdateTime.toString());
  
                 return true; // true means updated
             });
