@@ -11,6 +11,7 @@ import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.util.ElapsedTime;
+import dtb.terminalIO.util.Logging;
 
 /**
  * IScreenLineSegmentsBuffer that has a view into a 'source'
@@ -23,15 +24,14 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
     private Position offsetIntoSource;
     private Dimension maxsize;
 
-    public ScreenLineSegmentsView(IScreenLineSegmentsBuffer.Provider sourceSegments, Position offsetIntoSource,
-            Dimension maxsize) {
+    public ScreenLineSegmentsView(IScreenLineSegmentsBuffer.Provider sourceSegments, 
+                                  Position offsetIntoSource,
+                                  Dimension maxsize) {
         super(new ClippedSegmentsBuffer());
         ((ClippedSegmentsBuffer) this.getDelegate()).segmentsView = this;
         this.sourceSegments = sourceSegments;
         this.offsetIntoSource = new Position.Simple(offsetIntoSource);
-        this.maxsize = new Dimension.Simple(maxsize);
-        ((ClippedSegmentsBuffer) this.getDelegate()).fullrecalcDim();
-        populateViewFromSource();
+        this.resize( new Dimension.Simple(maxsize) );
     }
 
     // create a ScreenLineSegmentsBuffer with a custom fullrecalcDim() method
@@ -147,26 +147,27 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
     
     private void populateViewFromSource() {
 
-        DEBUG_STATS = "";
+        DEBUG_STATS = "\n\nXXXXXXXXXXXXXXXXXXXXXXXXXXXX\npopulateViewFromSource: ";
         
         this.clear();
         Rectangle bounds = rectangeFromOffsetAndDimension();
 
-        Collection<ScreenLineSegment> segments = this.sourceSegments.getSegmentsBuffer().getSegments();
+        Collection<ScreenLineSegment> segmentsFromSource = this.sourceSegments.getSegmentsBuffer().getSegments();
+        
+        int origSize = segmentsFromSource.size();
 
-        if (segments instanceof TreeSet) {
-            TreeSet<ScreenLineSegment> ts = (TreeSet<ScreenLineSegment>) segments;
+        if (segmentsFromSource instanceof TreeSet) {
+            TreeSet<ScreenLineSegment> ts = (TreeSet<ScreenLineSegment>) segmentsFromSource;
             ScreenLineSegment first = ScreenLineSegment.UTIL.getAtRowCol(ts, bounds.getRow(), bounds.getCol());
             //ScreenLineSegment first = null;
             if (first != null) {
                 ScreenLineSegment last = ScreenLineSegment.UTIL.getAtRowCol(ts, bounds.getBottomMostRow(),
-                        bounds.getRightMostCol());
+                                                                            bounds.getRightMostCol());
                 if (last != null) {
-                    // throw new IllegalStateException("WORKED!!!");
                     // really slow!!!! need to find another way to get subset
                     ElapsedTime e1 = new ElapsedTime();
-                    segments = ts.subSet(first, true, last, true);
-                    DEBUG_STATS = " ts size: " + ts.size()  + " ts.subset: " + segments.size();
+                    segmentsFromSource = ts.subSet(first, true, last, true);
+                    DEBUG_STATS += " ts size: " + ts.size()  + " ts.subset: " + segmentsFromSource.size();
                     DEBUG_STATS += " elapsed: " + e1.elapsed() ;
                 }
             }
@@ -187,8 +188,8 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
         ElapsedTime e2 = new ElapsedTime();
         
         TreeSet<ScreenLineSegment> destinationSegmentsTree = super.getSegments();
-        
-        for (ScreenLineSegment sourceSegment : segments) {
+        destinationSegmentsTree.clear();
+        for (ScreenLineSegment sourceSegment : segmentsFromSource) {
             int segmentRow = sourceSegment.getRow();
             if (segmentRow < topRow) {
                 continue;
@@ -207,12 +208,15 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
 
             // if (Rectangle.UTIL.hasOverlap(bounds, sourceSegment)) {
             destinationSegmentsTree.add(new ScreenLineSegmentView(sourceSegment));
+            // (slow)this.add(new ScreenLineSegmentView(sourceSegment));
             // }
         }
         segmentsUpToDate = true;
         
-        DEBUG_STATS += " loop : "+ e2.toString();
+        DEBUG_STATS += " | looptime : "+ e2.toString() + " | ORIG Size: " + origSize+"\n\nYYYYYYYYYYYYYYYYY\n";
 
+        // Logging.info(DEBUG_STATS);
+        
     }
 
     private void populateViewFromSourceIfNeeded() {
@@ -304,34 +308,52 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
         public String getText() {
 
             if (_clippedText != null) {
-                return _clippedText;
+                return _clippedText.substring(0,_clippedText.length()-1)+"X";
             }
 
             // ech!! and double-ech.. All of these checks make me see
             // a code smell.. When I get some time I
             // need to simplify
+
+            //char[] DEBUGCHARS = new char[] {'.','.','.','.','|'}; 
+
             int start = 0;
             int src_col = sourceSegment.getCol();
             int offset_col = ScreenLineSegmentsView.this.offsetIntoSource.getCol();
+            int rightColOffsetClipLen = 0;
             if (offset_col > src_col) {
                 start = offset_col - src_col;
+                rightColOffsetClipLen = start;
+                //DEBUGCHARS[0] = 'X';
             }
             int rightCol = sourceSegment.getRightMostCol(); // - ScreenLineSegmentsView.this.offsetIntoSource.getCol();
-            int viewerRightCol = ScreenLineSegmentsView.this.getRightMostCol();
+            int viewerRightCol = ScreenLineSegmentsView.this.getRightMostCol() - rightColOffsetClipLen;
             String sourceText = sourceSegment.getText();
-            
+
             if (rightCol >= sourceText.length()) {
                 rightCol = sourceText.length();
+                //DEBUGCHARS[1] = 'A';
             } else {
                 if (rightCol > viewerRightCol + offset_col) {
                     rightCol = viewerRightCol + offset_col;
+                    //DEBUGCHARS[2] = 'B';
                 }
                 rightCol += 1; // +1 to include rightmost char
+                //DEBUGCHARS[1] = 'b';
             }
             if (start < 0 || start > rightCol)
                 return "";
+            
+            //String debug = new String(DEBUGCHARS);
+            
             String clippedText = sourceText.substring(start, rightCol);
             _clippedText = clippedText;
+//            if (clippedText.length() > (debug.length() + 2)) {
+//                return "["+debug+_clippedText.substring(0,_clippedText.length()-(debug.length() + 2))+"]";
+//            }
+//            if (clippedText.length()>1) {
+//                return "["+_clippedText.substring(0,_clippedText.length()-2)+"]";
+//            }
             return clippedText;
         }
 

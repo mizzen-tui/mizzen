@@ -40,7 +40,7 @@ public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
         if (viewSource instanceof Component) {
             ((Component<?>) this.viewSource).setParentContainer(this);
         }
-        segmentsViewBuffer = new ScreenLineSegmentsView(this.viewSource, (Rectangle) WindowViewComponent.this);
+        segmentsViewBuffer = new ScreenLineSegmentsView(this.viewSource, WindowViewComponent.this.getRectangle());
         this.markAsDirty();
     }
 
@@ -68,11 +68,11 @@ public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
     }
 
     @Override
-    protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
+    protected void draw(Color color, IScreenLineSegmentsBuffer mySegments) {
         
         long elapsed = ElapsedTime.onRunOf(()->{
             
-            segments.clearAndMerge(segmentsViewBuffer.getSegments());
+            mySegments.clearAndMerge(segmentsViewBuffer.getSegments());
             
         }).elapsed();
         

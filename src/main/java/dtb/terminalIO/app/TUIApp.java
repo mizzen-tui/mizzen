@@ -8,6 +8,7 @@ import dtb.terminalIO.components.CanResize;
 import dtb.terminalIO.components.ChildComponentManager;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
+import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.components.modal.MessageBox;
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.core.Canvas;
@@ -163,6 +164,9 @@ public class TUIApp {
         }
 
         this.mainApplicationPanel = mainApplicationPanel;
+        
+        HasName.UTIL.setDefaultNameFromParentObject(this.mainApplicationPanel, this, "mainPanel");
+        
         return this;
     }
 

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.TreeSet;
 
 import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.ColorParsingUtils;
 import dtb.terminalIO.controlcodes.color.Colors;
@@ -276,7 +277,7 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
             
             ElapsedTime componentDrawTime = ElapsedTime.start();
             TreeSet<ScreenLineSegment> componentSegments = component.getSegmentsBuffer().getSegments();
-            Logging.info("componentsDraw: "+ component + ": segmenents-size: "+ componentSegments.size() + "  t:" + componentDrawTime);
+            Logging.info("componentsDraw: "+ HasName.UTIL.getName(component) + ": segmenents-size: "+ componentSegments.size() + "  t:" + componentDrawTime);
             
             ElapsedTime elapsed = ElapsedTime.onRunOf( ()-> getSegmentsBuffer().clearAndMerge(component.getSegmentsBuffer().getSegments()));
 

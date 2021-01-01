@@ -38,6 +38,7 @@ import dtb.terminalIO.examples.sampledata.ReadSampleFiles;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
+import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.StringUtils;
 import dtb.terminalIO.util.Stty;
 import dtb.terminalIO.util.linuxproc.ExecUtil;
@@ -383,13 +384,16 @@ public class ScrollableComponentTest {
         barChartDemo.setUpDemo(eventBus, clippedAreaForBarchart);
         barChartDemoContainer.add(barChartDemo.getBarChart(clippedAreaForBarchart));
 
+        String[] updateStrategy = new String[] {"UNKNOWN"};
+        
+        TestsCommon.toggleScreenupStrategyKeyboardHandling(master_canvas, eventBus, (us)->{updateStrategy[0] = String.valueOf(us);});
+
         Runnable updateCanvas = new Runnable() {
             
             long lastRun = 0;
 
             long updateTaskTime=0;
             long updateTaskDuration = 200;
-            
             
             @Override
             public synchronized void run() {
@@ -403,7 +407,8 @@ public class ScrollableComponentTest {
                 master_canvas.addComponentSegments(brailleViewComp2OffsetOnCanvas, brailleViewComp2);
                 master_canvas.addComponentSegments(lineChartPosition, lineChartDemoContainer);
                 master_canvas.addComponentSegments(barChartPosition, barChartDemoContainer);
-                master_canvas.t(master_canvas.getHeight()-1,1,"[Rendering stats | Rendering time :" + updateTaskTime + " | Wait time between updates: " + updateTaskDuration + "]     " );
+                master_canvas.t(master_canvas.getHeight()-1,1,String.format("[Rendering stats | Rendering time : %4d | Wait time between updates: %4d  |  Update Strategy : %-15s]",
+                                                                             updateTaskTime, updateTaskDuration, updateStrategy[0]));
 
                 TestsCommon.renderScreenDEBUG(master_canvas, screen, eventBus);
 
@@ -472,6 +477,7 @@ public class ScrollableComponentTest {
     }
 
     public static void main(String[] args) throws IOException {
+        Logging.setEnabled(true);
         testTwoScrollableWindows(args);
     }
 }

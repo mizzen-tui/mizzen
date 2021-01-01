@@ -142,18 +142,36 @@ public class ScreenCanvasBackend implements CanvasBackend {
     }
 
     protected void simpleScreenRefresh() {
-        screen.refresh();
+        int count = screen.rb.size();
+        long elapsed = ElapsedTime.onRunOf(()->{
+                                      screen.refresh();
+                                }
+                           ).elapsed();
+        Logging.info("terminal output time: "+elapsed + " renders: "+ count);
+    }
+
+    Color lastColor = Colors.DEFAULT_COLOR;
+
+    private void addColor(Color color) {
+        if (Color.COLOR_COMPARE.compare(lastColor, color) != 0) {
+            screen.add(color);
+            lastColor = color;
+          }
     }
 
     ScreenUpdateStrategy fullUpdateStrategy = new  ScreenUpdateStrategy() {
+        
+        
+        
+        
         @Override
         public void writeToBackend(ScreenLineSegment sc) {
-            screen.add(sc.getColors());
+            addColor(sc.getColors());
             screen.t(sc.getText());
         }
         @Override
         public void signal_eol() {
-            screen.add(Colors.RCol);
+            addColor(Colors.RCol);
         }
         
         @Override
@@ -224,16 +242,8 @@ public class ScreenCanvasBackend implements CanvasBackend {
             screen.home();
         }
         
-        
-        Color lastColor = Colors.DEFAULT_COLOR;
-        
         private void writeSegment(ScreenLineSegment sc) {
-            Color scColor = sc.getColors();
-            if (Color.COLOR_COMPARE.compare(lastColor, scColor) != 0) {
-              screen.add(scColor);
-              lastColor = scColor;
-            }
-            
+            addColor(sc.getColors());
             screen.t(sc.getText());
         }
 
@@ -250,12 +260,12 @@ public class ScreenCanvasBackend implements CanvasBackend {
             boolean doFullUpdate = useFullUpdateAndCountDown();
             if (doFullUpdate) {
                 simpleScreenRefresh();
-                lastColor = Colors.DEFAULT_COLOR;
+                //lastColor = Colors.DEFAULT_COLOR;
             } else {
 
                 // optimized updates ( send only changed/new segments to actual terminal)
 
-                lastColor = Colors.DEFAULT_COLOR;
+                //lastColor = Colors.DEFAULT_COLOR;
                 assertNoOverlaps(current);
                 assertNoOverlaps(previous);
 
@@ -290,7 +300,7 @@ public class ScreenCanvasBackend implements CanvasBackend {
                             curCol = sc.getRightMostCol()+1;
                         }
                     }
-                    screen.add( Colors.RCol );
+                    addColor( Colors.RCol );
                     simpleScreenRefresh();
                     screen.home();
                 }
@@ -313,7 +323,7 @@ public class ScreenCanvasBackend implements CanvasBackend {
         public void signal_eol() {
             if (useFullUpdate()) {
                 fullUpdateStrategy.signal_eol();
-                lastColor = Colors.DEFAULT_COLOR;
+                //lastColor = Colors.DEFAULT_COLOR;
             }
         }
 

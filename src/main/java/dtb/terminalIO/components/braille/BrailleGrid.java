@@ -10,6 +10,8 @@ import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.CleanString;
 
+
+// TODO:   Dont extend composite (too slow)..  change and then optimize draw() method
 public class BrailleGrid extends Composite {
 
     Plotter plotter;

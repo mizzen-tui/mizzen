@@ -91,33 +91,73 @@ public class LineTrackingCLIEmmitter implements CLIEmitter {
         resetLineCounter();
     }
 
-    @Override
     public void print(String s) {
         if (s == null) {
-            outputStr("NULL");
             return;
         }
-        // split is causing me grief - that's why all these checks - I'm
-        // probably being stupid
-        if (!s.contains("\n")) {
-            outputStr(s);
-            return;
-        }
-        if ("\n".equals(s)) {
-            CR();
-            return;
-        }
-        String[] lines = s.split("\n", -1);
-        for (int i = 0; i < lines.length; i++) {
-            outputStr(lines[i]);
-            if (i < lines.length-2) {
+        StringBuilder sb = null;//new StringBuilder(s.length());
+        int len = s.length();
+        for (int i=0; i<len; i++) {
+            char ch = s.charAt(i);
+            if (ch == '\n') {
+                if (sb==null) {
+                    sb = new StringBuilder(len);
+                    if (i>0) {
+                        sb.append(s.substring(0,i-1));
+                    }
+                } else {
+                    if (sb.length()>0) {
+                        outputStr(sb.toString());
+                        sb = new StringBuilder(s.length());
+                    }
+                }
                 CR();
+            } else {
+                if (sb != null) {
+                    sb.append(ch);
+                }
             }
         }
-        if (s.endsWith("\n")) {
-            CR();
+        if (sb == null) {
+            outputStr(s);
+        } else {
+            if (sb.length()>0) {
+                outputStr(sb.toString());
+            }
         }
     }
+    
+    
+//    public void printOLD(String s) {
+////        if (1+1==2) {
+////        printNew(s);
+////        return;
+////        }
+//        if (s == null) {
+//            outputStr("NULL");
+//            return;
+//        }
+//        // split is causing me grief - that's why all these checks - I'm
+//        // probably being stupid
+//        if (!s.contains("\n")) {
+//            outputStr(s);
+//            return;
+//        }
+//        if ("\n".equals(s)) {
+//            CR();
+//            return;
+//        }
+//        String[] lines = s.split("\n", -1);
+//        for (int i = 0; i < lines.length; i++) {
+//            outputStr(lines[i]);
+//            if (i < lines.length-2) {
+//                CR();
+//            }
+//        }
+//        if (s.endsWith("\n")) {
+//            CR();
+//        }
+//    }
 
     @Override
     public void println(String s) {
