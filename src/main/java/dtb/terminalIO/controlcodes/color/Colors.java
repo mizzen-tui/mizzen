@@ -150,34 +150,45 @@ public class Colors {
     public static final Colors.BgColor On_IPur= addNamedBGColor(  "On_IPur",Colors.BgColor.instance(105).setInvertTransform( (c) -> Colors.getNamedFGColor("IPur") ));
     public static final Colors.BgColor On_ICya= addNamedBGColor(  "On_ICya",Colors.BgColor.instance(106).setInvertTransform( (c) -> Colors.getNamedFGColor("ICya") ));
     public static final Colors.BgColor On_IWhi= addNamedBGColor(  "On_IWhi",Colors.BgColor.instance(107).setInvertTransform( (c) -> Colors.getNamedFGColor("IWhi") ));
-    
-    
-    public static class RGBColor extends Color {
 
-        int[] codes;
+    static abstract class AbstractRGBColor extends Color {
 
-        public static Color instance(int r, int g, int b) {
-            return new RGBColor(r, g, b);
-        }
-        
-        private RGBColor(int r, int g, int b) {
-            this.codes = new int[] {38, 2, r, g, b};
+        private AbstractRGBColor(int prefixCode, int r, int g, int b) {
+            this.codes = new int[] {prefixCode, 2, r, g, b};
         }
 
         @Override
         protected int[] buildControlCodes() {
             return codes;
         }
-
     }
-    
+
+    public static class RGBColorForeground extends AbstractRGBColor {
+        public static Color instance(int r, int g, int b) {
+            return new RGBColorForeground(r, g, b);
+        }
+
+        private RGBColorForeground(int r, int g, int b) {
+            super(38, r, g, b);
+        }
+    }
+
+    public static class RGBColorBackground extends AbstractRGBColor {
+        public static Color instance(int r, int g, int b) {
+            return new RGBColorForeground(r, g, b);
+        }
+
+        private RGBColorBackground(int r, int g, int b) {
+            super(48, r, g, b);
+        }
+    }
 
     public static class ColorFromCodes extends Color {
     
         public static Color instance(int[] codes) {
             return getColorFromCacheOrBuild(codes, ()->new ColorFromCodes(codes));
         }
-        
+
         public static Color instance(Color color) {
             return getColorFromCacheOrBuild(color.getControlCodes(), ()->new ColorFromCodes(color));
         }
@@ -189,9 +200,7 @@ public class Colors {
         private ColorFromCodes(Color color) {
             this(color.getControlCodes());
         }
-        
-    
-        
+
         @Override
         public int[] buildControlCodes() {
             return codes;
@@ -292,12 +301,12 @@ public class Colors {
         public FgColor asUnderline() {
             return FgColor.instance(colorCode, bold, italic, true);
         }
-    
+
         @Override
         public int[] buildControlCodes() {
             return __buildControlCodes(bold, italic, underline, this.getColorCode());
         }
-        
+
         static int[] __buildControlCodes(boolean bold,
                                          boolean italic,
                                          boolean underline,
@@ -402,33 +411,32 @@ public class Colors {
             
             protected ColorTransform buildDefaultColorTransform() {
                 if (this.fgc != null && this.fgc.getInvertTransform() != null) {
-                    
+
                     if (this.bgc == null || this.bgc.getInvertTransform() == null) {
                         return this.fgc.getInvertTransform(); 
                     }
-                    
+
                     int[] fgcInvertedColorCodes = this.fgc.getInvertTransform().transform(this.fgc).getControlCodes();
                     int[] bgcInvertedColorCodes = this.bgc.getInvertTransform().transform(this.bgc).getControlCodes();
-                    
+
                     int[] combinedCodes = new int[fgcInvertedColorCodes.length + bgcInvertedColorCodes.length];
                     System.arraycopy(fgcInvertedColorCodes, 0, combinedCodes, 0, fgcInvertedColorCodes.length);
                     System.arraycopy(bgcInvertedColorCodes, 0, combinedCodes, fgcInvertedColorCodes.length, bgcInvertedColorCodes.length);
-                    
+
                     return (color) -> new ColorFromCodes(combinedCodes).setInvertTransform((c)->FGBGColors.this);
-                    
-                    
+
+
                 } else if ((this.bgc != null && this.bgc.getInvertTransform()!=null)) {
                     return this.bgc.getInvertTransform();
                 } else {
                     return ColorTransform.NULL_colorTransform;
                 }
             }
-            
+
             public ColorTransform getInvertTransform() {
                 return buildDefaultColorTransform();
             }
-    
-    
+
             public FGBGColors removebold() {
                 return new FGBGColors(fgc.removeBold(), bgc);
             }
@@ -549,7 +557,7 @@ public class Colors {
         int g = (pixelColor & 0xff00)   >> 8;
         int b =  pixelColor & 0xff;
         
-        rgbColor = new RGBColor(r,g,b);
+        rgbColor = new RGBColorForeground(r,g,b);
         rgbMap.put(pixelColor, rgbColor);
         return rgbColor;
         
@@ -561,7 +569,7 @@ public class Colors {
         if (rgbColor != null) {
             return rgbColor;
         }
-        rgbColor = RGBColor.instance(r,g,b);
+        rgbColor = RGBColorForeground.instance(r,g,b);
         rgbMap.put(pixelColor, rgbColor);
         return rgbColor;
     }

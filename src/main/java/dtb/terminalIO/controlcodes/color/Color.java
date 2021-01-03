@@ -20,7 +20,7 @@ public abstract class Color extends ControlCode implements ColorProvider {
             if (c1 == c2) {
                 return 0;
             }
-    
+
             int[] c1codes = c1.getControlCodes();
             int[] c2codes = c2.getControlCodes();
             return IntArrayComparator.INTARRAY_COMPARE.compare(c1codes, c2codes);
@@ -87,7 +87,7 @@ public abstract class Color extends ControlCode implements ColorProvider {
             ctx.write(this.buildColorControlCode());
         }
     }
-    
+
     public Colors.FGBGColors newFrom(Colors.FgColor fgcNew) {
         throw new IllegalStateException("Not implemented! Only works for FGBGColors object");
     }
@@ -107,7 +107,7 @@ public abstract class Color extends ControlCode implements ColorProvider {
     public static Color fromStr(String colorStr) {
         return new Colors.ColorFromString(colorStr);
     }
-    
+
     public DisplayableValue<Color> asDisplayableValue() {
         return new DisplayableValue<Color>() {
             @Override
@@ -120,7 +120,7 @@ public abstract class Color extends ControlCode implements ColorProvider {
             }
         };
     }
-    
+
     /**
      * Returns itself with more color codes
      */
@@ -140,9 +140,9 @@ public abstract class Color extends ControlCode implements ColorProvider {
         }
         return Colors.ColorFromCodes.instance(newCodes);
     }
-    
+
     public Color appendCodes(Color color) {
         return appendCodes(color.getControlCodes());
     }
-    
+
 }

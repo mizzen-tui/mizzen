@@ -5,6 +5,9 @@ import java.awt.image.ImageObserver;
 
 import dtb.terminalIO.geom.Rectangle;
 
+/**
+ * Adapts an Image object to look like a Rectangle
+ */
 public class ImageRectangleAdapter implements Rectangle {
 
     private Image image;
@@ -43,7 +46,7 @@ public class ImageRectangleAdapter implements Rectangle {
 
     private synchronized int getImageWidth(Image img) {
 
-        /* Wait for the width the image to
+        /* Wait for the width of the image to
          * become available.
          */
         while (img.getWidth(observer) == -1) {
@@ -59,7 +62,7 @@ public class ImageRectangleAdapter implements Rectangle {
 
     private synchronized int getImageHeight(Image img) {
 
-        /* Wait for the height the image to
+        /* Wait for the height of the image to
          * become available.
          */
         while (img.getHeight(observer) == -1) {

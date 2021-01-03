@@ -147,7 +147,7 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
     
     private void populateViewFromSource() {
 
-        DEBUG_STATS = "\n\nXXXXXXXXXXXXXXXXXXXXXXXXXXXX\npopulateViewFromSource: ";
+        DEBUG_STATS = "";
         
         this.clear();
         Rectangle bounds = rectangeFromOffsetAndDimension();
@@ -308,7 +308,7 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
         public String getText() {
 
             if (_clippedText != null) {
-                return _clippedText.substring(0,_clippedText.length()-1)+"X";
+                return _clippedText;
             }
 
             // ech!! and double-ech.. All of these checks make me see

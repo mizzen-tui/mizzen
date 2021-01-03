@@ -2,6 +2,7 @@ package dtb.terminalIO.examples;
 
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
+import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.RenderingHints;
@@ -10,7 +11,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 import javax.imageio.ImageIO;
 
@@ -24,6 +25,8 @@ import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.core.ScreenCanvasBackend;
+import dtb.terminalIO.events.OnIdleEventEventHandler;
+import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
@@ -53,28 +56,12 @@ public class ReadImageFileToScreenTest {
             
             Dimension desiredImgSize = new Dimension.Simple(tApp.getMainApplicationPanel().getHeight()-6,tApp.getMainApplicationPanel().getWidth()-4);
             
-            Function<Dimension, Component<?>>  buildImageViewer = (size) -> {
-                
-                Component<?> imgViewer = null;
-                try {
-                    imgViewer = ImageViewerFactory.fromImage(imageToView, desiredImgSize);
-                } catch (Exception e) {
-                    // TODO Auto-generated catch block
-                    throw new RuntimeException(e);
-                }
-                return imgViewer;
-            };
-            
-            
-
-            Component<?> imageViewer = buildImageViewer.apply(desiredImgSize);
-            
             ButtonBar bannerPanel = new ButtonBar().setHorizontalSpacer(0);
             bannerPanel.setBorder(false);
             bannerPanel.setNoBorderChars();
 
             bannerPanel.addComponent(new TextComponent("Demonstrate reading color codes from text file   "));
-            
+
             Button updateToggler = new Button(Colors.IYel,"                 ");
             updateToggler.setHotKey(Keys.CTRL_U_KEYSTROKE);
             updateToggler.setDisplayHotKey(true);
@@ -90,32 +77,19 @@ public class ReadImageFileToScreenTest {
             bannerPanel.addButton(Colors.IGre,"CTRL-C",Keys.CTRL_C_KEYSTROKE, (te) -> tApp.getTerminateAppHotKeyEventHandler().handle(te)  );
             
             bannerPanel.addComponent(new TextComponent(" to quit "));
+            
+            TextComponent loadingImage = new TextComponent(Colors.BGre, "Loading image ..                                ");
 
             Button toggleColors = new Button(Colors.IGre,"No colors");
-/*
-            bannerPanel.addButton(toggleColors,Keys.CTRL_D_KEYSTROKE, (te) -> {
-                stripColorCodes.getAndSet(!stripColorCodes.get());
-                String data = fileData;
-                if (stripColorCodes.get()) {
-                    data = ColorParsingUtils.removeColorCodes(data);
-                    toggleColors.setButtonText("Show colors");
-                } else {
-                    toggleColors.setButtonText("No colors");
-                }
-                image.setText(data);
-                tApp.doRefreshCanvasIfModified();
-            }  );
-*/
             
             ScrollableComponent sc = new ScrollableComponent(viewerTextColor, 
                                                              (Dimension)tApp.getMainApplicationPanel(), 
-                                                             imageViewer,
+                                                             loadingImage,
                                                              ()-> new DefaultFocusManager(Keys.SHIFT_TAB_KEYSTROKE, Keys.TAB_KEYSTROKE).setNavKeysFirst(false));
             sc.setFillOnClear(true);
             sc.setEmptyChar('░');
 
             sc.resize(  new Dimension.Simple(sc.getHeight()-4, sc.getWidth()));
-            
 
             tApp.getMainApplicationPanel().add(1,1, bannerPanel);
 
@@ -127,15 +101,38 @@ public class ReadImageFileToScreenTest {
 
             tApp.getEventBus().appendEventHandler( mainFocusManager );
 
+            Consumer<Dimension>  buildImageViewer = (size) -> {
+
+                Dimension newImageSize = new Dimension.Simple(sc.getHeight()-2, sc.getWidth()-2);
+
+                loadingImage.setTextAndResize( Colors.coloredText(Colors.BGre,"Loading image ..  Size: ") + 
+                                               Colors.coloredText(Colors.Yel, String.valueOf(newImageSize)));
+                sc.setComponentBeingViewed(loadingImage);
+                //tApp.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(sc) );
+                tApp.doRefreshCanvasIfModified();
+
+                new Thread(()->{
+                    try {
+                        Component<?> imgViewer = ImageViewerFactory.fromImage(imageToView, newImageSize);
+                        tApp.getEventBus().appendIdleEventHandler( new OnIdleEventEventHandler.OneTime((te)-> {
+                            sc.setComponentBeingViewed(imgViewer);
+                            te.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(sc) );
+                        } ));
+
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }).start();
+            };
+
+            buildImageViewer.accept(desiredImgSize);
+
             BiConsumer<TUIApp, Dimension> baseResizeAction = tApp.getResizeAction();
 
             tApp.setOnResizeAction( (ptApp, newSize) ->{
                 baseResizeAction.accept(ptApp, newSize);
-                Component<?> imageViewerResized = buildImageViewer.apply(newSize);
-                
-                sc.setComponentBeingViewed(imageViewerResized);
-                
                 sc.resize(  new Dimension.Simple(newSize.getHeight()-4, newSize.getWidth()));
+                buildImageViewer.accept(newSize);
             } );
 
             FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
@@ -169,7 +166,7 @@ public class ReadImageFileToScreenTest {
     }
     
     private static Image genImageData() {
-        return getCircle(100,100);
+        return getCircle(500,600);
     }
     
     static BufferedImage getCircle(int width, int height) {
@@ -177,6 +174,8 @@ public class ReadImageFileToScreenTest {
         BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
         java.awt.Color transparent = new java.awt.Color(0x00FFFFFF, true);
 
+        java.awt.Color fg = java.awt.Color.black;
+        
         Graphics2D g = (Graphics2D) bufferedImage.getGraphics();
         //trying to make the bufferedImage transparent 
         g.setComposite(AlphaComposite.Src);
@@ -185,12 +184,39 @@ public class ReadImageFileToScreenTest {
         g.fillRect(0, 0, bufferedImage.getWidth(), bufferedImage.getHeight());
         //drawing the circle 
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        
+        float dash1[] = {10.0f};
+        BasicStroke dashed =
+                new BasicStroke(1.0f,
+                                BasicStroke.CAP_BUTT,
+                                BasicStroke.JOIN_MITER,
+                                10.0f, dash1, 0.0f);
+        g.setStroke(dashed);        
+        
         g.setColor(java.awt.Color.red);
 
-        g.setStroke(new BasicStroke(5));
-        g.drawOval(0, 0, 100, 100);
+        int fontSize = 100;
+
+        g.setFont(new Font("TimesRoman", Font.PLAIN, fontSize));
+         
+        g.setColor(java.awt.Color.red);
+        
+        g.drawString("HELLO WORLD!", 10, height - 50);        
+        
+        //g.drawString("Filled Rectangle2D", 0, 0);
+        
+//        g.setStroke(new BasicStroke(5));
+//        g.drawOval(0, 0, width - 5, height -5);
+     
+//        GradientPaint redtowhite = new GradientPaint(0,0,java.awt.Color.RED,100, 0,java.awt.Color.WHITE);
+//        g.setPaint(java.awt.Color.green);
+//        g.fill (new Ellipse2D.Double(0, 0, width - 5, height -20));        
+        
+        
         return bufferedImage;
     }
+    
+    
     
     
 }

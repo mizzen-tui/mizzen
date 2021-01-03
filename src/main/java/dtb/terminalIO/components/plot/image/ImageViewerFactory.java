@@ -58,6 +58,10 @@ public class ImageViewerFactory {
 
         pxGrabber.grabPixels();
         
+        //  TODO:  would be good to find out terminal color capability and map colors to simpler
+        //         ones for terminals that are not very capable ... reasoning for this is,
+        //         less generated colors will cause more color duplicates on output which will get filtered out and speed up output
+        
         RGBPlotPredicate toPlotOrNot =  // PLOT_WHITE_ONLY; 
                                         PLOT_ALWAYS;
                                         //PLOT_BLACK_ONLY;
@@ -65,18 +69,31 @@ public class ImageViewerFactory {
         RGBToAnsiColorControlCode colorMap =    //   rgbColorPlotBlack; 
                                                 // rgbColorPlotBlackAndGreyAsWhite; 
                                                 // rgbColorMapSimple1; 
-                                                // rgbGreyScale; 
+                                               //  rgbGreyScale; 
                                                  rgbColorMapDIRECT;
         
         
-        String gradientStr =   SIMPLE_char_gradientStr1;
-                              //   SIMPLE_char_gradientStr2;
+        String gradientStr =  SIMPLE_char_gradientStr1;
+                              // SIMPLE_char_gradientStr2;
                               // SIMPLE_char_gradientStr3;
                               //"##@$%WRHGo\"~;:'. ";
                               //"#";
+                              //"#$%WHOo.";
+                              //"/";
+                              //"-";
+                              //"===--- ";
+                              //"===---.. ";
+                              //"###||||!!!!;;;::: ";
+                             //  "|";
+                              //"Oo.";
                               //"o";
-                              //".";
-                              // "@@@@OOOOoooo::::....";
+                             //"o●●" ;
+                              // "●●o" ;
+                              //".✷";
+                              //"@@@@@@@OOOOoooo::::....";
+                              // "▓" + "▒" + "░" + "⣯" + "⠹" + "⠸" + "⠰";
+                              //"▉"+"▊"+"▋"+"▌"+"▍"+"▎";
+
         
         for (int row = 0; row < height; row++) {
             for (int col = 0; col < width; col++) {
@@ -89,9 +106,9 @@ public class ImageViewerFactory {
                //if (pixel != -1 && pixel != 0) {
                if (toPlotOrNot.test(red, green, blue)) {
 
-                   Color mappedColor = colorMap.toControlCode(red, blue, green);
+                   Color mappedColor = colorMap.toControlCode(red, green, blue);
                    
-                   char plotChar = rgbToChar(red, blue, green, gradientStr);
+                   char plotChar = rgbToChar(red, green, blue, gradientStr);
                    plotterComponent.addPlot(row, col, plotChar, mappedColor);
                    //plotter.setColor(mappedColor);
                    //plotter.plot(col, row);
@@ -206,33 +223,31 @@ public class ImageViewerFactory {
     static RGBPlotPredicate PLOT_WHITE_ONLY = (r,g,b) -> r > 200 && g > 200 && b > 200;
 
     static RGBPlotPredicate PLOT_BLACK_ONLY = (r,g,b) -> r < 100 && g < 100 && b < 100;
-    
+
     @FunctionalInterface
     static interface RGBToAnsiColorControlCode {
         
         Color toControlCode(int r,int g, int b);
         
     }
-    
+
     static RGBToAnsiColorControlCode rgbColorMapDIRECT = (r,g,b) ->Colors.fromRGB(r,g,b);
-    
+
     static RGBToAnsiColorControlCode rgbColorPlotBlackAndGreyAsWhite = (r,g,b) ->  {
         
         if (r < 50 && g < 50 && b < 50) {
             return Colors.BWhi;
         }
-        
-        
+
         return Colors.BBla;
     };
 
     static RGBToAnsiColorControlCode rgbColorPlotBlack = (r,g,b) ->  {
-        
+
         if (r < 50 && g < 50 && b < 50) {
             return Colors.BWhi;
         }
-        
-        
+
         return Colors.Whi;
     };
 
@@ -242,15 +257,15 @@ public class ImageViewerFactory {
 
     
     static RGBToAnsiColorControlCode rgbColorMapSimple1 = (r,g,b) ->  {
-        
+
         if (r + g + b == 0) {
             return Colors.Bla;
         }
-        
+
         if (r + g + b > 3 * 200) {
             return Colors.BWhi;
         }
-        
+
         // red
         if (r > 100 && g < 100 && b < 100) {
             return r > 200 ? Colors.BRed : Colors.Red;

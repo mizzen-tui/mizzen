@@ -87,7 +87,7 @@ public class Plotter extends BoundedComponent<Plotter> {
             
         }).elapsed();
         
-        Logging.info("Plotter.draw() - elapsed: " + elapsed );
+        Logging.info("Plotter.draw() - elapsed: " + elapsed +" size: " + segments.getSegments().size()+ " plotsSize="+plots.size());
     }
     
     private void __draw(Color color, IScreenLineSegmentsBuffer segments) {

@@ -858,7 +858,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
                     return continueParsing;
                 }
             });
-            
+
             if (lastSimpleText[0] != null && lastSimpleText[0].length()>0) {
                 ScreenLineSegment segment = createSegment.create(lastColor[0], 
                                                                  offset.offsetAdd(0, curlengthCreated[0]),
@@ -866,7 +866,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
                 curlengthCreated[0] += lastSimpleText[0].length();
                 ts.add(segment);
             }
-            
+
             return curlengthCreated[0];
         }
 

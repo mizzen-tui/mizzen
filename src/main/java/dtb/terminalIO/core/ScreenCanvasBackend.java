@@ -153,10 +153,10 @@ public class ScreenCanvasBackend implements CanvasBackend {
     Color lastColor = Colors.DEFAULT_COLOR;
 
     private void addColor(Color color) {
-        if (Color.COLOR_COMPARE.compare(lastColor, color) != 0) {
+       // if (Color.COLOR_COMPARE.compare(lastColor, color) != 0) {
             screen.add(color);
             lastColor = color;
-          }
+       //   }
     }
 
     ScreenUpdateStrategy fullUpdateStrategy = new  ScreenUpdateStrategy() {
