@@ -5,13 +5,12 @@ import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.awt.image.PixelGrabber;
-import java.io.File;
-
-import javax.imageio.ImageIO;
 
 import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.input.DisplayableValue;
+import dtb.terminalIO.components.input.DisplayableValue.SimpleDisplayValue;
+import dtb.terminalIO.components.input.DisplayableValue.StringDisplayValue;
 import dtb.terminalIO.components.plot.Plotter;
-import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.geom.Dimension;
@@ -29,13 +28,78 @@ public class ImageViewerFactory {
     }
     
     
+    public static DisplayableValue<String>[] standardAsciiGradients() {
+        return StringDisplayValue.fromStringValues(new String[] {
+                   SIMPLE_char_gradientStr1,
+                   SIMPLE_char_gradientStr2,
+                   SIMPLE_char_gradientStr3,
+                   "##@$%WRHGo\"~;:'. ",
+                   "#",
+                   "#$%WHOo.",
+                   "/",
+                   "-",
+                   "====--- ",
+                   "===---.. ",
+                   "###||||!!!!;;;::: ",
+                   "|",
+                   "▌",
+                   "Oo.",
+                   "o",
+                   "o●●" ,
+                    "●●o" ,
+                   ".✷",
+                   "@@@@@@@OOOOoooo::::....",
+                   "▓" + "▒" + "░" + "⣯" + "⠹" + "⠸" + "⠰",
+                   "▉"+"▊"+"▋"+"▌"+"▍"+"▎"
+                                                                }, 15);
+    }
+    
+    public static class ColorMapOption extends SimpleDisplayValue<RGBToAnsiColorControlCode> {
+        public ColorMapOption(String displayValue, RGBToAnsiColorControlCode value) {
+            super(displayValue, value);
+        }
+
+    }
+
+    public static ColorMapOption[] colorMap() {
+        ColorMapOption[] colorMaps = new ColorMapOption[] {
+                 new ColorMapOption("rgbColorMapDIRECT",rgbColorMapDIRECT),
+                 new ColorMapOption("rgbColorPlotBlack",rgbColorPlotBlack),
+                 new ColorMapOption("rgbColorPlotBlackAndGreyAsWhite",rgbColorPlotBlackAndGreyAsWhite),
+                 new ColorMapOption("rgbColorMapSimple1",rgbColorMapSimple1),
+                 new ColorMapOption("rgbGreyScale",rgbGreyScale)
+        }; 
+        return colorMaps;
+    }
+    
+    public static class PlotPredicateOption extends SimpleDisplayValue<RGBPlotPredicate> {
+        public PlotPredicateOption(String displayValue, RGBPlotPredicate value) {
+            super(displayValue, value);
+        }
+
+    }
+
+    public static PlotPredicateOption[] plotPointPredicateOptions() {
+        PlotPredicateOption[] colorMaps = new PlotPredicateOption[] {
+                 new PlotPredicateOption("PLOT_ALWAYS",PLOT_ALWAYS),
+                 new PlotPredicateOption("PLOT_WHITE_ONLY",PLOT_WHITE_ONLY),
+                 new PlotPredicateOption("PLOT_BLACK_ONLY",PLOT_BLACK_ONLY)
+        }; 
+        return colorMaps;
+    }
+    
     
     public static Component<?> fromImage(Image imageToView, Dimension desiredImgSizeInCharacters) throws Exception {
 
         return simpleImageToStringView(imageToView, desiredImgSizeInCharacters);
     }
 
-    static Component<?> simpleImageToStringView(Image inputImage, Dimension desiredImgSizeInCharacters) throws Exception {
+    public static Component<?> simpleImageToStringView(Image inputImage, Dimension desiredImgSizeInCharacters) throws Exception {
+        return simpleImageToStringView(inputImage, desiredImgSizeInCharacters, plotPointPredicateOptions()[0].getValue(),  colorMap()[0].getValue(), standardAsciiGradients()[0].getValue());
+    }
+    
+    
+    public static Component<?> simpleImageToStringView(Image inputImage, Dimension desiredImgSizeInCharacters, RGBPlotPredicate toPlotOrNot, RGBToAnsiColorControlCode colorMap, String gradientStr) throws Exception {
 
         Plotter plotterComponent = new Plotter(Colors.On_Whi, desiredImgSizeInCharacters);
         plotterComponent.setEmptyColor(Colors.Whi);
@@ -62,37 +126,38 @@ public class ImageViewerFactory {
         //         ones for terminals that are not very capable ... reasoning for this is,
         //         less generated colors will cause more color duplicates on output which will get filtered out and speed up output
         
-        RGBPlotPredicate toPlotOrNot =  // PLOT_WHITE_ONLY; 
-                                        PLOT_ALWAYS;
-                                        //PLOT_BLACK_ONLY;
-        
-        RGBToAnsiColorControlCode colorMap =    //   rgbColorPlotBlack; 
-                                                // rgbColorPlotBlackAndGreyAsWhite; 
-                                                // rgbColorMapSimple1; 
-                                               //  rgbGreyScale; 
-                                                 rgbColorMapDIRECT;
-        
-        
-        String gradientStr =  SIMPLE_char_gradientStr1;
-                              // SIMPLE_char_gradientStr2;
-                              // SIMPLE_char_gradientStr3;
-                              //"##@$%WRHGo\"~;:'. ";
-                              //"#";
-                              //"#$%WHOo.";
-                              //"/";
-                              //"-";
-                              //"===--- ";
-                              //"===---.. ";
-                              //"###||||!!!!;;;::: ";
-                             //  "|";
-                              //"Oo.";
-                              //"o";
-                             //"o●●" ;
-                              // "●●o" ;
-                              //".✷";
-                              //"@@@@@@@OOOOoooo::::....";
-                              // "▓" + "▒" + "░" + "⣯" + "⠹" + "⠸" + "⠰";
-                              //"▉"+"▊"+"▋"+"▌"+"▍"+"▎";
+//        RGBPlotPredicate toPlotOrNot =  // PLOT_WHITE_ONLY; 
+//                                        PLOT_ALWAYS;
+//                                        //PLOT_BLACK_ONLY;
+//        
+//        RGBToAnsiColorControlCode colorMap =    //   rgbColorPlotBlack; 
+//                                                // rgbColorPlotBlackAndGreyAsWhite; 
+//                                                // rgbColorMapSimple1; 
+//                                               //  rgbGreyScale; 
+//                                                 rgbColorMapDIRECT;
+//        
+//        
+//        String gradientStr =  //SIMPLE_char_gradientStr1;
+//                              // SIMPLE_char_gradientStr2;
+//                              // SIMPLE_char_gradientStr3;
+//                              //"##@$%WRHGo\"~;:'. ";
+//                              //"#";
+//                              //"#$%WHOo.";
+//                              //"/";
+//                              //"-";
+//                              "====--- ";
+//                              //"===---.. ";
+//                              //"###||||!!!!;;;::: ";
+//                               //"|";
+//                              // "▌";
+//                              //"Oo.";
+//                              //"o";
+//                             // "o●●" ;
+//                             //  "●●o" ;
+//                              //".✷";
+//                              //"@@@@@@@OOOOoooo::::....";
+//                              // "▓" + "▒" + "░" + "⣯" + "⠹" + "⠸" + "⠰";
+//                              //"▉"+"▊"+"▋"+"▌"+"▍"+"▎";
 
         
         for (int row = 0; row < height; row++) {
@@ -212,7 +277,7 @@ public class ImageViewerFactory {
     
     
     @FunctionalInterface
-    static interface RGBPlotPredicate {
+    public static interface RGBPlotPredicate {
         
         boolean test(int r,int g, int b);
         
@@ -225,7 +290,7 @@ public class ImageViewerFactory {
     static RGBPlotPredicate PLOT_BLACK_ONLY = (r,g,b) -> r < 100 && g < 100 && b < 100;
 
     @FunctionalInterface
-    static interface RGBToAnsiColorControlCode {
+    public static interface RGBToAnsiColorControlCode {
         
         Color toControlCode(int r,int g, int b);
         

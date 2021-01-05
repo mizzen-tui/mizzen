@@ -871,7 +871,10 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
         }
 
         public static SegmentsFromStringResult textSegmentsFromStringWithEmbeddedColor(String multiLineString,
-                int offSetRow, int offSetCol, Rectangle boundingRectangle, CreateSegmentWithColor createSegment) {
+                                                                                       int offSetRow, 
+                                                                                       int offSetCol, 
+                                                                                       Rectangle boundingRectangle, 
+                                                                                       CreateSegmentWithColor createSegment) {
 
             TreeSet<ScreenLineSegment> ts = makeCollection(null); // empty
             if (multiLineString == null || multiLineString.length() == 0) {

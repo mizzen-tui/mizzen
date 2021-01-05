@@ -12,6 +12,7 @@ public interface DisplayableValue<V> extends HasValue<V> {
 
         V value;
         String displayValue;
+        int maxDisplayValueLen = -1;
         
         public SimpleDisplayValue(String displayValue, V value) {
             this.displayValue = displayValue;
@@ -30,9 +31,19 @@ public interface DisplayableValue<V> extends HasValue<V> {
 
         @Override
         public String getDisplayValue() {
+            if (maxDisplayValueLen<4) {
+               return displayValue;
+            }
+            if (maxDisplayValueLen < displayValue.length()) {
+                return displayValue.substring(0,maxDisplayValueLen-4)+" .. ";
+            }
             return displayValue;
         }
         
+        public void setMaxDisplayValueLen(int maxDisplayValueLen) {
+            this.maxDisplayValueLen = maxDisplayValueLen;
+        }
+
         @Override
         public String toString() {
             return getDisplayValue();
@@ -51,6 +62,10 @@ public interface DisplayableValue<V> extends HasValue<V> {
         }
 
         public static StringDisplayValue[] fromStringValues(String[] values) {
+            return fromStringValues(values, -1); 
+        }
+        
+        public static StringDisplayValue[] fromStringValues(String[] values, int maxDisplayValueLen) {
             if (values == null) {
                 return null;
             }
@@ -58,6 +73,7 @@ public interface DisplayableValue<V> extends HasValue<V> {
             
             for (int i=0; i<values.length; i++) {
                 displayValues[i] = new StringDisplayValue(values[i]);
+                displayValues[i].setMaxDisplayValueLen(maxDisplayValueLen);
             }
             
             return displayValues;

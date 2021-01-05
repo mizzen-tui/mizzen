@@ -150,7 +150,13 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
         return yesNoDropDown(Colors.FGBGColors.NO_COLOR_SPECIFIED);
     }
     
-    private void setMaxItemWidth(int maxItemWidth) {
+    public void setMaxItemWidth(int maxItemWidth) {
+        if (maxItemWidth<1) {
+            throw new IllegalArgumentException("bad max width specified :"+maxItemWidth);
+        }
+        if (this.maxItemWidth != maxItemWidth) {
+            this.markAsDirty();
+        }
         this.maxItemWidth = maxItemWidth;
         setSelectedOntoTextView();
     }

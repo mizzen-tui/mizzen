@@ -83,11 +83,13 @@ public class ColorParsingUtils {
             switch (PARSE_STATE) {
             case PARSE_TEXT:
                 if (ch == '\u001B') {
-                    simpleText = new CleanString.Simple(sb.toString());
-                    boolean continueParsing = colorColorSegmentBuilder.newColorSegment(color, simpleText);
-                    if (!continueParsing)
-                        return;
-                    // result.add( new ColorParseSegment(color, simpleText) );
+                    if (sb.length()>0) {
+                        simpleText = new CleanString.Simple(sb.toString());
+                        boolean continueParsing = colorColorSegmentBuilder.newColorSegment(color, simpleText);
+                        if (!continueParsing) {
+                            return;
+                        }
+                    }
                     PARSE_STATE = PARSE_COLOR_START;
                     simpleText = null;
                     color = null;

@@ -399,12 +399,8 @@ public class ImageViewer {
                             tApp2.getEventBus().appendEventHandler( new OnIdleEventEventHandler.OneTime((te)->  {
                                 throttledDisplayImageRequestWrapper.accept(te);
                             }));
-                            
-                            
                         });
 
-                        
-                        
                         DefaultFocusManager mainFocusManager = (DefaultFocusManager)FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),tApp.getEventBus());
 
                         //mainFocusManager.setNavKeysFirst(false);

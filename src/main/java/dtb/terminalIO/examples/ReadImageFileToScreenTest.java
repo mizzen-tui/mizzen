@@ -20,11 +20,15 @@ import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.input.Button;
+import dtb.terminalIO.components.input.DropdownListBox;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory;
+import dtb.terminalIO.components.plot.image.ImageViewerFactory.RGBPlotPredicate;
+import dtb.terminalIO.components.plot.image.ImageViewerFactory.RGBToAnsiColorControlCode;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.core.ScreenCanvasBackend;
+import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
@@ -54,7 +58,7 @@ public class ReadImageFileToScreenTest {
            //Color viewerTextColor = new Colors.FGBGColors(Colors.BIYel, Colors.On_Blu);
            Color viewerTextColor = Colors.DEFAULT_COLOR;
             
-            Dimension desiredImgSize = new Dimension.Simple(tApp.getMainApplicationPanel().getHeight()-6,tApp.getMainApplicationPanel().getWidth()-4);
+            Dimension desiredImgSize = new Dimension.Simple(tApp.getMainApplicationPanel().getHeight()-8,tApp.getMainApplicationPanel().getWidth()-4);
             
             ButtonBar bannerPanel = new ButtonBar().setHorizontalSpacer(0);
             bannerPanel.setBorder(false);
@@ -74,14 +78,28 @@ public class ReadImageFileToScreenTest {
             updateToggler.onChange(toggleUpdateHandler);
             bannerPanel.addComponent(updateToggler);
 
+            
+            DropdownListBox<ImageViewerFactory.RGBToAnsiColorControlCode> colorMapDDLB =  new DropdownListBox<ImageViewerFactory.RGBToAnsiColorControlCode>(ImageViewerFactory.colorMap());
+            colorMapDDLB.setSelected(0);
+            bannerPanel.addComponent(colorMapDDLB);
+            
+            DropdownListBox<ImageViewerFactory.RGBPlotPredicate> plotPredicatesDDLB =  new DropdownListBox<ImageViewerFactory.RGBPlotPredicate>(ImageViewerFactory.plotPointPredicateOptions());
+            plotPredicatesDDLB.setSelected(0);
+            bannerPanel.addComponent(plotPredicatesDDLB);
+            
+            
+            DropdownListBox<String> gradientsDDLB =  new DropdownListBox<String>(ImageViewerFactory.standardAsciiGradients());
+            gradientsDDLB.setMaxItemWidth(15);
+            gradientsDDLB.setSelected(0);
+            bannerPanel.addComponent(gradientsDDLB);
+            
+            
             bannerPanel.addButton(Colors.IGre,"CTRL-C",Keys.CTRL_C_KEYSTROKE, (te) -> tApp.getTerminateAppHotKeyEventHandler().handle(te)  );
             
             bannerPanel.addComponent(new TextComponent(" to quit "));
             
             TextComponent loadingImage = new TextComponent(Colors.BGre, "Loading image ..                                ");
 
-            Button toggleColors = new Button(Colors.IGre,"No colors");
-            
             ScrollableComponent sc = new ScrollableComponent(viewerTextColor, 
                                                              (Dimension)tApp.getMainApplicationPanel(), 
                                                              loadingImage,
@@ -107,13 +125,22 @@ public class ReadImageFileToScreenTest {
 
                 loadingImage.setTextAndResize( Colors.coloredText(Colors.BGre,"Loading image ..  Size: ") + 
                                                Colors.coloredText(Colors.Yel, String.valueOf(newImageSize)));
+                
                 sc.setComponentBeingViewed(loadingImage);
-                //tApp.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(sc) );
                 tApp.doRefreshCanvasIfModified();
 
                 new Thread(()->{
                     try {
-                        Component<?> imgViewer = ImageViewerFactory.fromImage(imageToView, newImageSize);
+                        RGBPlotPredicate toPlotOrNot        =  plotPredicatesDDLB.getValue();
+                        RGBToAnsiColorControlCode colorMap  = colorMapDDLB.getValue();
+                        String gradientStr                  = gradientsDDLB.getValue();
+
+                        Component<?> imgViewer;
+                        if (toPlotOrNot != null && colorMap != null && gradientStr != null) {
+                            imgViewer = ImageViewerFactory.simpleImageToStringView(imageToView, newImageSize, toPlotOrNot, colorMap, gradientStr);
+                        } else {
+                            imgViewer = ImageViewerFactory.fromImage(imageToView, newImageSize);
+                        }
                         tApp.getEventBus().appendIdleEventHandler( new OnIdleEventEventHandler.OneTime((te)-> {
                             sc.setComponentBeingViewed(imgViewer);
                             te.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(sc) );
@@ -135,10 +162,16 @@ public class ReadImageFileToScreenTest {
                 buildImageViewer.accept(newSize);
             } );
 
+            EventHandler onOptionChanged = (te)->buildImageViewer.accept((Dimension)sc);
+            
+            plotPredicatesDDLB.onChange(onOptionChanged);
+            colorMapDDLB.onChange(onOptionChanged);
+            gradientsDDLB.onChange(onOptionChanged);
+            
+            
             FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
 
             ScreenCanvasBackend canvasBackend = ((ScreenCanvasBackend)tApp.getCanvas().getCanvasBackend());
-            //canvasBackend.setUpdateStrategy(UpdateStrategy.UPDATE_FULL);
             
             
         }).start();

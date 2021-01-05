@@ -77,6 +77,10 @@ public class Colors {
         }
         
     };
+
+    static {
+        colorsCache.put(RCol.getControlCodes(), RCol);
+    }
     
     public static final Color DEFAULT_COLOR            = RCol ; // new FGBGColors(Colors.Whi, null);
     
