@@ -9,20 +9,20 @@ import dtb.terminalIO.controlcodes.color.ColorTransform;
  * its hilited equivalent which usually means making it bold
  */
 public class ColorHiliter implements Hiliter, ColorProvider {
-    
+
     private boolean hilited = false;
-    
+
     private ColorProvider colorToHilite;
     private ColorTransform colorHilitedTransform = (color)->color.bold();
 
     public ColorHiliter(ColorProvider colorProvider) {
         this.colorToHilite = colorProvider;
     }
-    
+
     protected Color getColorToHilite() {
         return colorToHilite.getColor();
     }
-    
+
     public Color getColor() {
         if (hilited) {
            return colorHilitedTransform.transform(getColorToHilite().getColor());

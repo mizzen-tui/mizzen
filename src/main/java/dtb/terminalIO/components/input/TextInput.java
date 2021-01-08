@@ -29,7 +29,9 @@ import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 
 public class TextInput extends BoundedComponent<TextInput>
-        implements HasValue<String>, ParentContainer, Focusable /*, EventHandlerContainer*/ {
+                       implements HasValue<String>, 
+                                  ParentContainer, 
+                                  Focusable  {
 
     private TextComponent textRenderer;
     private StringBuffer buffer;
@@ -64,6 +66,14 @@ public class TextInput extends BoundedComponent<TextInput>
         init();
     }
 
+    public void markAsDirty() {
+        if (! isDirty()) {
+            super.markAsDirty();
+            this.textRenderer.markAsDirty();
+        }
+    }
+    
+    
     @Override
     public TextInput setColor(Color drawingcolor) {
         super.setColor(drawingcolor);
@@ -96,7 +106,8 @@ public class TextInput extends BoundedComponent<TextInput>
         this.caret = new Position.Simple(0, 0);
         this.setFillOnClear(true);
         this.textRenderer = makeChildComponent(() -> new TextComponent(TextInput.this.getColor(),
-                TextInput.this.getRectangle(), TextInput.this.buffer.toString()));
+                                                                       TextInput.this.getRectangle(), 
+                                                                       TextInput.this.buffer.toString()));
     }
 
     @Override
@@ -151,6 +162,8 @@ public class TextInput extends BoundedComponent<TextInput>
             return;
         }
         setRectangle(new Rectangle.Simple(this.getPostion_TopLeft(), d));
+        this.textRenderer.resize(d);
+        this.maxTextWidth = Math.max(this.getWidth(), this.getText().length());
         markAsDirty();
     }
 
@@ -267,7 +280,7 @@ public class TextInput extends BoundedComponent<TextInput>
         requestShowCursor(eventBus);
         eventBus.raiseEvent(new RequestUpdateCanvasEvent(this));
     }
-    
+
     void raiseEventOnChanged(EventBus eventBus, Supplier<Boolean> changeTextAction) {
         if (changeTextAction.get()) {
             eventBus.raiseEvent(new HasValue.ValueChangedEvent<>(this));
@@ -454,7 +467,9 @@ public class TextInput extends BoundedComponent<TextInput>
 
     @Override
     public String toString() {
-        return "TextInput [buffer=" + buffer.toString() + "]" + "[row=" + getRow() + ", lcol" + getCol() + ", rcol="
+        return "TextInput [buffer=" + 
+                           buffer.toString() + "]" + 
+                           "[row=" + getRow() + ", lcol" + getCol() + ", rcol="
                 + getRightMostCol() + " width=" + getWidth() + ", height=" + getHeight() + "]";
     }
 

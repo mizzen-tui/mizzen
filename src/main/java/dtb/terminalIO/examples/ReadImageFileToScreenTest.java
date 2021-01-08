@@ -18,9 +18,11 @@ import javax.imageio.ImageIO;
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.input.DropdownListBox;
+import dtb.terminalIO.components.input.TextInput;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.RGBPlotPredicate;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.RGBToAnsiColorControlCode;
@@ -28,6 +30,7 @@ import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.core.ScreenCanvasBackend;
+import dtb.terminalIO.events.AbstractTimedRequestedController;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
@@ -36,6 +39,8 @@ import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
+import dtb.terminalIO.geom.Rectangle.Simple;
+import dtb.terminalIO.util.ElapsedTime;
 import dtb.terminalIO.util.Logging;
 
 public class ReadImageFileToScreenTest {
@@ -55,9 +60,9 @@ public class ReadImageFileToScreenTest {
 
             AtomicBoolean stripColorCodes = new AtomicBoolean(false);
 
-           //Color viewerTextColor = new Colors.FGBGColors(Colors.BIYel, Colors.On_Blu);
-           Color viewerTextColor = Colors.DEFAULT_COLOR;
-            
+            //Color viewerTextColor = new Colors.FGBGColors(Colors.BIYel, Colors.On_Blu);
+            Color viewerTextColor = Colors.DEFAULT_COLOR;
+
             Dimension desiredImgSize = new Dimension.Simple(tApp.getMainApplicationPanel().getHeight()-8,tApp.getMainApplicationPanel().getWidth()-4);
             
             ButtonBar bannerPanel = new ButtonBar().setHorizontalSpacer(0);
@@ -78,27 +83,36 @@ public class ReadImageFileToScreenTest {
             updateToggler.onChange(toggleUpdateHandler);
             bannerPanel.addComponent(updateToggler);
 
-            
-            DropdownListBox<ImageViewerFactory.RGBToAnsiColorControlCode> colorMapDDLB =  new DropdownListBox<ImageViewerFactory.RGBToAnsiColorControlCode>(ImageViewerFactory.colorMap());
+            DropdownListBox<ImageViewerFactory.RGBToAnsiColorControlCode> colorMapDDLB = new DropdownListBox<ImageViewerFactory.RGBToAnsiColorControlCode>(ImageViewerFactory.colorMap());
             colorMapDDLB.setSelected(0);
             bannerPanel.addComponent(colorMapDDLB);
-            
-            DropdownListBox<ImageViewerFactory.RGBPlotPredicate> plotPredicatesDDLB =  new DropdownListBox<ImageViewerFactory.RGBPlotPredicate>(ImageViewerFactory.plotPointPredicateOptions());
+
+            DropdownListBox<ImageViewerFactory.RGBPlotPredicate> plotPredicatesDDLB = new DropdownListBox<ImageViewerFactory.RGBPlotPredicate>(ImageViewerFactory.plotPointPredicateOptions());
             plotPredicatesDDLB.setSelected(0);
             bannerPanel.addComponent(plotPredicatesDDLB);
-            
-            
-            DropdownListBox<String> gradientsDDLB =  new DropdownListBox<String>(ImageViewerFactory.standardAsciiGradients());
+
+            DropdownListBox<String> gradientsDDLB = new DropdownListBox<String>(ImageViewerFactory.standardAsciiGradients());
             gradientsDDLB.setMaxItemWidth(15);
             gradientsDDLB.setSelected(0);
             bannerPanel.addComponent(gradientsDDLB);
-            
-            
+
             bannerPanel.addButton(Colors.IGre,"CTRL-C",Keys.CTRL_C_KEYSTROKE, (te) -> tApp.getTerminateAppHotKeyEventHandler().handle(te)  );
-            
+
             bannerPanel.addComponent(new TextComponent(" to quit "));
+
+            HorizontalPanel hpForTextBox = new HorizontalPanel();
+            hpForTextBox.add(new TextComponent("Current gradient:"));
+            TextInput currentGradientTextBox = new TextInput(10).setColor(Colors.IYel);
+            currentGradientTextBox.setText("");
             
-            TextComponent loadingImage = new TextComponent(Colors.BGre, "Loading image ..                                ");
+            Button reverseGradientText = new Button(Colors.IRed,"Reverse");
+            reverseGradientText.setHotKey(Keys.CTRL_R_KEYSTROKE);
+            reverseGradientText.setDisplayHotKey(true);
+            
+            hpForTextBox.add(reverseGradientText);
+            hpForTextBox.add(currentGradientTextBox);
+
+            TextComponent loadingImage = new TextComponent(Colors.BGre, "  ..   ");
 
             ScrollableComponent sc = new ScrollableComponent(viewerTextColor, 
                                                              (Dimension)tApp.getMainApplicationPanel(), 
@@ -110,12 +124,13 @@ public class ReadImageFileToScreenTest {
             sc.resize(  new Dimension.Simple(sc.getHeight()-4, sc.getWidth()));
 
             tApp.getMainApplicationPanel().add(1,1, bannerPanel);
-
+            tApp.getMainApplicationPanel().add(2,1, hpForTextBox);
+            
             tApp.getMainApplicationPanel().add(4,0, sc);
 
             FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),
-                    tApp.getEventBus(),
-                    ()-> new DefaultFocusManager().setNavKeysFirst(false).setCycling(false));
+                                                                                             tApp.getEventBus(),
+                                                                                             ()-> new DefaultFocusManager().setNavKeysFirst(false).setCycling(false));
 
             tApp.getEventBus().appendEventHandler( mainFocusManager );
 
@@ -123,25 +138,34 @@ public class ReadImageFileToScreenTest {
 
                 Dimension newImageSize = new Dimension.Simple(sc.getHeight()-2, sc.getWidth()-2);
 
-                loadingImage.setTextAndResize( Colors.coloredText(Colors.BGre,"Loading image ..  Size: ") + 
-                                               Colors.coloredText(Colors.Yel, String.valueOf(newImageSize)));
-                
-                sc.setComponentBeingViewed(loadingImage);
+                String loadingText = Colors.coloredText(Colors.BGre,"Loading image ..  Size: ") + 
+                                     Colors.coloredText(Colors.Yel, String.valueOf(newImageSize));
+
+                //loadingImage.setTextAndResize( loadingText );
+
+                //sc.setComponentBeingViewed(loadingImage);
+                sc.setTitle(loadingText);
                 tApp.doRefreshCanvasIfModified();
 
                 new Thread(()->{
                     try {
                         RGBPlotPredicate toPlotOrNot        =  plotPredicatesDDLB.getValue();
                         RGBToAnsiColorControlCode colorMap  = colorMapDDLB.getValue();
-                        String gradientStr                  = gradientsDDLB.getValue();
+                        String gradientStr                  = currentGradientTextBox.getValue();
+                        if (gradientStr==null || gradientStr.trim().length()==0) {
+                            gradientStr = gradientsDDLB.getValue();
+                        }
 
                         Component<?> imgViewer;
+                        ElapsedTime imgGenerateTime = ElapsedTime.start();
                         if (toPlotOrNot != null && colorMap != null && gradientStr != null) {
                             imgViewer = ImageViewerFactory.simpleImageToStringView(imageToView, newImageSize, toPlotOrNot, colorMap, gradientStr);
                         } else {
                             imgViewer = ImageViewerFactory.fromImage(imageToView, newImageSize);
                         }
+                        Logging.info("\n\n-------------------------\ngenerated image time: " + imgGenerateTime.elapsed()+"\n--------------------------------\n");
                         tApp.getEventBus().appendIdleEventHandler( new OnIdleEventEventHandler.OneTime((te)-> {
+                            sc.setTitle("");
                             sc.setComponentBeingViewed(imgViewer);
                             te.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(sc) );
                         } ));
@@ -159,21 +183,40 @@ public class ReadImageFileToScreenTest {
             tApp.setOnResizeAction( (ptApp, newSize) ->{
                 baseResizeAction.accept(ptApp, newSize);
                 sc.resize(  new Dimension.Simple(newSize.getHeight()-4, newSize.getWidth()));
+                currentGradientTextBox.resize(new Dimension.Simple(1,sc.getWidth()-20));
                 buildImageViewer.accept(newSize);
             } );
 
-            EventHandler onOptionChanged = (te)->buildImageViewer.accept((Dimension)sc);
-            
+            AbstractTimedRequestedController throttledOptionChangedHandler = (new AbstractTimedRequestedController(()->buildImageViewer.accept((Dimension)sc)) {
+                @Override
+                protected boolean isRequestDifferentFromPrevious() {
+                    return true;
+                }
+                
+            }).setTimerDelayMillis(500);
+
+            EventHandler onOptionChanged = (te)->throttledOptionChangedHandler.onRequest(te.getEventBus());
+
             plotPredicatesDDLB.onChange(onOptionChanged);
             colorMapDDLB.onChange(onOptionChanged);
-            gradientsDDLB.onChange(onOptionChanged);
+
+            gradientsDDLB.onChange((te)->{
+                                            currentGradientTextBox.setText( gradientsDDLB.getValue() );
+                                            onOptionChanged.handle(te);
+                                         });
             
-            
+            currentGradientTextBox.onChange(onOptionChanged);
+
+            reverseGradientText.onChange((te)->{
+                StringBuilder sb = new StringBuilder(currentGradientTextBox.getValue());  
+                currentGradientTextBox.setText(sb.reverse().toString());
+                onOptionChanged.handle(te);
+            });
+
             FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
 
             ScreenCanvasBackend canvasBackend = ((ScreenCanvasBackend)tApp.getCanvas().getCanvasBackend());
-            
-            
+
         }).start();
 
     }

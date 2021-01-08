@@ -24,12 +24,14 @@ public abstract class AbstractTimedRequestedController {
         return timerDelayMillis;
     }
 
-    public void setTimerDelayMillis(int timerDelayMillis) {
+    public AbstractTimedRequestedController setTimerDelayMillis(int timerDelayMillis) {
         this.timerDelayMillis = timerDelayMillis;
+        return this;
     }
 
-    public void setMaxStarvationTime(int timerDelayMillis) {
+    public AbstractTimedRequestedController setMaxStarvationTime(int timerDelayMillis) {
         this.maxStarvationTime = timerDelayMillis;
+        return this;
     }
 
     /**
@@ -99,5 +101,7 @@ public abstract class AbstractTimedRequestedController {
         }
 
     }
+    
+    
 
 }

@@ -152,7 +152,7 @@ public class TextComponent extends BoundedComponent<TextComponent> {
         super.resize(d);
         parsedSegments = null;
     }
-    
+
     public void setText(CleanString text) {
         if (text == null) {
             throw new NullPointerException("attempting to set null text on TextComponent!");
