@@ -29,6 +29,7 @@ import dtb.terminalIO.components.plot.image.ImageViewerFactory.RGBToAnsiColorCon
 import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
+import dtb.terminalIO.controlcodes.color.Colors.FGBGColors;
 import dtb.terminalIO.core.ScreenCanvasBackend;
 import dtb.terminalIO.events.AbstractTimedRequestedController;
 import dtb.terminalIO.events.EventHandler;
@@ -39,7 +40,6 @@ import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
-import dtb.terminalIO.geom.Rectangle.Simple;
 import dtb.terminalIO.util.ElapsedTime;
 import dtb.terminalIO.util.Logging;
 
@@ -65,13 +65,13 @@ public class ReadImageFileToScreenTest {
 
             Dimension desiredImgSize = new Dimension.Simple(tApp.getMainApplicationPanel().getHeight()-8,tApp.getMainApplicationPanel().getWidth()-4);
             
-            ButtonBar bannerPanel = new ButtonBar().setHorizontalSpacer(0);
+            ButtonBar bannerPanel = new ButtonBar().setHorizontalSpacer(1);
             bannerPanel.setBorder(false);
             bannerPanel.setNoBorderChars();
 
-            bannerPanel.addComponent(new TextComponent("Demonstrate reading color codes from text file   "));
+            bannerPanel.addComponent(new TextComponent(new FGBGColors(Colors.BCya,Colors.On_Whi),"Image to ASCII"));
 
-            Button updateToggler = new Button(Colors.IYel,"                 ");
+            Button updateToggler = new Button(Colors.IYel,"             ");
             updateToggler.setHotKey(Keys.CTRL_U_KEYSTROKE);
             updateToggler.setDisplayHotKey(true);
             KeyInputEventHandler toggleUpdateHandler = TestsCommon.toggleScreenupStrategyKeyboardHandling(Keys.CTRL_U_KEYSTROKE, 
@@ -100,17 +100,23 @@ public class ReadImageFileToScreenTest {
 
             bannerPanel.addComponent(new TextComponent(" to quit "));
 
-            HorizontalPanel hpForTextBox = new HorizontalPanel();
-            hpForTextBox.add(new TextComponent("Current gradient:"));
+            HorizontalPanel hp2ndRow = new HorizontalPanel();
+            hp2ndRow.setEmptyChar('X');
+            Button useBrailleToggleButton = new Button(Colors.Whi, "Braille Renderer", true);
+
+            hp2ndRow.add(useBrailleToggleButton);
+
+            TextComponent gradientLabel = new TextComponent("Current gradient:");
+            hp2ndRow.add(gradientLabel);
             TextInput currentGradientTextBox = new TextInput(10).setColor(Colors.IYel);
             currentGradientTextBox.setText("");
-            
+
             Button reverseGradientText = new Button(Colors.IRed,"Reverse");
             reverseGradientText.setHotKey(Keys.CTRL_R_KEYSTROKE);
             reverseGradientText.setDisplayHotKey(true);
-            
-            hpForTextBox.add(reverseGradientText);
-            hpForTextBox.add(currentGradientTextBox);
+
+            hp2ndRow.add(reverseGradientText);
+            hp2ndRow.add(currentGradientTextBox);
 
             TextComponent loadingImage = new TextComponent(Colors.BGre, "  ..   ");
 
@@ -124,8 +130,8 @@ public class ReadImageFileToScreenTest {
             sc.resize(  new Dimension.Simple(sc.getHeight()-4, sc.getWidth()));
 
             tApp.getMainApplicationPanel().add(1,1, bannerPanel);
-            tApp.getMainApplicationPanel().add(2,1, hpForTextBox);
-            
+            tApp.getMainApplicationPanel().add(2,1, hp2ndRow);
+
             tApp.getMainApplicationPanel().add(4,0, sc);
 
             FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),
@@ -141,9 +147,6 @@ public class ReadImageFileToScreenTest {
                 String loadingText = Colors.coloredText(Colors.BGre,"Loading image ..  Size: ") + 
                                      Colors.coloredText(Colors.Yel, String.valueOf(newImageSize));
 
-                //loadingImage.setTextAndResize( loadingText );
-
-                //sc.setComponentBeingViewed(loadingImage);
                 sc.setTitle(loadingText);
                 tApp.doRefreshCanvasIfModified();
 
@@ -152,14 +155,18 @@ public class ReadImageFileToScreenTest {
                         RGBPlotPredicate toPlotOrNot        =  plotPredicatesDDLB.getValue();
                         RGBToAnsiColorControlCode colorMap  = colorMapDDLB.getValue();
                         String gradientStr                  = currentGradientTextBox.getValue();
-                        if (gradientStr==null || gradientStr.trim().length()==0) {
+                        if (gradientStr==null || gradientStr.trim().length() == 0) {
                             gradientStr = gradientsDDLB.getValue();
                         }
 
                         Component<?> imgViewer;
                         ElapsedTime imgGenerateTime = ElapsedTime.start();
                         if (toPlotOrNot != null && colorMap != null && gradientStr != null) {
-                            imgViewer = ImageViewerFactory.simpleImageToStringView(imageToView, newImageSize, toPlotOrNot, colorMap, gradientStr);
+                            if (useBrailleToggleButton.getValue()) {
+                                imgViewer = ImageViewerFactory.simpleImageToBrailleView(imageToView, newImageSize, toPlotOrNot, colorMap);
+                            } else {
+                                imgViewer = ImageViewerFactory.simpleImageToStringView(imageToView, newImageSize, toPlotOrNot, colorMap, gradientStr);
+                            }
                         } else {
                             imgViewer = ImageViewerFactory.fromImage(imageToView, newImageSize);
                         }
@@ -204,12 +211,29 @@ public class ReadImageFileToScreenTest {
                                             currentGradientTextBox.setText( gradientsDDLB.getValue() );
                                             onOptionChanged.handle(te);
                                          });
-            
+
             currentGradientTextBox.onChange(onOptionChanged);
 
             reverseGradientText.onChange((te)->{
                 StringBuilder sb = new StringBuilder(currentGradientTextBox.getValue());  
                 currentGradientTextBox.setText(sb.reverse().toString());
+                onOptionChanged.handle(te);
+            });
+            
+            useBrailleToggleButton.onChange((te)->{
+                if (useBrailleToggleButton.getValue()) {
+                    currentGradientTextBox.hide();
+                    gradientLabel.hide();
+                    reverseGradientText.hide();
+                    gradientsDDLB.hide();
+                    //tApp.doRefreshCanvasIfModified();
+                } else {
+                    currentGradientTextBox.show();
+                    gradientLabel.show();
+                    reverseGradientText.show();
+                    gradientsDDLB.show();
+                    //tApp.doRefreshCanvasIfModified();
+                }
                 onOptionChanged.handle(te);
             });
 

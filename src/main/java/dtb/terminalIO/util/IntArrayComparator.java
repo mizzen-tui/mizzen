@@ -2,6 +2,9 @@ package dtb.terminalIO.util;
 
 import java.util.Comparator;
 
+/**
+ * A Comparator for int[] arrays.
+ */
 public class IntArrayComparator implements Comparator<int[]> {
 
     @Override

@@ -21,13 +21,18 @@ public class BrailleGrid extends Composite {
         super(color);
         this.plotter = new Plotter(color, new Dimension.Simple(d.getHeight(), d.getWidth()));
         this.add(plotter);
+        this.plotter.setName("grid-plotter");
         gridRectangle = BrailleUtils.componentRectangleToGridRectangle(plotter);
     }
 
     public BrailleGrid(Color color, int height, int width) {
         this(color, new Dimension.Simple(height, width));
     }
-
+    
+    
+    public Plotter getPlotter() {
+        return plotter;
+    }
 
     public void resize(Dimension d) {
         if (d != null && d.isSameDimension(this)) {

@@ -64,7 +64,7 @@ public abstract class TabAction implements HasHotKey, Focusable {
 
     private Focusable tabActionAsFocusable() {
         if (meAsFocuable == null) {
-            this.meAsFocuable = new DefaultFocusableBehaviour.Simple(this.tabComponent, ConditionalEventHandler.NOOP) {
+            this.meAsFocuable = new DefaultFocusableBehaviour.HiliteOnFocus(this.tabComponent) {
                 @Override
                 public void setFocus(boolean focus, EventBus eventBus) {
                     super.setFocus(focus, eventBus);

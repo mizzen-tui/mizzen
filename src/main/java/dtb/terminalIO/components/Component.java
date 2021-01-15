@@ -41,6 +41,14 @@ public interface Component<T extends Component<?>>
     void setParentContainer(ParentContainer composite);
     
     ParentContainer getParentContainer();
+    
+    default void hide() {
+        UTIL.hide(this);
+    }
+    
+    default void show() {
+        UTIL.show(this);
+    }
 
     /**
      * Canvas will have set this offset value if component
@@ -61,6 +69,7 @@ public interface Component<T extends Component<?>>
 
     public static class UTIL {
         
+                
         public static boolean isDirty(Component<?> ... c) {
             
             if (c == null || c.length==0) {
@@ -143,7 +152,7 @@ public interface Component<T extends Component<?>>
             return path;
         }
 
-        static public boolean isAttacheToCanvas(Component<?> component) {
+        static public boolean isAttachedToCanvas(Component<?> component) {
             List<Component<?>> path = pathToCanvas(component);
             if ( isAttachedDirectlyToCanvas(path.get(path.size()-1))) {
                 return true;
@@ -173,7 +182,7 @@ public interface Component<T extends Component<?>>
             Position canvasOffset = Component.UTIL.getCanvasOffsetFor(component);
 
             if (canvasOffset == null) {
-                if ( isAttacheToCanvas(component)) {
+                if ( isAttachedToCanvas(component)) {
                      throw new IllegalStateException("requestShowCursor(): Offset not calculated");
                 } else {
                     throw new IllegalStateException("requestShowCursor(): Offset not calculated\n" +
@@ -260,6 +269,38 @@ public interface Component<T extends Component<?>>
         }
         
         
+        public static <T extends Component<?>> void hide(T component) {
+
+            ParentContainer parent = component.getParentContainer(); 
+
+            if (component.getParentContainer() == null) {
+                return ; // hmm... should I be recording intent
+            }
+
+            if (parent instanceof ChildComponentManager) {
+                ChildComponentManager<?> parentComponentManager = (ChildComponentManager<?>) parent;
+                parentComponentManager.hide(component);
+                component.markAsDirty();
+            }
+
+        }
+
+        public static <T extends Component<?>> void show(T component) {
+
+            ParentContainer parent = component.getParentContainer();
+
+            if (component.getParentContainer() == null) {
+                return ; // hmm... should I be recording intent
+            }
+
+            if (parent instanceof ChildComponentManager) {
+                ChildComponentManager<?> parentComponentManager = (ChildComponentManager<?>) parent;
+                parentComponentManager.show(component);
+                component.markAsDirty();
+            }
+
+        }
+
     }
 
 }

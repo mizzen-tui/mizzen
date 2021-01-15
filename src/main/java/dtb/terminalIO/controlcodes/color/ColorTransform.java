@@ -1,6 +1,5 @@
 package dtb.terminalIO.controlcodes.color;
 
-import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.RendererTransform;
 
 /**

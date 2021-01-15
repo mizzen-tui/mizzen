@@ -7,14 +7,18 @@ import java.awt.image.BufferedImage;
 import java.awt.image.PixelGrabber;
 
 import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.braille.BrailleGrid;
+import dtb.terminalIO.components.braille.BrailleUtils;
 import dtb.terminalIO.components.input.DisplayableValue;
 import dtb.terminalIO.components.input.DisplayableValue.SimpleDisplayValue;
 import dtb.terminalIO.components.input.DisplayableValue.StringDisplayValue;
 import dtb.terminalIO.components.plot.Plotter;
+import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.util.Logging;
 
 public class ImageViewerFactory {
 
@@ -33,6 +37,8 @@ public class ImageViewerFactory {
                    SIMPLE_char_gradientStr1,
                    SIMPLE_char_gradientStr2,
                    SIMPLE_char_gradientStr3,
+                 //  "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'. ",
+                   "@%#*+=-:. ", 
                    "##@$%WRHGo\"~;:'. ",
                    "#",
                    "#$%WHOo.",
@@ -67,7 +73,8 @@ public class ImageViewerFactory {
                  new ColorMapOption("rgbColorPlotBlack",rgbColorPlotBlack),
                  new ColorMapOption("rgbColorPlotBlackAndGreyAsWhite",rgbColorPlotBlackAndGreyAsWhite),
                  new ColorMapOption("rgbColorMapSimple1",rgbColorMapSimple1),
-                 new ColorMapOption("rgbGreyScale",rgbGreyScale)
+                 new ColorMapOption("rgbGreyScale",rgbGreyScale),
+                 new ColorMapOption("No Color (default)", rgbColorMapRCol)
         }; 
         return colorMaps;
     }
@@ -83,7 +90,9 @@ public class ImageViewerFactory {
         PlotPredicateOption[] colorMaps = new PlotPredicateOption[] {
                  new PlotPredicateOption("PLOT_ALWAYS",PLOT_ALWAYS),
                  new PlotPredicateOption("PLOT_WHITE_ONLY",PLOT_WHITE_ONLY),
-                 new PlotPredicateOption("PLOT_BLACK_ONLY",PLOT_BLACK_ONLY)
+                 new PlotPredicateOption("PLOT_BLACK_ONLY",PLOT_BLACK_ONLY),
+                 new PlotPredicateOption("PLOT_DARK_ONLY", PLOT_DARK_ONLY),
+                 new PlotPredicateOption("PLOT_LIGHT_ONLY",PLOT_LIGHT_ONLY)
         }; 
         return colorMaps;
     }
@@ -98,6 +107,10 @@ public class ImageViewerFactory {
         return simpleImageToStringView(inputImage, desiredImgSizeInCharacters, plotPointPredicateOptions()[0].getValue(),  colorMap()[0].getValue(), standardAsciiGradients()[0].getValue());
     }
     
+    public static Component<?> simpleImageToStringView(Image inputImage, Dimension desiredImgSizeInCharacters, String gradientStr) throws Exception {
+        return simpleImageToStringView(inputImage, desiredImgSizeInCharacters, plotPointPredicateOptions()[0].getValue(),  colorMap()[0].getValue(), gradientStr);
+    }
+    
     
     public static Component<?> simpleImageToStringView(Image inputImage, Dimension desiredImgSizeInCharacters, RGBPlotPredicate toPlotOrNot, RGBToAnsiColorControlCode colorMap, String gradientStr) throws Exception {
 
@@ -105,7 +118,7 @@ public class ImageViewerFactory {
         plotterComponent.setEmptyColor(Colors.Whi);
         plotterComponent.setEmptyChar(' ');
         plotterComponent.setFillOnClear(true);
-        //PointPlotter plotter = plotterComponent.asPointPlotter();
+        plotterComponent.setName("imageViewer-plotter");
         
         Image image = resize(inputImage, desiredImgSizeInCharacters);
         
@@ -121,44 +134,6 @@ public class ImageViewerFactory {
         PixelGrabber pxGrabber = new PixelGrabber(image, 0, 0, width, height, pixels, 0, width);
 
         pxGrabber.grabPixels();
-        
-        //  TODO:  would be good to find out terminal color capability and map colors to simpler
-        //         ones for terminals that are not very capable ... reasoning for this is,
-        //         less generated colors will cause more color duplicates on output which will get filtered out and speed up output
-        
-//        RGBPlotPredicate toPlotOrNot =  // PLOT_WHITE_ONLY; 
-//                                        PLOT_ALWAYS;
-//                                        //PLOT_BLACK_ONLY;
-//        
-//        RGBToAnsiColorControlCode colorMap =    //   rgbColorPlotBlack; 
-//                                                // rgbColorPlotBlackAndGreyAsWhite; 
-//                                                // rgbColorMapSimple1; 
-//                                               //  rgbGreyScale; 
-//                                                 rgbColorMapDIRECT;
-//        
-//        
-//        String gradientStr =  //SIMPLE_char_gradientStr1;
-//                              // SIMPLE_char_gradientStr2;
-//                              // SIMPLE_char_gradientStr3;
-//                              //"##@$%WRHGo\"~;:'. ";
-//                              //"#";
-//                              //"#$%WHOo.";
-//                              //"/";
-//                              //"-";
-//                              "====--- ";
-//                              //"===---.. ";
-//                              //"###||||!!!!;;;::: ";
-//                               //"|";
-//                              // "▌";
-//                              //"Oo.";
-//                              //"o";
-//                             // "o●●" ;
-//                             //  "●●o" ;
-//                              //".✷";
-//                              //"@@@@@@@OOOOoooo::::....";
-//                              // "▓" + "▒" + "░" + "⣯" + "⠹" + "⠸" + "⠰";
-//                              //"▉"+"▊"+"▋"+"▌"+"▍"+"▎";
-
         
         for (int row = 0; row < height; row++) {
             for (int col = 0; col < width; col++) {
@@ -184,8 +159,71 @@ public class ImageViewerFactory {
     
     }
     
-    static Component<?> simpleImageToBrailleView(Image inputImage, Dimension desiredImgSizeInCharacters) throws Exception {
-        return null;
+    public static Component<?> simpleImageToBrailleView(Image inputImage, Dimension desiredImgSizeInCharacters, RGBPlotPredicate toPlotOrNot, RGBToAnsiColorControlCode colorMap) throws Exception {
+        
+        BrailleGrid brailleGrid = new BrailleGrid(Colors.On_Whi, desiredImgSizeInCharacters);
+        brailleGrid.setEmptyColor(Colors.Whi);
+        brailleGrid.setEmptyChar(' ');
+        brailleGrid.setFillOnClear(true);
+        brailleGrid.setName("imageViewer-brailleGrid");
+        
+        Image image = resize(inputImage, brailleGrid.getGridRectangle());
+        
+        Rectangle imgSize = new ImageRectangleAdapter(image);
+        
+        int width = imgSize.getWidth();
+        int height = imgSize.getHeight();
+        
+        int[] pixels = new int[width * height];
+
+        PixelGrabber pxGrabber = new PixelGrabber(image, 0, 0, width, height, pixels, 0, width);
+
+        pxGrabber.grabPixels();
+
+        int charsWidth  = desiredImgSizeInCharacters.getWidth();
+        int charsHeight = desiredImgSizeInCharacters.getHeight();
+
+        for (int charsRow = 0; charsRow < charsHeight; charsRow++) {
+            for (int charsCol = 0; charsCol < charsWidth; charsCol++) {
+               int gridRow = charsRow * 4;
+               int gridCol = charsCol * 2;
+               char curBrailleChar = 0;
+               int blueAVG  = 0;
+               int greenAVG = 0;
+               int redAVG   = 0;
+               int charPlotCount = 0;
+               for (int gridRowOffset = 0; gridRowOffset<4; gridRowOffset++) {
+                   for (int gridColOffset = 0; gridColOffset<2; gridColOffset++) {
+                       int curPixelRow = gridRow+gridRowOffset;
+                       int curPixelCol = gridCol+gridColOffset;
+                       int pixel = pixels[curPixelRow * width + curPixelCol];
+                       
+                       int blue  = (pixel & 0xff);
+                       int green = ((pixel & 0xff00) >> 8);
+                       int red   = ((pixel & 0xff0000) >> 16);
+                       if (toPlotOrNot.test(red, green, blue)) {
+                           blueAVG  += blue;
+                           greenAVG += green;
+                           redAVG   += red;
+                           charPlotCount++;
+                           curBrailleChar = BrailleUtils.setBraillePixel(curBrailleChar, curPixelRow, curPixelCol);
+                       }
+                   }
+               }
+               if (charPlotCount>0) {
+                   
+                   blueAVG  = blueAVG  / charPlotCount;
+                   greenAVG = greenAVG / charPlotCount;
+                   redAVG   = redAVG   / charPlotCount;
+                   
+                   Color mappedColor = colorMap.toControlCode(redAVG, greenAVG, blueAVG);
+
+                   brailleGrid.getPlotter().addPlot(charsRow, charsCol, curBrailleChar, mappedColor);
+               }
+            }
+        }
+        return brailleGrid;
+    
     }
 
     
@@ -261,14 +299,9 @@ public class ImageViewerFactory {
         Graphics2D g2d = outputImage.createGraphics();
         g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
                              RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-        //boolean result = g2d.drawImage(inputImage, 0, 0, d.getWidth(), d.getHeight(),0, 0, original.getWidth(), original.getHeight(), (ImageObserver)null);
+
         g2d.drawImage(inputImage, 0, 0, d.getWidth(), d.getHeight(), null);
-//        try {
-//            Thread.sleep(250);
-//        } catch (InterruptedException e) {
-//            // TODO Auto-generated catch block
-//            e.printStackTrace();
-//        }
+
         g2d.dispose();
 
         return outputImage;
@@ -278,9 +311,7 @@ public class ImageViewerFactory {
     
     @FunctionalInterface
     public static interface RGBPlotPredicate {
-        
         boolean test(int r,int g, int b);
-        
     }
     
     static RGBPlotPredicate PLOT_ALWAYS = (r,g,b) -> true;
@@ -289,6 +320,13 @@ public class ImageViewerFactory {
 
     static RGBPlotPredicate PLOT_BLACK_ONLY = (r,g,b) -> r < 100 && g < 100 && b < 100;
 
+    static RGBPlotPredicate PLOT_DARK_ONLY = (r,g,b) -> (r + g + b)/3 < 100;
+// 
+    static RGBPlotPredicate PLOT_LIGHT_ONLY = (r,g,b) -> {
+        //Logging.info(String.format("r %d g %d b %d",r,g,b));
+        return (r + g + b)/3 >= 9;
+    };
+
     @FunctionalInterface
     public static interface RGBToAnsiColorControlCode {
         
@@ -296,6 +334,8 @@ public class ImageViewerFactory {
         
     }
 
+    static RGBToAnsiColorControlCode rgbColorMapRCol = (r,g,b) ->Colors.RCol;
+    
     static RGBToAnsiColorControlCode rgbColorMapDIRECT = (r,g,b) ->Colors.fromRGB(r,g,b);
 
     static RGBToAnsiColorControlCode rgbColorPlotBlackAndGreyAsWhite = (r,g,b) ->  {

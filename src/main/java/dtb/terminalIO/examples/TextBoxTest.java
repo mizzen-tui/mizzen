@@ -28,6 +28,7 @@ import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.Keys;
+import dtb.terminalIO.events.resize.TerminalResizeDetection;
 import dtb.terminalIO.examples.BarChartTest.BarChartDemo;
 import dtb.terminalIO.examples.GridBrailleTest.BrailleDemo;
 import dtb.terminalIO.examples.plot.Test1GamesSeparateThread;
@@ -55,11 +56,15 @@ public class TextBoxTest {
         Logging.setEnabled(true);
         
         new TUIApp(args)
-        .setCanvasSize(40, 130)
         .setEmptyChar(' ')
-        .setMainApplicationPanel(new Composite().setBounds(39, 130).setEmptyChar(' ').setTitle("MainPanel").setBorder(true))
+        .setMainApplicationPanel(new Composite().setBounds(TestsCommon.terminalSize()).setEmptyChar(' ').setTitle("MainPanel").setBorder(true))
         .confirmOnExit()
         .setOnReadyStart((tApp)-> {
+            
+            //Component<?> demo = addBackGround_GridBrailleDemo(tApp);
+            //Component<?> demo = addBackGround_TestSprites(tApp, args);
+            Component<?> demo = addBackGround_Test1Games(tApp, args);
+            
             
             VerticalPanel panel1 = new VerticalPanel();
             
@@ -151,16 +156,14 @@ public class TextBoxTest {
 
             tApp.getMainApplicationPanel().add(3, 5, deskTopPanel); 
 
-            //Component<?> demo = addBackGround_GridBrailleDemo(tApp);
-            Component<?> demo = addBackGround_TestSprites(tApp);
-
             FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),tApp.getEventBus());
 
 
             tApp.getEventBus().appendEventHandler(  mainFocusManager );
 
             ComponentInspector componentInspector = new ComponentInspector(Colors.BIGre, new Dimension.Simple((int)(tApp.getMainApplicationPanel().getHeight()*.55),
-                                                                                                              (int)(tApp.getMainApplicationPanel().getWidth()*.35)), topPanel, mainFocusManager);
+                                                                                                              (int)(tApp.getMainApplicationPanel().getWidth()*.35)), 
+                    (Component<?>)tApp.getMainApplicationPanel(), mainFocusManager);
             horizontalPanel.add(componentInspector);
 
             DefaultFocusManager.applyIfDefaultFocusManager(mainFocusManager, (dfalt_fm)->{
@@ -208,18 +211,16 @@ public class TextBoxTest {
                 baseResizeAction.accept(ptApp, newSize);
                 int appHeight = tApp.getMainApplicationPanel().getHeight();
                 int appWidth = tApp.getMainApplicationPanel().getWidth();
-                
+
                 componentInspector.resize( new Dimension.Simple((int)(appHeight * (.50)  ),
                                                                 (int)(appWidth  * (.50) - panel2.getWidth() - 4 )));
-                
+
                 sc_1.resize( new Dimension.Simple( componentInspector.getHeight(), sc_1.getWidth() ) );
                 
             } );
-            
-            
-            
+
             ((Composite)tApp.getMainApplicationPanel()).bringToBack(demo);
-            
+
             FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
 
             // necessary?
@@ -228,12 +229,12 @@ public class TextBoxTest {
         }).start();
     }
     
-    static Component<?> addBackGround_Test1Games(TUIApp tApp) {
-        Component<?> grid = Test1GamesSeparateThread.addTestSpritesPanel(tApp, tApp.getMainApplicationPanel());
+    static Component<?> addBackGround_Test1Games(TUIApp tApp, String args[]) {
+        Component<?> grid = Test1GamesSeparateThread.addTestSpritesPanel(tApp, tApp.getMainApplicationPanel(), args);
         return grid;
     }
     
-    static Component<?> addBackGround_TestSprites(TUIApp tApp) {
+    static Component<?> addBackGround_TestSprites(TUIApp tApp, String args[]) {
         Component<?> grid = TestSprites.addTestSpritesPanel(tApp, tApp.getMainApplicationPanel());
         return grid;
     }

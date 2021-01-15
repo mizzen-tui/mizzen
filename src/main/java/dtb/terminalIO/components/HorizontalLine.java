@@ -1,7 +1,5 @@
 package dtb.terminalIO.components;
 
-import java.util.Collection;
-
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.geom.Dimension;

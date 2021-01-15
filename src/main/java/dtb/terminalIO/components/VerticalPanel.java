@@ -1,7 +1,6 @@
 package dtb.terminalIO.components;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
@@ -9,6 +8,9 @@ import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.geom.position.PositionVerticalRelative;
 
+/**
+ * Adds child components such that they are stacked vertically
+ */
 public class VerticalPanel extends Composite {
 
     private int verticalSpacer = 0;
@@ -32,7 +34,7 @@ public class VerticalPanel extends Composite {
         fullrecalcDim();
         return this;
     }
-    
+
     public DefaultFocusManager buildFocusManager() {
         DefaultFocusManager focusManager = new DefaultFocusManager();
         focusManager.setNavKeysFirst(false);
@@ -62,20 +64,10 @@ public class VerticalPanel extends Composite {
         return super.add(makeOffsetForChild(anchor, verticalSpacer) , component);
     }
 
-    public Composite remove(Component<?> component) {
-        ComponentWithOffset child = findChildOrFail(component, "remove");
-        super.remove(component);
-        offsetsMap.remove(child);
-        return this;
-    }
-
-    private Map<ComponentWithOffset, RectangleFromAnchor> offsetsMap = new HashMap<ComponentWithOffset,RectangleFromAnchor>();
-
     private Position makeOffsetForChild(ComponentWithOffset anchor, int verticalSpacer) {
         RectangleFromAnchor rectangleFromAnchor = null; 
         if (anchor != null) {
            rectangleFromAnchor = new RectangleFromAnchor(anchor); 
-           offsetsMap.put(anchor, rectangleFromAnchor);
         }
         return new PositionVerticalRelative(rectangleFromAnchor, verticalSpacer);
     }
@@ -86,15 +78,25 @@ public class VerticalPanel extends Composite {
         }
         super.markAsDirty();
     }
-    
-    
+
     private void readjustAllAnchors() {
-        for (ComponentWithOffset child : getChildrenComponentsWithOffset()) {
-            RectangleFromAnchor rectFromAnchor = offsetsMap.get(child);
-            if (rectFromAnchor != null) {
-                rectFromAnchor.reCalcRectangle();
+        //offsetsMap.clear();
+        List<ComponentWithOffset> visibleChildren = getVisibleChildrenComponentsWithOffset();
+        int childCount = visibleChildren.size();
+        if (childCount > 0) {
+            ComponentWithOffset anchor = visibleChildren.get(0); 
+            anchor.setOffset(makeOffsetForChild(null, verticalSpacer));
+            for (int i = 1; i < childCount; i++) {
+                ComponentWithOffset componentWithOffset = visibleChildren.get(i);
+                componentWithOffset.setOffset(makeOffsetForChild(anchor, verticalSpacer)  );
+                anchor = componentWithOffset;
             }
         }
+    }
+    
+    public void fullrecalcDim() {
+        readjustAllAnchors();
+        super.fullrecalcDim();
     }
 
     private class RectangleFromAnchor extends Rectangle.Delegate {
@@ -107,10 +109,6 @@ public class VerticalPanel extends Composite {
             this.anchor = anchor;
         }
 
-        public void reCalcRectangle() {
-            needsRectangleCalc = true;
-        }
-
         public Rectangle getRectangle() {
             if (anchor == null) return Rectangle.ZERO;
             if (needsRectangleCalc) {
@@ -119,7 +117,7 @@ public class VerticalPanel extends Composite {
             }
             return super.getRectangle();
         }
-        
+
     }
 
 }

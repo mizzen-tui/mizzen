@@ -38,6 +38,7 @@ public class Composite extends AbstractComponent<Composite>
         private Rectangle bounds;
         private Rectangle rectangleForLayout; // used only by layout managers ( Horizontal/VerticalPanels )
         private boolean hasShadow;
+        private boolean visible = true;
 
         public ComponentWithOffset(Position offset, Component<?> component) {
             super();
@@ -176,6 +177,10 @@ public class Composite extends AbstractComponent<Composite>
         return children;
     }
 
+    protected List<ComponentWithOffset> getVisibleChildrenComponentsWithOffset() {
+        return children.stream().filter(c->c.visible).collect(Collectors.toList());
+    }
+
     public void resize(Dimension size) {
         if (size != null && size.isSameDimension(this)) {
             return;
@@ -241,13 +246,15 @@ public class Composite extends AbstractComponent<Composite>
             return;         // then don't recalculate
         }
 
-        for (ComponentWithOffset child : children) {
+        List<ComponentWithOffset> visibleChildren = getVisibleChildrenComponentsWithOffset();
+        
+        for (ComponentWithOffset child : visibleChildren) {
             if (child.component instanceof Composite) {
                 ((Composite) child.component).fullrecalcDim();
             }
         }
 
-        Rectangle calculatedBounds = Rectangle.UTIL.calcDimensionsWith(children);
+        Rectangle calculatedBounds = Rectangle.UTIL.calcDimensionsWith(visibleChildren);
         if (includeBorder) {
             rebuildBorder(calcBorderSize(calculatedBounds));
             bounds = new Rectangle.Simple(this.border);
@@ -341,6 +348,38 @@ public class Composite extends AbstractComponent<Composite>
         return componentWithOffset;
     }
 
+    public Composite hide(Component<?> component) {
+        if (component == null) {
+            throw new NullPointerException("Component hide failure: Cannot hide null component!");
+        }
+        ComponentWithOffset child = findChildOrFail(component,"hide");
+        
+        if ( ! child.visible) {
+            return this; // no change
+        }
+        
+        child.visible = false;
+        fullrecalcDim();
+        this.markAsDirty();
+        return this;
+    }
+
+    public Composite show(Component<?> component) {
+        if (component == null) {
+            throw new NullPointerException("Component show failure: Cannot show null component!");
+        }
+        ComponentWithOffset child = findChildOrFail(component,"show");
+
+        if (child.visible) {
+            return this; // no change
+        }
+
+        child.visible = true;
+        fullrecalcDim();
+        this.markAsDirty();
+        return this;
+    }
+
     public Composite insert(int index, Position offset, Component<?> component) {
         if (component == null) {
             throw new NullPointerException("Component insert failure: Cannot add null component!");
@@ -386,7 +425,6 @@ public class Composite extends AbstractComponent<Composite>
     public Composite add(int offsetRow, int offsetCol, Component<?> component) {
         return this.add(new Position.Simple(offsetRow, offsetCol), component);
     }
-    
 
     private void removeOneComponent(Component<?> component) {
         ComponentWithOffset child = findChildOrFail(component, "remove");
@@ -628,6 +666,10 @@ public class Composite extends AbstractComponent<Composite>
         }
 
         for (ComponentWithOffset child : children) {
+            
+            if (child.visible == false) {
+                continue;
+            }
 
             Position childOffset = child.offset.offsetAdd(offset);
 
@@ -691,7 +733,7 @@ public class Composite extends AbstractComponent<Composite>
         ListIterator<ComponentWithOffset> li = childrenInZOrder.listIterator(childrenInZOrder.size());
         while (li.hasPrevious()) {
             ComponentWithOffset child = li.previous();
-            if (child.containsPosition(offset)) {
+            if (child.visible && child.containsPosition(offset)) {
                 if (child.component instanceof GetComponentAtOffset) {
                     Position relativeOffset =  offset.offsetAdd(child.offset.negate());
                     return ((GetComponentAtOffset)child.component).getComponentAtOffset(relativeOffset);

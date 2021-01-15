@@ -1,7 +1,7 @@
 package dtb.terminalIO.traverse;
 
 /**
- * Adapts an object an implementation HasChildren.
+ * Adapts an object to look like an object that implements HasChildren.
  * 
  * Useful when object does not directly implement HasChildren but you want to 'adapt' (wrap) it
  * so that the resulting wrapper does.

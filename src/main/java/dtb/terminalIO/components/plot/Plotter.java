@@ -87,7 +87,7 @@ public class Plotter extends BoundedComponent<Plotter> {
             
         }).elapsed();
         
-        Logging.info("Plotter.draw() - elapsed: " + elapsed +" size: " + segments.getSegments().size()+ " plotsSize="+plots.size());
+        Logging.info("Plotter["+this.getName()+"].draw() - elapsed: " + elapsed +" size: " + segments.getSegments().size()+ " plotsSize="+plots.size());
     }
     
     private void __draw(Color color, IScreenLineSegmentsBuffer segments) {
@@ -95,8 +95,6 @@ public class Plotter extends BoundedComponent<Plotter> {
         int lastRow = -1;
         int lastCol = -1;
 
-        Logging.info("plotter draw! start");
-        
         SegmentImpl lastSegment = null;
         Position    lastSegmentPosition = null;
 
