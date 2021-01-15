@@ -38,6 +38,7 @@ import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.util.Logging;
 
+// TODO:  this has a problem.. internal scrollable component is not clipping!
 public class RockerButtonTest {
 
     public static void main(String args[]) {

@@ -87,7 +87,7 @@ public class TreeViewTest {
         .setOnReadyStart((tApp)->{ 
             
             Composite mainpanel = (Composite) tApp.getMainApplicationPanel();
-            mainpanel.add(2,2,new TextComponent("This is a test"));
+            mainpanel.add(2,2,new TextComponent("This is a test of rendering simple TreeViews - CTRL-C to quit"));
             
             HorizontalPanel hp = new HorizontalPanel();
             

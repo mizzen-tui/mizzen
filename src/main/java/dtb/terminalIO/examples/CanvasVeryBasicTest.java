@@ -3,7 +3,6 @@ package dtb.terminalIO.examples;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.ScreenCanvasBackend;
 import dtb.terminalIO.core.TerminalScreen;
-import dtb.terminalIO.util.Stty;
 
 public class CanvasVeryBasicTest {
 
