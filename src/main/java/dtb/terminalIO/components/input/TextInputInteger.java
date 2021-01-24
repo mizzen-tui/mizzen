@@ -5,6 +5,7 @@ import dtb.terminalIO.controlcodes.color.Colors;
 
 public class TextInputInteger  extends TextInputForType<Integer> {
 
+    
     public TextInputInteger(Color color, int length) {
         super(color, length, 
               (t)-> validateText(t),

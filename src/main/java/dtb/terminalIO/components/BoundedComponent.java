@@ -46,7 +46,6 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
     
     private String name;
 
-                                                 
     protected IScreenLineSegmentsBuffer createSegmentsBuffer() {
         IScreenLineSegmentsBuffer segmentsBuffer   = new ScreenLineSegmentsBuffer() {
             protected void doAdd(TreeSet<ScreenLineSegment> segments, ScreenLineSegment sc) {
@@ -228,7 +227,7 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
     }
     
     /**
-     * Make a component that has the same empty char and empty color.
+     * Make a component that has the same empty char and empty color as well as making this its parent
      * @param createComponent
      * @return
      */

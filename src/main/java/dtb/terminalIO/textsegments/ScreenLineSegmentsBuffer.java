@@ -88,14 +88,14 @@ public class ScreenLineSegmentsBuffer implements Rectangle, IScreenLineSegmentsB
     @Override
     public void clearAndMerge(Collection<ScreenLineSegment> segments) {
         if (segments instanceof TreeSet) {
-            
+
             this.segments = (TreeSet<ScreenLineSegment>) segments;
-            
+
         } else {
             this.clear();
             this.merge(segments);
         }
-        
+
     }
     
 

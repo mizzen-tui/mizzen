@@ -115,7 +115,7 @@ public class TabPanelTest {
         Dimension sizeOfInspectorWindow = new Dimension() {
             @Override
             public int getWidth() {
-                return tabPanelDemoApp.getCanvas().getWidth() - (sizeOfTabPanelWindow.getWidth() + 3);
+                return tabPanelDemoApp.getCanvas().getWidth() - (sizeOfTabPanelWindow.getWidth() + 6);
             }
 
             @Override
@@ -241,12 +241,13 @@ public class TabPanelTest {
 
         
         LineChartDemo lineChartDemo = new LineChartDemo();
-        tb.addTab(new DemoInTab(lineChartDemo, (tc) -> lineChartDemo.getLineChartPanelComponent()).getTabAction(Keys.F7_KEYSTROKE,
-                "LineChart Example"));
+        tb.addTab(new DemoInTab(lineChartDemo, 
+                                (tc) -> lineChartDemo.getLineChartPanelComponent()).getTabAction(Keys.F7_KEYSTROKE,
+                                "LineChart Example"));
 
         BrailleDemo brailleDemo = new BrailleDemo();
         tb.addTab(new DemoInTab(brailleDemo, (tc) -> brailleDemo.getBrailleComponent()).getTabAction(Keys.F8_KEYSTROKE,
-                "Braille Character Graphics Demo"));
+                                "Braille Character Graphics Demo"));
 
         tabPanelDemoApp.setOnResizeAction((tApp, size) -> {
             tApp.getCanvas().setSize(size.getHeight(), size.getWidth());

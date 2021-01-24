@@ -217,6 +217,18 @@ public class TUIApp {
         return this;
     }
 
+    public TUIApp appendOnResizeAction(BiConsumer<TUIApp, Dimension> resizeAction) {
+        
+        BiConsumer<TUIApp, Dimension> previousOnResizeAction =   this.getResizeAction()!=null ? this.getResizeAction() : (t,s)->{};
+
+        setOnResizeAction((tApp,size)->{
+            previousOnResizeAction.accept(tApp, size);
+            resizeAction.accept(tApp, size);
+        });
+        
+        return this;
+    }
+
     public BiConsumer<TUIApp, Dimension> getResizeAction() {
         return this.onResizeAction;
     }

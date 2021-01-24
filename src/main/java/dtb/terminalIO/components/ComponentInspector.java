@@ -63,14 +63,14 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
                     (node) -> nodeName(node));
             tvComponents.setModel(new HasChildrenTreeViewModel<Component<?>>(componentToInspect));
 
-            scrollingArea = new ScrollableComponent(Colors.BIGre, d, new BorderedComponent(tvComponents));
+            scrollingArea = new ScrollableComponent(Colors.BIGre, d, tvComponents);
             scrollingArea.setParentContainer(this);
         } else {
 
             TreeView<Focusable> tvFocusable = new TreeView<Focusable>(Colors.IBlu, new Dimension.Simple(90, 60),
                     (node) -> node.hasFocus()
                             ? new Colors.FGBGColors(node==currentFocus?Colors.BGre    : Colors.BBlu, 
-                                             node==currentFocus?Colors.On_IYel : Colors.On_Yel).asString() + nodeName(node)
+                                                    node==currentFocus?Colors.On_IYel : Colors.On_Yel).asString() + nodeName(node)
                                     + Colors.RCol.asString()
                             : nodeName(node)) {
                 
@@ -83,7 +83,7 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
             tvFocusable.setModel(new HasChildrenTreeViewModel<Focusable>(focusManagerToInspect,
                                                                          new FocusManagerHasChildrenAdapter()));
 
-            scrollingArea = new ScrollableComponent(Colors.BIGre, d, new BorderedComponent(tvFocusable));
+            scrollingArea = new ScrollableComponent(Colors.BIGre, d, tvFocusable);
             scrollingArea.setParentContainer(this);
         }
 

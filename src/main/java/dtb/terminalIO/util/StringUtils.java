@@ -9,12 +9,30 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class StringUtils {
+    
+    public static boolean isEmptyStr(String s) {
+        if (s == null) {
+            return true;
+        }
+        
+        return s.trim().equals("");
+    }
 
     public static String repeat(char ch, int count) {
         StringBuffer sb = new StringBuffer(count);
         if (count > 0) {
             for (int i = 0; i < count; i++) {
                 sb.append(ch);
+            }
+        }
+        return sb.toString();
+    }
+
+    public static String repeat(String s, int count) {
+        StringBuffer sb = new StringBuffer(count*s.length());
+        if (count > 0) {
+            for (int i = 0; i < count; i++) {
+                sb.append(s);
             }
         }
         return sb.toString();

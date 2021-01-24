@@ -11,12 +11,19 @@ import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.input.tree.TreeView;
 import dtb.terminalIO.components.input.tree.TreeViewModel;
 import dtb.terminalIO.components.input.tree.TreeViewModel.HasChildrenTreeViewModel;
+import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Colors;
+import dtb.terminalIO.events.focus.DefaultFocusManager;
+import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.geom.Dimension;
+import dtb.terminalIO.util.Logging;
 
 public class TreeViewTest {
 
     public static void main(String[] args) throws IOException {
+
+        Logging.setEnabled(true);
+        
         
         String root = "the root";
         String[] rootChildren = new String[] {"child1", "child2","child3", "child4"};
@@ -85,23 +92,29 @@ public class TreeViewTest {
         .setMainApplicationPanel(new Composite().setBounds(40, 100).setEmptyChar(' ').setBorder(true))
         .confirmOnExit()
         .setOnReadyStart((tApp)->{ 
-            
+
             Composite mainpanel = (Composite) tApp.getMainApplicationPanel();
             mainpanel.add(2,2,new TextComponent("This is a test of rendering simple TreeViews - CTRL-C to quit"));
-            
+
             HorizontalPanel hp = new HorizontalPanel();
-            
+
             TreeView<String>  tv = new TreeView<String>(Colors.IGre, new Dimension.Simple(20,35));
             tv.setModel( model);
-            
+
             hp.add(new BorderedComponent(tv));
-            
+
             mainpanel.add(4,2 , hp);
 
             TreeView<Component<?>>  tv2 = new TreeView<Component<?>>(Colors.IBlu, new Dimension.Simple(20,35), (node)->node.getClass().getSimpleName()  );
             tv2.setModel( new HasChildrenTreeViewModel<Component<?>>(mainpanel));
-            
-            hp.add(new BorderedComponent(tv2));
+
+            hp.add( new ScrollableComponent(tv2.getColor(), tv2.getRectangle(), tv2));
+
+            FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(
+                    tApp.getMainApplicationPanel(), tApp.getEventBus(),
+                    () -> new DefaultFocusManager().setNavKeysFirst(false).setCycling(false));
+
+            tApp.getEventBus().appendEventHandler(mainFocusManager);
             
             
         }).start();

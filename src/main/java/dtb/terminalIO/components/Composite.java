@@ -64,7 +64,7 @@ public class Composite extends AbstractComponent<Composite>
             };
             
         }
-        
+
         // this function is used by Composites that want to 
         // layout components relative to other components
         // most components will return themselves as the "rectangleForLayout"

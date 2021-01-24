@@ -85,19 +85,13 @@ public class CompositeLayeringTest {
             keyboardEvents.appendEventHandler(new KeyInputEventHandler(Keys.CTRL_F_KEYSTROKE, (te)->  container.moveChildDelta(new Position.Simple(0,-1),the_c) ));
              
             keyboardEvents.appendEventHandler(new KeyInputEventHandler(Keys.CTRL_G_KEYSTROKE, (te)->  container.moveChildDelta(new Position.Simple(0,1),the_c) ));
-            
-            keyboardEvents.appendEventHandler(new KeyInputEventHandler(Keys.CTRL_V_KEYSTROKE, (te)->  container.moveChildDelta(new Position.Simple(1,0),the_c)));
-             
-            tApp.getEventBus().appendEventHandler( new EventHandlerWithCanvasUpdate(keyboardEvents.asConditionalEventHandler()));
-            
-            
-        }).start();
-                    
-        
-        
 
-        
-        
+            keyboardEvents.appendEventHandler(new KeyInputEventHandler(Keys.CTRL_V_KEYSTROKE, (te)->  container.moveChildDelta(new Position.Simple(1,0),the_c)));
+
+            tApp.getEventBus().appendEventHandler( new EventHandlerWithCanvasUpdate(keyboardEvents.asConditionalEventHandler()));
+
+        }).start();
+
     }
 
 }

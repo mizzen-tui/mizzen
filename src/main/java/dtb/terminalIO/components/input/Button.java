@@ -55,8 +55,8 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
         void buttonPressed( boolean toggleOn);
     }
     
-    public Button(Color color, String buttonText, boolean toggle) {
-        super(color, Rectangle.ZERO);
+    public Button(Color color, int row, int col, String buttonText, boolean toggle) {
+        super(color, new Rectangle.Simple(row, col, 0, 0));
         this.toggleButton = toggle;
         this.buttonText = buttonText;
         this.renderedText = new TextComponent(color, "");
@@ -64,6 +64,9 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
         this.container.add(renderedText);
         this.container.setParentContainer(this);
         this.setButtonTextAndResize(buttonText);
+    }
+    public Button(Color color, String buttonText, boolean toggle) {
+        this(color, 0, 0, buttonText, toggle);
     }
 
     public Button(Color color, String buttonText) {
@@ -310,7 +313,13 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
 
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer mySegments) {
-        mySegments.getSegments().addAll(this.container.getSegmentsBuffer().getSegments());
+        if (this.getPostion_TopLeft().isSamePosition(Position.ZERO)) {
+            // fast
+           mySegments.getSegments().addAll(this.container.getSegmentsBuffer().getSegments());
+        } else {
+            // slower
+            segments.mergeAt(this.getRow(), this.getCol(), container.getSegmentsBuffer());
+        }
     }
 
     @Override

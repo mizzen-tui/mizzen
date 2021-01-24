@@ -83,13 +83,13 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         
         this.componentBeingViewed = componentBeingViewed;
         
-        viewer = new WindowViewComponent(color, 
+        viewer = new WindowViewComponent(color,
                                          new Dimension.Simple(d.getHeight() - 2, d.getWidth() - 2),
                                          this.componentBeingViewed);
         
         borderedComponent = new BorderedComponent(color, viewer, this);
 
-        vScrollBar = new ScrollBarVertical(color, 
+        vScrollBar = new ScrollBarVertical(color,
                                            borderedComponent.getPostion_TopRight().offsetAdd(1, 0),
                                            borderedComponent.getHeight() - 2);
 
@@ -97,7 +97,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         
         vScrollBar.setViewedSize(new Rectangle.Delegate(componentBeingViewed), new Rectangle.Delegate(viewer));
 
-        hScrollBar = new ScrollBarHorizontal(color, 
+        hScrollBar = new ScrollBarHorizontal(color,
                                              borderedComponent.getPostion_BottomLeft().offsetAdd(0, 1),
                                              borderedComponent.getWidth() - 2);
         
@@ -115,7 +115,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         
         currentFocusable = footerControls;
         
-        asEventHandler();
+        buildEventHandler();
     }
     
     public ScrollableComponent setColor(Color drawingcolor) {
@@ -276,11 +276,11 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         borderedComponent.resize(d);
 
         vScrollBar.setRectangle(new Rectangle.Simple(borderedComponent.getPostion_TopRight().offsetAdd(1, 0),
-                new Dimension.Simple(borderedComponent.getHeight() - 2, 1)));
+                                                     new Dimension.Simple(borderedComponent.getHeight() - 2, 1)));
         vScrollBar.markAsDirty();
 
         hScrollBar.setRectangle(new Rectangle.Simple(borderedComponent.getPostion_BottomLeft().offsetAdd(0, 1),
-                (Dimension) hScrollBar));
+                                                     (Dimension) hScrollBar));
         hScrollBar.markAsDirty();
 
         positionFooterText();
@@ -475,6 +475,10 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
     }
 
     public ConditionalEventHandler asEventHandler() {
+        return buildEventHandler();
+    }
+    
+    private ConditionalEventHandler buildEventHandler() {
 
         if (conditionalEventHandler != null) {
             return conditionalEventHandler;

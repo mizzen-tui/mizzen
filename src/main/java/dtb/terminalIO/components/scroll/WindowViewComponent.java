@@ -18,7 +18,6 @@ import dtb.terminalIO.util.Logging;
 
 /**
  * Used exclusively by the ScrollableComponent.  It is the View into the scrollable content.
- *
  */
 public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
                                  implements  ParentContainer, 
@@ -75,7 +74,7 @@ public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
             mySegments.clearAndMerge(segmentsViewBuffer.getSegments());
             
         }).elapsed();
-        
+
         Logging.info("    ---- sc.viewer.draw() - elapsed: " + elapsed );
     }
 
@@ -121,13 +120,13 @@ public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
         if ( ! this.containsPosition(offset)) {
             return null;
         }
-        
+
         if (!(viewSource instanceof Component)) {
             return this;
         }
-        
+
         Component<?> viewSourceComponent = (Component<?>) viewSource;
-        
+
         offset = offset.offsetAdd( this.getPositionRelativeToParent(viewSourceComponent).negate());
 
         if (viewSourceComponent.containsPosition(offset)) {
@@ -138,7 +137,6 @@ public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
         }
         return this;
     }
-    
-    
+
 
 }

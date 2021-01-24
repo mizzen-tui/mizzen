@@ -192,6 +192,12 @@ public interface Component<T extends Component<?>>
             }
 
             Position cursorPos = canvasOffset.offsetAdd(offset);
+            
+            if (cursorPos == null    ||
+                cursorPos.getRow()<0 || 
+                cursorPos.getCol()<0) {
+                    return;
+            }
 
             eventBus.raiseEvent(new RequestShowCursorEvent(component, cursorPos));
         }

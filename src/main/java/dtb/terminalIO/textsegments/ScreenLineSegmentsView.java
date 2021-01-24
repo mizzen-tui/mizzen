@@ -11,7 +11,7 @@ import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.util.ElapsedTime;
-import dtb.terminalIO.util.Logging;
+import dtb.terminalIO.util.StringUtils;
 
 /**
  * IScreenLineSegmentsBuffer that has a view into a 'source'
@@ -284,7 +284,7 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
 
         public String toString() {
             return String.format("VS(row=%d,lcol=%d,rcol=%d,[id=%d]):'%s'", getRow(), getCol(), getRightMostCol(),
-                    getId(), getText());
+                                 getId(), getText());
         }
 
         @Override
@@ -311,49 +311,31 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
                 return _clippedText;
             }
 
-            // ech!! and double-ech.. All of these checks make me see
-            // a code smell.. When I get some time I
-            // need to simplify
-
-            //char[] DEBUGCHARS = new char[] {'.','.','.','.','|'}; 
-
-            int start = 0;
-            int src_col = sourceSegment.getCol();
-            int offset_col = ScreenLineSegmentsView.this.offsetIntoSource.getCol();
-            int rightColOffsetClipLen = 0;
-            if (offset_col > src_col) {
-                start = offset_col - src_col;
-                rightColOffsetClipLen = start;
-                //DEBUGCHARS[0] = 'X';
-            }
-            int rightCol = sourceSegment.getRightMostCol(); // - ScreenLineSegmentsView.this.offsetIntoSource.getCol();
-            int viewerRightCol = ScreenLineSegmentsView.this.getRightMostCol() - rightColOffsetClipLen;
             String sourceText = sourceSegment.getText();
-
-            if (rightCol >= sourceText.length()) {
-                rightCol = sourceText.length();
-                //DEBUGCHARS[1] = 'A';
-            } else {
-                if (rightCol > viewerRightCol + offset_col) {
-                    rightCol = viewerRightCol + offset_col;
-                    //DEBUGCHARS[2] = 'B';
-                }
-                rightCol += 1; // +1 to include rightmost char
-                //DEBUGCHARS[1] = 'b';
+            int textBeginIndex = 0;
+            int srcLeftCol = sourceSegment.getCol();
+            int viewerLeftCol = ScreenLineSegmentsView.this.offsetIntoSource.getCol();
+            if (viewerLeftCol > 0) {
+                textBeginIndex = 0;
             }
-            if (start < 0 || start > rightCol)
-                return "";
+            if (viewerLeftCol > srcLeftCol) {
+                textBeginIndex = viewerLeftCol - srcLeftCol;
+                //rightColOffsetClipLen = textBeginIndex;
+            }
+            int textEndIndex = sourceSegment.getWidth();
+            int viewerRightCol = ScreenLineSegmentsView.this.getRightMostCol();
+
+            if (srcLeftCol + textEndIndex > viewerRightCol) {
+                textEndIndex = textEndIndex - ((srcLeftCol + textEndIndex) - viewerRightCol)+1;
+            }
+
+
+            if (textBeginIndex < 0 || textBeginIndex > textEndIndex)
+                return " ";
             
-            //String debug = new String(DEBUGCHARS);
-            
-            String clippedText = sourceText.substring(start, rightCol);
+            String clippedText = sourceText.substring(textBeginIndex, textEndIndex);
             _clippedText = clippedText;
-//            if (clippedText.length() > (debug.length() + 2)) {
-//                return "["+debug+_clippedText.substring(0,_clippedText.length()-(debug.length() + 2))+"]";
-//            }
-//            if (clippedText.length()>1) {
-//                return "["+_clippedText.substring(0,_clippedText.length()-2)+"]";
-//            }
+
             return clippedText;
         }
 

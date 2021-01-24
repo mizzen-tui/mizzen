@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.function.BiConsumer;
 
 import dtb.terminalIO.app.TUIApp;
+import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.ChildComponentManager;
 import dtb.terminalIO.components.Component;
@@ -28,11 +29,11 @@ import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.Keys;
-import dtb.terminalIO.events.resize.TerminalResizeDetection;
 import dtb.terminalIO.examples.BarChartTest.BarChartDemo;
 import dtb.terminalIO.examples.GridBrailleTest.BrailleDemo;
 import dtb.terminalIO.examples.plot.Test1GamesSeparateThread;
 import dtb.terminalIO.examples.plot.TestSprites;
+import dtb.terminalIO.examples.sampledata.ReadSampleFiles;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
@@ -61,8 +62,6 @@ public class TextBoxTest {
         .confirmOnExit()
         .setOnReadyStart((tApp)-> {
             
-            //Component<?> demo = addBackGround_GridBrailleDemo(tApp);
-            //Component<?> demo = addBackGround_TestSprites(tApp, args);
             Component<?> demo = addBackGround_Test1Games(tApp, args);
             
             
@@ -102,6 +101,16 @@ public class TextBoxTest {
             Button b_2 = new Button("Press Too");
             panel1.add(b_2);
 
+            String largeText;
+            try {
+                largeText = ReadSampleFiles.readSampleFile("LoremIpsumLarge.txt");
+            } catch (IOException e) {
+                largeText = e.toString();
+            }  
+            
+            //panel1.add(  new TextComponent(largeText).setColor(Colors.Cya) );
+            panel1.add(  new BorderedComponent(new TextComponent(largeText)).setColor(Colors.Cya) );
+            
             Composite topPanel = new Composite();
             topPanel.setTitle("Form input testing");
             HorizontalPanel horizontalPanel = new HorizontalPanel();
@@ -109,7 +118,7 @@ public class TextBoxTest {
 
             topPanel.add(2,1, horizontalPanel);
 
-            ScrollableComponent sc_1 = new ScrollableComponent(Colors.Blu, new Dimension.Simple(panel1.getHeight()+1, 50), panel1);
+            ScrollableComponent sc_1 = new ScrollableComponent(Colors.Blu, new Dimension.Simple(Math.min(tApp.getCanvas().getHeight()-12, panel1.getHeight()+2), 60), panel1);
 
             sc_1.setTitle("Scrollable with form");
             
@@ -216,7 +225,7 @@ public class TextBoxTest {
                                                                 (int)(appWidth  * (.50) - panel2.getWidth() - 4 )));
 
                 sc_1.resize( new Dimension.Simple( componentInspector.getHeight(), sc_1.getWidth() ) );
-                
+
             } );
 
             ((Composite)tApp.getMainApplicationPanel()).bringToBack(demo);
@@ -240,15 +249,15 @@ public class TextBoxTest {
     }
     
     static Component<?> addBackGround_BarChart(TUIApp tApp) {
-        
+
         ChildComponentManager<?> barChartDemoContainer = tApp.getMainApplicationPanel();
-        
+
         BarChartDemo barChartDemo = new BarChartDemo();
         Rectangle clippedAreaForBarchart = new Rectangle.Simple(Position.ZERO, new Dimension.Simple(barChartDemoContainer.getHeight()-2, barChartDemoContainer.getWidth()-2));
 
         barChartDemo.setUpDemo(tApp.getEventBus(), clippedAreaForBarchart);
         barChartDemoContainer.add(barChartDemo.getBarChart(clippedAreaForBarchart));
-        
+
         BiConsumer<TUIApp, Dimension> defaultOnResizeAction = 
                 tApp.getResizeAction()!=null ? tApp.getResizeAction() : (t,s)->{};
 
