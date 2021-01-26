@@ -16,13 +16,17 @@ import java.util.Map;
 import java.util.Random;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import javax.imageio.ImageIO;
 
 import dtb.terminalIO.app.TUIApp;
+import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.FillOnClearPolicy;
 import dtb.terminalIO.components.HorizontalPanel;
+import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.VerticalPanel;
 import dtb.terminalIO.components.braille.BrailleGrid;
 import dtb.terminalIO.components.input.DisplayableValue;
@@ -30,13 +34,17 @@ import dtb.terminalIO.components.input.DisplayableValue.StringDisplayValue;
 import dtb.terminalIO.components.input.DropdownListBox;
 import dtb.terminalIO.components.input.ListBox;
 import dtb.terminalIO.components.plot.PointPlotter;
+import dtb.terminalIO.components.plot.image.ImageViewerFactory;
+import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
+import dtb.terminalIO.controlcodes.color.Colors.FGBGColors;
 import dtb.terminalIO.core.ScreenCanvasBackend;
 import dtb.terminalIO.core.ScreenCanvasBackend.UpdateStrategy;
 import dtb.terminalIO.events.AbstractTimedRequestedController;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
+import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
@@ -47,8 +55,8 @@ import dtb.terminalIO.geom.Dimension;
 public class ImageViewer {
 
     public static void main(String[] args) {
-        plotterTest(args);
-        // gridTest(args);
+        // plotterTest(args);
+        gridTest(args);
     }
     public static void gridTest(String[] args) {
         new TUIApp(args)
@@ -58,13 +66,68 @@ public class ImageViewer {
                     .enableMouseHandling()
                     .setOnReadyStart((tApp)->{
 
-                        BrailleGrid grid = new BrailleGrid(Colors.BBlu, new Dimension.Simple(48,118));
+                        Component<?> lastImageComp[] = new Component[]{null};
+                        
+                        Composite fractalView = new Composite();
+                        
+                        tApp.getMainApplicationPanel().add(0,0, fractalView);
+                        
+                        ButtonBar bannerPanel = new ButtonBar().setHorizontalSpacer(1);
+                        bannerPanel.setBorder(false);
+                        bannerPanel.setNoBorderChars();
+                        
+                        bannerPanel.addComponent(new TextComponent(new FGBGColors(Colors.BCya,Colors.On_Whi),"Fractals in ASCII"));
+                        
+                        DropdownListBox<String> gradientsDDLB = new DropdownListBox<String>(ImageViewerFactory.standardAsciiGradients());
+                        gradientsDDLB.setMaxItemWidth(15);
+                        gradientsDDLB.setSelected(0);
+                        bannerPanel.addComponent(gradientsDDLB);
+                        
+                        fractalView.add(bannerPanel);
+                        
+                        tApp.appendOnResizeAction((tApp2, size)->{
+                            fractalView.resize(size);
+                        });
+                        
+                        
+                        Runnable makeImage = new Runnable() {
 
-                        int col[] = new int[] {10};
+                            @Override
+                            public void run() {
+                                long[][] fractal = makeFractal();
+                                Component<?> imgComponent ;
+                                try {
+                                    Dimension imgSize = new Dimension.Simple(tApp.getCanvas().getHeight()-1, tApp.getCanvas().getWidth());
+                                    imgComponent = ImageViewerFactory.simpleImageToStringView(toImage(fractal), imgSize, gradientsDDLB.getValue());
+                                } catch (Exception e) {
+                                    imgComponent = new TextComponent("img component failure: " + e.getMessage());
+                                }
+                                if (lastImageComp[0] != null) {
+                                    fractalView.remove(lastImageComp[0]);
+                                }
+                                fractalView.add(1,0, imgComponent);
+                                lastImageComp[0] = imgComponent;
+                            }
+                        };
                         
-                        long[][] fractal = makeFractal();
+                        tApp.getEventBus().appendIdleEventHandler( new OnIdleEventEventHandler.RepeatingInterval(500, (te)-> {
+                            makeImage.run();
+                            te.getEventBus().raiseEvent(  new RequestUpdateCanvasEvent(makeImage)  );
+                        } ));
                         
-                        tApp.getMainApplicationPanel().add(1, 1, grid);
+                        
+                        FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),
+                                tApp.getEventBus(),
+                                ()-> new DefaultFocusManager().setNavKeysFirst(false).setCycling(false));
+
+                        tApp.getEventBus().appendEventHandler( mainFocusManager );
+                        
+//                        
+//                        try {
+//                            tApp.getMainApplicationPanel().add(0, 0, ImageViewerFactory.fromImage(toImage(fractal), tApp.getCanvas().asRectangle()));
+//                        } catch (Exception e) {
+//                            tApp.getMainApplicationPanel().add(0, 0, new TextComponent("failure: " + e.getMessage()));
+//                        }
                     })
                     .start();
     }
@@ -102,15 +165,19 @@ public class ImageViewer {
     
     public static void plotterTest(String[] args) {
         
-        HorizontalPanel mainPanel = new HorizontalPanel();
+        //HorizontalPanel mainPanel = new HorizontalPanel();
         
         new TUIApp(args)
-                    .setCanvasSize(new Dimension.Simple(50,170))
-                    .setMainApplicationPanel(mainPanel)
+                    //.setCanvasSize(new Dimension.Simple(50,170))
+                    //.setMainApplicationPanel(mainPanel)
+                    .setDefaultMainApplicationPanel()
                     .confirmOnExit()
                     .enableMouseHandling()
                     .setOnReadyStart((tApp)->{
 
+                        HorizontalPanel mainPanel = new HorizontalPanel();
+                        tApp.getMainApplicationPanel().add(mainPanel);
+                        
                         int column[] = new int[] {5};
 
                         BrailleGrid plotter = new BrailleGrid(Colors.BBlu, 
@@ -133,7 +200,13 @@ public class ImageViewer {
                         ListBox<String> imagesListbox = new ListBox<String>(StringDisplayValue.fromStringValues(images));
                         imagesListbox.setTitle("Images");
                         imagesListbox.setSelected(0);
-                        formPanel.add(imagesListbox);
+                        Dimension maxImagesSize = new Dimension.Simple(20,35);
+                        if ( ! maxImagesSize.contains(imagesListbox)) {
+                            ScrollableComponent imagesSC = new ScrollableComponent(imagesListbox.getColor(), maxImagesSize, imagesListbox);
+                            formPanel.add(imagesSC);
+                        } else {
+                           formPanel.add(imagesListbox);
+                        }
                         
                         List<DisplayableValue<RGBToAnsiColorControlCode>> rgbMappingList = new ArrayList<DisplayableValue<RGBToAnsiColorControlCode>>();
                         
@@ -147,8 +220,7 @@ public class ImageViewer {
                                 return "rgb-direct";
                             }
                         });
-                        
-                        
+
                         rgbMappingList.add(new DisplayableValue<RGBToAnsiColorControlCode>() {
                             @Override
                             public RGBToAnsiColorControlCode getValue() {
@@ -280,11 +352,13 @@ public class ImageViewer {
                             pointPlotter.plot(col+3, 10);
                             //plotter.markAsDirty();
                             tApp.getCanvas().clearCanvas();
+                            /*
                             tApp.getCanvas().t(5,5,
                                                " col: " + col + "   "+
                                                " col: " + col + "   "+
                                                " plotter: " + plotter.getSegmentsBuffer().getSegments().size()+"   " +
                                                " canvas: "  + tApp.getCanvas().getSegmentsBuffer().getSegments().size()+"   ");
+                             */
                             tApp.doRefreshCanvasIfModified();
                         };
 
@@ -625,6 +699,8 @@ public class ImageViewer {
 
     }
     
+    
+    
     static long[][] makeFractal() {
         Random random = new Random();
         long[][] background = new long[240][320];
@@ -654,6 +730,24 @@ public class ImageViewer {
         }
         
         return background;
+    }
+    
+    static BufferedImage toImage(long[][] raw) {
+        BufferedImage img = null;
+        int height = raw.length;
+        int width = raw[0].length;
+        
+        if (height > 0 && width > 0) {
+            img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+
+            for (int row = 0; row < height; row++) {
+                for (int column = 0; column < width; column++) {
+                    img.setRGB(column, row, (int)raw[row][column]);
+                }
+            }
+        }
+        
+        return img;
     }
 
 

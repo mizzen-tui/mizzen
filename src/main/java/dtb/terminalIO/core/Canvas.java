@@ -270,22 +270,25 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
         
         boolean canvasContainsComponent = ElapsedTime.getAndTime(()->this.asRectangle().contains(component),
                                                                  (elapsedTime)-> { Logging.info("contains "+elapsedTime);});
-        
+
         if (canvasContainsComponent) {
             // fast case!! 
             component.setCanvasOffset(Position.ZERO);
-            
+
             ElapsedTime componentDrawTime = ElapsedTime.start();
             TreeSet<ScreenLineSegment> componentSegments = component.getSegmentsBuffer().getSegments();
             Logging.info("componentsDraw: "+ HasName.UTIL.getName(component) + ": segmenents-size: "+ componentSegments.size() + "  t:" + componentDrawTime);
-            
+
             ElapsedTime elapsed = ElapsedTime.onRunOf( ()-> getSegmentsBuffer().clearAndMerge(component.getSegmentsBuffer().getSegments()));
 
             Logging.info("clearAndAddComponentSegments: fast! "+ elapsed);
 
             return;
         }
-        this.clearCanvas();
+        // we clear segmentsBuffer in this manner (new) to ensure that if it was pointing to a components
+        // treeSet, that it is not doing so now. 
+        segmentsBuffer = new ScreenLineSegmentsBuffer();
+        //this.clearCanvas();
         Logging.info("clearAndAddComponentSegments:slow-path: canvas size:"+ this.asRectangle()+ "  "+component);
         addComponentSegments(Position.ZERO, component);
     }

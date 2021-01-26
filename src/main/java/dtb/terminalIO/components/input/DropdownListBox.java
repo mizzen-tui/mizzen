@@ -60,6 +60,8 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
         });
         
         appendEventHandler( new KeyInputEventHandler(Keys.ENTER_KEYSTROKE, (te)-> { showListBox(); }));
+
+        appendEventHandler( new KeyInputEventHandler(Keys.ESC_KEYSTROKE, (te)-> { hideListBox(); }));
         
         this.preferredRectangleForLayout = new Rectangle.AbstractDelegate() {
 
