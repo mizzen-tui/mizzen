@@ -110,7 +110,7 @@ public class GridBrailleTest {
                             + textCOLOR.asString());
 
             tc = new TextComponent(textCOLOR,
-                    "This is a demonstration \n" + "using the special braille\n" + "character set to plot points\n"
+                              "This is a demonstration \n" + "using the special braille\n" + "character set to plot points\n"
                             + "in a standard linux terminal.\n" + "\n" + "The idea is that we map the normal\n"
                             + "terminal row columns combined with the\n" + "2 x 8 dots of the braille character set\n"
                             + "to come up with a plottable coordinate system.\n" + "\n" + "      "
@@ -146,12 +146,12 @@ public class GridBrailleTest {
             TransformPointPlotter rectangle2PointPlotter = new TransformPointPlotter(null, rectangle2Rotator);
 
             shapes.addShape(new ShapeWithTransform(
-                    new RectangleShape(new Rectangle.Simple(30, 30, 20, 20), Colors.IGre), rectangle2PointPlotter));
+                    new RectangleShape(new Rectangle.Simple(30, 30, 20, 20), Colors.IGre).setFilled(true), rectangle2PointPlotter));
 
             PositionTransform.FofG trianglePositionTransform = new PositionTransform.FofG(
                     new RotateAroundFixedPoint(0, fixedPoint), new PositionTransform.Translate(0, 0));
-            shapes.addShape(new ShapeWithTransform(new Triangle(0, 0, 30, 100, 65, 50, Colors.ICya),
-                    new TransformPointPlotter(null, trianglePositionTransform)));
+            shapes.addShape(new ShapeWithTransform(new Triangle(0, 0, 30, 100, 65, 50, Colors.ICya).setFilled(true),
+                                                   new TransformPointPlotter(null, trianglePositionTransform)));
 
             XYTranslate circle1PointPlotter = new XYTranslate(null, 0, 0);
 
@@ -188,7 +188,7 @@ public class GridBrailleTest {
                 public void handle(TerminalEvent<?> te) {
                     drawIt.run();
                 }
-            }));
+            }).setName("GridBrailleGrid.redraw.IdleEventHandler"));
 
             // move the triangle
             addAndRememberEventHandler(eventBus, new OnIdleEventEventHandler.RepeatingInterval(100, new EventHandler() {
@@ -216,7 +216,7 @@ public class GridBrailleTest {
 
                     translate.setColDelta(x);
                 }
-            }));
+            }).setName("moveTriangle.IdleEventHandler"));
 
             // redraw rectangle1 and move it around a circle path
             addAndRememberEventHandler(eventBus, new OnIdleEventEventHandler.RepeatingInterval(100,
@@ -232,7 +232,7 @@ public class GridBrailleTest {
 
             // redraw circle2 and move it around a circle path
             addAndRememberEventHandler(eventBus, new OnIdleEventEventHandler.RepeatingInterval(100,
-                    new CirclePathEventHandler(0, 0, 25, new CircleCounterClockwise_SORT(0, 0), circle2PointPlotter)));
+                    new CirclePathEventHandler(0, 0, 25, new CircleCounterClockwise_SORT(0, 0), circle2PointPlotter)).setName("Circle.EventHandler"));
 
             addAndRememberEventHandler(eventBus, new OnIdleEventEventHandler.RepeatingInterval(100, new EventHandler() {
                 @Override
@@ -240,7 +240,7 @@ public class GridBrailleTest {
                     int newTheta = (rectangle2Rotator.getTheta() + 1) % 360;
                     rectangle2Rotator.setTheta(newTheta);
                 }
-            }));
+            }).setName("rectangle2Rotator.idleHandler"));
 
             
             // brailleComponent
@@ -273,7 +273,7 @@ public class GridBrailleTest {
                 pointPlotter.setxDelta(pointPlotter.getxDelta() - 1);
                 drawIt.run();
             });
-            
+
             Button rightButton = new Button("»");
             rightButton.setHotKey(KEY_MOVE_RIGHT);
             rightButton.setDisplayHotKey(true);
@@ -340,7 +340,7 @@ public class GridBrailleTest {
                 app.doRefreshCanvasIfModified();
             }
         };
-        
+
         if (style.equals("MAX")) {
             app.setOnResizeAction((tApp, size)->{
                 tApp.clearCanvas();

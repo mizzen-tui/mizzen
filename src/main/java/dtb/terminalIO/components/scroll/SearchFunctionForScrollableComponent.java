@@ -184,10 +184,10 @@ public class SearchFunctionForScrollableComponent extends HorizontalPanel {
     public static void addFinderToScrollable(ScrollableComponent viewComp, KeyStroke hotKey, int maxSearchTextWidth) {
 
         SearchFunctionForScrollableComponent finder = new SearchFunctionForScrollableComponent(viewComp.getColor(),
-                viewComp);
+                                                                                               viewComp);
         finder.maxSearchTextWidth = maxSearchTextWidth;
 
-        viewComp.addFooterButton(finder, hotKey, (te) -> {
+        viewComp.addFooterComponent(finder, hotKey, (te) -> {
             finder.setInFindMode(te);
             viewComp.refreshFooter();
         });

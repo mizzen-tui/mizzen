@@ -8,6 +8,7 @@ import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.components.Component.UTIL;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.ChainedEventHandler;
@@ -39,6 +40,7 @@ public class TextInput extends BoundedComponent<TextInput>
     private Position caret = Position.ZERO;
     private int maxTextWidth;
     private boolean multiLine = false;  // TODO: multi-line not implemented yet
+    private boolean visible = true;
 
     ConditionalEventHandler eventHandler;
     ChainedEventHandler chainedEventHandler;
@@ -72,8 +74,19 @@ public class TextInput extends BoundedComponent<TextInput>
             this.textRenderer.markAsDirty();
         }
     }
+
+    public boolean hide() {
+        boolean isVisible = super.hide();
+        this.visible = isVisible;
+        return isVisible;
+    }
     
-    
+    public boolean show() {
+        boolean isVisible = super.show();
+        this.visible = isVisible;
+        return isVisible;
+    }
+
     @Override
     public TextInput setColor(Color drawingcolor) {
         super.setColor(drawingcolor);
@@ -410,7 +423,22 @@ public class TextInput extends BoundedComponent<TextInput>
 
         ConditionalEventHandler complexKeyHandler = chainedEventHandler.asConditionalEventHandler();
 
-        return complexKeyHandler;
+        ConditionalEventHandler handleEventsWhenVisible = new ConditionalEventHandler.AbstractDelegate() {
+            
+            @Override
+            protected ConditionalEventHandler getDelegate() {
+                return complexKeyHandler;
+            }
+            @Override
+            public EventHandler canHandle(TerminalEvent<?> te) {
+                if (!visible) {
+                    return null;
+                }
+                return super.canHandle(te);
+            }   
+        };
+        
+        return handleEventsWhenVisible;
 
     }
 

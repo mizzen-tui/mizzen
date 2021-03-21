@@ -6,6 +6,7 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.awt.image.PixelGrabber;
 
+import dtb.terminalIO.components.AbstractComponentWrappper;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.braille.BrailleGrid;
 import dtb.terminalIO.components.braille.BrailleUtils;
@@ -13,12 +14,11 @@ import dtb.terminalIO.components.input.DisplayableValue;
 import dtb.terminalIO.components.input.DisplayableValue.SimpleDisplayValue;
 import dtb.terminalIO.components.input.DisplayableValue.StringDisplayValue;
 import dtb.terminalIO.components.plot.Plotter;
-import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
-import dtb.terminalIO.util.Logging;
+import dtb.terminalIO.geom.position.Position;
 
 public class ImageViewerFactory {
 
@@ -37,6 +37,7 @@ public class ImageViewerFactory {
                    SIMPLE_char_gradientStr1,
                    SIMPLE_char_gradientStr2,
                    SIMPLE_char_gradientStr3,
+                   //" !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
                  //  "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'. ",
                    "@%#*+=-:. ", 
                    "##@$%WRHGo\"~;:'. ",
@@ -65,7 +66,7 @@ public class ImageViewerFactory {
             super(displayValue, value);
         }
 
-    }
+    }   
 
     public static ColorMapOption[] colorMap() {
         ColorMapOption[] colorMaps = new ColorMapOption[] {
@@ -96,10 +97,140 @@ public class ImageViewerFactory {
         }; 
         return colorMaps;
     }
-    
-    
-    public static Component<?> fromImage(Image imageToView, Dimension desiredImgSizeInCharacters) throws Exception {
 
+    public static class ImageRenderer extends AbstractComponentWrappper<Component<?>> {
+        
+        protected ImageRenderer(Component<?> wrappedComponent) {
+            super(wrappedComponent.getColor(), wrappedComponent);
+        }
+        
+        void rebuildWrappedComponentIfNeeded(ImageRenderRequest rqst) {
+            if (this.getWrappedComponent() instanceof Plotter && rqst.isUseBraille()) {
+                BrailleGrid grid = new BrailleGrid(this.getWrappedComponent().getColor(), (Dimension)this.getWrappedComponent());
+                this.setWrappedComponent(grid);
+            } else if (this.getWrappedComponent() instanceof BrailleGrid && !rqst.isUseBraille()) {
+                Plotter plotter = new Plotter(this.getWrappedComponent().getColor(), (Dimension)this.getWrappedComponent());
+                this.setWrappedComponent(plotter);
+                
+            }
+        }
+
+    }
+    
+    public static class ImageRenderRequest {
+        
+        Image imageToView;
+        Dimension desiredImgSizeInCharacters;
+        RGBPlotPredicate toPlotOrNot;
+        RGBToAnsiColorControlCode colorMap;
+        boolean useBraille;
+        // ascii char rendering
+        String gradientStr;
+        
+        public Image getImageToView() {
+            return imageToView;
+        }
+        
+        public ImageRenderRequest setImageToView(Image imageToView) {
+            this.imageToView = imageToView;
+            return this;
+        }
+        
+        public Dimension getDesiredImgSizeInCharacters() {
+            return desiredImgSizeInCharacters;
+        }
+        
+        public ImageRenderRequest setDesiredImgSizeInCharacters(Dimension desiredImgSizeInCharacters) {
+            this.desiredImgSizeInCharacters = desiredImgSizeInCharacters;
+            return this;
+        }
+        
+        public RGBPlotPredicate getToPlotOrNot() {
+            return toPlotOrNot != null ? toPlotOrNot : plotPointPredicateOptions()[0].getValue();
+        }
+        
+        public ImageRenderRequest setToPlotOrNot(RGBPlotPredicate toPlotOrNot) {
+            this.toPlotOrNot = toPlotOrNot;
+            return this;
+        }
+
+        public RGBToAnsiColorControlCode getColorMap() {
+            return colorMap != null ? colorMap : colorMap()[0].getValue();
+        }
+
+        public ImageRenderRequest setColorMap(RGBToAnsiColorControlCode colorMap) {
+            this.colorMap = colorMap;
+            return this;
+        }
+
+        public boolean isUseBraille() {
+            return useBraille;
+        }
+
+        public ImageRenderRequest setUseBraille(boolean useBraille) {
+            this.useBraille = useBraille;
+            return this;
+        }
+
+        public String getGradientStr() {
+            return gradientStr != null ? gradientStr : standardAsciiGradients()[0].getValue();
+        }
+        
+        public ImageRenderRequest setGradientStr(String gradientStr) {
+            this.gradientStr = gradientStr;
+            return this;
+        }
+
+        public void copyFrom(ImageRenderRequest srcRqst) {
+            this.colorMap = srcRqst.getColorMap();
+            this.desiredImgSizeInCharacters = srcRqst.desiredImgSizeInCharacters;
+            this.gradientStr = srcRqst.gradientStr;
+            this.toPlotOrNot = srcRqst.toPlotOrNot;
+            this.useBraille = srcRqst.useBraille;
+        }
+
+    }
+    
+    public static Component<?> fromImage(ImageRenderRequest rqst) throws Exception {
+        
+        if (rqst.isUseBraille()) {
+            return new ImageRenderer(simpleImageToBrailleView(rqst.getImageToView(), 
+                                                              rqst.getDesiredImgSizeInCharacters(), 
+                                                              rqst.getToPlotOrNot(), 
+                                                              rqst.getColorMap()));
+       }
+
+        return new ImageRenderer(simpleImageToStringView(rqst.getImageToView(), 
+                                                         rqst.getDesiredImgSizeInCharacters(), 
+                                                         rqst.getToPlotOrNot(), 
+                                                         rqst.getColorMap(),
+                                                         rqst.getGradientStr()));
+
+    }
+    
+    public static Component<?> fromImage(Component<?> imageViewer, ImageRenderRequest rqst) throws Exception {
+
+        ImageRenderer viewer = (ImageRenderer) imageViewer;
+        viewer.rebuildWrappedComponentIfNeeded(rqst);
+
+        if (rqst.isUseBraille()) {
+            return simpleImageToBrailleView(viewer.getWrappedComponent(),
+                                            rqst.getImageToView(), 
+                                            rqst.getDesiredImgSizeInCharacters(), 
+                                            rqst.getToPlotOrNot(), 
+                                            rqst.getColorMap());
+        }
+
+        return simpleImageToStringView(viewer.getWrappedComponent(),
+                                       Position.ZERO,
+                                       rqst.getImageToView(), 
+                                       rqst.getDesiredImgSizeInCharacters(), 
+                                       rqst.getToPlotOrNot(), 
+                                       rqst.getColorMap(),
+                                       rqst.getGradientStr());
+
+    }
+    public static Component<?> fromImage(Image imageToView, Dimension desiredImgSizeInCharacters) throws Exception {
         return simpleImageToStringView(imageToView, desiredImgSizeInCharacters);
     }
 
@@ -111,45 +242,71 @@ public class ImageViewerFactory {
         return simpleImageToStringView(inputImage, desiredImgSizeInCharacters, plotPointPredicateOptions()[0].getValue(),  colorMap()[0].getValue(), gradientStr);
     }
     
-    
-    public static Component<?> simpleImageToStringView(Image inputImage, Dimension desiredImgSizeInCharacters, RGBPlotPredicate toPlotOrNot, RGBToAnsiColorControlCode colorMap, String gradientStr) throws Exception {
 
+    public static Component<?> simpleImageToStringView(Image inputImage, 
+                                                        Dimension desiredImgSizeInCharacters, 
+                                                        RGBPlotPredicate toPlotOrNot, 
+                                                        RGBToAnsiColorControlCode colorMap, 
+                                                        String gradientStr) throws Exception {
+        
         Plotter plotterComponent = new Plotter(Colors.On_Whi, desiredImgSizeInCharacters);
         plotterComponent.setEmptyColor(Colors.Whi);
         plotterComponent.setEmptyChar(' ');
         plotterComponent.setFillOnClear(true);
         plotterComponent.setName("imageViewer-plotter");
         
+        return simpleImageToStringView(plotterComponent,
+                                       Position.ZERO,
+                                       inputImage, 
+                                       desiredImgSizeInCharacters, 
+                                       toPlotOrNot, 
+                                       colorMap, 
+                                       gradientStr);
+    }
+
+    public static Component<?> simpleImageToStringView(Component<?> plotterDestination,
+                                                       Position offset,
+                                                       Image inputImage, 
+                                                       Dimension desiredImgSizeInCharacters, 
+                                                       RGBPlotPredicate toPlotOrNot, 
+                                                       RGBToAnsiColorControlCode colorMap, 
+                                                       String gradientStr) throws Exception {
+
+        Plotter plotterComponent = (Plotter) plotterDestination;
+        plotterComponent.clearPlots();
+        plotterComponent.clear();
+
         Image image = resize(inputImage, desiredImgSizeInCharacters);
-        
-        //ImageIO.write((BufferedImage)image, "png", new File("/home/dbalme/workspace/dtbTerminalIO/testScale.png"));
-        
+
         Rectangle imgSize = new ImageRectangleAdapter(image);
-        
+
         int width = imgSize.getWidth();
         int height = imgSize.getHeight();
-        
+
         int[] pixels = new int[width * height];
 
         PixelGrabber pxGrabber = new PixelGrabber(image, 0, 0, width, height, pixels, 0, width);
 
         pxGrabber.grabPixels();
-        
+
+        int row_offset = offset.getRow();
+        int col_offset = offset.getCol();
+
         for (int row = 0; row < height; row++) {
             for (int col = 0; col < width; col++) {
                int pixel = pixels[row * width + col];
-               
+
                int blue  = (pixel & 0xff);
                int green = ((pixel & 0xff00) >> 8);
                int red   = ((pixel & 0xff0000) >> 16);
-               
+
                //if (pixel != -1 && pixel != 0) {
                if (toPlotOrNot.test(red, green, blue)) {
 
                    Color mappedColor = colorMap.toControlCode(red, green, blue);
                    
                    char plotChar = rgbToChar(red, green, blue, gradientStr);
-                   plotterComponent.addPlot(row, col, plotChar, mappedColor);
+                   plotterComponent.addPlot(row + row_offset, col + col_offset, plotChar, mappedColor);
                    //plotter.setColor(mappedColor);
                    //plotter.plot(col, row);
                }
@@ -158,6 +315,19 @@ public class ImageViewerFactory {
         return plotterComponent;
     
     }
+
+    public static Component<?> simpleImageToBrailleView(Image imageToView, Dimension desiredImgSizeInCharacters) throws Exception {
+        return simpleImageToBrailleView(imageToView, desiredImgSizeInCharacters, plotPointPredicateOptions()[0].getValue(),  colorMap()[0].getValue());
+    }
+    
+    public static Component<?> simpleImageToBrailleView(Component<?> plotterDestination, Image imageToView, Dimension desiredImgSizeInCharacters) throws Exception {
+        return simpleImageToBrailleView(plotterDestination, imageToView, desiredImgSizeInCharacters, plotPointPredicateOptions()[0].getValue(),  colorMap()[0].getValue());
+    }
+    
+    public static Component<?> simpleImageToBrailleView(Component<?> plotterDestination, Image imageToView) throws Exception {
+        return simpleImageToBrailleView(plotterDestination, imageToView, plotterDestination.getPreferredRectangleForLayout(), plotPointPredicateOptions()[0].getValue(),  colorMap()[0].getValue());
+    }
+    
     
     public static Component<?> simpleImageToBrailleView(Image inputImage, Dimension desiredImgSizeInCharacters, RGBPlotPredicate toPlotOrNot, RGBToAnsiColorControlCode colorMap) throws Exception {
         
@@ -166,14 +336,32 @@ public class ImageViewerFactory {
         brailleGrid.setEmptyChar(' ');
         brailleGrid.setFillOnClear(true);
         brailleGrid.setName("imageViewer-brailleGrid");
-        
+
+        return simpleImageToBrailleView(brailleGrid, 
+                                        inputImage, 
+                                        desiredImgSizeInCharacters,
+                                        toPlotOrNot,
+                                        colorMap);
+    }
+
+    public static Component<?> simpleImageToBrailleView(Component<?> plotterDestination,
+            Image inputImage, 
+            Dimension desiredImgSizeInCharacters, 
+            RGBPlotPredicate toPlotOrNot, 
+            RGBToAnsiColorControlCode colorMap) throws Exception {
+
+        BrailleGrid brailleGrid = (BrailleGrid) plotterDestination;
+
+        brailleGrid.getPlotter().clearPlots();
+        brailleGrid.clear();
+
         Image image = resize(inputImage, brailleGrid.getGridRectangle());
-        
+
         Rectangle imgSize = new ImageRectangleAdapter(image);
-        
+
         int width = imgSize.getWidth();
         int height = imgSize.getHeight();
-        
+
         int[] pixels = new int[width * height];
 
         PixelGrabber pxGrabber = new PixelGrabber(image, 0, 0, width, height, pixels, 0, width);
@@ -182,6 +370,7 @@ public class ImageViewerFactory {
 
         int charsWidth  = desiredImgSizeInCharacters.getWidth();
         int charsHeight = desiredImgSizeInCharacters.getHeight();
+        int pixelLen = pixels.length;
 
         for (int charsRow = 0; charsRow < charsHeight; charsRow++) {
             for (int charsCol = 0; charsCol < charsWidth; charsCol++) {
@@ -192,12 +381,17 @@ public class ImageViewerFactory {
                int greenAVG = 0;
                int redAVG   = 0;
                int charPlotCount = 0;
+               // iterate thru a 4x2 braille char generation
                for (int gridRowOffset = 0; gridRowOffset<4; gridRowOffset++) {
                    for (int gridColOffset = 0; gridColOffset<2; gridColOffset++) {
                        int curPixelRow = gridRow+gridRowOffset;
                        int curPixelCol = gridCol+gridColOffset;
-                       int pixel = pixels[curPixelRow * width + curPixelCol];
-                       
+                       int curPixelDIX = curPixelRow * width + curPixelCol;
+                       if (curPixelDIX >= pixelLen) {
+                           break;
+                       }
+                       int pixel = pixels[curPixelDIX];
+
                        int blue  = (pixel & 0xff);
                        int green = ((pixel & 0xff00) >> 8);
                        int red   = ((pixel & 0xff0000) >> 16);
@@ -215,7 +409,7 @@ public class ImageViewerFactory {
                    blueAVG  = blueAVG  / charPlotCount;
                    greenAVG = greenAVG / charPlotCount;
                    redAVG   = redAVG   / charPlotCount;
-                   
+
                    Color mappedColor = colorMap.toControlCode(redAVG, greenAVG, blueAVG);
 
                    brailleGrid.getPlotter().addPlot(charsRow, charsCol, curBrailleChar, mappedColor);
@@ -223,42 +417,13 @@ public class ImageViewerFactory {
             }
         }
         return brailleGrid;
-    
     }
 
-    
 
-    static String SIMPLE_char_gradientStr3 = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'. ";
+    private static String SIMPLE_char_gradientStr1 = "ÆÑÊŒØMÉËÈÃÂWQBÅæ#NÁþEÄÀHKRŽœXgÐêqÛŠÕÔA€ßpmãâG¶øðé8ÚÜ$ëdÙýèÓÞÖåÿÒb¥FDñáZPäšÇàhû§ÝkŸ®S9žUTe6µOyxÎ¾f4õ5ôú&aü™2ùçw©Y£0VÍL±3ÏÌóC@nöòs¢u‰½¼‡zJƒ%¤Itocîrjv1lí=ïì<>i7†[¿?×}*{+()\\/»«•¬|!¡÷¦¯—^ª„”“~³º²–°­¹‹›;:’‘‚’˜ˆ¸…·¨´`";
+    private static String SIMPLE_char_gradientStr2 = new StringBuilder(" .:-=+*#%@").reverse().toString();
+    private static String SIMPLE_char_gradientStr3 = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'. ";
 
-    static String SIMPLE_char_gradientStr1 = "ÆÑÊŒØMÉËÈÃÂWQBÅæ#NÁþEÄÀHKRŽœXgÐêqÛŠÕÔA€ßpmãâG¶øðé8ÚÜ$ëdÙýèÓÞÖåÿÒb¥FDñáZPäšÇàhû§ÝkŸ®S9žUTe6µOyxÎ¾f4õ5ôú&aü™2ùçw©Y£0VÍL±3ÏÌóC@nöòs¢u‰½¼‡zJƒ%¤Itocîrjv1lí=ïì<>i7†[¿?×}*{+()\\/»«•¬|!¡÷¦¯—^ª„”“~³º²–°­¹‹›;:’‘‚’˜ˆ¸…·¨´`";
-
-    static String SIMPLE_char_gradientStr2 = new StringBuilder(" .:-=+*#%@").reverse().toString();
-
-    static char[] SIMPLE_char_gradient3 = buildCharacterGradient(SIMPLE_char_gradientStr3);
-
-    static char[] SIMPLE_char_gradient1 = buildCharacterGradient(SIMPLE_char_gradientStr1);
-
-    static char[] SIMPLE_char_gradient2 = buildCharacterGradient(SIMPLE_char_gradientStr2);
-
-    static char[] buildCharacterGradient(String greyScale) {
-        float strLen = (float) greyScale.length();
-        char[]  gradient = new char[256];
-        for (int i = 0; i<256; i++) {
-            int chrIndex = (int) Math.floor(  ((((float)i) / 255.0f) * strLen)   );
-            if (chrIndex>=strLen) {
-                chrIndex = (int) strLen - 1;
-            } else {
-                if (chrIndex<0) {
-                    chrIndex = 0;
-                }
-            }
-            gradient[i] = greyScale.charAt(chrIndex);
-        }
-        return gradient;
-    }
-    
-    
-    
     static char rgbToChar(int r, int g, int b, char[] greyScale) {
         int h = (int) Math.floor((r  + g  + b) / 3.0);
         return greyScale[h];
@@ -266,7 +431,6 @@ public class ImageViewerFactory {
     
     static char rgbToChar(int r, int g, int b) {
         return rgbToChar(r,g,b, SIMPLE_char_gradientStr1);
-        //return rgbToChar(r,g,b, SIMPLE_char_gradient1);
     }
 
     static char rgbToChar(int r, int g, int b, String greyScale) {
@@ -291,9 +455,11 @@ public class ImageViewerFactory {
     public static Image resize(Image inputImage, Dimension d) {
 
         // creates output image
+        
+        
         BufferedImage outputImage = new BufferedImage(d.getWidth(), d.getHeight(), BufferedImage.TYPE_INT_RGB);
         
-        ImageRectangleAdapter original = new ImageRectangleAdapter(inputImage);
+        //ImageRectangleAdapter original = new ImageRectangleAdapter(inputImage);
         
         // scales the input image to the output image
         Graphics2D g2d = outputImage.createGraphics();
@@ -339,7 +505,7 @@ public class ImageViewerFactory {
     static RGBToAnsiColorControlCode rgbColorMapDIRECT = (r,g,b) ->Colors.fromRGB(r,g,b);
 
     static RGBToAnsiColorControlCode rgbColorPlotBlackAndGreyAsWhite = (r,g,b) ->  {
-        
+
         if (r < 50 && g < 50 && b < 50) {
             return Colors.BWhi;
         }

@@ -24,8 +24,8 @@ public class HorizontalPanelTest {
         Composite hPanel1 = new HorizontalPanel();
         
         hPanel1.add(new BorderedComponent("In Spain .. In Spain\n" + 
-                                        "The Rain in Spain stays \n" + 
-                                        "mainly on the plain!")).t("Some Random Text");
+                                          "The Rain in Spain stays \n" + 
+                                          "mainly on the plain!")).t("Some Random Text");
 
 
        Button b1 = new Button("Hello Button");

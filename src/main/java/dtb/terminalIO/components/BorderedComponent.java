@@ -109,6 +109,23 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
         return this.component;
     }
 
+    public BorderedComponent  setComponent(Component<?> component) {
+        if (this.component != null) {
+            this.component.setParentContainer(null);
+        }
+        this.component = component;
+        this.component.setParentContainer(this);
+        this.componentPosition = new Position.Simple(1,1);
+        Position.Simple p = new Position.Simple(component);
+        Rectangle bounds = new Rectangle.Simple(p, new Dimension.Simple(component.getHeight() + 2, component.getWidth() + 2));
+        this.border = new SimpleBorder(getColor(), bounds);
+        this.border.setParentContainer(this);
+        showBorder = true;
+        this.setRectangle( bounds );
+        this.setFillOnClear(false);
+        return this;
+    }
+
     public void setShowBorder(boolean showBorder) {
         this.showBorder = showBorder;
         this.markAsDirty();

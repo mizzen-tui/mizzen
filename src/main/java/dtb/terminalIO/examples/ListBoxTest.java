@@ -17,6 +17,7 @@ import dtb.terminalIO.components.modal.MessageBox;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
 import dtb.terminalIO.controlcodes.ControlCode;
+import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.TerminalScreen;
@@ -56,12 +57,44 @@ import dtb.terminalIO.util.Stty;
  */
 public class ListBoxTest {
 
+    static int currentExitValue = 1;
+    static long startTime = System.currentTimeMillis();
+    
+    static void exitOnArgX(int xArg, String msg) {
+        if (currentExitValue == xArg) {
+            try {
+                Stty.setCooked();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            System.out.println("breakout: " + xArg + " :  " + msg + "  : elapsed: " + (System.currentTimeMillis() - startTime));
+            System.out.println(ControlCode.SHOW_CURSOR.asString());
+            System.exit(0);
+        }
+        currentExitValue ++;
+    }
+    
     public static void main(String[] args) throws IOException {
+
+        int breakout = 0;
+
+        if (args != null && args.length > 0) {
+            breakout = Integer.parseInt(args[0]);
+        }
+
+        exitOnArgX(breakout, "JVM startup");
 
         TerminalScreen screen = TestsCommon.getTerminalScreenForTesting(args);
 
-        
+        exitOnArgX(breakout, "TerminalScreen creation");
+
         Position anchorPoint = new Position.Simple(1,10);
+        
+        Color testColor = Colors.BBlu;
+
+        exitOnArgX(breakout, "Color assignment");
+
+        exitOnArgX(breakout, "Position.Simple(1,10) creation");
         
         String[] iFaces = new String[] 
                 {"lo", 
@@ -69,7 +102,7 @@ public class ListBoxTest {
                 "virbr0", 
                 "virbr0-nic", 
                 "docker0"};
-        
+
         ListBox<String> lb1 = ListBox.fromStrings(Colors.IGre,
                                                 new String[] {
                                                "Blue Suede Shoes", 
@@ -167,6 +200,8 @@ public class ListBoxTest {
                                                "-----------------------"
                                                },new TextComponentItemFactory<String>());
         
+        exitOnArgX(breakout, "Biggest listbox creation");
+        
         lb1.setBorder(false);
         //lb1.setTitle("Ifaces");
         
@@ -188,12 +223,13 @@ public class ListBoxTest {
                 });
 
         ListBox<String> lb2 = new ListBox<String>(Colors.IGre, weird, new TextComponentItemFactory<String>());
-        // TODO: make it so we can specify border color/ title color
+
         lb2.setTitle("Child list");
         
         DropdownListBox<String> lb3 = DropdownListBox.fromStrings(new String[] {"Test1", "Test2", "No tests", "No more teacher's","dirty looks"}, new TextComponentItemFactory<String>());
         DropdownListBox<Boolean> lb4 = DropdownListBox.yesNoDropDown();
-        // lb3.setBorder(true);
+
+        exitOnArgX(breakout, "ListBox data created");
 
         HorizontalPanel listBoxesPanel = new HorizontalPanel().setHorizontalSpacer(4);
          
@@ -224,26 +260,25 @@ public class ListBoxTest {
 
         mainPanel.add(anchorPoint, listBoxesPanel);
         mainPanel.add(new PositionVerticalRelative(new Rectangle.Simple(anchorPoint, lb1_sc),1), eventDisplayer);
-        
+
         mainPanel.setBorder(true);
-        
 
         Runnable renderComponents = ()-> {
             
             if ( ! Component.UTIL.isDirty(mainPanel, listBoxesPanel, eventDisplayer)) {
                 return ;
             }
-            
+
             master_canvas.clearCanvas();
-            
+
             master_canvas.addComponentSegments(mainPanel);
             /*
             master_canvas.addComponentSegments(anchorPoint, listBoxes);
             
             master_canvas.addComponentSegments(new PositionVerticalRelative(new Rectangle.Simple(anchorPoint, lb1_sc),1), eventDisplayer);
             */
-            
-            
+
+
             master_canvas.refresh();
         };
         
@@ -358,9 +393,8 @@ public class ListBoxTest {
            eventBus.stopConsuming();
            return;
        }
-       
-       
-       
+
+       exitOnArgX(breakout, "Everything built");
 
     }
     

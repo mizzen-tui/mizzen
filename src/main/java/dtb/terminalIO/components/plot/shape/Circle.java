@@ -59,7 +59,7 @@ import dtb.terminalIO.controlcodes.color.Color;
  * @author dbalme
  *
  */
-public class Circle implements Shape {
+public class Circle implements Shape , Fillable<Circle>{
 
     /**
      * Specifies how to draw the circle,

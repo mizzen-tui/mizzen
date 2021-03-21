@@ -2,6 +2,7 @@ package dtb.terminalIO.events;
 
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /**
  * An EventHandler that can handle OnIdleEvent events.
@@ -34,6 +35,7 @@ public class OnIdleEventEventHandler extends ConditionalEventHandler.Impl {
         }
         return null;
     }
+    
 
     /**
      * Executes on an IdleEvent once and then removes itself from the eventBus.
@@ -128,6 +130,35 @@ public class OnIdleEventEventHandler extends ConditionalEventHandler.Impl {
 
     }
 
+    /**
+     * Executes on an IdleEvent repeatedly until continueConditional returns false
+     */
+    public static class RepeatingIntervalWhileCond extends RepeatingInterval {
+
+        Supplier<Boolean> continueConditional;
+
+        public RepeatingIntervalWhileCond(long interval, Supplier<Boolean> continueConditional, EventHandler handler) {
+            super(interval, handler);
+            this.continueConditional = continueConditional;
+        }
+
+        @Override
+        public void handle(TerminalEvent<?> te) {
+
+            if ( ! continueConditional.get() ) {
+                // conditional did not pass so let's remove ourselves
+                te.getEventBus().removeEventHandler(this);
+                return;
+            }
+
+            // conditional passed to execute handler
+            super.handle(te);
+
+        }
+
+    }
+
+    
     /**
      * Executes on an IdleEvent a defined number of times and then removes itself
      * from the eventBus

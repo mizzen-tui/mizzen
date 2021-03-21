@@ -327,7 +327,7 @@ public class Test1GamesSeparateThread {
             pointRotator = new RotateAroundFixedPoint(0, midPoint);
             rotatingPlotter = new TransformPointPlotter(null, pointRotator);
 
-            this.t1 = new Triangle(p1, p2, p3, Colors.BBlu);
+            this.t1 = new Triangle(p1, p2, p3, Colors.BBlu).setFilled(true);
 
             this.componentShapes = new CompositeShape() {
                 protected void drawChild(Shape childShape, PointPlotter pointPlotter) {
@@ -341,12 +341,11 @@ public class Test1GamesSeparateThread {
                 }
             };
 
-            componentShapes.addShape(new Circle(midPoint.getRow(), midPoint.getCol(), 5, Colors.BGre)
-                    .setAlgorithm(new CircleAlgorithm(true)));
+            componentShapes.addShape(t1);
+            componentShapes.addShape(new Circle(midPoint.getRow(), midPoint.getCol(), 5, Colors.BGre).setAlgorithm(new CircleAlgorithm(true)));
             componentShapes.addShape(new Circle(midPoint.getRow(), midPoint.getCol(), 1, Colors.BRed));
 
             componentShapes.addShape(new RectangleShape(boundingRect, Colors.BIBla));
-            componentShapes.addShape(t1);
             componentShapes.addShape(new DotShape(p1, Colors.BIYel));
             componentShapes.addShape(new DotShape(p2, Colors.BIYel));
             componentShapes.addShape(new DotShape(p3, Colors.BIYel));

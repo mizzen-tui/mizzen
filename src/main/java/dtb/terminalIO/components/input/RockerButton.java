@@ -8,6 +8,7 @@ import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.focus.FocusManager;
+import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.keyboard.HasHotKey;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
@@ -24,6 +25,8 @@ public class RockerButton extends    AbstractWrappedComponentWithFocusManager<Bu
     private TextComponent label;
     private Button        onButton;
     private Button        offButton;
+    private String        onText;
+    private String        offText;
 
     private KeyStroke hotKey;
     private KeyInputEventHandler hotKeyHandler;
@@ -31,15 +34,21 @@ public class RockerButton extends    AbstractWrappedComponentWithFocusManager<Bu
     public RockerButton(Color color, String label, String onText, String offText, boolean value) {
         super(color, new ButtonBar(color));
 
-        onButton = new Button(onText);
+        this.onText = onText;
+        this.offText = offText;
+        
+        onButton = new Button(this.onText);
         onButton.onChange((te) -> toggleState(true, te.getEventBus()));
 
-        offButton = new Button(offText);
+        offButton = new Button(this.offText);
         offButton.onChange((te) -> toggleState(false, te.getEventBus()));
 
         getWrappedComponent().setNoBorderChars();
-        getWrappedComponent().setHorizontalSpacer(1);
+        getWrappedComponent().setHorizontalSpacer(0);
 
+        if (!label.endsWith(" ")) {
+            label = label + " ";
+        }
         this.labelText = label;
         this.label = new TextComponent(color, label);
 
@@ -80,8 +89,12 @@ public class RockerButton extends    AbstractWrappedComponentWithFocusManager<Bu
     private void toggleState(boolean state, EventBus eventBus) {
         this.toggleValue = state;
         if (state) {
+            this.onButton. setButtonText("<" + this.onText+">");
+            this.offButton.setButtonText(" " + this.offText+" ");
             getFocusManager().setChildAsCurrentFocus(onButton, eventBus);
         } else {
+            this.onButton. setButtonText(" " + this.onText+" ");
+            this.offButton.setButtonText("<" + this.offText+">");
             getFocusManager().setChildAsCurrentFocus(offButton, eventBus);
         }
         this.markAsDirty();
@@ -127,6 +140,13 @@ public class RockerButton extends    AbstractWrappedComponentWithFocusManager<Bu
     @Override
     public Boolean getValue() {
         return toggleValue;
+    }
+
+
+    @Override
+    public void childHasCurrentFocus(Focusable focusableChild, EventBus eventBus) {
+        // TODO Auto-generated method stub
+        
     }
 
 

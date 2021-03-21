@@ -347,6 +347,15 @@ public class Composite extends AbstractComponent<Composite>
         component.setParentContainer(this);
         return componentWithOffset;
     }
+    
+    public boolean isChildVisible(Component<?> component) {
+        if (component == null) {
+            throw new NullPointerException("Component isChildVisible failure: Null component!");
+        }
+        ComponentWithOffset child = findChildOrFail(component,"Component");
+
+        return child.visible;
+    }
 
     public Composite hide(Component<?> component) {
         if (component == null) {

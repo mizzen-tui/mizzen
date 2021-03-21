@@ -34,6 +34,7 @@ public class Relation<T, U extends T, V extends T> {
 			
 	}
 	
+	
 	protected void swap()
 	{
 		T tmp = r1;

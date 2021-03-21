@@ -1,6 +1,7 @@
 package dtb.terminalIO.components;
 
 import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
@@ -17,7 +18,7 @@ public abstract class AbstractWrappedComponentAndFocusable<T extends Component<?
 
     @Override
     public EventHandler canHandle(TerminalEvent<?> te) {
-        if ( asFocusable().canHandle(te) == null ) {
+        if ( eventHandler().canHandle(te) == null ) {
             return null;
         }
         return this;
@@ -25,7 +26,7 @@ public abstract class AbstractWrappedComponentAndFocusable<T extends Component<?
 
     @Override
     public void handle(TerminalEvent<?> te) {
-        asFocusable().handle(te);
+        eventHandler().handle(te);
     }
 
     @Override
@@ -38,6 +39,56 @@ public abstract class AbstractWrappedComponentAndFocusable<T extends Component<?
         asFocusable().setFocus(focus, eventBus);
     }
 
+    private ConditionalEventHandler conditionalEventHandler;
+
+    public ConditionalEventHandler getConditionalEventHandler() {
+        return conditionalEventHandler;
+    }
+
+    public void setConditionalEventHandler(ConditionalEventHandler conditionalEventHandler) {
+        this.conditionalEventHandler = conditionalEventHandler;
+    }
+
+
+    private ConditionalEventHandler evtHandler;
+
+    protected ConditionalEventHandler eventHandler() {
+        
+        if (evtHandler != null) {
+            return evtHandler;
+        }
+        
+        evtHandler = new ConditionalEventHandler() {
+
+            @Override
+            public void handle(TerminalEvent<?> te) {
+                if ( asFocusable().canHandle(te) != null ) {
+                    asFocusable().handle(te);
+                    return;
+                }
+                if (conditionalEventHandler != null) {
+                    conditionalEventHandler.handle(te);
+                }
+            }
+
+            @Override
+            public EventHandler canHandle(TerminalEvent<?> te) {
+                if ( asFocusable().canHandle(te) != null ) {
+                    return AbstractWrappedComponentAndFocusable.this;
+                }
+                
+                if (conditionalEventHandler != null && conditionalEventHandler.canHandle(te) != null) {
+                    return AbstractWrappedComponentAndFocusable.this;
+                }
+
+                return null;
+            }
+            
+        };
+        
+        return evtHandler;
+    }
+    
     abstract protected Focusable asFocusable();
 
 }

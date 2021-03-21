@@ -23,14 +23,19 @@ public class AbstractComponentWrappper<T extends Component<?>>  extends  Abstrac
         setWrappedComponent(wrappedComponent);
     }
 
-    protected T getWrappedComponent() {
+    public T getWrappedComponent() {
         return wrappedComponent;
     }
 
     protected void setWrappedComponent(T wrappedComponent) {
+        if (this.wrappedComponent != null) {
+            this.wrappedComponent.setParentContainer(null);
+        }
         this.wrappedComponent = wrappedComponent;
-        this.wrappedComponent.setParentContainer(this);
-        HasName.UTIL.decorateWithParentsNamePrefix(this.wrappedComponent, this);
+        if (wrappedComponent != null) {
+            this.wrappedComponent.setParentContainer(this);
+            HasName.UTIL.decorateWithParentsNamePrefix(this.wrappedComponent, this);
+        }
     }
 
     @Override

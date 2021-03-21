@@ -42,12 +42,18 @@ public interface Component<T extends Component<?>>
     
     ParentContainer getParentContainer();
     
-    default void hide() {
-        UTIL.hide(this);
+    default boolean hide() {
+        if (UTIL.isAttachedDirectlyToCanvas(this)) {
+            return true;
+        }
+        return UTIL.hide(this);
     }
     
-    default void show() {
-        UTIL.show(this);
+    default boolean show() {
+        if (UTIL.isAttachedDirectlyToCanvas(this)) {
+            return true;
+        }
+        return UTIL.show(this);
     }
 
     /**
@@ -275,35 +281,41 @@ public interface Component<T extends Component<?>>
         }
         
         
-        public static <T extends Component<?>> void hide(T component) {
+        public static <T extends Component<?>> boolean hide(T component) {
 
             ParentContainer parent = component.getParentContainer(); 
 
             if (component.getParentContainer() == null) {
-                return ; // hmm... should I be recording intent
+                return false; // false not visible
             }
 
             if (parent instanceof ChildComponentManager) {
                 ChildComponentManager<?> parentComponentManager = (ChildComponentManager<?>) parent;
                 parentComponentManager.hide(component);
                 component.markAsDirty();
+                return false;  // false means hidden
             }
+            
+            return true; // has a parent - but parent cannot hide
 
         }
 
-        public static <T extends Component<?>> void show(T component) {
+        public static <T extends Component<?>> boolean show(T component) {
 
             ParentContainer parent = component.getParentContainer();
 
             if (component.getParentContainer() == null) {
-                return ; // hmm... should I be recording intent
+                return false;
             }
 
             if (parent instanceof ChildComponentManager) {
                 ChildComponentManager<?> parentComponentManager = (ChildComponentManager<?>) parent;
                 parentComponentManager.show(component);
                 component.markAsDirty();
+                return true;
             }
+            
+            return true; // has a parent, but parent cannot hide child
 
         }
 

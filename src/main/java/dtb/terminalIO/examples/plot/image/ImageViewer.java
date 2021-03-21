@@ -1,4 +1,4 @@
-package dtb.terminalIO.examples.plot;
+package dtb.terminalIO.examples.plot.image;
 
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
@@ -13,123 +13,46 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 import javax.imageio.ImageIO;
 
 import dtb.terminalIO.app.TUIApp;
-import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.FillOnClearPolicy;
 import dtb.terminalIO.components.HorizontalPanel;
-import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.VerticalPanel;
 import dtb.terminalIO.components.braille.BrailleGrid;
 import dtb.terminalIO.components.input.DisplayableValue;
 import dtb.terminalIO.components.input.DisplayableValue.StringDisplayValue;
 import dtb.terminalIO.components.input.DropdownListBox;
 import dtb.terminalIO.components.input.ListBox;
+import dtb.terminalIO.components.plot.Plotter;
 import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory;
+import dtb.terminalIO.components.plot.image.ImageViewerFactory.RGBPlotPredicate;
+import dtb.terminalIO.components.plot.image.ImageViewerFactory.RGBToAnsiColorControlCode;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
-import dtb.terminalIO.controlcodes.color.Colors.FGBGColors;
 import dtb.terminalIO.core.ScreenCanvasBackend;
 import dtb.terminalIO.core.ScreenCanvasBackend.UpdateStrategy;
 import dtb.terminalIO.events.AbstractTimedRequestedController;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
+import dtb.terminalIO.geom.Rectangle.Simple;
 
 public class ImageViewer {
 
     public static void main(String[] args) {
-        // plotterTest(args);
-        gridTest(args);
-    }
-    public static void gridTest(String[] args) {
-        new TUIApp(args)
-                    .setCanvasSize(new Dimension.Simple(50,120))
-                    .setDefaultMainApplicationPanel()
-                    .confirmOnExit()
-                    .enableMouseHandling()
-                    .setOnReadyStart((tApp)->{
-
-                        Component<?> lastImageComp[] = new Component[]{null};
-                        
-                        Composite fractalView = new Composite();
-                        
-                        tApp.getMainApplicationPanel().add(0,0, fractalView);
-                        
-                        ButtonBar bannerPanel = new ButtonBar().setHorizontalSpacer(1);
-                        bannerPanel.setBorder(false);
-                        bannerPanel.setNoBorderChars();
-                        
-                        bannerPanel.addComponent(new TextComponent(new FGBGColors(Colors.BCya,Colors.On_Whi),"Fractals in ASCII"));
-                        
-                        DropdownListBox<String> gradientsDDLB = new DropdownListBox<String>(ImageViewerFactory.standardAsciiGradients());
-                        gradientsDDLB.setMaxItemWidth(15);
-                        gradientsDDLB.setSelected(0);
-                        bannerPanel.addComponent(gradientsDDLB);
-                        
-                        fractalView.add(bannerPanel);
-                        
-                        tApp.appendOnResizeAction((tApp2, size)->{
-                            fractalView.resize(size);
-                        });
-                        
-                        
-                        Runnable makeImage = new Runnable() {
-
-                            @Override
-                            public void run() {
-                                long[][] fractal = makeFractal();
-                                Component<?> imgComponent ;
-                                try {
-                                    Dimension imgSize = new Dimension.Simple(tApp.getCanvas().getHeight()-1, tApp.getCanvas().getWidth());
-                                    imgComponent = ImageViewerFactory.simpleImageToStringView(toImage(fractal), imgSize, gradientsDDLB.getValue());
-                                } catch (Exception e) {
-                                    imgComponent = new TextComponent("img component failure: " + e.getMessage());
-                                }
-                                if (lastImageComp[0] != null) {
-                                    fractalView.remove(lastImageComp[0]);
-                                }
-                                fractalView.add(1,0, imgComponent);
-                                lastImageComp[0] = imgComponent;
-                            }
-                        };
-                        
-                        tApp.getEventBus().appendIdleEventHandler( new OnIdleEventEventHandler.RepeatingInterval(500, (te)-> {
-                            makeImage.run();
-                            te.getEventBus().raiseEvent(  new RequestUpdateCanvasEvent(makeImage)  );
-                        } ));
-                        
-                        
-                        FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),
-                                tApp.getEventBus(),
-                                ()-> new DefaultFocusManager().setNavKeysFirst(false).setCycling(false));
-
-                        tApp.getEventBus().appendEventHandler( mainFocusManager );
-                        
-//                        
-//                        try {
-//                            tApp.getMainApplicationPanel().add(0, 0, ImageViewerFactory.fromImage(toImage(fractal), tApp.getCanvas().asRectangle()));
-//                        } catch (Exception e) {
-//                            tApp.getMainApplicationPanel().add(0, 0, new TextComponent("failure: " + e.getMessage()));
-//                        }
-                    })
-                    .start();
+        plotterTest(args);
     }
     
     public static Map<String,String> imageFiles(String dir) {
@@ -165,11 +88,7 @@ public class ImageViewer {
     
     public static void plotterTest(String[] args) {
         
-        //HorizontalPanel mainPanel = new HorizontalPanel();
-        
         new TUIApp(args)
-                    //.setCanvasSize(new Dimension.Simple(50,170))
-                    //.setMainApplicationPanel(mainPanel)
                     .setDefaultMainApplicationPanel()
                     .confirmOnExit()
                     .enableMouseHandling()
@@ -187,14 +106,14 @@ public class ImageViewer {
                         plotter.setTitle(Colors.BCya, "Image Viewer");
 
                         VerticalPanel formPanel = new VerticalPanel();
-                        
+
                         formPanel.setFillOnClear(true);
                         formPanel.setEmptyColor(Colors.Blu);
                         formPanel.setEmptyChar('◍');
-                        
+
                         mainPanel.add(plotter);
                         mainPanel.add(formPanel);
-                        
+
                         Map<String,String> images = imageFiles(null);
 
                         ListBox<String> imagesListbox = new ListBox<String>(StringDisplayValue.fromStringValues(images));
@@ -207,106 +126,21 @@ public class ImageViewer {
                         } else {
                            formPanel.add(imagesListbox);
                         }
-                        
-                        List<DisplayableValue<RGBToAnsiColorControlCode>> rgbMappingList = new ArrayList<DisplayableValue<RGBToAnsiColorControlCode>>();
-                        
-                        rgbMappingList.add(new DisplayableValue<RGBToAnsiColorControlCode>() {
-                            @Override
-                            public RGBToAnsiColorControlCode getValue() {
-                                return rgbColorMapDIRECT;
-                            }
-                            @Override
-                            public String getDisplayValue() {
-                                return "rgb-direct";
-                            }
-                        });
 
-                        rgbMappingList.add(new DisplayableValue<RGBToAnsiColorControlCode>() {
-                            @Override
-                            public RGBToAnsiColorControlCode getValue() {
-                                return rgbColorMapSimple1;
-                            }
-                            @Override
-                            public String getDisplayValue() {
-                                return "rgb-simple1";
-                            }
-                        });
-
-                        rgbMappingList.add(new DisplayableValue<RGBToAnsiColorControlCode>() {
-                            @Override
-                            public RGBToAnsiColorControlCode getValue() {
-                                return rgbColorPlotBlackAndGreyAsWhite;
-                            }
-                            @Override
-                            public String getDisplayValue() {
-                                return "rgb-blackAndGreyAsWhite";
-                            }
-                        });
-                        
-                        rgbMappingList.add(new DisplayableValue<RGBToAnsiColorControlCode>() {
-                            @Override
-                            public RGBToAnsiColorControlCode getValue() {
-                                return rgbGreyScale;
-                            }
-                            @Override
-                            public String getDisplayValue() {
-                                return "rgb-greyScale";
-                            }
-                        });
-                        
-                        
-                        
-                        ListBox<RGBToAnsiColorControlCode> rgbMapperListBox = new ListBox<RGBToAnsiColorControlCode>();
-                        rgbMapperListBox.setItems(rgbMappingList);
+                        DropdownListBox<RGBToAnsiColorControlCode> rgbMapperListBox = new DropdownListBox<ImageViewerFactory.RGBToAnsiColorControlCode>(ImageViewerFactory.colorMap());
                         rgbMapperListBox.setSelected(0);
                         rgbMapperListBox.setTitle("Color mapping algorithm");
-                        
-                        formPanel.add(rgbMapperListBox);
-                        
-                        List<DisplayableValue<RGBPlotPredicate>> plotConditionals = new ArrayList<DisplayableValue<RGBPlotPredicate>>();
-                        
-                        plotConditionals.add(new DisplayableValue<RGBPlotPredicate>() {
-                            @Override
-                            public RGBPlotPredicate getValue() {
-                                return PLOT_ALWAYS;
-                            }
-                            @Override
-                            public String getDisplayValue() {
-                                return "plot-all";
-                            }
-                        });
-                        
-                        plotConditionals.add(new DisplayableValue<RGBPlotPredicate>() {
-                            @Override
-                            public RGBPlotPredicate getValue() {
-                                return PLOT_WHITE_ONLY;
-                            }
-                            @Override
-                            public String getDisplayValue() {
-                                return "plot-white";
-                            }
-                        });
-                        
-                        plotConditionals.add(new DisplayableValue<RGBPlotPredicate>() {
-                            @Override
-                            public RGBPlotPredicate getValue() {
-                                return PLOT_BLACK_ONLY;
-                            }
-                            @Override
-                            public String getDisplayValue() {
-                                return "plot-black";
-                            }
-                        });
 
-                        DropdownListBox<RGBPlotPredicate> rgbPlotConditionalListBox = new DropdownListBox<RGBPlotPredicate>();
-                        rgbPlotConditionalListBox.setItems(plotConditionals);
+                        formPanel.add(rgbMapperListBox);
+
+                        DropdownListBox<ImageViewerFactory.RGBPlotPredicate> rgbPlotConditionalListBox = new DropdownListBox<ImageViewerFactory.RGBPlotPredicate>(ImageViewerFactory.plotPointPredicateOptions());
                         rgbPlotConditionalListBox.setSelected(0);
                         rgbPlotConditionalListBox.setTitle("PlotPredicate");
 
                         formPanel.add(rgbPlotConditionalListBox);
 
                         List<DisplayableValue<PictureBackground>> plotBackgroundsOnEmptyFill = new ArrayList<DisplayableValue<PictureBackground>>();
-                        
+
                         plotBackgroundsOnEmptyFill.add(background_NOFILL.asDisplayableValue());
                         plotBackgroundsOnEmptyFill.add(background_FILL_SOLID_WHITE.asDisplayableValue());
                         plotBackgroundsOnEmptyFill.add(background_FILL_SOLID_BLACK.asDisplayableValue());
@@ -320,11 +154,11 @@ public class ImageViewer {
                         plotBackgroundsListBox.setItems(plotBackgroundsOnEmptyFill);
                         plotBackgroundsListBox.setSelected(0);
                         plotBackgroundsListBox.setTitle("Empty-Fill");
-                        
+
                         formPanel.add(plotBackgroundsListBox);
-                        
+
                         List<DisplayableValue<Color>> backgroundColorForPlots = new ArrayList<DisplayableValue<Color>>();
-                        
+
                         backgroundColorForPlots.add(Colors.RCol.asDisplayableValue());
                         backgroundColorForPlots.add(Colors.On_IWhi.asDisplayableValue());
                         backgroundColorForPlots.add(Colors.On_Whi.asDisplayableValue());
@@ -337,20 +171,20 @@ public class ImageViewer {
                         plotFillBackgroundsListBox.setItems(backgroundColorForPlots);
                         plotFillBackgroundsListBox.setSelected( plotFillBackgroundsListBox.indexOf(Colors.RCol) );
                         plotFillBackgroundsListBox.setTitle("Plot-BgColor");
-                        
+
                         formPanel.add(plotFillBackgroundsListBox);
-                        
-                        PointPlotter pointPlotter = plotter.asPointPlotter();
-                        
+
+                        //PointPlotter pointPlotter = plotter.asPointPlotter();
+
                         Consumer<Integer> renderLine = (col)-> {
                             //plotter.clear();
                             plotter.markAsDirty();
+                            PointPlotter pointPlotter = plotter.asPointPlotter();
                             pointPlotter.clearPlots();
                             pointPlotter.plot(col+0, 10);
                             pointPlotter.plot(col+1, 10);
                             pointPlotter.plot(col+2, 10);
                             pointPlotter.plot(col+3, 10);
-                            //plotter.markAsDirty();
                             tApp.getCanvas().clearCanvas();
                             /*
                             tApp.getCanvas().t(5,5,
@@ -363,9 +197,7 @@ public class ImageViewer {
                         };
 
                         renderLine.accept(column[0]);
-                        
-                        long[][] fractal = makeFractal();
-                        
+
                         tApp.getEventBus().appendEventHandler( new KeyInputEventHandler(Keys.LEFT_KEYSTROKE, (te) -> {
                             column[0]--;
                             renderLine.accept(column[0]);
@@ -375,15 +207,13 @@ public class ImageViewer {
                             column[0]++;
                             renderLine.accept(column[0]);
                         }));
-                        
-                        
+
                         Map<String, Image> imageCache = new HashMap<String, Image>();
-                        
-                        
+
                         Consumer<TerminalEvent<?>> task_DisplayImage = (te)-> {
                             plotBackgroundsListBox.getValue().setBackGround(plotter);
                             plotter.clear();
-                            pointPlotter.clearPlots();
+                            //pointPlotter.clearPlots();
                             BufferedImage img;
                             Image img2;
                             int drawingWidth = plotter.getGridRectangle().getWidth();
@@ -396,7 +226,9 @@ public class ImageViewer {
                                     // TODO: need to clear the cache when window resized
                                     imageCache.put(imagesListbox.getValue(), img2);
                                 }
-                                plotImage(pointPlotter, 
+
+
+                                plotImage(plotter, 
                                           img2, 
                                           drawingWidth, 
                                           drawingHeight, 
@@ -419,17 +251,15 @@ public class ImageViewer {
                             protected boolean isRequestDifferentFromPrevious() {
                                 return true;
                             }
-                            
                         };
-                        
+
                         displayImgCTRL.setTimerDelayMillis(2000);
-                        
+
                         Consumer<TerminalEvent<?>> throttledDisplayImageRequestWrapper = (te)-> {
                             displayImgCTRL.onRequest(tApp.getEventBus());
                             //task_DisplayImage.accept(te);
                         };
-                        
-                        
+
                         tApp.getEventBus().appendEventHandler( new KeyInputEventHandler(Keys.CTRL_I_KEYSTROKE, (te) -> {
                             throttledDisplayImageRequestWrapper.accept(te);
                         }));
@@ -438,24 +268,22 @@ public class ImageViewer {
                         EventHandler onListBoxValueChangeHandler = (te) -> {
                             throttledDisplayImageRequestWrapper.accept(te);
                         };
-                        
+
                         imagesListbox.onChange(onListBoxValueChangeHandler);
-                        
+
                         rgbMapperListBox.onChange(onListBoxValueChangeHandler);
-                        
+
                         rgbPlotConditionalListBox.onChange(onListBoxValueChangeHandler);
-                        
+
                         plotBackgroundsListBox.onChange(onListBoxValueChangeHandler);
-                        
+
                         plotFillBackgroundsListBox.onChange(onListBoxValueChangeHandler);
-                        
+
                         ScreenCanvasBackend backEnd = (ScreenCanvasBackend) tApp.getCanvas().getCanvasBackend();
                         backEnd.setUpdateStrategy(UpdateStrategy.UPDATE_CHANGED  );
 
-                        
                         // tApp.getMainApplicationPanel().add(1, 1, mainPanel);
-                        
-                        
+
                         BiConsumer<TUIApp, Dimension> defaultOnResizeAction =   tApp.getResizeAction()!=null ? tApp.getResizeAction() : (t,s)->{};
 
                         tApp.setOnResizeAction((tApp2, newSize)->{
@@ -467,9 +295,6 @@ public class ImageViewer {
                             
                             plotter.resize( new Dimension.Simple(newSize.getHeight()-5, newSize.getWidth() - 40 )  );
 
-                            plotter.clear();
-                            pointPlotter.clearPlots();
-
                             tApp2.getEventBus().appendEventHandler( new OnIdleEventEventHandler.OneTime((te)->  {
                                 throttledDisplayImageRequestWrapper.accept(te);
                             }));
@@ -480,13 +305,12 @@ public class ImageViewer {
                         //mainFocusManager.setNavKeysFirst(false);
                         mainFocusManager.setNextKeyStroke(Keys.TAB_KEYSTROKE);
                         mainFocusManager.setPrevKeyStroke(Keys.SHIFT_TAB_KEYSTROKE);
-                        
+
                         tApp.getEventBus().appendEventHandler(  mainFocusManager );
-                        
+
                         // sanity check
                         FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
-                        
-                        
+
                     })
                     .start();
     }
@@ -510,32 +334,13 @@ public class ImageViewer {
         //drawing the circle 
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.setColor(java.awt.Color.black);
-        
-        g.setStroke(new BasicStroke(1));        
+
+        g.setStroke(new BasicStroke(1));
         g.drawOval(0, 0, 100, 100);
         return bufferedImage;
     }
 
-    @FunctionalInterface
-    static interface RGBPlotPredicate {
-        
-        boolean test(int r,int g, int b);
-        
-    }
     
-    static RGBPlotPredicate PLOT_ALWAYS = (r,g,b) -> true;
-
-    static RGBPlotPredicate PLOT_WHITE_ONLY = (r,g,b) -> r > 200 && g > 200 && b > 200;
-
-    static RGBPlotPredicate PLOT_BLACK_ONLY = (r,g,b) -> r < 100 && g < 100 && b < 100;
-
-    @FunctionalInterface
-    static interface RGBToAnsiColorControlCode {
-        
-        Color toControlCode(int r,int g, int b);
-        
-    }
-
     static interface PictureBackground {
         void setBackGround(Component<?> c);
     }
@@ -586,7 +391,7 @@ public class ImageViewer {
         
         
     }
-    
+
     static PictureBackgroundImpl background_NOFILL = new PictureBackgroundImpl(' ', null, false,"None");
     static PictureBackgroundImpl background_FILL_SOLID_WHITE = new PictureBackgroundImpl(' ', new Colors.FGBGColors(Colors.BIWhi, Colors.On_IWhi), true,"Solid white");
     static PictureBackgroundImpl background_FILL_SOLID_BLACK = new PictureBackgroundImpl(' ', new Colors.FGBGColors(Colors.Bla, Colors.On_Bla), true, "Solid black");
@@ -596,20 +401,19 @@ public class ImageViewer {
     static PictureBackgroundImpl background_FILL_DOTS_BLACK = new PictureBackgroundImpl('░', Colors.Bla, true, "Dippled black");
     static PictureBackgroundImpl background_FILL_DOTS_BLUE = new PictureBackgroundImpl('░', Colors.Blu, true, "Dippled blue");
     static PictureBackgroundImpl background_FILL_DOTS_IBLUE = new PictureBackgroundImpl('░', Colors.IBlu, true, "Dippled IBlue");
-    
-    static RGBToAnsiColorControlCode rgbColorMapDIRECT = (r,g,b) ->Colors.fromRGB(r,g,b);
-    
-    static RGBToAnsiColorControlCode rgbColorPlotBlackAndGreyAsWhite = (r,g,b) ->  {
-        
+
+    private static RGBToAnsiColorControlCode rgbColorMapDIRECT = (r,g,b) ->Colors.fromRGB(r,g,b);
+
+    private static RGBToAnsiColorControlCode rgbColorPlotBlackAndGreyAsWhite = (r,g,b) ->  {
+
         if (r < 50 && g < 50 && b < 50) {
             return Colors.BWhi;
         }
-        
-        
+
         return Colors.BBla;
     };
 
-    static RGBToAnsiColorControlCode rgbColorPlotBlack = (r,g,b) ->  {
+    private static RGBToAnsiColorControlCode rgbColorPlotBlack = (r,g,b) ->  {
         
         if (r < 50 && g < 50 && b < 50) {
             return Colors.BWhi;
@@ -619,198 +423,52 @@ public class ImageViewer {
         return Colors.Whi;
     };
 
-    static RGBToAnsiColorControlCode rgbGreyScale = (r,g,b) ->  {
+    private static RGBToAnsiColorControlCode rgbGreyScale = (r,g,b) ->  {
         return Colors.fromRGBToGreyScale(r, g, b);
     };
 
     
-    static RGBToAnsiColorControlCode rgbColorMapSimple1 = (r,g,b) ->  {
-        
-        if (r + g + b == 0) {
-            return Colors.Bla;
-        }
-        
-        if (r + g + b > 3 * 200) {
-            return Colors.BWhi;
-        }
-        
-        // red
-        if (r > 100 && g < 100 && b < 100) {
-            return r > 200 ? Colors.BRed : Colors.Red;
-        }
-        // green
-        if (g > 100 && r < 100 && b < 100) {
-            return g > 200 ? Colors.BGre : Colors.Gre;
-        }
-        // blue
-        if (b > 100 && r < 100 && g < 100) {
-            return b > 200 ? Colors.BBlu : Colors.Blu;
-        }
-        
-        // yellow
-        if (r > 100 && g > 100 && b < 100) {
-            return r > 200 && g > 200 ? Colors.BYel : Colors.Yel;
-        }
-        // cyan
-        if (r < 100 && g > 150 && b > 150) {
-            return g > 200 && b > 200 ? Colors.BICya : Colors.Cya;
-        }
-        // orange
-        if (r < 240 && g >= 170 && b < 100) {
-            return new Colors.FGBGColors(Colors.Bla, Colors.On_Yel);
-        }
-        
-        return Colors.BBla;
-    };
-    
-    static void plotImage(PointPlotter plotter, 
-                          Image image, 
-                          int width, 
-                          int height, 
-                          RGBToAnsiColorControlCode colorMap,
-                          RGBPlotPredicate toPlotOrNot, 
-                          Color plotBGColor ) throws InterruptedException {
 
-        int[] pixels = new int[width * height];
-        PixelGrabber pxGrabber = new PixelGrabber(image, 0, 0, width, height, pixels, 0, width);
+    private static void plotImage(BrailleGrid plotter, 
+                                  Image image, 
+                                  int width, 
+                                  int height, 
+                                  RGBToAnsiColorControlCode colorMap,
+                                  RGBPlotPredicate toPlotOrNot, 
+                                  Color plotBGColor ) throws Exception {
 
-        pxGrabber.grabPixels();
         
-        for (int row = 0; row < height; row++) {
-            for (int col = 0; col < width; col++) {
-               int pixel = pixels[row * width + col];
-               
-               int blue  = (pixel & 0xff);
-               int green = ((pixel & 0xff00) >> 8);
-               int red   = ((pixel & 0xff0000) >> 16);
-               
-               //if (pixel != -1 && pixel != 0) {
-               if (toPlotOrNot.test(red, green, blue)) {
-                   Color mappedColor = colorMap.toControlCode(red, blue, green);
-                   if (plotBGColor != null && plotBGColor instanceof Colors.BgColor) {
-                       mappedColor = Colors.ColorFromCodes.instance(mappedColor).appendCodes(plotBGColor);
-                   }
-                   plotter.setColor(mappedColor);
-                   plotter.plot(col, row);
-               }
-               //}
-            }
-        }
+        ImageViewerFactory.simpleImageToBrailleView(plotter, 
+                                                    image, 
+                                                    new Dimension.Simple(height, width),toPlotOrNot, colorMap);
 
-    }
-    
-    
-    
-    static long[][] makeFractal() {
-        Random random = new Random();
-        long[][] background = new long[240][320];
-        double Cr = (random.nextDouble() - 0.5) * 2;
-        double Ci = random.nextDouble() - 0.5;
-        int angleOffset = random.nextInt(256);
-        int A = 2 + random.nextInt(2);
-        int B = 1 + random.nextInt(2);
-        boolean C = random.nextBoolean();
-        boolean D = random.nextBoolean();
-        boolean E = random.nextBoolean();
-        for (int i = 0; i < 240; i++) {
-            for (int j = 0; j < 320; j++) {
-                double Zi = (i - 120) / 120.0, Zr = (j - 160) / 120.0;
-                int angle = random.nextInt(16);
-                while (angle < 4096 && Zi * Zi + Zr * Zr < 4.0) {
-                    double nextZr = Zr * Zr - Zi * Zi + Cr;
-                    Zi = A * Zr * Zi * (C ? Zr : 1) * (D ? Zi : 1) + Ci;
-                    if (E) {
-                        Zi = Math.sqrt(Zi);
-                    }
-                    Zr = B * nextZr;
-                    angle += 24;
-                }
-                background[i][j] = C(96, angleOffset + angle, 255);
-            }
-        }
-        
-        return background;
-    }
-    
-    static BufferedImage toImage(long[][] raw) {
-        BufferedImage img = null;
-        int height = raw.length;
-        int width = raw[0].length;
-        
-        if (height > 0 && width > 0) {
-            img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-
-            for (int row = 0; row < height; row++) {
-                for (int column = 0; column < width; column++) {
-                    img.setRGB(column, row, (int)raw[row][column]);
-                }
-            }
-        }
-        
-        return img;
-    }
-
-
-    public static long C(int magnitude, int angle, int light) {
-      return (D(magnitude, angle, light) << 16)
-           | (D(magnitude, angle + 85, light) << 8)
-           | (D(magnitude, angle - 85, light))
-           | 0xff000000;
-    }
-
-    public static long D(int magnitude, int angle, int light) {
-      return (int)(magnitude
-                   * Math.pow((Math.cos(Math.PI * angle / 127.5) + 1) / 2,
-                   light / 255.0));
-    }
-
-//    static class FastRGB
-//    {
+//        
+//        
+//        int[] pixels = new int[width * height];
+//        PixelGrabber pxGrabber = new PixelGrabber(image, 0, 0, width, height, pixels, 0, width);
 //
-//        public int width;
-//        public int height;
-//        private boolean hasAlphaChannel;
-//        private int pixelLength;
-//        private int[] pixels;
-//        private BufferedImage image;
+//        pxGrabber.grabPixels();
 //
-//        FastRGB(BufferedImage image)
-//        {
+//        for (int row = 0; row < height; row++) {
+//            for (int col = 0; col < width; col++) {
+//               int pixel = pixels[row * width + col];
+//               
+//               int blue  = (pixel & 0xff);
+//               int green = ((pixel & 0xff00) >> 8);
+//               int red   = ((pixel & 0xff0000) >> 16);
 //
-//            //pixels = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
-//            width = image.getWidth();
-//            height = image.getHeight();
-//            hasAlphaChannel = image.getAlphaRaster() != null;
-//            pixelLength = 3;
-//            if (hasAlphaChannel)
-//            {
-//                pixelLength = 4;
+//               if (toPlotOrNot.test(red, green, blue)) {
+//                   Color mappedColor = colorMap.toControlCode(red, blue, green);
+//                   if (plotBGColor != null && plotBGColor instanceof Colors.BgColor) {
+//                       mappedColor = Colors.ColorFromCodes.instance(mappedColor).appendCodes(plotBGColor);
+//                   }
+//                   plotter.setColor(mappedColor);
+//                   plotter.plot(col, row);
+//               }
+//
 //            }
-//            
-//            this.image = image;
-//
 //        }
-//
-//        int getRGB(int x, int y) {
-//            return this.image.getRGB(x, y);
-//        }
-//    
-//        int getRGBFastButBroken(int x, int y)
-//        {
-//            
-//            
-//            int pos = (y * pixelLength * width) + (x * pixelLength);
-//
-//            int argb = -16777216; // 255 alpha
-//            if (hasAlphaChannel)
-//            {
-//                argb = (((int) pixels[pos++] & 0xff) << 24); // alpha
-//            }
-//
-//            argb += ((int) pixels[pos++] & 0xff); // blue
-//            argb += (((int) pixels[pos++] & 0xff) << 8); // green
-//            argb += (((int) pixels[pos++] & 0xff) << 16); // red
-//            return argb;
-//        }
-//    }    
+
+    }
+
 }

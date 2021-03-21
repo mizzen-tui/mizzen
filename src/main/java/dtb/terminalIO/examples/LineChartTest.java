@@ -67,7 +67,7 @@ public class LineChartTest {
         }
 
         private Dimension calc_lc_bounds(Dimension containingDimension) {
-            return new Dimension.Simple(containingDimension.getHeight() - 5, containingDimension.getWidth() - 4);
+            return new Dimension.Simple(containingDimension.getHeight() - 1, containingDimension.getWidth());
         }
 
         public Composite getLineChartPanelComponent() {
@@ -81,25 +81,9 @@ public class LineChartTest {
                 throw new NullPointerException("drawingArea parameter null!");
             }
 
-            this.panel = new VerticalPanel().setVerticalSpacer(1);
+            this.panel = new VerticalPanel().setVerticalSpacer(0);
 
-            this.lineChartSize = new Function<Dimension, Dimension>() {
-
-                @Override
-                public Dimension apply(Dimension size) {
-                    return new Dimension() {
-                        @Override
-                        public int getWidth() {
-                            return size.getWidth();
-                        }
-
-                        @Override
-                        public int getHeight() {
-                            return size.getHeight();
-                        }
-                    };
-                }
-            };
+            this.lineChartSize = (size) -> new Dimension.Simple(size.getHeight(), size.getWidth());
             
             Dimension lc_bounds = calc_lc_bounds(this.lineChartSize.apply(drawingArea));
 

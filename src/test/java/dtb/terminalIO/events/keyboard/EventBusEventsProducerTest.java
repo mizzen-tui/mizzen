@@ -13,7 +13,7 @@ import junit.framework.TestCase;
 
 public class EventBusEventsProducerTest extends TestCase {
 
-    
+
     private EventBus makeEventProducer(EventBus eventBus, InputStream inputStream) {
         try {
             new InputEventsProducer(inputStream, eventBus);
@@ -23,14 +23,14 @@ public class EventBusEventsProducerTest extends TestCase {
             return null;
         }
     }
-    
-    
+
+
     private String runTest(String inputSource) throws Exception {
- 
+
         boolean[] stopFlag = new boolean[] {false};
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream(inputSource.getBytes()) {
-            
+        
             public int available()  {
                 int result = super.available();
                 if (result <1) {
@@ -43,12 +43,11 @@ public class EventBusEventsProducerTest extends TestCase {
         EventBus eventBus = new EventBusImpl() {
             protected void handleEvent(TerminalEvent<?> te) {
                 super.handleEvent(te);
-                // System.out.println("Got here: " + te);
             }
         };
-        
+
         BytesContainer keyboardInputBytesContainer = new BytesContainer();
-        
+
         eventBus.appendEventHandler( new KeyInputEventHandler((te)->{
             return true;
             },
@@ -56,7 +55,7 @@ public class EventBusEventsProducerTest extends TestCase {
                InputBytesHelper.captureAndStoreKeyEvent(keyboardInputBytesContainer,
                                                         (KeyEvent)te);
            })); 
-        
+
         eventBus.appendIdleEventHandler(new OnIdleEventEventHandler.RepeatingInterval(100, (te)-> {
             if (stopFlag[0] && eventBus.isEmptyQueue()) {
                 eventBus.appendEventHandler( new OnIdleEventEventHandler.OneTimeAfterInterval((te2)-> {
@@ -74,7 +73,7 @@ public class EventBusEventsProducerTest extends TestCase {
         
         return result;
     }
-    
+
     private void util_readInput(String testInputABC) throws Exception {
         String result = runTest(testInputABC);
         assertEquals(testInputABC, result);

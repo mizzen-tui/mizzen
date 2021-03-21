@@ -2,6 +2,7 @@ package dtb.terminalIO.geom;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import dtb.terminalIO.controlcodes.color.ColorParsingUtils;
@@ -27,19 +28,24 @@ public interface Dimension {
     
     public static abstract class AbstractDelegate implements Dimension {
         
-        abstract protected Dimension getSize();
+        abstract protected Dimension getBaseSize();
         
         @Override
         public int getWidth() {
-            return getSize().getWidth();
+            return getBaseSize().getWidth();
         }
 
         @Override
         public int getHeight() {
-            return getSize().getHeight();
+            return getBaseSize().getHeight();
+        }
+        
+        public String toString() {
+            return new Simple(this).toString();
         }
         
     }
+
     public static class Delegate extends AbstractDelegate {
         Dimension size;
 
@@ -52,11 +58,40 @@ public interface Dimension {
         }
 
         @Override
-        protected Dimension getSize() {
+        public Dimension getBaseSize() {
             return this.size;
         }
 
+        public void setBaseSize(Dimension size) {
+            this.size = size;
+        }
+
     }
+    
+    public static class ComputedDelegate extends Delegate {
+        Dimension size;
+        
+        Function<Dimension, Integer> computeHeight;
+        Function<Dimension, Integer> computeWidth;
+
+        public ComputedDelegate(Dimension size, Function<Dimension, Integer> computeHeight, Function<Dimension, Integer> computeWidth) {
+            super(size);
+            this.computeHeight = computeHeight;
+            this.computeWidth = computeWidth;
+        }
+        
+        @Override
+        public int getWidth() {
+            return computeWidth.apply(getBaseSize());
+        }
+
+        @Override
+        public int getHeight() {
+            return computeHeight.apply(getBaseSize());
+        }
+
+    }
+    
     
     public static class SupplierAsDimension extends AbstractDelegate {
         
@@ -67,7 +102,7 @@ public interface Dimension {
         }
 
         @Override
-        protected Dimension getSize() {
+        protected Dimension getBaseSize() {
             return derivedDimension.get();
         }
         

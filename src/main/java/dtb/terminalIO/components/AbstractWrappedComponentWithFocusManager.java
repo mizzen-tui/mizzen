@@ -3,15 +3,15 @@ package dtb.terminalIO.components;
 import java.util.Collection;
 import java.util.function.Function;
 
+import dtb.terminalIO.components.input.HasValue;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
 
-// USED?
-// AbstractWrappedComponentAndFocusable
-public  class AbstractWrappedComponentWithFocusManager<T extends Component<?>> extends AbstractWrappedComponentAndFocusable<T> implements FocusManager {
+public  abstract class AbstractWrappedComponentWithFocusManager<T extends Component<?>> extends AbstractWrappedComponentAndFocusable<T> implements FocusManager {
 
     private FocusManager focusManager;
     private Function<EventBus, FocusManager> focusManagerBuilder;
@@ -21,7 +21,16 @@ public  class AbstractWrappedComponentWithFocusManager<T extends Component<?>> e
         if (componentToWrap instanceof FocusManager) {
             this.focusManagerBuilder = (eventBus)-> (FocusManager)componentToWrap;
         } else {
-           this.focusManagerBuilder = (eventBus)-> new DefaultFocusManager();
+            this.focusManagerBuilder = null;
+            this.focusManager = new DefaultFocusManager() {
+                public void setChildAsCurrentFocus(Focusable focusableChild, EventBus eventBus) {
+                    Focusable prevFocus = getCurrentChildFocus();
+                    super.setChildAsCurrentFocus(focusableChild, eventBus);
+                    if (getCurrentChildFocus() != prevFocus) {
+                        AbstractWrappedComponentWithFocusManager.this.childHasCurrentFocus(focusableChild, eventBus);
+                    }
+                }
+            };
         }
     }
 
@@ -74,6 +83,8 @@ public  class AbstractWrappedComponentWithFocusManager<T extends Component<?>> e
         getFocusManager(eventBus).setChildAsCurrentFocus(focusableChild, eventBus);
     }
 
+    abstract public void childHasCurrentFocus(Focusable focusableChild, EventBus eventBus);
+
     @Override
     public Focusable getCurrentChildFocus() {
         return getFocusManager().getCurrentChildFocus();
@@ -82,6 +93,14 @@ public  class AbstractWrappedComponentWithFocusManager<T extends Component<?>> e
     @Override
     public Collection<Focusable> getChildFocusables() {
         return getFocusManager().getChildFocusables();
+    }
+    
+    public void addFocusable(Focusable focusable) {
+        if (getFocusManager() instanceof DefaultFocusManager) {
+            ((DefaultFocusManager) getFocusManager()).addFocusable(focusable);
+        } else {
+            throw new IllegalStateException("Can only add a focusable to "+this.getName()+" when focusManager is a DefaultFocusManager");
+        }
     }
 
 }

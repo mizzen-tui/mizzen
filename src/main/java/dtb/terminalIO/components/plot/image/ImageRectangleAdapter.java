@@ -43,6 +43,10 @@ public class ImageRectangleAdapter implements Rectangle {
         throw new IllegalStateException("ImageRectangleAdapter.moveTo(): Cannot perform a move!");
 
     }
+    
+    public String toString() {
+        return new Rectangle.Simple(this).toString();
+    }
 
     private synchronized int getImageWidth(Image img) {
 

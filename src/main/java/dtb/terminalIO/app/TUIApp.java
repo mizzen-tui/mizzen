@@ -176,6 +176,16 @@ public class TUIApp {
     }
 
     public ChildComponentManager<?> getMainApplicationPanel() {
+        if (this.mainApplicationPanel == null) {
+            throw new NullPointerException("\n\nError calling getMainApplicationPanel():\n"+
+                                           "  mainApplicationPanel is not yet defined.\n"+
+                                           "   You must first call either ..\n"+
+                                           "      1) setMainApplicationPanel(..) ..\n"+
+                                           "        or ..\n"+
+                                           "      2) setDefaultMainApplicationPanel()\n"
+                                           );
+                                            
+        }
         return this.mainApplicationPanel;
     }
 

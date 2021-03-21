@@ -113,7 +113,6 @@ public class HideShowTest {
             MessageBox.showInfoDialog(eventBus, (ChildComponentManager<?>) Component.UTIL.getRootPanelOf(this)  , this.text + " ClickableRectangle clicked!!");
         }
 
-        
         @Override
         protected Focusable asFocusable() {
             return focusable;

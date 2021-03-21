@@ -1,6 +1,7 @@
 package dtb.terminalIO.components.plot.shape;
 
-import java.awt.geom.Path2D;
+import java.util.Arrays;
+import java.util.List;
 
 import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.controlcodes.color.Color;
@@ -25,19 +26,135 @@ import dtb.terminalIO.geom.position.Position;
  * @author dbalme
  *
  */
-public class Triangle implements Shape {
+public class Triangle implements Shape, Fillable<Triangle> {
 
     Position p1;
     Position p2;
     Position p3;
     Color color;
+    
+    DrawTriangleAlgorithm algorithm;
 
+    /**
+     * Specifies how to draw the rectangle,
+     *    outline, solid
+     */
+    @FunctionalInterface
+    public static interface DrawTriangleAlgorithm {
+        void draw(Position p1, Position p2, Position p3, Color color, PointPlotter pointPlotter);
+    }
+
+    static DrawTriangleAlgorithm drawOutline = new DrawTriangleAlgorithm() {
+        @Override
+        public void draw(Position p1, Position p2, Position p3, Color color, PointPlotter pointPlotter) {
+            Polygon polygon = new Polygon();
+            polygon.addPoint(p1, color);
+            polygon.addPoint(p2, color);
+            polygon.addPoint(p3, color);
+            polygon.draw(pointPlotter);
+        }
+    };
+    
+    static DrawTriangleAlgorithm drawFilled = new DrawTriangleAlgorithm() {
+        @Override
+        public void draw(Position p1, Position p2, Position p3, Color color, PointPlotter pointPlotter) {
+            
+            List<Position> points = getPointsSorted(p1,p2,p3); 
+
+            p1 = points.get(0);
+            p2 = points.get(1);
+            p3 = points.get(2);
+
+            int rowOffset = p1.getRow();
+            int height = p3.getRow() - p1.getRow() + 1;
+            
+            int[] columnEndPointsX1X2 = new int[height*2];
+            int unAssigned = Integer.MIN_VALUE;
+            Arrays.fill(columnEndPointsX1X2, unAssigned);
+            
+            PointPlotter plotToColumnEndPointsArray = new PointPlotter() {
+
+                @Override
+                public void plot(int x, int y) {
+                    int colIdx1 = (y - rowOffset)*2;
+                    int colIdx2 = colIdx1 + 1;
+                    if (columnEndPointsX1X2[colIdx1] == unAssigned) {
+                        columnEndPointsX1X2[colIdx1] = x;
+                    } else {
+                        if (x < columnEndPointsX1X2[colIdx1]) {
+                            int oldX1 = columnEndPointsX1X2[colIdx1];
+                            columnEndPointsX1X2[colIdx1] = x;
+                            if (columnEndPointsX1X2[colIdx2] == unAssigned || oldX1>columnEndPointsX1X2[colIdx2]) {
+                                columnEndPointsX1X2[colIdx2] = oldX1;
+                            }
+                        } else {
+                            if (x > columnEndPointsX1X2[colIdx2]) {
+                               columnEndPointsX1X2[colIdx2] = x;
+                            } 
+                        }
+                    }
+                }
+
+                @Override
+                public Color setColor(Color color) {
+                    return color;
+                }
+
+                @Override
+                public void clearPlots() {
+                    Arrays.fill(columnEndPointsX1X2, unAssigned);
+                    pointPlotter.clearPlots();
+                }
+            };
+
+            // first draw to columnEndPointsX1X2 array..
+            drawOutline.draw(p1, p2, p3, color, plotToColumnEndPointsArray);
+            
+            // now take the populated columnEndPointsX1X2 array and draw using original PointsPlotter
+
+            Color lastColor = null;
+            if (color != null) {
+                lastColor = pointPlotter.setColor(color);
+            }
+
+            // we will draw line by line from first row to last row
+            for (int row = 0; row < height; row++) {
+                
+                int y = row + rowOffset;
+                
+                int x1 = columnEndPointsX1X2[row*2];
+                int x2 = columnEndPointsX1X2[row*2 + 1];
+                if (x1 != unAssigned && x2 != unAssigned) {
+                    for (int x = x1; x<= x2; x++) {
+                        pointPlotter.plot(x, y);
+                    }
+                }
+            }
+
+            if (color != null) {
+                pointPlotter.setColor(lastColor);
+            }
+
+        }
+    };
+    
+    private static List<Position> getPointsSorted(Position p1, Position p2, Position p3) {
+        List<Position> points = Arrays.asList(new Position[] {p1,p2,p3}); 
+        points.sort( Position.UTIL.POS_COMPARE);
+        return points;
+    }
+    
+    
     public Triangle(Position p1, Position p2, Position p3, Color color) {
         super();
-        this.p1 = p1;
-        this.p2 = p2;
-        this.p3 = p3;
+        
+        List<Position> points = getPointsSorted(p1,p2,p3); 
+
+        this.p1 = points.get(0);
+        this.p2 = points.get(1);
+        this.p3 = points.get(2);
         this.color = color;
+        this.algorithm = drawOutline;
     }
 
     public Triangle(Position p1, Position p2, Position p3) {
@@ -61,15 +178,15 @@ public class Triangle implements Shape {
     }
 
     @Override
+    public Triangle setFilled(boolean filled) {
+        this.algorithm = (filled) ? drawFilled : drawOutline;
+        return this;
+    }
+    
+    
+    @Override
     public void draw(PointPlotter pointPlotter) {
-        
-        Path2D myPath = new Path2D.Double();
-        
-        Polygon polygon = new Polygon();
-        polygon.addPoint(p1, color);
-        polygon.addPoint(p2, color);
-        polygon.addPoint(p3, color);
-        polygon.draw(pointPlotter);
+        this.algorithm.draw(p1, p2, p3, color, pointPlotter);
     }
 
     /**

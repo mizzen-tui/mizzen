@@ -670,11 +670,13 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
             throw new IllegalStateException("FooterControls object is null! Cannot add button control yet!");
         }
 
+        footerControls.addComponent(componentForButtonBar);//  addButton(buttonText, hotKey, handler).setUseCursor(false);
+
         positionFooterText();
 
     }
 
-    public void addFooterButton(Component<?> componentForButtonBar, KeyStroke hotKey, EventHandler handler) {
+    public void addFooterComponent(Component<?> componentForButtonBar, KeyStroke hotKey, EventHandler handler) {
 
         __addFooterButton(componentForButtonBar, hotKey, handler);
         positionFooterText();

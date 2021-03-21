@@ -1,36 +1,25 @@
 package dtb.terminalIO.examples;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
+import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
+import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.components.VerticalPanel;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
-import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
-import dtb.terminalIO.controlcodes.ControlCode;
+import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
-import dtb.terminalIO.core.Canvas;
-import dtb.terminalIO.core.TerminalScreen;
-import dtb.terminalIO.events.ChainedEventHandler;
-import dtb.terminalIO.events.ConditionalEventHandler;
+import dtb.terminalIO.core.ScreenCanvasBackend;
+import dtb.terminalIO.core.ScreenCanvasBackend.UpdateStrategy;
 import dtb.terminalIO.events.EventBus;
-import dtb.terminalIO.events.EventBusImpl;
-import dtb.terminalIO.events.EventHandler;
-import dtb.terminalIO.events.EventHandlerContainer;
-import dtb.terminalIO.events.OnIdleEventEventHandler;
-import dtb.terminalIO.events.OnRequestUpdateCanvasEventHandler;
-import dtb.terminalIO.events.OnResizeEventHandler;
-import dtb.terminalIO.events.TerminalEvent;
-import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
-import dtb.terminalIO.events.TerminalEvent.TYPE;
+import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
-import dtb.terminalIO.events.keyboard.InputEventsProducer;
-import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
+import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.Keys;
-import dtb.terminalIO.events.resize.TerminalResizeDetection;
 import dtb.terminalIO.examples.BarChartTest.BarChartDemo;
 import dtb.terminalIO.examples.GridBrailleTest.BrailleDemo;
 import dtb.terminalIO.examples.LineChartTest.LineChartDemo;
@@ -38,12 +27,162 @@ import dtb.terminalIO.examples.sampledata.ReadSampleFiles;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
-import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.StringUtils;
-import dtb.terminalIO.util.Stty;
 import dtb.terminalIO.util.linuxproc.ExecUtil;
 
 public class ScrollableComponentTest {
+
+    public static void main(String[] args) {
+
+        new TUIApp(args)
+        .setEmptyChar(' ')
+        .setDefaultMainApplicationPanel()
+        .confirmOnExit()
+        .setOnReadyStart((tApp)->{ 
+            
+            Supplier<Dimension> calcScrollableDimension = ()-> {
+                return new Dimension.Simple( ((int)(tApp.getCanvas().getHeight()*.7)), tApp.getCanvas().getWidth()/2 -2);
+            };
+   
+            ScrollableComponent sc1 = new ScrollableComponent(Colors.Gre, calcScrollableDimension.get(), new TextViewer().getComponent(Colors.Gre));
+
+            ScrollableComponent sc2 = new ScrollableComponent(Colors.Blu, calcScrollableDimension.get(), new Composite(Colors.Blu).setBounds(tApp.getCanvas().getHeight()-7, tApp.getCanvas().getWidth()/2 -2));
+
+            brailleDemoSetup((Composite)sc2.getComponentBeingViewed(), tApp.getEventBus());
+
+            Composite  lineChart = new Composite(Colors.Cya);
+            lineChart.setBorder(true);
+            lineChartDemoSetup(lineChart, tApp.getEventBus());
+
+            Composite  barChart = new Composite(Colors.Cya);
+            barChart.setBorder(true);
+            barChartDemoSetup(barChart, tApp.getEventBus());
+
+            Supplier<Dimension> lineChartDim = ()-> {
+                return new Dimension.Simple( ((int)(tApp.getCanvas().getHeight() - calcScrollableDimension.get().getHeight())), sc1.getWidth());
+            };
+
+            Supplier<Dimension> barChartDim = ()-> {
+                return new Dimension.Simple( ((int)(tApp.getCanvas().getHeight() - calcScrollableDimension.get().getHeight()  )), sc2.getWidth());
+            };
+
+            lineChart.resize(lineChartDim.get());
+            barChart.resize(barChartDim.get());
+
+            VerticalPanel vp = new VerticalPanel();
+            HorizontalPanel hpSCs = new HorizontalPanel();
+            vp.add(hpSCs);
+
+            hpSCs.add(sc1);
+            hpSCs.add(sc2);
+
+            HorizontalPanel hpCharts = new HorizontalPanel();
+
+            hpCharts.add(lineChart);
+            hpCharts.add(barChart);
+
+            vp.add(hpCharts);
+
+            tApp.getMainApplicationPanel().add(vp);
+
+            FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),
+                                                                                             tApp.getEventBus(),
+                                                                                             ()-> new DefaultFocusManager(Keys.SHIFT_TAB_KEYSTROKE, Keys.TAB_KEYSTROKE)
+                                                                                                       .setNavKeysFirst(false)
+                                                                                                       .setCycling(true));
+
+            tApp.getEventBus().appendEventHandler( mainFocusManager );
+
+            BiConsumer<TUIApp, Dimension> baseResizeAction = tApp.getResizeAction();
+
+            tApp.setOnResizeAction( (ptApp, newSize) ->{
+                baseResizeAction.accept(ptApp, newSize);
+
+                sc1.resize(calcScrollableDimension.get());
+                sc2.resize(calcScrollableDimension.get());
+                lineChart.resize(lineChartDim.get());
+                barChart.resize(barChartDim.get());
+                
+            } );
+
+            ScreenCanvasBackend canvasBackend = ((ScreenCanvasBackend)tApp.getCanvas().getCanvasBackend());
+            canvasBackend.setUpdateStrategy(UpdateStrategy.UPDATE_FULL);
+            
+            
+        }).start();
+        
+    }
+    
+    private static void brailleDemoSetup(Composite container, EventBus eventBus) {
+        BrailleDemo brailleDemo = new BrailleDemo() {
+            
+        };
+
+       // this call must happen before brailleDemo.setUpDemo(..)
+       brailleDemo.setupMovementKeys(Keys.CTRL_T_KEYSTROKE,    // up
+                                     Keys.CTRL_V_KEYSTROKE,    // down
+                                     Keys.CTRL_F_KEYSTROKE,    // left
+                                     Keys.CTRL_G_KEYSTROKE);   // right
+
+       // sets up a braille demo using the source component both for size as well as 
+       // the place where grid segments will be copied on a render iteration
+       brailleDemo.setUpDemo(eventBus, container);
+       brailleDemo.setFlushDemoOutput(()->{
+           eventBus.raiseEvent(new RequestUpdateCanvasEvent(brailleDemo));
+       });
+
+
+       Component<?> brailleComponent = brailleDemo.getBrailleComponent();
+
+       container.add(brailleComponent);
+
+       container.setOnResize((newSize)-> brailleDemo.resize(newSize) );
+    }
+
+    private static void barChartDemoSetup(Composite container, EventBus eventBus) {
+        BarChartDemo barChartDemo = new BarChartDemo();
+        Supplier<Rectangle> clippedAreaForBarchart = ()-> new Rectangle.Simple(Position.ZERO, new Dimension.Simple(container.getHeight()-2, container.getWidth()-2));
+
+        barChartDemo.setUpDemo(eventBus, clippedAreaForBarchart.get());
+        container.add(barChartDemo.getBarChart(clippedAreaForBarchart.get()));
+        
+        barChartDemo.setFlushDemoOutput(()->{
+            eventBus.raiseEvent(new RequestUpdateCanvasEvent(barChartDemo));
+        });
+        
+        container.setOnResize((newSize)-> barChartDemo.resize(clippedAreaForBarchart.get()) );
+
+    }
+
+
+    private static void lineChartDemoSetup(Composite container, EventBus eventBus) {
+        
+        LineChartDemo lineChartDemo = new LineChartDemo();
+        Supplier<Rectangle> clippedAreaForLinechart = ()-> new Rectangle.Simple(Position.ZERO, new Dimension.Simple(container.getHeight()-2, container.getWidth()-2));
+        lineChartDemo.setUpDemo(eventBus, clippedAreaForLinechart.get());
+        container.add(lineChartDemo.getLineChartPanelComponent());
+
+        lineChartDemo.setFlushDemoOutput(()->{
+            eventBus.raiseEvent(new RequestUpdateCanvasEvent(lineChartDemo));
+        });
+
+        container.setOnResize((newSize)-> lineChartDemo.resize(clippedAreaForLinechart.get()) );
+
+    }
+    
+    
+    static class TextViewer {
+
+        public Component<?> getComponent(Color color) {
+            Component<?> viewable = new TextComponent(color, readLargeSampleFile(100));
+            return viewable;
+        }
+//
+//        public EventHandler activity() {
+//            return null;
+//        }
+
+    }
 
     static String execTop()   {
         try {
@@ -54,430 +193,19 @@ public class ScrollableComponentTest {
         }
     }
 
-    public static ScrollableComponent testWindowViewer1(Dimension size) throws IOException { 
-
-        String text2a = execTop();  
-
-        String text2 = text2a; // StringUtils.wrap(text2a, size.getWidth()*2);
-
-        TextComponent __srcOfText = new TextComponent("");
-        __srcOfText.setFillOnClear(false);
-
-        Dimension sizeOfWindow = size;
-        Position viewOffset = new Position.Simple(0, 0);
-
-        ScrollableComponent viewComp1 = new ScrollableComponent(Colors.Gre, sizeOfWindow, __srcOfText);
-
-        viewComp1.setFillOnClear(false);
-
-        Supplier<String> text3 = new Supplier<String>() {
-
-            String bigFile = "LoremIpsumLarge.txt";
-            Thread readFileThread = null;
-            String largeText = null;
-
-            @Override
-            public String get() {
-                synchronized (this) {
-                    if (largeText != null) {
-                        return largeText;
-                    }
-
-                    if (readFileThread == null) {
-                        readFileThread = new Thread(()->{
-                            try {
-                                largeText = ReadSampleFiles.readSampleFile(bigFile);  
-                                largeText = StringUtils.wrap(largeText, size.getWidth()*2);
-                                
-                                largeText = StringUtils.addLineNumbers(largeText);
-                                
-                                __srcOfText.setTextAndResize(largeText);
-                                
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        });
-                        readFileThread.start();
-                    }
-                }
-                return "Reading large text file - one moment ..";
-            }
-        };
-
-        boolean[] toggle = new boolean[] {false};
-
-        Runnable setTextToView = new Runnable() {
-            @Override
-            public void run() {
-                toggle[0] = !toggle[0];
-                __srcOfText.setTextAndResize((toggle[0])?text3.get():text2);
-               // srcOfText.setBounds(__srcOfText);
-            }
-        };
-
-        setTextToView.run();
-
-        viewComp1.setViewOffset(viewOffset.getRow(), viewOffset.getCol());
-        //viewComp1.setFooterText("Help comes in many forms!");
-
-        viewComp1.addEventHandlerWithCanvasUpdate(new KeyInputEventHandler(Keys.CTRL_H_KEYSTROKE, new EventHandler() {
-            @Override
-            public void handle(TerminalEvent<?> te) {
-                viewComp1.setShowBorder( ! viewComp1.visibleBorder() );
-            }
-        }));
-
-        viewComp1.addEventHandlerWithCanvasUpdate(new KeyInputEventHandler(Keys.CTRL_V_KEYSTROKE, new EventHandler() {
-            @Override
-            public void handle(TerminalEvent<?> te) {
-                setTextToView.run();
-                viewComp1.markAsDirty();
-            }
-        }));
-
-        SearchFunctionForScrollableComponent.addFinderToScrollable(viewComp1);
-
-        return viewComp1;
-    }
-
-
-    public static ScrollableComponent testScrollingGridBrailleWindowViewer(Dimension size, Dimension sizeOfGrid, EventHandlerContainer eventBus) throws IOException { 
-
-        Composite sourceComponentContainingBrailleDemo = new Composite();
-        sourceComponentContainingBrailleDemo.setBounds(sizeOfGrid);
-        
-        ScrollableComponent viewComp1 = new ScrollableComponent(Colors.Gre, size, sourceComponentContainingBrailleDemo);
-
-        Position viewOffset = new Position.Simple(0, 0);
-
-        viewComp1.setViewOffset(viewOffset.getRow(), viewOffset.getCol());
-        
-        viewComp1.setViewOffset(viewOffset.getRow(), viewOffset.getCol());
-        viewComp1.setFooterText("Help comes in many forms!");
-
-        BrailleDemo brailleDemo = new BrailleDemo() {
-             public void flushOutput() {
-                 // sourceComponentContainingBrailleDemo.markAsDirty();
-                 // viewComp1.markAsDirty();
-             }
-        };
-
-        // this call must happen before brailleDemo.setUpDemo(..)
-        brailleDemo.setupMovementKeys(Keys.CTRL_T_KEYSTROKE,    // up
-                                      Keys.CTRL_V_KEYSTROKE,    // down
-                                      Keys.CTRL_F_KEYSTROKE,    // left
-                                      Keys.CTRL_G_KEYSTROKE);   // right
-
-        // sets up a braille demo using the source component both for size as well as 
-        // the place where grid segments will be copied on a render iteration
-        brailleDemo.setUpDemo(eventBus, sourceComponentContainingBrailleDemo);
-
-        Component<?> brailleComponent = brailleDemo.getBrailleComponent();
-
-        sourceComponentContainingBrailleDemo.add(brailleComponent);
-
-        SearchFunctionForScrollableComponent.addFinderToScrollable(viewComp1);
-
-        return viewComp1;
-    }
-    
-    
-    private static void setUpTerminateHandler(TerminalScreen screen, Canvas master_canvas, EventBus eventBus) {
-        EventHandler terminate = new EventHandler() {
-
-            @Override
-            public void handle(TerminalEvent<?> te) {
-                eventBus.stopConsuming();
-                screen.add(ControlCode.SHOW_CURSOR);
-                screen.add(ControlCode.DISABLE_MOUSE_TRACKING);
-                screen.refresh();
-
-                try {
-                    Stty.setCooked();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                if (te.getType().equals(TYPE.EXCEPTION)) {
-                    System.out.println("\n");
-                    ((Exception) te.getEventData()).printStackTrace();
-                } else {
-                    // next refresh() is necessary to get cursor to be below
-                    // rendered canvas
-                    master_canvas.refresh();
-                }
-                return;
-            }
-        };
-
-        eventBus.appendEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
-        //eventBus.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
-        eventBus.appendEventHandler(new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
-    }
-
-
-    public static void testTwoScrollableWindows(String[] args) throws IOException {
-
-        TerminalScreen screen = TestsCommon.getTerminalScreenForTesting(args);
-
-        Canvas master_canvas = TestsCommon.getMasterCanvasForTesting(screen);
-        
-       // master_canvas.setSize(30, master_canvas.getWidth());
-        
-        master_canvas.setEmptyChar(' ');
-        
-        Dimension sizeOfWindow = new Dimension() {
-            @Override
-            public int getWidth() {
-                return master_canvas.getWidth()/2-2;
-            }
-            @Override
-            public int getHeight() {
-                return master_canvas.getHeight()-17;
-            }
-        };
-
-        ScrollableComponent viewComp1 = testWindowViewer1(sizeOfWindow);
-        
-        EventBus eventBus = new EventBusImpl();
+    static String readLargeSampleFile(int wrapLength) {
+        String bigFile = "LoremIpsumLarge.txt";
+        String largeText = null;
         try {
-            new InputEventsProducer(eventBus);
-        } catch (Exception e) {
-            eventBus.stopConsuming();
-            return ;
+            largeText = ReadSampleFiles.readSampleFile(bigFile);  
+            largeText = StringUtils.wrap(largeText, wrapLength);
+
+            largeText = StringUtils.addLineNumbers(largeText);
+
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-
-        setUpTerminateHandler(screen, master_canvas, eventBus);
-        
-        eventBus.appendEventHandler(master_canvas.asShowCursorEventHandler());
-        eventBus.appendEventHandler(master_canvas.asHideCursorEventHandler());
-
-        
-        List<ConditionalEventHandler> gridEventHandlers = new ArrayList<ConditionalEventHandler>();
-
-        EventHandlerContainer gridBrailleEventHandlers = new EventHandlerContainer() {
-            
-            ChainedEventHandler  idleEventHandlers = ChainedEventHandler.useHandleAllStrategy("handle-all-gridBrailleEventHandlers");
-
-            @Override
-            public EventHandlerContainer appendEventHandler(ConditionalEventHandler eventHandler) {
-                if (eventHandler instanceof OnIdleEventEventHandler) {
-                    idleEventHandlers.appendEventHandler(eventHandler);
-                    eventBus.appendEventHandler(eventHandler);
-                    return this;
-                }
-                gridEventHandlers.add(eventHandler);                
-                return this;
-            }
-
-            @Override
-            public EventHandlerContainer removeEventHandler(ConditionalEventHandler eventHandler) {
-                if (eventHandler instanceof OnIdleEventEventHandler) {
-                    idleEventHandlers.removeEventHandler(eventHandler);
-                    eventBus.removeEventHandler(eventHandler);
-                    return this;
-                }
-                gridEventHandlers.remove(eventHandler);
-                return this;
-            }
-
-	    @Override
-	    public EventHandlerContainer prependEventHandler(ConditionalEventHandler eventHandler) {
-                if (eventHandler instanceof OnIdleEventEventHandler) {
-                    idleEventHandlers.prependEventHandler(eventHandler);
-                    eventBus.prependEventHandler(eventHandler);
-                    return this;
-                }
-                gridEventHandlers.add(0, eventHandler);
-                return this;
-	    }
-        };
-
-        ScrollableComponent brailleViewComp2 = testScrollingGridBrailleWindowViewer(sizeOfWindow, master_canvas, gridBrailleEventHandlers);
-
-        brailleViewComp2.setFillOnClear(false);
-
-        for (ConditionalEventHandler eventHandler : gridEventHandlers) {
-            brailleViewComp2.addEventHandlerWithCanvasUpdate(eventHandler);
-        }
-
-        Position viewComp1OffsetOnCanvas = new Position.Simple(1, 1);
-        
-        screen.add(ControlCode.HIDE_CURSOR);
-        screen.refresh();
-
-        Position brailleViewComp2OffsetOnCanvas = new Position() {
-            @Override
-            public int getCol() {
-                return viewComp1.getWidth()+3;
-            }
-            @Override
-            public int getRow() {
-                return viewComp1OffsetOnCanvas.getRow();
-            }
-        };
-        
-        Position lineChartPosition = new Position() {
-            @Override
-            public int getCol() {
-                return viewComp1OffsetOnCanvas.getCol();
-            }
-            @Override
-            public int getRow() {
-                return viewComp1OffsetOnCanvas.getRow()+viewComp1.getHeight()+1;
-            }
-        }; 
-        
-        Dimension sizeOfLineChartWindow = new Dimension() {
-
-            @Override
-            public int getWidth() {
-                return viewComp1.getWidth() ;
-            }
-
-            @Override
-            public int getHeight() {
-                return 14 ;
-            }
-            
-        };
-
-        Position barChartPosition = new Position() {
-            @Override
-            public int getCol() {
-                return brailleViewComp2OffsetOnCanvas.getCol();
-            }
-            @Override
-            public int getRow() {
-                return lineChartPosition.getRow();
-            }
-        }; 
-
-        Dimension sizeOfBarChartWindow = new Dimension() {
-            @Override
-            public int getWidth() {
-                return brailleViewComp2.getWidth();
-            }
-            @Override
-            public int getHeight() {
-                return sizeOfLineChartWindow.getHeight() ;
-            }
-        };
-        
-        class ContainerForDemo extends Composite {
-        };
-        
-        
-        Composite lineChartDemoContainer = new ContainerForDemo();
-        lineChartDemoContainer.setBounds(sizeOfLineChartWindow);
-        lineChartDemoContainer.setBorder(true);
-        LineChartDemo lineChartDemo = new LineChartDemo();
-        Rectangle clippedAreaForLinechart = new Rectangle.Simple(Position.ZERO, new Dimension.Simple(lineChartDemoContainer.getHeight()-2, lineChartDemoContainer.getWidth()-2));
-        lineChartDemo.setUpDemo(eventBus, clippedAreaForLinechart);
-        lineChartDemoContainer.add(lineChartDemo.getLineChartPanelComponent());
-        
-        Composite barChartDemoContainer = new ContainerForDemo();
-        barChartDemoContainer.setBounds(sizeOfBarChartWindow);
-        barChartDemoContainer.setBorder(true);
-        BarChartDemo barChartDemo = new BarChartDemo();
-        Rectangle clippedAreaForBarchart = new Rectangle.Simple(Position.ZERO, new Dimension.Simple(barChartDemoContainer.getHeight()-2, barChartDemoContainer.getWidth()-2));
-
-        barChartDemo.setUpDemo(eventBus, clippedAreaForBarchart);
-        barChartDemoContainer.add(barChartDemo.getBarChart(clippedAreaForBarchart));
-
-        String[] updateStrategy = new String[] {"UNKNOWN"};
-        
-        TestsCommon.toggleScreenupStrategyKeyboardHandling(master_canvas, eventBus, (us)->{updateStrategy[0] = String.valueOf(us);});
-
-        Runnable updateCanvas = new Runnable() {
-            
-            long lastRun = 0;
-
-            long updateTaskTime=0;
-            long updateTaskDuration = 200;
-            
-            @Override
-            public synchronized void run() {
-                long now = System.currentTimeMillis();
-                if (now - lastRun < updateTaskDuration) {
-                    return;
-                }
-                lastRun = now;
-                master_canvas.clearCanvas();
-                master_canvas.addComponentSegments(viewComp1OffsetOnCanvas, viewComp1);
-                master_canvas.addComponentSegments(brailleViewComp2OffsetOnCanvas, brailleViewComp2);
-                master_canvas.addComponentSegments(lineChartPosition, lineChartDemoContainer);
-                master_canvas.addComponentSegments(barChartPosition, barChartDemoContainer);
-                master_canvas.t(master_canvas.getHeight()-1,1,String.format("[Rendering stats | Rendering time : %4d | Wait time between updates: %4d  |  Update Strategy : %-15s]",
-                                                                             updateTaskTime, updateTaskDuration, updateStrategy[0]));
-
-                TestsCommon.renderScreenDEBUG(master_canvas, screen, eventBus);
-
-                master_canvas.refresh();
-
-                updateTaskTime = System.currentTimeMillis() - now;
-                updateTaskDuration = updateTaskTime * 3;
-            }
-        };
-        
-//        eventBus.appendEventHandler(  new KeyInputEventHandler(  Keys.CTRL_N_KEYSTROKE  , (te)-> { showYvalues[0] = ! showYvalues[0]; }));
-                
-        eventBus.appendEventHandler(new OnRequestUpdateCanvasEventHandler(updateCanvas));
-        
-        lineChartDemo.setUpDemo(eventBus, lineChartDemoContainer);
-        lineChartDemo.setFlushDemoOutput(updateCanvas);
-        
-        barChartDemo.setUpDemo(eventBus, barChartDemoContainer);
-        barChartDemo.setFlushDemoOutput(updateCanvas);
-
-        
-        DefaultFocusManager focusManager = new DefaultFocusManager(Keys.TAB_KEYSTROKE);
-        
-        focusManager.addFocusable(viewComp1, eventBus );
-
-        focusManager.addFocusable(brailleViewComp2, eventBus );
-        
-        TestsCommon.addNoGraphicsToggleEvent(eventBus, screen);
-
-        eventBus.appendEventHandler(focusManager);
-
-        TerminalResizeDetection.initiate(screen, eventBus);
-
-        eventBus.appendEventHandler(new OnResizeEventHandler() {
-            @Override
-            public void handleResize(Dimension size) {
-                master_canvas.setSize(size.getHeight(), size.getWidth()); 
-                master_canvas.clearCanvas();
-                viewComp1.resize(sizeOfWindow);
-                brailleViewComp2.resize(sizeOfWindow);
-
-                lineChartDemoContainer.clear();
-                lineChartDemoContainer.resize(sizeOfLineChartWindow);
-
-                lineChartDemo.resize(new Dimension.Simple(sizeOfLineChartWindow.getHeight()-2, sizeOfBarChartWindow.getWidth()-2));
-
-                barChartDemoContainer.clear();
-
-                barChartDemoContainer.resize(sizeOfBarChartWindow);
-                barChartDemo.resize(new Dimension.Simple(barChartDemoContainer.getHeight()-2, barChartDemoContainer.getWidth()-2));
-
-                updateCanvas.run();
-            }
-        });
-
-
-        setUpTerminateHandler(screen, master_canvas, eventBus);
-
-        
-//        MouseEventOrchestrator mOrch = new MouseEventOrchestrator(screen, master_canvas, eventBus);
-//        
-//        mOrch.enableMouseHandling();
-//        mOrch.enableMouseHandling(rootComponent);
-
-        return ;
+        return largeText;
     }
 
-    public static void main(String[] args) throws IOException {
-        Logging.setEnabled(true);
-        testTwoScrollableWindows(args);
-    }
 }

@@ -257,6 +257,10 @@ public class ReadImageFileToScreenTest {
             return genImageData();
         }
 
+        if (fileName.equalsIgnoreCase("GENERATESHAPES")) {
+            return genImageData2();
+        }
+
         // TODO: validation required (file exists etc)
 
         // byte[] fileByteData = Files.readAllBytes(Paths.get(fileName));
@@ -267,6 +271,23 @@ public class ReadImageFileToScreenTest {
     
     private static Image genImageData() {
         return getCircle(500,600);
+    }
+
+    private static Image genImageData2() {
+        BufferedImage image = new BufferedImage(500, 600, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D graphics2D = image.createGraphics();
+        
+      //  BasicShapes.doDrawing(graphics2D);
+        
+        graphics2D.setColor(java.awt.Color.WHITE);
+        graphics2D.setStroke(new BasicStroke(5));
+        
+        graphics2D.drawLine(10, 20, 500, 200);
+        graphics2D.drawLine(500, 200, 10, 100);
+        //graphics2D.drawLine(10, 20, 500, 200);
+        
+        
+        return image;
     }
     
     static BufferedImage getCircle(int width, int height) {
