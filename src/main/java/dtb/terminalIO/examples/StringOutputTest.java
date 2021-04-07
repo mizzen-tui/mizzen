@@ -6,8 +6,8 @@ import java.util.function.Consumer;
 
 import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.TextComponent;
-import dtb.terminalIO.components.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.PointPlotter;
+import dtb.terminalIO.components.plot.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.shape.Circle;
 import dtb.terminalIO.components.plot.shape.CircleAlgorithm.DonutCircleAlgorithm;
 import dtb.terminalIO.components.plot.shape.Triangle;

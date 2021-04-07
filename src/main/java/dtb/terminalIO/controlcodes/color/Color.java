@@ -68,7 +68,14 @@ public abstract class Color extends ControlCode implements ColorProvider {
     public Color mergeWith(Color other) {
         return this; // TODO:  fix!
     }
+    
+    public Color getBackGroundColor() {
+        return this;
+    }
 
+    public Color getForeGroundColor() {
+        return this;
+    }
     public boolean isMergeable() {
         return false;
     }

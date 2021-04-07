@@ -10,12 +10,11 @@ import java.util.TreeSet;
 
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.HasName;
-import dtb.terminalIO.components.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.PointPlotter;
+import dtb.terminalIO.components.plot.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.shape.ConnectedPoints;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
-import dtb.terminalIO.controlcodes.color.Colors.FGBGColors;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;

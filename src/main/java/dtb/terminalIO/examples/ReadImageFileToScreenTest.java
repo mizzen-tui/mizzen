@@ -163,7 +163,7 @@ public class ReadImageFileToScreenTest {
                         ElapsedTime imgGenerateTime = ElapsedTime.start();
                         if (toPlotOrNot != null && colorMap != null && gradientStr != null) {
                             if (useBrailleToggleButton.getValue()) {
-                                imgViewer = ImageViewerFactory.simpleImageToBrailleView(imageToView, newImageSize, toPlotOrNot, colorMap);
+                                imgViewer = ImageViewerFactory.simpleImageToBlocksView(imageToView, newImageSize, toPlotOrNot, colorMap);
                             } else {
                                 imgViewer = ImageViewerFactory.simpleImageToStringView(imageToView, newImageSize, toPlotOrNot, colorMap, gradientStr);
                             }

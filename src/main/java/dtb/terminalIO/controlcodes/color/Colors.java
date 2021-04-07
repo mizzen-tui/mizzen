@@ -23,7 +23,8 @@ public class Colors {
 
     private static final TreeMap<int[],Color> colorsCache = new TreeMap<int[],Color>(IntArrayComparator.INTARRAY_COMPARE);
 
-    private static final Map<Integer, Color> rgbMap = new HashMap<Integer, Color>();
+    private static final Map<Integer, RGBColorForeground> rgbMapFG = new HashMap<Integer, RGBColorForeground>();
+    private static final Map<Integer, RGBColorBackground> rgbMapBG = new HashMap<Integer, RGBColorBackground>();
 
 
     static Colors.FgColor addNamedFGColor(String name, Colors.FgColor color) {
@@ -161,6 +162,18 @@ public class Colors {
             this.codes = new int[] {prefixCode, 2, r, g, b};
         }
 
+        public int get_r() {
+            return this.codes[2];
+        }
+        
+        public int get_g() {
+            return this.codes[3];
+        }
+        
+        public int get_b() {
+            return this.codes[4];
+        }
+        
         @Override
         protected int[] buildControlCodes() {
             return codes;
@@ -168,23 +181,72 @@ public class Colors {
     }
 
     public static class RGBColorForeground extends AbstractRGBColor {
-        public static Color instance(int r, int g, int b) {
+        public static RGBColorForeground instance(int r, int g, int b) {
             return new RGBColorForeground(r, g, b);
         }
-
+        
         private RGBColorForeground(int r, int g, int b) {
             super(38, r, g, b);
+            setInvertTransform((c)-> fromRGBBG(r, g, b) );
         }
+        
+        public Color getBackGroundColor() {
+            return this.invert();
+        }
+        
     }
 
     public static class RGBColorBackground extends AbstractRGBColor {
-        public static Color instance(int r, int g, int b) {
-            return new RGBColorForeground(r, g, b);
+        public static RGBColorBackground instance(int r, int g, int b) {
+            return new RGBColorBackground(r, g, b);
         }
 
         private RGBColorBackground(int r, int g, int b) {
             super(48, r, g, b);
+            setInvertTransform((c)-> fromRGBFG(r, g, b) );
         }
+
+        public Color getForeGroundColor() {
+            return this.invert();
+        }
+        
+    }
+
+    public static class RGBColorFGBG extends ColorFromCodes {
+
+        private static int FG_R_IDX = 2;
+        private static int FG_G_IDX = 3;
+        private static int FG_B_IDX = 4;
+        private static int BG_R_IDX = 7;
+        private static int BG_G_IDX = 8;
+        private static int BG_B_IDX = 9;
+
+        public static RGBColorFGBG instance(int r, int g, int b, int bg_r, int bg_g, int bg_b) {
+            //                       0   1  2  3  4  5   6  7     8     9
+            int[] codes = new int[] {38, 2, r, g, b, 48, 2, bg_r, bg_g, bg_b };
+            return getColorFromCacheOrBuild(codes, ()->new RGBColorFGBG(codes));
+        }
+
+        public static RGBColorFGBG instance(RGBColorForeground fgRGBColor, RGBColorBackground bgRGBColor) {
+            return instance(fgRGBColor.get_r(), fgRGBColor.get_g(), fgRGBColor.get_b(),
+                            bgRGBColor.get_r(), bgRGBColor.get_g(), bgRGBColor.get_b());
+        }
+
+        private RGBColorFGBG(int[] codes) {
+            super(codes);
+            this.setInvertTransform( (c) ->  instance(this.codes[BG_R_IDX],this.codes[BG_G_IDX], this.codes[BG_B_IDX], 
+                                                      this.codes[FG_R_IDX],this.codes[FG_G_IDX], this.codes[FG_B_IDX]) );
+        }
+
+        
+        public Color getBackGroundColor() {
+            return fromRGBBG(this.codes[FG_R_IDX],this.codes[FG_G_IDX], this.codes[FG_B_IDX]);
+        }
+
+        public Color getForeGroundColor() {
+            return fromRGBFG(this.codes[BG_R_IDX],this.codes[BG_G_IDX], this.codes[BG_B_IDX]);
+        }
+
     }
 
     public static class ColorFromCodes extends Color {
@@ -213,9 +275,9 @@ public class Colors {
 
 
     public static class ColorFromString extends Color {
-    
+
         int[] codes;
-        
+
         public ColorFromString(String colorStr) {
             colorStr = colorStr.replace(ControlCode.escape_PREFIX,"");
             colorStr = colorStr.replace("m","");
@@ -225,7 +287,7 @@ public class Colors {
                 codes[i] = Integer.parseInt(codesStr[i]);
             }
         }
-        
+
         @Override
         public int[] buildControlCodes() {
             return codes;
@@ -265,12 +327,12 @@ public class Colors {
             int[] codes =  __buildControlCodes(false, false, false, colorCode);
             return getColorFromCacheOrBuild(codes, ()->new FgColor(colorCode));
         }
-    
+
         private static FgColor instance(int colorCode, boolean bold, boolean italic, boolean underline) {
             int[] codes =  __buildControlCodes(bold, italic, underline, colorCode);
             return getColorFromCacheOrBuild(codes, ()->new FgColor(colorCode,bold, italic, underline));
         }
-        
+
         private FgColor(int colorCode) {
             super(colorCode);
             this.setBoldTransform((color)->asBold());
@@ -288,6 +350,8 @@ public class Colors {
             super.setInvertTransform(invertTransform);
             return this;
         }
+        
+        
     
     
         public FgColor asBold() {
@@ -304,6 +368,10 @@ public class Colors {
     
         public FgColor asUnderline() {
             return FgColor.instance(colorCode, bold, italic, true);
+        }
+        
+        public Color getBackGroundColor() {
+            return this.invert();
         }
 
         @Override
@@ -358,6 +426,11 @@ public class Colors {
             return this;
         }
         
+        public Color getForeGroundColor() {
+            return this.invert();
+        }
+        
+        
         @Override
         public int[] buildControlCodes() {
             return new int[] { this.getColorCode() };
@@ -376,7 +449,7 @@ public class Colors {
 
 
     /**
-         * encapsulate foreground and background colors together
+         * encapsulate simple foreground and background colors together
          */
         public static class FGBGColors extends Color {
     
@@ -461,6 +534,15 @@ public class Colors {
                 this.fgc = fgc;
             }
     
+            public Color getBackGroundColor() {
+                return this.bgc != null ? this.bgc : super.getBackGroundColor();
+            }
+
+            public Color getForeGroundColor() {
+                return this.fgc != null ? this.fgc : super.getForeGroundColor();
+            }
+            
+            
             @Override
             public boolean isMergeable() {
                 return this.getBgc() == null || this.getFgc() == null;
@@ -552,7 +634,7 @@ public class Colors {
     }
 
     static public Color fromRGBPixelColor(int pixelColor) {
-        Color rgbColor = rgbMap.get(pixelColor);
+        RGBColorForeground rgbColor = rgbMapFG.get(pixelColor);
         if (rgbColor != null) {
             return rgbColor;
         }
@@ -562,26 +644,42 @@ public class Colors {
         int b =  pixelColor & 0xff;
         
         rgbColor = new RGBColorForeground(r,g,b);
-        rgbMap.put(pixelColor, rgbColor);
+        rgbMapFG.put(pixelColor, rgbColor);
         return rgbColor;
-        
     }
 
-    static public Color fromRGB(int r, int g, int b) {
+    static public Color fromRGBFG(int r, int g, int b) {
         int pixelColor = toPixelColor(r,g,b);
-        Color rgbColor = rgbMap.get(pixelColor);
+        RGBColorForeground rgbColor = rgbMapFG.get(pixelColor);
         if (rgbColor != null) {
             return rgbColor;
         }
         rgbColor = RGBColorForeground.instance(r,g,b);
-        rgbMap.put(pixelColor, rgbColor);
+        rgbMapFG.put(pixelColor, rgbColor);
         return rgbColor;
     }
     
-    static public Color fromRGBToGreyScale(int r, int g, int b) {
+    static public Color fromRGBToGreyScaleFG(int r, int g, int b) {
         // take the average of all 3 colors -> translates to grey scale.. who knew?
         int h = (r / 3 + g / 3 + b / 3);
-        return fromRGB(h, h, h);
+        return fromRGBFG(h, h, h);
+    }
+    
+    static public Color fromRGBBG(int r, int g, int b) {
+        int pixelColor = toPixelColor(r,g,b);
+        RGBColorBackground rgbColor = rgbMapBG.get(pixelColor);
+        if (rgbColor != null) {
+            return rgbColor;
+        }
+        rgbColor = RGBColorBackground.instance(r,g,b);
+        rgbMapBG.put(pixelColor, rgbColor);
+        return rgbColor;
+    }
+    
+    static public Color fromRGBToGreyScaleBG(int r, int g, int b) {
+        // take the average of all 3 colors -> translates to grey scale.. who knew?
+        int h = (r / 3 + g / 3 + b / 3);
+        return fromRGBBG(h, h, h);
     }
     
     static public String coloredText(Color color, String text) {

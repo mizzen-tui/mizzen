@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import dtb.terminalIO.components.BlockChars;
-import dtb.terminalIO.components.braille.BrailleUtils;
+import dtb.terminalIO.components.plot.braille.BrailleUtils;
 
 /**
  * Utility class to map characters from one character to another

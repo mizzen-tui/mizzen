@@ -15,12 +15,12 @@ import javax.imageio.ImageIO;
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.ChildComponentManager;
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.components.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.components.plot.PointPlotter.PointPlot;
 import dtb.terminalIO.components.plot.PointPlotter.PointPlotterList;
 import dtb.terminalIO.components.plot.TransformPointPlotter;
 import dtb.terminalIO.components.plot.XYTranslate;
+import dtb.terminalIO.components.plot.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory;
 import dtb.terminalIO.components.plot.shape.Circle;
 import dtb.terminalIO.components.plot.shape.CircleAlgorithm;
@@ -102,6 +102,7 @@ public class Test1GamesSeparateThread {
 
         Dimension gridSize = computeGridSize.get();
 
+        //BlocksGrid grid = new BlocksGrid(Colors.BGre, gridSize);
         BrailleGrid grid = new BrailleGrid(Colors.BGre, gridSize);
         if (includeTitle) {
             grid.setTitle(Colors.BPur, "Space Invaders");

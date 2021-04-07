@@ -1,4 +1,4 @@
-package dtb.terminalIO.components.braille;
+package dtb.terminalIO.components.plot.braille;
 
 import java.util.Comparator;
 import java.util.Map;

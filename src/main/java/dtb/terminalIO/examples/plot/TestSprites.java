@@ -9,7 +9,6 @@ import java.util.function.Supplier;
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.ChildComponentManager;
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.components.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.PathPlotter;
 import dtb.terminalIO.components.plot.PathPlotter.CirclePathPlotter;
 import dtb.terminalIO.components.plot.PathPlotter.CompositePathPlotter;
@@ -19,6 +18,7 @@ import dtb.terminalIO.components.plot.PointPlotter.PointPlot;
 import dtb.terminalIO.components.plot.PointPlotter.PointPlotterList;
 import dtb.terminalIO.components.plot.TransformPointPlotter;
 import dtb.terminalIO.components.plot.XYTranslate;
+import dtb.terminalIO.components.plot.blocks.BlocksGrid;
 import dtb.terminalIO.components.plot.shape.Circle;
 import dtb.terminalIO.components.plot.shape.CircleAlgorithm.CircleCounterClockwise_SORT;
 import dtb.terminalIO.components.plot.shape.CompositeShape;
@@ -67,7 +67,8 @@ public class TestSprites {
 
         Dimension gridSize = computeGridSize.get();
 
-        BrailleGrid grid = new BrailleGrid(Colors.BGre, gridSize);
+        BlocksGrid grid = new BlocksGrid(Colors.BGre, gridSize);
+//        BrailleGrid grid = new BrailleGrid(Colors.BGre, gridSize);
 
         if (includeTitle) {
           grid.setTitle(Colors.BPur, "Space Invaders");

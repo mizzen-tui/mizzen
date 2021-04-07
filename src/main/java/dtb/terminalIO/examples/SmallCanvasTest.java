@@ -3,13 +3,16 @@ package dtb.terminalIO.examples;
 import java.io.IOException;
 import java.util.Collections;
 
-import dtb.terminalIO.components.braille.BrailleGrid;
+import dtb.terminalIO.components.plot.blocks.BlocksGrid;
+import dtb.terminalIO.components.plot.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.shape.Circle;
+import dtb.terminalIO.components.plot.shape.RectangleShape;
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.TerminalScreen;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.geom.position.Position;
 
 public class SmallCanvasTest {
 
@@ -19,7 +22,7 @@ public class SmallCanvasTest {
         TerminalScreen screen = TestsCommon.getTerminalScreenForTesting(args);
 
         Canvas master_canvas = new Canvas(screen);
-        master_canvas.setSize(10, 30);
+        master_canvas.setSize(30, 30);
 
         screen.setRaw();
         
@@ -37,7 +40,7 @@ public class SmallCanvasTest {
 
         master_canvas.refresh();
 
-        TestsCommon.sleep(1000);
+        //TestsCommon.sleep(1000);
 
         master_canvas.t("\n And now a circle .. ");
 
@@ -45,23 +48,46 @@ public class SmallCanvasTest {
 
         BrailleGrid grid = new BrailleGrid(Colors.BBlu, 6, 11);
 
+        BlocksGrid grid2 = new BlocksGrid(Colors.BGre, 6, 11);
+
+        Position.Simple grid2Offset = new Position.Simple(7,0);
+        
         Rectangle lastGridLocation = null;
         
-        for (int i = 0; i < 50; i++) {
+        int maxLoop = 50;
+        //int maxLoop = 1;
+        
+        for (int i = 0; i < maxLoop; i++) {
 
             TestsCommon.sleep(50);
 
             Circle c = new Circle(10, 10 , 10);
 
-            c.draw(grid.asPointPlotter());
-            
+            //RectangleShape r = new RectangleShape(new Rectangle.Simple(0,0,20,20)).setFilled(true);
+            Circle r = new Circle(5, 5 , 5).setFilled(true);
+
             if (lastGridLocation != null) {
-               master_canvas.getSegmentsBuffer().removeRectangles(Collections.singleton(lastGridLocation));
+                master_canvas.getSegmentsBuffer().removeRectangles(Collections.singleton(new Rectangle.Simple(grid2Offset.getRow() + lastGridLocation.getRow(), grid2Offset.getCol() + lastGridLocation.getCol(),grid2)));
+                master_canvas.getSegmentsBuffer().removeRectangles(Collections.singleton(lastGridLocation));
             }
+
+            grid2.clear();
+            grid2.clearPlots();
             
-            master_canvas.addComponentSegments(3, i%30, grid);
+           // grid2.asPointPlotter().plot(1, 0);
+            //grid2.asPointPlotter().plot(1, 1);
+            //grid2.asPointPlotter().plot(2, 1);
+           // grid2.asPointPlotter().plot(2, 2);
             
-            lastGridLocation = new Rectangle.Simple(3,i%30 , grid);
+            r.draw(grid2.asPointPlotter());
+            c.draw(grid.asPointPlotter());
+
+
+            lastGridLocation = new Rectangle.Simple(3,i%30 , grid.getHeight(), grid.getWidth());
+            
+            master_canvas.addComponentSegments(lastGridLocation.getRow(), lastGridLocation.getCol(), grid);
+            master_canvas.addComponentSegments(grid2Offset.getRow() + lastGridLocation.getRow(), grid2Offset.getCol() + lastGridLocation.getCol(), grid2);
+
 
             master_canvas.refresh();
 

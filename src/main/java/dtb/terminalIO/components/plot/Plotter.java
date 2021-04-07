@@ -49,6 +49,17 @@ public class Plotter extends BoundedComponent<Plotter> {
         return this;
     }
 
+    public Plotter addPlot(Plot plot) {
+        if (!this.containsPosition(plot.getRow(), plot.getCol())) {
+            // throw new IllegalArgumentException(String.format("Bad plot! row %d %d not in
+            // range %s", row, col, String.valueOf(this)));
+            Color color = new Colors.FGBGColors(Colors.IRed);
+            plot.setPlotColor(color);
+        }
+        plots.add(plot);
+        return this;
+    }
+
     public Plotter addPlot(int row, int col, char plotChar) {
         return addPlot(row, col, plotChar, this.getColor());
 
@@ -70,12 +81,12 @@ public class Plotter extends BoundedComponent<Plotter> {
         return addText(row, col, text);
     }
 
-    protected void drawOLD(Color color, IScreenLineSegmentsBuffer segments) {
-
-        for (Plotter.Plot plot : plots) {
-            segments.setCharAt(plot.pos.getRow(), plot.pos.getCol(), plot.plotChar, plot.plotColor);
-        }
-    }
+//    protected void drawOLD(Color color, IScreenLineSegmentsBuffer segments) {
+//
+//        for (Plotter.Plot plot : plots) {
+//            segments.setCharAt(plot.pos.getRow(), plot.pos.getCol(), plot.plotChar, plot.plotColor);
+//        }
+//    }
 
     
     @Override
@@ -185,9 +196,9 @@ public class Plotter extends BoundedComponent<Plotter> {
     }
     
     public static class Plot implements Position {
-        Position pos;
-        char plotChar;
-        Color plotColor;
+        public Position pos;
+        public char plotChar;
+        public Color plotColor;
 
         public Plot(Position pos, char plotChar, Color plotColor) {
             super();

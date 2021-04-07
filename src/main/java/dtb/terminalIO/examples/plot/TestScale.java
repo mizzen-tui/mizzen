@@ -13,13 +13,14 @@ import dtb.terminalIO.components.CompositeWithFocusManager;
 import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.VerticalPanel;
-import dtb.terminalIO.components.braille.BrailleGrid;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.input.DisplayableValue;
 import dtb.terminalIO.components.input.ListBox;
 import dtb.terminalIO.components.input.RockerButton;
 import dtb.terminalIO.components.input.TextInputInteger;
 import dtb.terminalIO.components.plot.XYTranslate;
+import dtb.terminalIO.components.plot.blocks.BlocksGrid;
+import dtb.terminalIO.components.plot.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.shape.Circle;
 import dtb.terminalIO.components.plot.shape.Fillable;
 import dtb.terminalIO.components.plot.shape.Line;
@@ -69,7 +70,8 @@ public class TestScale {
 
                    Dimension gridSize = new Dimension.SupplierAsDimension(computeGridSize);
 
-                   BrailleGrid grid = new BrailleGrid(Colors.BGre, gridSize);
+                   BlocksGrid grid = new BlocksGrid(Colors.BGre, gridSize);
+                   //BrailleGrid grid = new BrailleGrid(Colors.BGre, gridSize);
                    
                    RockerButton fillOption = new RockerButton(grid.getColor(), "Fill", false);
                    Position fillOptionPosition = PositionRelativeFactory.fromAlign(VAlign.BOTTOM, 3, Align.LEFT, 0,  grid, fillOption);
@@ -126,22 +128,22 @@ public class TestScale {
 
                    HorizontalPanel hp = new HorizontalPanel();
                    hp.add(navButtonsPanel(
-                                      (e)->{    
+                                      (e)->{
                                               xyTranslatePlotter.setyDelta(xyTranslatePlotter.getyDelta()-1) ;
                                               delayedDraw.onRequest(tApp.getEventBus());
                                               msg.accept("Up  "+xyTranslatePlotter.getyDelta());
                                             },
-                                      (e)->{    
+                                      (e)->{
                                               xyTranslatePlotter.setyDelta(xyTranslatePlotter.getyDelta()+1) ;
                                               delayedDraw.onRequest(tApp.getEventBus());
                                               msg.accept("Down  "+xyTranslatePlotter.getyDelta());
                                             },
-                                      (e)->{    
+                                      (e)->{
                                               xyTranslatePlotter.setxDelta(xyTranslatePlotter.getxDelta()-1) ;
                                               delayedDraw.onRequest(tApp.getEventBus());
                                               msg.accept("Left  "+xyTranslatePlotter.getxDelta());
                                            },
-                                      (e)->{    
+                                      (e)->{
                                               xyTranslatePlotter.setxDelta(xyTranslatePlotter.getxDelta()+1) ;
                                               delayedDraw.onRequest(tApp.getEventBus());
                                               msg.accept("Right  "+xyTranslatePlotter.getxDelta());

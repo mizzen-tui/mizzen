@@ -23,13 +23,13 @@ import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.FillOnClearPolicy;
 import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.VerticalPanel;
-import dtb.terminalIO.components.braille.BrailleGrid;
 import dtb.terminalIO.components.input.DisplayableValue;
 import dtb.terminalIO.components.input.DisplayableValue.StringDisplayValue;
 import dtb.terminalIO.components.input.DropdownListBox;
 import dtb.terminalIO.components.input.ListBox;
 import dtb.terminalIO.components.plot.Plotter;
 import dtb.terminalIO.components.plot.PointPlotter;
+import dtb.terminalIO.components.plot.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.RGBPlotPredicate;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.RGBToAnsiColorControlCode;
@@ -402,7 +402,7 @@ public class ImageViewer {
     static PictureBackgroundImpl background_FILL_DOTS_BLUE = new PictureBackgroundImpl('░', Colors.Blu, true, "Dippled blue");
     static PictureBackgroundImpl background_FILL_DOTS_IBLUE = new PictureBackgroundImpl('░', Colors.IBlu, true, "Dippled IBlue");
 
-    private static RGBToAnsiColorControlCode rgbColorMapDIRECT = (r,g,b) ->Colors.fromRGB(r,g,b);
+    private static RGBToAnsiColorControlCode rgbColorMapDIRECT = (r,g,b) ->Colors.fromRGBFG(r,g,b);
 
     private static RGBToAnsiColorControlCode rgbColorPlotBlackAndGreyAsWhite = (r,g,b) ->  {
 
@@ -424,7 +424,7 @@ public class ImageViewer {
     };
 
     private static RGBToAnsiColorControlCode rgbGreyScale = (r,g,b) ->  {
-        return Colors.fromRGBToGreyScale(r, g, b);
+        return Colors.fromRGBToGreyScaleFG(r, g, b);
     };
 
     
@@ -441,33 +441,6 @@ public class ImageViewer {
         ImageViewerFactory.simpleImageToBrailleView(plotter, 
                                                     image, 
                                                     new Dimension.Simple(height, width),toPlotOrNot, colorMap);
-
-//        
-//        
-//        int[] pixels = new int[width * height];
-//        PixelGrabber pxGrabber = new PixelGrabber(image, 0, 0, width, height, pixels, 0, width);
-//
-//        pxGrabber.grabPixels();
-//
-//        for (int row = 0; row < height; row++) {
-//            for (int col = 0; col < width; col++) {
-//               int pixel = pixels[row * width + col];
-//               
-//               int blue  = (pixel & 0xff);
-//               int green = ((pixel & 0xff00) >> 8);
-//               int red   = ((pixel & 0xff0000) >> 16);
-//
-//               if (toPlotOrNot.test(red, green, blue)) {
-//                   Color mappedColor = colorMap.toControlCode(red, blue, green);
-//                   if (plotBGColor != null && plotBGColor instanceof Colors.BgColor) {
-//                       mappedColor = Colors.ColorFromCodes.instance(mappedColor).appendCodes(plotBGColor);
-//                   }
-//                   plotter.setColor(mappedColor);
-//                   plotter.plot(col, row);
-//               }
-//
-//            }
-//        }
 
     }
 

@@ -8,7 +8,7 @@ import java.net.UnknownHostException;
 import java.util.function.Consumer;
 
 import dtb.terminalIO.components.BlockChars;
-import dtb.terminalIO.components.braille.BrailleUtils;
+import dtb.terminalIO.components.plot.braille.BrailleUtils;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.ScreenCanvasBackend;
 import dtb.terminalIO.core.ScreenCanvasBackend.UpdateStrategy;
