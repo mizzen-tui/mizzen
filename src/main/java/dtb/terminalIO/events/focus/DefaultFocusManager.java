@@ -38,7 +38,7 @@ public class DefaultFocusManager implements FocusManager,
     private ConditionalEventHandler meAsEventHandler;
     private Focusable meAsFocusable;
     private NAV_STYLE navKeysStyle = NAV_STYLE.NAVKEYS_LAST;
-    private boolean cycling = true;   // true mean cycle thru focus object
+    private boolean cycling = true;   // true means cycle thru focus object
     private String name;
 
     public static enum NAV_STYLE {

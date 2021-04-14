@@ -88,7 +88,7 @@ public class TestSprites {
             PointPlotter ppGrid = grid.asPointPlotter();
 
             for (PointPlot pp  : l) {
-                ppGrid.setColor(pp.color);
+                ppGrid.setNextPlotColor(pp.color);
                 ppGrid.plot(pp.x, pp.y);
             }
 

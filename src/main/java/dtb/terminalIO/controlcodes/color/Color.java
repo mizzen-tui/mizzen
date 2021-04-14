@@ -76,6 +76,7 @@ public abstract class Color extends ControlCode implements ColorProvider {
     public Color getForeGroundColor() {
         return this;
     }
+
     public boolean isMergeable() {
         return false;
     }

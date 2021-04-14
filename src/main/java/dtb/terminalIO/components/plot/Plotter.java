@@ -180,7 +180,7 @@ public class Plotter extends BoundedComponent<Plotter> {
             }
 
             @Override
-            public Color setColor(Color color) {
+            public Color setNextPlotColor(Color color) {
                 Color prevColor = Plotter.this.getColor();
                 Plotter.this.setColor(color);
                 return prevColor;

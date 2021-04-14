@@ -294,8 +294,16 @@ public class Composite extends AbstractComponent<Composite>
     }
 
     public Composite setBorderColor(Color borderColors) {
-        setBorder(true);
+        if (!hasBorder()) {
+            setBorder(true);
+        }
         this.border.setBorderColor(borderColors);
+        // bug in border component - so this until fixed
+        //this.border.setColor(borderColors);
+        this.border.markAsDirty();
+        this.markAsDirty();
+        // due a subtle bug in the order in hw
+        // setBorder(true);
         return this;
     }
 
@@ -352,7 +360,7 @@ public class Composite extends AbstractComponent<Composite>
         if (component == null) {
             throw new NullPointerException("Component isChildVisible failure: Null component!");
         }
-        ComponentWithOffset child = findChildOrFail(component,"Component");
+        ComponentWithOffset child = findChildOrFail(component,"isChildVisible");
 
         return child.visible;
     }

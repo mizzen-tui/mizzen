@@ -1,5 +1,6 @@
 package dtb.terminalIO.components.plot.braille;
 
+import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.plot.Plotter;
 import dtb.terminalIO.components.plot.Plotter.Plot;
@@ -8,6 +9,7 @@ import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
+import dtb.terminalIO.geom.position.PositionTransform;
 import dtb.terminalIO.textsegments.CleanString;
 
 
@@ -38,6 +40,8 @@ public class BrailleGrid extends Composite {
         if (d != null && d.isSameDimension(this)) {
             return;
         }
+        super.resize(d);
+        // what about if we have a border on this component
         this.plotter.resize(d);
         gridRectangle = BrailleUtils.componentRectangleToGridRectangle(plotter);
     }
@@ -56,7 +60,6 @@ public class BrailleGrid extends Composite {
         super.markAsDirty();
         this.plotter.markAsDirty();
     }
-
 
     Position gridPosToComponentPosition(Position gridPosition) {
         return new Position.Simple(gridPosition.getRow() / 4, gridPosition.getCol() / 2);
@@ -151,9 +154,9 @@ public class BrailleGrid extends Composite {
             }
 
             @Override
-            public Color setColor(Color color) {
+            public Color setNextPlotColor(Color color) {
                 Color prevColor = BrailleGrid.this.getPlotColor();
-                BrailleGrid.this.setPlotColor(color);
+                BrailleGrid.this.setPlottingColor(color);
                 return prevColor;
             }
 
@@ -170,7 +173,7 @@ public class BrailleGrid extends Composite {
         return this.plotter.getColor();
     }
 
-    public void setPlotColor(Color color) {
+    public void setPlottingColor(Color color) {
         this.plotter.setColor(color);
     }
 

@@ -48,13 +48,13 @@ public class DotShape implements Shape {
         Color lastColor = null;
         
         if (color != null) {
-            lastColor = pointPlotter.setColor(color);
+            lastColor = pointPlotter.setNextPlotColor(color);
         }
         
         pointPlotter.plot(getX(), getY());
 
         if (color != null) {
-            pointPlotter.setColor(lastColor);
+            pointPlotter.setNextPlotColor(lastColor);
         }
 
     }

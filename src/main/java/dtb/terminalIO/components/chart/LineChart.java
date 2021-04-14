@@ -313,7 +313,7 @@ public class LineChart extends Composite {
 
         // set color
         if (series.color != null) {
-            prevColor = pp.setColor(series.color);
+            prevColor = pp.setNextPlotColor(series.color);
         }
 
         // plot points
@@ -337,7 +337,7 @@ public class LineChart extends Composite {
 
         // unset color
         if (series.color != null) {
-            prevColor = pp.setColor(prevColor);
+            prevColor = pp.setNextPlotColor(prevColor);
         }
 
     }
@@ -495,7 +495,7 @@ public class LineChart extends Composite {
 
     public LineChart setPlotColor(Color plotColor) {
         this.plotColor = plotColor;
-        this.grid.setPlotColor(plotColor);
+        this.grid.setPlottingColor(plotColor);
         return this;
     }
 

@@ -126,7 +126,7 @@ public class GridBrailleTest {
 
             grid = new BrailleGrid(Colors.DEFAULT_COLOR, new Dimension.Simple(brailleComponent.getHeight() - 4,
                     brailleComponent.getWidth() - 4 - tc.getWidth()));
-            grid.setPlotColor(new Colors.FGBGColors(Colors.Yel));
+            grid.setPlottingColor(new Colors.FGBGColors(Colors.Yel));
 
             brailleComponent.add(new Position.Simple(2, tc.getWidth() + 2), grid);
 

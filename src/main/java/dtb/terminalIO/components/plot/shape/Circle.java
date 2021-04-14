@@ -168,13 +168,13 @@ public class Circle implements Shape , Fillable<Circle>{
     public void draw(PointPlotter pointPlotter) {
         Color lastColor = null;
         if (color != null) {
-            lastColor = pointPlotter.setColor(color);
+            lastColor = pointPlotter.setNextPlotColor(color);
         }
 
         this.algorithm.draw(x, y, radius, pointPlotter);
 
         if (color != null) {
-            pointPlotter.setColor(lastColor);
+            pointPlotter.setNextPlotColor(lastColor);
         }
     }
 

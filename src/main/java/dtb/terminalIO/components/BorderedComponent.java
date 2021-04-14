@@ -80,8 +80,11 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
             return ; //  avoid infinite recursion
         }
         // adjust this container to be big enough for its child
-        super.resize(newSize);
         this.border.resize(newSize);
+        super.resize(newSize);
+        if (this.getParentContainer()!=null) {
+            this.getParentContainer().childResized(this);
+        }
     }
     
     public BorderedComponent(Color color, Component<?> component) {

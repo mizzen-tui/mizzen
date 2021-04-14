@@ -19,6 +19,8 @@ import dtb.terminalIO.traverse.FindPathToTarget;
 import dtb.terminalIO.traverse.HasChildren;
 import dtb.terminalIO.traverse.HasChildrenAdapter;
 import dtb.terminalIO.traverse.Traverser;
+import dtb.terminalIO.util.StringUtils;
+import dtb.terminalIO.util.TerminalDimensions;
 
 /**
  * A FocusManager is basically a 'Focusable' eventHandler that routes 
@@ -252,13 +254,37 @@ public interface FocusManager extends Focusable {
             }
 
             if (failedOn.size()>0) {
-                StringJoiner sj = new StringJoiner("\n");
+                String divider = StringUtils.repeat('-', (int)Math.max((int)TerminalDimensions.create().getWidth()/1.5,20));
+                StringJoiner sj = new StringJoiner("\n"+divider+"\n");
                 failedOn.forEach((s)-> sj.add(s));
+                sj.add("--- Reachable Focusables -------");
+
+                sj.add(traverseAllFocusablesToString(focusManager));
+
                 throw new IllegalStateException("FocusManager.verifyPathsToFocusables(): Failed to find focus path for:\n"+sj.toString());
             }
 
         }
 
+        
+        public static String traverseAllFocusablesToString(Focusable focusable)  { 
+            StringBuilder sb = new StringBuilder();
+
+            Traverser<Focusable> traverser = new Traverser<Focusable>(new FocusManagerHasChildrenAdapter());
+            int depth[] = new int[] {0};
+            traverser.traverse(focusable, (f)->{
+                                                      if (depth[0]>0) {
+                                                          sb.append(StringUtils.repeat("  ", depth[0]));
+                                                      }
+                                                      sb.append("   -----> ").append(HasName.UTIL.getName(f)).append("\n");
+                                                      depth[0]++;
+                                                      return Traverser.CONTINUE_TRAVERSE;
+                                                  },
+                                              (f)->{
+                                                  depth[0]--;
+                                                  }) ;
+            return sb.toString();
+        }
 
         /**
          * Builds a focus event handler for a FocusManager to handle

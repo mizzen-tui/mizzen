@@ -11,6 +11,7 @@ import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.CompositeWithFocusManager;
 import dtb.terminalIO.components.HorizontalPanel;
+import dtb.terminalIO.components.NavButtonsPanel;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.VerticalPanel;
 import dtb.terminalIO.components.input.Button;
@@ -20,7 +21,6 @@ import dtb.terminalIO.components.input.RockerButton;
 import dtb.terminalIO.components.input.TextInputInteger;
 import dtb.terminalIO.components.plot.XYTranslate;
 import dtb.terminalIO.components.plot.blocks.BlocksGrid;
-import dtb.terminalIO.components.plot.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.shape.Circle;
 import dtb.terminalIO.components.plot.shape.Fillable;
 import dtb.terminalIO.components.plot.shape.Line;
@@ -210,56 +210,15 @@ public class TestScale {
      * @param rightAction
      * @return
      */
+    
+    
     static Component<?> navButtonsPanel(EventHandler upAction,
-                                        EventHandler downAction,
-                                        EventHandler leftAction,
-                                        EventHandler rightAction) {
-        CompositeWithFocusManager buttonPanel = new CompositeWithFocusManager();
-        buttonPanel.getFocusManager().setNextKeyStroke(Keys.DOWN_KEYSTROKE);
-        buttonPanel.getFocusManager().setPrevKeyStroke(Keys.UP_KEYSTROKE);
-
-        Button up = new Button("^");
-        up.setHotKey(Keys.CTRL_T_KEYSTROKE);
-        up.setBorder(true);
-        up.setDisplayHotKey(true);
-        up.onChange(upAction);
-
-        Button down = new Button("v");
-        down.setHotKey(Keys.CTRL_V_KEYSTROKE);
-        down.setBorder(true);
-        down.setDisplayHotKey(true);
-        down.onChange(downAction);
-
-        Button left = new Button("«");
-        left.setHotKey(Keys.CTRL_F_KEYSTROKE);
-        left.setBorder(true);
-        left.setDisplayHotKey(true);
-        left.onChange(leftAction);
-
-        Button right = new Button("»");
-        right.setHotKey(Keys.CTRL_G_KEYSTROKE);
-        right.setBorder(true);
-        right.setDisplayHotKey(true);
-        right.onChange(rightAction);
-
-        Position upVPosition = Position.ZERO;
-        Position leftHPosition =  Position.ZERO;
-
-        Position upPosition  = new PositionDelegate(upVPosition, new PositionHorizontalRelative(left,1));
-        Position leftPosition = new PositionDelegate(new PositionVerticalRelative(up, 0), leftHPosition);
-        
-        Position rightPosition = new PositionDelegate(leftPosition, 
-                                                      ()-> up.getWidth() + left.getWidth() + leftPosition.getCol() + 2);
-        
-        Position downPosition =  new PositionDelegate(()->upVPosition.getRow()+up.getHeight()+ left.getHeight(),
-                                                      upPosition);
-        buttonPanel.add(leftPosition, left);
-        buttonPanel.add(upPosition, up);
-        buttonPanel.add(rightPosition, right);
-        buttonPanel.add(downPosition, down);
-
-        return buttonPanel;
+            EventHandler downAction,
+            EventHandler leftAction,
+            EventHandler rightAction) {
+        return new NavButtonsPanel(Colors.DEFAULT_COLOR, upAction, downAction, leftAction, rightAction);
     }
+    
 
     /**
      * Build list box of shapes to draw 
@@ -273,7 +232,7 @@ public class TestScale {
         choices.add(new ShapeDisplayValue("Line", new Line(2, 2, 35, 35)));
         choices.add(new ShapeDisplayValue("Rectangle", new  RectangleShape( new Rectangle.Simple(0,0,30,40)  ) ));
         
-        Triangle triangle = new Triangle(0, 0, 30, 100, 65, 50).setFilled(true);
+        Triangle triangle = new Triangle(0, 0, 30, 100, 65, 50);
         
         choices.add(new ShapeDisplayValue("Triangle", triangle ));
         ListBox<Shape> shapes = new ListBox<Shape>();

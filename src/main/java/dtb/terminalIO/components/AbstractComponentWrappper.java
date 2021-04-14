@@ -106,6 +106,10 @@ public class AbstractComponentWrappper<T extends Component<?>>  extends  Abstrac
         if (child instanceof CanResize) {
             ((CanResize) child).resize(d);
         }
+        if (this.getParentContainer() != null) {
+            this.getParentContainer().childResized(this);
+        }
+        
     }
 
     @Override

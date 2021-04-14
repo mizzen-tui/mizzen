@@ -89,12 +89,12 @@ public class Line implements Shape {
     public void draw(PointPlotter pointPlotter) {
         Color lastColor = null;
         if (color != null) {
-            lastColor = pointPlotter.setColor(color);
+            lastColor = pointPlotter.setNextPlotColor(color);
         }
         new LinePlotter().draw(this.getX1(), this.getY1(), this.getX2(), this.getY2(), pointPlotter);
 
         if (color != null) {
-            pointPlotter.setColor(lastColor);
+            pointPlotter.setNextPlotColor(lastColor);
         }
 
     }

@@ -157,7 +157,7 @@ public class BlocksGrid extends Composite {
             }
 
             @Override
-            public Color setColor(Color color) {
+            public Color setNextPlotColor(Color color) {
                 Color prevColor = BlocksGrid.this.getPlotColor();
                 BlocksGrid.this.setPlotColor(color);
                 return prevColor;

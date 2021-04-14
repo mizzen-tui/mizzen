@@ -96,7 +96,7 @@ public class Triangle implements Shape, Fillable<Triangle> {
                 }
 
                 @Override
-                public Color setColor(Color color) {
+                public Color setNextPlotColor(Color color) {
                     return color;
                 }
 
@@ -114,7 +114,7 @@ public class Triangle implements Shape, Fillable<Triangle> {
 
             Color lastColor = null;
             if (color != null) {
-                lastColor = pointPlotter.setColor(color);
+                lastColor = pointPlotter.setNextPlotColor(color);
             }
 
             // we will draw line by line from first row to last row
@@ -132,7 +132,7 @@ public class Triangle implements Shape, Fillable<Triangle> {
             }
 
             if (color != null) {
-                pointPlotter.setColor(lastColor);
+                pointPlotter.setNextPlotColor(lastColor);
             }
 
         }

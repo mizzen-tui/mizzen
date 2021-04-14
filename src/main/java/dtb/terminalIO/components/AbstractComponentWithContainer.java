@@ -8,7 +8,7 @@ public abstract class AbstractComponentWithContainer<T extends Composite>  exten
                           implements CanResize, GetComponentAtOffset {
 
     protected AbstractComponentWithContainer(Color color, T container) {
-        super(color, null);
+        super(color, container);
     }
 
 

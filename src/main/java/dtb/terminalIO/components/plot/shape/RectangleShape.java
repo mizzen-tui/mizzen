@@ -42,7 +42,7 @@ public class RectangleShape implements Shape, Rectangle, Fillable<RectangleShape
             // set color of plotter
             Color lastColor = null;
             if (color != null) {
-                lastColor = plotter.setColor(color);
+                lastColor = plotter.setNextPlotColor(color);
             }
             // now fill
             for (int x = x1+1; x<x2; x++) {
@@ -51,7 +51,7 @@ public class RectangleShape implements Shape, Rectangle, Fillable<RectangleShape
                 }
             }
             if (color != null) {
-                plotter.setColor(lastColor);
+                plotter.setNextPlotColor(lastColor);
             }
 
             

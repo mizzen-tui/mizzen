@@ -35,7 +35,7 @@ public interface PointPlotter {
     }
     
     
-    Color setColor(Color color);
+    Color setNextPlotColor(Color color);
     
     void clearPlots();
 
@@ -62,8 +62,8 @@ public interface PointPlotter {
         }
 
         @Override
-        public Color setColor(Color color) {
-            return this.getPointPlotter().setColor(color);
+        public Color setNextPlotColor(Color color) {
+            return this.getPointPlotter().setNextPlotColor(color);
         }
 
         @Override
@@ -176,7 +176,7 @@ public interface PointPlotter {
         }
 
         @Override
-        public Color setColor(Color color) {
+        public Color setNextPlotColor(Color color) {
             Color prevColor = currentColor;
             currentColor = color;
             return prevColor;

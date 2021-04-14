@@ -152,7 +152,7 @@ public class GameOfLifeEngine  {
             }
 
             @Override
-            public Color setColor(Color color) {
+            public Color setNextPlotColor(Color color) {
                 return null;
             }
 
