@@ -36,6 +36,10 @@ public class ConnectedPoints implements Shape {
         points.add(new PointPlot(x,y));
     }
 
+    public void addPoint(float x, float y) {
+        points.add(new PointPlot(x,y));
+    }
+
     public void addPoint(PointPlot point) {
         points.add(point);
     }

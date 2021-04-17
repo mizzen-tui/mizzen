@@ -147,8 +147,8 @@ public class GameOfLifeEngine  {
         return new PointPlotter() {
 
             @Override
-            public void plot(int x, int y) {
-                grid[y][x] = 1;
+            public void plot(float x, float y) {
+                grid[(int)y][(int)x] = 1;
             }
 
             @Override

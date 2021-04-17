@@ -34,8 +34,8 @@ public class DropdownListBoxInButtonBarTest {
             HorizontalPanel hpMain = new HorizontalPanel();
             
             ButtonBar bbar = new ButtonBar();
-            bbar.setPrevKeyStroke(Keys.LEFT_KEYSTROKE);
-            bbar.setNextKeyStroke(Keys.RIGHT_KEYSTROKE);
+            //bbar.setPrevKeyStroke(Keys.LEFT_KEYSTROKE);
+            //bbar.setNextKeyStroke(Keys.RIGHT_KEYSTROKE);
             
             bbar.addComponent( new TextComponent("A LABEL") );
             
@@ -62,10 +62,15 @@ public class DropdownListBoxInButtonBarTest {
             hpMain.add(DropdownListBox.yesNoDropDown());
 
             tApp.getMainApplicationPanel().add(2,2,hpMain);
-
+            
+            
             FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),
                                                                                              tApp.getEventBus(),
-                                                                                             ()-> new DefaultFocusManager().setNavKeysFirst(false).setCycling(false).setName("ApplicationFocusManager"));
+                                                                                             ()-> new DefaultFocusManager().setNavKeysFirst(false)
+                                                                                                                           .setCycling(true)
+                                                                                                                           .setPrevKeyStroke(Keys.SHIFT_TAB_KEYSTROKE)
+                                                                                                                           .setNextKeyStroke(Keys.TAB_KEYSTROKE)
+                                                                                                                           .setName("ApplicationFocusManager"));
             
            // mainFocusManager = bbar;
             

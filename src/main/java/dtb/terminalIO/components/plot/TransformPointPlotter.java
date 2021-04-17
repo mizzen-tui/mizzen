@@ -23,7 +23,7 @@ public class TransformPointPlotter extends PointPlotter.Delegate {
     }
 
     @Override
-    public void plot(int x, int y) {
+    public void plot(float x, float y) {
         // transform the points
         Position p = positionTransform.transform(new Position.Simple(y, x));
         // now plot onto the 'real' PointPlotter object

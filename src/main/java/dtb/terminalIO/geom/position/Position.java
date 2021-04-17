@@ -6,7 +6,6 @@ import java.util.TreeSet;
 
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Movable;
-import dtb.terminalIO.geom.Relation;
 import dtb.terminalIO.geom.Relation.LeftRight;
 import dtb.terminalIO.geom.Relation.OverUnder;
 
@@ -46,6 +45,18 @@ public interface Position extends Row, Column{
         return new Position.Simple(row + this.getRow(), col + this.getCol());
     }
 
+    public default Position mult(int factor) {
+        return new Position.Simple(factor * this.getRow(), factor * this.getCol());
+    }
+
+    public default Position mult(float factor) {
+        return new Position.Simple((int)Math.round(factor * this.getRow()), (int)Math.round(factor * this.getCol()));
+    }
+
+    public default Position mult(double factor) {
+        return new Position.Simple((int)Math.round(factor * this.getRow()), (int)Math.round(factor * this.getCol()));
+    }
+
     public default Position offsetAdd(Position offsetToAdd) {
         return new Position.Simple(offsetToAdd.getRow() + this.getRow(), offsetToAdd.getCol() + this.getCol());
     }
@@ -58,6 +69,14 @@ public interface Position extends Row, Column{
         return new Position.Simple(this.getRow() + rows, this.getCol());
     }
 
+    public default float getX() {
+        return getCol();
+    }
+    
+    public default float getY() {
+        return getRow();
+    }
+
     public default Position negate() {
         return new Position.Simple(this.getRow()*-1, this.getCol()*-1);
     }
@@ -65,77 +84,90 @@ public interface Position extends Row, Column{
     public static final Position ZERO = new Simple(0, 0);
 
     /**
-     * Simple implementation of {@link Dimension}
+     * Simple implementation of {@link Position}
      */
     public static class Simple implements Position, Movable {
-    int row;
-    int col;
+        public float y;
+        public float x;
+    
+        // for historical API reasons row, col (y,x) is reversed from the more traditional (x,y)
+        public Simple(float row, float col) {
+            super();
+            this.y = row;
+            this.x = col;
+        }
 
-    public Simple(int row, int col) {
-        super();
-        this.row = row;
-        this.col = col;
-    }
+        public Simple(int row, int col) {
+            this((float)row,(float) col);
+        }
+    
+        public Simple(Position pos) {
+            this(pos.getRow(), pos.getCol());
+        }
+    
+        public int getRow() {
+            return (int)y;
+        }
+    
+        public int getCol() {
+            return (int)x;
+        }
+    
+        public float getX() {
+            return x;
+        }
+        
+        public float getY() {
+            return y;
+        }
 
-    public Simple(Position pos) {
-        this(pos.getRow(), pos.getCol());
-    }
-
-    public int getRow() {
-        return row;
-    }
-
-    public int getCol() {
-        return col;
-    }
-
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + col;
-        result = prime * result + row;
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-        return true;
-        if (obj == null)
-        return false;
-        if (getClass() != obj.getClass())
-        return false;
-        Simple other = (Simple) obj;
-        if (col != other.col)
-        return false;
-        if (row != other.row)
-        return false;
-        return true;
-    }
-
-    @Override
-    public void moveTo(int row, int col) {
-        this.row = row;
-        this.col = col;
-    }
-
-    @Override
-    public void moveDelta(int rowOffset, int colOffset) {
-        this.row += rowOffset;
-        this.col += colOffset;
-    }
-
-    @Override
-    public String toString() {
-        return UTIL.asString(this);
-    }
-
-    public static Position withOffset(Position position, Position offset) {
-        Position.Simple newPos = new Simple(position);
-        newPos.moveDelta(offset.getRow(), offset.getCol());
-        return newPos;
-    }
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + (int)x;
+            result = prime * result + (int)y;
+            return result;
+        }
+    
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+            return true;
+            if (obj == null)
+            return false;
+            if (getClass() != obj.getClass())
+            return false;
+            Simple other = (Simple) obj;
+            if (x != other.x)
+            return false;
+            if (x != other.x)
+            return false;
+            return true;
+        }
+    
+        @Override
+        public void moveTo(int row, int col) {
+            this.y = row;
+            this.x = col;
+        }
+    
+        @Override
+        public void moveDelta(int rowOffset, int colOffset) {
+            this.y += rowOffset;
+            this.x += colOffset;
+        }
+    
+        @Override
+        public String toString() {
+            return UTIL.asString(this);
+        }
+    
+        public static Position withOffset(Position position, Position offset) {
+            Position.Simple newPos = new Simple(position);
+            newPos.moveDelta(offset.getRow(), offset.getCol());
+            return newPos;
+        }
 
     }
 

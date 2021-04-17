@@ -67,7 +67,7 @@ public class Circle implements Shape , Fillable<Circle>{
      */
     @FunctionalInterface
     public static interface DrawCircleAlgorithm {
-        void draw(int x, int y, int radius, PointPlotter plot);
+        void draw(float x, float y, float radius, PointPlotter plot);
     }
     
     public static class CompositeAlgo implements DrawCircleAlgorithm {
@@ -82,24 +82,28 @@ public class Circle implements Shape , Fillable<Circle>{
         }
 
         @Override
-        public void draw(int x, int y, int radius, PointPlotter plot) {
+        public void draw(float x, float y, float radius, PointPlotter plot) {
             algo1.draw(x, y, radius, plot);
             algo2.draw(x, y, radius, plot);
         }
     }
 
-    int x;
-    int y;
-    int radius;
+    float x;
+    float y;
+    float radius;
     Color color;
     DrawCircleAlgorithm algorithm;
 
-    public Circle(int x, int y, int radius) {
+    public Circle(float x, float y, float radius) {
         super();
         this.x = x;
         this.y = y;
         this.radius = radius;
         this.algorithm = new CircleAlgorithm();
+    }
+    
+    public Circle(int x, int y, int radius) { 
+        this((float)x, (float) y, (float) radius);
     }
     
     public Circle(PointPlot middle, int radius) {
@@ -129,23 +133,23 @@ public class Circle implements Shape , Fillable<Circle>{
         return setAlgorithm(new CircleAlgorithm(filled));
     }
     
-    public int getX() {
+    public float getX() {
         return x;
     }
 
-    public void setX(int x) {
+    public void setX(float x) {
         this.x = x;
     }
 
-    public int getY() {
+    public float getY() {
         return y;
     }
 
-    public void setY(int y) {
+    public void setY(float y) {
         this.y = y;
     }
 
-    public int getRadius() {
+    public float getRadius() {
         return radius;
     }
 

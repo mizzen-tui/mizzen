@@ -68,21 +68,21 @@ public class Triangle implements Shape, Fillable<Triangle> {
             int rowOffset = p1.getRow();
             int height = p3.getRow() - p1.getRow() + 1;
             
-            int[] columnEndPointsX1X2 = new int[height*2];
-            int unAssigned = Integer.MIN_VALUE;
+            float[] columnEndPointsX1X2 = new float[height*2];
+            float unAssigned = Integer.MIN_VALUE;
             Arrays.fill(columnEndPointsX1X2, unAssigned);
             
             PointPlotter plotToColumnEndPointsArray = new PointPlotter() {
 
                 @Override
-                public void plot(int x, int y) {
-                    int colIdx1 = (y - rowOffset)*2;
+                public void plot(float x, float y) {
+                    int colIdx1 = (int)(y - rowOffset)*2;
                     int colIdx2 = colIdx1 + 1;
                     if (columnEndPointsX1X2[colIdx1] == unAssigned) {
                         columnEndPointsX1X2[colIdx1] = x;
                     } else {
                         if (x < columnEndPointsX1X2[colIdx1]) {
-                            int oldX1 = columnEndPointsX1X2[colIdx1];
+                            float oldX1 = columnEndPointsX1X2[colIdx1];
                             columnEndPointsX1X2[colIdx1] = x;
                             if (columnEndPointsX1X2[colIdx2] == unAssigned || oldX1>columnEndPointsX1X2[colIdx2]) {
                                 columnEndPointsX1X2[colIdx2] = oldX1;
@@ -120,12 +120,12 @@ public class Triangle implements Shape, Fillable<Triangle> {
             // we will draw line by line from first row to last row
             for (int row = 0; row < height; row++) {
                 
-                int y = row + rowOffset;
+                float y = row + rowOffset;
                 
-                int x1 = columnEndPointsX1X2[row*2];
-                int x2 = columnEndPointsX1X2[row*2 + 1];
+                float x1 = columnEndPointsX1X2[row*2];
+                float x2 = columnEndPointsX1X2[row*2 + 1];
                 if (x1 != unAssigned && x2 != unAssigned) {
-                    for (int x = x1; x<= x2; x++) {
+                    for (float x = x1; x<= x2; x++) {
                         pointPlotter.plot(x, y);
                     }
                 }
@@ -159,6 +159,14 @@ public class Triangle implements Shape, Fillable<Triangle> {
 
     public Triangle(Position p1, Position p2, Position p3) {
         this(p1, p2, p3, null);
+    }
+
+    public Triangle(float x1, float y1, float x2, float y2, float x3, float y3, Color color) {
+        this(new Position.Simple(y1, x1), new Position.Simple(y2, x2), new Position.Simple(y3, x3), color);
+    }
+
+    public Triangle(float x1, float y1, float x2, float y2, float x3, float y3) {
+        this(x1, y1, x2, y2, x3, y3, null);
     }
 
     public Triangle(int x1, int y1, int x2, int y2, int x3, int y3, Color color) {

@@ -14,7 +14,7 @@ public class CircleAlgorithm implements DrawCircleAlgorithm {
     
     @FunctionalInterface
     static interface PlotCondition {
-        boolean test(int x, int y, double radius, double distance);
+        boolean test(float x, float y, double radius, double distance);
     }
     
     private PlotCondition plotCondition;
@@ -37,11 +37,11 @@ public class CircleAlgorithm implements DrawCircleAlgorithm {
         this(false);
     }
 
-    public void draw(int x, int y, int radius, PointPlotter plot) {
+    public void draw(float x, float y, float radius, PointPlotter plot) {
         // yeah .. yeah .. seems so inefficient to scan all points in the square
         //                 but against all my better instincts .. it works pretty fast
-        for (int x1 = x - radius; x1 <= x + radius; x1++) {
-            for (int y1 = y - radius; y1 <= y + radius; y1++) {
+        for (float x1 = x - radius; x1 <= x + radius; x1++) {
+            for (float y1 = y - radius; y1 <= y + radius; y1++) {
                 double distance = Math.sqrt(Math.pow(x - x1, 2) + Math.pow(y - y1, 2));
                 if (plotCondition.test(x1,y1,(double)radius, distance))
                     plot.plot(x1, y1);
@@ -159,9 +159,9 @@ public class CircleAlgorithm implements DrawCircleAlgorithm {
             if (angle<0 || angle > 360) throw new IllegalArgumentException("angle of range! "+angle+ " not in ( 0 .. 360 )");
         }
         
-        public void draw(int x, int y, int outerRadius, PointPlotter plot) {
+        public void draw(float x, float y, float outerRadius, PointPlotter plot) {
 
-            int innerRadius = outerRadius/2;
+            float innerRadius = outerRadius/2;
             PlotCondition plotCondition;
             if (filled) {
                 plotCondition = (x1, y1, radius, distance) -> {
@@ -196,6 +196,7 @@ public class CircleAlgorithm implements DrawCircleAlgorithm {
             CircleAlgorithm plotter = new CircleAlgorithm(plotCondition);
             plotter.draw(x, y, outerRadius, plot);
         }
+
     }
     
     

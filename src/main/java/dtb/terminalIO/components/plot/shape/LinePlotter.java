@@ -7,18 +7,18 @@ import dtb.terminalIO.components.plot.PointPlotter;
  */
 public class LinePlotter {
 
-    public void draw(int x1, int y1, int x2, int y2, PointPlotter plot) {
-        int xdiff = Math.max(x1, x2) - Math.min(x1, x2);
-        int ydiff = Math.max(y1, y2) - Math.min(y1, y2);
-        int xdir = (x1 <= x2) ? 1 : -1;
-        int ydir = (y1 <= y2) ? 1 : -1;
+    public void draw(float x1, float y1, float x2, float y2, PointPlotter plot) {
+        float xdiff = Math.max(x1, x2) - Math.min(x1, x2);
+        float ydiff = Math.max(y1, y2) - Math.min(y1, y2);
+        float xdir = (x1 <= x2) ? 1 : -1;
+        float ydir = (y1 <= y2) ? 1 : -1;
 
-        int r = Math.max(xdiff, ydiff);
+        float r = Math.max(xdiff, ydiff);
 
         // for (int i=0; i<= r+1; i++) { // overshoots by one
         for (int i = 0; i < r + 1; i++) {
-            int x = x1;
-            int y = y1;
+            float x = x1;
+            float y = y1;
             if (ydiff > 0) {
                 y += (((float) i) * ydiff) / r * ydir;
             }

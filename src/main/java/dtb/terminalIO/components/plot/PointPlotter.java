@@ -24,7 +24,7 @@ import dtb.terminalIO.geom.position.Position;
  */
 public interface PointPlotter {
 
-    void plot(int x, int y);
+    void plot(float x, float y);
     
     default void plot(PointPlot p) {
         plot(p.x, p.y);
@@ -57,7 +57,7 @@ public interface PointPlotter {
         }
 
         @Override
-        public void plot(int x, int y) {
+        public void plot(float x, float y) {
             this.getPointPlotter().plot(x, y);
         }
 
@@ -96,15 +96,24 @@ public interface PointPlotter {
      *
      */
     public static class PointPlot implements Position {
-        public int x;
-        public int y;
+        
+        public float x;
+        public float y;
         public Color color;
 
-        public PointPlot(int x, int y, Color color) {
+        public PointPlot(float x, float y, Color color) {
             super();
             this.x = x;
             this.y = y;
             this.color = color;
+        }
+        
+        public PointPlot(int x, int y, Color color) {
+            this((float) x, (float) y, color);
+        }
+
+        public PointPlot(float x, float y) {
+            this(x, y, null);
         }
 
         public PointPlot(int x, int y) {
@@ -121,13 +130,23 @@ public interface PointPlotter {
 
         @Override
         public int getCol() {
-            return x;
+            return (int)x;  // use Math.round()?
         }
 
         @Override
         public int getRow() {
+            return (int)y;
+        }
+
+        public float getX() {
+            return x;
+        }
+
+        public float getY() {
             return y;
         }
+        
+        
 
     }
 
@@ -158,12 +177,12 @@ public interface PointPlotter {
         }
 
         @Override
-        public void plot(int x, int y) {
+        public void plot(float x, float y) {
             plot(x, y, currentColor);
 //            getPlots().add(new PointPlot(y, x));
         }
 
-        public void plot(int x, int y, Color color) {
+        public void plot(float x, float y, Color color) {
             getPlots().add(new PointPlot(x, y, color != null ? color : currentColor));
         }
 

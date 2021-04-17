@@ -14,17 +14,17 @@ import dtb.terminalIO.geom.position.Position;
  */
 public class Line implements Shape {
 
-    int x1;
-    int y1;
-    int x2;
-    int y2;
+    float x1;
+    float y1;
+    float x2;
+    float y2;
 
     Color color;
 
     public Line() {
     }
 
-    public Line(int x1, int y1, int x2, int y2, Color color) {
+    public Line(float x1, float y1, float x2, float y2, Color color) {
         super();
         this.x1 = x1;
         this.y1 = y1;
@@ -33,19 +33,23 @@ public class Line implements Shape {
         this.color = color;
     }
 
+    public Line(int x1, int y1, int x2, int y2, Color color) {
+        this((float)x1,(float)y1, (float) x2, (float) y2, color);
+    }
+
     public Line(int x1, int y1, int x2, int y2) {
         this(x1, y1, x2, y2, null);
     }
 
     public Line(Position p1, Position p2, Color color) {
-        this(p1.getCol(), p1.getRow(), p2.getCol(), p2.getRow(), color);
+        this(p1.getX(), p1.getY(), p2.getX(), p2.getY(), color);
     }
 
     public Line(Position p1, Position p2) {
         this(p1, p2, null);
     }
 
-    public int getX1() {
+    public float getX1() {
         return x1;
     }
 
@@ -53,7 +57,7 @@ public class Line implements Shape {
         this.x1 = x1;
     }
 
-    public int getY1() {
+    public float getY1() {
         return y1;
     }
 
@@ -61,7 +65,7 @@ public class Line implements Shape {
         this.y1 = y1;
     }
 
-    public int getX2() {
+    public float getX2() {
         return x2;
     }
 
@@ -69,7 +73,7 @@ public class Line implements Shape {
         this.x2 = x2;
     }
 
-    public int getY2() {
+    public float getY2() {
         return y2;
     }
 

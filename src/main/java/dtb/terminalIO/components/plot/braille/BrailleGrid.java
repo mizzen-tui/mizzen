@@ -118,6 +118,10 @@ public class BrailleGrid extends Composite {
         plotPosition(gridPosition, this.plotter.getColor());
     }
 
+    public void plotPosition(float row, float col) {
+        plotPosition(new Position.Simple(row, col));
+    }
+
     public void plotPosition(int row, int col) {
         plotPosition(new Position.Simple(row, col));
     }
@@ -149,7 +153,7 @@ public class BrailleGrid extends Composite {
     public PointPlotter asPointPlotter() {
         PointPlotter plot = new PointPlotter() {
             @Override
-            public void plot(int x, int y) {
+            public void plot(float x, float y) {
                 plotPosition(y, x);
             }
 

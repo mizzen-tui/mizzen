@@ -313,7 +313,7 @@ public class DrawingBoardImpl implements DrawingBoard {
         
         Logging.info("componentClear "+ name);
         
-        Component c = this.components.getNamedComponent(name);
+        Component<?> c = this.components.getNamedComponent(name);
         if (c instanceof TextComponent) {
             TextComponent tc = (TextComponent) c;
             tc.clear();

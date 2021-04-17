@@ -175,8 +175,8 @@ public class Plotter extends BoundedComponent<Plotter> {
     public PointPlotter asPointPlotter() {
         PointPlotter plot = new PointPlotter() {
             @Override
-            public void plot(int x, int y) {
-                addPlot(y, x);
+            public void plot(float x, float y) {
+                addPlot((int)y, (int)x);
             }
 
             @Override

@@ -125,7 +125,11 @@ public class BlocksGrid extends Composite {
         plotPosition(new Position.Simple(row, col));
     }
 
-    public void plotPosition(int row, int col, Color plotColor) {
+    public void plotPosition(float row, float col) {
+        plotPosition(new Position.Simple(row, col));
+    }
+
+    public void plotPosition(float row, float col, Color plotColor) {
         plotPosition(new Position.Simple(row, col), plotColor);
     }
 
@@ -152,7 +156,7 @@ public class BlocksGrid extends Composite {
     public PointPlotter asPointPlotter() {
         PointPlotter plot = new PointPlotter() {
             @Override
-            public void plot(int x, int y) {
+            public void plot(float x, float y) {
                 plotPosition(y, x);
             }
 

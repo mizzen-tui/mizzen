@@ -16,11 +16,11 @@ public class TrigUtil {
     static final int MAX_ANGLE = 360;
     
     
-    public static PointPlot circlePointAtAngle(int degrees, PointPlot mid, int radius) {
+    public static PointPlot circlePointAtAngle(int degrees, PointPlot mid, float radius) {
         double angle = NumbersUtil.degreesToRadians(degrees);
         double r = (double) radius;
-        int x = mid.x + ((int) Math.round( r * Math.cos( angle ) ) );
-        int y = mid.y + ((int) Math.round( r * Math.sin( angle) ) );
+        float x = (float) (mid.x +  r * Math.cos(angle));
+        float y = (float) (mid.y +  r * Math.sin(angle));
         return new PointPlot(x, y);
     }
     
@@ -38,7 +38,7 @@ public class TrigUtil {
         
     }
 
-    public static int circleAngleAtPoint(int pointX, int pointY, int midX, int midY) {
+    public static int circleAngleAtPoint(float pointX, float pointY, float midX, float midY) {
         double adj = (double) pointX - (double) midX;
         double opp = (double) midY   - (double) pointY;
         if (opp != 0) {
@@ -67,10 +67,10 @@ public class TrigUtil {
             return false;
         }
         
-        int maxX = Integer.MIN_VALUE;
-        int minX = Integer.MAX_VALUE;
-        int maxY = Integer.MIN_VALUE;
-        int minY = Integer.MAX_VALUE;
+        float maxX = Integer.MIN_VALUE;
+        float minX = Integer.MAX_VALUE;
+        float maxY = Integer.MIN_VALUE;
+        float minY = Integer.MAX_VALUE;
         
         for (PointPlot sp : points) {
             if (sp.isSamePosition(p)) {
@@ -86,15 +86,15 @@ public class TrigUtil {
             return false;
         }
 
-        Map<Integer,List<Integer>> byY = new HashMap<Integer,List<Integer>>();
+        Map<Float,List<Float>> byY = new HashMap<Float,List<Float>>();
         for (PointPlot sp : points) {
             if (byY.get(sp.y)==null) {
-                byY.put(sp.y, new ArrayList<Integer>());
+                byY.put(sp.y, new ArrayList<Float>());
             }
             byY.get(sp.y).add(sp.x);
         }
         
-        for (Integer y : byY.keySet()) {
+        for (Float y : byY.keySet()) {
             Collections.sort(byY.get(y));
         }
         

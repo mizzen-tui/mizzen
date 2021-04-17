@@ -33,6 +33,7 @@ public class ColoredTextTest {
         Dimension textSize = Dimension.UTIL.stringToDimension(ReadSampleFiles.readSampleFile(fileName, true));
         Dimension dim = maxDim.contains(textSize) ? textSize : maxDim;
 
+        @SuppressWarnings("rawtypes")
         BoundedComponent image = new BoundedComponent(null, dim) {
             @Override
             protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
