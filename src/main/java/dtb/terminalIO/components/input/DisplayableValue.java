@@ -102,11 +102,8 @@ public interface DisplayableValue<V> extends HasValue<V> {
 
     public class BooleanDisplayValue extends  SimpleDisplayValue<Boolean> {
         
-        String displayValue;
-        
         public BooleanDisplayValue(String displayValue,  Boolean value) {
-            super(value);
-            this.displayValue = displayValue;
+            super(displayValue, value);
         }
 
         public BooleanDisplayValue(Boolean value) {
@@ -122,6 +119,30 @@ public interface DisplayableValue<V> extends HasValue<V> {
         }
 
         
+    }
+
+    
+    public class IntegerDisplayValue extends  SimpleDisplayValue<Integer> {
+        
+        String format;
+        
+        public IntegerDisplayValue(String format, Integer value) {
+            super(value);
+            this.format = format;
+        }
+
+        public IntegerDisplayValue(Integer value) {
+            this("%d", value);
+        }
+
+        @Override
+        public String getDisplayValue() {
+            if (format != null) {
+                return String.format(format, getValue());
+            }
+            return super.getDisplayValue();
+        }
+
     }
 
 }

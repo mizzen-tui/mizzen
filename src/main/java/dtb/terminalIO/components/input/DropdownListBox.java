@@ -59,7 +59,7 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
             te.getEventBus().raiseEvent(new HasValue.ValueChangedEvent<T>(DropdownListBox.this));
         });
         
-        appendEventHandler( new KeyInputEventHandler(Keys.ENTER_KEYSTROKE, (te)-> { showListBox(); }));
+        appendEventHandler( new KeyInputEventHandler(Keys.ENTER_KEYSTROKE, (te)-> { toggleShowHide(); }));
 
         appendEventHandler( new KeyInputEventHandler(Keys.ESC_KEYSTROKE, (te)-> { hideListBox(); }));
         
@@ -276,6 +276,14 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
             return;
         }
         this.getListBoxParent().remove(this.listBox);
+    }
+    
+    protected void toggleShowHide() {
+        if (listBoxVisible()) {
+            hide();
+        } else {
+            show();
+        }
     }
     
     @Override
