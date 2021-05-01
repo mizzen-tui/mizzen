@@ -519,7 +519,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
                                                                              ScrollableComponent.this.viewer);
 
             Position offsetIntoSource = ScrollableComponent.this.viewer.getOffsetIntoSource();
-            if ( ! offsetIntoSource.isSamePosition(Position.ZERO)) {
+            if ( ! offsetIntoSource.isSameLocation(Position.ZERO)) {
 
                 offset = offset.offsetAdd( offsetIntoSource);
             }

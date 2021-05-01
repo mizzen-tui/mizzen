@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.TreeSet;
 
-import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Movable;
 import dtb.terminalIO.geom.Relation.LeftRight;
 import dtb.terminalIO.geom.Relation.OverUnder;
@@ -12,61 +11,49 @@ import dtb.terminalIO.geom.Relation.OverUnder;
 /**
  * Represents a location ( row/col ) on a Canvas, or component.
  */
-public interface Position extends Row, Column{
+public interface Position extends Vec2<Position>, Row, Column{
 
-    public default boolean isSamePosition(Position other) {
-    if (other == null) {
-        return false;
-    }
-    return this.getCol() == other.getCol() && 
-           this.getRow() == other.getRow();
+    public default boolean isSameLocation(Position other) {
+        if (other == null) {
+            return false;
+        }
+        return this.getY() == other.getY() && 
+               this.getX() == other.getX();
     }
     
     @SuppressWarnings("unchecked")
     public default <T extends Position> LeftRight<T> leftRight(T right) {
-    return Position.UTIL.leftRight((T) this, (T) right);
+        return Position.UTIL.leftRight((T) this, (T) right);
     }
 
     @SuppressWarnings("unchecked")
     public default <T extends Position> OverUnder<T> overUnder(T under) {
-    return Position.UTIL.overUnder((T) this, (T) under);
+        return Position.UTIL.overUnder((T) this, (T) under);
     }
     
+    public default Position newFrom(float x, float y) {
+        return new Position.Simple(y, x);
+    }
 
-    public default Position offsetTo(Position target) {
-        return offsetTo(target.getRow(), target.getCol());
-    }
-    
-    public default Position offsetTo(int row, int col) {
-        return new Position.Simple(row - this.getRow(), col - this.getCol());
+    public default Position offsetToRowCol(int row, int col) {
+        return new Position.Simple(row - this.getY(), col - this.getX());
     }
 
     public default Position offsetAdd(int row, int col) {
-        return new Position.Simple(row + this.getRow(), col + this.getCol());
+        return add((float)col, (float)row);
     }
 
-    public default Position mult(int factor) {
-        return new Position.Simple(factor * this.getRow(), factor * this.getCol());
-    }
 
-    public default Position mult(float factor) {
-        return new Position.Simple((int)Math.round(factor * this.getRow()), (int)Math.round(factor * this.getCol()));
-    }
-
-    public default Position mult(double factor) {
-        return new Position.Simple((int)Math.round(factor * this.getRow()), (int)Math.round(factor * this.getCol()));
-    }
-
-    public default Position offsetAdd(Position offsetToAdd) {
-        return new Position.Simple(offsetToAdd.getRow() + this.getRow(), offsetToAdd.getCol() + this.getCol());
-    }
+//    public default Position offsetAdd(Position offsetToAdd) {
+//        return new Position.Simple(offsetToAdd.getY() + this.getY(), offsetToAdd.getX() + this.getX());
+//    }
 
     public default Position addCols(int cols) {
-        return new Position.Simple(this.getRow(), this.getCol()+cols);
+        return new Position.Simple(this.getY(), this.getX()+cols);
     }
 
     public default Position addRows(int rows) {
-        return new Position.Simple(this.getRow() + rows, this.getCol());
+        return new Position.Simple(this.getY() + rows, this.getX());
     }
 
     public default float getX() {
@@ -78,7 +65,7 @@ public interface Position extends Row, Column{
     }
 
     public default Position negate() {
-        return new Position.Simple(this.getRow()*-1, this.getCol()*-1);
+        return new Position.Simple(this.getY()*-1, this.getX()*-1);
     }
 
     public static final Position ZERO = new Simple(0, 0);
@@ -101,8 +88,8 @@ public interface Position extends Row, Column{
             this((float)row,(float) col);
         }
     
-        public Simple(Position pos) {
-            this(pos.getRow(), pos.getCol());
+        public Simple(Vec2<?> pos) {
+            this(pos.getY(), pos.getX());
         }
     
         public int getRow() {
@@ -176,31 +163,33 @@ public interface Position extends Row, Column{
         public int compare(Position pos1, Position pos2) {
             if (pos1 == pos2)
                 return 0;
+            // beware trying to compare using getY (float) - results are not desirable
+            //   so use getRow() ( int ) ... do the same thing for getCol()
             int cmp = Integer.compare(pos1.getRow(), pos2.getRow());
             if (cmp != 0)
                 return cmp;
             return Integer.compare(pos1.getCol(), pos2.getCol());
         }
     }
-    
+
     public static class UTIL {
+
+        public static final PositionComparator POS_COMPARE = new PositionComparator();
     
-    public static final PositionComparator POS_COMPARE = new PositionComparator();
-
-    public static String asString(Position position) {
-        if (position == null) {
-            return "Position[null, null]";
+        public static String asString(Position position) {
+            if (position == null) {
+                return "Position[null, null]";
+            }
+            return String.format("Position[%4d, %4d]", position.getRow(), position.getCol());
         }
-        return String.format("Position[%4d, %4d]", position.getRow(), position.getCol());
-    }
-
-    public static <T extends Position> LeftRight<T> leftRight(T p1, T p2) {
-        return new LeftRight<T>(p1, p2, (left, right) -> left.getCol() <= right.getCol());
-    }
-
-    public static <T extends Position> OverUnder<T> overUnder(T p1, T p2) {
-        return new OverUnder<T>(p1, p2, (over, under) -> over.getRow() <= under.getRow());
-    }
+    
+        public static <T extends Position> LeftRight<T> leftRight(T p1, T p2) {
+            return new LeftRight<T>(p1, p2, (left, right) -> left.getCol() <= right.getCol());
+        }
+    
+        public static <T extends Position> OverUnder<T> overUnder(T p1, T p2) {
+            return new OverUnder<T>(p1, p2, (over, under) -> over.getRow() <= under.getRow());
+        }
     
         public static TreeSet<Position> makeCollection(Collection<Position> positions) {
             TreeSet<Position> ts = new TreeSet<Position>(POS_COMPARE);
@@ -209,8 +198,7 @@ public interface Position extends Row, Column{
             }
             return ts;
         }
-    
-    }
-    
+    } /* UTIL */
+
 
 }

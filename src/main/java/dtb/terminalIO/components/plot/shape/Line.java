@@ -1,8 +1,11 @@
 package dtb.terminalIO.components.plot.shape;
 
 import dtb.terminalIO.components.plot.PointPlotter;
+import dtb.terminalIO.components.plot.shape.Shape.AbstractShape;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.geom.position.Position;
+import dtb.terminalIO.geom.position.PositionTransform;
+import dtb.terminalIO.geom.position.Vec2;
 
 /**
  * Defines a line between two points.
@@ -12,7 +15,7 @@ import dtb.terminalIO.geom.position.Position;
  * Uses a {@link LinePlotter} to draw itself.
  *
  */
-public class Line implements Shape {
+public class Line extends AbstractShape {
 
     float x1;
     float y1;
@@ -90,12 +93,16 @@ public class Line implements Shape {
     }
 
     @Override
-    public void draw(PointPlotter pointPlotter) {
+    protected void drawWithTransform(PointPlotter pointPlotter, PositionTransform positionTransform) {
         Color lastColor = null;
         if (color != null) {
             lastColor = pointPlotter.setNextPlotColor(color);
         }
-        new LinePlotter().draw(this.getX1(), this.getY1(), this.getX2(), this.getY2(), pointPlotter);
+        
+        Vec2<?> p1 = positionTransform.transform(this.getX1(), this.getY1());
+        Vec2<?> p2 = positionTransform.transform(this.getX2(), this.getY2());
+        
+        new LinePlotter().draw(p1.getX(), p1.getY(), p2.getX(), p2.getY(), pointPlotter);
 
         if (color != null) {
             pointPlotter.setNextPlotColor(lastColor);

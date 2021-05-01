@@ -38,7 +38,7 @@ public class HorizontalPanel extends Composite {
             throw new IllegalArgumentException(HasName.UTIL.getName(this)+":Child Component add failure:  Duplicate child("+HasName.UTIL.getName(component)+") !");
         }
 
-        if ( ! component.isSamePosition(Position.ZERO)) {
+        if ( ! component.isSameLocation(Position.ZERO)) {
             throw new IllegalArgumentException(HasName.UTIL.getName(this)+":Child Component ("+HasName.UTIL.getName(component)+") add failure. Must not specify Position offet. Set to (0,0) ! Current position =" + String.valueOf(component.getPostion_TopLeft()));
         }
 

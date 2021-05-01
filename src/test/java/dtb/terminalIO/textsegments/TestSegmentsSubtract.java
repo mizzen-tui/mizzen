@@ -1,9 +1,14 @@
 package dtb.terminalIO.textsegments;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.textsegments.ScreenLineSegment.SegmentImpl;
+import dtb.terminalIO.textsegments.ScreenLineSegment.UTIL;
 import junit.framework.TestCase;
 
 public class TestSegmentsSubtract  extends TestCase {
@@ -87,6 +92,9 @@ public class TestSegmentsSubtract  extends TestCase {
                                          ScreenLineSegmentTestHelper.addElementTreeSegment(ts2 , 3, 3, "Twiddle or twaddle");
 
         TreeSet<ScreenLineSegment> diff1 = ScreenLineSegment.UTIL.subtractAggressive(ts1, ts2);
+
+        System.out.println( Arrays.toString(diff1.stream().sorted(UTIL.SO_COMPARE).map((s)->s.toString()+"\n").collect(Collectors.toSet()).toArray(new String[] {})));
+        
         assertEquals("diff1 size", 5, diff1.size());
 
     }

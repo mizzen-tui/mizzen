@@ -21,19 +21,19 @@ public class XYTranslate extends TransformPointPlotter {
         super(pointPlotter, new PositionTransform.Translate(yDelta, xDelta));
     }
 
-    public void setyDelta(int yDelta) {
+    public void setyDelta(float yDelta) {
         ((PositionTransform.Translate) this.positionTransform).setRowDelta(yDelta);
     }
 
-    public void setxDelta(int xDelta) {
+    public void setxDelta(float xDelta) {
         ((PositionTransform.Translate) this.positionTransform).setColDelta(xDelta);
     }
 
-    public int getyDelta() {
+    public float getyDelta() {
         return ((PositionTransform.Translate) this.positionTransform).getRowDelta();
     }
 
-    public int getxDelta() {
+    public float getxDelta() {
         return ((PositionTransform.Translate) this.positionTransform).getColDelta();
     }
 

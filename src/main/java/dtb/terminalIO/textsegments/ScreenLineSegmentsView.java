@@ -135,7 +135,7 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
     }
 
     public boolean setOffsetIntoSource(Position offsetIntoSource) {
-        if (offsetIntoSource!=null && offsetIntoSource.isSamePosition(this.offsetIntoSource)) {
+        if (offsetIntoSource!=null && offsetIntoSource.isSameLocation(this.offsetIntoSource)) {
             return false;
         }
         this.offsetIntoSource = offsetIntoSource;

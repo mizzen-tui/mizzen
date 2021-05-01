@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.stream.Collectors;
 
 import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.geom.Align;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
@@ -40,6 +41,11 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
         showBorder = true;
         this.setRectangle( bounds );
         this.setFillOnClear(false);
+        
+        // debugging
+        //this.setFillOnClear(true);
+        //this.setEmptyColor(Colors.On_IYel);
+        //
     }
     
     @Override
@@ -200,7 +206,7 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
 
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
-        if (componentPosition.isSamePosition(Position.ZERO)) {
+        if (componentPosition.isSameLocation(Position.ZERO)) {
             // very fast merge (not this case probably does not come up)
             segments.getSegments().addAll(this.component.getSegmentsBuffer().getSegments());
         } else {

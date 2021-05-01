@@ -118,7 +118,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
         List<ScreenLineSegment> chunks = new ArrayList<ScreenLineSegment>(2);
         if (under.getCol() < top.getCol()) {
             // tmp
-            top.overlapsWith(under);
+            //top.overlapsWith(under);
             // left part of under
             chunks.add(slice(under, 0, top.getCol() - under.getCol()));
         }
@@ -573,7 +573,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
                                                        Rectangle bounds,
                                                        TreeSet<ScreenLineSegment> ts, 
                                                        ScreenLineSegment sc) {
-            if (offset == null || offset.isSamePosition(Position.ZERO)) {
+            if (offset == null || offset.isSameLocation(Position.ZERO)) {
                 addSegmentBounded(bounds, ts, sc);
                 return;
             }
@@ -587,7 +587,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
             if (destination ==  segmentsToAdd) {
                 return;
             }
-            if (offset == null || offset.isSamePosition(Position.ZERO)) {
+            if (offset == null || offset.isSameLocation(Position.ZERO)) {
                 // no offset
                 addSegmentsBounded(bounds, destination, segmentsToAdd);
                 return;

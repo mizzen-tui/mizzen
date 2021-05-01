@@ -2,6 +2,7 @@ package dtb.terminalIO.components.plot;
 
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.geom.position.PositionTransform;
+import dtb.terminalIO.geom.position.Vec2;
 
 /**
  * A {@link PointPlotter} that transforms the x, y coordinates (before plotting) using a
@@ -25,9 +26,9 @@ public class TransformPointPlotter extends PointPlotter.Delegate {
     @Override
     public void plot(float x, float y) {
         // transform the points
-        Position p = positionTransform.transform(new Position.Simple(y, x));
+        Vec2<?> p = positionTransform.transform(new Position.Simple(y, x));
         // now plot onto the 'real' PointPlotter object
-        super.plot(p.getCol(), p.getRow());
+        super.plot(p.getX(), p.getY());
     }
 
 }

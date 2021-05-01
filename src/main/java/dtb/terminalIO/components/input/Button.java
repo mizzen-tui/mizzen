@@ -313,7 +313,7 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
 
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer mySegments) {
-        if (this.getPostion_TopLeft().isSamePosition(Position.ZERO)) {
+        if (this.getPostion_TopLeft().isSameLocation(Position.ZERO)) {
             // fast
            mySegments.getSegments().addAll(this.container.getSegmentsBuffer().getSegments());
         } else {

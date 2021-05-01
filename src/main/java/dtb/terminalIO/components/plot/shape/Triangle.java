@@ -4,8 +4,11 @@ import java.util.Arrays;
 import java.util.List;
 
 import dtb.terminalIO.components.plot.PointPlotter;
+import dtb.terminalIO.components.plot.shape.Shape.AbstractShape;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.geom.position.Position;
+import dtb.terminalIO.geom.position.PositionTransform;
+import dtb.terminalIO.geom.position.Vec2;
 
 /**
  * 
@@ -26,11 +29,11 @@ import dtb.terminalIO.geom.position.Position;
  * @author dbalme
  *
  */
-public class Triangle implements Shape, Fillable<Triangle> {
+public class Triangle extends AbstractShape<Triangle> implements Fillable<Triangle> {
 
-    Position p1;
-    Position p2;
-    Position p3;
+    Vec2<?> p1;
+    Vec2<?> p2;
+    Vec2<?> p3;
     Color color;
     
     DrawTriangleAlgorithm algorithm;
@@ -41,12 +44,12 @@ public class Triangle implements Shape, Fillable<Triangle> {
      */
     @FunctionalInterface
     public static interface DrawTriangleAlgorithm {
-        void draw(Position p1, Position p2, Position p3, Color color, PointPlotter pointPlotter);
+        void draw(Vec2<?> p1, Vec2<?> p2, Vec2<?> p3, Color color, PointPlotter pointPlotter);
     }
 
     static DrawTriangleAlgorithm drawOutline = new DrawTriangleAlgorithm() {
         @Override
-        public void draw(Position p1, Position p2, Position p3, Color color, PointPlotter pointPlotter) {
+        public void draw(Vec2<?> p1, Vec2<?> p2, Vec2<?> p3, Color color, PointPlotter pointPlotter) {
             Polygon polygon = new Polygon();
             polygon.addPoint(p1, color);
             polygon.addPoint(p2, color);
@@ -55,18 +58,18 @@ public class Triangle implements Shape, Fillable<Triangle> {
         }
     };
     
-    static DrawTriangleAlgorithm drawFilled = new DrawTriangleAlgorithm() {
+    public static DrawTriangleAlgorithm drawFilled = new DrawTriangleAlgorithm() {
         @Override
-        public void draw(Position p1, Position p2, Position p3, Color color, PointPlotter pointPlotter) {
+        public void draw(Vec2<?> p1, Vec2<?> p2, Vec2<?> p3, Color color, PointPlotter pointPlotter) {
             
-            List<Position> points = getPointsSorted(p1,p2,p3); 
+            List<Vec2<?>> points = Vec2.UTIL.getSorted(p1,p2,p3); 
 
             p1 = points.get(0);
             p2 = points.get(1);
             p3 = points.get(2);
 
-            int rowOffset = p1.getRow();
-            int height = p3.getRow() - p1.getRow() + 1;
+            float rowOffset = p1.getY();
+            int height = Math.round(p3.getY() - p1.getY() + 1);
             
             float[] columnEndPointsX1X2 = new float[height*2];
             float unAssigned = Integer.MIN_VALUE;
@@ -138,17 +141,10 @@ public class Triangle implements Shape, Fillable<Triangle> {
         }
     };
     
-    private static List<Position> getPointsSorted(Position p1, Position p2, Position p3) {
-        List<Position> points = Arrays.asList(new Position[] {p1,p2,p3}); 
-        points.sort( Position.UTIL.POS_COMPARE);
-        return points;
-    }
-    
-    
     public Triangle(Position p1, Position p2, Position p3, Color color) {
         super();
         
-        List<Position> points = getPointsSorted(p1,p2,p3); 
+        List<Vec2<?>> points = Vec2.UTIL.getSorted(p1,p2,p3); 
 
         this.p1 = points.get(0);
         this.p2 = points.get(1);
@@ -193,8 +189,12 @@ public class Triangle implements Shape, Fillable<Triangle> {
     
     
     @Override
-    public void draw(PointPlotter pointPlotter) {
-        this.algorithm.draw(p1, p2, p3, color, pointPlotter);
+    protected void drawWithTransform(PointPlotter pointPlotter, PositionTransform positionTransform) {
+        this.algorithm.draw( positionTransform.transform(p1), 
+                             positionTransform.transform(p2), 
+                             positionTransform.transform(p3), 
+                             color, 
+                             pointPlotter);
     }
 
     /**

@@ -16,6 +16,14 @@ public class PositionHorizontalRelative implements Position {
         this(anchorComponent, 1);
     }
     
+    public int getHorizontalSpacer() {
+        return horizontalSpacer;
+    }
+
+    public void setHorizontalSpacer(int horizontalSpacer) {
+        this.horizontalSpacer = horizontalSpacer;
+    }
+
     Rectangle getAnchor() {
         if (anchorComponent == null) {
             return null;

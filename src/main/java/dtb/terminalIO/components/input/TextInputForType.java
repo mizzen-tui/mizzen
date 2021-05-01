@@ -59,7 +59,7 @@ public class TextInputForType<T>  extends BoundedComponent<TextInputForType<T>> 
         return Collections.singletonList(this.textInput);
     }
 
-    protected void setText(String text) {
+    public void setText(String text) {
         this.textInput.setText(text);
     }
 

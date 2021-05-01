@@ -7,6 +7,7 @@ import java.util.List;
 
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.geom.position.Position;
+import dtb.terminalIO.geom.position.Vec2;
 
 /**
  * 
@@ -120,11 +121,11 @@ public interface PointPlotter {
             this(x, y, null);
         }
 
-        public PointPlot(Position p, Color color) {
-            this(p.getCol(), p.getRow(), color);
+        public PointPlot(Vec2<?> p, Color color) {
+            this(p.getX(), p.getY(), color);
         }
 
-        public PointPlot(Position p) {
+        public PointPlot(Vec2<?> p) {
             this(p, null);
         }
 
@@ -144,6 +145,41 @@ public interface PointPlotter {
 
         public float getY() {
             return y;
+        }
+        
+        public String toString() {
+            return "(x="+x+", y="+y + ")";
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((color == null) ? 0 : color.hashCode());
+            result = prime * result + Float.floatToIntBits(x);
+            result = prime * result + Float.floatToIntBits(y);
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            PointPlot other = (PointPlot) obj;
+            if (color == null) {
+                if (other.color != null)
+                    return false;
+            } else if (!color.equals(other.color))
+                return false;
+            if (Float.floatToIntBits(x) != Float.floatToIntBits(other.x))
+                return false;
+            if (Float.floatToIntBits(y) != Float.floatToIntBits(other.y))
+                return false;
+            return true;
         }
         
         

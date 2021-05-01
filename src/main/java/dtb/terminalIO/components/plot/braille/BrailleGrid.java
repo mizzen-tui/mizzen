@@ -1,20 +1,23 @@
 package dtb.terminalIO.components.plot.braille;
 
-import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
+import dtb.terminalIO.components.input.Clickable;
 import dtb.terminalIO.components.plot.Plotter;
 import dtb.terminalIO.components.plot.Plotter.Plot;
 import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.mouse.ApplicationMouseEvent;
+import dtb.terminalIO.events.mouse.MOUSE_ACTION;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
-import dtb.terminalIO.geom.position.PositionTransform;
 import dtb.terminalIO.textsegments.CleanString;
 
 
 // TODO:   Dont extend composite (too slow)..  change and then optimize draw() method
-public class BrailleGrid extends Composite {
+public class BrailleGrid extends Composite implements Clickable, PointPlotter {
 
     Plotter plotter;
     Rectangle gridRectangle;
@@ -150,7 +153,12 @@ public class BrailleGrid extends Composite {
         unplotPosition(new Position.Simple(row, col));
     }
 
+    private PointPlotter pointPlotter;
+    
     public PointPlotter asPointPlotter() {
+        if (pointPlotter != null) {
+            return pointPlotter;
+        }
         PointPlotter plot = new PointPlotter() {
             @Override
             public void plot(float x, float y) {
@@ -170,6 +178,7 @@ public class BrailleGrid extends Composite {
             }
 
         };
+        this.pointPlotter = plot;
         return plot;
     }
 
@@ -184,5 +193,36 @@ public class BrailleGrid extends Composite {
     public void clearPlots() {
         this.plotter.clearPlots();
     }
+
+    @Override
+    public void onClick(EventBus eventBus) {
+        // TODO Auto-generated method stub
+        
+    }
+    
+    public EventHandler onClickHandler = null;
+    
+    public void onClick(ApplicationMouseEvent appMouseEvent) {
+        if (MOUSE_ACTION.DOWN_LEFT.equals(appMouseEvent.getMouseAction())) {
+            if (onClickHandler != null) {
+                onClickHandler.handle(appMouseEvent);
+            } else {
+                onClick( appMouseEvent.getEventBus());
+            }
+        }
+    }
+
+    @Override
+    public void plot(float x, float y) {
+        asPointPlotter().plot(x,y);
+        
+    }
+
+    @Override
+    public Color setNextPlotColor(Color color) {
+        return asPointPlotter().setNextPlotColor(color);
+    }
+    
+    
 
 }

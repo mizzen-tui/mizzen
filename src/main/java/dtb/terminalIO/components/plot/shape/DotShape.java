@@ -1,10 +1,12 @@
 package dtb.terminalIO.components.plot.shape;
 
 import dtb.terminalIO.components.plot.PointPlotter;
+import dtb.terminalIO.components.plot.shape.Shape.AbstractShape;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.geom.position.Position;
+import dtb.terminalIO.geom.position.PositionTransform;
 
-public class DotShape implements Shape {
+public class DotShape extends AbstractShape {
     
     Position p;
 
@@ -44,7 +46,7 @@ public class DotShape implements Shape {
     }
 
     @Override
-    public void draw(PointPlotter pointPlotter) {
+    protected void drawWithTransform(PointPlotter pointPlotter, PositionTransform positionTransform) {
         Color lastColor = null;
         
         if (color != null) {

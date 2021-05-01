@@ -360,14 +360,14 @@ public class Test1GamesSeparateThread {
             return Colors.IYel;
         }
 
-        @Override
-        public void draw(PointPlotter pointPlotter) {
-            drawCounter++;
-            if (drawCounter % 6 == 0) {
-                t1.setColor(getLineColor(t1));
-            }
-            this.componentShapes.draw(pointPlotter);
-        }
+//        @Override
+//        public void draw(PointPlotter pointPlotter) {
+//            drawCounter++;
+//            if (drawCounter % 6 == 0) {
+//                t1.setColor(getLineColor(t1));
+//            }
+//            this.componentShapes.draw(pointPlotter);
+//        }
 
         @Override
         protected Shape getCurrentShape() {
@@ -386,6 +386,7 @@ public class Test1GamesSeparateThread {
         Rectangle calcBoundingRect() {
             return boundingRect;
         }
+
     };
 
 }

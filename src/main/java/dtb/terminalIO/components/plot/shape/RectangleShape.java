@@ -1,10 +1,13 @@
 package dtb.terminalIO.components.plot.shape;
 
 import dtb.terminalIO.components.plot.PointPlotter;
+import dtb.terminalIO.components.plot.shape.Shape.AbstractShape;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.geom.position.PositionTransform;
+import dtb.terminalIO.geom.position.Vec2;
 
-public class RectangleShape implements Shape, Rectangle, Fillable<RectangleShape> {
+public class RectangleShape extends AbstractShape implements Rectangle, Fillable<RectangleShape> {
 
     Rectangle rectangle;
     Color color;
@@ -16,45 +19,28 @@ public class RectangleShape implements Shape, Rectangle, Fillable<RectangleShape
      */
     @FunctionalInterface
     public static interface DrawRectangleAlgorithm {
-        void draw(Rectangle rectangle, Color color, PointPlotter plotter);
+        void draw(Vec2<?> topLeft, Vec2<?> topRight, Vec2<?> bottomRight, Vec2<?> bottomLeft, Color color, PointPlotter plotter);
     }
-    
+
     static DrawRectangleAlgorithm drawOutline = new DrawRectangleAlgorithm() {
         @Override
-        public void draw(Rectangle rectangle, Color color, PointPlotter plotter) {
+        public void draw(Vec2<?> topLeft, Vec2<?> topRight, Vec2<?> bottomRight, Vec2<?> bottomLeft, Color color, PointPlotter plotter) {
             Polygon polygon = new Polygon();
-            polygon.addPoint(rectangle.getPostion_TopLeft(), color);
-            polygon.addPoint(rectangle.getPostion_TopRight(), color);
-            polygon.addPoint(rectangle.getPostion_BottomRight(), color);
-            polygon.addPoint(rectangle.getPostion_BottomLeft(), color);
+            polygon.addPoint(topLeft, color);
+            polygon.addPoint(topRight, color);
+            polygon.addPoint(bottomRight, color);
+            polygon.addPoint(bottomLeft, color);
             polygon.draw(plotter);
         }
     };
-    
+
     static DrawRectangleAlgorithm drawFilled = new DrawRectangleAlgorithm() {
         @Override
-        public void draw(Rectangle rectangle, Color color, PointPlotter plotter) {
-            drawOutline.draw(rectangle, color, plotter);
-            int x1 = rectangle.getPostion_TopLeft().getCol();
-            int y1 = rectangle.getPostion_TopLeft().getRow();
-            int x2 = rectangle.getPostion_BottomRight().getCol();
-            int y2 = rectangle.getPostion_BottomRight().getRow();
-            // set color of plotter
-            Color lastColor = null;
-            if (color != null) {
-                lastColor = plotter.setNextPlotColor(color);
-            }
-            // now fill
-            for (int x = x1+1; x<x2; x++) {
-                for (int y = y1+1; y<y2; y++) {
-                    plotter.plot(x, y);
-                }
-            }
-            if (color != null) {
-                plotter.setNextPlotColor(lastColor);
-            }
+        public void draw(Vec2<?> topLeft, Vec2<?> topRight, Vec2<?> bottomRight, Vec2<?> bottomLeft, Color color, PointPlotter plotter) {
 
-            
+            // A filled rectangle is really just two filled triangles,
+            Triangle.drawFilled.draw(topLeft, topRight, bottomLeft, color, plotter);
+            Triangle.drawFilled.draw(topRight, bottomRight, bottomLeft, color, plotter);
         }
     };
     
@@ -87,10 +73,16 @@ public class RectangleShape implements Shape, Rectangle, Fillable<RectangleShape
         this.algorithm = (filled) ? drawFilled : drawOutline;
         return this;
     }
-    
+
     @Override
-    public void draw(PointPlotter pointPlotter) {
-        this.algorithm.draw(rectangle, color, pointPlotter);
+    protected void drawWithTransform(PointPlotter pointPlotter, PositionTransform positionTransform) {
+        //new Rectangle.Simple(row, col, height, width)
+        this.algorithm.draw(positionTransform.transform(rectangle.getPostion_TopLeft()), 
+                            positionTransform.transform(rectangle.getPostion_TopRight()), 
+                            positionTransform.transform(rectangle.getPostion_BottomRight()), 
+                            positionTransform.transform(rectangle.getPostion_BottomLeft()), 
+                            color, 
+                            pointPlotter);
     }
 
     @Override

@@ -2,7 +2,10 @@ package dtb.terminalIO.components.plot.shape;
 
 import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.components.plot.PointPlotter.PointPlot;
+import dtb.terminalIO.components.plot.shape.Shape.AbstractShape;
 import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.geom.position.PositionTransform;
+import dtb.terminalIO.geom.position.Vec2;
 
 /**
  * Draws a circle {@link Shape}
@@ -59,7 +62,7 @@ import dtb.terminalIO.controlcodes.color.Color;
  * @author dbalme
  *
  */
-public class Circle implements Shape , Fillable<Circle>{
+public class Circle extends AbstractShape implements Fillable<Circle>{
 
     /**
      * Specifies how to draw the circle,
@@ -169,17 +172,20 @@ public class Circle implements Shape , Fillable<Circle>{
         this.color = color;
     }
 
-    public void draw(PointPlotter pointPlotter) {
+    protected void drawWithTransform(PointPlotter pointPlotter, PositionTransform positionTransform) {
         Color lastColor = null;
         if (color != null) {
             lastColor = pointPlotter.setNextPlotColor(color);
         }
+        
+        Vec2<?> centerPoint = positionTransform.transform(x, y);
 
-        this.algorithm.draw(x, y, radius, pointPlotter);
+        this.algorithm.draw(centerPoint.getX(), centerPoint.getY(), radius, pointPlotter);
 
         if (color != null) {
             pointPlotter.setNextPlotColor(lastColor);
         }
     }
+
 
 }

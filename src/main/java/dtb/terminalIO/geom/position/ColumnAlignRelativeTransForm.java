@@ -12,7 +12,6 @@ import dtb.terminalIO.geom.Rectangle;
 @FunctionalInterface
 public interface ColumnAlignRelativeTransForm {
     int getCol(Rectangle anchorComponent, Rectangle alignedComponent);
-    
 
     public static class Factory {
         

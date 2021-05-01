@@ -1,6 +1,7 @@
 package dtb.terminalIO.components;
 
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.controlcodes.color.Color;
@@ -11,6 +12,7 @@ import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.geom.position.PositionDelegate;
 import dtb.terminalIO.geom.position.PositionHorizontalRelative;
 import dtb.terminalIO.geom.position.PositionVerticalRelative;
+import dtb.terminalIO.geom.position.Vec2;
 
 /**
  * A nav button panel with up, down, left, right action handlers attached to it
@@ -31,7 +33,7 @@ public class NavButtonsPanel extends CompositeWithFocusManager {
     Button down;
     Button left;
     Button right;
-    
+
     public NavButtonsPanel(Color color, 
                            EventHandler upAction,
                            EventHandler downAction,
@@ -45,15 +47,16 @@ public class NavButtonsPanel extends CompositeWithFocusManager {
         
         buildButtons(upAction, downAction, leftAction, rightAction);
     }
-    
-    public NavButtonsPanel(Color color, BiConsumer<Integer, Integer> clickDirection) {
-           this(color, 
-                (te)-> clickDirection.accept(-1, 0),
-                (te)-> clickDirection.accept( 1, 0),
-                (te)-> clickDirection.accept( 0, -1),
-                (te)-> clickDirection.accept( 0, 1));
+
+    public NavButtonsPanel(Color color, Consumer<Vec2<?>> clickDirection) {
+           this(    color, 
+                    (te)-> clickDirection.accept( new BaseVec2( 0, -1)),  // up
+                    (te)-> clickDirection.accept( new BaseVec2( 0,  1)),  // down
+                    (te)-> clickDirection.accept( new BaseVec2(-1,  0)),  // left
+                    (te)-> clickDirection.accept( new BaseVec2( 1,  0))   // right
+                );
     }
-        
+
     public NavButtonsPanel setDisplayHotKey(boolean displayHotKey) {
         up.setDisplayHotKey(displayHotKey);
         down.setDisplayHotKey(displayHotKey);
@@ -62,13 +65,12 @@ public class NavButtonsPanel extends CompositeWithFocusManager {
         this.markAsDirty();
         return this;
     }
-    
-    
+
     void buildButtons(EventHandler upAction,
                       EventHandler downAction,
                       EventHandler leftAction,
                       EventHandler rightAction) {
-        
+
         up = new Button("^");
         up.setHotKey(Keys.CTRL_T_KEYSTROKE);
         up.setBorder(true);
@@ -110,6 +112,20 @@ public class NavButtonsPanel extends CompositeWithFocusManager {
         this.add(downPosition, down);
 
         
+    }
+    
+    public static NavButtonsPanel leftRight(Color color, 
+                                            EventHandler leftAction,
+                                            EventHandler rightAction) {
+        
+        NavButtonsPanel navPanel = new NavButtonsPanel(color, 
+                                                      (te)->{},
+                                                      (te)->{},
+                                                      leftAction,
+                                                      rightAction);
+        navPanel.remove(navPanel.up);
+        navPanel.remove(navPanel.down);
+        return navPanel;
     }
     
 }

@@ -2,7 +2,7 @@ package dtb.terminalIO.geom.position;
 
 public class PositionRelativeUsingTransform implements Position {
 
-    Position originalPosition;
+    Vec2<?> originalPosition;
     PositionTransform tranform;
     
     public PositionRelativeUsingTransform(Position originalPosition, PositionTransform tranform) {
@@ -13,12 +13,12 @@ public class PositionRelativeUsingTransform implements Position {
 
     @Override
     public int getCol() {
-        return tranform.transform(originalPosition).getCol();
+        return (int) tranform.transform(originalPosition).getX();
     }
 
     @Override
     public int getRow() {
-        return tranform.transform(originalPosition).getRow();
+        return (int) tranform.transform(originalPosition).getY();
     }
 
 }

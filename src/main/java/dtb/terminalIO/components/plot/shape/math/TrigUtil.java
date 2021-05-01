@@ -73,7 +73,7 @@ public class TrigUtil {
         float minY = Integer.MAX_VALUE;
         
         for (PointPlot sp : points) {
-            if (sp.isSamePosition(p)) {
+            if (sp.isSameLocation(p)) {
                 return false; // not inside because 'on' the shape
             }
             maxX = (maxX > sp.x) ? sp.x : maxX;

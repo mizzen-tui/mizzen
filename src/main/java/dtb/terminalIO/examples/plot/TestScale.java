@@ -9,7 +9,6 @@ import java.util.function.Supplier;
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
-import dtb.terminalIO.components.CompositeWithFocusManager;
 import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.NavButtonsPanel;
 import dtb.terminalIO.components.TextComponent;
@@ -19,11 +18,13 @@ import dtb.terminalIO.components.input.DisplayableValue;
 import dtb.terminalIO.components.input.ListBox;
 import dtb.terminalIO.components.input.RockerButton;
 import dtb.terminalIO.components.input.TextInputInteger;
-import dtb.terminalIO.components.plot.XYTranslate;
-import dtb.terminalIO.components.plot.blocks.BlocksGrid;
+import dtb.terminalIO.components.modal.MessageBox;
+import dtb.terminalIO.components.plot.PointPlotter;
+import dtb.terminalIO.components.plot.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.shape.Circle;
 import dtb.terminalIO.components.plot.shape.Fillable;
 import dtb.terminalIO.components.plot.shape.Line;
+import dtb.terminalIO.components.plot.shape.Polygon;
 import dtb.terminalIO.components.plot.shape.RectangleShape;
 import dtb.terminalIO.components.plot.shape.Shape;
 import dtb.terminalIO.components.plot.shape.Triangle;
@@ -34,15 +35,16 @@ import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.InputEventsProducer;
 import dtb.terminalIO.events.keyboard.Keys;
+import dtb.terminalIO.events.mouse.ApplicationMouseEvent;
 import dtb.terminalIO.geom.Align;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.VAlign;
 import dtb.terminalIO.geom.position.Position;
-import dtb.terminalIO.geom.position.PositionDelegate;
-import dtb.terminalIO.geom.position.PositionHorizontalRelative;
 import dtb.terminalIO.geom.position.PositionRelativeFactory;
-import dtb.terminalIO.geom.position.PositionVerticalRelative;
+import dtb.terminalIO.geom.position.PositionTransform;
+import dtb.terminalIO.geom.position.PositionTransform.RotateAroundFixedPoint;
+import dtb.terminalIO.geom.position.Vec2;
 
 public class TestScale {
 
@@ -55,13 +57,15 @@ public class TestScale {
                .confirmOnExit()
                .setOnReadyStart((tApp)->{
 
-                   XYTranslate xyTranslatePlotter = new XYTranslate(null, 0, 0);
+                   //XYTranslate xyTranslatePlotter = new XYTranslate(null, 0, 0);
+                   
+                   PositionTransform.Translate translateTranFormer = new PositionTransform.Translate(0, 0);
 
                    TextComponent msgArea = new TextComponent(" ");
 
                    Consumer<String> msg = (s) -> msgArea.setTextAndResize("MSG: " + s);
 
-                   ListBox<Shape> shapesChoiceComponent = shapeChooser();
+                   ListBox<Shape<?>> shapesChoiceComponent = shapeChooser();
 
                    Supplier<Dimension> computeGridSize = ()-> {
                        return new Dimension.Simple(tApp.getMainApplicationPanel().getHeight()-15,
@@ -70,23 +74,51 @@ public class TestScale {
 
                    Dimension gridSize = new Dimension.SupplierAsDimension(computeGridSize);
 
-                   BlocksGrid grid = new BlocksGrid(Colors.BGre, gridSize);
-                   //BrailleGrid grid = new BrailleGrid(Colors.BGre, gridSize);
+                   //BlocksGrid grid = new BlocksGrid(Colors.BGre, gridSize);
+                   BrailleGrid grid = new BrailleGrid(Colors.BGre, gridSize);
                    
+                   HorizontalPanel controlsInGrid = new HorizontalPanel();
+                   controlsInGrid.setBorder(true);
                    RockerButton fillOption = new RockerButton(grid.getColor(), "Fill", false);
-                   Position fillOptionPosition = PositionRelativeFactory.fromAlign(VAlign.BOTTOM, 3, Align.LEFT, 0,  grid, fillOption);
-                   grid.add(fillOptionPosition, fillOption);
+                   controlsInGrid.add(fillOption);
+                   
+                   TextInputInteger rotationInput = new TextInputInteger(3);
+                   
 
+                   Button rotateLeft = new Button("<-");
+                   Button rotateRight = new Button("->");
+                   
+                   controlsInGrid.add(new TextComponent("|  Rotatation (degrees)"));
+                   controlsInGrid.add(rotateLeft);
+                   controlsInGrid.add(rotationInput);
+                   controlsInGrid.add(rotateRight);
 
+                   Position controlsInGridPosition = PositionRelativeFactory.fromAlign(VAlign.BOTTOM, 3, Align.LEFT, 0,  grid, controlsInGrid);
+                   
+                   grid.add(controlsInGridPosition, controlsInGrid);
+                   grid.onClickHandler = (te) -> {
+                       ApplicationMouseEvent appMouseEvent = (ApplicationMouseEvent) te;
+                       MessageBox.showInfoDialog(te.getEventBus(), tApp.getMainApplicationPanel()  , "click at");
+                   };
+                   
                    grid.setTitle(Colors.BPur, " Shape : ");
 
-                   xyTranslatePlotter.setPointPlotter(grid.asPointPlotter());
+                   PointPlotter pp = grid; //.asPointPlotter();
+                   //xyTranslatePlotter.setPointPlotter(grid.asPointPlotter());
 
                    Consumer<Shape> drawShape = (shape)-> {
                        if (shape == null) {
                            msg.accept("shape = null");
                            return;
                        }
+                       
+                       Vec2<?>  midPoint = grid.getGridRectangle().centerPosition();
+                       
+                       
+                       PositionTransform.FofG transForm = new PositionTransform.FofG(new RotateAroundFixedPoint(rotationInput.getValue(),midPoint),translateTranFormer);
+                       
+                       
+                       shape.setPositionTransform(transForm);
 
                        grid.clearPlots();
 
@@ -97,10 +129,11 @@ public class TestScale {
                            fillOption.hide();
                        }
 
-                       shape.draw(xyTranslatePlotter);
+                       shape.draw(pp);
                        grid.markAsDirty();
                        tApp.doRefreshCanvasIfModified();
                    };
+                   
 
                    shapesChoiceComponent.onChange((te)->{
                        Shape shape = shapesChoiceComponent.getValue();
@@ -129,26 +162,42 @@ public class TestScale {
                    HorizontalPanel hp = new HorizontalPanel();
                    hp.add(navButtonsPanel(
                                       (e)->{
-                                              xyTranslatePlotter.setyDelta(xyTranslatePlotter.getyDelta()-1) ;
+                                          translateTranFormer.setRowDelta(translateTranFormer.getRowDelta() -1) ;
                                               delayedDraw.onRequest(tApp.getEventBus());
-                                              msg.accept("Up  "+xyTranslatePlotter.getyDelta());
+                                              msg.accept("Up  "+translateTranFormer.getRowDelta());
                                             },
                                       (e)->{
-                                              xyTranslatePlotter.setyDelta(xyTranslatePlotter.getyDelta()+1) ;
+                                          translateTranFormer.setRowDelta(translateTranFormer.getRowDelta()+1) ;
                                               delayedDraw.onRequest(tApp.getEventBus());
-                                              msg.accept("Down  "+xyTranslatePlotter.getyDelta());
+                                              msg.accept("Down  "+translateTranFormer.getRowDelta());
                                             },
                                       (e)->{
-                                              xyTranslatePlotter.setxDelta(xyTranslatePlotter.getxDelta()-1) ;
+                                          translateTranFormer.setColDelta(translateTranFormer.getColDelta()-1) ;
                                               delayedDraw.onRequest(tApp.getEventBus());
-                                              msg.accept("Left  "+xyTranslatePlotter.getxDelta());
+                                              msg.accept("Left  "+translateTranFormer.getColDelta());
                                            },
                                       (e)->{
-                                              xyTranslatePlotter.setxDelta(xyTranslatePlotter.getxDelta()+1) ;
+                                          translateTranFormer.setColDelta(translateTranFormer.getColDelta()+1) ;
                                               delayedDraw.onRequest(tApp.getEventBus());
-                                              msg.accept("Right  "+xyTranslatePlotter.getxDelta());
+                                              msg.accept("Right  "+translateTranFormer.getColDelta());
                                            }
                                   ));
+
+                   rotateLeft.onChange((te)->{
+                       Integer value = (rotationInput.getValue()==null ? 0 : rotationInput.getValue()) - 1;
+                       rotationInput.setText(String.valueOf(value));
+                       delayedDraw.onRequest(te.getEventBus());
+                   });
+
+                   rotateRight.onChange((te)->{
+                       Integer value = (rotationInput.getValue()==null ? 0 : rotationInput.getValue()) + 1;
+                       rotationInput.setText(String.valueOf(value));
+                       delayedDraw.onRequest(te.getEventBus());
+                   });
+                   
+                   rotationInput.onChange((te)->{
+                       delayedDraw.onRequest(te.getEventBus());
+                   });
 
                    hp.add(shapesChoiceComponent);
 
@@ -191,27 +240,6 @@ public class TestScale {
     }
     
     
-    /**
-     * Builds the nav button panel and attaches the up, down, left, right action handlers to it
-     *
-     * 
-     * <pre>
-     *             ^
-     *             |
-     *       <--        -->
-     *             |
-     *             V
-     *      
-     * </pre> 
-     *       
-     * @param upAction
-     * @param downAction
-     * @param leftAction
-     * @param rightAction
-     * @return
-     */
-    
-    
     static Component<?> navButtonsPanel(EventHandler upAction,
             EventHandler downAction,
             EventHandler leftAction,
@@ -224,37 +252,51 @@ public class TestScale {
      * Build list box of shapes to draw 
      * 
      */
-    static ListBox<Shape> shapeChooser() {
+    static ListBox<Shape<?>> shapeChooser() {
         
-        List<DisplayableValue<Shape>> choices = new ArrayList<DisplayableValue<Shape>>();
+        List<DisplayableValue<Shape<?>>> choices = new ArrayList<DisplayableValue<Shape<?>>>();
 
         choices.add(new ShapeDisplayValue("Circle", new Circle(20, 20, 20)));
         choices.add(new ShapeDisplayValue("Line", new Line(2, 2, 35, 35)));
         choices.add(new ShapeDisplayValue("Rectangle", new  RectangleShape( new Rectangle.Simple(0,0,30,40)  ) ));
-        
+
         Triangle triangle = new Triangle(0, 0, 30, 100, 65, 50);
-        
         choices.add(new ShapeDisplayValue("Triangle", triangle ));
-        ListBox<Shape> shapes = new ListBox<Shape>();
+
+        int[][] dinoDOTs =  new int[][]{ { 6, 4 }, { 3, 1 }, { 1, 2 }, { -1, 5 }, { -2, 5 }, { -3, 4 }, { -4, 4 }, { -5, 3 },
+                                         { -5, 2 }, { -2, 2 }, { -5, 1 }, { -4, 0 }, { -2, 1 }, { -1, 0 }, { 0, -3 }, { -1, -4 }, { 1, -4 },
+                                         { 2, -3 }, { 1, -2 }, { 3, -1 }, { 5, 1 } };
+
+         for (int[] p : dinoDOTs) {
+             p[0] = (p[0] + 5 )* 10;
+             p[1] = (p[1] + 6 )* 10;
+         }
+
+        Polygon dino = new Polygon(dinoDOTs);
+        dino.setName("Dino");
+
+        choices.add(new ShapeDisplayValue(dino.getName(), dino ));
+
+        ListBox<Shape<?>> shapes = new ListBox<Shape<?>>();
         shapes.setBorder(true);
         shapes.setItems(choices);
-        
+
         return shapes;
     }
     
 
-    static class ShapeDisplayValue implements DisplayableValue<Shape> {
+    static class ShapeDisplayValue implements DisplayableValue<Shape<?>> {
 
         String name;
-        Shape shape;
+        Shape<?> shape;
         
-        public ShapeDisplayValue(String name, Shape shape) {
+        public ShapeDisplayValue(String name, Shape<?> shape) {
             this.name = name;
             this.shape = shape;
         }
 
         @Override
-        public Shape getValue() {
+        public Shape<?> getValue() {
             return shape;
         }
 
@@ -264,5 +306,5 @@ public class TestScale {
         }
     }
 
-    
+
 }

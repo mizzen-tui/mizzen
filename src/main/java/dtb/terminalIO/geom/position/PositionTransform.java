@@ -1,7 +1,5 @@
 package dtb.terminalIO.geom.position;
 
-import dtb.terminalIO.geom.Rectangle.Simple;
-
 /**
  * Transforms Position objects from one location to another.
  * 
@@ -12,11 +10,16 @@ import dtb.terminalIO.geom.Rectangle.Simple;
  */
 public interface PositionTransform {
 
-    Position transform(Position position);
+    Vec2<?> transform(Vec2<?> position);
+    
+    default Vec2<?> transform(float x1, float y1) {
+        return transform(new Position.Simple(y1,x1));
+    }
+
 
     public static final PositionTransform NOOP = new PositionTransform() {
         @Override
-        public Position transform(Position position) {
+        public Vec2<?> transform(Vec2<?> position) {
             return position;
         }
 
@@ -40,7 +43,7 @@ public interface PositionTransform {
         }
 
         @Override
-        public Position transform(Position position) {
+        public Vec2<?>  transform(Vec2<?>  position) {
             return f_transform.transform(g_transform.transform(position));
         }
 
@@ -54,38 +57,42 @@ public interface PositionTransform {
     }
 
     public static class Translate implements PositionTransform {
-        int rowDelta;
-        int colDelta;
+        float rowDelta;
+        float colDelta;
 
-        public Translate(int rowDelta, int colDelta) {
+        public Translate(float rowDelta, float colDelta) {
             super();
             this.rowDelta = rowDelta;
             this.colDelta = colDelta;
         }
 
-        public Translate(Position delta) {
-            this(delta.getRow(), delta.getCol());
+        public Translate(int rowDelta, int colDelta) {
+            this((float) rowDelta, (float) colDelta);
         }
 
-        public int getRowDelta() {
+        public Translate(Vec2<?>  delta) {
+            this(delta.getY(), delta.getX());
+        }
+
+        public float getRowDelta() {
             return rowDelta;
         }
 
-        public void setRowDelta(int rowDelta) {
+        public void setRowDelta(float rowDelta) {
             this.rowDelta = rowDelta;
         }
 
-        public int getColDelta() {
+        public float getColDelta() {
             return colDelta;
         }
 
-        public void setColDelta(int colDelta) {
+        public void setColDelta(float colDelta) {
             this.colDelta = colDelta;
         }
 
         @Override
-        public Position transform(Position position) {
-            return new Position.Simple(position.getRow() + getRowDelta(), position.getCol() + getColDelta());
+        public Vec2<?>  transform(Vec2<?>  position) {
+            return position.add(colDelta, getRowDelta());
         }
 
     }
@@ -112,9 +119,12 @@ public interface PositionTransform {
         }
 
         @Override
-        public Position transform(Position position) {
-            int rotatedX = (int) (position.getCol() * Math.cos(theta) - position.getRow() * Math.sin(theta));
-            int rotatedY = (int) (position.getRow() * Math.cos(theta) + position.getCol() * Math.sin(theta));
+        public Vec2<?> transform(Vec2<?> position) {
+            if (theta == 0f) {
+                return position;
+            }
+            int rotatedX = (int) (position.getX() * Math.cos(theta) - position.getY() * Math.sin(theta));
+            int rotatedY = (int) (position.getY() * Math.cos(theta) + position.getX() * Math.sin(theta));
             return new Position.Simple(rotatedY, rotatedX);
         }
     }
@@ -125,11 +135,11 @@ public interface PositionTransform {
     public static class RotateAroundFixedPoint implements PositionTransform {
 
         int theta;
-        Position fixedPoint;
+        Vec2<?> fixedPoint;
 
         PositionTransform positionTransform;
 
-        public RotateAroundFixedPoint(int theta, Position fixedPoint) {
+        public RotateAroundFixedPoint(int theta, Vec2<?> fixedPoint) {
             super();
             this.theta = theta;
             this.fixedPoint = fixedPoint;
@@ -153,7 +163,7 @@ public interface PositionTransform {
             makeTransform();
         }
 
-        public Position getFixedPoint() {
+        public Vec2<?> getFixedPoint() {
             return fixedPoint;
         }
 
@@ -163,7 +173,7 @@ public interface PositionTransform {
         }
 
         @Override
-        public Position transform(Position position) {
+        public Vec2<?> transform(Vec2<?> position) {
             return positionTransform.transform(position);
         }
 
@@ -185,12 +195,13 @@ public interface PositionTransform {
         }
 
         @Override
-        public Position transform(Position position) {
+        public Vec2<?> transform(Vec2<?> position) {
             return new Position.Simple((float)(position.getY()*this.scaleFactorRow), 
                                        (float)(position.getX()*this.scaleFactorCol));
         }
 
     }
+
     
     
 

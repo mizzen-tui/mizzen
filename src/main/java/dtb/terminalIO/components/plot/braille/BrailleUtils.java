@@ -10,6 +10,7 @@ import dtb.terminalIO.controlcodes.color.Colors.FGBGColors;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
+import dtb.terminalIO.geom.position.Vec2;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.MapChars;
 
@@ -38,8 +39,8 @@ public class BrailleUtils {
         return curBrailleChar |= braillePixelMap[rowOffset % 4][colOffset % 2];
     }
 
-    public static Position gridPosToComponentPosition(Position gridPosition) {
-        return new Position.Simple(gridPosition.getRow() / 4, gridPosition.getCol() / 2);
+    public static Position gridPosToComponentPosition(Vec2<?> gridPosition) {
+        return new Position.Simple(gridPosition.getY() / 4, gridPosition.getX() / 2);
     }
 
     public static Dimension componentDimensionToGridDimension(Dimension componentDimension) {

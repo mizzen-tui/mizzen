@@ -92,7 +92,8 @@ public interface Rectangle extends Position, Dimension, Movable {
          if (!contains(d)) {
              return defaultPos;
          }
-         return new Position.Simple( (this.getHeight() - d.getHeight() )/2, (this.getWidth() - d.getWidth()) /2 );
+         return new Position.Simple( ((this.getHeight() - d.getHeight() )/2) + this.getRow(), 
+                                     ((this.getWidth()  - d.getWidth()  )/2) + this.getCol());
     }
     
     public default Position centered(Dimension d) {
@@ -551,6 +552,15 @@ public interface Rectangle extends Position, Dimension, Movable {
             return new Rectangle.Simple(minRow,minCol, (maxRow - minRow)+1  ,(maxCol - minCol)+1);
         }
 
+        public static <T extends Rectangle> boolean hasOverlap(T r1, T r2) {
+            
+            boolean overlap = r2.getCol() <= r1.getRightMostCol() &&
+                              r1.getCol() <= r2.getRightMostCol() &&
+                              r2.getBottomMostRow() >= r1.getRow() &&
+                              r1.getBottomMostRow() >= r2.getRow() ;
+            
+            return overlap;
+        }
         
         /**
          * returns true if rectangle r1 overlaps r2
@@ -558,7 +568,7 @@ public interface Rectangle extends Position, Dimension, Movable {
          * @param r2
          * @return
          */
-        public static <T extends Rectangle> boolean hasOverlap(T r1, T r2) {
+        public static <T extends Rectangle> boolean hasOverlapSlower(T r1, T r2) {
             LeftRight<T> lr = Position.UTIL.leftRight(r1, r2);
             if (lr.getLeft().getRightMostCol() >= lr.getRight().getCol()) {
                 OverUnder<T> ou = Position.UTIL.overUnder(r1, r2);

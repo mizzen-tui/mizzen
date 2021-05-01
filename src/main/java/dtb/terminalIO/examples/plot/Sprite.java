@@ -4,11 +4,14 @@ import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.components.plot.TransformPointPlotter;
 import dtb.terminalIO.components.plot.XYTranslate;
 import dtb.terminalIO.components.plot.shape.Shape;
+import dtb.terminalIO.components.plot.shape.Shape.AbstractShape;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
+import dtb.terminalIO.geom.position.PositionTransform;
 import dtb.terminalIO.geom.position.PositionTransform.RotateAroundFixedPoint;
 
-public abstract class Sprite implements Shape {
+// TODO: this should not be under examples!
+public abstract class Sprite extends AbstractShape {
 
 
     XYTranslate delta = new XYTranslate(null, 0, 0);
@@ -22,7 +25,7 @@ public abstract class Sprite implements Shape {
 
 
     @Override
-    public void draw(PointPlotter pointPlotter) {
+    protected void drawWithTransform(PointPlotter pointPlotter, PositionTransform positionTransform) {
         getRotatingPlotter().setPointPlotter(pointPlotter);
         getPointRotator().setTheta(getTheta());
         drawCounter++;

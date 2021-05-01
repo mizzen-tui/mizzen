@@ -631,7 +631,7 @@ public class Composite extends AbstractComponent<Composite>
 
     @Override
     public void moveTo(int row, int col) {
-        Position delta = this.offsetTo(row, col);
+        Position delta = this.offsetToRowCol(row, col);
         bounds.moveDelta(delta.getRow(), delta.getCol());
         fullrecalcDim();
     }
@@ -676,7 +676,7 @@ public class Composite extends AbstractComponent<Composite>
         // loop thru children and draw each
         Position offset = Position.ZERO;
         if (this.hasBorder()) {
-            offset = offset.offsetTo(1, 1);
+            offset = offset.offsetToRowCol(1, 1);
             if (boundsFixed) {
                 clippedArea = new Rectangle.Simple(bounds.getRow()+1, bounds.getCol()+1, bounds.getHeight()-2, bounds.getWidth()-2);
             }

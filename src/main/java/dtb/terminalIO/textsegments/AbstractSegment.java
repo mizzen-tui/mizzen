@@ -37,7 +37,7 @@ abstract class AbstractSegment implements ScreenLineSegment {
     }
 
     public String toString() {
-        return String.format("(row=%d,lcol=%d,rcol=%d,[id=%d]):%s", getRow(), getCol(), getRightMostCol(), getId(), getText());
+        return String.format("x(row=%d,lcol=%d,rcol=%d,[id=%d]):%s", getRow(), getCol(), getRightMostCol(), getId(), getText());
     }
 
     @Override

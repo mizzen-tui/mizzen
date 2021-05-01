@@ -10,6 +10,7 @@ import dtb.terminalIO.components.plot.shape.Circle;
 import dtb.terminalIO.components.plot.shape.CompositeShape;
 import dtb.terminalIO.components.plot.shape.Line;
 import dtb.terminalIO.components.plot.shape.Shape;
+import dtb.terminalIO.components.plot.shape.Shape.AbstractShape;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.core.Canvas;
@@ -17,6 +18,7 @@ import dtb.terminalIO.core.TerminalScreen;
 import dtb.terminalIO.examples.TestsCommon;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
+import dtb.terminalIO.geom.position.PositionTransform;
 import dtb.terminalIO.geom.position.PositionTransform.RotateAroundFixedPoint;
 
 public class BrailleScratchPadTests {
@@ -25,7 +27,7 @@ public class BrailleScratchPadTests {
         grid.plotPosition(10, 10);
     }
 
-    static class EnemyOneShape implements Shape {
+    static class EnemyOneShape extends AbstractShape {
 
         CompositeShape componentShapes;
         Line l1;
@@ -57,7 +59,7 @@ public class BrailleScratchPadTests {
         }
 
         @Override
-        public void draw(PointPlotter pointPlotter) {
+        protected void drawWithTransform(PointPlotter pointPlotter, PositionTransform positionTransform) {
             drawCounter++;
             if (drawCounter % 6 == 0) {
                 l1.setColor(getLineColor(l1));
