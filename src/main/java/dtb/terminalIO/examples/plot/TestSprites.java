@@ -18,7 +18,7 @@ import dtb.terminalIO.components.plot.PointPlotter.PointPlot;
 import dtb.terminalIO.components.plot.PointPlotter.PointPlotterList;
 import dtb.terminalIO.components.plot.TransformPointPlotter;
 import dtb.terminalIO.components.plot.XYTranslate;
-import dtb.terminalIO.components.plot.blocks.BlocksGrid;
+import dtb.terminalIO.components.plot.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.shape.Circle;
 import dtb.terminalIO.components.plot.shape.CircleAlgorithm.CircleCounterClockwise_SORT;
 import dtb.terminalIO.components.plot.shape.CompositeShape;
@@ -38,8 +38,7 @@ import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.geom.position.PositionTransform.RotateAroundFixedPoint;
 
 public class TestSprites {
-    
-    
+
     public static void main(String args[]) {
         
         TUIApp app = new TUIApp(args).setEmptyChar(' ')
@@ -52,8 +51,7 @@ public class TestSprites {
 
         }).start();
     }
-    
-    
+
     public static Component<?> addTestSpritesPanel(TUIApp tApp, ChildComponentManager<?> parentPanel) {
         return addTestSpritesPanel(tApp, parentPanel, false);
     }
@@ -67,8 +65,8 @@ public class TestSprites {
 
         Dimension gridSize = computeGridSize.get();
 
-        BlocksGrid grid = new BlocksGrid(Colors.BGre, gridSize);
-//        BrailleGrid grid = new BrailleGrid(Colors.BGre, gridSize);
+        //BlocksGrid grid = new BlocksGrid(Colors.BGre, gridSize);
+        BrailleGrid grid = new BrailleGrid(Colors.BGre, gridSize);
 
         if (includeTitle) {
           grid.setTitle(Colors.BPur, "Space Invaders");

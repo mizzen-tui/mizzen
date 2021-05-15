@@ -4,8 +4,12 @@ import java.util.Arrays;
 import java.util.List;
 
 import dtb.terminalIO.components.plot.PointPlotter;
+import dtb.terminalIO.components.plot.PointPlotterAsRectangle;
+import dtb.terminalIO.components.plot.PointPlotter.PointPlot;
 import dtb.terminalIO.components.plot.shape.Shape.AbstractShape;
 import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.geom.AsRectangle2D;
+import dtb.terminalIO.geom.Rectangle2D;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.geom.position.PositionTransform;
 import dtb.terminalIO.geom.position.Vec2;
@@ -29,8 +33,7 @@ import dtb.terminalIO.geom.position.Vec2;
  * @author dbalme
  *
  */
-public class Triangle extends AbstractShape<Triangle> implements Fillable<Triangle> {
-
+public class Triangle extends AbstractShape<Triangle> implements Fillable<Triangle> , AsRectangle2D.AsFloat2D  {
     Vec2<?> p1;
     Vec2<?> p2;
     Vec2<?> p3;
@@ -236,4 +239,17 @@ public class Triangle extends AbstractShape<Triangle> implements Fillable<Triang
         }
     }
 
+    @Override
+    public Rectangle2D<Float> getRectangle2D() {
+        PointPlotterAsRectangle calculatedRectanglePlotter = new PointPlotterAsRectangle();
+        
+        calculatedRectanglePlotter.plot(positionTransform.transform(p1));
+        calculatedRectanglePlotter.plot(positionTransform.transform(p2));
+        calculatedRectanglePlotter.plot(positionTransform.transform(p3));
+
+        return calculatedRectanglePlotter.getRectangle2D();
+    }
+    
+
+    
 }

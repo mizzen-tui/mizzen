@@ -11,7 +11,7 @@ package dtb.terminalIO.geom.position;
 public interface PositionTransform {
 
     Vec2<?> transform(Vec2<?> position);
-    
+
     default Vec2<?> transform(float x1, float y1) {
         return transform(new Position.Simple(y1,x1));
     }
@@ -22,7 +22,6 @@ public interface PositionTransform {
         public Vec2<?> transform(Vec2<?> position) {
             return position;
         }
-
     };
 
     /**
@@ -147,11 +146,16 @@ public interface PositionTransform {
             makeTransform();
         }
 
+        public RotateAroundFixedPoint(Integer theta, Vec2<?> fixedPoint) {
+            // autoboxing issues - that's why this
+            this( theta == null ? 0 : theta, fixedPoint);
+        }
+
         private void makeTransform() {
             // This transform will translate position relative to origin,
             // then perform the rotate and then translate back to fixed point
             positionTransform = new FofG(new Translate(fixedPoint),
-                    new FofG(new Rotate(theta), new Translate(fixedPoint.negate())));
+                                         new FofG(new Rotate(theta), new Translate(fixedPoint.negate())));
         }
 
         public int getTheta() {
@@ -180,7 +184,7 @@ public interface PositionTransform {
     }
     
     public static class Scale implements PositionTransform {
-        
+
         Double scaleFactorRow;
         Double scaleFactorCol;
 
@@ -202,7 +206,5 @@ public interface PositionTransform {
 
     }
 
-    
-    
 
 }

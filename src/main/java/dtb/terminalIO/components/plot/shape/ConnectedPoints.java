@@ -2,17 +2,18 @@ package dtb.terminalIO.components.plot.shape;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.TreeSet;
 
 import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.components.plot.PointPlotter.PointPlot;
+import dtb.terminalIO.components.plot.PointPlotterAsRectangle;
 import dtb.terminalIO.components.plot.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.shape.Shape.AbstractShape;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
+import dtb.terminalIO.geom.AsRectangle2D;
+import dtb.terminalIO.geom.Rectangle2D;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.geom.position.PositionTransform;
 import dtb.terminalIO.geom.position.Vec2;
@@ -27,7 +28,7 @@ import dtb.terminalIO.textsegments.CleanString;
  * Makes heavy use of the {@link Line} shape.
  * 
  */
-public class ConnectedPoints<T extends ConnectedPoints<?>> extends AbstractShape<T> implements Fillable<T>{
+public class ConnectedPoints<T extends ConnectedPoints<?>> extends AbstractShape<T> implements Fillable<T> , AsRectangle2D.AsFloat2D  {
     
     List<PointPlot> points = new ArrayList<PointPlot>();
     boolean filled = false;
@@ -194,6 +195,16 @@ public class ConnectedPoints<T extends ConnectedPoints<?>> extends AbstractShape
     public T setFilled(boolean filled) {
         this.filled = filled;
         return (T) this;
+    }
+
+    @Override
+    public Rectangle2D<Float> getRectangle2D() {
+        PointPlotterAsRectangle calculatedRectanglePlotter = new PointPlotterAsRectangle();
+        
+        for (PointPlot point : points) {
+            calculatedRectanglePlotter.plot(positionTransform.transform(point));
+        }
+        return calculatedRectanglePlotter.getRectangle2D();
     }
     
 

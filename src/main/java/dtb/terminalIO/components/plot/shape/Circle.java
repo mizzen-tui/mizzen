@@ -4,6 +4,8 @@ import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.components.plot.PointPlotter.PointPlot;
 import dtb.terminalIO.components.plot.shape.Shape.AbstractShape;
 import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.geom.AsRectangle2D;
+import dtb.terminalIO.geom.Rectangle2D;
 import dtb.terminalIO.geom.position.PositionTransform;
 import dtb.terminalIO.geom.position.Vec2;
 
@@ -62,7 +64,7 @@ import dtb.terminalIO.geom.position.Vec2;
  * @author dbalme
  *
  */
-public class Circle extends AbstractShape implements Fillable<Circle>{
+public class Circle extends AbstractShape<Circle> implements Fillable<Circle>, AsRectangle2D.AsFloat2D {
 
     /**
      * Specifies how to draw the circle,
@@ -70,7 +72,7 @@ public class Circle extends AbstractShape implements Fillable<Circle>{
      */
     @FunctionalInterface
     public static interface DrawCircleAlgorithm {
-        void draw(float x, float y, float radius, PointPlotter plot);
+        void draw(int x, int y, int radius, PointPlotter plot);
     }
     
     public static class CompositeAlgo implements DrawCircleAlgorithm {
@@ -85,7 +87,7 @@ public class Circle extends AbstractShape implements Fillable<Circle>{
         }
 
         @Override
-        public void draw(float x, float y, float radius, PointPlotter plot) {
+        public void draw(int x, int y, int radius, PointPlotter plot) {
             algo1.draw(x, y, radius, plot);
             algo2.draw(x, y, radius, plot);
         }
@@ -172,19 +174,54 @@ public class Circle extends AbstractShape implements Fillable<Circle>{
         this.color = color;
     }
 
+    protected float getTransformedRadius(float currentRadius, PositionTransform positionTransform) {
+        float scaledRadius;
+
+        Vec2<?> center00 = new Vec2.BaseVec2(0,0);
+        Vec2<?> radiusVec = new Vec2.BaseVec2(0,currentRadius);
+        
+        float prevRadiusSquared = currentRadius * currentRadius;
+        
+        Vec2<?> transFormedCenter00 = positionTransform.transform(center00);
+        Vec2<?> transFormedRadiusVec = positionTransform.transform(radiusVec);
+        
+        float newRadiusSquared =  transFormedRadiusVec.sub(transFormedCenter00) .lengthSquared();
+        
+        if (prevRadiusSquared != newRadiusSquared) {
+            scaledRadius = (float)Math.sqrt( newRadiusSquared );
+        } else {
+            scaledRadius = currentRadius;
+        }
+
+        return scaledRadius;
+    }
+    
     protected void drawWithTransform(PointPlotter pointPlotter, PositionTransform positionTransform) {
         Color lastColor = null;
         if (color != null) {
             lastColor = pointPlotter.setNextPlotColor(color);
         }
-        
+
         Vec2<?> centerPoint = positionTransform.transform(x, y);
 
-        this.algorithm.draw(centerPoint.getX(), centerPoint.getY(), radius, pointPlotter);
+        float scaledRadius = getTransformedRadius(radius, positionTransform);
+
+        this.algorithm.draw(Math.round(centerPoint.getX()), Math.round(centerPoint.getY()), Math.round(scaledRadius), pointPlotter);
 
         if (color != null) {
             pointPlotter.setNextPlotColor(lastColor);
         }
+    }
+
+    @Override
+    public Rectangle2D.Float2D getRectangle2D() {
+        Vec2<?> centerPoint = positionTransform.transform(x, y);
+        float scaledRadius = getTransformedRadius(radius, positionTransform);
+        
+        Vec2<?> topLeft      =  centerPoint.sub(new Vec2.BaseVec2(scaledRadius, 0)).sub(new Vec2.BaseVec2(0, scaledRadius));
+        Vec2<?> bottomRight  =  centerPoint.offsetAdd(new Vec2.BaseVec2(scaledRadius, 0)).offsetAdd(new Vec2.BaseVec2(0, scaledRadius));
+
+        return new Rectangle2D.Float2D(topLeft, bottomRight) ;
     }
 
 

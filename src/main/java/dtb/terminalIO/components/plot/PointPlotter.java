@@ -27,8 +27,8 @@ public interface PointPlotter {
 
     void plot(float x, float y);
     
-    default void plot(PointPlot p) {
-        plot(p.x, p.y);
+    default void plot(Vec2<?> p) {
+        plot(p.getX(), p.getY());
     }
 
     default void plot(Position p) {
@@ -71,12 +71,6 @@ public interface PointPlotter {
         public void clearPlots() {
             this.getPointPlotter().clearPlots();
         }
-
-//	@Override
-//	public void plot(int x, int y, Color color) {
-//	    this.getPointPlotter().plot(x, y, color);
-//	    
-//	}
 
     }
 
@@ -215,7 +209,6 @@ public interface PointPlotter {
         @Override
         public void plot(float x, float y) {
             plot(x, y, currentColor);
-//            getPlots().add(new PointPlot(y, x));
         }
 
         public void plot(float x, float y, Color color) {

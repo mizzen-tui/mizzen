@@ -6,7 +6,7 @@ import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.geom.position.PositionTransform;
 
-public class DotShape extends AbstractShape {
+public class DotShape extends AbstractShape<DotShape> {
     
     Position p;
 

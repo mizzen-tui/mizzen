@@ -7,7 +7,7 @@ import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.PositionTransform;
 import dtb.terminalIO.geom.position.Vec2;
 
-public class RectangleShape extends AbstractShape implements Rectangle, Fillable<RectangleShape> {
+public class RectangleShape extends AbstractShape<RectangleShape> implements Rectangle, Fillable<RectangleShape> {
 
     Rectangle rectangle;
     Color color;

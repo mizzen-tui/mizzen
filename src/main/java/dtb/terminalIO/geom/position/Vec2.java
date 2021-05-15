@@ -39,8 +39,10 @@ public interface Vec2<T extends Vec2<?>> {
         return add(offsetToAdd.getX(), offsetToAdd.getY());
     }
 
-    public default T sub(Vec2<?> offsetToAdd) {
-        return add(offsetToAdd.getX(), offsetToAdd.getY());
+    public default T sub(Vec2<?> other) {
+        float newX = this.getX() - other.getX();
+        float newY = this.getY() - other.getY();
+        return newFrom(newX, newY);
     }
 
     public default T mul(float factor) {

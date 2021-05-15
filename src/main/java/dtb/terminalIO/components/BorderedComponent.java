@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.stream.Collectors;
 
 import dtb.terminalIO.controlcodes.color.Color;
-import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.geom.Align;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;

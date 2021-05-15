@@ -212,11 +212,6 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
     }
     
     
-    @Override
-    public String toString() {
-        return super.toString() + String.valueOf(fillPolicy.toString());
-    }
-    
     public String getName() {
         return this.name;
     }
@@ -244,12 +239,12 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
        component.getFillOnClearPolicy().setFillOnClear(this.getFillOnClearPolicy().isFillOnClear());
        return component;
     }
-    
+
     @Override
     public Position getCanvasOffset() {
         return this.canvasOffset;
     }
-    
+
     @Override
     public void setCanvasOffset(Position canvasOffset) {
         this.canvasOffset = canvasOffset;
@@ -274,6 +269,12 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
             // do nothing
         }
 
+    @Override
+    public String toString() {
+        return  HasName.UTIL.getName(this) + toStringDetails();
+    }
+
+	
     }
 
 }

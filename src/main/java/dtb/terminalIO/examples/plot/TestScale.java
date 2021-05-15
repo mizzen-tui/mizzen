@@ -44,6 +44,7 @@ import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.geom.position.PositionRelativeFactory;
 import dtb.terminalIO.geom.position.PositionTransform;
 import dtb.terminalIO.geom.position.PositionTransform.RotateAroundFixedPoint;
+import dtb.terminalIO.geom.position.PositionTransform.Scale;
 import dtb.terminalIO.geom.position.Vec2;
 
 public class TestScale {
@@ -57,8 +58,6 @@ public class TestScale {
                .confirmOnExit()
                .setOnReadyStart((tApp)->{
 
-                   //XYTranslate xyTranslatePlotter = new XYTranslate(null, 0, 0);
-                   
                    PositionTransform.Translate translateTranFormer = new PositionTransform.Translate(0, 0);
 
                    TextComponent msgArea = new TextComponent(" ");
@@ -69,21 +68,19 @@ public class TestScale {
 
                    Supplier<Dimension> computeGridSize = ()-> {
                        return new Dimension.Simple(tApp.getMainApplicationPanel().getHeight()-15,
-                                                   tApp.getMainApplicationPanel().getWidth()-shapesChoiceComponent.getWidth()-20);
+                                                   tApp.getMainApplicationPanel().getWidth()-shapesChoiceComponent.getWidth()-48);
                    };
 
                    Dimension gridSize = new Dimension.SupplierAsDimension(computeGridSize);
 
-                   //BlocksGrid grid = new BlocksGrid(Colors.BGre, gridSize);
                    BrailleGrid grid = new BrailleGrid(Colors.BGre, gridSize);
-                   
+
                    HorizontalPanel controlsInGrid = new HorizontalPanel();
                    controlsInGrid.setBorder(true);
                    RockerButton fillOption = new RockerButton(grid.getColor(), "Fill", false);
                    controlsInGrid.add(fillOption);
-                   
+
                    TextInputInteger rotationInput = new TextInputInteger(3);
-                   
 
                    Button rotateLeft = new Button("<-");
                    Button rotateRight = new Button("->");
@@ -93,31 +90,45 @@ public class TestScale {
                    controlsInGrid.add(rotationInput);
                    controlsInGrid.add(rotateRight);
 
+                   TextInputInteger scaleInput = new TextInputInteger(3);
+                   scaleInput.setText("100");
+                   Button scaleUp = new Button("+");
+                   Button scaleDown = new Button("-");
+
+                   controlsInGrid.add(new TextComponent("|  Scale (%)"));
+                   controlsInGrid.add(scaleUp);
+                   controlsInGrid.add(scaleInput);
+                   controlsInGrid.add(scaleDown);
+
                    Position controlsInGridPosition = PositionRelativeFactory.fromAlign(VAlign.BOTTOM, 3, Align.LEFT, 0,  grid, controlsInGrid);
-                   
+
                    grid.add(controlsInGridPosition, controlsInGrid);
                    grid.onClickHandler = (te) -> {
                        ApplicationMouseEvent appMouseEvent = (ApplicationMouseEvent) te;
                        MessageBox.showInfoDialog(te.getEventBus(), tApp.getMainApplicationPanel()  , "click at");
                    };
-                   
+
                    grid.setTitle(Colors.BPur, " Shape : ");
 
                    PointPlotter pp = grid; //.asPointPlotter();
-                   //xyTranslatePlotter.setPointPlotter(grid.asPointPlotter());
 
                    Consumer<Shape> drawShape = (shape)-> {
                        if (shape == null) {
                            msg.accept("shape = null");
                            return;
                        }
-                       
+
                        Vec2<?>  midPoint = grid.getGridRectangle().centerPosition();
-                       
-                       
+
                        PositionTransform.FofG transForm = new PositionTransform.FofG(new RotateAroundFixedPoint(rotationInput.getValue(),midPoint),translateTranFormer);
-                       
-                       
+
+                       Integer scaleValuePercent = scaleInput.getValue();
+                       if (scaleValuePercent != null && scaleValuePercent != 100) {
+                           double scaleValue = ((double)scaleValuePercent) / 100d;
+                           Scale scaleTransform = new Scale(scaleValue);
+                           transForm = new PositionTransform.FofG(transForm, scaleTransform);
+                       }
+
                        shape.setPositionTransform(transForm);
 
                        grid.clearPlots();
@@ -136,7 +147,7 @@ public class TestScale {
                    
 
                    shapesChoiceComponent.onChange((te)->{
-                       Shape shape = shapesChoiceComponent.getValue();
+                       Shape<?> shape = shapesChoiceComponent.getValue();
                        msg.accept("Shape selected: " + shape.getClass().getSimpleName());
                        grid.setTitle(" Shape : "+shape.getClass().getSimpleName()+" ");
 
@@ -183,6 +194,7 @@ public class TestScale {
                                            }
                                   ));
 
+                   // handle rotate requests
                    rotateLeft.onChange((te)->{
                        Integer value = (rotationInput.getValue()==null ? 0 : rotationInput.getValue()) - 1;
                        rotationInput.setText(String.valueOf(value));
@@ -196,6 +208,23 @@ public class TestScale {
                    });
                    
                    rotationInput.onChange((te)->{
+                       delayedDraw.onRequest(te.getEventBus());
+                   });
+
+                   // handle scale requests
+                   scaleUp.onChange((te)->{
+                       Integer value = (scaleInput.getValue()==null ? 0 : scaleInput.getValue()) + 1;
+                       scaleInput.setText(String.valueOf(value));
+                       delayedDraw.onRequest(te.getEventBus());
+                   });
+
+                   scaleDown.onChange((te)->{
+                       Integer value = (scaleInput.getValue()==null ? 0 : scaleInput.getValue()) - 1;
+                       scaleInput.setText(String.valueOf(value));
+                       delayedDraw.onRequest(te.getEventBus());
+                   });
+
+                   scaleInput.onChange((te)->{
                        delayedDraw.onRequest(te.getEventBus());
                    });
 
@@ -223,6 +252,10 @@ public class TestScale {
                    vp.add(msgArea);
 
                    tApp.getMainApplicationPanel().add(vp);
+
+                   tApp.appendOnResizeAction((tApp2, size)->{
+                       grid.resize(new Dimension.SupplierAsDimension(computeGridSize));
+                   });
 
                    ((Composite)tApp.getMainApplicationPanel()).setBorder(true);
 

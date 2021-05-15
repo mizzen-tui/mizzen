@@ -1,12 +1,10 @@
 package dtb.terminalIO.components;
 
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.events.EventHandler;
-import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.geom.position.PositionDelegate;

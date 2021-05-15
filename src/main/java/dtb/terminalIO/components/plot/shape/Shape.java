@@ -1,7 +1,13 @@
 package dtb.terminalIO.components.plot.shape;
 
+import java.util.Collection;
+
 import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.components.plot.PointPlotter;
+import dtb.terminalIO.components.plot.PointPlotterAsRectangle;
+import dtb.terminalIO.geom.AsRectangle2D;
+import dtb.terminalIO.geom.Rectangle2D;
+import dtb.terminalIO.geom.Rectangle2D.Float2D;
 import dtb.terminalIO.geom.position.PositionTransform;
 
 /**
@@ -16,12 +22,11 @@ public interface Shape<T extends Shape<?>> extends HasName<T> {
      * @param pointPlotter
      */
     public void draw(PointPlotter pointPlotter);
-    
+
     PositionTransform getPositionTransform();
-    
+
     void setPositionTransform(PositionTransform positionTransform);
 
-    
     public static abstract class AbstractShape<T extends AbstractShape<?>> implements Shape<T> {
 
         PositionTransform positionTransform = PositionTransform.NOOP; 
@@ -61,7 +66,6 @@ public interface Shape<T extends Shape<?>> extends HasName<T> {
             return (T) this;
         }
 
-        
     }
     
     /** 
@@ -108,6 +112,43 @@ public interface Shape<T extends Shape<?>> extends HasName<T> {
         public Delegate setName(String name) {
             getShape().setName(name);
             return this;
+        }
+
+    }
+
+    public static class UTIL {
+
+        static public Rectangle2D.Float2D getAsRectangle(Shape<?> shape) {
+
+            PointPlotterAsRectangle calculatedRectanglePlotter = new PointPlotterAsRectangle();
+            calculateAndGrowRectangleFromShape(calculatedRectanglePlotter, shape);
+            return calculatedRectanglePlotter.getRectangle2D();
+
+        }
+
+        static public Rectangle2D.Float2D getAsRectangle(Collection<Shape<?>> shapes) {
+
+            PointPlotterAsRectangle calculatedRectanglePlotter = new PointPlotterAsRectangle();
+
+            for (Shape<?> shape : shapes) {
+                calculateAndGrowRectangleFromShape(calculatedRectanglePlotter, shape);
+            }
+
+            return calculatedRectanglePlotter.getRectangle2D();
+
+        }
+
+        static private void calculateAndGrowRectangleFromShape(PointPlotterAsRectangle calculatedRectanglePlotter, Shape<?> shape) {
+
+            if (shape instanceof AsRectangle2D.AsFloat2D) {
+                Float2D sizeOfShape = (Rectangle2D.Float2D) ((AsRectangle2D.AsFloat2D)shape).getRectangle2D(); 
+                calculatedRectanglePlotter.plot(sizeOfShape.getX1(), sizeOfShape.getY1());
+                calculatedRectanglePlotter.plot(sizeOfShape.getX2(), sizeOfShape.getY2());
+                return;
+            }
+
+            shape.draw(calculatedRectanglePlotter);
+
         }
 
     }

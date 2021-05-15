@@ -2,6 +2,7 @@ package dtb.terminalIO.components.plot.shape;
 
 import dtb.terminalIO.components.plot.PointPlotter;
 
+// TODO - need to eliminate -- now that shapes have a transform - this is no longer I needed I would think
 public class ShapeWithTransform extends Shape.Delegate {
 
     // TODO:  I need to document why this needs to be a delegate

@@ -334,5 +334,9 @@ public class ChainedEventHandler implements EventHandler, EventHandlerContainer,
         this.name = name;
         return this;
     }
+    
+    public String toString() {
+        return statsAsStr();
+    }
 
 }

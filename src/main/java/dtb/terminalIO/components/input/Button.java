@@ -357,4 +357,9 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
     public void childResized(Component<?> child) {
         this.resize((Dimension)child);
     }
+    
+    public String toStringDetails() {
+        return "["+this.getTextForRendering(false)+", value="+String.valueOf(getValue())+"]";
+    }
+    
 }

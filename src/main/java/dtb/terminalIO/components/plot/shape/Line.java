@@ -15,7 +15,7 @@ import dtb.terminalIO.geom.position.Vec2;
  * Uses a {@link LinePlotter} to draw itself.
  *
  */
-public class Line extends AbstractShape {
+public class Line extends AbstractShape<Line> {
 
     float x1;
     float y1;

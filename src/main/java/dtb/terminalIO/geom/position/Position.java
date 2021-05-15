@@ -44,10 +44,6 @@ public interface Position extends Vec2<Position>, Row, Column{
     }
 
 
-//    public default Position offsetAdd(Position offsetToAdd) {
-//        return new Position.Simple(offsetToAdd.getY() + this.getY(), offsetToAdd.getX() + this.getX());
-//    }
-
     public default Position addCols(int cols) {
         return new Position.Simple(this.getY(), this.getX()+cols);
     }
@@ -186,7 +182,7 @@ public interface Position extends Vec2<Position>, Row, Column{
         public static <T extends Position> LeftRight<T> leftRight(T p1, T p2) {
             return new LeftRight<T>(p1, p2, (left, right) -> left.getCol() <= right.getCol());
         }
-    
+
         public static <T extends Position> OverUnder<T> overUnder(T p1, T p2) {
             return new OverUnder<T>(p1, p2, (over, under) -> over.getRow() <= under.getRow());
         }

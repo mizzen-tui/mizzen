@@ -17,6 +17,7 @@ import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.util.StringUtils;
 
 public class TextInputForType<T>  extends BoundedComponent<TextInputForType<T>> implements HasValue<T>, ParentContainer, Focusable{
 
@@ -143,6 +144,10 @@ public class TextInputForType<T>  extends BoundedComponent<TextInputForType<T>> 
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer mySegments) {
         mySegments.clearAndMerge(this.textInput.getSegmentsBuffer().getSegments());
+    }
+    
+    public String toStringDetails() {
+        return "[value=" + StringUtils.truncate(String.valueOf(this.getValue()),10)+"]";
     }
 
 }

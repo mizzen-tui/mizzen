@@ -4,7 +4,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import dtb.terminalIO.components.plot.PointPlotter;
+import dtb.terminalIO.geom.AsRectangle2D;
+import dtb.terminalIO.geom.Rectangle2D;
 import dtb.terminalIO.geom.position.PositionTransform;
+import dtb.terminalIO.traverse.HasChildren;
 
 /**
  * A {@link Shape} that contains multiple shapes
@@ -14,7 +17,7 @@ import dtb.terminalIO.geom.position.PositionTransform;
  * The draw method will draw all
  * 
  */
-public class CompositeShape implements Shape<CompositeShape> {
+public class CompositeShape implements Shape<CompositeShape> , HasChildren<Shape<?>>, AsRectangle2D.AsFloat2D {
 
     Collection<Shape<?>> shapes = new ArrayList<Shape<?>>();
     PositionTransform positionTransform = PositionTransform.NOOP;
@@ -63,6 +66,16 @@ public class CompositeShape implements Shape<CompositeShape> {
     public CompositeShape setName(String name) {
         this.name = name;
         return this;
+    }
+
+    @Override
+    public Collection<? extends Shape<?>> getChildren() {
+        return shapes;
+    }
+
+    @Override
+    public Rectangle2D.Float2D getRectangle2D() {
+        return Shape.UTIL.getAsRectangle( shapes );
     }
 
 }
