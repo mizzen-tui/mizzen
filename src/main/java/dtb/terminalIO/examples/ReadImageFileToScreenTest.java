@@ -24,6 +24,7 @@ import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.input.DropdownListBox;
 import dtb.terminalIO.components.input.TextInput;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory;
+import dtb.terminalIO.components.plot.image.ImageViewerFactory.IMAGE_RENDER_TYPE;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.RGBPlotPredicate;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.RGBToAnsiColorControlCode;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
@@ -102,9 +103,11 @@ public class ReadImageFileToScreenTest {
 
             HorizontalPanel hp2ndRow = new HorizontalPanel();
             hp2ndRow.setEmptyChar('X');
-            Button useBrailleToggleButton = new Button(Colors.Whi, "Braille Renderer", true);
+//            Button useBrailleToggleButton = new Button(Colors.Whi, "Braille Renderer", true);
+            DropdownListBox<ImageViewerFactory.IMAGE_RENDER_TYPE> imageRendererTypeDDLB = new DropdownListBox<ImageViewerFactory.IMAGE_RENDER_TYPE>(ImageViewerFactory.imageRenderTypeOptions());
+            imageRendererTypeDDLB.setSelected(0);
 
-            hp2ndRow.add(useBrailleToggleButton);
+            hp2ndRow.add(imageRendererTypeDDLB);
 
             TextComponent gradientLabel = new TextComponent("Current gradient:");
             hp2ndRow.add(gradientLabel);
@@ -162,10 +165,14 @@ public class ReadImageFileToScreenTest {
                         Component<?> imgViewer;
                         ElapsedTime imgGenerateTime = ElapsedTime.start();
                         if (toPlotOrNot != null && colorMap != null && gradientStr != null) {
-                            if (useBrailleToggleButton.getValue()) {
+                            if (imageRendererTypeDDLB.getValue().equals(IMAGE_RENDER_TYPE.BLOCK)) {
                                 imgViewer = ImageViewerFactory.simpleImageToBlocksView(imageToView, newImageSize, toPlotOrNot, colorMap);
-                            } else {
+                            } else  if (imageRendererTypeDDLB.getValue().equals(IMAGE_RENDER_TYPE.BRAILLE)) {
+                                imgViewer = ImageViewerFactory.simpleImageToBrailleView(imageToView, newImageSize, toPlotOrNot, colorMap);
+                            } else if (imageRendererTypeDDLB.getValue().equals(IMAGE_RENDER_TYPE.ASCII)) {
                                 imgViewer = ImageViewerFactory.simpleImageToStringView(imageToView, newImageSize, toPlotOrNot, colorMap, gradientStr);
+                            } else {
+                                imgViewer = new TextComponent("Image renderer type not defined");
                             }
                         } else {
                             imgViewer = ImageViewerFactory.fromImage(imageToView, newImageSize);
@@ -220,8 +227,9 @@ public class ReadImageFileToScreenTest {
                 onOptionChanged.handle(te);
             });
             
-            useBrailleToggleButton.onChange((te)->{
-                if (useBrailleToggleButton.getValue()) {
+            imageRendererTypeDDLB.onChange((te)->{
+                if (imageRendererTypeDDLB.getValue().equals(IMAGE_RENDER_TYPE.BLOCK) ||
+                    imageRendererTypeDDLB.getValue().equals(IMAGE_RENDER_TYPE.BRAILLE)) {
                     currentGradientTextBox.hide();
                     gradientLabel.hide();
                     reverseGradientText.hide();

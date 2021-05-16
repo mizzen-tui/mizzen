@@ -35,6 +35,7 @@ import dtb.terminalIO.components.input.DropdownListBox;
 import dtb.terminalIO.components.input.HasValue;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.ImageRenderRequest;
+import dtb.terminalIO.components.plot.image.ImageViewerFactory.ImageRenderTypeOption;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.ConditionalEventHandler;
@@ -108,16 +109,16 @@ public class RenderFromGraphics2D {
 
             controls.addComponent(new TextComponent("2D animated Grpahics | "));
 
-            Button useBrailleToggleButton = new Button(Colors.Whi, "Braille Renderer", true);
-            controls.addComponent(useBrailleToggleButton);
-            useBrailleToggleButton.setValue(currentRequest.get().isUseBraille());
-            useBrailleToggleButton.onChange((te)->{
-                currentRequest.get().setUseBraille( useBrailleToggleButton.getValue());
+            //DropdownListBox<T>
+            DropdownListBox<ImageViewerFactory.IMAGE_RENDER_TYPE> imageRendererTypeDDLB = new DropdownListBox<ImageViewerFactory.IMAGE_RENDER_TYPE>(ImageViewerFactory.imageRenderTypeOptions());
+            controls.addComponent(imageRendererTypeDDLB);
+            imageRendererTypeDDLB.setSelected(0);
+            imageRendererTypeDDLB.onChange((te)->{
+                currentRequest.get().setImageRenderType( imageRendererTypeDDLB.getValue());
             });
             
             controls.addComponent(new TextComponent(" | Color map: "));
-             
-            
+
             DropdownListBox<ImageViewerFactory.RGBToAnsiColorControlCode> colorMapDDLB = new DropdownListBox<ImageViewerFactory.RGBToAnsiColorControlCode>(ImageViewerFactory.colorMap());
             colorMapDDLB.setSelected(0);
             colorMapDDLB.setColor(Colors.BIBlu);
@@ -233,7 +234,7 @@ public class RenderFromGraphics2D {
     
     static public class AnimatorController extends AbstractComponentWrappper<Component<?>> {
 
-        ImageRenderRequest imageRenderRequest = new ImageRenderRequest().setUseBraille(false);
+        ImageRenderRequest imageRenderRequest = new ImageRenderRequest();
         OnIdleEventEventHandler idleEventHandler;
         boolean stopped = false;
 
