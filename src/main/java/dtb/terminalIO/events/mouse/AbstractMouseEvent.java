@@ -12,6 +12,9 @@ class AbstractMouseEvent extends TerminalEvent<Position> {
     protected AbstractMouseEvent(Object source, TYPE theType, MOUSE_ACTION action, Position eventData) {
         super(source, theType, eventData, Q_FULL_POLICY.OFFER);
         this.mouseAction = action;
+        if (this.mouseAction == null) {
+            throw new NullPointerException("mouseAction = null! ");
+        }
     }
     
     public MOUSE_ACTION getMouseAction() {

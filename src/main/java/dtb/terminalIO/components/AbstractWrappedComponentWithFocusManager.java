@@ -3,10 +3,8 @@ package dtb.terminalIO.components;
 import java.util.Collection;
 import java.util.function.Function;
 
-import dtb.terminalIO.components.input.HasValue;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.events.EventBus;
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
@@ -20,6 +18,7 @@ public  abstract class AbstractWrappedComponentWithFocusManager<T extends Compon
         super(color, componentToWrap);
         if (componentToWrap instanceof FocusManager) {
             this.focusManagerBuilder = (eventBus)-> (FocusManager)componentToWrap;
+            setFocusManager((FocusManager)componentToWrap);
         } else {
             this.focusManagerBuilder = null;
             this.focusManager = new DefaultFocusManager() {
@@ -39,13 +38,6 @@ public  abstract class AbstractWrappedComponentWithFocusManager<T extends Compon
         DefaultFocusManager.setDefaultNameFromParentObject(focusManager, this);
     }
     
-    public void setFocusManagerBuilder(Function<EventBus, FocusManager> focusManagerBuilder) {
-        if (focusManagerBuilder != null) {
-            this.focusManager = null;
-        }
-        this.focusManagerBuilder = focusManagerBuilder;
-    }
-
     private FocusManager getFocusManager(EventBus eventBus) {
         if (this.focusManager == null) {
             if (focusManagerBuilder == null) {
@@ -56,7 +48,7 @@ public  abstract class AbstractWrappedComponentWithFocusManager<T extends Compon
         return this.focusManager;
     }
 
-    protected FocusManager getFocusManager() {
+    private FocusManager getFocusManager() {
         if (this.focusManager == null) {
             throw new NullPointerException("getFocusManager(): focusManager is null - cannot get access to a focusManager for "+HasName.UTIL.getName(this));
         }
@@ -88,11 +80,13 @@ public  abstract class AbstractWrappedComponentWithFocusManager<T extends Compon
     @Override
     public Focusable getCurrentChildFocus() {
         return getFocusManager().getCurrentChildFocus();
+        //return getFocusManager();
     }
 
     @Override
     public Collection<Focusable> getChildFocusables() {
         return getFocusManager().getChildFocusables();
+        //return Collections.singleton(getFocusManager());
     }
     
     public void addFocusable(Focusable focusable) {

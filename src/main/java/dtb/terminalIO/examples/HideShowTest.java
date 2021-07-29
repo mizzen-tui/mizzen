@@ -12,7 +12,6 @@ import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.VerticalPanel;
 import dtb.terminalIO.components.input.Button;
-import dtb.terminalIO.components.input.Clickable;
 import dtb.terminalIO.components.input.DefaultFocusableBehaviour;
 import dtb.terminalIO.components.modal.MessageBox;
 import dtb.terminalIO.controlcodes.color.Color;
@@ -21,6 +20,7 @@ import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.mouse.Clickable;
 
 /**
  * Test hide and show component functions.

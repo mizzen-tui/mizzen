@@ -11,6 +11,7 @@ import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.RequestHideCursorEvent;
 import dtb.terminalIO.events.RequestScrollToView;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
+import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
@@ -137,6 +138,9 @@ public class ScrollToViewTest {
                 
                 sc.resize(size);
             });
+            
+            FocusManager.UTIL.verifyPathsToFocusables(sc, (Component<?>)tApp.getMainApplicationPanel());
+            
             
         }).start();
     }

@@ -4,6 +4,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * 
+ * @author dbalme
+ *
+ * @param <V>
+ */
 public interface DisplayableValue<V> extends HasValue<V> {
     
     String getDisplayValue();
@@ -18,12 +24,11 @@ public interface DisplayableValue<V> extends HasValue<V> {
             this.displayValue = displayValue;
             this.value = value;
         }
-        
+
         public SimpleDisplayValue(V value) {
             this(String.valueOf(value), value);
-            
         }
-        
+
         @Override
         public V getValue() {
             return value;
@@ -39,7 +44,7 @@ public interface DisplayableValue<V> extends HasValue<V> {
             }
             return displayValue;
         }
-        
+
         public void setMaxDisplayValueLen(int maxDisplayValueLen) {
             this.maxDisplayValueLen = maxDisplayValueLen;
         }
@@ -48,11 +53,11 @@ public interface DisplayableValue<V> extends HasValue<V> {
         public String toString() {
             return getDisplayValue();
         }
-        
+
     }
-    
+
     public class StringDisplayValue extends  SimpleDisplayValue<String> {
-        
+
         public StringDisplayValue(String displayValue, String value) {
             super(displayValue, value);
         }
@@ -64,18 +69,18 @@ public interface DisplayableValue<V> extends HasValue<V> {
         public static StringDisplayValue[] fromStringValues(String[] values) {
             return fromStringValues(values, -1); 
         }
-        
+
         public static StringDisplayValue[] fromStringValues(String[] values, int maxDisplayValueLen) {
             if (values == null) {
                 return null;
             }
             StringDisplayValue[] displayValues = new StringDisplayValue[values.length];
-            
+
             for (int i=0; i<values.length; i++) {
                 displayValues[i] = new StringDisplayValue(values[i]);
                 displayValues[i].setMaxDisplayValueLen(maxDisplayValueLen);
             }
-            
+
             return displayValues;
         }
 
@@ -83,25 +88,25 @@ public interface DisplayableValue<V> extends HasValue<V> {
             if (displayValuesMap == null) {
                 return null;
             }
-            
+
             int length = displayValuesMap.size();
             StringDisplayValue[] displayValues = new StringDisplayValue[length];
-            
+
             List<String> sortedKeys = displayValuesMap.keySet().stream().sorted().collect(Collectors.toList());
-            
+
             int i = 0;
             for (String key : sortedKeys) {
                 displayValues[i] = new StringDisplayValue(key, displayValuesMap.get(key));
                 i++;
             }
-            
+
             return displayValues;
         }
-        
+
     }
 
     public class BooleanDisplayValue extends  SimpleDisplayValue<Boolean> {
-        
+
         public BooleanDisplayValue(String displayValue,  Boolean value) {
             super(displayValue, value);
         }
@@ -109,7 +114,7 @@ public interface DisplayableValue<V> extends HasValue<V> {
         public BooleanDisplayValue(Boolean value) {
             this(null, value);
         }
-        
+
         @Override
         public String getDisplayValue() {
             if (displayValue != null) {
@@ -118,7 +123,6 @@ public interface DisplayableValue<V> extends HasValue<V> {
             return super.getDisplayValue();
         }
 
-        
     }
 
     

@@ -9,10 +9,14 @@ import dtb.terminalIO.geom.position.Position;
 /**
  * A CLIEmmitter that tracks the # of lines emitted (output) so far
  * 
+ * <p/>
+ * 
  * TODO: There is a fundamental problem with the lineCounter variable.it always
  * seems to be +1 of the actual value. This causes issues when using the
  * showCursorAtFromBottomUP(showCursorPosition) method when canvas is full
  * screen..
+ * 
+ * <p/>
  * 
  * Also can have issues when outputting to last line of canvas when canvas is
  * full screen

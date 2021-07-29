@@ -105,6 +105,7 @@ public abstract class ControlCode implements Renderer, HasName<ControlCode> {
     public static final ControlCode SET_X10_MOUSE               = new BaseTextControlCode(escape_CHR + "[?9h").setName("SET_X10_MOUSE");
     public static final ControlCode SET_VT200_MOUSE             = new BaseTextControlCode(escape_CHR + "[?1000h").setName("SET_VT200_MOUSE");
     public static final ControlCode SET_VT200_HIGHLIGHT_MOUSE   = new BaseTextControlCode(escape_CHR + "[?1001h").setName("SET_VT200_HIGHLIGHT_MOUSE");
+    public static final ControlCode SET_BTN_MOTION_TRACKING     = new BaseTextControlCode(escape_CHR + "[?1002h").setName("SET_BTN_MOTION_TRACKING");
     public static final ControlCode SET_BTN_EVENT_MOUSE         = new BaseTextControlCode(escape_CHR + "[?10021h").setName("SET_BTN_EVENT_MOUSE");
     public static final ControlCode SET_ANY_EVENT_MOUSE         = new BaseTextControlCode(escape_CHR + "[?10031h").setName("SET_ANY_EVENT_MOUSE");
 
@@ -117,7 +118,7 @@ public abstract class ControlCode implements Renderer, HasName<ControlCode> {
     public static final ControlCode SET_URXVT_EXT_MODE_MOUSE    = new BaseTextControlCode(escape_CHR + "[?10151h").setName("SET_URXVT_EXT_MODE_MOUSE");
     public static final ControlCode SET_PIXEL_POSITION_MOUSE    = new BaseTextControlCode(escape_CHR + "[?10161h").setName("SET_PIXEL_POSITION_MOUSE");
 
-    public static final ControlCode ENABLE_MOUSE_TRACKING  = SET_VT200_MOUSE;
+    public static final ControlCode ENABLE_MOUSE_TRACKING  = SET_BTN_MOTION_TRACKING; //SET_VT200_HIGHLIGHT_MOUSE; //SET_VT200_MOUSE;
     public static final ControlCode DISABLE_MOUSE_TRACKING = new BaseTextControlCode(escape_CHR + "[?1000l").setName("ERASE_END_OF_LINE");
 
     public static final String      CURSOR_FAR_LEFT_STR = escape_CHR + "[G";

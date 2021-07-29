@@ -1,8 +1,6 @@
-package dtb.terminalIO.components.input;
+package dtb.terminalIO.events.mouse;
 
 import dtb.terminalIO.events.EventBus;
-import dtb.terminalIO.events.mouse.ApplicationMouseEvent;
-import dtb.terminalIO.events.mouse.MOUSE_ACTION;
 
 public interface Clickable {
 

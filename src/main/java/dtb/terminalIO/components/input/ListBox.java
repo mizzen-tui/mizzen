@@ -32,6 +32,7 @@ import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.events.mouse.ApplicationMouseEvent;
+import dtb.terminalIO.events.mouse.Clickable;
 import dtb.terminalIO.events.mouse.MOUSE_ACTION;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
@@ -45,7 +46,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
                                            ParentContainer, 
                                            GetComponentAtOffset,
                                            Clickable {
-    
+
     List<ListItem> items = new ArrayList<ListItem>();
     VerticalPanel  itemsContainer;
     int            selected;
@@ -56,7 +57,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
     // Components that are rendered in the list
     abstract class ItemComponent  {
          Component<?> component;
-         
+
          public Component<?> getComponent() {
             return component;
         }
@@ -64,14 +65,14 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         ItemComponent(Component<?> component) {
              this.component = component;
          }
-         
+
          abstract public void selectWithFocus();
          abstract public void selectWithNoFocus();
          abstract public void unSelect();
     }
-    
+
     static class ListItemComponent<T> extends Composite {
-        
+
         TextComponent tc;
         CharComponent bullet;
         
@@ -154,7 +155,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
                      
                  };
              }
-         
+
              if (component instanceof ListItemComponent) {
                  return new ItemComponent(component) {
 
@@ -246,7 +247,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         public DisplayableValue<T> getHasValue() {
             return hasValue;
         }
-        
+
         public void setDisplayValue(DisplayableValue<T> displayValue) {
             this.hasValue = displayValue;
         }
@@ -254,17 +255,17 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         public ItemComponent getItemComponent() {
             return itemComponent;
         }
-        
+
         public void setItemComponent(ItemComponent itemComponent) {
             this.itemComponent = itemComponent;
         }
-        
+
         public T getValue() {
             return getHasValue().getValue();
         }
 
     }
-    
+
     public ListBox(Color color) {
         super(color);
         this.selected = -1;
@@ -729,7 +730,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
 
     @Override
     public void onClick(ApplicationMouseEvent appMouseEvent) {
-        if (MOUSE_ACTION.DOWN_LEFT.equals(appMouseEvent.getMouseAction())) {
+        if (MOUSE_ACTION.DOWN_LEFT.equals(appMouseEvent.getMouseAction()) || MOUSE_ACTION.DOWN_LEFT_DRAG.equals(appMouseEvent.getMouseAction())) {
             
             // first find child component , clicked on
             Component<?> componentClicked = getComponentAtOffset(appMouseEvent.getMousePosition() );
@@ -755,9 +756,9 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
 
         }
     }
-    
+
     HasValue.OnValueChangedEventHandler<T> onChangeHandler;
-    
+
     public void onChange(EventHandler consumeChange) {
 
         onChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, onChangeHandler, getChainedEventHandler(), consumeChange);

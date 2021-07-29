@@ -27,6 +27,7 @@ import dtb.terminalIO.examples.sampledata.ReadSampleFiles;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
+import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.StringUtils;
 import dtb.terminalIO.util.linuxproc.ExecUtil;
 
@@ -34,6 +35,8 @@ public class ScrollableComponentTest {
 
     public static void main(String[] args) {
 
+        //Logging.setEnabled(true);
+        
         new TUIApp(args)
         .setEmptyChar(' ')
         .setDefaultMainApplicationPanel()
@@ -105,8 +108,8 @@ public class ScrollableComponentTest {
                 
             } );
 
-            ScreenCanvasBackend canvasBackend = ((ScreenCanvasBackend)tApp.getCanvas().getCanvasBackend());
-            canvasBackend.setUpdateStrategy(UpdateStrategy.UPDATE_FULL);
+            //ScreenCanvasBackend canvasBackend = ((ScreenCanvasBackend)tApp.getCanvas().getCanvasBackend());
+            //canvasBackend.setUpdateStrategy(UpdateStrategy.UPDATE_FULL);
             
             
         }).start();

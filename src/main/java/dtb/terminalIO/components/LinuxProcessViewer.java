@@ -5,7 +5,6 @@ import java.util.Collections;
 
 import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.components.scroll.ScrollableSearch;
-import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.ChainedEventHandler;
@@ -29,8 +28,8 @@ import dtb.terminalIO.util.linuxproc.LinuxProcessWatcher;
 public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxProcessViewer>>
         implements ParentContainer, FocusManager, GetComponentAtOffset {
 
-    ScrollableComponent scrollView;
-    public TextComponent textView;
+    ScrollableComponent scrollableView;
+    public TextComponent textContentView;
 
     Focusable focusable;
     ChainedEventHandler chainedEventHandler;
@@ -75,14 +74,14 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
 
     public LinuxProcessViewer(Color color, Dimension d) {
         super(color, d);
-        this.textView = new TextComponent(color, "Initializing..");
-        this.textView.setFillOnClear(false);
-        this.scrollView = new ScrollableComponent(color, d, textView);
-        this.scrollView.setFillOnClear(true);
-        this.scrollView.setParentContainer(this);
+        this.textContentView = new TextComponent(color, "Initializing..");
+        this.textContentView.setFillOnClear(false);
+        this.scrollableView = new ScrollableComponent(color, d, textContentView);
+        this.scrollableView.setFillOnClear(true);
+        this.scrollableView.setParentContainer(this);
         this.setFillOnClear(false);
-        this.scrollView.asEventHandler();
-        this.scrollView.setBorderColor(color);
+        this.scrollableView.asEventHandler();
+        this.scrollableView.setBorderColor(color);
         this.textLineFormatter = new DefaultTextFormatter();
     }
 
@@ -91,11 +90,11 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
     }
 
     public void setBorderColor(Color color) {
-        this.scrollView.setBorderColor(color);
+        this.scrollableView.setBorderColor(color);
     }
 
     public Color getBorderColor() {
-        return this.scrollView.getBorderColor();
+        return this.scrollableView.getBorderColor();
     }
 
     public LinuxProcessViewer(Color color, Dimension d, ParentContainer parentContainer) {
@@ -104,12 +103,12 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
     }
     
     public void setContentColor(Color drawingColor) {
-        this.textView.setColor(drawingColor);
-        this.textView.setEmptyColor(drawingColor);
-        this.scrollView.setColor(drawingColor);
-        this.scrollView.setContentColor(drawingColor);
-        this.scrollView.setEmptyColor(drawingColor);
-        this.scrollView.setEmptyChar(' ');
+        this.textContentView.setColor(drawingColor);
+        this.textContentView.setEmptyColor(drawingColor);
+        this.scrollableView.setColor(drawingColor);
+        this.scrollableView.setContentColor(drawingColor);
+        this.scrollableView.setEmptyColor(drawingColor);
+        this.scrollableView.setEmptyChar(' ');
     }
 
     boolean finderAdded = false;
@@ -120,12 +119,12 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
         }
         finderAdded = true;
         //SearchFunctionForScrollableComponent.addFinderToScrollable(this.scrollView);
-        ScrollableSearch.UTIL.addSearch(this.scrollView);
+        ScrollableSearch.UTIL.addSearch(this.scrollableView);
     }
 
     public void resize(Dimension d) {
         super.resize(d);
-        this.scrollView.resize(d);
+        this.scrollableView.resize(d);
     }
 
     private void updateCanvas(EventBus eventBus) {
@@ -133,17 +132,17 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
     }
 
     public LinuxProcessViewer setTitle(String title) {
-        scrollView.setTitle(title);
+        scrollableView.setTitle(title);
         return this;
     }
     
     public LinuxProcessViewer setFooterText(String footerText) {
-        scrollView.setFooterText(footerText);
+        scrollableView.setFooterText(footerText);
         return this;
     }
     
     public LinuxProcessViewer setTitle(Color titleColors, String title) {
-        scrollView.setTitle(titleColors, title);
+        scrollableView.setTitle(titleColors, title);
         return this;
     }
 
@@ -170,16 +169,16 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
                 textBuffer.getForDisplayIfModified(() -> {
 
                     String rawText = textBuffer.toString();
-                    ElapsedTime elapsed = ElapsedTime.onRunOf(() -> textView.setTextAndResize(rawText));
+                    ElapsedTime elapsed = ElapsedTime.onRunOf(() -> textContentView.setTextAndResize(rawText));
 
-                    int vHeight = scrollView.getHeight() - 2;
+                    int vHeight = scrollableView.getHeight() - 2;
 
                     int height = textBuffer.height;
 
                     if (vHeight < height) {
                         int offsetRow = height - vHeight;
-                        scrollView.setViewOffset(offsetRow, scrollView.getOffsetIntoSource().getCol());
-                        scrollView.getOffsetIntoSource();
+                        scrollableView.setViewOffset(offsetRow, scrollableView.getOffsetIntoSource().getCol());
+                        scrollableView.getOffsetIntoSource();
                     }
 
                     setTitle("lines: " + height + "  elapsed: " + elapsed);
@@ -232,7 +231,7 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
                     });
 
                 } catch (Exception e) {
-                    textView.setTextAndResize(e.toString());
+                    textContentView.setTextAndResize(e.toString());
                     updateCanvas(te.getEventBus());
                 }
             }
@@ -245,12 +244,12 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
 
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
-        segments.clearAndMerge(this.scrollView.getSegmentsBuffer().getSegments());
+        segments.clearAndMerge(this.scrollableView.getSegmentsBuffer().getSegments());
     }
 
     public Component<?> getComponentAtOffset(Position offset) {
-        Component<?> component = this.scrollView.getComponentAtOffset(offset);
-        if (component == this.scrollView) {
+        Component<?> component = this.scrollableView.getComponentAtOffset(offset);
+        if (component == this.scrollableView) {
             return this;
         }
         return component;
@@ -260,7 +259,7 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
     
     @Override
     public Collection<? extends Component<?>> getChildren() {
-        return Collections.singleton(this.scrollView);
+        return Collections.singleton(this.scrollableView);
     }
 
     @Override
@@ -275,12 +274,15 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
 
     @Override
     public EventHandler canHandle(TerminalEvent<?> te) {
-        return this.scrollView.canHandle(te);
+        if ( this.scrollableView.canHandle(te) != null) {
+            return this;
+        }
+        return null;
     }
 
     @Override
     public void handle(TerminalEvent<?> te) {
-        this.scrollView.handle(te);
+        this.scrollableView.handle(te);
     }
 
     @Override
@@ -295,14 +297,14 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
 
     @Override
     public void setChildAsCurrentFocus(Focusable focusableChild, EventBus eventBus) {
-        if (this.scrollView != focusableChild) {
+        if (this.scrollableView != focusableChild) {
             throw new IllegalStateException("Who knew?");
         }
     }
 
     @Override
     public Focusable getCurrentChildFocus() {
-        return this.scrollView;
+        return this.scrollableView;
     }
 
     @Override

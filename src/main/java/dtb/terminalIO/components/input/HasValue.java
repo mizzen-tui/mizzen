@@ -2,6 +2,7 @@ package dtb.terminalIO.components.input;
 
 import java.util.function.Predicate;
 
+import dtb.terminalIO.components.Component;
 import dtb.terminalIO.events.AbstractTimedRequestedController;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventHandler;
@@ -12,6 +13,11 @@ import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 /**
  * A container that has a value. It just allows for an extra level of
  * indirection.
+ * 
+ * <p/>
+ * 
+ * Components can implement HasValue.. ex  ListBox, TextInput, CheckBox
+ * 
  *
  * @param <V>
  */
@@ -134,25 +140,60 @@ public interface HasValue<V> {  //TODO:  Make a SettableValue that extends this.
 
     public static class UTIL {
 
-        public static <T> HasValue.OnValueChangedEventHandler<T> wrapHandlerInOnValueChangedHandler(HasValue<T> hasValueContainer, 
-                                                                                                    EventHandler consumeChange) {
+        /**
+         * A utility method that builds and returns an OnValueChangedEventHandler object from a HasValue (container .. ex. a TextField)
+         * and an EventHandler.
+         * 
+         * <p/>
+         * 
+         * Basic idea is we want to run/execute some action (EventHandler) when the internal value of a component (that implements HasValue) has changed.
+         * 
+         * <p/>
+         * 
+         * This utility method wraps the EventHandler (consumeChange) to look like HasValue.OnValueChangedEventHandler such that the EventHandler 
+         * will get invoked whenever a change to the component (hasValueContainer) internal value has changed.
+         * 
+         * @param hasValueContainer
+         * @param consumeChange
+         * @return
+         */
+        public static <T> HasValue.OnValueChangedEventHandler<T> wrapHandlerIntoOnValueChangedHandler(HasValue<T> hasValueContainer, 
+                                                                                                      EventHandler consumeChange) {
             
             if (consumeChange == null) {
                 return null;
             }
 
             // build new handler
-            HasValue.OnValueChangedEventHandler<T> newOnChange = new HasValue.OnValueChangedEventHandler<T>(hasValueContainer) {
+            HasValue.OnValueChangedEventHandler<T> newOnValueChangedHandler = new HasValue.OnValueChangedEventHandler<T>(hasValueContainer) {
                 @Override
                 public void valueChanged(TerminalEvent<?> te, HasValue<T> valueContainer) {
                     consumeChange.handle(te);
                 }
             };
             
-            return newOnChange;
+            return newOnValueChangedHandler;
         }
 
-        
+        /***
+         * A convenience 'utility' method used by many event aware {@link Component}s that want to attach onChange(..) handlers to their 
+         * internal event handler container.
+         * 
+         * <p/>
+         * 
+         * Ex:  myButton.onChange((te) -> .. );
+         * 
+         * <p/>
+         * 
+         * will call this method to bind the above handler to the button's event handler container.
+         * 
+         * 
+         * @param hasValueContainer           the container containing the value.. ie a button or text field
+         * @param previousOnChangeHandler     the previous handler that needs to be removed
+         * @param eventHandlerContainer       the components event handler container where the handler gets added
+         * @param consumeChange               the handler
+         * @return
+         */
         public static <T> HasValue.OnValueChangedEventHandler<T> bindConsumerAsOnValueChangedHandler(HasValue<T> hasValueContainer, 
                                                                               HasValue.OnValueChangedEventHandler<T> previousOnChangeHandler,
                                                                               EventHandlerContainer eventHandlerContainer,
@@ -169,16 +210,17 @@ public interface HasValue<V> {  //TODO:  Make a SettableValue that extends this.
             
             
             // build new handler
-            HasValue.OnValueChangedEventHandler<T> newOnChange = new HasValue.OnValueChangedEventHandler<T>(hasValueContainer) {
-                @Override
-                public void valueChanged(TerminalEvent<?> te, HasValue<T> valueContainer) {
-                    consumeChange.handle(te);
-                }
-            };
+            
+            HasValue.OnValueChangedEventHandler<T> newOnValueChangedHandler = wrapHandlerIntoOnValueChangedHandler(hasValueContainer, consumeChange);
+            
+            if (newOnValueChangedHandler == null) {
+                return null;
+            }
+            
 
             // attach new
-            eventHandlerContainer.appendEventHandler(newOnChange);
-            return newOnChange;
+            eventHandlerContainer.appendEventHandler(newOnValueChangedHandler);
+            return newOnValueChangedHandler;
         }
     }
     

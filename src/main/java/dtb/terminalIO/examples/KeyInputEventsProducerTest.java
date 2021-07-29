@@ -20,6 +20,7 @@ import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.events.mouse.RawParsedFromConsoleMouseEvent;
+import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.Stty;
 
 /**
@@ -39,6 +40,8 @@ public class KeyInputEventsProducerTest {
     
     public static void main(String[] args) throws Exception {
 
+        
+        Logging.setEnabled(true);
         
         TerminalScreen screen = TestsCommon.getTerminalScreenForTesting(args);
 
@@ -63,8 +66,8 @@ public class KeyInputEventsProducerTest {
 
         screen.add( ControlCode.ENABLE_MOUSE_TRACKING );
 //        screen.add( ControlCode.SET_BTN_EVENT_MOUSE );
-//        screen.add( ControlCode.SET_ANY_EVENT_MOUSE );
-//        screen.add( ControlCode.SET_EXT_MODE_MOUSE );
+        screen.add( ControlCode.SET_ANY_EVENT_MOUSE );
+        screen.add( ControlCode.SET_EXT_MODE_MOUSE );
         // now flush to stdout
         screen.refresh();
         

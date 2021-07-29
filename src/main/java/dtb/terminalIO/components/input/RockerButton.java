@@ -12,6 +12,7 @@ import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.keyboard.HasHotKey;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
+import dtb.terminalIO.events.mouse.Clickable;
 
 public class RockerButton extends    AbstractWrappedComponentWithFocusManager<ButtonBar> 
                           implements HasHotKey, 

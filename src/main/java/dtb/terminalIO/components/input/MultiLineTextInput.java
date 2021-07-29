@@ -34,6 +34,7 @@ import dtb.terminalIO.events.keyboard.KeyEvent;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.events.mouse.ApplicationMouseEvent;
+import dtb.terminalIO.events.mouse.Clickable;
 import dtb.terminalIO.events.mouse.MOUSE_ACTION;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
@@ -48,14 +49,12 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
                                            ParentContainer, 
                                            Focusable, 
                                            EventHandlerContainer,
-                                           Clickable, 
-                                           CanResize {
+                                           Clickable {
 
     private TextComponent textRenderer;
     private boolean textRendererNeedsUpdate = false;
-    private List<StringBuffer> buffer;
+    private MultiLineTextBuffer buffer;
     private Position caret = Position.ZERO;
-    private int maxTextWidth = 1000;
     private boolean multiLine = true;
 
     ConditionalEventHandler eventHandler;
@@ -64,7 +63,6 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
     Focusable focusable;
 
     private boolean modeOverite = false; // true means insertMode
-//    private int maxHeight;
 
     public MultiLineTextInput(Color color) {
         super(color);
@@ -104,7 +102,7 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
     }
 
     protected void init() {
-        this.buffer = new ArrayList<StringBuffer>();
+        this.buffer = new MultiLineTextBuffer();
         this.buffer.add(new StringBuffer());
         this.caret = new Position.Simple(0, 0);
         this.setFillOnClear(true);
@@ -129,14 +127,15 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
     @Override
     public void childResized(Component<?> child) {
         this.markAsDirty();
-    }
-
-    @Override
-    public void resize(Dimension d) {
-        // TODO Auto-generated method stub
-        // FIXME:  implement!!!
+        signalResized();
     }
     
+    protected void signalResized() {
+        if (this.getParentContainer()!=null) {
+            this.getParentContainer().childResized(this);
+        }
+    }
+
     public void setText(String text) {
         if (text == null) {
             text = "";
@@ -151,12 +150,10 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
     }
 
     private void __setText(String text) {
-        this.buffer = Arrays.stream(text.split("\n", -1)).map(line -> new StringBuffer(line))
-                .collect(Collectors.toList());
+        this.buffer = new MultiLineTextBuffer(Arrays.stream(text.split("\n", -1)).map(line -> new StringBuffer(line))
+                                                                                 .collect(Collectors.toList()));
         this.textRendererNeedsUpdate = true;
-        int textMaxWidth = this.buffer.stream().max(Comparator.comparing(StringBuffer::length)).get().length();
-        this.maxTextWidth = Math.max(this.getWidth(), textMaxWidth);
-//        this.maxHeight = Math.max(this.buffer.size(), this.getHeight());
+        signalResized();
         this.markAsDirty();
     }
 
@@ -168,24 +165,11 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
 
     private void concatAndSetRendererTextIfNeeded() {
         if (textRendererNeedsUpdate) {
-            StringJoiner sj = new StringJoiner("\n");
-            for (StringBuffer sb : this.buffer) {
-                sj.add(sb);
-            }
-            this.textRenderer.setTextAndResize(sj.toString());
+            this.textRenderer.setTextAndResize(this.buffer.toString());
             this.textRendererNeedsUpdate = false;
-            textUpdated();
         }
     }
     
-    protected void textUpdated() {
-        // default - do nothing
-    }
-
-//    public void resize(Dimension d) {
-//        setRectangle(new Rectangle.Simple(this.getPostion_TopLeft(), d));
-//        markAsDirty();
-//    }
 
     void setCaretPosition(Position newRequestedPosition) {
 
@@ -251,11 +235,11 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
         if (caret.getCol() < lengthAtCaretLine()) {
             return true;
         }
-        
+
         if (canMoveCaretDown()) {
             return true;
         }
-        
+
         return false;
     }
 
@@ -283,7 +267,7 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
             return false;
         }
         int newCol = StringUtils.indexOfPrevWord(caret.getCol(), this.buffer.get(caret.getRow()).toString());
-        
+
         // special case ..
         if (newCol == -1 && caret.getCol()>0) {
             newCol = 0;
@@ -330,6 +314,7 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
         if (!canMoveCaretUp()) {
             return false;
         }
+
         int targetRow = this.caret.getRow() - 1;
         int strLineLen = this.buffer.get(targetRow).length();
 
@@ -383,16 +368,16 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
         if (modeOverite) {
             return false;
         } else { // insert mode
-            if (currentTextLine.length() >= maxTextWidth) {
-                return false;
-            }
+//            if (currentTextLine.length() >= maxTextWidth) {
+//                return false;
+//            }
             if (caret.getCol() < currentTextLine.length()) { // []ABCDE
                 currentTextLine.insert(caret.getCol(), ch);
             } else if (caret.getCol() >= currentTextLine.length()) { // ABCDE[]
                 currentTextLine.append(ch);
             }
             caretOffsetAdd(0, 1);
-            this.maxTextWidth = Math.max(this.getWidth(), currentTextLine.length());
+            this.buffer.adjustDimensionsFromBufferText(currentTextLine.toString());
             this.textRendererNeedsUpdate = true;
             return true;
         }
@@ -413,7 +398,7 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
                 this.buffer.add(caret.getRow() + 1, new StringBuffer(""));
                 setCaretPosition(new Position.Simple(caret.getRow() + 1, 0));
             }
-            this.maxTextWidth = Math.max(this.getWidth(), currentTextLine.length());
+            //this.setMaxTextWidth( Math.max(this.getWidth(), currentTextLine.length()));
             this.textRendererNeedsUpdate = true;
             this.markAsDirty();
             return true;
@@ -445,7 +430,7 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
             } else {
                 caretOffsetAdd(-1, 0);
             }
-            this.maxTextWidth = Math.max(this.getWidth(), currentTextLine.length());
+            this.buffer.adjustDimensionsFromBufferText(currentTextLine.toString());
             this.textRendererNeedsUpdate = true;
             return true;
         }
@@ -463,7 +448,7 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
             int textlen = currentTextLine.length();
             if (caret.getCol() < textlen) {
                 currentTextLine.deleteCharAt(caret.getCol());
-                this.maxTextWidth = Math.max(this.getWidth(), currentTextLine.length());
+                this.buffer.adjustDimensionsFromBufferText(currentTextLine.toString());
                 this.textRendererNeedsUpdate = true;
                 markAsDirty();
                 return true;
@@ -726,7 +711,7 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
 
     @Override
     public void onClick(ApplicationMouseEvent appMouseEvent) {
-        if (MOUSE_ACTION.DOWN_LEFT.equals(appMouseEvent.getMouseAction())) {
+        if ( MOUSE_ACTION.DOWN_LEFT.equals(appMouseEvent.getMouseAction()) || MOUSE_ACTION.DOWN_LEFT_DRAG.equals(appMouseEvent.getMouseAction()) ) {
             setCaretPosition(appMouseEvent.getMousePosition());
             raiseEventOnChanged(appMouseEvent.getEventBus(), ()-> true);
         }
@@ -740,6 +725,7 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
         }
     }
 
+    
     @Override
     public int getCol() {
         return this.textRenderer.getCol();
@@ -752,12 +738,12 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
 
     @Override
     public int getWidth() {
-        return this.maxTextWidth;
+        return this.buffer.getWidth();
     }
 
     @Override
     public int getHeight() {
-        return this.buffer.size();
+        return this.buffer.getHeight();
     }
 
     @Override
@@ -768,6 +754,114 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
     @Override
     public void moveTo(int row, int col) {
         this.textRenderer.moveTo(row, col);
+    }
+    
+    
+    class MultiLineTextBuffer implements Dimension {
+        
+        private int maxTextWidth = 0;
+        private List<StringBuffer> bufferText;
+        
+
+        MultiLineTextBuffer(List<StringBuffer> bufferText) {
+            this.setBufferText(bufferText);
+        }
+        
+        MultiLineTextBuffer() {
+            this(new ArrayList<StringBuffer>());
+        }
+        
+
+        
+
+        public int size() {
+            return getHeight();
+        }
+
+
+        public void set(int row, StringBuffer stringBuffer) {
+            this.bufferText.set(row, stringBuffer);
+            adjustDimensionsFromBufferText(stringBuffer.toString());
+        }
+
+
+        public void add(int i, StringBuffer stringBuffer) {
+            this.bufferText.add(i, stringBuffer);
+            adjustDimensionsFromBufferText(true);
+        }
+
+
+        public void remove(int row) {
+            this.bufferText.remove(row);
+            adjustDimensionsFromBufferText(true);
+        }
+
+
+        public StringBuffer get(int i) {
+            return this.bufferText.get(i);
+        }
+
+
+        void setBufferText(List<StringBuffer> bufferText) {
+            this.bufferText =  bufferText;
+            adjustDimensionsFromBufferText(true);
+        }
+        
+        private void adjustDimensionsFromBufferText(boolean heightChanged) {
+            if (this.bufferText.size()==0) {
+                return;
+            }
+            int textMaxWidth = this.bufferText.stream().max(Comparator.comparing(StringBuffer::length)).get().length();
+            boolean widthChanged = this.setMaxTextWidth( Math.max(this.getWidth(), textMaxWidth) );
+            if (heightChanged || widthChanged) {
+                signalResized();
+            }
+        }
+
+        public void adjustDimensionsFromBufferText(String textLine) {
+            boolean widthChanged = this.setMaxTextWidth( Math.max(this.getWidth(), textLine.length()) );
+            if (widthChanged) {
+                signalResized();
+            }
+        }
+        
+        
+        public void adjustDimensions() {
+            adjustDimensionsFromBufferText(false);
+        }
+
+
+        private boolean setMaxTextWidth(int maxTextWidth) {
+            boolean changed = this.maxTextWidth != maxTextWidth;
+            this.maxTextWidth = maxTextWidth;
+            return changed;
+        }
+
+
+        public void add(StringBuffer stringBuffer) {
+            this.bufferText.add(stringBuffer);
+            adjustDimensionsFromBufferText(true);
+        }
+
+        @Override
+        public int getWidth() {
+            return this.maxTextWidth;
+        }
+
+
+        @Override
+        public int getHeight() {
+            return this.bufferText.size();
+        }
+        
+        public String toString() {
+            StringJoiner sj = new StringJoiner("\n");
+            for (StringBuffer sb : this.bufferText) {
+                sj.add(sb);
+            }
+            return sj.toString();
+        }
+        
     }
 
 

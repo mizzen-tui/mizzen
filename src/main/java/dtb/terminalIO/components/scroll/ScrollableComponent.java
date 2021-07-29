@@ -9,6 +9,7 @@ import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.CanResize;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
+import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.components.Hiliter;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.controlcodes.color.Color;
@@ -76,37 +77,54 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
     public ScrollableComponent(Color color, Dimension d, Component<?> componentBeingViewed, Supplier<DefaultFocusManager> defaultFocusManagerBuilder) {
 
         super(color);
-        
+
         if (defaultFocusManagerBuilder != null) {
             setDefaultFocusManagerBuilder(defaultFocusManagerBuilder);
         }
-        
+
         this.componentBeingViewed = componentBeingViewed;
-        
+
         viewer = new WindowViewComponent(color,
                                          new Dimension.Simple(d.getHeight() - 2, d.getWidth() - 2),
                                          this.componentBeingViewed);
-        
+
         borderedComponent = new BorderedComponent(color, viewer, this);
 
         vScrollBar = new ScrollBarVertical(color,
                                            borderedComponent.getPostion_TopRight().offsetAdd(1, 0),
                                            borderedComponent.getHeight() - 2);
+        
+        HasName.UTIL.decorateWithParentsNamePrefix(vScrollBar, this);
 
         vScrollBar.setOffset(Position.ZERO);
-        
+
         vScrollBar.setViewedSize(new Rectangle.Delegate(componentBeingViewed), new Rectangle.Delegate(viewer));
+
+        vScrollBar.onChange(  (te) ->  {
+            Position curPos = this.getOffsetIntoSource();
+            Position vScrolPos = vScrollBar.getValue();
+            this.setViewOffset(vScrolPos.getRow(), curPos.getCol());
+        } );
+        
 
         hScrollBar = new ScrollBarHorizontal(color,
                                              borderedComponent.getPostion_BottomLeft().offsetAdd(0, 1),
                                              borderedComponent.getWidth() - 2);
-        
+
+        HasName.UTIL.decorateWithParentsNamePrefix(hScrollBar, this);
+
         hScrollBar.setOffset(Position.ZERO);
-        
+
         hScrollBar.setViewedSize(new Rectangle.Delegate(componentBeingViewed), new Rectangle.Delegate(viewer));
 
+        hScrollBar.onChange(  (te) ->  {
+            Position curPos = this.getOffsetIntoSource();
+            Position hScrolPos = hScrollBar.getValue();
+            this.setViewOffset(curPos.getRow(), hScrolPos.getCol());
+        } );
+
         footerText = null;
-        
+
         this.add(borderedComponent);
 
         setShowBorder(visibleBorder()); // add border and footertext if border defined
@@ -470,7 +488,7 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         }
         ConditionalEventHandler handler = wrapEventHandlerWithCanvasUpdate(eventHandler);
         appendEventHandler(handler);
-        
+
         return handler;
     }
 
@@ -490,16 +508,14 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
         chainedEventHandler.appendEventHandler(new ConditionalEventHandler() {
             @Override
             public EventHandler canHandle(TerminalEvent<?> te) {
-                if (footerControls == null) {
-                    return null;
+                if (footerControls != null  && footerControls.canHandle(te) != null) {
+                    return this;
                 }
-                if (footerControls.canHandle(te) == null) {
-                    return null;
-                }
-                return this;
+                return null;
             }
             @Override
             public void handle(TerminalEvent<?> te) {
+                
                 if (footerControls == null) {
                     return;
                 }
@@ -541,16 +557,22 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
             }
 
         }));
-
-        conditionalEventHandler = chainedEventHandler.asConditionalEventHandler();
         
+
+        // to avoid recursion we need to define conditionalEventHandler before calling prependEventHandler(..)
+        conditionalEventHandler = chainedEventHandler.asConditionalEventHandler();
+
+        // As this is not a standard FocusManager we have to explicitly add our own RequestFocusEvent handler
+        chainedEventHandler.appendEventHandler(FocusManager.UTIL.buildRequestFocusEventHandler(this));
+
+        // attach the child focusables - hmm.. this is non-standard beaviour...
         Collection<Focusable> focusables = getChildFocusables();
         for (Focusable focusable : focusables) {
             if (focusable != footerControls ) { /* footer control special case'd and handled above */
                 prependEventHandler(focusable);
             }
-         }
-        
+        }
+
         return conditionalEventHandler;
     }
 
@@ -707,37 +729,29 @@ public class ScrollableComponent extends Composite implements CanResize, FocusMa
 
     // try very hard to build a list of child focusables from componentBeingViewed and FooterControls
     private Collection<Focusable> buildChildFocusablesIfNeeded() {
+
         if (childFocusables != null) {
-            return childFocusables;
-        }
-        
-        if (componentBeingViewed instanceof FocusManager) {
-            childFocusables = new ArrayList<Focusable>();
-            childFocusables.add((FocusManager)componentBeingViewed);
-            if (footerControls != null) {
-                childFocusables.add(footerControls);
-            }
             return childFocusables;
         }
 
         FocusManager componentBeingViewedFocusManager = buildFocusManagerFromComponent();
 
-        if (componentBeingViewedFocusManager != null) {
-            childFocusables = new ArrayList<Focusable>();
-            childFocusables.add(componentBeingViewedFocusManager);
-            if (footerControls != null) {
-                childFocusables.add(footerControls);
-            }
-            return childFocusables;
-        }
-
         childFocusables = new ArrayList<Focusable>();
 
-        if (componentBeingViewed instanceof Focusable) {
-            childFocusables.add((Focusable)componentBeingViewed);
+        if (componentBeingViewedFocusManager != null) {
+            childFocusables.add(componentBeingViewedFocusManager);
         }
+
         if (footerControls != null) {
             childFocusables.add(footerControls);
+        }
+
+        if (this.vScrollBar != null) {
+            childFocusables.add(this.vScrollBar);
+        }
+ 
+        if (this.hScrollBar != null) {
+            childFocusables.add(this.hScrollBar);
         }
 
         return childFocusables;

@@ -19,6 +19,7 @@ import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
+import dtb.terminalIO.events.mouse.Clickable;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
@@ -31,15 +32,15 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
     private ListBox<T> listBox;
     private Button button;
     private Rectangle preferredRectangleForLayout;
-    
+
     private int maxItemWidth = 10;  // arbitrary default.
-    
+
     protected DropdownListBox(Color color) {
         super(color, new VerticalPanel());
-        
+
         this.button = new Button(color, "");
         this.getContainer().add(this.button);
-        
+
         this.listBox = new ListBox<T>(color);
         this.listBox.setBorder(true);
 
@@ -58,7 +59,7 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
             te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(DropdownListBox.this));
             te.getEventBus().raiseEvent(new HasValue.ValueChangedEvent<T>(DropdownListBox.this));
         });
-        
+
         appendEventHandler( new KeyInputEventHandler(Keys.ENTER_KEYSTROKE, (te)-> { toggleShowHide(); }));
 
         appendEventHandler( new KeyInputEventHandler(Keys.ESC_KEYSTROKE, (te)-> { hideListBox(); }));
@@ -79,9 +80,9 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
             public int getHeight() {
                 return super.getHeight() + (hasBorder() ? 2 : 0);
             }
-            
+
         };
-        
+
     }
 
     public DropdownListBox() {
@@ -131,13 +132,13 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
     public static DropdownListBox<String> fromStrings(Color color, String[] listItems, ComponentItemFactory<String> displayItemToComponent) {
         return new DropdownListBox<String>(color, StringDisplayValue.fromStringValues(listItems), displayItemToComponent);
     }
-    
+
     public static DropdownListBox<Boolean> trueFalseDropDown(Color color) {
         return new DropdownListBox<Boolean>(color, 
                 new BooleanDisplayValue[] {new BooleanDisplayValue(true),
                                            new BooleanDisplayValue(false)});
     }
-    
+
     public static DropdownListBox<Boolean> trueFalseDropDown() {
         return trueFalseDropDown(Colors.FGBGColors.NO_COLOR_SPECIFIED);
     }
@@ -147,11 +148,11 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
                 new BooleanDisplayValue[] {new BooleanDisplayValue("yes", true),
                                            new BooleanDisplayValue("no", false)});
     }
-    
+
     public static DropdownListBox<Boolean> yesNoDropDown() {
         return yesNoDropDown(Colors.FGBGColors.NO_COLOR_SPECIFIED);
     }
-    
+
     public void setMaxItemWidth(int maxItemWidth) {
         if (maxItemWidth<1) {
             throw new IllegalArgumentException("bad max width specified :"+maxItemWidth);
@@ -172,7 +173,7 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
         this.listBox.setItems(displayableItems, displayItemToComponent);
         this.button.resize( new Dimension.Simple(this.button.getHeight(),  this.listBox.getWidth()) );
     }
-    
+
     public Rectangle getPreferredRectangleForLayout() {
         return preferredRectangleForLayout;
     }
@@ -187,8 +188,7 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
         this.listBox.setSelectedValue(value);
         setSelectedOntoTextView();
     }
-    
-    
+
     private void setSelectedOntoTextView() {
 
         DisplayableValue<T> selected = this.listBox.getSelected();
@@ -215,8 +215,7 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
 
         this.button.setButtonText( buttonText );
     }
-    
-    
+
 
     @Override
     public T getValue() {
@@ -292,7 +291,7 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
         if (focus) {
             showListBox();
         } 
-        
+
         if (!focus) {
             hideListBox();
         }
@@ -312,6 +311,5 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
         onChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, onChangeHandler, this, consumeChange);
 
     }
-    
 
 }

@@ -44,10 +44,12 @@ public class InputBytesEventParser {
     private static final int STATE_MOUSE_START = 5;
     private static final int STATE_MOUSE_DOWN_LEFT = 6;
     private static final int STATE_MOUSE_DOWN_RIGHT = 7;
-    private static final int STATE_MOUSE_UP = 8;
+    private static final int STATE_MOUSE_DOWN_LEFT_DRAG = 8;
+    private static final int STATE_MOUSE_DOWN_RIGHT_DRAG = 9;
+    private static final int STATE_MOUSE_UP = 10;
 
-    private static final int STATE_REPORT_START = 9;
-    private static final int STATE_REPORT_INTERMEDIATE = 10;
+    private static final int STATE_REPORT_START = 11;
+    private static final int STATE_REPORT_INTERMEDIATE = 12;
 
     
     private int parse_STATE = STATE_START;
@@ -243,9 +245,24 @@ public class InputBytesEventParser {
                 mouse_action = MOUSE_ACTION.UP;
                 return;
             }
+            if (ch == 64) {
+                parse_STATE = STATE_MOUSE_DOWN_LEFT_DRAG;
+                mouse_action = MOUSE_ACTION.DOWN_LEFT_DRAG;
+                return;
+            }
+            if (ch == 66) {
+                parse_STATE = STATE_MOUSE_DOWN_RIGHT_DRAG;
+                mouse_action = MOUSE_ACTION.DOWN_RIGHT_DRAG;
+                return;
+            }
+            
+            resetTo_STATE_START();
+            return;
             
         case STATE_MOUSE_DOWN_LEFT:
         case STATE_MOUSE_DOWN_RIGHT:
+        case STATE_MOUSE_DOWN_LEFT_DRAG:
+        case STATE_MOUSE_DOWN_RIGHT_DRAG:
         case STATE_MOUSE_UP:
              if (parsed_col == -1) {
                  parsed_col = ch - 33;

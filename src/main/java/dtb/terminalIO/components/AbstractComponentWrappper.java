@@ -15,7 +15,7 @@ public class AbstractComponentWrappper<T extends Component<?>>  extends  Abstrac
                                  GetComponentAtOffset,
                                  HasName<AbstractComponentWrappper<T>> {
 
-    private T wrappedComponent; 
+    private T wrappedComponent;
     private String name;
 
     protected AbstractComponentWrappper(Color color, T wrappedComponent) {

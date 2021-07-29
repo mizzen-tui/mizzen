@@ -9,7 +9,7 @@ import java.util.function.Supplier;
 import dtb.terminalIO.events.TerminalEvent;
 
 /**
- * Encapsulates keyboard keys
+ * Encapsulates common keyboard keys
  */
 public class Keys {
 

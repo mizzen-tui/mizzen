@@ -1,7 +1,6 @@
 package dtb.terminalIO.components.plot.braille;
 
 import dtb.terminalIO.components.Composite;
-import dtb.terminalIO.components.input.Clickable;
 import dtb.terminalIO.components.plot.Plotter;
 import dtb.terminalIO.components.plot.Plotter.Plot;
 import dtb.terminalIO.components.plot.PointPlotter;
@@ -9,6 +8,7 @@ import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.mouse.ApplicationMouseEvent;
+import dtb.terminalIO.events.mouse.Clickable;
 import dtb.terminalIO.events.mouse.MOUSE_ACTION;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;

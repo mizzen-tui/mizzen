@@ -26,6 +26,16 @@ import dtb.terminalIO.textsegments.ScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.ElapsedTime;
 import dtb.terminalIO.util.Logging;
 
+/*
+ * A canvas is a data structure in which all components's contents will be copied into.
+ * 
+ * <p/>
+ * 
+ * When you invoke this canvas's refresh method, its contents will be "flushed" to the canvas backend which is
+ * typically a terminal.
+ * 
+ * 
+ */
 public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
 
     private CanvasBackend    backend;

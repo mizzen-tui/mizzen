@@ -16,14 +16,14 @@ public class TextInputInteger  extends TextInputForType<Integer> {
     public TextInputInteger(int length) {
           this(Colors.DEFAULT_COLOR, length);
     }
-    
+
     static Integer toDesiredType(String text) {
         if (text.trim().equals("-")) {
             return 0;
         }
         return Integer.parseInt(text);
     }
-    
+
     static boolean validateText(String newText) {
         try {
             if (newText == null || newText.trim().length()==0) {

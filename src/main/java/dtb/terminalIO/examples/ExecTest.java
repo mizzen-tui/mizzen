@@ -85,7 +85,7 @@ public class ExecTest {
     public static void slowRunnerTest2(String[] args) throws Exception {
         
         TUIApp app = new TUIApp();
-        app.initFromArgs(args);
+        app.initFromArgs(args).setDefaultMainApplicationPanel();;
         
         app.getCanvas().t("testing LinuxProcessViewer ..\n");
 
@@ -148,7 +148,7 @@ public class ExecTest {
 
             tApp.clearCanvas();
             
-            TimeAndCount elapsed = TimeAndCount.onRun(()->tApp.getCanvas().addComponentSegments(view1OffsetOnCanvas, mainPanel), lprocViewer.textView);
+            TimeAndCount elapsed = TimeAndCount.onRun(()->tApp.getCanvas().addComponentSegments(view1OffsetOnCanvas, mainPanel), lprocViewer.textContentView);
 
             tApp.getCanvas().t(lprocViewer.getBottomMostRow()+5, 0, "elapsed = "+elapsed);
 
@@ -207,18 +207,19 @@ public class ExecTest {
                     linuxProc.setInvokeScript("./slowRunner.sh testme");
                 }
             }
-            
+
             if (linuxProc != null)  {
                 lprocViewer.setLinuxProcessWatcher(linuxProc);
                 lprocViewer.invoke(tApp.getEventBus());
             }
             lprocViewer2.setLinuxProcessWatcher( new LinuxProcessWatcher().setInvokeScript("./slowRunner.sh testme")  );
             lprocViewer2.invoke(tApp.getEventBus());
-            
-            
-            
+
             FocusManager.UTIL.verifyPathsToFocusables(focusManager, (Component<?>)tApp.getMainApplicationPanel());
-            
+
+            // following is test code when I want to see structure of focusables hierarchy
+            // throw new IllegalStateException(FocusManager.UTIL.traverseAllFocusablesToString(focusManager));
+
         });
         
         app.start();

@@ -14,11 +14,11 @@ public class TextInputFloat extends TextInputForType<Float> {
     public TextInputFloat(int length) {
           this(Colors.DEFAULT_COLOR, length);
     }
-    
+
     static Float toDesiredType(String text) {
         return Float.parseFloat(text);
     }
-    
+
     static boolean validateText(String newText) {
         try {
             if (newText == null || newText.trim().length()==0) {

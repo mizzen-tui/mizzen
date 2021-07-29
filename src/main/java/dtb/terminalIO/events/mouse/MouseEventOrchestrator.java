@@ -4,7 +4,6 @@ import java.util.function.BiFunction;
 
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.GetComponentAtOffset;
-import dtb.terminalIO.components.input.Clickable;
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.TerminalScreen;
@@ -34,6 +33,8 @@ public class MouseEventOrchestrator {
     private Canvas canvas;
     private EventBus eventBus;
     private ConditionalEventHandler mouseTrackingEventHandler;
+    
+    private Draggable currentDraggable;
 
     /**
      * MouseEventOrchestrator  
@@ -83,6 +84,11 @@ public class MouseEventOrchestrator {
                   (te)->{
                       RawParsedFromConsoleMouseEvent rme = (RawParsedFromConsoleMouseEvent) te;
 
+                      rme.getMouseAction();
+                      if (rme.getMouseAction()==null) {
+                          throw new NullPointerException(String.valueOf(rme));
+                      }
+                      
                       Position lastRequestedCursorPosition = canvas.getLastRequestCursorPosition();
 
                       // (1) now let's move the screen cursor position to its top-left ( its 0,0 )
@@ -99,7 +105,7 @@ public class MouseEventOrchestrator {
                           // let's map the raw mouse position to the application position 
                           Position applicationMousePosition = cpr.getPosition().offsetAdd(-1, -1).negate().offsetAdd( rme.getEventData() );
 
-                          Logging.info("------ mouse captured: ---------------");
+                          Logging.info("\n\n------ mouse captured: ---------------");
                           Logging.info("mouse info: " + String.valueOf(rme));
                           Logging.info("current cursor pos: " + String.valueOf(cpr));
                           Logging.info("current app mouse pos: " + String.valueOf(applicationMousePosition));
@@ -115,7 +121,7 @@ public class MouseEventOrchestrator {
                               te2.getEventBus().raiseEvent( aMe );
                               Logging.info("app mouse info:: " + String.valueOf(aMe));
                           }
-                          Logging.info("--------------------------------------");
+                          Logging.info("--------------------------------------\n\n");
                       }));
 
                   });
@@ -188,8 +194,15 @@ public class MouseEventOrchestrator {
             @Override
             public void handle(TerminalEvent<?> te) {
                 ApplicationMouseEvent appMouseEvent = (ApplicationMouseEvent) te;
+                
+                if (currentDraggable != null && (appMouseEvent.getMouseAction() == MOUSE_ACTION.DOWN_LEFT_DRAG || appMouseEvent.getMouseAction() == MOUSE_ACTION.UP)) {
+                    boolean handled = handleDragMode(appMouseEvent);
+                    if (handled) {
+                        return;
+                    }
+                }
 
-                if (appMouseEvent.getMouseAction() != MOUSE_ACTION.DOWN_LEFT) {
+                if (appMouseEvent.getMouseAction() != MOUSE_ACTION.DOWN_LEFT && appMouseEvent.getMouseAction() != MOUSE_ACTION.DOWN_LEFT_DRAG) {
                     return;
                 }
 
@@ -228,22 +241,25 @@ public class MouseEventOrchestrator {
                     return;
                 }
 
-                Focusable focusComponent = ToFocusable.UTIL.toFocusable(componentClicked);
+                Focusable focusableComponent = ToFocusable.UTIL.toFocusable(componentClicked);
 
-                if (focusComponent != null) {
-                    eventBus.raiseEvent( new RequestFocusEvent(focusComponent));
+                if (focusableComponent != null) {
+                    eventBus.raiseEvent( new RequestFocusEvent(focusableComponent));
                     componentClicked = findFocusableParent.apply(componentClicked, true);
+                    if (appMouseEvent.getMouseAction() == MOUSE_ACTION.DOWN_LEFT_DRAG  && currentDraggable == null && componentClicked instanceof Draggable) {
+                        if (checkHandleDragStart((Draggable)componentClicked, appMouseEvent)) {
+                            currentDraggable = (Draggable)componentClicked;
+                            return ;
+                        }
+                    }
                     if (componentClicked instanceof Clickable) {
                         Clickable clickable = (Clickable)componentClicked;
-                        Focusable focusableClickable = ToFocusable.UTIL.toFocusable(componentClicked);
-                        if (focusableClickable == null) {
+                        Focusable focusableAndClickable = ToFocusable.UTIL.toFocusable(componentClicked);
+                        if (focusableAndClickable == null) {
                             return;
                         }
                         eventBus.appendEventHandler( new OnIdleEventEventHandler.OneTime((te2)-> {
-                            if (focusComponent.hasFocus()) {
-                                int x = 2;
-                            }
-                            if (focusableClickable.hasFocus()) {
+                            if (focusableAndClickable.hasFocus()) {
                                 // map mouse position as an offset into the clicked component
                                 // and pass the component a new mouse event with this offset
                                 Position clickableOffsetOnCanvas = Component.UTIL.getCanvasOffsetFor((Component<?>)clickable);
@@ -263,6 +279,20 @@ public class MouseEventOrchestrator {
             }
         };
         eventBus.appendEventHandler(appMouseToFocusableComponent);
+    }
+
+    protected boolean handleDragMode(ApplicationMouseEvent appMouseEvent) {
+        return false;
+    }
+    
+    
+    protected boolean checkHandleDragStart(Draggable newDraggable, ApplicationMouseEvent appMouseEvent) {
+        if (currentDraggable != null) {
+            return false;
+        }
+        
+        
+        return false;
     }
 
 }

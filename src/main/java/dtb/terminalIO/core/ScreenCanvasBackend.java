@@ -147,7 +147,7 @@ public class ScreenCanvasBackend implements CanvasBackend {
                                       screen.refresh();
                                 }
                            ).elapsed();
-        Logging.info("terminal output time: "+elapsed + " renders: "+ count);
+        //Logging.info("terminal output time: "+elapsed + " renders: "+ count);
     }
 
     Color lastColor = Colors.DEFAULT_COLOR;
@@ -214,9 +214,9 @@ public class ScreenCanvasBackend implements CanvasBackend {
             if (counter > 0) {
                 counter--;
                 
-                if (counter == 0) {
-                    Logging.info("REVERTING TO CHANGED SCREEN UPDATES AFTER NEXT UPDATE");
-                }
+//                if (counter == 0) {
+//                    Logging.info("REVERTING TO CHANGED SCREEN UPDATES AFTER NEXT UPDATE");
+//                }
                 return true;  
             }
             return false;
@@ -274,7 +274,7 @@ public class ScreenCanvasBackend implements CanvasBackend {
                 //TreeSet<ScreenLineSegment> newOrModifiedsegments = ScreenLineSegment.UTIL.subtractAggressive(current, previous);
                 TreeSet<ScreenLineSegment> newOrModifiedsegments = ScreenLineSegment.UTIL.subtract(current, previous);
                 subtractTime.elapsed();
-                Logging.info("ScreenLineSegment.UTIL.subtract() "+subtractTime.elapsed());
+                //Logging.info("ScreenLineSegment.UTIL.subtract() "+subtractTime.elapsed());
 
                 ElapsedTime modifiedLoopTime = ElapsedTime.start();
                 if (newOrModifiedsegments.size()>0) {

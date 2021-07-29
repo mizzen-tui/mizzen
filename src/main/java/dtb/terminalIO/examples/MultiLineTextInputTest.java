@@ -27,7 +27,8 @@ public class MultiLineTextInputTest {
         .confirmOnExit()
         .setOnReadyStart((tApp)-> {
 
-            MultiLineTextInput mTextBox = new MultiLineTextInput(); mTextBox.setText("Silly Sally sold\nSeaShells at the seashore\nWhat a silly thing to do!");
+            MultiLineTextInput mTextBox = new MultiLineTextInput(); 
+            mTextBox.setText("Silly Sally sold\nSeaShells at the seashore\nWhat a silly thing to do!");
 
             mTextBox.setColor(  new Colors.FGBGColors( Colors.BBlu, Colors.On_Bla  )  );
 
@@ -35,6 +36,7 @@ public class MultiLineTextInputTest {
                                                              (Dimension)tApp.getMainApplicationPanel(), 
                                                              mTextBox,
                                                              ()-> new DefaultFocusManager(Keys.SHIFT_TAB_KEYSTROKE, Keys.TAB_KEYSTROKE).setNavKeysFirst(false));
+          
             sc.setFillOnClear(false);
 
             sc.resize(  new Dimension.Simple(sc.getHeight()-2, sc.getWidth()));

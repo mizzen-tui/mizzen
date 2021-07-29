@@ -29,7 +29,6 @@ import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.VerticalPanel;
 import dtb.terminalIO.components.input.Button;
-import dtb.terminalIO.components.input.Clickable;
 import dtb.terminalIO.components.input.DefaultFocusableBehaviour;
 import dtb.terminalIO.components.input.DropdownListBox;
 import dtb.terminalIO.components.input.HasValue;
@@ -46,6 +45,7 @@ import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.mouse.Clickable;
 import dtb.terminalIO.geom.Dimension;
 
 public class RenderFromGraphics2D {
@@ -103,8 +103,7 @@ public class RenderFromGraphics2D {
             animatorOptionsPanel.onChange((te)-> {
                 setAnimator.accept(animatorOptionsPanel.getValue().get());
             });
-            
-            
+
             controls.setNoBorderChars();
 
             controls.addComponent(new TextComponent("2D animated Grpahics | "));
@@ -149,6 +148,8 @@ public class RenderFromGraphics2D {
             tApp.getEventBus().appendEventHandler( mainFocusManager );
             
             FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
+            
+            //throw new IllegalStateException(FocusManager.UTIL.traverseAllFocusablesToString(mainFocusManager));
 
         }).start();
 

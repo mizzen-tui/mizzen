@@ -20,6 +20,7 @@ import dtb.terminalIO.events.focus.RequestFocusEvent;
 import dtb.terminalIO.events.focus.ToFocusable;
 import dtb.terminalIO.events.keyboard.KeyEvent;
 import dtb.terminalIO.events.keyboard.Keys;
+import dtb.terminalIO.events.mouse.Clickable;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
@@ -158,7 +159,7 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
 
     public void onChange(EventHandler handler) {
 
-        actionOnChangeHandler = HasValue.UTIL.wrapHandlerInOnValueChangedHandler(this, handler);
+        actionOnChangeHandler = HasValue.UTIL.wrapHandlerIntoOnValueChangedHandler(this, handler);
 
     }
 

@@ -9,7 +9,7 @@ import dtb.terminalIO.geom.position.Position;
  * <p/>
  * 
  * This event is meant only to be handled by MouseEventOrchestrator which
- * translates this raw mouse event to application mouse event - which 
+ * translates this raw mouse event to an application mouse event - which 
  * means that it maps the raw console x.y coordinates to the canvas
  * coordinates.
  */
