@@ -9,6 +9,23 @@ public class DefaultTerminateAction implements Consumer<TUIApp> {
 
     @Override
     public void accept(TUIApp tApp) {
+
+        resetTerminalForExiting(tApp);
+
+        // next refresh() is necessary to get cursor to be below
+        // rendered canvas
+        tApp.getCanvas().refresh();
+
+        if (tApp.lastException != null) {
+            
+            tApp.lastException.printStackTrace();
+            
+        }
+        
+        return;
+    }
+    
+    public static void resetTerminalForExiting(TUIApp tApp) {
         tApp.getEventBus().stopConsuming();
         tApp.getScreen().add( ControlCode.DISABLE_MOUSE_TRACKING );
         tApp.getScreen().add(ControlCode.SHOW_CURSOR);
@@ -19,18 +36,6 @@ public class DefaultTerminateAction implements Consumer<TUIApp> {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        // next refresh() is necessary to get cursor to be below
-        // rendered canvas
-        tApp.getCanvas().refresh();
-        
-        
-        if (tApp.lastException != null) {
-            
-            tApp.lastException.printStackTrace();
-            
-        }
-        
-        return;
     }
 
 }
