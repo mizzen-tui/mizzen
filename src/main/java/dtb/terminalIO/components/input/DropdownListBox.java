@@ -124,7 +124,7 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
     }
 
     private void calcAndSetMaxItemWidth(List<DisplayableValue<T>> displayableItems) {
-        setMaxItemWidth( 7 + displayableItems.stream().map( (li) -> Dimension.UTIL.stringToDimension( li.toString() ).getWidth()).max( Integer::compareTo).get());
+        setMaxItemWidth( 2 + displayableItems.stream().map( (li) -> Dimension.UTIL.stringToDimension( li.toString() ).getWidth()).max( Integer::compareTo).get());
     }
     
     public DropdownListBox(DisplayableValue<T>[] listItems) {
@@ -257,7 +257,7 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
             boolean hasFocus = hasFocus();
             Color arrowColor = hasFocus ? getColor().bold() : Colors.BIBla;
             String arrow = arrowColor.asString() +"[v]" + getColor().asString();
-            int padLen = maxItemWidth-(hasFocus?1:0);
+            int padLen = maxItemWidth; //-(hasFocus?1:0);
             if (selected == null) {
                 buttonText = String.format("%-"+(padLen)+"s"+arrow, StringUtils.repeat(emptyCH, padLen));
             } else {

@@ -117,7 +117,8 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
         }
         super.resize(d);
         if ( ! d.isSameDimension(this.container)) {
-            this.container.resize(d);
+            this.container.fullrecalcDim();
+            //this.container.resize(d);
         }
     }
     

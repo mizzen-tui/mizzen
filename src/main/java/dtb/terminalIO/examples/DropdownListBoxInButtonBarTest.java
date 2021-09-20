@@ -34,8 +34,6 @@ public class DropdownListBoxInButtonBarTest {
             VerticalPanel desktop = new VerticalPanel().setVerticalSpacer(3);
             
             HorizontalPanel hpMain = new HorizontalPanel();
-            hpMain.setEmptyChar('!');
-            hpMain.setFillOnClear(true);
             
             ButtonBar bbar = new ButtonBar();
 
