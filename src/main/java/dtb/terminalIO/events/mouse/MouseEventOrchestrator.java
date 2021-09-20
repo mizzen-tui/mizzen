@@ -4,6 +4,7 @@ import java.util.function.BiFunction;
 
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.GetComponentAtOffset;
+import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.TerminalScreen;
@@ -194,7 +195,7 @@ public class MouseEventOrchestrator {
             @Override
             public void handle(TerminalEvent<?> te) {
                 ApplicationMouseEvent appMouseEvent = (ApplicationMouseEvent) te;
-                
+
                 if (currentDraggable != null && (appMouseEvent.getMouseAction() == MOUSE_ACTION.DOWN_LEFT_DRAG || appMouseEvent.getMouseAction() == MOUSE_ACTION.UP)) {
                     boolean handled = handleDragMode(appMouseEvent);
                     if (handled) {
@@ -213,6 +214,7 @@ public class MouseEventOrchestrator {
                 if (panelOffsetOnCanvas == null) {
                     throw new IllegalStateException("mainApplicationPanel used to map mouse events is not attached (directly or indirectly) to the canvas!");
                 }
+
                 Position mousePositionAdjustedForPanel = canvasPosition.offsetAdd( panelOffsetOnCanvas.negate());
 
                 Component<?> componentClicked = GetComponentAtOffset.UTIL.getComponentAtOffset( mainApplicationPanel, mousePositionAdjustedForPanel );
@@ -244,14 +246,20 @@ public class MouseEventOrchestrator {
                 Focusable focusableComponent = ToFocusable.UTIL.toFocusable(componentClicked);
 
                 if (focusableComponent != null) {
+                    Logging.info("mouse on "  + HasName.UTIL.getName(focusableComponent) + "evt:" + String.valueOf(appMouseEvent));
                     eventBus.raiseEvent( new RequestFocusEvent(focusableComponent));
-                    componentClicked = findFocusableParent.apply(componentClicked, true);
-                    if (appMouseEvent.getMouseAction() == MOUSE_ACTION.DOWN_LEFT_DRAG  && currentDraggable == null && componentClicked instanceof Draggable) {
-                        if (checkHandleDragStart((Draggable)componentClicked, appMouseEvent)) {
-                            currentDraggable = (Draggable)componentClicked;
-                            return ;
+                    if (appMouseEvent.getMouseAction() == MOUSE_ACTION.DOWN_LEFT_DRAG) {
+                        if (currentDraggable == null && componentClicked instanceof Draggable) {
+                            if (checkHandleDragStart((Draggable)componentClicked, appMouseEvent)) {
+                                currentDraggable = (Draggable)componentClicked;
+                                Logging.info("onDragStart!!!");
+                                return ;
+                            }
                         }
                     }
+
+                    componentClicked = findFocusableParent.apply(componentClicked, true);
+
                     if (componentClicked instanceof Clickable) {
                         Clickable clickable = (Clickable)componentClicked;
                         Focusable focusableAndClickable = ToFocusable.UTIL.toFocusable(componentClicked);
@@ -282,6 +290,28 @@ public class MouseEventOrchestrator {
     }
 
     protected boolean handleDragMode(ApplicationMouseEvent appMouseEvent) {
+        // appMouseEvent.getMouseAction() == MOUSE_ACTION.DOWN_LEFT_DRAG || appMouseEvent.getMouseAction() == MOUSE_ACTION.UP)
+        
+        if (currentDraggable == null) {
+            return false;
+        }
+        
+        if (appMouseEvent.getMouseAction() == MOUSE_ACTION.DOWN_LEFT_DRAG) {
+            if (currentDraggable.onDrag(appMouseEvent)) {
+                return true;
+            }
+            this.currentDraggable = null;
+            return false;
+        }
+
+        if (appMouseEvent.getMouseAction() == MOUSE_ACTION.UP) {
+            if (currentDraggable.onDragStop(appMouseEvent)) {
+                this.currentDraggable = null;
+                return true;
+            }
+            return false;
+        }
+        
         return false;
     }
     
@@ -291,6 +321,10 @@ public class MouseEventOrchestrator {
             return false;
         }
         
+        if (newDraggable.onDragStart(appMouseEvent)) {
+            this.currentDraggable = newDraggable;
+            return true;
+        }
         
         return false;
     }

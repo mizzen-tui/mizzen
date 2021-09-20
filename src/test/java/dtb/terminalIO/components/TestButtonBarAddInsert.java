@@ -73,33 +73,30 @@ public class TestButtonBarAddInsert extends TestCase {
     public void testInsertMiddle() {
 
         Component<?>  t = new TextComponent("TestMe");
-        
 
         bbar1.insertComponent(1, t);
-        
+
         assertNotNull(bbar1.getChildFocusables());
         // t is not a focusable
         assertEquals(bbar1.getChildFocusables().size(),3);
-        
+
         assertTrue(bbar1.containsChild(t));
         assertEquals(1,bbar1.indexOf(t));
-        
+
     }
 
     public void testInsertEnd() {
 
         Component<?>  t = new TextComponent("TestMe");
-        
 
         bbar1.insertComponent(2, t);
-        
+
         assertNotNull(bbar1.getChildFocusables());
         // t is not a focusable
         assertEquals(bbar1.getChildFocusables().size(),3);
-        
+
         assertTrue(bbar1.containsChild(t));
         assertEquals(2,bbar1.indexOf(t));
-        
     }
 
 }

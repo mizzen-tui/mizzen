@@ -7,6 +7,7 @@ import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.components.VerticalPanel;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
@@ -114,7 +115,8 @@ public class MessageBox {
                                      ButtonSpec[] buttonSpec,
                                      EventBus eventBus, 
                                      ChildComponentManager<?> parentPanel,
-                                     String message) {
+                                     String message,
+                                     Component<?> customComponent) {
 
         Color dialogColor = new Colors.FGBGColors(Colors.Bla,Colors.On_Whi);
         dialogColor.setBoldTransform((c)-> new Colors.FGBGColors(Colors.BIWhi, Colors.On_Bla));
@@ -136,6 +138,8 @@ public class MessageBox {
         messageText.setFillOnClear(true);
         messageText.setEmptyColor(dialogColor);
 
+        VerticalPanel mainPanel = new VerticalPanel(dialogColor).setVerticalSpacer(1);
+        
         HorizontalPanel messagePanel = new HorizontalPanel(dialogColor).setHorizontalSpacer(2);
         messagePanel.setFillOnClear(true);
         messagePanel.setEmptyColor(dialogColor);
@@ -146,7 +150,12 @@ public class MessageBox {
         
         Position messageTextPosition = new Position.Simple(1,1);
         
-        dialog.add(messageTextPosition, messagePanel);
+        mainPanel.add(messagePanel);
+        if (customComponent != null) {
+            mainPanel.add(customComponent);
+        }
+        
+        dialog.add(messageTextPosition, mainPanel);
         
         ButtonBar buttons = new ButtonBar().setCycling(true);
         buttons.setFillOnClear(true);
@@ -167,7 +176,7 @@ public class MessageBox {
             buttonPositionCol = messageTextPosition.getCol();
         }
         
-        Position positionOfButtons = messageTextPosition.offsetAdd(new Position.Simple(messagePanel.getHeight()+2,buttonPositionCol));
+        Position positionOfButtons = messageTextPosition.offsetAdd(new Position.Simple(mainPanel.getHeight()+2,buttonPositionCol));
         
         dialog.add( positionOfButtons, buttons );
 
@@ -218,8 +227,15 @@ public class MessageBox {
                                       ChildComponentManager<?> parentPanel,
                                       String message,
                                       EventHandler  onPressed) {
-        simpleDialog(IconStyle.INFO, "Info", new ButtonSpec[] {new ButtonSpec("OK", Keys.ENTER_KEYSTROKE, onPressed)}, eventBus, parentPanel, message );
+        simpleDialog(IconStyle.INFO, "Info", new ButtonSpec[] {new ButtonSpec("OK", Keys.ENTER_KEYSTROKE, onPressed)}, eventBus, parentPanel, message, null );
+    }
 
+    public static void showInfoDialog(EventBus eventBus, 
+                                      ChildComponentManager<?> parentPanel,
+                                      String message,
+                                      Component<?> customComponent,
+                                      EventHandler  onPressed) {
+         simpleDialog(IconStyle.INFO, "Info", new ButtonSpec[] {new ButtonSpec("OK", Keys.ENTER_KEYSTROKE, onPressed)}, eventBus, parentPanel, message, customComponent );
     }
 
     public static void showInfoDialog(EventBus  eventBus, 
@@ -228,11 +244,18 @@ public class MessageBox {
         showInfoDialog(eventBus, parentPanel, message, EventHandler.NULL_HANDLER);
     }
     
+    public static void showInfoDialog(EventBus  eventBus, 
+                                      ChildComponentManager<?> parentPanel,
+                                      String message,
+                                      Component<?> customComponent) {
+        showInfoDialog(eventBus, parentPanel, message, customComponent, EventHandler.NULL_HANDLER);
+}
+
     public static void showWarningDialog(EventBus  eventBus, 
                                          ChildComponentManager<?> parentPanel,
                                          String message,
                                          EventHandler onPressed) {
-         simpleDialog(IconStyle.WARNING, "Warning", new ButtonSpec[] {new ButtonSpec("OK", Keys.ENTER_KEYSTROKE, onPressed)}, eventBus, parentPanel, message);
+         simpleDialog(IconStyle.WARNING, "Warning", new ButtonSpec[] {new ButtonSpec("OK", Keys.ENTER_KEYSTROKE, onPressed)}, eventBus, parentPanel, message, null);
     }
     
     public static void showWarningDialog(EventBus eventBus, 
@@ -245,7 +268,7 @@ public class MessageBox {
                                        ChildComponentManager<?> parentPanel,
                                        String message,
                                        EventHandler onPressed) {
-          simpleDialog(IconStyle.ERROR, "Error", new ButtonSpec[] {new ButtonSpec("OK", Keys.ENTER_KEYSTROKE, onPressed)}, eventBus, parentPanel, message);
+          simpleDialog(IconStyle.ERROR, "Error", new ButtonSpec[] {new ButtonSpec("OK", Keys.ENTER_KEYSTROKE, onPressed)}, eventBus, parentPanel, message, null);
     }
     
     public static void showErrorDialog(EventBus eventBus, 
@@ -261,7 +284,7 @@ public class MessageBox {
                                        String message,
                                        EventHandler onYesAction) {
 
-        simpleDialog(IconStyle.QUESTION, " Yes / No ", new ButtonSpec[] {new ButtonSpec("Yes", KeyStroke.caseInsensitive('y'), onYesAction),new ButtonSpec("No", KeyStroke.caseInsensitive('n'), EventHandler.NULL_HANDLER)}, eventBus, parentPanel, message);
+        simpleDialog(IconStyle.QUESTION, " Yes / No ", new ButtonSpec[] {new ButtonSpec("Yes", KeyStroke.caseInsensitive('y'), onYesAction),new ButtonSpec("No", KeyStroke.caseInsensitive('n'), EventHandler.NULL_HANDLER)}, eventBus, parentPanel, message, null);
     }
 
 }

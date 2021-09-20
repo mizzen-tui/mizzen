@@ -15,6 +15,8 @@ import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
+import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.events.mouse.ApplicationMouseEvent;
 import dtb.terminalIO.events.mouse.Clickable;
 import dtb.terminalIO.events.mouse.MOUSE_ACTION;
@@ -34,17 +36,27 @@ public class ScrollBarVertical extends BoundedComponent<ScrollBarVertical> imple
     Dimension sizeOfComponentBeingViewed;
     Dimension sizeOfViewer;
     private BlockHiliter blockHiliter = new BlockChars.BlockHiliter();
+    private boolean handleKeyEvents;
 
     // ▒
     // [░░▒]  [▒░░]
     
     public ScrollBarVertical(Color color, Position pos, int len) {
         super(color, pos, new Dimension.Simple(len, 1));
+        handleKeyEvents = true;
     }
     
     public ScrollBarVertical(Color color, int row, int col, int len) {
         super(color, new Position.Simple(row, col), new Dimension.Simple(len, 1));
+        handleKeyEvents = true;
     }
+
+
+    public ScrollBarVertical enableKeyEvents(boolean enable) {
+        handleKeyEvents = enable;
+        return this;
+    }
+
 
     Position calcScrollbarOffset() {
         if (sizeOfComponentBeingViewed == null || offset == null) {
@@ -76,6 +88,44 @@ public class ScrollBarVertical extends BoundedComponent<ScrollBarVertical> imple
         return new Position.Simple( (int)(  ((float)scrollbarOffset.getRow()) * percentage) , 0 );
     }
 
+    boolean canScrollUp(TerminalEvent<?> te) {
+        if (sizeOfComponentBeingViewed == null || offset==null) {
+            return false;
+        }
+        
+        if (offset.getRow() == 0) {
+            return false;
+        }
+        
+        return true;
+    }
+
+    void scrollUp(TerminalEvent<?> te) {
+        if (!canScrollUp(te)) {
+            return;
+        }
+        setOffset(offset.offsetAdd(-1, 0));
+        te.getEventBus().raiseEvent( new HasValue.ValueChangedEvent<>(this) );
+    }
+    
+    boolean canScrollDown(TerminalEvent<?> te) {
+        if (sizeOfComponentBeingViewed == null || offset==null) {
+            return false;
+        }
+        if (offset.getRow()>=sizeOfComponentBeingViewed.getHeight()) {
+            return false;
+        }
+        return true;
+    }
+
+    void scrollDown(TerminalEvent<?> te) {
+        if (!canScrollDown(te)) {
+            return;
+        }
+        setOffset(offset.offsetAdd(1, 0));
+        te.getEventBus().raiseEvent( new HasValue.ValueChangedEvent<>(this) );
+    }
+    
     public void setOffset(Position offset) {
         this.offset = offset;
         this.markAsDirty();
@@ -212,8 +262,23 @@ public class ScrollBarVertical extends BoundedComponent<ScrollBarVertical> imple
         if (meAsFocusable != null) {
             return meAsFocusable;
         }
-        
+
         this.eventHandlerContainer = ChainedEventHandler.useChainOfResponsibilityStrategy(HasName.UTIL.getName(this)+"-chainOfResponsibility");
+
+
+        eventHandlerContainer.appendEventHandler(new KeyInputEventHandler(Keys.UP_KEYSTROKE, 
+                                                                          (te)->handleKeyEvents && canScrollUp(te),
+                                                                          (te)-> {
+                                                                              scrollUp(te);
+                                                                          }) );
+
+        eventHandlerContainer.appendEventHandler(new KeyInputEventHandler(Keys.DOWN_KEYSTROKE, 
+                                                                          (te)->handleKeyEvents && canScrollDown(te),
+                                                                          (te)-> {
+                                                                              scrollDown(te);
+                                                                          }) );
+
+
         this.conditionalHandler = this.eventHandlerContainer.asConditionalEventHandler();
         
         meAsFocusable = new DefaultFocusableBehaviour() {

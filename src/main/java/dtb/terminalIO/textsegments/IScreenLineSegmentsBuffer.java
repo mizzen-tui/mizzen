@@ -100,6 +100,8 @@ public interface IScreenLineSegmentsBuffer extends Rectangle , Iterable<ScreenLi
 	 * rectangles from this buffer.  This is more expensive than removeSegments
 	 * which will remove whole segments.
 	 * 
+	 * <pre>
+	 * 
 	 * Lets say we have these list of segments ..
 	 * 
 	 *     (1)           (2)          (3)
@@ -117,7 +119,9 @@ public interface IScreenLineSegmentsBuffer extends Rectangle , Iterable<ScreenLi
 	 *    (1)                   (2)   (3)   
 	 *    
 	 *    Notice how segment (1) and segment (2) have been clipped.
-	 *    
+	 *
+	 * </pre>
+	 * 
 	 * @param rectangles
 	 */
 	public abstract void removeRectangles(Collection<? extends Rectangle> rectangles);

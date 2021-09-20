@@ -3,10 +3,15 @@ package dtb.terminalIO.util.linuxproc;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import dtb.terminalIO.util.ConsumeResult;
+import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.linuxproc.ExecUtil.StreamLineGobbler;
 
 public class LinuxProcessWatcher {
@@ -26,12 +31,15 @@ public class LinuxProcessWatcher {
     Thread controllerThread;
     String name;
     boolean controlledInterrupt = true;
+    String workingDirectory;
+    Map<String, String> environment;
 
     Supplier<Boolean> isActive = new Supplier<Boolean>() {
         @Override
         public Boolean get() {
             return isAlive();
-        }};
+        }
+    };
 
     public LinuxProcessWatcher setInvokeScript(String invokeScript) {
         this.invokeScript = invokeScript;
@@ -42,7 +50,39 @@ public class LinuxProcessWatcher {
         this.name = name;
     }
     
-    public synchronized void invokeLongRunning(ConsumeResult<String> consumeOutput, ConsumeResult<Integer> consumeResult) throws Exception {
+    public LinuxProcessWatcher setWorkingDirectory(String workingDirectory) {
+        if (workingDirectory != null) {
+            // validate ..
+            if ( ! new File(workingDirectory).exists()) {
+                throw new IllegalArgumentException("specified working directory '"+ workingDirectory + "' not found");
+            }
+        }
+        this.workingDirectory = workingDirectory;
+        return this;
+    }
+
+    public LinuxProcessWatcher setEnvironment(Map<String, String> environment) {
+        this.environment = environment;
+        return this;
+    }
+
+    public synchronized void invokeLongRunning(TerminalStreamOutputParser parser, ConsumeResult<Integer> consumeResult)
+            throws Exception {
+
+        TerminalStreamReader terminalReader = new TerminalStreamReader(parser, (in) -> isActive.get(), true);
+        Function<InputStream, Thread> gooblerThreadBuilder = (in) -> new Thread(terminalReader.asRunnable(in));
+        invokeLongRunning(gooblerThreadBuilder, consumeResult);
+    }
+
+    public synchronized void invokeLongRunning(ConsumeResult<String> consumeOutput,
+                                               ConsumeResult<Integer> consumeResult) throws Exception {
+        Function<InputStream, Thread> gooblerThreadBuilder = (in) -> new Thread(new StreamLineGobbler(in, consumeOutput, isActive));
+        invokeLongRunning(gooblerThreadBuilder, consumeResult);
+    }
+
+    public synchronized void invokeLongRunning(Function<InputStream, 
+                                               Thread> gooblerThreadBuilder,
+                                               ConsumeResult<Integer> consumeResult) throws Exception {
         if (invokeScript == null) {
             throw new NullPointerException("invokeScript not set.  Please call setInvokeScript() first");
         }
@@ -52,7 +92,7 @@ public class LinuxProcessWatcher {
         }
 
         controlledInterrupt = false;
-        
+
         invoking.set(true);
 
         Runnable invoker = new Runnable() {
@@ -60,19 +100,39 @@ public class LinuxProcessWatcher {
             public void run() {
                 try {
 
-                    String[] commands = new String[] { "/bin/sh", "-c",LinuxProcessWatcher.this.invokeScript};
+                    String[] commands = new String[] { "/bin/sh", "-c", LinuxProcessWatcher.this.invokeScript };
 
                     ProcessBuilder procBuilder = new ProcessBuilder(commands);
+                    
+                    if (LinuxProcessWatcher.this.workingDirectory != null) {
+                        procBuilder.directory(new File(LinuxProcessWatcher.this.workingDirectory ));
+                    }
+                    
+                    if (LinuxProcessWatcher.this.environment != null) {
+                        Map<String, String> procENV = procBuilder.environment();
+                        for (String envVarName : LinuxProcessWatcher.this.environment.keySet()) {
+                            String value = LinuxProcessWatcher.this.environment.get(envVarName);
+                            if (value != null && value.trim().length()!=0) {
+                                procENV.put(envVarName, value);
+                             }
+                        }
+                    }
 
                     procBuilder.redirectErrorStream(true);
-                    
+
                     LinuxProcessWatcher.this.process = procBuilder.start();
-                    
+
                     String gobblerName = "outputGobbler";
-                    if ( LinuxProcessWatcher.this.name != null) {
+                    if (LinuxProcessWatcher.this.name != null) {
                         gobblerName = gobblerName + "-" + name;
                     }
-                    outputGobbler = new Thread(new StreamLineGobbler(LinuxProcessWatcher.this.process.getInputStream(), consumeOutput, isActive),gobblerName);
+                    outputGobbler = gooblerThreadBuilder.apply(LinuxProcessWatcher.this.process.getInputStream()); // new
+                                                                                                                   // Thread(new
+                                                                                                                   // StreamLineGobbler(LinuxProcessWatcher.this.process.getInputStream(),
+                                                                                                                   // consumeOutput,
+                                                                                                                   // isActive),gobblerName);
+
+                    outputGobbler.setName(gobblerName);
 
                     outputGobbler.start();
 
@@ -89,8 +149,14 @@ public class LinuxProcessWatcher {
                         invoking.set(false);
                         process = null;
                         outputGobbler = null;
+                        try {
+                            consumeResult.accept(-1);
+                        } catch (Exception e1) {
+                            //
+                        }
                         return;
                     }
+                   // Logging.forceLogInfo("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n\n\nError " + e);
                     throw new RuntimeException(e);
                 }
 
@@ -102,12 +168,12 @@ public class LinuxProcessWatcher {
 
         };
 
-        String threadName = "LinuxProcessWatcher-" + (this.name != null?(name+"-"):"") + nextThreadNum(); 
+        String threadName = "LinuxProcessWatcher-" + (this.name != null ? (name + "-") : "") + nextThreadNum();
 
         controllerThread = new Thread(invoker, threadName);
         controllerThread.start();
     }
-    
+
     private synchronized void killGobblerThread() {
         if (outputGobbler != null && outputGobbler.isAlive()) {
             if (outputGobbler != null && outputGobbler.isAlive()) {
@@ -127,7 +193,7 @@ public class LinuxProcessWatcher {
         }
         controllerThread = null;
     }
-    
+
     public synchronized void stopRequest() {
         invoking.set(false);
         Process theProcess = process;
@@ -171,9 +237,12 @@ public class LinuxProcessWatcher {
         }
 
         invoking.set(true);
-        String result = ExecUtil.executeWithShell(this.invokeScript);
-        invoking.set(false);
-        return result;
+        try {
+            String result = ExecUtil.executeWithShell(this.invokeScript);
+            return result;
+        } finally {
+            invoking.set(false);
+        }
     }
 
     public static LinuxProcessWatcher tailFile(String name, String fileName) throws Exception {
@@ -187,7 +256,7 @@ public class LinuxProcessWatcher {
         String tailCMD = "/usr/bin/tail -f " + fileToTail.getAbsolutePath();
 
         LinuxProcessWatcher watcher = new LinuxProcessWatcher();
-        
+
         if (name != null) {
             watcher.setName(name);
         }
@@ -205,7 +274,8 @@ public class LinuxProcessWatcher {
     public static LinuxProcessWatcher tailFile(String fileName, ConsumeResult<String> consumeOutput) throws Exception {
 
         LinuxProcessWatcher watcher = tailFile(fileName);
-        watcher.invokeLongRunning(consumeOutput, (result)->{});
+        watcher.invokeLongRunning(consumeOutput, (result) -> {
+        });
 
         return watcher;
 
@@ -219,7 +289,7 @@ public class LinuxProcessWatcher {
             throw new FileNotFoundException(fileName + " not found.  Cannot perform tail.");
         }
 
-        // todo: Should not use cat !!!-- should just read the damn file!!!!  yeesh..
+        // todo: Should not use cat !!!-- should just read the damn file!!!! yeesh..
 
         String tailCMD = "cat " + fileToTail.getAbsolutePath();
 
@@ -231,10 +301,11 @@ public class LinuxProcessWatcher {
 
     }
 
-    public static LinuxProcessWatcher viewTextFile(String fileName, ConsumeResult<String> consumeOutput) throws Exception {
+    public static LinuxProcessWatcher viewTextFile(String fileName, ConsumeResult<String> consumeOutput)
+            throws Exception {
 
         LinuxProcessWatcher watcher = viewTextFile(fileName);
-        watcher.invokeLongRunning(consumeOutput, (result)->{});
+        watcher.invokeLongRunning(consumeOutput, (result) -> {});
 
         return watcher;
 

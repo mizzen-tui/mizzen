@@ -226,7 +226,16 @@ public interface Component<T extends Component<?>>
                     return null;
                 }
                 
-                Position newOffset = new Position.Simple(parentCanvasOffset).offsetAdd(parentContainer.getPositionRelativeToParent(component)).offsetAdd(component.getPostion_TopLeft());   
+                Position componentPositionRelativeToParent = parentContainer.getPositionRelativeToParent(component);
+                
+                if (componentPositionRelativeToParent == null) {
+                    throw new NullPointerException("Unexpected null offset.  Component " + 
+                                                   HasName.UTIL.getName(component) + 
+                                                   " does not have a defined offset into parent " + 
+                                                   HasName.UTIL.getName(parentContainer) );
+                }
+                
+                Position newOffset = new Position.Simple(parentCanvasOffset).offsetAdd(componentPositionRelativeToParent).offsetAdd(component.getPostion_TopLeft());   
                 return newOffset;
             }
             
@@ -267,16 +276,38 @@ public interface Component<T extends Component<?>>
             
         }
 
+        private static Component<?> __findComponentInHierarchyWithCompositeParent(Component<?> component) {
+            ParentContainer parentContainer = component.getParentContainer();
+            if (parentContainer == null) {
+                return null;
+            }
+            if ( ! (parentContainer instanceof Composite) ) {
+                
+                if ( ! (parentContainer instanceof Component)) {
+                    return null;
+                }
+                return __findComponentInHierarchyWithCompositeParent((Component<?>)parentContainer);
+            }
+            return component;
+        }
+        
+        
         public static boolean bringToFront(Component<?> component) {
             if (component == null || component.getParentContainer() == null) {
                 return false;
             }
-            ParentContainer parentContainer = component.getParentContainer();
-            if ( ! (parentContainer instanceof Composite) ) {
+            
+            component = __findComponentInHierarchyWithCompositeParent(component);
+            if (component == null) {
                 return false;
             }
             
-            ((Composite)parentContainer).bringToFront(component);
+            Composite parentContainer = (Composite) component.getParentContainer();
+            
+            parentContainer.bringToFront(component);
+            
+            bringToFront(parentContainer);
+            
             return true;
         }
         

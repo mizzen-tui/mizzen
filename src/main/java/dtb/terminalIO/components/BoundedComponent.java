@@ -5,6 +5,7 @@ import java.util.function.Supplier;
 
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
+import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
@@ -110,7 +111,10 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
     
     public void markAsDirty() {
         if (isDirty()) {
-            Component.UTIL.markParentDirtyIfChildDirty(this);
+            //Component.UTIL.markParentDirtyIfChildDirty(this);
+            // this next lines is redundant for many but not
+            // all components.  Remove at your peril.
+            this.hasDrawn = false;
             return;
         }
         this.hasDrawn = false;

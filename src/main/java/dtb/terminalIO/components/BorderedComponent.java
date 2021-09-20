@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.geom.Align;
+import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
@@ -207,9 +208,11 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
         if (componentPosition.isSameLocation(Position.ZERO)) {
             // very fast merge (not this case probably does not come up)
+            segments.getSegments().clear();
             segments.getSegments().addAll(this.component.getSegmentsBuffer().getSegments());
         } else {
             // (SLOW)segments.mergeAt(componentPosition.getRow(), componentPosition.getCol(), this.component.getSegmentsBuffer());
+            segments.getSegments().clear();
             segments.getSegments().addAll( this.component.getSegmentsBuffer().getSegments().stream().map((s)->s.fromOffset(componentPosition)).collect(Collectors.toList())  );
         }
         if (showBorder) {

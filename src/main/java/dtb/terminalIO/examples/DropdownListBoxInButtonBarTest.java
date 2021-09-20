@@ -6,6 +6,7 @@ import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.components.VerticalPanel;
 import dtb.terminalIO.components.input.DropdownListBox;
 import dtb.terminalIO.components.modal.MessageBox;
 import dtb.terminalIO.controlcodes.color.Colors;
@@ -15,42 +16,42 @@ import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.util.Logging;
 
 public class DropdownListBoxInButtonBarTest {
-    
+
     public static void main(String args[]) {
-        
+
         Logging.setEnabled(true);
-        
+
         new TUIApp(args)
         .setCanvasSize(24, 100)
-        //.setEmptyChar(' ')
         .setMainApplicationPanel(new Composite().setBounds(20, 100).setEmptyChar(' ').setBorder(true))
         .confirmOnExit()
         .setOnReadyStart((tApp)-> {
-            
+
             Composite mainPanel = (Composite) tApp.getMainApplicationPanel();
-            
+
             mainPanel.setTitle(new Colors.FGBGColors(Colors.BGre,Colors.On_Blu), "DropDownList\nTesting     ");
+
+            VerticalPanel desktop = new VerticalPanel().setVerticalSpacer(3);
             
             HorizontalPanel hpMain = new HorizontalPanel();
+            hpMain.setEmptyChar('!');
+            hpMain.setFillOnClear(true);
             
             ButtonBar bbar = new ButtonBar();
-            //bbar.setPrevKeyStroke(Keys.LEFT_KEYSTROKE);
-            //bbar.setNextKeyStroke(Keys.RIGHT_KEYSTROKE);
-            
+
             bbar.addComponent( new TextComponent("A LABEL") );
-            
-            
+
             bbar.addButton("POPUP", Keys.CTRL_F_KEYSTROKE, (te)->{
                 MessageBox.showInfoDialog(te.getEventBus(), tApp.getMainApplicationPanel(), "b1 popup msg");
             });
-            
+
             bbar.addButton("POPUP2", Keys.CTRL_G_KEYSTROKE, (te)->{
                 MessageBox.showInfoDialog(te.getEventBus(), tApp.getMainApplicationPanel(), "b2 popup msg");
             });
-            
+
             DropdownListBox<String> ddlb = DropdownListBox.fromStrings(new String[] {"Test1","Test2","Test3"});
             ddlb.setSelectedValue("Test2");
-            
+
             DropdownListBox<String> ddlb2 = DropdownListBox.fromStrings(new String[] {"Silly Sally","Sold SeaShells","At the SeahShore!"});
 
             hpMain.add(bbar);
@@ -59,11 +60,36 @@ public class DropdownListBoxInButtonBarTest {
 
             hpMain.add(ddlb2);
 
-            hpMain.add(DropdownListBox.yesNoDropDown());
+            DropdownListBox<Boolean> yesNo = DropdownListBox.yesNoDropDown();
 
-            tApp.getMainApplicationPanel().add(2,2,hpMain);
+            hpMain.add(yesNo);
+
+            desktop.add(hpMain);
+
+            HorizontalPanel statusBar = new HorizontalPanel().setHorizontalSpacer(2);
+
+            TextComponent ddlb_currentValue = new TextComponent( ddlb.getValue()  == null ? "<NULL>" : ddlb.getValue()  );
+            ddlb.onChange((te)->{
+                ddlb_currentValue.setTextAndResize(ddlb.getValue());
+            });
+            statusBar.add(ddlb_currentValue);
+
+            TextComponent ddlb2_currentValue = new TextComponent( ddlb2.getValue() == null ? "<NULL>" : ddlb2.getValue() );
+            ddlb2.onChange((te)->{
+                ddlb2_currentValue.setTextAndResize(ddlb2.getValue());
+            });
+            statusBar.add(ddlb2_currentValue);
+
+            TextComponent yesNo_currentValue = new TextComponent(  yesNo.getValue()  == null ? "<NULL>" : String.valueOf(yesNo.getValue()) );
+            yesNo.onChange((te)->{
+                yesNo_currentValue.setTextAndResize(String.valueOf(yesNo.getValue()) );
+            });
+            statusBar.add(yesNo_currentValue);
             
-            
+            desktop.add(statusBar);
+
+            tApp.getMainApplicationPanel().add(2,2,desktop);
+
             FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),
                                                                                              tApp.getEventBus(),
                                                                                              ()-> new DefaultFocusManager().setNavKeysFirst(false)
@@ -71,18 +97,14 @@ public class DropdownListBoxInButtonBarTest {
                                                                                                                            .setPrevKeyStroke(Keys.SHIFT_TAB_KEYSTROKE)
                                                                                                                            .setNextKeyStroke(Keys.TAB_KEYSTROKE)
                                                                                                                            .setName("ApplicationFocusManager"));
-            
-           // mainFocusManager = bbar;
-            
+
             tApp.getEventBus().appendEventHandler(  mainFocusManager );
-            
+
             // sanity check
             FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
-            
-            
+
         }).start();
-        
+
     }
-    
 
 }

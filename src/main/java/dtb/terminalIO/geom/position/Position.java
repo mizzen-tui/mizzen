@@ -43,6 +43,10 @@ public interface Position extends Vec2<Position>, Row, Column{
         return add((float)col, (float)row);
     }
 
+    public default Position offsetAdd(Position offset) {
+        return offsetAdd(offset.getRow(), offset.getCol());
+    }
+
 
     public default Position addCols(int cols) {
         return new Position.Simple(this.getY(), this.getX()+cols);

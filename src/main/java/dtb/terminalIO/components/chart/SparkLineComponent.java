@@ -5,12 +5,12 @@ import java.util.Collection;
 import java.util.Collections;
 
 import dtb.terminalIO.components.AbstractComponent;
-import dtb.terminalIO.components.CanResize;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;

@@ -186,29 +186,44 @@ public class TextComponent extends BoundedComponent<TextComponent> {
         return super.toString().replace("TextComponent[","TextComponent["+getText()+"][");
     }
 
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((text == null) ? 0 : text.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        TextComponent other = (TextComponent) obj;
-        if (text == null) {
-            if (other.text != null)
-                return false;
-        } else if (!text.equals(other.text))
-            return false;
-        return true;
-    }
-    
+//    @Override
+//    public int hashCode() {
+//        final int prime = 31;
+//        int result = 1;
+//        result = prime * result + ((cleanText == null) ? 0 : cleanText.hashCode());
+//        result = prime * result + (hasColorCodes ? 1231 : 1237);
+//        result = prime * result + ((parsedSegments == null) ? 0 : parsedSegments.hashCode());
+//        result = prime * result + ((text == null) ? 0 : text.hashCode());
+//        return result;
+//    }
+//
+//    @Override
+//    public boolean equals(Object obj) {
+//        if (this == obj)
+//            return true;
+//        if (obj == null)
+//            return false;
+//        if (getClass() != obj.getClass())
+//            return false;
+//        TextComponent other = (TextComponent) obj;
+//        if (cleanText == null) {
+//            if (other.cleanText != null)
+//                return false;
+//        } else if (!cleanText.equals(other.cleanText))
+//            return false;
+//        if (hasColorCodes != other.hasColorCodes)
+//            return false;
+//        if (parsedSegments == null) {
+//            if (other.parsedSegments != null)
+//                return false;
+//        } else if (!parsedSegments.equals(other.parsedSegments))
+//            return false;
+//        if (text == null) {
+//            if (other.text != null)
+//                return false;
+//        } else if (!text.equals(other.text))
+//            return false;
+//        return true;
+//    }
+//    
 }

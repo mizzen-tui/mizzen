@@ -638,7 +638,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
             return chainedHandler;
         }
         
-        chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
+        chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
 
         chainedHandler.appendEventHandler(new KeyInputEventHandler(this.keystrokePrevious, 
                 (te)->  canSetSelectedPrev(),
@@ -749,12 +749,17 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
                 if (selectIDX > -1) {
                     this.setSelected(selectIDX);
                     // now let the rest of the app know that changes have happened to this ListBox
-                    appMouseEvent.getEventBus().raiseEvent(  new HasValue.ValueChangedEvent<>(ListBox.this) );
-                    raiseEventRequestShowSelected(appMouseEvent.getEventBus());
+                    onMouseSelected(appMouseEvent.getEventBus()); 
                 }
             }
 
         }
+    }
+    
+    protected void onMouseSelected(EventBus eventBus) {
+        // now let the rest of the app know that changes have happened to this ListBox
+        eventBus.raiseEvent(  new HasValue.ValueChangedEvent<>(ListBox.this) );
+        raiseEventRequestShowSelected(eventBus);
     }
 
     HasValue.OnValueChangedEventHandler<T> onChangeHandler;

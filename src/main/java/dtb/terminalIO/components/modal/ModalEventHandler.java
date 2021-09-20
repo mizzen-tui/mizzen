@@ -29,7 +29,7 @@ class ModalEventHandler implements ConditionalEventHandler {
     private ConditionalEventHandler innerEventHandlerAsConditionalEventHandler;
 
     public ModalEventHandler(EventHandlerContainer parentEventsContainer) {
-        modalEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
+        modalEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
         modalEventHandlerAsConditionalEventHandler = modalEventHandler.asConditionalEventHandler();
         
         innerEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();

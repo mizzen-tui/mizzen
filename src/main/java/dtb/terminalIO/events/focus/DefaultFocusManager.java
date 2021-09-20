@@ -117,11 +117,13 @@ public class DefaultFocusManager implements FocusManager,
 
         if (!eventConsumers.contains(focusable)) {
             throw new IllegalArgumentException(
-                    "DefaultFocusManager("+getName()+"):  Cannot set a focusable ("+
-                       HasName.UTIL.getName(focusable)+") that has not been first added to the DefaultFocusManager. ");
+                    "DefaultFocusManager("+getName()+"):  Cannot set as focusable ("+
+                       HasName.UTIL.getName(focusable)+") that has not been first added to the DefaultFocusManager "+HasName.UTIL.getName(this)+". ");
         }
 
-        FocusManager.UTIL.setNewFocusable(focusable, this.current, eventBus, onFocusChanged);
+        if (this.hasFocus()) {
+           FocusManager.UTIL.setNewFocusable(focusable, this.current, eventBus, onFocusChanged);
+        }
         this.current = focusable;
     }
 
@@ -186,7 +188,7 @@ public class DefaultFocusManager implements FocusManager,
 
     private ConditionalEventHandler buildEventHandler() {
 
-        ChainedEventHandler chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
+        ChainedEventHandler chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
 
         chainedEventHandler.appendEventHandler(HasName.UTIL.decorateWithParentsNamePrefix(buildRequestFocusEventHandler(),chainedEventHandler));
         chainedEventHandler.appendEventHandler(HasName.UTIL.decorateWithParentsNamePrefix(buildKeyStrokeEventHandler(),chainedEventHandler));
@@ -298,7 +300,19 @@ public class DefaultFocusManager implements FocusManager,
                 // at this point let's look at hot keys..
 
                 if (!IS_KEYPRESS.test(te)) {
-                    return false; // not a keyboard event, so not a hotkey
+                    
+                    // not a key press so hunt for another focusable that might be able to handle this event
+                    if (size()>0) {
+                       for (Focusable otherFocusable : getChildFocusables()) {
+                           if (otherFocusable != focusable) {
+                               if (otherFocusable.canHandle(te) != null) {
+                                   return true;
+                               }
+                           }
+                       }
+                    }
+                    
+                    return false; // not a keyboard event, so not a hotkey and not handled by any child focusable
                 }
                 
                 boolean handled = handleHotkeyPressed((KeyEvent) te);
@@ -326,8 +340,28 @@ public class DefaultFocusManager implements FocusManager,
             // not a navigation key so forward event to current focusable
             Focusable focusable = getCurrentOrSet(te.getEventBus());
             if (focusable != null) {
-                focusable.handle(te);
+                if (focusable.canHandle(te) != null) { 
+                     focusable.handle(te);
+                     return;
+                }
             }
+            
+            if (!IS_KEYPRESS.test(te)) {
+                
+                // not a key press so hunt for another focusable that might be able to handle this event
+                if (size()>0) {
+                   for (Focusable otherFocusable : getChildFocusables()) {
+                       if (otherFocusable != focusable) {
+                           if (otherFocusable.canHandle(te) != null) {
+                               otherFocusable.handle(te);
+                               return;
+                           }
+                       }
+                   }
+                }
+                
+            }
+            
         });
     }
 
@@ -362,7 +396,8 @@ public class DefaultFocusManager implements FocusManager,
             @Override
             public boolean test(TerminalEvent<?> te) {
                 
-                Focusable focusable = getCurrentOrSet(te.getEventBus());
+                Focusable focusable = null;
+                focusable = getCurrentOrSet(te.getEventBus());
                 if (focusable != null) {
                     if  (focusable.canHandle(te) != null) {
                         return true;
@@ -383,6 +418,16 @@ public class DefaultFocusManager implements FocusManager,
                         return true;
                     } else if (nextKeyStroke != null && ke.isKeyStroke(nextKeyStroke) && getNext(te.getEventBus()) != null) {
                         return true;
+                    }
+                } else {  // not a key press so hunt for another focusable that might be able to handle this event
+                    if (size()>0) {
+                       for (Focusable otherFocusable : getChildFocusables()) {
+                           if (otherFocusable != focusable) {
+                               if (otherFocusable.canHandle(te) != null) {
+                                   return true;
+                               }
+                           }
+                       }
                     }
                 }
 
@@ -413,6 +458,16 @@ public class DefaultFocusManager implements FocusManager,
                 } else if (nextKeyStroke != null && ke.isKeyStroke(nextKeyStroke)) {
                     if (setNextAsCurrentFocus(te.getEventBus())) {
                         return;
+                    }
+                }
+            } else {  // not a key press
+                if (size()>0) {
+                    for (Focusable otherFocusable : getChildFocusables()) {
+                        if (otherFocusable != focusable) {
+                            if (otherFocusable.canHandle(te) != null) {
+                                otherFocusable.handle(te);
+                            }
+                        }
                     }
                 }
             }
@@ -446,7 +501,17 @@ public class DefaultFocusManager implements FocusManager,
                     if ( handleHotkeyPressed((KeyEvent) te)) {
                         return true;
                     }
-                }
+                } else {  // not a key press so hunt for another focusable that might be able to handle this event
+                    if (size()>0) {
+                        for (Focusable otherFocusable : getChildFocusables()) {
+                            if (otherFocusable != focusable) {
+                                if (otherFocusable.canHandle(te) != null) {
+                                    return true;
+                                }
+                            }
+                        }
+                     }
+                 }
 
                 return false; // not handled
             }
@@ -475,6 +540,16 @@ public class DefaultFocusManager implements FocusManager,
                 } else if (nextKeyStroke != null && ke.isKeyStroke(nextKeyStroke)) {
                     if (setNextAsCurrentFocus(te.getEventBus())) {
                         return;
+                    }
+                }
+            } else {  // not a key press
+                if (size()>0) {
+                    for (Focusable otherFocusable : getChildFocusables()) {
+                        if (otherFocusable != focusable) {
+                            if (otherFocusable.canHandle(te) != null) {
+                                otherFocusable.handle(te);
+                            }
+                        }
                     }
                 }
             }

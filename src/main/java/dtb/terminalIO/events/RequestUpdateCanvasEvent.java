@@ -6,11 +6,22 @@ public class RequestUpdateCanvasEvent extends TerminalEvent<Object> {
 
     public RequestUpdateCanvasEvent(Object source) {
         super(source, TYPE.REQUEST_UPDATE_CANVAS, null, Q_FULL_POLICY.OFFER);
+        
+       // Logging.forceLogInfo("RequestUpdateCanvasEvent " + String.valueOf(source));
+        
     }
 
     @Override
     public String toString() {
        return "RequestUpdateCanvasEvent [source=" + getSource() + "]";
     }
-    
+
+    public static void invoke(TerminalEvent<?> te, Object source) {
+        invoke(te.getEventBus(), source);
+    }
+
+    public static void invoke(EventBus eventBus, Object source) {
+        eventBus.raiseEvent(new RequestUpdateCanvasEvent(source));
+    }
+
 }

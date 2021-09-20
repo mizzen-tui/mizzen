@@ -70,7 +70,7 @@ public class EventBusImpl implements EventHandlerContainer, EventBus {
                                                      // -- increase as needed
 
     // main events handler chain
-    private ChainedEventHandler eventsHandlerChain = ChainedEventHandler.useChainOfResponsibilityStrategy("BUS:main");
+    private ChainedEventHandler eventsHandlerChain = ChainedEventHandler.useChainOfResponsibilityStrategy("BUS:main-chainOfResponsibility");
 
     // main events handler chain
     private ChainedEventHandler terminateHandlerChain = null;

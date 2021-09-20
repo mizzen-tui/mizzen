@@ -162,12 +162,18 @@ public interface FocusManager extends Focusable {
 
             // component is not a focusable - maybe it has children and maybe some 
             // of them are focusable's - let's recursively find out add them if yes
+            addFocusableFromComponentChildren(focusableContainer, component);
+        }
+
+        private static void addFocusableFromComponentChildren(List<Focusable> focusableContainer, Object component) {
+
             if (component instanceof HasChildren) {
                 for (Object o : ((HasChildren<?>)component).getChildren()) {
                     addFocusableChildren(focusableContainer, o);
                 }
             }
         }
+
 
         /**
          * Given component ( which could represent a graph of components ), we will build
@@ -189,6 +195,34 @@ public interface FocusManager extends Focusable {
             if (focusables.size()==0) {
                 return null;
             }
+//            if (focusables.size()==1 && focusables.get(0) instanceof FocusManager) {
+//                return (FocusManager) focusables.get(0);
+//            }
+
+            DefaultFocusManager focusManager = defaultFocusManagerBuilder.get();
+            for (Focusable focusable : focusables) {
+                focusManager.addFocusable(focusable, eventBus);
+            }
+
+            return focusManager;
+        }
+
+        public static FocusManager buildFocusManagerFromComponentChildren(Object component, 
+                                                                          EventBus eventBus) {
+            return buildFocusManagerFromComponentChildren(component, eventBus, ()-> new DefaultFocusManager());
+        }
+
+        public static FocusManager buildFocusManagerFromComponentChildren(Object component, 
+                                                                          EventBus eventBus, 
+                                                                          Supplier<DefaultFocusManager> defaultFocusManagerBuilder ) {
+
+            List<Focusable> focusables = new ArrayList<Focusable>();
+            addFocusableFromComponentChildren(focusables, component);
+
+            if (focusables.size()==0) {
+                return null;
+            }
+
             if (focusables.size()==1 && focusables.get(0) instanceof FocusManager) {
                 return (FocusManager) focusables.get(0);
             }
@@ -200,6 +234,8 @@ public interface FocusManager extends Focusable {
 
             return focusManager;
         }
+
+
 
         public static Focusable findOrBuildFocusableFromComponent(Object component, EventBus eventBus) {
             return findOrBuildFocusableFromComponent(component, eventBus, ()-> new DefaultFocusManager());
@@ -348,7 +384,7 @@ public interface FocusManager extends Focusable {
 
                 if (pathToTarget == null) {
                     // we should not get here because canHandlePredicate
-                    // should dealt with this..
+                    // should have dealt with this already..
                     return;
                 }
 

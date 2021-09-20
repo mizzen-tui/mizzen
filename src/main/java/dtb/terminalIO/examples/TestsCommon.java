@@ -62,6 +62,7 @@ public class TestsCommon {
         mapChars.map('┈', '~');
         mapChars.map('┊', '!');
         mapChars.map('░', '#');
+        mapChars.map('▒', '=');
         mapChars.map('▫', 'o');
         mapChars.map('■', '*');
         mapChars.map('◍', '*');

@@ -345,7 +345,7 @@ public class TextInput extends BoundedComponent<TextInput>
 
     private ConditionalEventHandler buildEventHandler() {
 
-        this.chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
+        this.chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
 
         appendEventHandler(new KeyInputEventHandler(Keys.BACKSPACE_KEYSTROKE,
                 (te) -> raiseEventOnChanged(te.getEventBus(), () -> deleteCharBeforeCaret())));

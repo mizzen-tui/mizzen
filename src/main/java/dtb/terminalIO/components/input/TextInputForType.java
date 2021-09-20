@@ -49,7 +49,7 @@ public class TextInputForType<T>  extends BoundedComponent<TextInputForType<T>> 
                 return;
             }
             // emit a new ValueChangedEvent event indicating that the 'typed' value of this 
-            // outer component has changed due to the innerText component changing
+            // outer component has changed due to the inner TextInput component changing
             te.getEventBus().raiseEvent(new HasValue.ValueChangedEvent<T>(TextInputForType.this));
         });
         
@@ -86,7 +86,7 @@ public class TextInputForType<T>  extends BoundedComponent<TextInputForType<T>> 
         if (this.chainedHandler != null) {
             return this.chainedHandler;
         }
-        this.chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
+        this.chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
         chainedHandler.appendEventHandler(this.textInput);
         return this.chainedHandler;
     }

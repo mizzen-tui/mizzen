@@ -12,8 +12,10 @@ import dtb.terminalIO.events.TerminalEvent;
  * 
  * <p/>
  * 
- * This is a useful behaviour that Components that participate in
- * a data-form entry will implement.  
+ * This is a useful behaviour for Components that participate in
+ * a data-form entry.  
+ * 
+ * <p/>
  * 
  * A good example is:  {@link dtb.terminalIO.components.input.TextInput}
  * 

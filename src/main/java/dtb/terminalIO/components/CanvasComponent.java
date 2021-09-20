@@ -3,6 +3,7 @@ package dtb.terminalIO.components;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.CanvasBackend;
+import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
@@ -20,8 +21,7 @@ public class CanvasComponent implements Component<CanvasComponent>, CanResize {
     private ParentContainer parentContainer;
     
     private Position canvasOffset;
-    
-    
+
     public CanvasComponent() {
         this.backend = new CanvasBackend.NullCanvasBackEnd();
         this.canvas = new Canvas(this.backend);

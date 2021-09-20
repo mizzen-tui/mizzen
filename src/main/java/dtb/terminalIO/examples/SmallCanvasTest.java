@@ -6,8 +6,8 @@ import java.util.Collections;
 import dtb.terminalIO.components.plot.blocks.BlocksGrid;
 import dtb.terminalIO.components.plot.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.shape.Circle;
-import dtb.terminalIO.components.plot.shape.RectangleShape;
 import dtb.terminalIO.controlcodes.ControlCode;
+import dtb.terminalIO.controlcodes.ControlCode.CursorDown;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.TerminalScreen;
@@ -24,7 +24,7 @@ public class SmallCanvasTest {
         Canvas master_canvas = new Canvas(screen);
         master_canvas.setSize(30, 30);
 
-        screen.setRaw();
+        // screen.setRaw();
         
         screen.add( ControlCode.HIDE_CURSOR);
 
@@ -54,7 +54,7 @@ public class SmallCanvasTest {
         
         Rectangle lastGridLocation = null;
         
-        int maxLoop = 50;
+        int maxLoop = 100;
         //int maxLoop = 1;
         
         for (int i = 0; i < maxLoop; i++) {
@@ -63,7 +63,6 @@ public class SmallCanvasTest {
 
             Circle c = new Circle(10, 10 , 10);
 
-            //RectangleShape r = new RectangleShape(new Rectangle.Simple(0,0,20,20)).setFilled(true);
             Circle r = new Circle(5, 5 , 5).setFilled(true);
 
             if (lastGridLocation != null) {
@@ -73,12 +72,7 @@ public class SmallCanvasTest {
 
             grid2.clear();
             grid2.clearPlots();
-            
-           // grid2.asPointPlotter().plot(1, 0);
-            //grid2.asPointPlotter().plot(1, 1);
-            //grid2.asPointPlotter().plot(2, 1);
-           // grid2.asPointPlotter().plot(2, 2);
-            
+
             r.draw(grid2.asPointPlotter());
             c.draw(grid.asPointPlotter());
 
@@ -93,9 +87,11 @@ public class SmallCanvasTest {
 
         }
 
-        screen.setCooked();
-        screen.add(ControlCode.SHOW_CURSOR);
+        //screen.setCooked();
+        //screen.add(ControlCode.SHOW_CURSOR);
         master_canvas.refresh();
+        screen.add(new CursorDown(25));
+        screen.refresh();
         
 
     }

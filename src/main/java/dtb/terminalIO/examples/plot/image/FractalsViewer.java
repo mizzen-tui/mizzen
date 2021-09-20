@@ -18,15 +18,14 @@ import dtb.terminalIO.geom.Dimension;
 
 /**
  * Display some Ascii Fractals..
- * 
+ *
  * Demonstrates converting java image objects into ASCII (or Braille) images
- * 
+ *
  * @author dbalme
  *
  */
 public class FractalsViewer {
 
-    
     public static void main(String[] args) {
         new TUIApp(args)
         .setCanvasSize(new Dimension.Simple(50,120))
@@ -44,8 +43,8 @@ public class FractalsViewer {
             bannerPanel.setNoBorderChars();
 
             bannerPanel.addComponent(new TextComponent(new FGBGColors(Colors.BCya,Colors.On_Whi),"Fractals in ASCII"));
-
-            DropdownListBox<String> gradientsDDLB = new DropdownListBox<String>(ImageViewerFactory.standardAsciiGradients());
+            bannerPanel.addComponent(new TextComponent(" Select gradient "));
+            DropdownListBox<String> gradientsDDLB = new DropdownListBox<String>(Colors.BICya, ImageViewerFactory.standardAsciiGradients());
             gradientsDDLB.setMaxItemWidth(15);
             gradientsDDLB.setSelected(0);
             bannerPanel.addComponent(gradientsDDLB);
@@ -53,6 +52,7 @@ public class FractalsViewer {
             fractalView.add(bannerPanel);
 
             Dimension imgSize = new Dimension.ComputedDelegate(tApp.getCanvas(),(s)->s.getHeight()-1, (s)->s.getWidth());
+
             AnimatorController animator = new AnimatorController(Colors.DEFAULT_COLOR, 
                                                                  new ImageIterator() {
                                                                     @Override
@@ -65,7 +65,8 @@ public class FractalsViewer {
                                                                     }}, 
                                                                  imgSize, 
                                                                  tApp.getEventBus(),
-                                                                 500);
+                                                                 1000);
+                                                                 
             fractalView.add(1,0, animator);
 
             tApp.appendOnResizeAction((tApp2, size)->{
@@ -87,8 +88,5 @@ public class FractalsViewer {
         })
         .start();
     }
-    
-    
 
-    
 }

@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
@@ -102,6 +103,11 @@ public class AbstractComponentWrappper<T extends Component<?>>  extends  Abstrac
 
     @Override
     public void resize(Dimension d) {
+        
+        if (this.isSameDimension(d)) {
+            return ;
+        }
+        
         T child = getWrappedComponent();
         if (child instanceof CanResize) {
             ((CanResize) child).resize(d);

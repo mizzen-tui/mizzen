@@ -35,13 +35,6 @@ public class VerticalPanel extends Composite {
         return this;
     }
 
-    public DefaultFocusManager buildFocusManager() {
-        DefaultFocusManager focusManager = new DefaultFocusManager();
-        focusManager.setNavKeysFirst(false);
-        return focusManager;
-    }
-
-
     public Composite add(Component<?> component) {
 
         ComponentWithOffset child = findChild(component);

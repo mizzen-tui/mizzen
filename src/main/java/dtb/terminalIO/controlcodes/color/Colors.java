@@ -28,12 +28,14 @@ public class Colors {
 
 
     static Colors.FgColor addNamedFGColor(String name, Colors.FgColor color) {
+        color.setName(name);
         namedForgroundColors.put(name,color);
         foregroundColorToName.put(color, name);
         return color;
     }
     
     static Colors.BgColor addNamedBGColor(String name, Colors.BgColor color) {
+        color.setName(name);
         namedBackgroundColors.put(name,color);
         backgroundColorToName.put(color,name);
         return color;
@@ -71,6 +73,10 @@ public class Colors {
         }
         public Color setBoldTransform(ColorTransform boldTransform ) {
             throw new IllegalStateException("Cannot change DEFAULT color!");
+        }
+        
+        public String getName() {
+            return toString();
         }
         
         public String toString() {
@@ -126,7 +132,7 @@ public class Colors {
     public static final Colors.FgColor ICya= addNamedFGColor( "ICya",Colors.FgColor.instance(96).setInvertTransform( (c) -> Colors.getNamedBGColor("On_ICya") ));
     public static final Colors.FgColor IWhi= addNamedFGColor( "IWhi",Colors.FgColor.instance(97).setInvertTransform( (c) -> Colors.getNamedBGColor("On_IWhi") ));    
     
-    // BoldHigh Intens                                                    
+    // BoldHigh Intensity                                                    
     public static final Colors.FgColor BIBla= addNamedFGColor( "BIBla",IBla.asBold().setInvertTransform( (c) -> Colors.getNamedBGColor("On_IBla") ));
     public static final Colors.FgColor BIRed= addNamedFGColor( "BIRed",IRed.asBold().setInvertTransform( (c) -> Colors.getNamedBGColor("On_IRed") ));
     public static final Colors.FgColor BIGre= addNamedFGColor( "BIGre",IGre.asBold().setInvertTransform( (c) -> Colors.getNamedBGColor("On_IGre") ));

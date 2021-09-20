@@ -309,6 +309,23 @@ public class TestScale {
         dino.setName("Dino");
 
         choices.add(new ShapeDisplayValue(dino.getName(), dino ));
+        
+        
+        int[][] hexaDOTs =  new int[][]{ {10,10},
+                                         {25,10},
+                                         {35,20}, 
+                                         {35,30},
+                                         {25,40},
+                                         {10,40},
+                                         {0,30},
+                                         {0,20},
+                                         };
+        Polygon hexagon = new Polygon(hexaDOTs);
+        hexagon.setName("Hexagon");
+
+        choices.add(new ShapeDisplayValue(hexagon.getName(), hexagon ));
+
+        
 
         ListBox<Shape<?>> shapes = new ListBox<Shape<?>>();
         shapes.setBorder(true);
@@ -316,6 +333,8 @@ public class TestScale {
 
         return shapes;
     }
+    
+    
     
 
     static class ShapeDisplayValue implements DisplayableValue<Shape<?>> {

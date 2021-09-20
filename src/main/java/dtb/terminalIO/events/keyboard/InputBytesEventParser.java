@@ -151,7 +151,7 @@ public class InputBytesEventParser {
         switch (parse_STATE) {
         case STATE_START:
 
-            if (ch == 0x1B) {
+            if (ch == 0x1B) {  // Escape key
                 parse_STATE = STATE_ESCAPE;
                 last_ESC_PRESSED_TIME = System.currentTimeMillis();
                 return;
@@ -172,6 +172,7 @@ public class InputBytesEventParser {
             }
 
             break;
+
         case STATE_ESCAPE:
             if (ch <= 0x1F) {
                 // ALT-Control character
@@ -317,7 +318,7 @@ public class InputBytesEventParser {
                     parsed_row = Integer.parseInt(accumulatedDigits);
                     accumulatedDigits = "";
                 } catch (NumberFormatException nfe) {
-                    resetTo_STATE_START(); // should never get here .. maybe thro exception? ( IllegalStateException?)
+                    resetTo_STATE_START(); // should never get here .. maybe throw exception? ( IllegalStateException?)
                     return;
                 }
                 parse_STATE = STATE_REPORT_INTERMEDIATE;

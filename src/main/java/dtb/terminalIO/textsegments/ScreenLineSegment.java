@@ -261,10 +261,10 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
         public static ScreenLineSegment blankScreenObject(Color color, char emptyChar, int row, int col, int id, int width) {
             
             if (width < 0)
-                throw new IllegalArgumentException("width=" + width);
+                throw new IllegalArgumentException("Illegal width=" + width+ " in line segment object creation");
             
             if (emptyChar <= 27) {
-                throw new IllegalStateException("!!!!");
+                throw new IllegalStateException("building blankScreenObject with a CTRL character (character <= 27) is not allowed!");
             }
             return __blankScreenObject(color, emptyChar, null, row, col, id, width);
         }
@@ -633,7 +633,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
 
         public static void setCharAt(TreeSet<ScreenLineSegment> ts, int row, int col, char ch, Color color) {
             if (!CleanString.UTIL.isClean(ch)) {
-                throw new IllegalStateException("Bad char to set in text segment.  Cannot be a control code");
+                throw new IllegalStateException("Bad char to set in text segment.  Cannot be a control code " +((int)ch));
             }
             ScreenLineSegment sc = getAtRowCol(ts, row, col);
             if (sc == null || !sc.getColors().equals(color) || !(sc instanceof SegmentImpl)) {
@@ -918,7 +918,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
         }
         
         /**
-         * this is not a for production use method .. It is a sanity test that can be intermitantly
+         * this is not a for production use method .. It is a sanity test that can be intermittently
          * injected into code to ensure that the segment contents are in 'good shape'.
          * 
          * If 2 equal positions are found in the collection, then an IllegalStateException is thrown 
@@ -948,7 +948,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
         }
 
         /**
-         * this is not a for production use method .. It is a sanity test that can be intermitantly
+         * this is not a for production use method .. It is a sanity test that can be intermittently
          * injected into code to ensure that the segment contents are in 'good shape'
          * 
          * If 2 overlapping segments are found in the collection, then an IllegalStateException is thrown 

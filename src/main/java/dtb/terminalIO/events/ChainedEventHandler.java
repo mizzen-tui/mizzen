@@ -109,6 +109,10 @@ public class ChainedEventHandler implements EventHandler, EventHandlerContainer,
         return useChainOfResponsibilityStrategy("chainOfResponsibility");
     }
 
+    public static ChainedEventHandler useChainOfResponsibilityStrategy(Object parent) {
+        return useChainOfResponsibilityStrategy(HasName.UTIL.getName(parent)+"chainOfResponsibility");
+    }
+
     /**
      * Builds a ChainedEventHandler that delegates incoming events to all its child
      * event handlers that say they can handle the event. Useful for processing

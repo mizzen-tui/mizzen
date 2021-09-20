@@ -8,12 +8,12 @@ public class LineTrackingCLIEmmitterTest extends TestCase {
     
     StringContext stringContext;
     LineTrackingCLIEmmitter out;
-    
+
     public void setUp() {
         this.stringContext = new StringContext();
         this.out  = new LineTrackingCLIEmmitter(this.stringContext);
     }
-    
+
     public void testSimpleLineCount0WithNoText() {
         assertEquals(0, this.out.getLineCounter());
     }

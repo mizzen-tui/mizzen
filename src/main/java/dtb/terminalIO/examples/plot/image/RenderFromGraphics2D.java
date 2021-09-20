@@ -86,7 +86,6 @@ public class RenderFromGraphics2D {
                     curRqst.copyFrom(prevRsqt);
                     prevCtrlr.stop();
                 }
-                
                 mainAnimatorPanel.setComponent(animatorController);
             };
 
@@ -97,7 +96,7 @@ public class RenderFromGraphics2D {
             mainPanel.add(mainAnimatorPanel);
 
             animatorOptionsPanel.setFocus(true, tApp.getEventBus());
-            
+
             setAnimator.accept(animatorOptionsPanel.getValue().get());
 
             animatorOptionsPanel.onChange((te)-> {
@@ -196,7 +195,7 @@ public class RenderFromGraphics2D {
 
         private ChainedEventHandler getChainedEventHandler() {
             if (chainedHandler == null) {
-                chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
+                chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
                 chainedHandlerAsConditional = chainedHandler.asConditionalEventHandler();
                 setConditionalEventHandler(chainedHandlerAsConditional);
             }
@@ -290,11 +289,11 @@ public class RenderFromGraphics2D {
             }
 
         }
-        
+
         public OnIdleEventEventHandler getIdleEventEventHandler() {
             return this.idleEventHandler;
         }
-        
+
         public ImageRenderRequest getImageRenderRequest() {
             return this.imageRenderRequest;
         }

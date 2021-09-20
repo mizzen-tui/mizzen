@@ -84,6 +84,7 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>
         // contract:  segments have already benn cleared
         //segments.merge(this.border.getSegmentsBuffer());
         // do a fast add of border
+        segments.getSegments().clear();
         segments.getSegments().addAll( this.border.getSegmentsBuffer().getSegments() );
         if (this.getTitle() != null) {
             if (titleComponent == null) {

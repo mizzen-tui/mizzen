@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.Date;
 
 public class Logging {
 
@@ -47,6 +48,15 @@ public class Logging {
         if (enabled) {
             appendText(msg);
         } 
+    }
+    
+    public static void forceLogInfo(String msg) {
+        boolean enabled = isEnabled();
+        if (!enabled) {
+             setEnabled(true);
+        }
+        info(msg);
+        Logging.setEnabled(enabled);
     }
     
     private static void appendText(String msg) {

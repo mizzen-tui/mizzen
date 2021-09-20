@@ -147,7 +147,7 @@ public class ExecTest {
             }
 
             tApp.clearCanvas();
-            
+
             TimeAndCount elapsed = TimeAndCount.onRun(()->tApp.getCanvas().addComponentSegments(view1OffsetOnCanvas, mainPanel), lprocViewer.textContentView);
 
             tApp.getCanvas().t(lprocViewer.getBottomMostRow()+5, 0, "elapsed = "+elapsed);

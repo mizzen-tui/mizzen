@@ -74,6 +74,33 @@ public abstract class ControlCode implements Renderer, HasName<ControlCode> {
             //ctx.write(this.getControlCode());
             ctx.write(this);
         }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((controlCode == null) ? 0 : controlCode.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            BaseTextControlCode other = (BaseTextControlCode) obj;
+            if (controlCode == null) {
+                if (other.controlCode != null)
+                    return false;
+            } else if (!controlCode.equals(other.controlCode))
+                return false;
+            return true;
+        }
+        
+        
     }
 
 //    static int maxColorCodeLen = -1;
@@ -208,6 +235,28 @@ public abstract class ControlCode implements Renderer, HasName<ControlCode> {
             return count;
         }
 
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = super.hashCode();
+            result = prime * result + count;
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (!super.equals(obj))
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            CursorMovementWithCount other = (CursorMovementWithCount) obj;
+            if (count != other.count)
+                return false;
+            return true;
+        }
+
     }
 
     public static class CursorUp extends CursorMovementWithCount implements HasRowChange {
@@ -219,6 +268,11 @@ public abstract class ControlCode implements Renderer, HasName<ControlCode> {
         public int deltaRow() {
             return getCount()*-1;
         }
+        
+        public String getName() {
+            return "CursorUp("+count+")";
+        }
+        
     }
 
     public static class CursorDown extends CursorMovementWithCount implements HasRowChange {
@@ -243,11 +297,19 @@ public abstract class ControlCode implements Renderer, HasName<ControlCode> {
         public CursorForward(int nLines) {
             super(nLines, "C");
         }
+
+        public int getCursorDelta() {
+            return getCount();
+        }
     }
 
     public static class CursorBackward extends CursorMovementWithCount {
         public CursorBackward(int nLines) {
             super(nLines, "D");
+        }
+
+        public int getCursorDelta() {
+            return getCount()*-1;
         }
     }
 

@@ -9,9 +9,12 @@ import java.util.stream.Collectors;
 
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
+import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
+import dtb.terminalIO.geom.position.PositionHorizontalRelative;
+import dtb.terminalIO.geom.position.PositionVerticalRelative;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegment;
 
@@ -29,7 +32,7 @@ public class Composite extends AbstractComponent<Composite>
     private Rectangle bounds = Rectangle.ZERO;
     private List<ComponentWithOffset> children = new ArrayList<ComponentWithOffset>();
     private List<ComponentWithOffset> childrenInZOrder = new ArrayList<ComponentWithOffset>();
-    private OnResizeService onResizeService = new OnResizeService();
+    private CanResize onResizeService = CanResize.NOOP;
 
 
     protected static class ComponentWithOffset implements Rectangle {
@@ -181,18 +184,143 @@ public class Composite extends AbstractComponent<Composite>
         return children.stream().filter(c->c.visible).collect(Collectors.toList());
     }
 
+    private boolean resizing = false;
+    
     public void resize(Dimension size) {
-        if (size != null && size.isSameDimension(this)) {
+        if (resizing) {
             return;
         }
-        setBounds(size);
-        markAsDirty();
+        try {
+            resizing = true;
+            if (size != null && size.isSameDimension(this)) {
+                return;
+            }
+            setBounds(size);
+            handleResizeDependants(size);
+            markAsDirty();
+        } finally {
+            resizing = false;
+        }
+    }
+    // run resize service and tell parent that we have resized to size
+    private void handleResizeDependants(Dimension size) {
         this.onResizeService.resize(size);
+        if (this.getParentContainer()!=null ) {
+            this.getParentContainer().childResized(this);
+        }
+    }
+    
+    public void applyResizeRules() {
+        this.onResizeService.resize(this.getPreferredRectangleForLayout());
+    }
+    
+    protected Rectangle getInnerRectangle() {
+        return new Rectangle() {
+
+            @Override
+            public int getRow() {
+                return Composite.this.getRow() + (hasBorder()?1:0) ;
+            }
+
+            @Override
+            public int getCol() {
+                return Composite.this.getWidth() + (hasBorder()?1:0) ;
+            }
+
+            @Override
+            public int getWidth() {
+                return Composite.this.getWidth() + (hasBorder()?-2:0) ;
+            }
+
+            @Override
+            public int getHeight() {
+                return Composite.this.getHeight() + (hasBorder()?-2:0) ;
+            }
+
+            @Override
+            public void moveTo(int row, int col) {
+                // TODO Auto-generated method stub
+            }
+            
+        };
+    }
+    
+    public void onResizeExpandDown(Component<?> component) {
+        onResizeExpandDown(component, 0); 
+    }
+    
+    public void onResizeExpandDown(Component<?> component, int percent) {
+        if (component == null) {
+            throw new NullPointerException("Component onResizeExpandDown failure: Null component!");
+        }
+        ComponentWithOffset child = findChildOrFail(component,"isChildVisible");
+
+
+        if ( ! (child.component instanceof CanResize)) {
+            throw new IllegalArgumentException("child component ("+HasName.UTIL.getName(child.component)+") does not implement "+CanResize.class.getSimpleName());
+        }
+        
+        appendOnResizeRule( percent > 0 
+                            ? new  ExpandDownByPercent(getInnerRectangle(), Position.ZERO,  child, (CanResize)child.component, percent)
+                            : new  ExpandDown(getInnerRectangle(), Position.ZERO,  child, (CanResize)child.component));
+        
+    }
+    
+    public void onResizeExpandRight(Component<?> component) {
+        onResizeExpandRight(component, 0);
+    }
+    
+    public void onResizeExpandRight(Component<?> component, int percent) {
+        if (component == null) {
+            throw new NullPointerException("Component onResizeExpandRight failure: Null component!");
+        }
+        ComponentWithOffset child = findChildOrFail(component,"onResizeExpandRight");
+
+        if ( ! (child.component instanceof CanResize)) {
+            throw new IllegalArgumentException("child component ("+HasName.UTIL.getName(child.component)+") does not implement "+CanResize.class.getSimpleName());
+        }
+
+        appendOnResizeRule( percent>0 
+                            ?  new  ExpandRightByPercent(getInnerRectangle(), Position.ZERO,  child, (CanResize)child.component, percent)
+                            : new  ExpandRight(getInnerRectangle(), Position.ZERO,  child, (CanResize)child.component));
+
+    }
+    
+    public void onResizeExpandDownAndRight(Component<?> component) {
+        if (component == null) {
+            throw new NullPointerException("Component onResizeExpandDownAndRight failure: Null component!");
+        }
+        ComponentWithOffset child = findChildOrFail(component,"onResizeExpandDownAndRight");
+
+        if ( ! (child.component instanceof CanResize)) {
+            throw new IllegalArgumentException("child component ("+HasName.UTIL.getName(child.component)+") does not implement "+CanResize.class.getSimpleName());
+        }
+        appendOnResizeRule( new  ExpandDownAndRight(getInnerRectangle(), Position.ZERO,  child, (CanResize)child.component));
+        
+    }
+    
+    
+    
+    public Composite appendOnResize(Consumer<Dimension> onResize) {
+        return appendOnResizeRule(CanResize.UTIL.resizableFromService(onResize));
+    }
+
+    public Composite appendOnResizeRule(CanResize resizableRule) {
+        if (this.onResizeService == null) {
+            setOnResizeRule(resizableRule);
+            return this;
+        }
+        this.onResizeService = new CanResize.Chain(this.onResizeService, resizableRule);
+        return this;
+    }
+
+    public Composite setOnResizeRule(CanResize resizableRule) {
+        this.onResizeService = resizableRule;
+        return this;
     }
 
     public Composite setOnResize(Consumer<Dimension> onResize) {
-        this.onResizeService.setOnResize(onResize);
-        return this;
+        return setOnResizeRule(CanResize.UTIL.resizableFromService(onResize));
     }
 
     // TODO: not sure what this method means -- what do i
@@ -234,6 +362,7 @@ public class Composite extends AbstractComponent<Composite>
         fullrecalcDim(hasBorder());
         // if we have a parent, then we better tell it our new size
         if (this.getParentContainer() != null && !previousDimension.isSameDimension(this)) {
+            this.onResizeService.resize(this.getPreferredRectangleForLayout());
             this.getParentContainer().childResized(this);
         }
     }
@@ -279,6 +408,7 @@ public class Composite extends AbstractComponent<Composite>
 
     public Composite setBorder(boolean hasBorder) {
 
+        Rectangle prevBounds = bounds;
         if (hasBorder && boundsFixed) {
             rebuildBorder(bounds);
         } else {
@@ -290,6 +420,10 @@ public class Composite extends AbstractComponent<Composite>
                 this.border = null;
             }
         }
+        if ( ! prevBounds.isSameDimension(bounds)) {
+            handleResizeDependants(bounds);
+        }
+        markAsDirty();
         return this;
     }
 
@@ -363,6 +497,15 @@ public class Composite extends AbstractComponent<Composite>
         ComponentWithOffset child = findChildOrFail(component,"isChildVisible");
 
         return child.visible;
+    }
+
+    public Rectangle childAsRectangleOffset(Component<?> component) {
+        if (component == null) {
+            throw new NullPointerException("Component isChildVisible failure: Null component!");
+        }
+        ComponentWithOffset child = findChildOrFail(component,"isChildVisible");
+        
+        return child;
     }
 
     public Composite hide(Component<?> component) {
@@ -443,6 +586,27 @@ public class Composite extends AbstractComponent<Composite>
         return this.add(new Position.Simple(offsetRow, offsetCol), component);
     }
 
+    public Composite addBelow(Component<?> component, Component<?> anchorComponent) {
+        return addBelow(component, anchorComponent, 0);
+    }
+
+    public Composite addBelow(Component<?> component, Component<?> anchorComponent, int verticalSpacer) {
+        ComponentWithOffset anchorChild = findChildOrFail(anchorComponent, "addBelow.anchorComponent");
+        Position childPosition = new PositionVerticalRelative(anchorChild, verticalSpacer);
+        return add(childPosition, component);
+    }
+
+    public Composite addRight(Component<?> component, Component<?> anchorComponent) {
+        return addRight(component, anchorComponent, 0);
+    }
+
+    public Composite addRight(Component<?> component, Component<?> anchorComponent, int horizontalSpacer) {
+        ComponentWithOffset anchorChild = findChildOrFail(anchorComponent, "addRight.anchorComponent");
+        Position childPosition = new PositionHorizontalRelative(anchorChild, horizontalSpacer);
+        return add(childPosition, component);
+    }
+
+
     private void removeOneComponent(Component<?> component) {
         ComponentWithOffset child = findChildOrFail(component, "remove");
         removeChild(child);
@@ -488,10 +652,27 @@ public class Composite extends AbstractComponent<Composite>
         if (index == childrenInZOrder.size() - 1) {
             return this;
         }
+        if (index == childrenInZOrder.size()-1) {
+            // already at the top
+            return this;
+        }
         childrenInZOrder.remove(child);
         childrenInZOrder.add(childrenInZOrder.size(), child);
         markAsDirty();
         return this;
+    }
+
+    public boolean isChildOnTop(Component<?> component) {
+        ComponentWithOffset child = findChildOrFail(component, "isChildOnTop");
+        int index = childrenInZOrder.indexOf(child);
+        if (index == childrenInZOrder.size() - 1) {
+            return false;
+        }
+        if (index == childrenInZOrder.size()-1) {
+            // already at the top
+            return true;
+        }
+        return false;
     }
 
     public Composite bringToBack(Component<?> component) {
@@ -588,6 +769,20 @@ public class Composite extends AbstractComponent<Composite>
         return this;
     }
 
+    @Override
+    public boolean moveChildToPosition(Position position, Component<?> child) {
+        moveChildTo(position, child);
+        return true;
+    }
+    
+    public boolean canMoveChild(Component<?> child) {
+        if (findChild(child) != null) {
+            return true;
+        }
+        return false;
+    }
+
+    
     public Composite append(Component<?> component) {
 
         if (children.size() == 0) {
@@ -641,12 +836,15 @@ public class Composite extends AbstractComponent<Composite>
         List<ComponentWithOffset> copiedChildren = new ArrayList<ComponentWithOffset>(this.children);
 
         for (ComponentWithOffset child : copiedChildren) {
+            // TODO: remove all related child resize requests 
             removeOneComponent(child.component);
         }
         fullrecalcDim();
-        markAsDirty();
 
         this.clear();
+        
+        this.onResizeService = CanResize.NOOP;
+
     }
 
     protected void drawBorderIfNeeded(IScreenLineSegmentsBuffer segments) {
@@ -761,10 +959,12 @@ public class Composite extends AbstractComponent<Composite>
         return this;
     }
 
+    
     @Override
     public void childResized(Component<?> child) {
         this.markAsDirty();
         fullrecalcDim();
+        this.onResizeService.resize(this.getPreferredRectangleForLayout());
     }
 
     @Override
@@ -772,14 +972,14 @@ public class Composite extends AbstractComponent<Composite>
         return bounds;
     }
 
-    protected Rectangle getInnerRectangle() {
-        if (!hasBorder())
-            return bounds;
-        return new Rectangle.Simple(bounds.getRow()    + 1,
-                                    bounds.getCol()    + 1,
-                                    bounds.getHeight() - 2,
-                                    bounds.getWidth()  - 2);
-    }
+//    protected Rectangle getInnerRectangle() {
+//        if (!hasBorder())
+//            return bounds;
+//        return new Rectangle.Simple(bounds.getRow()    + 1,
+//                                    bounds.getCol()    + 1,
+//                                    bounds.getHeight() - 2,
+//                                    bounds.getWidth()  - 2);
+//    }
 
     public Composite t(int i, int j, String text) {
         this.add(new TextComponent(getColor(), i, j, text));

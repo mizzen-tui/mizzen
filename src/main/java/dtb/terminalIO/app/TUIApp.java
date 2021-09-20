@@ -4,13 +4,14 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import dtb.terminalIO.components.CanResize;
 import dtb.terminalIO.components.ChildComponentManager;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.components.modal.MessageBox;
+import dtb.terminalIO.components.scroll.FindScrollToViewHandler;
 import dtb.terminalIO.controlcodes.ControlCode;
+import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.TerminalScreen;
 import dtb.terminalIO.events.ConditionalEventHandler;
@@ -32,6 +33,7 @@ import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.events.mouse.MouseEventOrchestrator;
 import dtb.terminalIO.events.resize.TerminalResizeDetection;
 import dtb.terminalIO.examples.TestsCommon;
+import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.util.ElapsedTime;
 import dtb.terminalIO.util.Logging;
@@ -291,6 +293,19 @@ public class TUIApp {
         return this;
     }
 
+    public char getEmptyChar() {
+        return this.getCanvas().getEmptyChar();
+    }
+
+    public TUIApp setEmptyColors(Color emptyColor) {
+        this.getCanvas().setEmptyColors(emptyColor);
+        return this;
+    }
+    
+    public Color getEmptyColor() {
+        return this.getCanvas().getEmptyColor();
+    }
+    
     private void makeRefreshCanvasIfModifiedAction() {
         refreshCanvasIfModifiedAction = () -> {
             boolean canvasRefreshRequired = (updateCanvas == null) ? true : updateCanvas.apply(this);
@@ -389,11 +404,11 @@ public class TUIApp {
                     return false; // false means no GUI update required
                 }
 
-                ElapsedTime canvasUpdateTime = ElapsedTime.start();
+                //ElapsedTime canvasUpdateTime = ElapsedTime.start();
 
                 tApp.getCanvas().clearAndAddComponentSegments( __mainPanel );
 
-                Logging.info("Canvas.addComponentSegments() time: " + canvasUpdateTime.toString());
+                //Logging.info("Canvas.addComponentSegments() time: " + canvasUpdateTime.toString());
  
                 return true; // true means updated
             });
@@ -463,6 +478,8 @@ public class TUIApp {
             } );
         }
 
+        eventBus.appendEventHandler(new FindScrollToViewHandler());
+        
         eventBus.appendEventHandler(new OnResizeEventHandler() {
             @Override
             public void handleResize(Dimension size) {

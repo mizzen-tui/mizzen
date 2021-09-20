@@ -6,7 +6,6 @@ import java.util.Collections;
 import dtb.terminalIO.components.AbstractComponent;
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.ButtonBar;
-import dtb.terminalIO.components.CanResize;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.GetComponentAtOffset;
@@ -28,6 +27,7 @@ import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Align;
+import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.VAlign;
@@ -102,7 +102,7 @@ public class TabPanel extends AbstractComponent<TabPanel>
         KeyStroke previousTabHotKey = Keys.SHIFT_TAB_KEYSTROKE;
         KeyStroke nextTabHotKey = Keys.TAB_KEYSTROKE;
         
-        chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
+        chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
         ConditionalEventHandler chainedEventHandlerAsConditionalEventHandler = chainedEventHandler.asConditionalEventHandler();
         focusManager = new DefaultFocusManager(previousTabHotKey, nextTabHotKey) {
             

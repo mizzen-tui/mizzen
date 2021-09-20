@@ -182,6 +182,7 @@ public interface Dimension {
 
             return new Dimension.Simple(1, s.length());
         }
+        
     }
 
       // TODO: move this to a unit test

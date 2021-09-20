@@ -15,6 +15,9 @@ import dtb.terminalIO.components.plot.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.shape.ConnectedPoints;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
+import dtb.terminalIO.controlcodes.color.Colors.BgColor;
+import dtb.terminalIO.controlcodes.color.Colors.FGBGColors;
+import dtb.terminalIO.controlcodes.color.Colors.FgColor;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
@@ -201,9 +204,25 @@ public class LineChart extends Composite {
         return series;
     }
 
+    private Color mergeGraphColorWithComponentBackgroundColor(Color color) {
+        
+        Color bgColor = getColor().getBackGroundColor();
+        Color fgColor = color.getForeGroundColor();
+        
+        if (!(bgColor instanceof BgColor)) {
+            bgColor = Colors.On_Bla;
+        }
+        if (!(fgColor instanceof FgColor)) {
+            fgColor = Colors.Whi;
+        }
+
+        return new FGBGColors((FgColor) fgColor, (BgColor) bgColor);
+    }
+
+    
     public LineChart setSeriesColor(String seriesName, Color seriesColor) {
         Series series = nameToSeries(seriesName);
-        series.color = seriesColor;
+        series.color = mergeGraphColorWithComponentBackgroundColor(seriesColor);
         return this;
     }
 

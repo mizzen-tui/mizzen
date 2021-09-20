@@ -379,7 +379,7 @@ public class ImageViewerFactory {
 
     public static Component<?> simpleImageToBrailleView(Image inputImage, Dimension desiredImgSizeInCharacters, RGBPlotPredicate toPlotOrNot, RGBToAnsiColorControlCode colorMap) throws Exception {
 
-        BrailleGrid brailleGrid = new BrailleGrid(Colors.On_Whi, desiredImgSizeInCharacters);
+        BrailleGrid brailleGrid = new BrailleGrid(Colors.On_Bla, desiredImgSizeInCharacters);
         brailleGrid.setEmptyColor(Colors.Whi);
         brailleGrid.setEmptyChar(' ');
         brailleGrid.setFillOnClear(true);
@@ -596,15 +596,15 @@ public class ImageViewerFactory {
         boolean test(int r,int g, int b);
     }
     
-    static RGBPlotPredicate PLOT_ALWAYS = (r,g,b) -> true;
+    public static RGBPlotPredicate PLOT_ALWAYS = (r,g,b) -> true;
 
-    static RGBPlotPredicate PLOT_WHITE_ONLY = (r,g,b) -> r > 200 && g > 200 && b > 200;
+    public static RGBPlotPredicate PLOT_WHITE_ONLY = (r,g,b) -> r > 200 && g > 200 && b > 200;
 
-    static RGBPlotPredicate PLOT_BLACK_ONLY = (r,g,b) -> r < 100 && g < 100 && b < 100;
+    public static RGBPlotPredicate PLOT_BLACK_ONLY = (r,g,b) -> r < 100 && g < 100 && b < 100;
 
-    static RGBPlotPredicate PLOT_DARK_ONLY = (r,g,b) -> (r + g + b)/3 < 100;
+    public static RGBPlotPredicate PLOT_DARK_ONLY = (r,g,b) -> (r + g + b)/3 < 100;
 // 
-    static RGBPlotPredicate PLOT_LIGHT_ONLY = (r,g,b) -> {
+    public static RGBPlotPredicate PLOT_LIGHT_ONLY = (r,g,b) -> {
         //Logging.info(String.format("r %d g %d b %d",r,g,b));
         return (r + g + b)/3 >= 9;
     };
@@ -616,9 +616,9 @@ public class ImageViewerFactory {
         
     }
 
-    static RGBToAnsiColorControlCode rgbColorMapRCol = (r,g,b) ->Colors.RCol;
+    public static RGBToAnsiColorControlCode rgbColorMapRCol = (r,g,b) ->Colors.RCol;
     
-    static RGBToAnsiColorControlCode rgbColorMapDIRECT = (r,g,b) ->Colors.fromRGBFG(r,g,b);
+    public static RGBToAnsiColorControlCode rgbColorMapDIRECT = (r,g,b) ->Colors.fromRGBFG(r,g,b);
 
     static RGBToAnsiColorControlCode rgbColorPlotBlackAndGreyAsWhite = (r,g,b) ->  {
 

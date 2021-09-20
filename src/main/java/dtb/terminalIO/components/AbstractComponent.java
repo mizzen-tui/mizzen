@@ -51,7 +51,7 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
     protected void drawIfNeeded() {
         if (isDirty()) {
             clearBeforeDraw();
-            hasDrawn = true;
+           // hasDrawn = true;
             draw(color, segments);
             hasDrawn = true;
         }
@@ -70,11 +70,12 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
 
         // if parent exists, then mark it as dirty as well
         Component.UTIL.markParentDirtyIfChildDirty(this);
-
     }
 
     public void clear() {
-        segments.clear();
+        if (this.segments != null) {
+            segments.clear();
+        }
         fillPolicy.fillEmptyIfConfigured();
         markAsDirty();
     }

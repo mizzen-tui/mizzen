@@ -16,6 +16,7 @@ import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
@@ -74,7 +75,6 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
         this.focusManagerBuilder = focusManagerBuilder;
     }
 
-
     private FocusManager getFocusManager(EventBus eventBus) {
         if (this.focusManager == null) {
             if (focusManagerBuilder == null) {
@@ -118,7 +118,7 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
     
     private ChainedEventHandler getOrBuildChainedEventHandler() {
         if (chainedEventHandler == null) {
-            chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
+            chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
             chainedEventHandlerAsConditionalEventHandler = chainedEventHandler.asConditionalEventHandler();
         }
         return chainedEventHandler;
@@ -210,6 +210,13 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
 
     @Override
     public void handle(TerminalEvent<?> te) {
+        
+        if (chainedEventHandlerAsConditionalEventHandler != null && 
+                chainedEventHandlerAsConditionalEventHandler.canHandle(te) != null) {
+                chainedEventHandlerAsConditionalEventHandler.handle(te);
+                return;
+            }
+
         // I'm avoiding an obscure bug in FocusManager
         if (getFocusManager(te.getEventBus()).getChildFocusables().size()<1) {
             return;
@@ -219,12 +226,6 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
             return;
         }
 
-        if (chainedEventHandlerAsConditionalEventHandler == null) {
-            return;
-        }
-        if (chainedEventHandlerAsConditionalEventHandler.canHandle(te) != null) {
-            chainedEventHandlerAsConditionalEventHandler.handle(te);
-        }
     }
 
     @Override

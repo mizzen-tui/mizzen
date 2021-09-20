@@ -3,6 +3,7 @@ package dtb.terminalIO.components;
 import dtb.terminalIO.geom.position.Position;
 
 public interface GetComponentAtOffset {
+    
     public Component<?> getComponentAtOffset(Position offset);
     
     public static class UTIL {

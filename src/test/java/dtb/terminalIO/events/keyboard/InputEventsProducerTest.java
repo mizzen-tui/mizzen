@@ -48,9 +48,7 @@ public class InputEventsProducerTest extends TestCase {
     
     
     public void testABCParseInput() throws Exception {
-
         util_readInput("ABC");
-
     }
 
     public void testMediumSmallParseInput() throws Exception {
@@ -61,14 +59,14 @@ public class InputEventsProducerTest extends TestCase {
     
     public void testMediumSizeParseInput() throws Exception {
         util_readInput(
- "890abc0abc!234567890abc!234567890abc!234567890abc!234567890abc!234567890abc!234567890"
-+"890abc0abc!234567890abc!234567890abc!234567890abc!234567890abc!234567890abc!234567890"                
-+"890abc0abc!234567890abc!234567890abc!234567890abc!234567890abc!234567890abc!234567890"                
-+"890abc0abc!234567890abc!234567890abc!234567890abc!234567890abc!234567890abc!234567890"                
-+"890abc0abc!234567890abc!234567890abc!234567890abc!234567890abc!234567890abc!234567890"                
-+"890abc0abc!234567890abc!234567890abc!234567890abc!234567890abc!234567890abc!234567890"                
-+"890abc0abc!234567890abc!234567890abc!234567890abc!234567890abc!234567890abc!234567890"                
-+"890abc0abc!234567890abc!234567890abc!234567890abc!234567890abc!234567890abc!234567890"                
+                     "890abc0abc!234567890abc!234567890abc!234567890abc!234567890abc!234567890abc!234567890"
+                    +"890abc0abc!234567890abc!234567890abc!234567890abc!234567890abc!234567890abc!234567890"
+                    +"890abc0abc!234567890abc!234567890abc!234567890abc!234567890abc!234567890abc!234567890"
+                    +"890abc0abc!234567890abc!234567890abc!234567890abc!234567890abc!234567890abc!234567890"
+                    +"890abc0abc!234567890abc!234567890abc!234567890abc!234567890abc!234567890abc!234567890"
+                    +"890abc0abc!234567890abc!234567890abc!234567890abc!234567890abc!234567890abc!234567890"
+                    +"890abc0abc!234567890abc!234567890abc!234567890abc!234567890abc!234567890abc!234567890"
+                    +"890abc0abc!234567890abc!234567890abc!234567890abc!234567890abc!234567890abc!234567890"
                 );
     }
 
@@ -84,6 +82,5 @@ public class InputEventsProducerTest extends TestCase {
         util_readInput(largeText);
         
     }
-    
-    
+
 }

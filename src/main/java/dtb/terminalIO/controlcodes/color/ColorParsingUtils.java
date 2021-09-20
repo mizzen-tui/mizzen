@@ -109,7 +109,14 @@ public class ColorParsingUtils {
                         codesBufferLen = 0;
                         sb = new StringBuffer();
                     } else {
-                        PARSE_STATE = PARSE_TEXT;
+                        if (ch == 'm') {
+                            color = Colors.RCol;
+                            sb = new StringBuffer();
+                            PARSE_STATE = PARSE_TEXT;
+                            break;
+                        } else {
+                            PARSE_STATE = PARSE_TEXT;
+                        }
                     }
                     sb.append(ch);
                 }
@@ -119,16 +126,24 @@ public class ColorParsingUtils {
                 if (ch == ';' || ch == 'm') {
                     String num = sb.toString();
                     sb.append(ch);
-                    if (num.length() == 0) {
+                    if (num.length() == 0 && ch!='m') {
                         PARSE_STATE = PARSE_TEXT;
                         break;
                     }
-                    int code = Integer.parseInt(num);
-                    codesBuffer[codesBufferLen] = code;
-                    codesBufferLen++;
-                    sb = new StringBuffer();
-                    if (ch == 'm' || codesBufferLen >= codesBuffer.length) {
-                        PARSE_STATE = PARSE_COLOR_END;
+                    // special case - badly formed RCOL
+                    if (num.length() == 0 && ch!='m') {
+                        color = Colors.RCol;
+                        sb = new StringBuffer();
+                        PARSE_STATE = PARSE_TEXT;
+                        break;
+                    } else {
+                        int code = Integer.parseInt(num);
+                        codesBuffer[codesBufferLen] = code;
+                        codesBufferLen++;
+                        sb = new StringBuffer();
+                        if (ch == 'm' || codesBufferLen >= codesBuffer.length) {
+                            PARSE_STATE = PARSE_COLOR_END;
+                        }
                     }
                 } else {
                     sb.append(ch);

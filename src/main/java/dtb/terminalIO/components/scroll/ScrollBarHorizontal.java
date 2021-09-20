@@ -9,12 +9,15 @@ import dtb.terminalIO.components.HorizontalLine;
 import dtb.terminalIO.components.input.DefaultFocusableBehaviour;
 import dtb.terminalIO.components.input.HasValue;
 import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
+import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.events.mouse.ApplicationMouseEvent;
 import dtb.terminalIO.events.mouse.Clickable;
 import dtb.terminalIO.events.mouse.MOUSE_ACTION;
@@ -34,18 +37,26 @@ public class ScrollBarHorizontal  extends BoundedComponent<ScrollBarVertical>  i
     Dimension sizeOfComponentBeingViewed;
     Dimension sizeOfViewer;
     private BlockHiliter blockHiliter = new BlockChars.BlockHiliter();
+    private boolean handleKeyEvents;
 
     // ▒
     // '░'
 
     public ScrollBarHorizontal(Color color, Position pos, int len) {
         super(color, pos, new Dimension.Simple(1, len));
+        handleKeyEvents = true;
     }
     
     public ScrollBarHorizontal(Color color, int row, int col, int len) {
         super(color, new Position.Simple(row, col), new Dimension.Simple(1, len));
+        handleKeyEvents = true;
     }
-    
+
+    public ScrollBarHorizontal enableKeyEvents(boolean enable) {
+        handleKeyEvents = enable;
+        return this;
+    }
+
     Position calcScrollbarOffset() {
         if (sizeOfComponentBeingViewed == null || offset == null) {
             return null;
@@ -58,7 +69,7 @@ public class ScrollBarHorizontal  extends BoundedComponent<ScrollBarVertical>  i
         return new Position.Simple( (int)(  ((float)offset.getRow()) * percentage) , 
                                     (int)(  ((float)offset.getCol()) * percentage) );
     }
-    
+
     Position calcOffset(Position scrollbarOffset) {
         if (sizeOfComponentBeingViewed == null || scrollbarOffset == null) {
             Logging.info("nulls");
@@ -74,6 +85,44 @@ public class ScrollBarHorizontal  extends BoundedComponent<ScrollBarVertical>  i
         Logging.info("percentage = " + percentage);
 
         return new Position.Simple(  0 , (int)(  ((float)scrollbarOffset.getCol()) * percentage) );
+    }
+    
+    boolean canScrollLeft(TerminalEvent<?> te) {
+        if (sizeOfComponentBeingViewed == null || offset==null) {
+            return false;
+        }
+        
+        if (offset.getCol() == 0) {
+            return false;
+        }
+        
+        return true;
+    }
+
+    void scrollLeft(TerminalEvent<?> te) {
+        if (!canScrollLeft(te)) {
+            return;
+        }
+        setOffset(offset.offsetAdd(0, -1));
+        te.getEventBus().raiseEvent( new HasValue.ValueChangedEvent<>(this) );
+    }
+
+    boolean canScrollRight(TerminalEvent<?> te) {
+        if (sizeOfComponentBeingViewed == null || offset==null) {
+            return false;
+        }
+        if (offset.getCol()>=sizeOfComponentBeingViewed.getWidth()) {
+            return false;
+        }
+        return true;
+    }
+
+    void scrollRight(TerminalEvent<?> te) {
+        if (!canScrollRight(te)) {
+            return;
+        }
+        setOffset(offset.offsetAdd(0, 1));
+        te.getEventBus().raiseEvent( new HasValue.ValueChangedEvent<>(this) );
     }
 
     
@@ -108,7 +157,7 @@ public class ScrollBarHorizontal  extends BoundedComponent<ScrollBarVertical>  i
         int a_width = scrollBarOffset.getCol();
         int b_width = Math.max((int)(  Math.round( percentage * (float)this.getWidth() ) ),1);
         int c_width = this.getWidth() - ( a_width + b_width );
-        
+
         if (b_width >= this.getWidth()) {
             segments.merge(makeChildComponent(()->new HorizontalLine(color, this.getRow(), this.getCol(), this.getWidth() )).getSegmentsBuffer());
             return;
@@ -126,12 +175,11 @@ public class ScrollBarHorizontal  extends BoundedComponent<ScrollBarVertical>  i
             segments.merge(makeChildComponent(()->new HorizontalLine(color, this.getRow(), this.getCol()+a_width+b_width, c_width )).getSegmentsBuffer());
         }
     }
-    
+
     public BlockChars getBlockChars() {
         return blockHiliter.getBlockChars();
     }
-    
-    
+
     @Override
     public void hilite() {
         if ( ! this.hilited) {
@@ -151,11 +199,10 @@ public class ScrollBarHorizontal  extends BoundedComponent<ScrollBarVertical>  i
         blockHiliter.unHilite();
         this.hilited = false;
     }
-    
-    
+
     @Override
     public void onClick(EventBus eventBus) {
-       // do nothing
+       // do nothing because handled by onClick(ApplicationMouseEvent appMouseEvent)
     }
 
     public void onClick(ApplicationMouseEvent appMouseEvent) {
@@ -201,10 +248,23 @@ public class ScrollBarHorizontal  extends BoundedComponent<ScrollBarVertical>  i
         if (meAsFocusable != null) {
             return meAsFocusable;
         }
-        
+
         this.eventHandlerContainer = ChainedEventHandler.useChainOfResponsibilityStrategy(HasName.UTIL.getName(this)+"-chainOfResponsibility");
+
+        eventHandlerContainer.appendEventHandler(new KeyInputEventHandler(Keys.LEFT_KEYSTROKE, 
+                                                                          (te)-> handleKeyEvents && canScrollLeft(te),
+                                                                          (te)-> {
+                                                                              scrollLeft(te);
+                                                                          }) );
+
+        eventHandlerContainer.appendEventHandler(new KeyInputEventHandler(Keys.RIGHT_KEYSTROKE, 
+                                                                          (te)-> handleKeyEvents && canScrollRight(te),
+                                                                          (te)-> {
+                                                                              scrollRight(te);
+                                                                          }) );
+
         this.conditionalHandler = this.eventHandlerContainer.asConditionalEventHandler();
-        
+
         meAsFocusable = new DefaultFocusableBehaviour() {
 
             @Override
@@ -216,7 +276,8 @@ public class ScrollBarHorizontal  extends BoundedComponent<ScrollBarVertical>  i
             public void handle(TerminalEvent<?> te) {
                 conditionalHandler.handle(te);
             }};
-
+            
+            
         return meAsFocusable;
     }
 

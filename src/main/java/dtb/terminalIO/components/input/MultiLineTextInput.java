@@ -11,7 +11,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import dtb.terminalIO.components.AbstractComponent;
-import dtb.terminalIO.components.CanResize;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
@@ -36,6 +35,7 @@ import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.events.mouse.ApplicationMouseEvent;
 import dtb.terminalIO.events.mouse.Clickable;
 import dtb.terminalIO.events.mouse.MOUSE_ACTION;
+import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
@@ -551,7 +551,7 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
 
     private ConditionalEventHandler buildEventHandler() {
 
-        this.chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
+        this.chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
 
         /*
          * KeyInputEventHandler(KeyStroke onKeyStroke, Predicate<TerminalEvent<?>>

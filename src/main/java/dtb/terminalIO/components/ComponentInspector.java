@@ -7,10 +7,12 @@ import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.input.CheckBoxInput;
 import dtb.terminalIO.components.input.HasValue;
 import dtb.terminalIO.components.input.tree.TreeView;
+import dtb.terminalIO.components.input.tree.TreeViewModel.CachingTreeviewModel;
 import dtb.terminalIO.components.input.tree.TreeViewModel.HasChildrenTreeViewModel;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
+import dtb.terminalIO.events.AbstractTimedRequestedController;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
@@ -19,6 +21,7 @@ import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
+import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
@@ -37,7 +40,7 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
     FocusManager focusManagerToInspect;
 
     VIEW_TYPE currentViewType = VIEW_TYPE.COMPONENT_VIEW;
-    
+
     Focusable currentFocus = null;
 
     public ComponentInspector(Color color, 
@@ -54,15 +57,20 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
 
     private void toggleViewType() {
         currentViewType = currentViewType == VIEW_TYPE.COMPONENT_VIEW ? VIEW_TYPE.FOCUSABLE_VIEW
-                : VIEW_TYPE.COMPONENT_VIEW;
+                                                                      : VIEW_TYPE.COMPONENT_VIEW;
     }
 
     private void __setView(Dimension d) {
+        this.clearBeforeDraw();
         if (currentViewType == VIEW_TYPE.COMPONENT_VIEW) {
             TreeView<Component<?>> tvComponents = new TreeView<Component<?>>(Colors.IBlu, new Dimension.Simple(90, 60),
                     (node) -> nodeName(node));
-            tvComponents.setModel(new HasChildrenTreeViewModel<Component<?>>(componentToInspect));
+            tvComponents.setModel(new CachingTreeviewModel<Component<?>>(new HasChildrenTreeViewModel<Component<?>>(componentToInspect)));
 
+            if (scrollingArea != null) {
+                this.scrollingArea.setParentContainer(null);
+            }
+            
             scrollingArea = new ScrollableComponent(Colors.BIGre, d, tvComponents);
             scrollingArea.setParentContainer(this);
         } else {
@@ -73,23 +81,26 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
                                                     node==currentFocus?Colors.On_IYel : Colors.On_Yel).asString() + nodeName(node)
                                     + Colors.RCol.asString()
                             : nodeName(node)) {
-                
+
                 public void draw(Color color, IScreenLineSegmentsBuffer segments) {
                     currentFocus = FocusManager.UTIL.findCurrentFocus(focusManagerToInspect);
                     super.draw(color, segments);
                 }
             };
 
-            tvFocusable.setModel(new HasChildrenTreeViewModel<Focusable>(focusManagerToInspect,
-                                                                         new FocusManagerHasChildrenAdapter()));
+            tvFocusable.setModel(new CachingTreeviewModel<Focusable>(new HasChildrenTreeViewModel<Focusable>(focusManagerToInspect,
+                                                                         new FocusManagerHasChildrenAdapter())));
 
+            if (scrollingArea != null) {
+                this.scrollingArea.setParentContainer(null);
+            }
             scrollingArea = new ScrollableComponent(Colors.BIGre, d, tvFocusable);
             scrollingArea.setParentContainer(this);
         }
 
-        scrollingArea.appendEventHandler(toggleViewEventHandler());
+        //scrollingArea.appendEventHandler(toggleViewEventHandler());
 
-        scrollingArea.appendEventHandler(refreshEventHandler());
+        //scrollingArea.appendEventHandler(refreshEventHandler());
 
         this.markAsDirty();
 
@@ -131,22 +142,60 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
     }
     
     
-    public KeyInputEventHandler refreshEventHandler() {
-        return new KeyInputEventHandler(Keys.CTRL_R_KEYSTROKE, (te) -> {
-            ComponentInspector.this.scrollingArea.getComponentBeingViewed().markAsDirty();
-            te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(this));
-        });
+
+    AbstractTimedRequestedController delayedSetView = null;
+
+    private void requestSetView(EventBus eventBus) {
+        if (delayedSetView == null) {
+            delayedSetView = new AbstractTimedRequestedController(()->{
+                                    Dimension currentSize = ComponentInspector.this.scrollingArea;
+                                    __setView(currentSize);
+                                    eventBus.raiseEvent(new RequestUpdateCanvasEvent(this));
+                                }) {
+                                    @Override
+                                    protected boolean isRequestDifferentFromPrevious() {
+                                        return true;
+                                    }
+                                };
+            delayedSetView.setTimerDelayMillis(500);
+            delayedSetView.setMaxStarvationTime(delayedSetView.getTimerDelayMillis()*3);
+        }
+        if (currentViewType == VIEW_TYPE.COMPONENT_VIEW) {
+            return;
+        }
+        delayedSetView.onRequest(eventBus);
     }
 
+
+    private KeyInputEventHandler __toggleViewEventHandler;
+    
     public KeyInputEventHandler toggleViewEventHandler() {
-        return new KeyInputEventHandler(Keys.CTRL_T_KEYSTROKE, (te) -> {
-            Dimension currentSize = ComponentInspector.this.scrollingArea;
+        if (__toggleViewEventHandler != null) {
+            return __toggleViewEventHandler;
+        }
+        __toggleViewEventHandler = new KeyInputEventHandler(Keys.CTRL_T_KEYSTROKE, (te) -> {
             toggleViewType();
-            __setView(currentSize);
-            te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(this));
+            requestSetView(te.getEventBus());
         });
+        return __toggleViewEventHandler;
     }
 
+    private KeyInputEventHandler __refreshEventHandler;
+    public KeyInputEventHandler refreshEventHandler() {
+        if (__refreshEventHandler != null) {
+            return __refreshEventHandler;
+        }
+        __refreshEventHandler = new KeyInputEventHandler(Keys.CTRL_R_KEYSTROKE, (te) -> {
+            Focusable curFocus = FocusManager.UTIL.findCurrentFocus(focusManagerToInspect);
+            if (curFocus != currentFocus) {
+                currentFocus = curFocus;
+                requestSetView(te.getEventBus());
+            }
+        });
+        return __refreshEventHandler;
+    }
+    
+    
     @Override
     public Collection<? extends Component<?>> getChildren() {
         return Collections.singletonList(this.scrollingArea);
@@ -201,8 +250,7 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
         this.scrollingArea.moveTo(row, col);
     }
 
-    
-    
+
     @Override
     public void setChildAsCurrentFocus(Focusable focusableChild, EventBus eventBus) {
         if (focusableChild != this.scrollingArea) {
@@ -257,6 +305,9 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
 
     @Override
     protected Rectangle getRectangleForClearAndFill() {
+        if (this.scrollingArea == null) {
+            return Rectangle.ZERO;
+        }
         return this.scrollingArea.getRectangleForClearAndFill();
     }
 

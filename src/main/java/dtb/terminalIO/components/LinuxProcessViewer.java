@@ -36,6 +36,7 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
     ConditionalEventHandler eventHandler;
 
     LinuxProcessWatcher linuProcWatcher;
+    OnTerminateEventHandler terminateHandler;
     TextLineFormatter textLineFormatter;
 
     final TextBuffer textBuffer = new TextBuffer();
@@ -147,6 +148,9 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
     }
 
     public LinuxProcessViewer setLinuxProcessWatcher(LinuxProcessWatcher lw) {
+        if (this.linuProcWatcher != null) {
+            this.linuProcWatcher.stopRequest();
+        }
         this.linuProcWatcher = lw;
         return this;
     }
@@ -154,7 +158,7 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
     boolean idleEventsAdded = false;
 
     private void addIdleAndTerminateEventsToEventBus(EventBus eventBus) {
-
+        
         // FIXME/TODO " if existing linuProcWatcher then we need to kill it
 
 //        eventHandlerContainer.prependEventHandler(scrollView.asEventHandler());
@@ -190,8 +194,11 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
                 });
             }
         }));
+        
+        
+        terminateHandler = new OnTerminateEventHandler(() -> stopRequest(LinuxProcessViewer.this.linuProcWatcher));
 
-        eventBus.appendEventHandler(new OnTerminateEventHandler(() -> stopRequest(linuProcWatcher)));
+        eventBus.appendEventHandler(terminateHandler);
 
     }
 
@@ -236,6 +243,10 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
                 }
             }
         }));
+    }
+
+    public void stopRequest() {
+        stopRequest(linuProcWatcher);
     }
 
     private void stopRequest(final LinuxProcessWatcher linuProcWatcher) {

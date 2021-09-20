@@ -148,7 +148,7 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
         return brackStr;
     }
     
-    private String getTextForRendering(boolean hasFocus) {
+    protected String getTextForRendering(boolean hasFocus) {
          String outputStr = this.buttonText;
 
          if (isDisplayHotKey()) {
@@ -205,6 +205,7 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
         renderedText.setText(getTextForRendering(true));
         eventBus.raiseEvent( new HasValue.ValueChangedEvent<>(Button.this) );
         eventBus.raiseEvent( new RequestUpdateCanvasEvent(this));
+      //  Logging.info( HasName.UTIL.getName(this)+ " clicked!!!!!!!!  "  + Component.UTIL.pathToCanvasAsString(this) );
     }
 
 
@@ -260,7 +261,7 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
             return meAsFocusable;
         }
 
-        chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy();
+        chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
         
         KeyStroke[] actionKeys = new KeyStroke[getHotKey()!=null?2:1];
         actionKeys[0] = Keys.ENTER_KEYSTROKE;
@@ -276,7 +277,7 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
             @Override
             public void setFocus(boolean focus, EventBus eventBus) {
                 super.setFocus(focus, eventBus);
-                renderedText.setText(getTextForRendering(focus));
+                renderedText.setTextAndResize(getTextForRendering(focus));
                 if (focus) {
                     new ShowComponentOnFocus().onFocus(Button.this, eventBus);
                     requestShowCursorAtComponent(eventBus);
@@ -316,6 +317,7 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
     protected void draw(Color color, IScreenLineSegmentsBuffer mySegments) {
         if (this.getPostion_TopLeft().isSameLocation(Position.ZERO)) {
             // fast
+           mySegments.getSegments().clear();
            mySegments.getSegments().addAll(this.container.getSegmentsBuffer().getSegments());
         } else {
             // slower

@@ -2,17 +2,25 @@ package dtb.terminalIO.components.scroll;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.GetComponentAtOffset;
 import dtb.terminalIO.components.ParentContainer;
+import dtb.terminalIO.components.WindowFrame;
 import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.OnRequestScrollToViewEventHandler;
+import dtb.terminalIO.events.RequestScrollToView;
+import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegmentsView;
+import dtb.terminalIO.traverse.FindPathToTarget;
 import dtb.terminalIO.util.ElapsedTime;
 import dtb.terminalIO.util.Logging;
 
@@ -25,6 +33,8 @@ public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
 
     private IScreenLineSegmentsBuffer.Provider viewSource;
     private ScreenLineSegmentsView segmentsViewBuffer;
+    
+    private OnResizeService onViewSourceResizeService = new OnResizeService();
 
     public WindowViewComponent(Color color, Dimension d, IScreenLineSegmentsBuffer.Provider viewSource) {
         super(color, d);
@@ -43,6 +53,11 @@ public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
         this.markAsDirty();
     }
 
+    public IScreenLineSegmentsBuffer.Provider getViewSource() {
+        return this.viewSource;
+    }
+
+
     public Position calculateScrollToViewOffset(Rectangle targetToView) {
         return segmentsViewBuffer.calculateScrollToViewOffset(targetToView);
     }
@@ -53,17 +68,11 @@ public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
         segmentsViewBuffer.resize(d);
     }
 
-    public boolean isDirty() {
-        if (super.isDirty())
-            return true;
-        return segmentsViewBuffer.isDirty();
-    }
-
     public void markAsDirty() {
-        super.markAsDirty();
         if (segmentsViewBuffer != null) {
             segmentsViewBuffer.markAsDirty();
         }
+        super.markAsDirty();
     }
 
     @Override
@@ -90,7 +99,7 @@ public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
         return changed;
     }
 
-    Position getOffsetIntoSource() {
+    public Position getOffsetIntoSource() {
         return segmentsViewBuffer.getOffsetIntoSource();
     }
 
@@ -113,8 +122,17 @@ public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
 
     public void childResized(Component<?> child) {
         markAsDirty();
+        if (child == this.viewSource) {
+           this.onViewSourceResizeService.resize(child);
+        }
     }
 
+    public WindowViewComponent setOnViewSourcResize(Consumer<Dimension> onResize) {
+        this.onViewSourceResizeService.setOnResize(onResize);
+        return this;
+    }
+    
+    
     @Override
     public Component<?> getComponentAtOffset(Position offset) {
         if ( ! this.containsPosition(offset)) {
@@ -138,5 +156,43 @@ public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
         return this;
     }
 
+    
+    public static class ScrollToViewHandler extends OnRequestScrollToViewEventHandler {
+
+        public ScrollToViewHandler(Supplier<WindowViewComponent> viewerProvider, CanScrollToView scrollable) {
+            super((te)-> {
+                            if (viewerProvider.get() == null) {
+                               return false;
+                            }
+                            Component<?> componentToScrollTo = ((RequestScrollToView)te).getScrollToComponent();
+                            
+                            boolean findPathToComponent = new FindPathToTarget<Component<?>>().exists(viewerProvider.get(), componentToScrollTo);
+                            
+                            return findPathToComponent;
+                         }, 
+                  (te)-> {
+                            Component<?> componentToScrollTo = ((RequestScrollToView)te).getScrollToComponent();
+                            Position offset = Component.UTIL.getOffsetFromComponentContainer(componentToScrollTo, viewerProvider.get());
+                            Position offsetIntoSource = viewerProvider.get().getOffsetIntoSource();
+                            if ( ! offsetIntoSource.isSameLocation(Position.ZERO)) {
+                                offset = offset.offsetAdd( offsetIntoSource);
+                            }
+                            if (offset != null) {
+                                Rectangle offsetRectangle = ((RequestScrollToView)te).getScrollToOffsetRectangle();
+                                if (offsetRectangle != null) {
+                                    offsetRectangle = new Rectangle.Simple(offsetRectangle.offsetAdd(offset), (Dimension)offsetRectangle);
+                                    if (scrollable.scrollToView(offsetRectangle)) {
+                                        te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(scrollable) );
+                                    }
+                                } else {
+                                    if ( scrollable.scrollToView(new Rectangle.Simple(offset, (Dimension) componentToScrollTo))) {
+                                        te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(scrollable) );
+                                    }
+                                }
+                            }
+                            
+                         });
+        }
+    }
 
 }

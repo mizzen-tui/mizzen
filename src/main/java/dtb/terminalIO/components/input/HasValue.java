@@ -3,6 +3,7 @@ package dtb.terminalIO.components.input;
 import java.util.function.Predicate;
 
 import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.events.AbstractTimedRequestedController;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventHandler;
@@ -34,13 +35,15 @@ public interface HasValue<V> {  //TODO:  Make a SettableValue that extends this.
         }
     }
 
-    public abstract class OnValueChangedEventHandler<V> implements ConditionalEventHandler {
+    public abstract class OnValueChangedEventHandler<V> implements ConditionalEventHandler , HasName<OnValueChangedEventHandler<V>> {
 
         static Predicate<TerminalEvent<?>> valueChangedPredicate = new IS_Event_TYPE(TerminalEvent.TYPE.VALUE_CHANGED);
 
         HasValue<V> targetSource;
 
         Object[] valuesOfInterest;
+        
+        String name;
 
         public OnValueChangedEventHandler(HasValue<V> targetSource, V[] valuesOfInterest) {
             this.targetSource = targetSource;
@@ -90,6 +93,16 @@ public interface HasValue<V> {  //TODO:  Make a SettableValue that extends this.
             valueChanged(te, (HasValue<V>) te.getEventData());
         }
 
+        public String getName() {
+            return this.name;
+        }
+        
+        public OnValueChangedEventHandler<V> setName(String name) {
+            this.name = name;
+            return this;
+        }
+        
+        
         abstract public void valueChanged(TerminalEvent<?> te, HasValue<V> source);
 
     }
@@ -172,6 +185,8 @@ public interface HasValue<V> {  //TODO:  Make a SettableValue that extends this.
                 }
             };
             
+            HasName.UTIL.decorateWithParentsNamePrefix(newOnValueChangedHandler, hasValueContainer);
+            
             return newOnValueChangedHandler;
         }
 
@@ -219,6 +234,7 @@ public interface HasValue<V> {  //TODO:  Make a SettableValue that extends this.
             
 
             // attach new
+            
             eventHandlerContainer.appendEventHandler(newOnValueChangedHandler);
             return newOnValueChangedHandler;
         }
