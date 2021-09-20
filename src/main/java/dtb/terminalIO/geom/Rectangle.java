@@ -31,7 +31,7 @@ public interface Rectangle extends Position, Dimension, Movable {
     }
 
     public default Position getPostion_BottomLeft() {
-	return new Position.Simple(this.getBottomMostRow(), this.getRow());
+	return new Position.Simple(this.getBottomMostRow(), this.getCol());
     }
 
     public default Position getPostion_BottomRight() {
@@ -532,7 +532,7 @@ public interface Rectangle extends Position, Dimension, Movable {
             }
             return calcDimensionsFromPositions(positions.toArray(new Position[] {}));
         }
-        
+
         public static Rectangle calcDimensionsFromPositions(Position ... positions) {
             if (positions == null || positions.length == 0) {
                 return Rectangle.ZERO;
@@ -603,7 +603,7 @@ public interface Rectangle extends Position, Dimension, Movable {
             return cmp;
         }
     }
-    
+
     public static RectangleComparator DEFAULT_COMPARATOR = new RectangleComparator();
 
 }
