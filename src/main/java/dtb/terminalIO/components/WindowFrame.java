@@ -2,10 +2,9 @@ package dtb.terminalIO.components;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.function.Function;
 
+import dtb.terminalIO.components.input.DefaultFocusableBehaviour;
 import dtb.terminalIO.components.input.DraggableTextComponent;
 import dtb.terminalIO.components.input.ResizeAnchor;
 import dtb.terminalIO.components.scroll.CanScrollToView;
@@ -14,15 +13,8 @@ import dtb.terminalIO.components.scroll.ScrollBarVertical;
 import dtb.terminalIO.components.scroll.WindowViewComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.events.ChainedEventHandler;
-import dtb.terminalIO.events.ConditionalEventHandler;
-import dtb.terminalIO.events.EventBus;
-import dtb.terminalIO.events.EventHandler;
-import dtb.terminalIO.events.TerminalEvent;
-import dtb.terminalIO.events.focus.DefaultFocusManager;
-import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
-import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
@@ -34,9 +26,9 @@ import dtb.terminalIO.util.Logging;
 public class WindowFrame extends AbstractComponent<WindowFrame> implements ParentContainer, 
                                                                            CanResize,
                                                                            CanScrollToView,
+                                                                          // Focusable,
                                                                            GetComponentAtOffset, 
                                                                            HasName<WindowFrame>, 
-                                                                           FocusManager, 
                                                                            HasTitleAndBorder<WindowFrame> {
 
     private SimpleBorder border;
@@ -58,10 +50,12 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
     private ScrollBarHorizontal hScrollBar;
     private WindowViewComponent viewer;
 
-    private FocusManager focusManager;
-    private Function<EventBus, FocusManager> focusManagerBuilder;
-    private ConditionalEventHandler eventHandler;
-    private ChainedEventHandler     eventHandlerAsChainedEventHandler;
+    //private FocusManager focusManager;
+    //private Function<EventBus, FocusManager> focusManagerBuilder;
+//    private ConditionalEventHandler eventHandler;
+//    private ChainedEventHandler     eventHandlerAsChainedEventHandler;
+    private Focusable               meAsFocusable;
+
 
 
     public WindowFrame(Color color, String title, Component<?> child) {
@@ -90,7 +84,7 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
         Position anchorPos = calcAnchorPosition();
         this.resizeAnchor.moveTo(anchorPos.getRow(), anchorPos.getCol());
 
-        buildFocusManager();
+        //buildFocusManager();
 
         this.setName(HasName.UTIL.deriveName(this) + "-" + title);
     }
@@ -101,7 +95,7 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
         }
         this.child = child;
         populateChildrenList();
-        buildFocusManager();
+        //buildFocusManager();
     }
 
     private void populateChildrenList() {
@@ -256,8 +250,6 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
             return;
         }
 
-        //Logging.info(HasName.UTIL.getName(this) + ":resize:" + String.valueOf(d));
-
         this.height = Math.max(this.border.getHeight(), this.minHeight);
         this.width = Math.max(this.border.getWidth(), this.minWidth);
 
@@ -294,7 +286,6 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
 
     @Override
     public void childResized(Component<?> child) {
-        Logging.info(HasName.UTIL.getName(this) + ":childResized :" + String.valueOf(child));
         Dimension dimensionOfChildren = sizeFromChildren();
         if (dimensionOfChildren.isSameDimension(this)) {
             return;
@@ -378,26 +369,26 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
         return this;
     }
 
-    private FocusManager getFocusManager(EventBus eventBus) {
-        if (this.focusManager == null) {
-            if (focusManagerBuilder == null) {
-                throw new IllegalStateException(
-                        "focusManager and focusManagerBuilder are null - cannot get access to a focusManager for "
-                                + this.getClass().getName());
-            }
-            this.focusManager = focusManagerBuilder.apply(eventBus);
-        }
-        return this.focusManager;
-    }
-
-    protected FocusManager getFocusManager() {
-        if (this.focusManager == null) {
-            throw new NullPointerException(
-                    "getFocusManager(): focusManager is null - cannot get access to a focusManager for "
-                            + this.getClass().getName());
-        }
-        return this.focusManager;
-    }
+//    private FocusManager getFocusManager(EventBus eventBus) {
+//        if (this.focusManager == null) {
+//            if (focusManagerBuilder == null) {
+//                throw new IllegalStateException(
+//                        "focusManager and focusManagerBuilder are null - cannot get access to a focusManager for "
+//                                + this.getClass().getName());
+//            }
+//            this.focusManager = focusManagerBuilder.apply(eventBus);
+//        }
+//        return this.focusManager;
+//    }
+//
+//    protected FocusManager getFocusManager() {
+//        if (this.focusManager == null) {
+//            throw new NullPointerException(
+//                    "getFocusManager(): focusManager is null - cannot get access to a focusManager for "
+//                            + this.getClass().getName());
+//        }
+//        return this.focusManager;
+//    }
 
     @Override
     public void hilite() {
@@ -442,107 +433,101 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
     public String getTitle() {
         return this.border.getTitle();
     }
+    
+    private Focusable asFocusable() {
 
-    private void buildFocusManager() {
-        this.focusManagerBuilder = (eventBus) -> {
-            FocusManager focusManager = FocusManager.UTIL.buildFocusManagerFromComponentChildren(this, 
-                                                                                                 eventBus,
-                                                                                                 () -> new DefaultFocusManager().setPrevKeyStroke(Keys.SHIFT_TAB_KEYSTROKE)
-                                                                                                                                .setNextKeyStroke(Keys.TAB_KEYSTROKE)
-                                                                                                                                .setNavKeysFirst(false)
-                                                                                                                                .setCycling(false));
-            if (focusManager == null) {
-                focusManager = new DefaultFocusManager(); // FocusManager.UTIL.buildFocusManagerFromComponent() is weird
-                                                          // - that's why this extra call
-            }
-            return focusManager;
-        };
+        if (meAsFocusable != null) {
+            return meAsFocusable;
+        }
+        
 
-        this.focusManager = this.focusManagerBuilder.apply(new EventBus.STUBBED());
-        this.eventHandlerAsChainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(HasName.UTIL.getName(this)+"-chainOfResponsibility");
-        this.eventHandler = this.eventHandlerAsChainedEventHandler.asConditionalEventHandler();
+
+        ChainedEventHandler chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(HasName.UTIL.getName(this)+"-chainOfResponsibility");
 
         // hookup scroll to view requests
-        eventHandlerAsChainedEventHandler.appendEventHandler( new  WindowViewComponent.ScrollToViewHandler(()->this.viewer, this));
+        chainedEventHandler.appendEventHandler( new  WindowViewComponent.ScrollToViewHandler(()->this.viewer, this));
 
-        eventHandlerAsChainedEventHandler.appendEventHandler( new KeyInputEventHandler((te)-> this.hScrollBar != null && this.hScrollBar.canHandle(te)!=null,
+        chainedEventHandler.appendEventHandler( new KeyInputEventHandler((te)-> this.hScrollBar != null && this.hScrollBar.canHandle(te)!=null,
                                                                                        (te)-> {
                                                                                            this.hScrollBar.handle(te);
                                                                                        }));
 
-        eventHandlerAsChainedEventHandler.appendEventHandler( new KeyInputEventHandler((te)-> this.vScrollBar != null && this.vScrollBar.canHandle(te)!=null,
+        chainedEventHandler.appendEventHandler( new KeyInputEventHandler((te)-> this.vScrollBar != null && this.vScrollBar.canHandle(te)!=null,
                                                                                        (te)-> {
                                                                                            this.vScrollBar.handle(te);
                                                                                        }));
+        
+        meAsFocusable = new DefaultFocusableBehaviour.Simple(this, chainedEventHandler.asConditionalEventHandler());
+        return meAsFocusable;
 
     }
     
     
-    @Override
-    public EventHandler canHandle(TerminalEvent<?> te) {
-        if (getFocusManager(te.getEventBus()).canHandle(te) != null) {
-            return this;
-        }
-        if (this.eventHandler != null && this.eventHandler.canHandle(te)!=null) {
-            return this;
-        }
-        return null;
-    }
 
-    @Override
-    public void handle(TerminalEvent<?> te) {
-        // I'm avoiding an obscure bug in FocusManager
-        if (getFocusManager(te.getEventBus()).getChildFocusables().size() < 1) {
-            if (this.eventHandler != null && this.eventHandler.canHandle(te)!=null) {
-                this.eventHandler.handle(te);
-            }
-            return;
-        }
-        if (getFocusManager(te.getEventBus()).canHandle(te) != null) {
-            getFocusManager(te.getEventBus()).handle(te);
-        } else {
-            this.eventHandler.handle(te);
-        }
-    }
-
-    @Override
-    public boolean hasFocus() {
-        return getFocusManager().hasFocus();
-    }
-
-    @Override
-    public void setFocus(boolean focus, EventBus eventBus) {
-        // I'm avoiding an obscure bug in FocusManager
-        if (getFocusManager(eventBus).getChildFocusables().size() < 1) {
-            return;
-        }
-        getFocusManager(eventBus).setFocus(focus, eventBus);
-
-        if (focus) {
-            this.hilite();
-        } else {
-            this.unHilite();
-        }
-
-    }
-
-    @Override
-    public void setChildAsCurrentFocus(Focusable focusableChild, EventBus eventBus) {
-        getFocusManager(eventBus).setChildAsCurrentFocus(focusableChild, eventBus);
-    }
-
-    @Override
-    public Focusable getCurrentChildFocus() {
-        return getFocusManager().getCurrentChildFocus();
-    }
-
-    @Override
-    public Collection<Focusable> getChildFocusables() {
-        if (focusManager == null) {
-            return Collections.emptyList();
-        }
-        return focusManager.getChildFocusables();
-    }
+//    private void buildFocusManager() {
+//        this.focusManagerBuilder = (eventBus) -> {
+//            FocusManager focusManager = FocusManager.UTIL.buildFocusManagerFromComponentChildren(this, 
+//                                                                                                 eventBus,
+//                                                                                                 () -> new DefaultFocusManager().setPrevKeyStroke(Keys.SHIFT_TAB_KEYSTROKE)
+//                                                                                                                                .setNextKeyStroke(Keys.TAB_KEYSTROKE)
+//                                                                                                                                .setNavKeysFirst(false)
+//                                                                                                                                .setCycling(false));
+//            if (focusManager == null) {
+//                focusManager = new DefaultFocusManager(); // FocusManager.UTIL.buildFocusManagerFromComponent() is weird
+//                                                          // - that's why this extra call
+//            }
+//            return focusManager;
+//        };
+//
+//        this.focusManager = this.focusManagerBuilder.apply(new EventBus.STUBBED());
+//        this.eventHandlerAsChainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(HasName.UTIL.getName(this)+"-chainOfResponsibility");
+//        this.eventHandler = this.eventHandlerAsChainedEventHandler.asConditionalEventHandler();
+//
+//        // hookup scroll to view requests
+//        eventHandlerAsChainedEventHandler.appendEventHandler( new  WindowViewComponent.ScrollToViewHandler(()->this.viewer, this));
+//
+//        eventHandlerAsChainedEventHandler.appendEventHandler( new KeyInputEventHandler((te)-> this.hScrollBar != null && this.hScrollBar.canHandle(te)!=null,
+//                                                                                       (te)-> {
+//                                                                                           this.hScrollBar.handle(te);
+//                                                                                       }));
+//
+//        eventHandlerAsChainedEventHandler.appendEventHandler( new KeyInputEventHandler((te)-> this.vScrollBar != null && this.vScrollBar.canHandle(te)!=null,
+//                                                                                       (te)-> {
+//                                                                                           this.vScrollBar.handle(te);
+//                                                                                       }));
+//
+//    }
+    
+    
+//    @Override
+//    public EventHandler canHandle(TerminalEvent<?> te) {
+//        if (asFocusable().canHandle(te) != null) {
+//            return this;
+//        }
+//        return null;
+//    }
+//
+//    @Override
+//    public void handle(TerminalEvent<?> te) {
+//        asFocusable().handle(te);
+//    }
+//
+//    @Override
+//    public boolean hasFocus() {
+//        return asFocusable().hasFocus();
+//    }
+//
+//    @Override
+//    public void setFocus(boolean focus, EventBus eventBus) {
+//        asFocusable().setFocus(focus, eventBus);
+//
+//        if (focus) {
+//            this.hilite();
+//        } else {
+//            this.unHilite();
+//        }
+//
+//    }
 
     private Position getOffsetIntoSource() {
         if (viewer == null) {
@@ -603,7 +588,6 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
                 this.hScrollBar = null;
                 this.vScrollBar = null;
                 populateChildrenList();
-                this.focusManager = null;
             }
             return;
         }
@@ -661,14 +645,11 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
         });
 
         populateChildrenList();
-        
+
         viewer.setOnViewSourcResize((dimChild)->childResizedInsideViewer());
 
-        // force focusManager to rebuild itself on its next access
-        this.focusManager = null;
-
     }
-    
+
     void childResizedInsideViewer() {
         Logging.info("childResizedInsideViewer(): "+this.child.toString());
     }
