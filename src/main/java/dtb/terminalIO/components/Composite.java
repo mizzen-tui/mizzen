@@ -192,6 +192,7 @@ public class Composite extends AbstractComponent<Composite>
         }
         try {
             resizing = true;
+            // yes - size = null is valid; see setBounds(..)
             if (size != null && size.isSameDimension(this)) {
                 return;
             }

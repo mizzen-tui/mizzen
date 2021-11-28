@@ -13,6 +13,7 @@ public interface ParentContainer extends  HasChildren<Component<?>>, DirtyFlag {
         return false;
     }
 
+    // used for dragging components
     default Component<?> findChildOrAncestorThatCanBeMoved(Component<?> child) {
         if (child == null) {
             return null;

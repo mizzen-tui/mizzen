@@ -14,6 +14,7 @@ import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.geom.Dimension;
+import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.util.StringUtils;
 
 public class GameOfLifeComponent extends AbstractComponentWithContainer<Composite> {
@@ -23,21 +24,25 @@ public class GameOfLifeComponent extends AbstractComponentWithContainer<Composit
     public static int SPEED_FAST        =  250;
     public static int SPEED_REALLY_FAST =  100;
 
-    private GridDataContainer dataGridContainer;
+    private GridData gridData;
     private GameOfLifeEngine gameOfLifeEngine;
     private OnIdleEventEventHandler gameTicker;
+    private VerticalPanel mainPanel;
     private GameGridRenderer renderer;
     private int gameTickInterval = SPEED_FAST;
+    Dimension desiredSize;
 
     public GameOfLifeComponent(Color color, Dimension d) {
 
         super(color);
+        
+        this.desiredSize = d;
 
         gameOfLifeEngine = new GameOfLifeEngine();
 
-        renderer = new GameGridRenderer.Simple(color);
+        renderer = new GameGridTextComponentRenderer(color);
 
-        dataGridContainer = new GridDataContainer();
+        gridData = new GridData();
 
         DropdownListBox<Integer> speedOptions = new DropdownListBox<Integer>(GameSpeeds.speedOptions());
         speedOptions.onChange((te)->{
@@ -50,6 +55,12 @@ public class GameOfLifeComponent extends AbstractComponentWithContainer<Composit
             drawShape(shapeOptions.getValue());
         });
 
+        DropdownListBox<GameGridRenderer.Builder> rendererOptions = new DropdownListBox<GameGridRenderer.Builder>(GameGridRenderer.UTIL.standardGameRenderers());
+        rendererOptions.onChange((te)->{
+            GameGridRenderer newRenderer = rendererOptions.getValue().build(color);
+            replaceRendererComponent(newRenderer); 
+        });
+
         HorizontalPanel optionsPanel = new HorizontalPanel().setHorizontalSpacer(1);
 
         optionsPanel.add(new TextComponent("Speed: "));
@@ -57,12 +68,16 @@ public class GameOfLifeComponent extends AbstractComponentWithContainer<Composit
 
         optionsPanel.add(new TextComponent("Shape: "));
         optionsPanel.add(shapeOptions);
-        
-        VerticalPanel mainPanel = new VerticalPanel();
+
+        optionsPanel.add(new TextComponent("Styles: "));
+        optionsPanel.add(rendererOptions);
+
+        mainPanel = new VerticalPanel();
         mainPanel.add(optionsPanel);
         mainPanel.add(renderer.getComponent());
 
-        resizeRenderer(d);
+        Dimension rendererComponentSize = resizeRendererComponent(d);
+        resizeGridDataFromRendererSize(rendererComponentSize);
 
         this.setWrappedComponent(mainPanel);
 
@@ -70,24 +85,54 @@ public class GameOfLifeComponent extends AbstractComponentWithContainer<Composit
         this.setFillOnClear(true);
 
     }
+    
+    private void replaceRendererComponent(GameGridRenderer newRenderer) {
+         if (this.renderer == null) {
+             mainPanel.add(newRenderer.getComponent());
+             this.renderer = newRenderer;
+             return;
+         }
+         Dimension gameSize = componentSizeToRendererComponentSize(this.desiredSize); 
+         int idx = mainPanel.indexOf(this.renderer.getComponent());
+         newRenderer.resizeComponent(gameSize);
+         mainPanel.insert(idx, newRenderer.getComponent());
+         mainPanel.remove(this.renderer.getComponent());
+         this.renderer = newRenderer;
+         resizeGridDataFromRendererSize( gameSize );
+         renderGeneration();
+         this.markAsDirty();
+    }
 
     @Override
     public void resize(Dimension d) {
-        resizeRenderer(d);
+        this.desiredSize = d;
+        Dimension rendererComponentSize = resizeRendererComponent(d);
+        resizeGridDataFromRendererSize(rendererComponentSize);
         super.resize(d);
     }
 
-    private Dimension calcGridSize(Dimension gameSize) {
-        if (gameSize.getHeight()<4 || gameSize.getWidth()<3) {
+    private Dimension calcDataGridSize(Dimension rendererComponentSize) {
+        if (rendererComponentSize.getHeight()<4 || rendererComponentSize.getWidth()<3) {
             return Dimension.ZERO;
         }
-        Dimension rendererComponentSize = new Dimension.Simple(gameSize.getHeight()-3, gameSize.getWidth()-2);
         Dimension gameGridSize = renderer.componentSizeToGridSize( rendererComponentSize  );
         return gameGridSize;
     }
 
-    private void resizeRenderer(Dimension gameSize) {
-        dataGridContainer.setSize(calcGridSize(gameSize));
+    private Dimension componentSizeToRendererComponentSize(Dimension componentSize) {
+        Position positionInMainPanel = mainPanel.childAsRectangleOffset(this.renderer.getComponent()); 
+        Dimension rendererComponentSize = new Dimension.Simple(componentSize.getHeight() - 2 - positionInMainPanel.getRow() , componentSize.getWidth()-2);
+        return rendererComponentSize;
+    }
+
+    private Dimension resizeRendererComponent(Dimension componentSize) {
+        Dimension rendererComponentSize = componentSizeToRendererComponentSize(componentSize);
+        this.renderer.resizeComponent(rendererComponentSize);
+        return rendererComponentSize;
+    }
+
+    private void resizeGridDataFromRendererSize(Dimension gameSize) {
+        gridData.setSize(calcDataGridSize(gameSize));
     }
     
     public void start(EventBus eventBus) {
@@ -95,10 +140,14 @@ public class GameOfLifeComponent extends AbstractComponentWithContainer<Composit
     }
 
     private void renderNextGeneration() {
-        dataGridContainer.grid = gameOfLifeEngine.makeNextGeneration(dataGridContainer.grid);
-        dataGridContainer.generation += 1;
-        setTitle("Gen: " + dataGridContainer.generation /*+ " " + new Dimension.Simple(this.getPreferredRectangleForLayout()) + " .. " + calcGridSize(this) + " .. " + this.getParentContainer()*/);
-        renderer.render(dataGridContainer);
+        gridData.array2D = gameOfLifeEngine.makeNextGeneration(gridData.array2D);
+        gridData.generation += 1;
+        renderGeneration();
+    }
+    
+    private void renderGeneration() {
+        setTitle(String.format("[ Gen: %4d   %2d X %2d ]", gridData.generation, gridData.getWidth(),  gridData.getHeight()));
+        renderer.render(gridData);
     }
     
     private void doStart(EventBus eventBus) {
@@ -124,7 +173,7 @@ public class GameOfLifeComponent extends AbstractComponentWithContainer<Composit
     }
 
     public void drawShape(int[][] shapeFromArray) {
-        dataGridContainer.copyShapeIntoGridCentered(shapeFromArray);
+        gridData.copyShapeIntoGridCentered(shapeFromArray);
         
     }
     
