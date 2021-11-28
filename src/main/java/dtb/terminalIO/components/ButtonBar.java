@@ -1,18 +1,13 @@
 package dtb.terminalIO.components;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
-import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
-import dtb.terminalIO.events.focus.Focusable;
-import dtb.terminalIO.events.focus.ToFocusable;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
 
@@ -28,12 +23,13 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
     private Component<?> lastDivider = null;
     private List<Component<?>> nonDividerComponents;
     
-    public ButtonBar(Color color) {
+    public ButtonBar(Color color, String name) {
         super(color, new HorizontalPanel().setHorizontalSpacer(0));
         BlockChars blockChars = this.getBlockChars();
         leftMostBorderChar = blockChars.getVERTICAL_LEFT(); 
         middleBorderChar = blockChars.getVERTICAL_LINE();
         rightMostBorderChar = blockChars.getVERTICAL_RIGHT();
+        this.setName(name==null? "buttonBar" : name);
         this.setFocusManager( new DefaultFocusManager()
                                           .setCycling(false)
                                           .setNavKeysFirst(false)
@@ -41,9 +37,16 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
                                           .setNextKeyStroke(Keys.TAB_KEYSTROKE));
         nonDividerComponents = new ArrayList<>();
     }
+    public ButtonBar(Color color) {
+        this(color, "Buttonbar");
+    }
 
     public ButtonBar() {
         this(Colors.FGBGColors.NO_COLOR_SPECIFIED);
+    }
+    
+    public ButtonBar(String name) {
+        this(Colors.FGBGColors.NO_COLOR_SPECIFIED, name);
     }
     
     public ButtonBar setHorizontalSpacer(int horizontalSpacer) {
@@ -125,24 +128,10 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
 
         count++;
 
-        ConditionalEventHandler componentAsEventHandler = null;
-        if (component instanceof ConditionalEventHandler) {
-            componentAsEventHandler = (ConditionalEventHandler) component;
-        } else {
-            if (component instanceof ToFocusable) {
-                componentAsEventHandler = ((ToFocusable) component).asFocusable();
-            }
-        }
-        if (componentAsEventHandler != null) {
-            appendEventHandler(componentAsEventHandler);
-            if (componentAsEventHandler instanceof Focusable) {
-                mapChildComponentToFocusable.put(component, (Focusable)componentAsEventHandler);
-                addFocusable((Focusable) componentAsEventHandler);
-            }
-        }
 
         getContainer().add(component);
         nonDividerComponents.add(component);
+        addComponentFocusablesToFocusManager(component);
 
         if (this.rightMostBorderChar > 0) {
             lastDivider = new CharComponent(this.getColor(), this.rightMostBorderChar);
@@ -154,7 +143,6 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
 
     }
 
-    Map<Component<?>, Focusable> mapChildComponentToFocusable = new HashMap<Component<?>, Focusable> ();
     
     public <T extends Component<?>> T insertComponent(int index, T component) {
         // Doing these checks preemptively (even tho' the child composite does the same checks)
@@ -184,24 +172,8 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
             getContainer().insert(indexInContainer, new CharComponent(this.getColor(), this.middleBorderChar));
         }
 
-        ConditionalEventHandler componentAsEventHandler = null;
-        if (component instanceof ConditionalEventHandler) {
-            componentAsEventHandler = (ConditionalEventHandler) component;
-        } else {
-            if (component instanceof ToFocusable) {
-                componentAsEventHandler = ((ToFocusable) component).asFocusable();
-            }
-        }
-        if (componentAsEventHandler != null) {
-            appendEventHandler(componentAsEventHandler);
-            if (componentAsEventHandler instanceof Focusable) {
-                mapChildComponentToFocusable.put(component, (Focusable)componentAsEventHandler);
-                insertFocusable(index, (Focusable) componentAsEventHandler);
-            }
-        }
-        
-        
         getContainer().insert(indexInContainer, component);
+        addComponentFocusablesToFocusManager(component);
         nonDividerComponents.add(index, component);
 
         count++;
@@ -225,11 +197,12 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
         if ( ! nonDividerComponents.contains(component)) {
             throw new IllegalArgumentException("Remove: Could not find component"+HasName.UTIL.getName(component)+")!");
         }
-        
+
         int index = getContainer().indexOf(component);
         if (index < 0) {
             throw new IllegalStateException("Remove: Could not find component("+HasName.UTIL.getName(component)+") in container!");
         }
+
         Component<?> prevChild = null;
         Component<?> nextChild = null;
         if (index>0 && nonDividerComponents.indexOf(component)==nonDividerComponents.size()-1) {
@@ -238,18 +211,14 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
         if (index < getContainer().size()-2) {
             nextChild = getContainer().getChild(index+1);
         }
-        
+
         if (nextChild != null && isDividerComponent(nextChild)) {
             getContainer().remove(nextChild);
         }
-        
-        // TODO:  This should be done in the ancestor class
-        Focusable focusable = mapChildComponentToFocusable.get(component);
-        
+
+        removeComponentFocusablesFromFocusManager(component);
         getContainer().remove(component);
-        if (focusable != null) {
-            removeFocusable(focusable);
-        }
+
         nonDividerComponents.remove(component);
         count--;
         
@@ -267,7 +236,7 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
     public void removeChildren() {
         super.removeChildren();
         nonDividerComponents.clear();
-        mapChildComponentToFocusable.clear();
+//        mapChildComponentToFocusable.clear();
         count = 0;
         lastDivider = null;
     }

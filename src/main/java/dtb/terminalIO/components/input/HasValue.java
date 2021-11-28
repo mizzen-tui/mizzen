@@ -119,8 +119,10 @@ public interface HasValue<V> {  //TODO:  Make a SettableValue that extends this.
         }
 
         private void makeTimer() {
-            timer = new AbstractTimedRequestedController(() -> {
-                valueChanged(null, targetSource);
+            timer = new AbstractTimedRequestedController((te) -> {
+                // When the timed request fires, finally we fire off the 
+                // original value changed event
+                valueChanged(te, targetSource);
             }) {
 
                 @Override
@@ -210,9 +212,9 @@ public interface HasValue<V> {  //TODO:  Make a SettableValue that extends this.
          * @return
          */
         public static <T> HasValue.OnValueChangedEventHandler<T> bindConsumerAsOnValueChangedHandler(HasValue<T> hasValueContainer, 
-                                                                              HasValue.OnValueChangedEventHandler<T> previousOnChangeHandler,
-                                                                              EventHandlerContainer eventHandlerContainer,
-                                                                              EventHandler consumeChange) {
+                                                                                                     HasValue.OnValueChangedEventHandler<T> previousOnChangeHandler,
+                                                                                                     EventHandlerContainer eventHandlerContainer,
+                                                                                                     EventHandler consumeChange) {
 
             // remove old
             if (previousOnChangeHandler != null) {

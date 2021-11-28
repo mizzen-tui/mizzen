@@ -7,6 +7,7 @@ import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.mouse.ApplicationMouseEvent;
 import dtb.terminalIO.events.mouse.Draggable;
@@ -109,5 +110,16 @@ public class ResizeAnchor  extends TextComponent implements Focusable , Draggabl
     public void setFocus(boolean focus, EventBus eventBus) {
         asFocusable().setFocus(focus, eventBus);
     }
+
+    @Override
+    public FocusManager getParentFocusManager() {
+        return asFocusable().getParentFocusManager();
+    }
+
+    @Override
+    public void setParentFocusManager(FocusManager focusManager) {
+        asFocusable().setParentFocusManager(focusManager);
+    }
+
     
 }

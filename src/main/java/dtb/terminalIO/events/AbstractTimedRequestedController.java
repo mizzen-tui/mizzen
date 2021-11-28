@@ -11,11 +11,15 @@ public abstract class AbstractTimedRequestedController {
     private long lastTimeRequestChange = -1;
     private long lastInvocationTime = -1;
     private OneTimeAfterInterval timerInterval;
-    private Runnable onRequestCommand;
+    private EventHandler onRequestCommand;
     private Object mutex = new Object();
 
-    public AbstractTimedRequestedController(Runnable onChangeAction) {
+    public AbstractTimedRequestedController(EventHandler onChangeAction) {
         this.onRequestCommand = onChangeAction;
+    }
+
+    public AbstractTimedRequestedController(Runnable onChangeAction) {
+        this.onRequestCommand = (te)-> onChangeAction.run();
     }
 
     abstract protected boolean isRequestDifferentFromPrevious();
@@ -84,7 +88,7 @@ public abstract class AbstractTimedRequestedController {
                     // lets invoke the request
                     synchronized (mutex) {
                         try {
-                             onRequestCommand.run();
+                             onRequestCommand.handle(te);
                         } finally {
                             timerInterval = null;
                             lastTimeRequestChange = -1;

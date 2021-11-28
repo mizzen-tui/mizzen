@@ -8,8 +8,8 @@ import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
-import dtb.terminalIO.events.keyboard.Keys;
 
 // A work in progress..
 
@@ -46,7 +46,8 @@ public class ScrollableSearch extends AbstractComponentWrappper<HorizontalPanel>
     public static class UTIL {
         public static void addSearch(ScrollableComponent viewComp) {
             ScrollableSearch search = new ScrollableSearch(viewComp.getBorderColor());
-            viewComp.addFooterComponent(search,Keys.CTRL_F_KEYSTROKE,search);
+            //viewComp.addFooterComponent(search,Keys.CTRL_F_KEYSTROKE,search);
+            throw new IllegalStateException("NOT implemented!!!");
         }
     }
 
@@ -73,5 +74,16 @@ public class ScrollableSearch extends AbstractComponentWrappper<HorizontalPanel>
         this.findButton.setFocus(focus, eventBus);
     }
     
+    @Override
+    public FocusManager getParentFocusManager() {
+        return this.findButton.getParentFocusManager();
+    }
 
+    @Override
+    public void setParentFocusManager(FocusManager focusManager) {
+        this.findButton.setParentFocusManager(focusManager);
+    }
+
+    
+    
 }

@@ -1,14 +1,15 @@
 package dtb.terminalIO.components.modal;
 
-import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.ChildComponentManager;
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.components.Composite;
+import dtb.terminalIO.components.CompositeWithFocusManager;
 import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.VerticalPanel;
 import dtb.terminalIO.components.input.Button;
+import dtb.terminalIO.components.modal.DialogComponent.ButtonSpec;
+import dtb.terminalIO.components.modal.DialogComponent.IconStyle;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventBus;
@@ -25,81 +26,81 @@ import dtb.terminalIO.geom.position.Position;
 
 public class MessageBox {
     
-    static enum IconStyle {
-        QUESTION,
-        INFO,
-        WARNING,
-        ERROR
-    }
+//    static enum IconStyle {
+//        QUESTION,
+//        INFO,
+//        WARNING,
+//        ERROR
+//    }
     
     
-    static Color iconToIconColor(IconStyle icon) {
-        switch (icon) {
-        case QUESTION:
-            return new Colors.FGBGColors(Colors.BIBla, Colors.On_IGre);
-        case INFO:
-            return new Colors.FGBGColors(Colors.BIBla, Colors.On_IPur);
-        case WARNING:
-            return new Colors.FGBGColors(Colors.BIBla, Colors.On_Yel);
-        case ERROR:
-            return new Colors.FGBGColors(Colors.BIWhi, Colors.On_IRed);
+//    static Color iconToIconColor(IconStyle icon) {
+//        switch (icon) {
+//        case QUESTION:
+//            return new Colors.FGBGColors(Colors.BIBla, Colors.On_IGre);
+//        case INFO:
+//            return new Colors.FGBGColors(Colors.BIBla, Colors.On_IPur);
+//        case WARNING:
+//            return new Colors.FGBGColors(Colors.BIBla, Colors.On_Yel);
+//        case ERROR:
+//            return new Colors.FGBGColors(Colors.BIWhi, Colors.On_IRed);
+//
+//        default:
+//            return null;
+//        }
+//    }
 
-        default:
-            return null;
-        }
-    }
-
-    static Component<?> iconToIconComponent(IconStyle icon) {
-        switch (icon) {
-        case QUESTION:
-             return questionICON();
-        case INFO:
-            return informationICON();
-        case WARNING:
-            return warningICON();
-        case ERROR:
-            return errorICON();
-
-        default:
-            return null;
-        }
-    }
+//    static Component<?> iconToIconComponent(IconStyle icon) {
+//        switch (icon) {
+//        case QUESTION:
+//             return questionICON();
+//        case INFO:
+//            return informationICON();
+//        case WARNING:
+//            return warningICON();
+//        case ERROR:
+//            return errorICON();
+//
+//        default:
+//            return null;
+//        }
+//    }
     
-    private static Component<?> makeICON(char icon, Color iconColor) {
-        BorderedComponent question = new BorderedComponent(iconColor, new TextComponent(iconColor," " + icon + " "));
-        return question;
-    }
-    
-
-    private static Component<?> questionICON() {
-        return makeICON('?', new Colors.FGBGColors(Colors.BIBla, Colors.On_IGre));
-    }
-    
-    private static Component<?> informationICON() {
-        return makeICON('i', new Colors.FGBGColors(Colors.BIBla, Colors.On_IPur));
-    }
-    
-    private static Component<?> warningICON() {
-        return makeICON('!', new Colors.FGBGColors(Colors.BIBla, Colors.On_Yel));
-    }
-    
-    private static Component<?> errorICON() {
-        return makeICON('X', new Colors.FGBGColors(Colors.BIWhi, Colors.On_IRed));
-    }
+//    private static Component<?> makeICON(char icon, Color iconColor) {
+//        BorderedComponent question = new BorderedComponent(iconColor, new TextComponent(iconColor," " + icon + " "));
+//        return question;
+//    }
+//    
+//
+//    private static Component<?> questionICON() {
+//        return makeICON('?', new Colors.FGBGColors(Colors.BIBla, Colors.On_IGre));
+//    }
+//    
+//    private static Component<?> informationICON() {
+//        return makeICON('i', new Colors.FGBGColors(Colors.BIBla, Colors.On_IPur));
+//    }
+//    
+//    private static Component<?> warningICON() {
+//        return makeICON('!', new Colors.FGBGColors(Colors.BIBla, Colors.On_Yel));
+//    }
+//    
+//    private static Component<?> errorICON() {
+//        return makeICON('X', new Colors.FGBGColors(Colors.BIWhi, Colors.On_IRed));
+//    }
     
     // internal class to specify buttons that will be built in call to simpleDialog(..)
-    private static class ButtonSpec {
-        public final String buttonLabel;
-        public final KeyStroke onPressedKeyStroke;
-        public final EventHandler onPressed;
-        
-        public ButtonSpec(String buttonLabel, KeyStroke onPressedKeyStroke, EventHandler onPressed) {
-            super();
-            this.buttonLabel = buttonLabel;
-            this.onPressedKeyStroke = onPressedKeyStroke;
-            this.onPressed = onPressed;
-        }
-    }
+//    private static class ButtonSpec {
+//        public final String buttonLabel;
+//        public final KeyStroke onPressedKeyStroke;
+//        public final EventHandler onPressed;
+//        
+//        public ButtonSpec(String buttonLabel, KeyStroke onPressedKeyStroke, EventHandler onPressed) {
+//            super();
+//            this.buttonLabel = buttonLabel;
+//            this.onPressedKeyStroke = onPressedKeyStroke;
+//            this.onPressed = onPressed;
+//        }
+//    }
     
     /**
      * Render a simple messagebox dialog with buttons 
@@ -116,20 +117,21 @@ public class MessageBox {
                                      EventBus eventBus, 
                                      ChildComponentManager<?> parentPanel,
                                      String message,
-                                     Component<?> customComponent) {
+                                     Component<?> customComponent,
+                                     EventHandler onCloseHandler ) {
 
         Color dialogColor = new Colors.FGBGColors(Colors.Bla,Colors.On_Whi);
         dialogColor.setBoldTransform((c)-> new Colors.FGBGColors(Colors.BIWhi, Colors.On_Bla));
         dialogColor.setInvertTransform((c)-> new Colors.FGBGColors(Colors.BIWhi, Colors.On_Bla));
 
-        Composite dialog = new Composite( dialogColor );
+        CompositeWithFocusManager dialog = new CompositeWithFocusManager( dialogColor );
 
-        dialog.setBorderColor(iconToIconColor(icon));
+        dialog.setBorderColor(DialogComponent.iconToIconColor(icon));
         dialog.setBorder(true); 
-        dialog.setTitle(iconToIconColor(icon), " " + title + " ");
+        dialog.setTitle(DialogComponent.iconToIconColor(icon), " " + title + " ");
         dialog.setFillOnClear(true);
         dialog.setEmptyColor(dialogColor);
-        
+
         if (icon != null && Dimension.UTIL.stringToDimension(message).getHeight()==1) {
             message = "\n" + message;
         }
@@ -139,24 +141,24 @@ public class MessageBox {
         messageText.setEmptyColor(dialogColor);
 
         VerticalPanel mainPanel = new VerticalPanel(dialogColor).setVerticalSpacer(1);
-        
+
         HorizontalPanel messagePanel = new HorizontalPanel(dialogColor).setHorizontalSpacer(2);
         messagePanel.setFillOnClear(true);
         messagePanel.setEmptyColor(dialogColor);
         if (icon != null) {
-            messagePanel.add(iconToIconComponent(icon));
+            messagePanel.add(DialogComponent.iconToIconComponent(icon));
         }
         messagePanel.add(messageText);
-        
+
         Position messageTextPosition = new Position.Simple(1,1);
-        
+
         mainPanel.add(messagePanel);
         if (customComponent != null) {
             mainPanel.add(customComponent);
         }
-        
+
         dialog.add(messageTextPosition, mainPanel);
-        
+
         ButtonBar buttons = new ButtonBar().setCycling(true);
         buttons.setFillOnClear(true);
         buttons.setEmptyColor(dialog.getColor());
@@ -164,20 +166,20 @@ public class MessageBox {
         buttons.setColor(dialog.getColor());
         buttons.setNoBorderChars();
         buttons.setHorizontalSpacer(3);
-        
+
         Button[] buttonsForButtonBar = new Button[buttonSpec.length];
-        
+
         for (int i=0; i<buttonSpec.length; i++) {
             buttonsForButtonBar[i] = buttons.addButton(buttonSpec[i].buttonLabel, buttonSpec[i].onPressedKeyStroke, null).setBorder(true);
         }
-        
+
         int buttonPositionCol = (dialog.getWidth() - buttons.getWidth()) / 2 ;
         if (buttonPositionCol < 0) {
             buttonPositionCol = messageTextPosition.getCol();
         }
-        
+
         Position positionOfButtons = messageTextPosition.offsetAdd(new Position.Simple(mainPanel.getHeight()+2,buttonPositionCol));
-        
+
         dialog.add( positionOfButtons, buttons );
 
         Position positionOfDialog = Position.ZERO;
@@ -188,40 +190,77 @@ public class MessageBox {
 
         parentPanel.add( positionOfDialog, dialog );
         parentPanel.setDropShadow(true, dialog);
-    
+
         //  -- bind dialog events to modalDialogEvents which in 
         //     turn is prepended to the eventBus --
-        
+
         ModalEventHandler modalDialogEvents = new ModalEventHandler(eventBus);
-        
+
         EventHandler removeDialog = (te)->{
             parentPanel.remove(dialog);
             te.getEventBus().removeEventHandler(modalDialogEvents);
             te.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(dialog)  );
         };
-        
+
         for (int i=0; i< buttonsForButtonBar.length; i++) {
             EventHandler onPressedButtonEventHandler = buttonSpec[i].onPressed;
             buttonsForButtonBar[i].onChange((te)->{
                 removeDialog.handle(te);
+                onCloseHandler.handle(te);
                 te.getEventBus().appendEventHandler( new OnIdleEventEventHandler.OneTime(onPressedButtonEventHandler) );
             });
         }
-        
+
         EventHandler noActionHandler = (te)-> {
             removeDialog.handle(te);
         };
-        
+
         modalDialogEvents.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, noActionHandler ) );
 
-        modalDialogEvents.appendEventHandler(buttons);
+        modalDialogEvents.appendEventHandler(dialog);
+//        if (customComponent != null && customComponent instanceof ConditionalEventHandler) {
+//            modalDialogEvents.appendEventHandler((ConditionalEventHandler)customComponent);
+//        }
 
         eventBus.raiseEvent( new RequestUpdateCanvasEvent(dialog));
 
         eventBus.raiseEvent( new RequestFocusEvent(buttonsForButtonBar[0]));
 
+    }
+
+    
+    public static void showDialogNew(DialogComponent.IconStyle icon,
+            String title,
+            ButtonSpec[] buttonSpec,
+            EventBus eventBus, 
+            ChildComponentManager<?> parentPanel,
+            String message,
+            Component<?> customComponent,
+            EventHandler onCloseHandler ) {
+        
+        
+        Color dialogColor = new Colors.FGBGColors(Colors.Bla,Colors.On_Whi);
+        dialogColor.setBoldTransform((c)-> new Colors.FGBGColors(Colors.BIWhi, Colors.On_Bla));
+        dialogColor.setInvertTransform((c)-> new Colors.FGBGColors(Colors.BIWhi, Colors.On_Bla));
+
+        
+        DialogComponent dialog = new DialogComponent(dialogColor, icon, title);
+        
+        
+        dialog.show(eventBus);
         
     }
+    
+    private static void simpleDialog(IconStyle icon,
+            String title,
+            ButtonSpec[] buttonSpec,
+            EventBus eventBus, 
+            ChildComponentManager<?> parentPanel,
+            String message,
+            Component<?> customComponent) {
+        simpleDialog(icon, title, buttonSpec, eventBus, parentPanel, message, customComponent, EventHandler.NULL_HANDLER);
+    }
+
     
     public static void showInfoDialog(EventBus eventBus, 
                                       ChildComponentManager<?> parentPanel,
@@ -243,13 +282,23 @@ public class MessageBox {
                                       String message) {
         showInfoDialog(eventBus, parentPanel, message, EventHandler.NULL_HANDLER);
     }
-    
+
     public static void showInfoDialog(EventBus  eventBus, 
                                       ChildComponentManager<?> parentPanel,
                                       String message,
                                       Component<?> customComponent) {
         showInfoDialog(eventBus, parentPanel, message, customComponent, EventHandler.NULL_HANDLER);
-}
+    } 
+
+    public static void showInfoDialog(EventBus  eventBus, 
+                                        ChildComponentManager<?> parentPanel,
+                                        String message,
+                                        Component<?> customComponent,
+                                        EventHandler  onPressed,
+                                        EventHandler onCloseHandler) {
+        showInfoDialog(eventBus, parentPanel, message, customComponent, EventHandler.NULL_HANDLER);
+    }
+
 
     public static void showWarningDialog(EventBus  eventBus, 
                                          ChildComponentManager<?> parentPanel,

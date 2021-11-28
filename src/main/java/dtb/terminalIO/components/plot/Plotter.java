@@ -12,7 +12,6 @@ import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegment;
 import dtb.terminalIO.textsegments.ScreenLineSegment.SegmentImpl;
 import dtb.terminalIO.util.ElapsedTime;
-import dtb.terminalIO.util.Logging;
 
 /**
  * A component that can plot a series of dots .. Useful sub-component for
@@ -98,7 +97,7 @@ public class Plotter extends BoundedComponent<Plotter> {
             
         }).elapsed();
         
-        Logging.info("Plotter["+this.getName()+"].draw() - elapsed: " + elapsed +" size: " + segments.getSegments().size()+ " plotsSize="+plots.size());
+       // Logging.info("Plotter["+this.getName()+"].draw() - elapsed: " + elapsed +" size: " + segments.getSegments().size()+ " plotsSize="+plots.size());
     }
     
     private void __draw(Color color, IScreenLineSegmentsBuffer segments) {

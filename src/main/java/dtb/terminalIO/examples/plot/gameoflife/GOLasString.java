@@ -1,5 +1,10 @@
 package dtb.terminalIO.examples.plot.gameoflife;
 
+import java.util.StringJoiner;
+
+import dtb.terminalIO.controlcodes.color.Colors;
+import dtb.terminalIO.geom.Dimension;
+
 public class GOLasString {
     
 
@@ -14,38 +19,37 @@ public class GOLasString {
     private char cellAsStringXXXX(int cellValue) {
         return 'x';
     }
-    private char cellAsString(int cellValue) {
+    
+    private String cellAsString(int cellValue) {
        if (cellValue == 0) {
-          return ' ';
+          return " ";
        }
-       //return cellValue = termIO.coloredStr(termIO.IYel,"▖");
+       return Colors.coloredText(Colors.IYel,"▖");
        //return '▖';
-       return '#';
+       //return '#';
        
        //return cellValue = ""+cellValue;
     }
 
+    
     private String array1DAsString(int[] a) {
-        String output = cellAsString(a[0])+"";
-        for (int i=1; i<a.length;i++) {
-            output += GRID_CELL_DIVIDER+""+cellAsString(a[i]);
+        StringJoiner  columnJoiner = new StringJoiner(GRID_CELL_DIVIDER+"");
+        for (int i=0; i<a.length;i++) {
+            columnJoiner.add(cellAsString(a[i])+"");
         }
-        return output;
+        return columnJoiner.toString();
     }
 
+    public Dimension calcGameBoardDimension(Dimension dataDimension) {
+        return new Dimension.Simple(dataDimension.getHeight(), dataDimension.getWidth()*2 - 1) ;
+    }
 
     public String array2DAsString(int[][] a) {
-        String output = GRID_BORDER_VERTICAL+" "+array1DAsString(a[0])+" "+GRID_BORDER_VERTICAL;
-        int maxlen = -1;
-        for (int i=1; i<a.length;i++) {
-            String lineOutput = array1DAsString(a[i]);
-            if (maxlen<lineOutput.length()) {
-              maxlen = lineOutput.length();
-            }
-            lineOutput = GRID_BORDER_VERTICAL+" "+array1DAsString(a[i])+" "+GRID_BORDER_VERTICAL;
-            output += "\n"+lineOutput;
+        StringJoiner  rowJoiner = new StringJoiner("\n");
+        for (int i=0; i<a.length; i++) {
+            rowJoiner.add(array1DAsString(a[i]));
         }
-        return  output;
+        return rowJoiner.toString();
     }
 
 

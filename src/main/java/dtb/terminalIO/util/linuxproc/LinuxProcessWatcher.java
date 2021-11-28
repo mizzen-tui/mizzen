@@ -7,11 +7,9 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import dtb.terminalIO.util.ConsumeResult;
-import dtb.terminalIO.util.Logging;
+import dtb.terminalIO.util.ConsumeResultAction;
 import dtb.terminalIO.util.linuxproc.ExecUtil.StreamLineGobbler;
 
 public class LinuxProcessWatcher {
@@ -20,7 +18,12 @@ public class LinuxProcessWatcher {
     private static int threadInitNumber;
 
     private static synchronized int nextThreadNum() {
-        return threadInitNumber++;
+        threadInitNumber++;
+        return threadInitNumber;
+    }
+
+    private static synchronized int currentThreadNum() {
+        return threadInitNumber;
     }
 
     AtomicBoolean invoking = new AtomicBoolean(false);
@@ -66,23 +69,31 @@ public class LinuxProcessWatcher {
         return this;
     }
 
-    public synchronized void invokeLongRunning(TerminalStreamOutputParser parser, ConsumeResult<Integer> consumeResult)
+    public synchronized void invokeLongRunning(TerminalStreamOutputParser parser, ConsumeResultAction<Integer> onCompletedAction, ConsumeResultAction<Exception> onExceptionAction)
             throws Exception {
 
-        TerminalStreamReader terminalReader = new TerminalStreamReader(parser, (in) -> isActive.get(), true);
-        Function<InputStream, Thread> gooblerThreadBuilder = (in) -> new Thread(terminalReader.asRunnable(in));
-        invokeLongRunning(gooblerThreadBuilder, consumeResult);
+        boolean readAsych = true;
+        TerminalStreamReader terminalReader = new TerminalStreamReader(parser, (in) -> isActive.get(), readAsych);
+        Function<InputStream, Thread> gobblerThreadBuilder = (in) -> new Thread(terminalReader.asRunnable(in));
+        invokeLongRunning(gobblerThreadBuilder, onCompletedAction, onExceptionAction);
     }
 
-    public synchronized void invokeLongRunning(ConsumeResult<String> consumeOutput,
-                                               ConsumeResult<Integer> consumeResult) throws Exception {
-        Function<InputStream, Thread> gooblerThreadBuilder = (in) -> new Thread(new StreamLineGobbler(in, consumeOutput, isActive));
-        invokeLongRunning(gooblerThreadBuilder, consumeResult);
+    public synchronized void invokeLongRunning(ConsumeResultAction<String> consumeStdOutputAction,
+                                               ConsumeResultAction<Integer> onCompletedAction) throws Exception {
+        Function<InputStream, Thread> gobblerThreadBuilder = (in) -> new Thread(new StreamLineGobbler(in, consumeStdOutputAction, isActive));
+        invokeLongRunning(gobblerThreadBuilder, onCompletedAction);
     }
 
-    public synchronized void invokeLongRunning(Function<InputStream, 
-                                               Thread> gooblerThreadBuilder,
-                                               ConsumeResult<Integer> consumeResult) throws Exception {
+    public synchronized void invokeLongRunning(Function<InputStream, Thread> gobblerThreadBuilder,
+            ConsumeResultAction<Integer> consumeResult) throws Exception {
+        invokeLongRunning(gobblerThreadBuilder,  consumeResult, null);
+    }
+
+    private static int outputGobblerThreadCounter = 0;
+    
+    public synchronized void invokeLongRunning(Function<InputStream, Thread> gobblerThreadBuilder,
+                                               ConsumeResultAction<Integer> consumeResult, 
+                                               ConsumeResultAction<Exception> consumeException) throws Exception {
         if (invokeScript == null) {
             throw new NullPointerException("invokeScript not set.  Please call setInvokeScript() first");
         }
@@ -122,16 +133,13 @@ public class LinuxProcessWatcher {
 
                     LinuxProcessWatcher.this.process = procBuilder.start();
 
-                    String gobblerName = "outputGobbler";
-                    if (LinuxProcessWatcher.this.name != null) {
-                        gobblerName = gobblerName + "-" + name;
-                    }
-                    outputGobbler = gooblerThreadBuilder.apply(LinuxProcessWatcher.this.process.getInputStream()); // new
+                    outputGobbler = gobblerThreadBuilder.apply(LinuxProcessWatcher.this.process.getInputStream()); // new
                                                                                                                    // Thread(new
                                                                                                                    // StreamLineGobbler(LinuxProcessWatcher.this.process.getInputStream(),
                                                                                                                    // consumeOutput,
                                                                                                                    // isActive),gobblerName);
 
+                    String gobblerName = "LinuxProcessWatcher-gobbler-" + (LinuxProcessWatcher.this.name != null ? (LinuxProcessWatcher.this.name + "-") : "") + currentThreadNum();
                     outputGobbler.setName(gobblerName);
 
                     outputGobbler.start();
@@ -145,19 +153,22 @@ public class LinuxProcessWatcher {
                     consumeResult.accept(LinuxProcessWatcher.this.lastResult);
 
                 } catch (Exception e) {
+                    invoking.set(false);
+                    process = null;
+                    outputGobbler = null;
                     if (controlledInterrupt && e instanceof InterruptedException) {
-                        invoking.set(false);
-                        process = null;
-                        outputGobbler = null;
-                        try {
-                            consumeResult.accept(-1);
-                        } catch (Exception e1) {
-                            //
-                        }
                         return;
                     }
-                   // Logging.forceLogInfo("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n\n\nError " + e);
-                    throw new RuntimeException(e);
+                    if (consumeException != null) {
+                        try {
+                            consumeException.accept(e);
+                        } catch (Exception e1) {
+                            // just can't win it seems.
+                            e1.printStackTrace();
+                        }
+                    } else {
+                        e.printStackTrace();
+                    }
                 }
 
                 invoking.set(false);
@@ -168,7 +179,7 @@ public class LinuxProcessWatcher {
 
         };
 
-        String threadName = "LinuxProcessWatcher-" + (this.name != null ? (name + "-") : "") + nextThreadNum();
+        String threadName = "LinuxProcessWatcher-main-" + (this.name != null ? (name + "-") : "") + nextThreadNum();
 
         controllerThread = new Thread(invoker, threadName);
         controllerThread.start();
@@ -271,7 +282,7 @@ public class LinuxProcessWatcher {
         return tailFile(null, fileName);
     }
 
-    public static LinuxProcessWatcher tailFile(String fileName, ConsumeResult<String> consumeOutput) throws Exception {
+    public static LinuxProcessWatcher tailFile(String fileName, ConsumeResultAction<String> consumeOutput) throws Exception {
 
         LinuxProcessWatcher watcher = tailFile(fileName);
         watcher.invokeLongRunning(consumeOutput, (result) -> {
@@ -301,7 +312,7 @@ public class LinuxProcessWatcher {
 
     }
 
-    public static LinuxProcessWatcher viewTextFile(String fileName, ConsumeResult<String> consumeOutput)
+    public static LinuxProcessWatcher viewTextFile(String fileName, ConsumeResultAction<String> consumeOutput)
             throws Exception {
 
         LinuxProcessWatcher watcher = viewTextFile(fileName);

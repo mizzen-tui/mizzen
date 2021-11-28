@@ -331,8 +331,6 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
             // this ensures that the full drop down gets displayed without distorting
             // internal container ( VerticalPanel ) size..
             Position thisPositionOnRootPanel = Component.UTIL.getCanvasOffsetFor(this);
-            // I'm confused : I don't know why I need to also add -1 to row/col
-            //Position listBoxPosition = thisPositionOnRootPanel.offsetAdd(this.getHeight()-1,-1);
             Position listBoxPosition = thisPositionOnRootPanel.offsetAdd(this.getHeight(),0);
             if (listBoxParent.hasBorder()) {
                 listBoxPosition = listBoxPosition.offsetAdd(-1,-1);

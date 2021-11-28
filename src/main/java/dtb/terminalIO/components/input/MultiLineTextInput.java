@@ -26,6 +26,7 @@ import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.RequestHideCursorEvent;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.RequestFocusEvent;
 import dtb.terminalIO.events.focus.RequestReleaseFocusEvent;
@@ -35,12 +36,10 @@ import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.events.mouse.ApplicationMouseEvent;
 import dtb.terminalIO.events.mouse.Clickable;
 import dtb.terminalIO.events.mouse.MOUSE_ACTION;
-import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
-import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.StringUtils;
 
 
@@ -534,6 +533,18 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
     public boolean hasFocus() {
         return asFocusable().hasFocus();
     }
+    
+
+    @Override
+    public FocusManager getParentFocusManager() {
+        return asFocusable().getParentFocusManager();
+    }
+
+    @Override
+    public void setParentFocusManager(FocusManager focusManager) {
+        asFocusable().setParentFocusManager(focusManager);
+    }
+    
 
     private ConditionalEventHandler getEventHandler() {
         if (this.eventHandler == null) {

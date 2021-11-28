@@ -125,9 +125,9 @@ public interface DisplayableValue<V> extends HasValue<V> {
 
     }
 
-    
+
     public class IntegerDisplayValue extends  SimpleDisplayValue<Integer> {
-        
+
         String format;
         
         public IntegerDisplayValue(String format, Integer value) {

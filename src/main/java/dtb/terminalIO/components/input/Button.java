@@ -17,6 +17,7 @@ import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.RequestHideCursorEvent;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.RequestFocusEvent;
 import dtb.terminalIO.events.keyboard.HasHotKey;
@@ -314,6 +315,16 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
         asFocusable().setFocus(focus, eventBus);
     }
 
+    @Override
+    public FocusManager getParentFocusManager() {
+        return asFocusable().getParentFocusManager();
+    }
+
+    @Override
+    public void setParentFocusManager(FocusManager focusManager) {
+        asFocusable().setParentFocusManager(focusManager);
+    }
+    
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer mySegments) {
         if (this.getPostion_TopLeft().isSameLocation(Position.ZERO)) {

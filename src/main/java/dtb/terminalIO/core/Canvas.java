@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.TreeSet;
 
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.ColorParsingUtils;
 import dtb.terminalIO.controlcodes.color.Colors;
@@ -24,7 +23,6 @@ import dtb.terminalIO.textsegments.ScreenLineSegment.SegmentImpl;
 import dtb.terminalIO.textsegments.ScreenLineSegment.UTIL.SegmentsFromStringResult;
 import dtb.terminalIO.textsegments.ScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.ElapsedTime;
-import dtb.terminalIO.util.Logging;
 
 /*
  * A canvas is a data structure in which all components's contents will be copied into.

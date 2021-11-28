@@ -8,7 +8,6 @@ import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
-import dtb.terminalIO.components.Component.UTIL;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.ChainedEventHandler;
@@ -18,6 +17,7 @@ import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.RequestHideCursorEvent;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.RequestFocusEvent;
 import dtb.terminalIO.events.focus.RequestReleaseFocusEvent;
@@ -322,6 +322,17 @@ public class TextInput extends BoundedComponent<TextInput>
     @Override
     public void setFocus(boolean focus, EventBus eventBus) {
         asFocusable().setFocus(focus, eventBus);
+    }
+
+
+    @Override
+    public FocusManager getParentFocusManager() {
+        return asFocusable().getParentFocusManager();
+    }
+
+    @Override
+    public void setParentFocusManager(FocusManager focusManager) {
+        asFocusable().setParentFocusManager(focusManager);
     }
 
     @Override

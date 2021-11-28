@@ -195,8 +195,12 @@ public class Composite extends AbstractComponent<Composite>
             if (size != null && size.isSameDimension(this)) {
                 return;
             }
+            boolean isFixed = this.boundsFixed;
             setBounds(size);
             handleResizeDependants(size);
+            if (size != null) {
+                this.boundsFixed = isFixed;
+            }
             markAsDirty();
         } finally {
             resizing = false;
@@ -253,7 +257,7 @@ public class Composite extends AbstractComponent<Composite>
         if (component == null) {
             throw new NullPointerException("Component onResizeExpandDown failure: Null component!");
         }
-        ComponentWithOffset child = findChildOrFail(component,"isChildVisible");
+        ComponentWithOffset child = findChildOrFail(component,"onResizeExpandDown");
 
 
         if ( ! (child.component instanceof CanResize)) {
@@ -315,7 +319,7 @@ public class Composite extends AbstractComponent<Composite>
     }
 
     public Composite setOnResizeRule(CanResize resizableRule) {
-        this.onResizeService = resizableRule;
+        this.onResizeService = resizableRule == null ? CanResize.NOOP : resizableRule;
         return this;
     }
 
@@ -354,17 +358,30 @@ public class Composite extends AbstractComponent<Composite>
     }
 
 
+    private boolean  fullrecalcDim_FLAG = false;
+    
     public void fullrecalcDim() {
         if (this.bulkAdd) {
             return;
         }
-        Dimension previousDimension = new Dimension.Simple(this);
-        fullrecalcDim(hasBorder());
-        // if we have a parent, then we better tell it our new size
-        if (this.getParentContainer() != null && !previousDimension.isSameDimension(this)) {
-            this.onResizeService.resize(this.getPreferredRectangleForLayout());
-            this.getParentContainer().childResized(this);
+        
+        if (fullrecalcDim_FLAG) {
+            return;
         }
+        
+        try {
+            fullrecalcDim_FLAG = true;
+            Dimension previousDimension = new Dimension.Simple(this);
+            fullrecalcDim(hasBorder());
+            // if we have a parent, then we better tell it our new size
+            if (this.getParentContainer() != null && !previousDimension.isSameDimension(this)) {
+                this.onResizeService.resize(this.getPreferredRectangleForLayout());
+                this.getParentContainer().childResized(this);
+            }
+        } finally {
+            fullrecalcDim_FLAG = false;
+        }
+        
     }
 
     // calculates size of this component based on size and
@@ -591,7 +608,7 @@ public class Composite extends AbstractComponent<Composite>
     }
 
     public Composite addBelow(Component<?> component, Component<?> anchorComponent, int verticalSpacer) {
-        ComponentWithOffset anchorChild = findChildOrFail(anchorComponent, "addBelow.anchorComponent");
+        ComponentWithOffset anchorChild = findChildOrFail(anchorComponent, "addBelow.anchorComponent["+HasName.UTIL.getName(anchorComponent)+"]");
         Position childPosition = new PositionVerticalRelative(anchorChild, verticalSpacer);
         return add(childPosition, component);
     }
@@ -601,7 +618,7 @@ public class Composite extends AbstractComponent<Composite>
     }
 
     public Composite addRight(Component<?> component, Component<?> anchorComponent, int horizontalSpacer) {
-        ComponentWithOffset anchorChild = findChildOrFail(anchorComponent, "addRight.anchorComponent");
+        ComponentWithOffset anchorChild = findChildOrFail(anchorComponent, "addRight.anchorComponent["+HasName.UTIL.getName(anchorComponent)+"]");
         Position childPosition = new PositionHorizontalRelative(anchorChild, horizontalSpacer);
         return add(childPosition, component);
     }
@@ -971,15 +988,6 @@ public class Composite extends AbstractComponent<Composite>
     protected Rectangle getRectangleForClearAndFill() {
         return bounds;
     }
-
-//    protected Rectangle getInnerRectangle() {
-//        if (!hasBorder())
-//            return bounds;
-//        return new Rectangle.Simple(bounds.getRow()    + 1,
-//                                    bounds.getCol()    + 1,
-//                                    bounds.getHeight() - 2,
-//                                    bounds.getWidth()  - 2);
-//    }
 
     public Composite t(int i, int j, String text) {
         this.add(new TextComponent(getColor(), i, j, text));

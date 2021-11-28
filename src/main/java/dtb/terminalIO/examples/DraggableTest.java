@@ -148,6 +148,17 @@ public class DraggableTest {
             asFocusable().setFocus(focus, eventBus);
         }
         
+        @Override
+        public FocusManager getParentFocusManager() {
+            return asFocusable().getParentFocusManager();
+        }
+
+        @Override
+        public void setParentFocusManager(FocusManager focusManager) {
+            asFocusable().setParentFocusManager(focusManager);
+        }
+        
+        
     }
 
 

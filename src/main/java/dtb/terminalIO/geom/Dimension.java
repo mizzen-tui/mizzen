@@ -159,6 +159,10 @@ public interface Dimension {
     // UTILITIES ..
 
     public static class UTIL {
+        
+        public static String shortStr(Dimension d) {
+            return d==null?"<NULL>" : "["+d.getHeight()+","+d.getWidth()+"]";
+        }
 
         public static Dimension stringToDimension(String s) {
 

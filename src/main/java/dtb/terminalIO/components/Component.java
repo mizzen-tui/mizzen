@@ -97,23 +97,40 @@ public interface Component<T extends Component<?>>
          * @param child
          */
         public static void markParentDirtyIfChildDirty(Component<?> child) {
-            if (child.getParentContainer() == null) {
-                return;
-            }
             if ( ! child.isDirty()) {
                 return;
             }
-            // child is dirty - and has a parent
-            if (!(child.getParentContainer() instanceof Component<?>)) {
-                return;
+            
+            Component<?> ancestorNotDirty = findNonDirtyAncestor(child);
+            
+            if (ancestorNotDirty != null) {
+                ancestorNotDirty.markAsDirty();
             }
-            Component<?> parentComponent = (Component<?>)child.getParentContainer();
-            if (parentComponent.isDirty()) {
-                return;
-            }
-            // child is dirty, but parent is not dirty - so mark parent dirty
-            parentComponent.markAsDirty();
+
         }
+        
+        private static Component<?> findNonDirtyAncestor(Component<?> child) {
+            
+            while (true) {
+            
+                ParentContainer parentContainer = child.getParentContainer();
+                
+                if (parentContainer == null) {
+                    return null;
+                }
+                // child is dirty - and has a parent
+                if (!(parentContainer instanceof Component<?>)) {
+                    return null;
+                }
+                
+                Component<?> parent = (Component<?>) parentContainer;
+                if ( ! parent.isDirty()) {
+                    return parent;
+                }
+                child = parent;
+            }
+        }
+
         
         
         static public boolean isAttachedDirectlyToCanvas(Component<?> component) {

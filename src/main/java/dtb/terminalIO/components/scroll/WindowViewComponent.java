@@ -9,9 +9,7 @@ import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.GetComponentAtOffset;
 import dtb.terminalIO.components.ParentContainer;
-import dtb.terminalIO.components.WindowFrame;
 import dtb.terminalIO.controlcodes.color.Color;
-import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.OnRequestScrollToViewEventHandler;
 import dtb.terminalIO.events.RequestScrollToView;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
@@ -22,7 +20,6 @@ import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegmentsView;
 import dtb.terminalIO.traverse.FindPathToTarget;
 import dtb.terminalIO.util.ElapsedTime;
-import dtb.terminalIO.util.Logging;
 
 /**
  * Used exclusively by the ScrollableComponent.  It is the View into the scrollable content.
@@ -84,7 +81,7 @@ public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
             
         }).elapsed();
 
-        Logging.info("    ---- sc.viewer.draw() - elapsed: " + elapsed );
+        //Logging.info("    ---- sc.viewer.draw() - elapsed: " + elapsed );
     }
 
     public boolean setViewOffset(int r, int c) {

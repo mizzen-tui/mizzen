@@ -1,50 +1,13 @@
 package dtb.terminalIO.examples.plot.gameoflife;
 
-import java.util.Arrays;
-
-import dtb.terminalIO.components.plot.PointPlotter;
-import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.geom.Dimension;
 
 public class GameOfLifeEngine  {
 
 
-    public void clearGrid(int a[][]) {
-        Dimension dimA = toDimension(a);
-        int height = dimA.getHeight();
-        for (int row = 0; row < height; row++) {
-            Arrays.fill(a[row], 0);
-        }
-    }
-
-    public int[][] make2d(int height, int width) {
-        int a[][] = new int[height][width];
-        clearGrid(a);
-        return a;
-    }
-
-    public int[][] make2d(Dimension d) {
-        return make2d(d.getHeight(), d.getWidth());
-    }
-
-    public Dimension toDimension(int a[][]) {
-        if (a.length == 0) {
-            return Dimension.ZERO;
-        }
-        return new Dimension.Simple(a.length, a[0].length);
-    }
-
-    private int[][] copyArraySize(int a[][]) {
-        if (a.length == 0) {
-            return new int[][] {};
-        }
-        Dimension dimA = toDimension(a);
-        return make2d(dimA.getHeight(), dimA.getWidth());
-    }
-
     private int sumNeighbours2D(int a[][], int y, int x) {
         int sum = 0;
-        Dimension dimA = toDimension(a);
+        Dimension dimA = GameArrayUtils.toDimension(a);
         int height = dimA.getHeight();
         int width = dimA.getWidth();
         // (y-1,x-1)
@@ -91,8 +54,8 @@ public class GameOfLifeEngine  {
     }
 
     private int[][] makeNeighboursArray2D(int a[][]) {
-        int[][] neighbours2D = copyArraySize(a);
-        Dimension dimA = toDimension(a);
+        int[][] neighbours2D = GameArrayUtils.copyArraySize(a);
+        Dimension dimA = GameArrayUtils.toDimension(a);
         int height = dimA.getHeight();
         int width = dimA.getWidth();
         for (int y = 0; y < height; y++) {
@@ -130,8 +93,8 @@ public class GameOfLifeEngine  {
     }
 
     public int[][] makeNextGeneration(int a[][]) {
-        int[][] nextGen2D = copyArraySize(a);
-        Dimension dimA = toDimension(a);
+        int[][] nextGen2D = GameArrayUtils.copyArraySize(a);
+        Dimension dimA = GameArrayUtils.toDimension(a);
         int height = dimA.getHeight();
         int width = dimA.getWidth();
         int[][] neighboursCount2D = makeNeighboursArray2D(a);
@@ -143,26 +106,6 @@ public class GameOfLifeEngine  {
         return nextGen2D;
     }
 
-    PointPlotter asPointPlotter(int[][] grid) {
-        return new PointPlotter() {
-
-            @Override
-            public void plot(float x, float y) {
-                grid[(int)y][(int)x] = 1;
-            }
-
-            @Override
-            public Color setNextPlotColor(Color color) {
-                return null;
-            }
-
-            @Override
-            public void clearPlots() {
-                clearGrid(grid);
-            }
-            
-        };
-    }
 
 }
 

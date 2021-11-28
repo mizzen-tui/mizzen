@@ -9,6 +9,7 @@ import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.keyboard.HasHotKey;
 import dtb.terminalIO.events.keyboard.KeyStroke;
@@ -96,6 +97,17 @@ public abstract class TabAction implements HasHotKey, Focusable {
     @Override
     public void setFocus(boolean focus, EventBus eventBus) {
         tabActionAsFocusable().setFocus(focus, eventBus);
+    }
+    
+
+    @Override
+    public FocusManager getParentFocusManager() {
+        return tabActionAsFocusable().getParentFocusManager();
+    }
+
+    @Override
+    public void setParentFocusManager(FocusManager focusManager) {
+        tabActionAsFocusable().setParentFocusManager(focusManager);
     }
 
 }

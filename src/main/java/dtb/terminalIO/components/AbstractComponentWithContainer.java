@@ -6,7 +6,13 @@ import dtb.terminalIO.geom.position.Position;
 
 public abstract class AbstractComponentWithContainer<T extends Composite>  extends 
                           AbstractComponentWrappper<T> 
-                          implements CanResize, GetComponentAtOffset {
+                          implements CanResize, 
+                                     GetComponentAtOffset,
+                                     HasTitleAndBorder<AbstractComponentWithContainer<T>> {
+
+    protected AbstractComponentWithContainer(Color color) {
+        super(color);
+    }
 
     protected AbstractComponentWithContainer(Color color, T container) {
         super(color, container);
@@ -27,7 +33,6 @@ public abstract class AbstractComponentWithContainer<T extends Composite>  exten
         return this;
     }
 
-    
     @Override
     public Component<?> getComponentAtOffset(Position offset) {
         Component<?> component = getWrappedComponent().getComponentAtOffset(offset);
@@ -63,7 +68,9 @@ public abstract class AbstractComponentWithContainer<T extends Composite>  exten
 
     public void setFillOnClear(boolean fillOnClear) {
         super.setFillOnClear(fillOnClear);
-        getWrappedComponent().setFillOnClear(fillOnClear);
+        if (getWrappedComponent() != null) {
+           getWrappedComponent().setFillOnClear(fillOnClear);
+        }
     }
     
     public void onResizeExpandRight(Component<?> component, int percent) {
@@ -78,5 +85,43 @@ public abstract class AbstractComponentWithContainer<T extends Composite>  exten
         getWrappedComponent().onResizeExpandDownAndRight(component);
     }
 
+    public AbstractComponentWithContainer<T>  setBorder(boolean hasBorder) {
+        getWrappedComponent().setBorder(hasBorder);
+        return this;
+    }
+    
+    public boolean hasBorder() {
+        return getWrappedComponent().hasBorder();
+    }
+
+    public AbstractComponentWithContainer<T> setBorderColor(Color borderColors) {
+        getWrappedComponent().setBorderColor(borderColors);
+        return this;
+    }
+
+    public AbstractComponentWithContainer<T> setTitle(Color titleColors, String title) {
+        getWrappedComponent().setTitle(titleColors, title);
+        return this;
+    }
+
+    public AbstractComponentWithContainer<T> setTitle(String title) {
+        getWrappedComponent().setTitle(title);
+        return this;
+    }
+    
+    public String getTitle() {
+        return getWrappedComponent().getTitle();
+    }
+    
+    @Override
+    public void hilite() {
+        getWrappedComponent().hilite();
+    }
+
+    @Override
+    public void unHilite() {
+        getWrappedComponent().unHilite();
+    }
+    
 
 }

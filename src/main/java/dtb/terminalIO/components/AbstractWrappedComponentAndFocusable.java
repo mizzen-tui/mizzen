@@ -5,6 +5,7 @@ import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
 
 
@@ -39,6 +40,16 @@ public abstract class AbstractWrappedComponentAndFocusable<T extends Component<?
         asFocusable().setFocus(focus, eventBus);
     }
 
+    @Override
+    public FocusManager getParentFocusManager() {
+        return asFocusable().getParentFocusManager();
+    }
+
+    @Override
+    public void setParentFocusManager(FocusManager focusManager) {
+        asFocusable().setParentFocusManager(focusManager);
+    }
+    
     private ConditionalEventHandler conditionalEventHandler;
 
     public ConditionalEventHandler getConditionalEventHandler() {

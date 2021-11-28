@@ -15,6 +15,7 @@ import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
@@ -78,7 +79,7 @@ public class ScrollBarHorizontal  extends BoundedComponent<ScrollBarVertical>  i
 
         float percentage = (float)sizeOfComponentBeingViewed.getWidth() / ((float)this.getWidth());
         if (percentage < 1 ) {
-            Logging.info("percentage = " + percentage);
+            //Logging.info("percentage = " + percentage);
             return Position.ZERO;
         }
 
@@ -239,6 +240,16 @@ public class ScrollBarHorizontal  extends BoundedComponent<ScrollBarVertical>  i
         asFocusable().setFocus(focus, eventBus);
     }
 
+    @Override
+    public FocusManager getParentFocusManager() {
+        return asFocusable().getParentFocusManager();
+    }
+
+    @Override
+    public void setParentFocusManager(FocusManager focusManager) {
+        asFocusable().setParentFocusManager(focusManager);
+    }
+    
     Focusable meAsFocusable;
 
     ChainedEventHandler eventHandlerContainer;
@@ -265,18 +276,7 @@ public class ScrollBarHorizontal  extends BoundedComponent<ScrollBarVertical>  i
 
         this.conditionalHandler = this.eventHandlerContainer.asConditionalEventHandler();
 
-        meAsFocusable = new DefaultFocusableBehaviour() {
-
-            @Override
-            public EventHandler canHandle(TerminalEvent<?> te) {
-                return conditionalHandler.canHandle(te);
-            }
-
-            @Override
-            public void handle(TerminalEvent<?> te) {
-                conditionalHandler.handle(te);
-            }};
-            
+        meAsFocusable = new FocusableFromParts(new DefaultFocusableBehaviour(),this.conditionalHandler);
             
         return meAsFocusable;
     }

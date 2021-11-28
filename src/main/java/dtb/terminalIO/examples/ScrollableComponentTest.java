@@ -11,10 +11,9 @@ import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.VerticalPanel;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
+import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
-import dtb.terminalIO.core.ScreenCanvasBackend;
-import dtb.terminalIO.core.ScreenCanvasBackend.UpdateStrategy;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
@@ -27,7 +26,6 @@ import dtb.terminalIO.examples.sampledata.ReadSampleFiles;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
-import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.StringUtils;
 import dtb.terminalIO.util.linuxproc.ExecUtil;
 
@@ -48,10 +46,15 @@ public class ScrollableComponentTest {
             };
    
             ScrollableComponent sc1 = new ScrollableComponent(Colors.Gre, calcScrollableDimension.get(), new TextViewer().getComponent(Colors.Gre));
+            
+            sc1.setName("ScrollableComponent-sc1");            
+            SearchFunctionForScrollableComponent.addFinderToScrollable(sc1);  
 
-            ScrollableComponent sc2 = new ScrollableComponent(Colors.Blu, calcScrollableDimension.get(), new Composite(Colors.Blu).setBounds(tApp.getCanvas().getHeight()-7, tApp.getCanvas().getWidth()/2 -2));
-
-            brailleDemoSetup((Composite)sc2.getComponentBeingViewed(), tApp.getEventBus());
+            Composite brailleContainer = new Composite(Colors.Blu).setBounds(tApp.getCanvas().getHeight()-7, tApp.getCanvas().getWidth()/2 -2);
+            brailleDemoSetup(brailleContainer, tApp.getEventBus());
+            ScrollableComponent sc2 = new ScrollableComponent(Colors.Blu, calcScrollableDimension.get(), brailleContainer);
+            sc2.setName("ScrollableComponent-sc2");
+ //           SearchFunctionForScrollableComponent.addFinderToScrollable(sc2);
 
             Composite  lineChart = new Composite(Colors.Cya);
             lineChart.setBorder(true);
@@ -110,6 +113,8 @@ public class ScrollableComponentTest {
 
             //ScreenCanvasBackend canvasBackend = ((ScreenCanvasBackend)tApp.getCanvas().getCanvasBackend());
             //canvasBackend.setUpdateStrategy(UpdateStrategy.UPDATE_FULL);
+            
+            FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>) tApp.getMainApplicationPanel());
             
             
         }).start();

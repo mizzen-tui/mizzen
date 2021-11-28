@@ -307,6 +307,17 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
     }
 
     @Override
+    public FocusManager getParentFocusManager() {
+        return scrollableView.getParentFocusManager();
+    }
+
+    @Override
+    public void setParentFocusManager(FocusManager focusManager) {
+        scrollableView.setParentFocusManager(focusManager);
+    }
+    
+    
+    @Override
     public void setChildAsCurrentFocus(Focusable focusableChild, EventBus eventBus) {
         if (this.scrollableView != focusableChild) {
             throw new IllegalStateException("Who knew?");

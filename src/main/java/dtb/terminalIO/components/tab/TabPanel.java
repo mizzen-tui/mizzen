@@ -341,6 +341,16 @@ public class TabPanel extends AbstractComponent<TabPanel>
             this.unHilite();
         }
     }
+    
+    @Override
+    public FocusManager getParentFocusManager() {
+        return getFocusManager().getParentFocusManager();
+    }
+
+    @Override
+    public void setParentFocusManager(FocusManager focusManager) {
+        getFocusManager().setParentFocusManager(focusManager);
+    }
 
     @Override
     public int getCol() {

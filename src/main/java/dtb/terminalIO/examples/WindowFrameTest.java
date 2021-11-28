@@ -3,6 +3,7 @@ package dtb.terminalIO.examples;
 import java.io.IOException;
 
 import dtb.terminalIO.app.TUIApp;
+import dtb.terminalIO.components.AbstractComponent;
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.ComponentInspector;
@@ -11,9 +12,11 @@ import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.WindowFrame;
+import dtb.terminalIO.components.WindowFrameFocusable;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.input.ListBox;
 import dtb.terminalIO.components.input.MultiLineTextInput;
+import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.controlcodes.color.Colors.FGBGColors;
 import dtb.terminalIO.events.OnIdleEventEventHandler.RepeatingInterval;
@@ -21,22 +24,26 @@ import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.geom.Align;
-import dtb.terminalIO.geom.CanResize;
-import dtb.terminalIO.geom.CanResize.ExpandDown;
-import dtb.terminalIO.geom.CanResize.ExpandRight;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.VAlign;
 import dtb.terminalIO.geom.position.Position;
-import dtb.terminalIO.geom.position.PositionHorizontalRelative;
 import dtb.terminalIO.geom.position.PositionRelativeFactory;
-import dtb.terminalIO.geom.position.PositionVerticalRelative;
 import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.TerminalDimensions;
 
 public class WindowFrameTest {
     
+    
+    static boolean useFocusable = false;
+    
     public static void main(String[] args) throws IOException {
 
+        if (args.length>0) {
+            if (args[0].equalsIgnoreCase("FOCUS")) {
+                useFocusable = true;
+            }
+        }
+        
         Logging.setEnabled(true);
 
         new TUIApp(args)
@@ -53,10 +60,10 @@ public class WindowFrameTest {
 
       //      mTextBox.resize(new Dimension.Simple(20,50));
 
-            WindowFrame wf1 = new WindowFrame(Colors.Whi, "Test Window1", mTextBox);
+            AbstractComponent<?> wf1 = makeWF(Colors.Whi, "Test Window1", mTextBox);
             wf1.setEmptyColor(Colors.On_IBla);
 
-            WindowFrame wf2 = new WindowFrame(Colors.Whi, "Test Window2", ListBox.fromStrings(new String[] {"Silly Sally",
+            AbstractComponent<?> wf2 = makeWF(Colors.Whi, "Test Window2", ListBox.fromStrings(new String[] {"Silly Sally",
                                                                                                             "Sold sea shells",
                                                                                                             "at the sea shore"}));
             wf2.setEmptyColor(Colors.On_Bla);
@@ -70,11 +77,11 @@ public class WindowFrameTest {
 */
             Composite windowContainer = new Composite();
 
-            WindowFrame wfFruit = new WindowFrame(Colors.Whi, "Fruit", ListBox.fromStrings(new String[] {"Apples",
+            Component<?> wfFruit = makeWF(Colors.Whi, "Fruit", ListBox.fromStrings(new String[] {"Apples",
                                                                                                          "Pears",
                                                                                                          "Plums"}));
             
-            WindowFrame wfVegatables = new WindowFrame(Colors.Whi, "Fruit", ListBox.fromStrings(new String[] {"Tomotoes",
+            Component<?> wfVegatables = makeWF(Colors.Whi, "Fruit", ListBox.fromStrings(new String[] {"Tomotoes",
                                                                                                              "Lettuce",
                                                                                                              "Cucumber",
                                                                                                              "Kale",
@@ -89,7 +96,7 @@ public class WindowFrameTest {
             windowContainer.add(4, 10, wfFruit);
             windowContainer.add(8, 14, wfVegatables);
 
-            WindowFrame nestedWindows = new WindowFrame(Colors.Whi, "Nested Windows", windowContainer);
+            Component<?> nestedWindows = makeWF(Colors.Whi, "Nested Windows", windowContainer);
 
             tApp.getMainApplicationPanel().add(2, 0, wf1);
             tApp.getMainApplicationPanel().add(2, 30, wf2);
@@ -102,7 +109,7 @@ public class WindowFrameTest {
                     super.fullrecalcDim();
                 }
             };
-            
+
             expandDownContainer.setOnResize( (size) ->{}  );
             Button redButton = new Button(new FGBGColors(Colors.BWhi, Colors.On_Blu),"Top widget");
             redButton.onChange((te)->{
@@ -130,12 +137,12 @@ public class WindowFrameTest {
 //            CanResize resizing = new CanResize.Chain( new ExpandRight(expandDownContainer, blue), new ExpandDown(expandDownContainer, redPosition,  red));
 //            expandDownContainer.setOnResize(resizing.asOnResizeService());
 
-            WindowFrame expandDownWindows = new WindowFrame(Colors.Whi, "Expand down tests", expandDownContainer);
+            AbstractComponent<?> expandDownWindows = makeWF(Colors.Whi, "Expand down tests", expandDownContainer);
 
             tApp.getMainApplicationPanel().add(13, 65, expandDownWindows);
 
 
-            FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),
+            DefaultFocusManager mainFocusManager = (DefaultFocusManager)FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),
                     tApp.getEventBus(),
                     ()-> new DefaultFocusManager().setNavKeysFirst(false).setCycling(false).setName("MainApplicationPanel-FocusManager"));
 
@@ -146,11 +153,9 @@ public class WindowFrameTest {
                                                                   (Component<?>)tApp.getMainApplicationPanel(), 
                                                                   mainFocusManager);
 
-            WindowFrame wfInspector = new WindowFrame(inspector.getColor(),"Components",inspector);
+            AbstractComponent<?> wfInspector = makeWF(inspector.getColor(),"Components",inspector);
 
-            DefaultFocusManager.applyIfDefaultFocusManager(mainFocusManager, (dfalt_fm)->{
-                dfalt_fm.addFocusable(wfInspector);
-            });
+            mainFocusManager.addComponentAsFocusables(wfInspector);
 
             tApp.getEventBus().appendEventHandler( inspector.toggleViewEventHandler() );
             tApp.getEventBus().appendEventHandler( inspector.refreshEventHandler() );
@@ -161,7 +166,7 @@ public class WindowFrameTest {
             TextComponent stats = new TextComponent("None");
             statsPanel.add(stats);
             stats.setColor(Colors.IYel);
-            
+
             Position statsPosition = PositionRelativeFactory.fromAlign(VAlign.BOTTOM, Align.LEFT,  tApp.getMainApplicationPanel(), statsPanel);
             tApp.getMainApplicationPanel().add(statsPosition, statsPanel);
 
@@ -178,16 +183,31 @@ public class WindowFrameTest {
 
             tApp.getMainApplicationPanel().add(22,44, wfInspector);
 
+            tApp.getMainApplicationPanel().add(0,0,new TextComponent("WindowFrame class: " + usedWindoManagerClass().getSimpleName()));
+
 
             FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
 
-            
             tApp.getResizeAction().accept(tApp, TerminalDimensions.create());
-            
-            
+
         }).start();
 
     }
+
+    static AbstractComponent<?> makeWF(Color color, String title, Component<?> child) {
+        if (useFocusable) {
+            AbstractComponent<?> component = new WindowFrameFocusable(color, title, child);
+            return component;
+        } else {
+            AbstractComponent<?> component = new WindowFrame(color, title, child);
+            return component;
+        }
+    }
+
+    static Class<?>  usedWindoManagerClass() {
+        return makeWF(Colors.DEFAULT_COLOR, "dummy", new TextComponent(" ")).getClass();
+    }
+
 
 
 }

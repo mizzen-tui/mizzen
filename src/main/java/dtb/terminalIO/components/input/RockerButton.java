@@ -1,24 +1,23 @@
 package dtb.terminalIO.components.input;
 
-import dtb.terminalIO.components.AbstractWrappedComponentWithFocusManager;
+import dtb.terminalIO.components.AbstractComponentWrappper;
 import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
-import dtb.terminalIO.events.focus.FocusManager;
-import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.focus.RequestFocusEvent;
 import dtb.terminalIO.events.keyboard.HasHotKey;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.mouse.Clickable;
 
-public class RockerButton extends    AbstractWrappedComponentWithFocusManager<ButtonBar> 
+public class RockerButton extends    AbstractComponentWrappper<ButtonBar> 
                           implements HasHotKey, 
                                      Clickable, 
-                                     HasValue<Boolean>,
-                                     FocusManager {
+                                     HasValue<Boolean>{
 
     private boolean toggleValue = false;
 
@@ -33,7 +32,16 @@ public class RockerButton extends    AbstractWrappedComponentWithFocusManager<Bu
     private KeyInputEventHandler hotKeyHandler;
 
     public RockerButton(Color color, String label, String onText, String offText, boolean value) {
-        super(color, new ButtonBar(color));
+        super(color, new ButtonBar(color, "rockerButtonBar") {
+            @Override
+            public EventHandler canHandle(TerminalEvent<?> te) {
+                if (te instanceof HasValue.ValueChangedEvent) {
+                    return super.canHandle(te);
+                }
+                return super.canHandle(te);
+            }
+
+        });
 
         this.onText = onText;
         this.offText = offText;
@@ -83,7 +91,6 @@ public class RockerButton extends    AbstractWrappedComponentWithFocusManager<Bu
         } else {
             this.label.setTextAndResize( this.labelText );
         }
-       // this.fullrecalcDim();
     }
     
 
@@ -92,11 +99,13 @@ public class RockerButton extends    AbstractWrappedComponentWithFocusManager<Bu
         if (state) {
             this.onButton. setButtonText("<" + this.onText+">");
             this.offButton.setButtonText(" " + this.offText+" ");
-            getFocusManager().setChildAsCurrentFocus(onButton, eventBus);
+            eventBus.raiseEvent( new RequestFocusEvent(this.onButton));
+            //getFocusManager().setChildAsCurrentFocus(onButton, eventBus);
         } else {
             this.onButton. setButtonText(" " + this.onText+" ");
             this.offButton.setButtonText("<" + this.offText+">");
-            getFocusManager().setChildAsCurrentFocus(offButton, eventBus);
+            eventBus.raiseEvent( new RequestFocusEvent(this.offButton));
+            //getFocusManager().setChildAsCurrentFocus(offButton, eventBus);
         }
         this.markAsDirty();
         eventBus.raiseEvent( new HasValue.ValueChangedEvent<>(this) );
@@ -114,10 +123,6 @@ public class RockerButton extends    AbstractWrappedComponentWithFocusManager<Bu
     @Override
     public void onClick(EventBus eventBus) {
         toggleState(!this.toggleValue, eventBus);
-    }
-
-    protected FocusManager getFocusManager() {
-        return getWrappedComponent();
     }
 
     public RockerButton setHotKey(KeyStroke hotKey) {
@@ -141,13 +146,6 @@ public class RockerButton extends    AbstractWrappedComponentWithFocusManager<Bu
     @Override
     public Boolean getValue() {
         return toggleValue;
-    }
-
-
-    @Override
-    public void childHasCurrentFocus(Focusable focusableChild, EventBus eventBus) {
-        // TODO Auto-generated method stub
-        
     }
 
 

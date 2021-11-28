@@ -14,6 +14,7 @@ import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
@@ -73,17 +74,17 @@ public class ScrollBarVertical extends BoundedComponent<ScrollBarVertical> imple
 
     Position calcOffset(Position scrollbarOffset) {
         if (sizeOfComponentBeingViewed == null || scrollbarOffset == null) {
-            Logging.info("nulls");
+            //Logging.info("nulls");
             return Position.ZERO;
         }
 
         float percentage = (float)sizeOfComponentBeingViewed.getHeight() / (float)sizeOfViewer.getHeight();
         if (percentage < 1 ) {
-            Logging.info("percentage = " + percentage);
+            //Logging.info("percentage = " + percentage);
             return Position.ZERO;
         }
 
-        Logging.info("percentage = " + percentage);
+        //Logging.info("percentage = " + percentage);
 
         return new Position.Simple( (int)(  ((float)scrollbarOffset.getRow()) * percentage) , 0 );
     }
@@ -253,6 +254,16 @@ public class ScrollBarVertical extends BoundedComponent<ScrollBarVertical> imple
         asFocusable().setFocus(focus, eventBus);
     }
 
+    @Override
+    public FocusManager getParentFocusManager() {
+        return asFocusable().getParentFocusManager();
+    }
+
+    @Override
+    public void setParentFocusManager(FocusManager focusManager) {
+        asFocusable().setParentFocusManager(focusManager);
+    }
+    
     Focusable meAsFocusable;
 
     ChainedEventHandler eventHandlerContainer;
@@ -280,18 +291,7 @@ public class ScrollBarVertical extends BoundedComponent<ScrollBarVertical> imple
 
 
         this.conditionalHandler = this.eventHandlerContainer.asConditionalEventHandler();
-        
-        meAsFocusable = new DefaultFocusableBehaviour() {
-
-            @Override
-            public EventHandler canHandle(TerminalEvent<?> te) {
-                return conditionalHandler.canHandle(te);
-            }
-
-            @Override
-            public void handle(TerminalEvent<?> te) {
-                conditionalHandler.handle(te);
-            }};
+        meAsFocusable = new FocusableFromParts(new DefaultFocusableBehaviour(),this.conditionalHandler);
 
         return meAsFocusable;
     }

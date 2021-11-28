@@ -35,8 +35,6 @@ import dtb.terminalIO.events.resize.TerminalResizeDetection;
 import dtb.terminalIO.examples.TestsCommon;
 import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
-import dtb.terminalIO.util.ElapsedTime;
-import dtb.terminalIO.util.Logging;
 
 /**
  * 
@@ -173,7 +171,7 @@ public class TUIApp {
     }
 
     public TUIApp setDefaultMainApplicationPanel() {
-        return setMainApplicationPanel(  new Composite().setBounds(this.getCanvas())
+        return setMainApplicationPanel(  new Composite().setBounds(this.getCanvas()).setName("defaultMainPanel")
                                                         .setEmptyChar(this.getCanvas().getEmptyChar()));
     }
 

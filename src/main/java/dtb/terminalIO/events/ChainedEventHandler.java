@@ -190,6 +190,22 @@ public class ChainedEventHandler implements EventHandler, EventHandlerContainer,
                     removeList.add(eventHandler);
                 }
             }
+        } else {
+            if (this.appendList.contains(eventHandler)) {
+                synchronized (appendList) {
+                    if (appendList.contains(eventHandler)) {
+                        appendList.remove(eventHandler);
+                    }
+                }
+            } else {
+                if ( this.preppendList.contains(eventHandler) ) {
+                    synchronized (preppendList) {
+                        if (!preppendList.contains(eventHandler)) {
+                            preppendList.remove(eventHandler);
+                        }
+                    }
+                }
+            }
         }
         return this;
     }

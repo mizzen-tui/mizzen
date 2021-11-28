@@ -232,7 +232,6 @@ public class TestsCommon {
             eventBus.appendEventHandler(new KeyInputEventHandler(Keys.CTRL_N_KEYSTROKE, (te) -> {
 
                 showScreen_DEBUGINFO[0] = !showScreen_DEBUGINFO[0];
-                
             }
 
             ));

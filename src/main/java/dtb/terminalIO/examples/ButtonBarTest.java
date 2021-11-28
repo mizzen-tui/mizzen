@@ -62,7 +62,7 @@ public class ButtonBarTest {
                                     }).setBorder(true);
 
 
-                    tApp.getEventBus().appendEventHandler(bbar1);
+                    tApp.getEventBus().appendEventHandler( FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(), tApp.getEventBus())  );
 
                     tApp.getEventBus().appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE,
                             (te) ->  {

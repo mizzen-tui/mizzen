@@ -8,6 +8,7 @@ import java.util.function.Consumer;
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.ButtonBar;
+import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.StdoutViewer;
 import dtb.terminalIO.components.TextComponent;
@@ -15,7 +16,6 @@ import dtb.terminalIO.components.WindowFrame;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.controlcodes.color.Colors.FGBGColors;
-import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.OnTerminateEventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
@@ -169,6 +169,9 @@ public class StdoutViewerTest {
                         statsArea.resize(statsAreaSize);
                         tApp.getMainApplicationPanel().moveChildToPosition(new Position.Simple(1,workArea.getWidth()), statsArea);
                     });
+                    
+                    
+                    FocusManager.UTIL.verifyPathsToFocusables(fm, (Component<?>) tApp.getMainApplicationPanel());
 
                 }).start();
     }
@@ -188,7 +191,7 @@ public class StdoutViewerTest {
         OnTerminateEventHandler watcherCleanupHandler = new OnTerminateEventHandler(() -> processWatcher.stopRequest());
         
         
-        EventBus evtbus = te.getEventBus();
+        dtb.terminalIO.events.EventBus evtbus = te.getEventBus();
         
         evtbus.appendTerminateEventHandler(watcherCleanupHandler);
 
@@ -201,7 +204,11 @@ public class StdoutViewerTest {
                                                       streamParser.parseInput( Colors.BWhi.asString()+ "Done reading input : result code = "+ result+viewer.getColor().asString());
                                                       evtbus.raiseEvent( new RequestUpdateCanvasEvent(viewer));
                                                       evtbus.removeEventHandler(watcherCleanupHandler);
-                                                    });
+                                                      },
+                                             (e)->{  
+                                                     evtbus.raiseEvent(viewer, TerminalEvent.TYPE.EXCEPTION , e);
+                                                  }
+                                           );
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

@@ -1,6 +1,6 @@
 package dtb.terminalIO.util;
 
 @FunctionalInterface
-public interface ConsumeResult<T> {
+public interface ConsumeResultAction<T> {
     void accept(T result) throws Exception;
 }

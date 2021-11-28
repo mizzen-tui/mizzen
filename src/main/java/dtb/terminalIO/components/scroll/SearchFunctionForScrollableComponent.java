@@ -2,10 +2,11 @@ package dtb.terminalIO.components.scroll;
 
 import java.util.Collection;
 
+import dtb.terminalIO.components.AbstractWrappedComponentWithFocusManager;
+import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.ComponentWithHilightedText;
-import dtb.terminalIO.components.HorizontalPanel;
-import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.input.HasValue;
 import dtb.terminalIO.components.input.HasValue.OnValueChangedEventHandler;
 import dtb.terminalIO.components.input.TextInput;
@@ -20,15 +21,16 @@ import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.RequestReleaseFocusEvent;
 import dtb.terminalIO.events.focus.ToFocusable;
+import dtb.terminalIO.events.keyboard.HasHotKey;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.SegmentsSearchUtils;
 
-public class SearchFunctionForScrollableComponent extends HorizontalPanel {
+public class SearchFunctionForScrollableComponent extends AbstractWrappedComponentWithFocusManager<ButtonBar> implements HasHotKey {
 
-    private TextComponent findLabel;
+    private Button findButton;
     private TextInput findTextInput;
     private ConditionalEventHandler findTextInputEventHandler;
     private String lastFindText = null;
@@ -40,16 +42,17 @@ public class SearchFunctionForScrollableComponent extends HorizontalPanel {
     private int minSearchLength = 3;
 
     public SearchFunctionForScrollableComponent(Color color, ScrollableComponent viewComp) {
-        super(color);
+        super(color, new ButtonBar(color).setNoBorderChars());
+        getWrappedComponent().setName("SearchFunctionForScrollableComponent-buttonBar");
         this.viewComp = viewComp;
-        this.findLabel = new TextComponent(SearchFunctionForScrollableComponent.this.getColor(),
+        this.findButton = new Button(SearchFunctionForScrollableComponent.this.getColor(),
                                       " " + SearchFunctionForScrollableComponent.this.getColor().bold().asString() + "^F"
                                       + SearchFunctionForScrollableComponent.this.getColor().asString() + "ind");
-        this.add(findLabel);
+        this.getWrappedComponent().addComponent(findButton);
     }
 
     public void hilite() {
-        super.hilite();
+        this.getWrappedComponent().hilite();
         if (findTextInput != null) {
             this.findTextInput.setColor(textInputSelectedColor());
             this.findTextInput.setEmptyColor(textInputSelectedColor());
@@ -61,7 +64,7 @@ public class SearchFunctionForScrollableComponent extends HorizontalPanel {
     }
 
     public void unHilite() {
-        super.unHilite();
+        this.getWrappedComponent().unHilite();
         if (findTextInput != null) {
             this.findTextInput.setColor(SearchFunctionForScrollableComponent.this.getColor());
             this.findTextInput.setEmptyColor(SearchFunctionForScrollableComponent.this.getColor());
@@ -85,11 +88,20 @@ public class SearchFunctionForScrollableComponent extends HorizontalPanel {
                 viewComp.removeEventHandler(SearchFunctionForScrollableComponent.this.finishSearchInputEventHandler);
                 SearchFunctionForScrollableComponent.this.finishSearchInputEventHandler = null;
             }
-            SearchFunctionForScrollableComponent.this.remove(textInput);
+            SearchFunctionForScrollableComponent.this.getWrappedComponent().remove(textInput);
             viewComp.refreshFooter();
             eventBus.raiseEvent(new RequestUpdateCanvasEvent(this));
         }
     }
+    
+    @Override
+    public void setFocus(boolean focus, EventBus eventBus) {
+        super.setFocus(focus, eventBus);
+//        if (!this.hasFocus() && SearchFunctionForScrollableComponent.this.findTextInput != null) {
+//            eventBus.appendEventHandler(new OnIdleEventEventHandler.OneTime( (te) ->  removeFindTextInput(te.getEventBus()) ));
+//        }
+    }
+
 
     void setInFindMode(TerminalEvent<?> te, boolean enable) {
 
@@ -97,7 +109,7 @@ public class SearchFunctionForScrollableComponent extends HorizontalPanel {
 
             attachComponentWithHilightedTextIfNeeded(viewComp, this);
 
-            findTextInput = new TextInput(textInputSelectedColor(), maxSearchTextWidth) {
+            findTextInput = new TextInput(textInputSelectedColor(), maxSearchTextWidth);/* {
                 @Override
                 public void setFocus(boolean focus, EventBus eventBus) {
                     super.setFocus(focus, eventBus);
@@ -105,7 +117,7 @@ public class SearchFunctionForScrollableComponent extends HorizontalPanel {
                         removeFindTextInput(eventBus);
                     }
                 }
-            };
+            };*/
             this.findTextInput.setEmptyColor(textInputSelectedColor());
             if (lastFindText != null) {
                 // should I trigger the search here?
@@ -113,7 +125,8 @@ public class SearchFunctionForScrollableComponent extends HorizontalPanel {
             } else {
                 findTextInput.setText("");
             }
-            this.add(findTextInput);
+            this.getWrappedComponent().addComponent(findTextInput);
+            this.viewComp.refreshFooter();
             // FIXME: 1) doing a prepend causes hotkeys on viewComp1 to be blocked including
             // CTRL-F
             // so cannot get out of find mode.. TextInput accepting too many keys
@@ -152,8 +165,7 @@ public class SearchFunctionForScrollableComponent extends HorizontalPanel {
                         return;
                     }
 
-                    Collection<Rectangle> searchResult = SegmentsSearchUtils
-                            .searchTextInSegmentsAll(srcOfText.getSegmentsBuffer(), newValue);
+                    Collection<Rectangle> searchResult = SegmentsSearchUtils.searchTextInSegmentsAll(srcOfText.getSegmentsBuffer(), newValue);
 
                     if (searchResult != null && searchResult.size() > 0) {
                         targetToView = searchResult.iterator().next();
@@ -165,6 +177,8 @@ public class SearchFunctionForScrollableComponent extends HorizontalPanel {
                             srcOfText.addHilitedRegion(r);
                         }
                         viewComp.setTitle(newValue + " (" + searchResult.size() + ")");
+
+                        te.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(SearchFunctionForScrollableComponent.this) );
                     }
 
                 }
@@ -179,18 +193,30 @@ public class SearchFunctionForScrollableComponent extends HorizontalPanel {
                 viewComp.setTitle("");
             }
         }
+        te.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(this));
     }
 
+    @Override
+    public KeyStroke getHotKey() {
+        return this.findButton.getHotKey();
+    }
+    
+    
     public static void addFinderToScrollable(ScrollableComponent viewComp, KeyStroke hotKey, int maxSearchTextWidth) {
 
         SearchFunctionForScrollableComponent finder = new SearchFunctionForScrollableComponent(viewComp.getColor(),
                                                                                                viewComp);
         finder.maxSearchTextWidth = maxSearchTextWidth;
 
-        viewComp.addFooterComponent(finder, hotKey, (te) -> {
-            finder.setInFindMode(te);
-            viewComp.refreshFooter();
-        });
+        
+        finder.findButton.setHotKey(hotKey);
+        finder.findButton.onChange((te) -> {
+                                                finder.setInFindMode(te);
+                                                viewComp.refreshFooter();
+                                            });
+
+        
+        viewComp.addFooterComponent(finder);
     }
 
     private static void attachComponentWithHilightedTextIfNeeded(ScrollableComponent viewComp,
@@ -235,5 +261,17 @@ public class SearchFunctionForScrollableComponent extends HorizontalPanel {
     public static void addFinderToScrollable(ScrollableComponent viewComp) {
         addFinderToScrollable(viewComp, Keys.CTRL_F_KEYSTROKE);
     }
+
+    @Override
+    public void childHasCurrentFocus(Focusable focusableChild, EventBus eventBus) {
+        eventBus.raiseEvent( new RequestUpdateCanvasEvent(this));
+    }
+
+    @Override
+    public void setChildAsCurrentFocus(Focusable focusableChild, EventBus eventBus) {
+       super.setChildAsCurrentFocus(focusableChild, eventBus);
+    }
+
+    
 
 }

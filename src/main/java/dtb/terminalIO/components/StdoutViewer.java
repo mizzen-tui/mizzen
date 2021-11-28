@@ -19,6 +19,8 @@ import dtb.terminalIO.textsegments.ScreenLineSegment;
 import dtb.terminalIO.textsegments.ScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.ElapsedTime;
 import dtb.terminalIO.util.Logging;
+import dtb.terminalIO.util.Logging.LogOnInterval;
+import dtb.terminalIO.util.ThrottledRunnable;
 import dtb.terminalIO.util.linuxproc.TerminalStreamConsumerSegmentsBuffer;
 import dtb.terminalIO.util.linuxproc.TerminalStreamConsumerSegmentsBuffer.StreamConsumerSegmentsAdapter;
 import dtb.terminalIO.util.linuxproc.TerminalStreamOutputParser.TerminalStreamConsumer;
@@ -31,6 +33,8 @@ public class StdoutViewer extends AbstractComponent<StdoutViewer>  implements Te
     private RepeatingInterval flushTimerTask = null;
     private Dimension lastMeasuredDimension;
     private Rectangle sizeOfSegments;
+    
+    static LogOnInterval logger = new LogOnInterval(500);
     
     public StdoutViewer(Color color) {
         super(color);
@@ -160,24 +164,26 @@ public class StdoutViewer extends AbstractComponent<StdoutViewer>  implements Te
         queue = null;
     }
 
-    long lastRefreshRequest = 0;
+    ThrottledRunnable throttleForRequestScrollToView = new ThrottledRunnable(500);
     
     public void flush(EventBus eventBus) {
-        eventBus.appendIdleEventHandler(new OnIdleEventEventHandler.OneTime((te)-> {
-            int countTasksExecuted = drainQWithTimeLimit(10);
+        int countTasksExecuted = drainQWithTimeLimit(10);
 
-            synchronized (streamConsumer) {
-                streamConsumer.flushText();
-            }
-//            if (streamConsumer.hasTextInBuffer() && queue.remainingCapacity()>200) {
-//                offerToQ(()->streamConsumer.flushText());
-//            }
-            countTasksExecuted += drainQWithTimeLimit(10);
-            if (countTasksExecuted>0) {
-                this.markAsDirty();
-            }
+        synchronized (streamConsumer) {
+            streamConsumer.flushText();
+        }
+        countTasksExecuted += drainQWithTimeLimit(10);
+        if (countTasksExecuted>0) {
+            this.markAsDirty();
+        }
+        
+    }
+    
+    public void flushAsynch(EventBus eventBus) {
+        eventBus.appendIdleEventHandler(new OnIdleEventEventHandler.OneTime((te)-> {
             
-          //  Logging.forceLogInfo("flush(): TOTAL  countTasksExecuted:  " + countTasksExecuted);
+            flush(te.getEventBus());
+
         }));
         
         
@@ -192,38 +198,19 @@ public class StdoutViewer extends AbstractComponent<StdoutViewer>  implements Te
         flushTimerTask = new RepeatingInterval(millisec, (te)->{
             
             int countTasksExecuted = ElapsedTime.getAndTime(()->  drainQWithTimeLimit(10),
-                                                            (t)->Logging.forceLogInfo("drain-time "+t));
-          //  Logging.forceLogInfo("First countTasksExecuted:  " + countTasksExecuted);
-         /*   
-            if (streamConsumer.hasTextInBuffer() && queueRemainingCapacity()>200) {
-                synchronized (streamConsumer) {
-                    if (streamConsumer.hasTextInBuffer() && queueRemainingCapacity()>200) {
-                        streamConsumer.flushText();
-                    }
-                }
-            }
-           */ 
+                                                            (t)->Logging.info("drain-time "+t));
+
             countTasksExecuted += drainQWithTimeLimit(10);
-            Logging.forceLogInfo("TOTAL  countTasksExecuted:  " + countTasksExecuted);
             if (this.isDirty() ||  countTasksExecuted > 0 || !lastMeasuredDimension.isSameDimension(this)) {
                 StdoutViewer.this.markAsDirty();
                 if (!lastMeasuredDimension.isSameDimension(this)) {
                     lastMeasuredDimension = new Dimension.Simple(this);
                     if (this.getParentContainer() != null) {
                         this.getParentContainer().childResized(this);
-                        Logging.forceLogInfo("childResized " );
                     }
                 }
 
-                long now =  System.currentTimeMillis();
-                if ((now - lastRefreshRequest)>500) {
-                    lastRefreshRequest = now;
-                    Rectangle scrollToRectangle = new Rectangle.Simple(StdoutViewer.this.getPostion_BottomLeft(),new Dimension.Simple(1,1));
-                    eventBus.raiseEvent( new RequestScrollToView( StdoutViewer.this, StdoutViewer.this , scrollToRectangle )  );
-                    Logging.forceLogInfo("RequestScrollToView " );
-    
-                    eventBus.raiseEvent( new RequestUpdateCanvasEvent(StdoutViewer.this));
-                }
+                throttleForRequestScrollToView.run(()->scrollToBottomOfViewer(eventBus));
 
             }
             if (firstFlushCall) {
@@ -231,6 +218,14 @@ public class StdoutViewer extends AbstractComponent<StdoutViewer>  implements Te
             }
         });
         eventBus.appendIdleEventHandler(flushTimerTask);
+    }
+
+    public void scrollToBottomOfViewer(EventBus eventBus) {
+        Rectangle scrollToRectangle = new Rectangle.Simple(StdoutViewer.this.getPostion_BottomLeft(),new Dimension.Simple(1,1));
+        eventBus.raiseEvent( new RequestScrollToView( StdoutViewer.this, StdoutViewer.this , scrollToRectangle )  );
+        Logging.info("RequestScrollToView " );
+   
+        eventBus.raiseEvent( new RequestUpdateCanvasEvent(StdoutViewer.this));
     }
     
     public static class ViewerStats {

@@ -1,6 +1,7 @@
 package dtb.terminalIO.examples;
 
 import dtb.terminalIO.app.TUIApp;
+import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.chart.DonutChart;
@@ -10,7 +11,6 @@ import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
-import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
 
 /**
@@ -66,9 +66,9 @@ public class DonutChartTest {
             
             
             tApp.getEventBus().appendEventHandler( new OnIdleEventEventHandler.RepeatingInterval(100, (te)-> {
-                
+
                 int maxData = 360;
-                
+
                 dataPoint[0] = ( dataPoint[0] + 1 ) % maxData;
                 
                 donutChart.setData(dataPoint[0],maxData,String.format("%3d",dataPoint[0]));
@@ -88,6 +88,7 @@ public class DonutChartTest {
 
             tApp.getEventBus().appendEventHandler(mainFocusManager);
             
+            FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
             
         })
         .start();

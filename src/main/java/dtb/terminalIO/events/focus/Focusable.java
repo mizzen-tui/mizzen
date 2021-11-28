@@ -21,12 +21,155 @@ import dtb.terminalIO.events.TerminalEvent;
  * 
  * 
  */
-public interface Focusable extends ConditionalEventHandler {
+public interface Focusable extends FocusBehaviour, ConditionalEventHandler {
 
-    boolean hasFocus();
+    FocusManager getParentFocusManager();
 
-    void setFocus(boolean focus, EventBus eventBus);
+    void setParentFocusManager(FocusManager focusManager);
+    
+    
+    public static class NOOPFocusable implements Focusable {
 
+        @Override
+        public boolean hasFocus() {
+            return false;
+        }
+
+        @Override
+        public void setFocus(boolean focus, EventBus eventBus) {
+        }
+
+        @Override
+        public EventHandler canHandle(TerminalEvent<?> te) {
+            return null;
+        }
+
+        @Override
+        public void handle(TerminalEvent<?> te) {
+        }
+
+        @Override
+        public FocusManager getParentFocusManager() {
+            return null;
+        }
+
+        @Override
+        public void setParentFocusManager(FocusManager focusManager) {
+        }
+        
+    }
+    
+    public static class FocusableFromParts extends NOOPFocusable {
+        FocusManager parentContainer;
+        FocusBehaviour behaviour;
+        ConditionalEventHandler eventHandler;
+        
+        public FocusableFromParts(FocusBehaviour behaviour, ConditionalEventHandler eventHandler) {
+            super();
+            this.behaviour = behaviour;
+            this.eventHandler = eventHandler;
+        }
+
+        public FocusBehaviour getBehaviour() {
+            return behaviour;
+        }
+
+        public void setBehaviour(FocusBehaviour behaviour) {
+            this.behaviour = behaviour;
+        }
+
+        public ConditionalEventHandler getEventHandler() {
+            return eventHandler;
+        }
+
+        public void setEventHandler(ConditionalEventHandler eventHandler) {
+            this.eventHandler = eventHandler;
+        }
+
+        @Override
+        public boolean hasFocus() {
+            return behaviour != null ? behaviour.hasFocus() : false;
+        }
+
+        @Override
+        public void setFocus(boolean focus, EventBus eventBus) {
+            if (behaviour != null) {
+                behaviour.setFocus(focus, eventBus);
+            }
+        }
+
+        @Override
+        public EventHandler canHandle(TerminalEvent<?> te) {
+            if (eventHandler == null) {
+                return null;
+            }
+            if ( eventHandler.canHandle(te) != null ) {
+                return this;
+            }
+            return null;
+        }
+
+        @Override
+        public void handle(TerminalEvent<?> te) {
+            if (eventHandler != null) {
+                eventHandler.handle(te);
+            }
+        }
+
+        @Override
+        public FocusManager getParentFocusManager() {
+            return parentContainer;
+        }
+
+        @Override
+        public void setParentFocusManager(FocusManager focusManager) {
+            this.parentContainer = focusManager;
+        }
+        
+    }
+
+    
+    public static class FocusableFromBehaviour extends NOOPFocusable {
+
+        FocusBehaviour behaviour;
+        
+        
+        @Override
+        public boolean hasFocus() {
+            return behaviour.hasFocus();
+        }
+
+        @Override
+        public void setFocus(boolean focus, EventBus eventBus) {
+            behaviour.setFocus(focus, eventBus);
+        }
+
+        @Override
+        public EventHandler canHandle(TerminalEvent<?> te) {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public void handle(TerminalEvent<?> te) {
+            // TODO Auto-generated method stub
+            
+        }
+
+        @Override
+        public FocusManager getParentFocusManager() {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public void setParentFocusManager(FocusManager focusManager) {
+            // TODO Auto-generated method stub
+            
+        }
+        
+    }
+    
     
     public class FocusableDelegate implements Focusable {
         
@@ -58,7 +201,19 @@ public interface Focusable extends ConditionalEventHandler {
         public void setFocus(boolean focus, EventBus eventBus) {
             delegate.setFocus(focus, eventBus);
         }
+
+        @Override
+        public FocusManager getParentFocusManager() {
+            return delegate.getParentFocusManager();
+        }
+
+        @Override
+        public void setParentFocusManager(FocusManager focusManager) {
+            delegate.setParentFocusManager(focusManager);
+        }
     
+        
+        
     }
 
 

@@ -4,7 +4,6 @@ import java.util.function.BiFunction;
 
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.GetComponentAtOffset;
-import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.TerminalScreen;
@@ -209,7 +208,7 @@ public class MouseEventOrchestrator {
 
                 Position canvasPosition = appMouseEvent.getEventData();
 
-                // mainApplicationPanel is not always at 0,0 ..always need to account for that
+                // mainApplicationPanel is not always at 0,0 (ie when app is not full-screen) ..always need to account for that
                 Position panelOffsetOnCanvas = Component.UTIL.getCanvasOffsetFor(mainApplicationPanel);
                 if (panelOffsetOnCanvas == null) {
                     throw new IllegalStateException("mainApplicationPanel used to map mouse events is not attached (directly or indirectly) to the canvas!");
@@ -246,7 +245,6 @@ public class MouseEventOrchestrator {
                 Focusable focusableComponent = ToFocusable.UTIL.toFocusable(componentClicked);
 
                 if (focusableComponent != null) {
-                    Logging.info("mouse on "  + HasName.UTIL.getName(focusableComponent) + "evt:" + String.valueOf(appMouseEvent));
                     eventBus.raiseEvent( new RequestFocusEvent(focusableComponent));
                     if (appMouseEvent.getMouseAction() == MOUSE_ACTION.DOWN_LEFT_DRAG) {
                         if (currentDraggable == null && componentClicked instanceof Draggable) {
@@ -279,7 +277,7 @@ public class MouseEventOrchestrator {
                                     return;
                                 }
                                 // can't map to an offset into component so just send the eventbus
-                                clickable.onClick( appMouseEvent.getEventBus() );
+                                clickable.onClick( te2.getEventBus() );
                             }
                         })); 
                     }

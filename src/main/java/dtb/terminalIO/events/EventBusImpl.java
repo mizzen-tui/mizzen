@@ -7,7 +7,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import dtb.terminalIO.events.TerminalEvent.TYPE;
 import dtb.terminalIO.events.keyboard.InputEventsProducer;
-import dtb.terminalIO.util.Logging;
 
 /**
  * Warning: This object will spawn a new thread in its constructor.
@@ -128,6 +127,7 @@ public class EventBusImpl implements EventHandlerContainer, EventBus {
                             handleEvent(te);
                         }
                     } catch (Exception e) {
+                        System.err.println("EventBusImpl: " +  e.getLocalizedMessage());
                         handleEvent(new TerminalEvent<Exception>(EventBusImpl.this, TerminalEvent.TYPE.EXCEPTION, e).setEventBus(EventBusImpl.this));
                         // hmm... Should I really be looping after an exception.. or should I
                         //        terminate?..

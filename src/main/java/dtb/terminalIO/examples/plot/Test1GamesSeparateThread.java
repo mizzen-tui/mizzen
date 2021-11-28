@@ -279,7 +279,7 @@ public class Test1GamesSeparateThread {
             return Colors.BWhi;
         }
 
-        protected Shape getCurrentShape() {
+        protected Shape<?> getCurrentShape() {
             return this.componentShapes;
         }
 
@@ -331,7 +331,7 @@ public class Test1GamesSeparateThread {
             this.t1 = new Triangle(p1, p2, p3, Colors.BBlu).setFilled(true);
 
             this.componentShapes = new CompositeShape() {
-                protected void drawChild(Shape childShape, PointPlotter pointPlotter) {
+                protected void drawChild(Shape<?> childShape, PointPlotter pointPlotter) {
                     if (childShape != t1) {
                         super.drawChild(childShape, pointPlotter);
                         return;

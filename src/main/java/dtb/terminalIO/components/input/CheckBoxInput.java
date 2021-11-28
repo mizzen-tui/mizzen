@@ -10,12 +10,15 @@ import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
+import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.RequestHideCursorEvent;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.focus.FocusBehaviour;
 import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.focus.Focusable.FocusableFromParts;
 import dtb.terminalIO.events.focus.RequestFocusEvent;
 import dtb.terminalIO.events.focus.ToFocusable;
 import dtb.terminalIO.events.keyboard.KeyEvent;
@@ -181,37 +184,7 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
             return false;
         };
 
-        meAsFocusable = new DefaultFocusableBehaviour.ComponentHiliterFocusableBehaviour(this) {
-
-            @Override
-            public void setFocus(boolean focus, EventBus eventBus) {
-                super.setFocus(focus, eventBus);
-                if (focus) {
-                    new ShowComponentOnFocus().onFocus(CheckBoxInput.this, eventBus);
-                    requestShowCursorAtComponent(eventBus);
-                } else {
-                    requestHideCursor(eventBus);
-                }
-            }
-
-            @Override
-            public void handle(TerminalEvent<?> te) {
-
-                if (canHandleOnChangeEvent.test(te)) {
-                    actionOnChangeHandler.handle(te);
-                    return;
-                }
-
-                if (!(te instanceof KeyEvent)) {
-                    return;
-                }
-
-                KeyEvent ke = (KeyEvent) te; 
-                
-                if (ke.isKeyStroke( Keys.ENTER_KEYSTROKE )  || ke.isKeyStroke(Keys.SPACE_KEYSTROKE)) {
-                    checkBoxPressed(te.getEventBus());
-                }
-            }
+        ConditionalEventHandler evtHandler = new ConditionalEventHandler() {
 
             @Override
             public EventHandler canHandle(TerminalEvent<?> te) {
@@ -233,11 +206,50 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
                 return null;
             }
             
+            @Override
+            public void handle(TerminalEvent<?> te) {
+
+                if (canHandleOnChangeEvent.test(te)) {
+                    actionOnChangeHandler.handle(te);
+                    return;
+                }
+
+                if (!(te instanceof KeyEvent)) {
+                    return;
+                }
+
+                KeyEvent ke = (KeyEvent) te; 
+                
+                if (ke.isKeyStroke( Keys.ENTER_KEYSTROKE )  || ke.isKeyStroke(Keys.SPACE_KEYSTROKE)) {
+                    checkBoxPressed(te.getEventBus());
+                }
+            }
+
+            
+        };
+        
+        FocusBehaviour focusBehaviour = new DefaultFocusableBehaviour.ComponentHiliterFocusableBehaviour(this) {
+
+            @Override
+            public void setFocus(boolean focus, EventBus eventBus) {
+                super.setFocus(focus, eventBus);
+                if (focus) {
+                    new ShowComponentOnFocus().onFocus(CheckBoxInput.this, eventBus);
+                    requestShowCursorAtComponent(eventBus);
+                } else {
+                    requestHideCursor(eventBus);
+                }
+            }
+
+            
             public String toString() {
                 return "ToFocusable(CheckBoxInput, value="+CheckBoxInput.this.getValue()+")";
             }
 
         };
+        
+        meAsFocusable = new FocusableFromParts(focusBehaviour, evtHandler);
+        
         return meAsFocusable;
     }
 

@@ -6,15 +6,14 @@ import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.ComponentInspector;
 import dtb.terminalIO.components.Composite;
-import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.components.WindowFrame;
 import dtb.terminalIO.components.input.MultiLineTextInput;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
+import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.OnIdleEventEventHandler.RepeatingInterval;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
-import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.util.Logging;
 
@@ -36,7 +35,7 @@ public class MultiLineTextInputTest {
 
             mTextBox.setColor(  new Colors.FGBGColors( Colors.BBlu, Colors.On_Bla  )  );
 
-            ScrollableComponent sc = new ScrollableComponent(Colors.Whi, 
+            ScrollableComponent sc = new ScrollableComponent(Colors.Yel, 
                                                              (Dimension)tApp.getMainApplicationPanel(), 
                                                              mTextBox,
                                                              ()-> new DefaultFocusManager().setNavKeysFirst(false)) {
@@ -49,6 +48,8 @@ public class MultiLineTextInputTest {
             sc.setEmptyChar('.');
 
             sc.resize(  new Dimension.Simple(sc.getHeight()-2, sc.getWidth()));
+            
+            SearchFunctionForScrollableComponent.addFinderToScrollable(sc, 20);
 
             tApp.getMainApplicationPanel().add(2,0, sc);
 
@@ -65,9 +66,9 @@ public class MultiLineTextInputTest {
             
             WindowFrame wfInspector = new WindowFrame(inspector.getColor(),"Components",inspector);
             
-            DefaultFocusManager.applyIfDefaultFocusManager(mainFocusManager, (dfalt_fm)->{
-                dfalt_fm.addFocusable(wfInspector);
-            });
+//            DefaultFocusManager.applyIfDefaultFocusManager(mainFocusManager, (dfalt_fm)->{
+//                dfalt_fm.addFocusable(wfInspector);
+//            });
 
             tApp.getEventBus().appendEventHandler( inspector.toggleViewEventHandler() );
             tApp.getEventBus().appendEventHandler( inspector.refreshEventHandler() );

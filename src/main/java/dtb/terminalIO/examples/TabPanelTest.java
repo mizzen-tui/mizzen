@@ -160,7 +160,7 @@ public class TabPanelTest {
         hp.add(inspector);
 
         focusManager.addFocusable(tb);
-        focusManager.addFocusable(inspector);
+        focusManager.addComponentAsFocusables(inspector);
 
         TextComponent debugSTATs = new TextComponent(Colors.IYel, "");
         Composite debugWindow = new Composite(Colors.IGre).setBounds(sizeOfDebugWindow);

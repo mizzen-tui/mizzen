@@ -112,7 +112,7 @@ public class TestScale {
 
                    PointPlotter pp = grid; //.asPointPlotter();
 
-                   Consumer<Shape> drawShape = (shape)-> {
+                   Consumer<Shape<?>> drawShape = (shape)-> {
                        if (shape == null) {
                            msg.accept("shape = null");
                            return;
@@ -266,7 +266,7 @@ public class TestScale {
 
                    tApp.getEventBus().appendEventHandler(  mainFocusManager );
                    
-                 //  FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
+                   FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
 
                }).start();
         

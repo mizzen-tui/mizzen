@@ -1,22 +1,18 @@
 package dtb.terminalIO.events.mouse;
 
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.events.RequestHideCursorEvent;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
-import dtb.terminalIO.util.Logging;
 
 public interface Draggable {
-    
+
     boolean onDragStart(ApplicationMouseEvent appMouseEvent);
     boolean onDrag(ApplicationMouseEvent appMouseEvent);
     boolean onDragStop(ApplicationMouseEvent appMouseEvent);
-    
-    
-    
+
     public static class DragAndMoveComponentBehaviour implements Draggable {
         
         Component<?>  draggableComponent;
@@ -106,7 +102,6 @@ public interface Draggable {
 
         @Override
         public boolean onDragStart(ApplicationMouseEvent appMouseEvent) {
-            Logging.info(HasName.UTIL.getName(dragAnchor)+":onDragStart evt:" + String.valueOf(appMouseEvent));
             offsetFromComponentPosition = appMouseEvent.getMousePosition().sub(Component.UTIL.getCanvasOffsetFor(dragAnchor)).negate();
             this.originalSizeDimension = new Dimension.Simple((Component<?>)componentToResize);
             return true;
@@ -135,7 +130,6 @@ public interface Draggable {
 
         @Override
         public boolean onDragStop(ApplicationMouseEvent appMouseEvent) {
-            Logging.info(HasName.UTIL.getName(dragAnchor)+":onDrag evt:" + String.valueOf(appMouseEvent));
             appMouseEvent.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(componentToResize)  );
             return true;
         }

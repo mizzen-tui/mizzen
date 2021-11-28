@@ -13,28 +13,28 @@ import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.StringUtils;
 
-public class TextInputForType<T>  extends BoundedComponent<TextInputForType<T>> implements HasValue<T>, ParentContainer, Focusable{
+public class TextInputForType<T>  extends BoundedComponent<TextInputForType<T>> implements HasValue<T>, ParentContainer, Focusable {
 
     private TextInput textInput;
     private Function<String,Boolean> validate;
     private Function<String, T> translateToType;
     private ConditionalEventHandler eventHandler;
     private ChainedEventHandler chainedHandler;
-    
-    
+
     public TextInputForType(Color color, int length, 
                             Function<String,Boolean> validate,
                             Function<String, T> translateToType) {
         super(color, new Dimension.Simple(1, length));
         this.translateToType = translateToType;
         this.validate = validate;
-        
+
         //  build a textbox such that the validate function parameter is injected
         //  into the TextBox's validate method
         this.textInput = new TextInput(color, length) {
@@ -52,7 +52,7 @@ public class TextInputForType<T>  extends BoundedComponent<TextInputForType<T>> 
             // outer component has changed due to the inner TextInput component changing
             te.getEventBus().raiseEvent(new HasValue.ValueChangedEvent<T>(TextInputForType.this));
         });
-        
+
     }
 
     @Override
@@ -65,7 +65,7 @@ public class TextInputForType<T>  extends BoundedComponent<TextInputForType<T>> 
     }
 
     HasValue.OnValueChangedEventHandler<T> onChangeHandler;
-    
+
     public void onChange(EventHandler consumeChange) {
 
         onChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, onChangeHandler, getChainedEventHandler(), consumeChange);
@@ -116,6 +116,17 @@ public class TextInputForType<T>  extends BoundedComponent<TextInputForType<T>> 
     }
 
     @Override
+    public FocusManager getParentFocusManager() {
+        return this.textInput.getParentFocusManager();
+    }
+
+    @Override
+    public void setParentFocusManager(FocusManager focusManager) {
+        this.textInput.setParentFocusManager(focusManager);
+    }
+    
+    
+    @Override
     public Position getPositionRelativeToParent(Component<?> child) {
         return Position.ZERO;
     }
@@ -133,7 +144,7 @@ public class TextInputForType<T>  extends BoundedComponent<TextInputForType<T>> 
         }
         currentText = currentText.trim();
 
-        // for robustness validate first - even tho' TextInput should have already invalidated
+        // for robustness validate first - even tho' TextInput should have already been validated
         if (! this.validate.apply(currentText)) {
             return null;
         }

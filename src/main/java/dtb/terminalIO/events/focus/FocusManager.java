@@ -2,19 +2,24 @@ package dtb.terminalIO.events.focus;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Stack;
 import java.util.StringJoiner;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import dtb.terminalIO.components.AbstractWrappedComponentWithFocusManager;
 import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.ComponentWithFocusManager;
 import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
+import dtb.terminalIO.events.focus.ToFocusable.FocusableComponentPair;
 import dtb.terminalIO.traverse.FindPathToTarget;
 import dtb.terminalIO.traverse.HasChildren;
 import dtb.terminalIO.traverse.HasChildrenAdapter;
@@ -145,13 +150,28 @@ public interface FocusManager extends Focusable {
          * 
          * If focusTarget found,  then it returns path (a list of objects)
          * from focusManager to focusTarget
+         * 
          */
         public static List<Focusable> findTargetAsPath(FocusManager focusManager, Focusable focusTarget) {
 
-            List<Focusable> pathToTarget = new FindPathToTarget<Focusable>(new FocusManagerHasChildrenAdapter()).findPath(focusManager, focusTarget);
+            FindPathToTarget<Focusable> finder = new FindPathToTarget<Focusable>(new FocusManagerHasChildrenAdapter());
+            
+            // look for path via tree traversal technique ( traditional method )
+            List<Focusable> pathToTarget = finder.findPath(focusManager, focusTarget);
 
-            return pathToTarget;
+            if (pathToTarget != null && pathToTarget.size() > 0) {
+                return pathToTarget;
+            }
+
+            // look for path by looping up target to root
+            pathToTarget = finder.findPath(focusManager, focusTarget, new HasParentFocusableAdapter());
+            if (pathToTarget != null && pathToTarget.size() > 0) {
+                return pathToTarget;
+            }
+
+            return null;
         }
+
 
         private static void addFocusableChildren(List<Focusable> focusableContainer, Object component) {
 
@@ -235,6 +255,20 @@ public interface FocusManager extends Focusable {
             return focusManager;
         }
 
+        public static Collection<Focusable> focusablesFromComponent(Object component) {
+                if (component instanceof Focusable) {
+                    return Collections.singleton((Focusable)component);
+                }
+                if (component instanceof ToFocusable) {
+                    return Collections.singleton(((ToFocusable)component).asFocusable());
+                }
+            
+                List<Focusable> focusables = new ArrayList<Focusable>();
+                addFocusableFromComponentChildren(focusables, component);
+                
+                return focusables;
+
+        }
 
 
         public static Focusable findOrBuildFocusableFromComponent(Object component, EventBus eventBus) {
@@ -265,8 +299,27 @@ public interface FocusManager extends Focusable {
 
         public static void verifyPathsToFocusables(FocusManager focusManager, Component<?> component) {
 
+
+            // this is a hack.. because ComponentWithFocusManager and AbstractWrappedComponentWithFocusManager
+            //                  do not play nicely with this method..  
+            Predicate<Component<?>> skipProxiedManagers = (c)->{
+                if (c.getParentContainer() == null) {
+                    return true;
+                }
+                if (c.getParentContainer() instanceof ComponentWithFocusManager ) {
+                    return false;
+                }
+                if (c.getParentContainer() instanceof AbstractWrappedComponentWithFocusManager ) {
+                    return false;
+                }
+                return true;
+            };
+            
+            skipProxiedManagers = (c)-> true;
+            
             List<Focusable> focusables = Traverser.asList(component, (c)-> ToFocusable.UTIL.isFocusable(c) )
                                                   .stream()
+                                                  .filter(skipProxiedManagers)
                                                   .map((c)-> ToFocusable.UTIL.toFocusable(c))
                                                   .collect(Collectors.toList());
 
@@ -373,7 +426,7 @@ public interface FocusManager extends Focusable {
                 }
             };
 
-            return new ConditionalEventHandler.Impl(canHandlePredicate, (te) -> {
+            ConditionalEventHandler.Impl requestFocusHandler = new ConditionalEventHandler.Impl(canHandlePredicate, (te) -> {
 
                 @SuppressWarnings("unchecked")
                 TerminalEvent<Focusable> fe = (TerminalEvent<Focusable>)te;
@@ -423,9 +476,9 @@ public interface FocusManager extends Focusable {
                             } else {
                                 FocusManager targetsParentFocusManager = (FocusManager)pathToTarget.get(lastIndex-1);
                                 if (targetsParentFocusManager.getCurrentChildFocus() == focusTarget) {
-                                    targetsParentFocusManager.setChildAsCurrentFocus(null, te.getEventBus());
-                                } else {
-                                    // odd that we get here ..
+//                                    targetsParentFocusManager.setChildAsCurrentFocus(null, te.getEventBus());
+//                                } else {
+//                                    // odd that we get here ..
                                     focusTarget.setFocus(false, te.getEventBus());
                                 }
                             }
@@ -434,6 +487,9 @@ public interface FocusManager extends Focusable {
                 }
                 
             });
+            
+            requestFocusHandler.setName("requestFocusHandler");
+            return requestFocusHandler;
 
         }
     }

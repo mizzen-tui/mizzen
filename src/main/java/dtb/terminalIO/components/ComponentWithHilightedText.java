@@ -8,6 +8,7 @@ import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.CleanString;
@@ -160,4 +161,21 @@ public class ComponentWithHilightedText extends Composite implements Focusable {
         focusable.setFocus(focus, eventBus);
     }
 
+    @Override
+    public FocusManager getParentFocusManager() {
+        if (focusable == null) {
+            return null;
+        }
+        return focusable.getParentFocusManager();
+    }
+
+    @Override
+    public void setParentFocusManager(FocusManager focusManager) {
+        if (focusable == null) {
+            return;
+        }
+        focusable.setParentFocusManager(focusManager);
+    }
+    
+    
 }

@@ -8,6 +8,7 @@ import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.input.DropdownListBox;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory;
+import dtb.terminalIO.components.plot.image.ImageViewerFactory.IMAGE_RENDER_TYPE;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.controlcodes.color.Colors.FGBGColors;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
@@ -43,11 +44,21 @@ public class FractalsViewer {
             bannerPanel.setNoBorderChars();
 
             bannerPanel.addComponent(new TextComponent(new FGBGColors(Colors.BCya,Colors.On_Whi),"Fractals in ASCII"));
-            bannerPanel.addComponent(new TextComponent(" Select gradient "));
+            
+            bannerPanel.addComponent(new TextComponent(" Render style : "));
+            
+            DropdownListBox<ImageViewerFactory.IMAGE_RENDER_TYPE> imageRendererTypeDDLB = new DropdownListBox<ImageViewerFactory.IMAGE_RENDER_TYPE>(ImageViewerFactory.imageRenderTypeOptions());
+            imageRendererTypeDDLB.setSelected(0);
+            bannerPanel.addComponent(imageRendererTypeDDLB);
+
+            TextComponent asciiGradientLabel = new TextComponent(" Select gradient : ");
+            bannerPanel.addComponent(asciiGradientLabel);
+
             DropdownListBox<String> gradientsDDLB = new DropdownListBox<String>(Colors.BICya, ImageViewerFactory.standardAsciiGradients());
             gradientsDDLB.setMaxItemWidth(15);
             gradientsDDLB.setSelected(0);
             bannerPanel.addComponent(gradientsDDLB);
+            
 
             fractalView.add(bannerPanel);
 
@@ -73,6 +84,17 @@ public class FractalsViewer {
                 fractalView.resize(size);
             });
 
+
+            imageRendererTypeDDLB.onChange((te)->{
+                animator.getImageRenderRequest().setImageRenderType( imageRendererTypeDDLB.getValue()  );
+                if (imageRendererTypeDDLB.getValue().equals(IMAGE_RENDER_TYPE.ASCII)) {
+                    asciiGradientLabel.show();
+                    gradientsDDLB.show();
+                } else {
+                    asciiGradientLabel.hide();
+                    gradientsDDLB.hide();
+                }
+            });
 
             gradientsDDLB.onChange((te)->{
                 animator.getImageRenderRequest().setGradientStr( gradientsDDLB.getValue() );

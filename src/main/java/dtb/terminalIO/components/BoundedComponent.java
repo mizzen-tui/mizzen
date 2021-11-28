@@ -114,7 +114,7 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
             //Component.UTIL.markParentDirtyIfChildDirty(this);
             // this next lines is redundant for many but not
             // all components.  Remove at your peril.
-            this.hasDrawn = false;
+            //this.hasDrawn = false;
             return;
         }
         this.hasDrawn = false;

@@ -131,7 +131,7 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
         this.border.setParentContainer(this);
         showBorder = true;
         this.setRectangle( bounds );
-        this.setFillOnClear(false);
+        this.setFillOnClear(this.isFillOnClear());
         return this;
     }
 

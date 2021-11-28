@@ -3,6 +3,7 @@ package dtb.terminalIO.app;
 import java.util.function.Consumer;
 
 import dtb.terminalIO.controlcodes.ControlCode;
+import dtb.terminalIO.controlcodes.Renderer;
 import dtb.terminalIO.util.Stty;
 
 public class DefaultTerminateAction implements Consumer<TUIApp> {
@@ -24,11 +25,18 @@ public class DefaultTerminateAction implements Consumer<TUIApp> {
         
         return;
     }
-    
+
     public static void resetTerminalForExiting(TUIApp tApp) {
+        resetTerminalForExiting(tApp, null);
+    }
+    
+    public static void resetTerminalForExiting(TUIApp tApp, Renderer r) {
         tApp.getEventBus().stopConsuming();
         tApp.getScreen().add( ControlCode.DISABLE_MOUSE_TRACKING );
         tApp.getScreen().add(ControlCode.SHOW_CURSOR);
+        if (r != null) {
+            tApp.getScreen().add(r);
+        }
         tApp.getScreen().refresh();
 
         try {

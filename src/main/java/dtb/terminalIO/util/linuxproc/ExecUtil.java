@@ -7,7 +7,7 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.function.Supplier;
 
-import dtb.terminalIO.util.ConsumeResult;
+import dtb.terminalIO.util.ConsumeResultAction;
 
 /**
  * Utilities to exec external processes (usually via bash or sh)
@@ -20,7 +20,7 @@ public class ExecUtil {
     }
 
     @FunctionalInterface
-    public static interface ConsumeLineOutput extends ConsumeResult<String> {
+    public static interface ConsumeLineOutput extends ConsumeResultAction<String> {
     }
 
     public static class StringBuilderConsumeOutput implements ConsumeLineOutput {
@@ -42,11 +42,15 @@ public class ExecUtil {
         }
     }
 
+    public static String[] shellCMD(String command) {
+        return new String[] { "/bin/sh", "-c", command };
+    }
+    
     public static String executeWithShell(String command) throws Exception {
         return executeCMDAndReturnOutput(new String[] { "/bin/sh", "-c", command });
     }
 
-    public static void executeCMD(String[] commands, ConsumeResult<String> outputConsumer) throws Exception {
+    public static int executeCMD(String[] commands, ConsumeResultAction<String> outputConsumer) throws Exception {
 
         Process proc = new ProcessBuilder(commands).start();
         BufferedReader stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
@@ -61,6 +65,10 @@ public class ExecUtil {
         while ((s = stdError.readLine()) != null) {
             outputConsumer.accept(s);
         }
+        
+        int exitVal = proc.waitFor();
+        
+        return exitVal;
 
     }
 
@@ -131,11 +139,11 @@ public class ExecUtil {
 
         private InputStream is;
 //        private Reader      input;
-        ConsumeResult<String> outputConsumer;
+        ConsumeResultAction<String> outputConsumer;
         Supplier<Boolean> isActive;
         boolean isEOF = false;
 
-        public StreamLineGobbler(InputStream is, ConsumeResult<String> outputConsumer, Supplier<Boolean> isActive) {
+        public StreamLineGobbler(InputStream is, ConsumeResultAction<String> outputConsumer, Supplier<Boolean> isActive) {
             super();
             this.is = is;
             this.outputConsumer = outputConsumer;

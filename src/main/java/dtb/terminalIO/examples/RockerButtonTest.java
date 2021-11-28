@@ -11,6 +11,7 @@ import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.VerticalPanel;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.input.DefaultFocusableBehaviour;
+import dtb.terminalIO.components.input.HasValue;
 import dtb.terminalIO.components.input.RockerButton;
 import dtb.terminalIO.components.input.TextInput;
 import dtb.terminalIO.components.modal.MessageBox;
@@ -21,13 +22,11 @@ import dtb.terminalIO.core.ScreenCanvasBackend;
 import dtb.terminalIO.core.ScreenCanvasBackend.UpdateStrategy;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
-import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.OnIdleEventEventHandler.RepeatingInterval;
 import dtb.terminalIO.events.RequestHideCursorEvent;
 import dtb.terminalIO.events.RequestShowCursorEvent;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
-import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
@@ -54,7 +53,23 @@ public class RockerButtonTest {
 
         app.getMainApplicationPanel().add(new ClickableBackground(app.getCanvas()));
 
-        ButtonBar buttons = new ButtonBar();
+        ButtonBar buttons = new ButtonBar("RockerButtonTest-buttonBar") {
+            @Override
+            public EventHandler canHandle(TerminalEvent<?> te) {
+                if (te instanceof HasValue.ValueChangedEvent) {
+                    return super.canHandle(te);
+                }
+                return super.canHandle(te);
+            }
+            @Override
+            public void handle(TerminalEvent<?> te) {
+                if (te instanceof HasValue.ValueChangedEvent) {
+                    super.handle(te);
+                    return;
+                }
+                super.handle(te);
+            }
+        };
         buttons.setLeftMostBorderChar((char) 0);
         buttons.setRightMostBorderChar((char) 0);
 
@@ -145,11 +160,7 @@ public class RockerButtonTest {
             tApp.getMainApplicationPanel().add(new Position.Simple(5,2), vp);
 
             FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),
-                                                                                             tApp.getEventBus(),
-                                                                                             ()-> new DefaultFocusManager().setNavKeysFirst(false)
-                                                                                                                           .setCycling(false)
-                                                                                                                           .setPrevKeyStroke(Keys.SHIFT_TAB_KEYSTROKE)
-                                                                                                                           .setNextKeyStroke(Keys.TAB_KEYSTROKE));
+                                                                                             tApp.getEventBus());
 
             tApp.getEventBus().appendEventHandler( mainFocusManager );
             tApp.getEventBus().appendEventHandler( new KeyInputEventHandler(Keys.CTRL_T_KEYSTROKE,componentInspector.toggleViewEventHandler()) );
@@ -190,27 +201,14 @@ public class RockerButtonTest {
 
                 Position newPosition = curPos.addCols(movementDirection[0]);
 
-                Logging.info("newPosition:  "+ newPosition.toString());
 
                 ((Component<?>)tApp.getMainApplicationPanel()).markAsDirty();
                 app.getEventBus().raiseEvent(new RequestShowCursorEvent(tApp.getMainApplicationPanel(),newPosition));
                 app.doRefreshCanvasIfModified();
                }));
             
-//            tApp.getEventBus().appendIdleEventHandler( new OnIdleEventEventHandler.OneTime((te)->  {
-//                
-//                Dimension.Simple inspectorSize = new Dimension.Simple((int)(tApp.getMainApplicationPanel().getHeight()*.54),
-//                        (int)(tApp.getMainApplicationPanel().getWidth()*.34));
-//
-//               componentInspector.resize(inspectorSize);
-//                
-//            }));
-
         });
         
-        ScreenCanvasBackend canvasBackend = ((ScreenCanvasBackend)app.getCanvas().getCanvasBackend());
-
-        canvasBackend.setUpdateStrategy(UpdateStrategy.UPDATE_FULL);
 
         app.start();
 
@@ -259,23 +257,24 @@ public class RockerButtonTest {
             asFocusable().setFocus(focus, eventBus);
         }
 
+
+        @Override
+        public FocusManager getParentFocusManager() {
+            return asFocusable().getParentFocusManager();
+        }
+
+        @Override
+        public void setParentFocusManager(FocusManager focusManager) {
+            asFocusable().setParentFocusManager(focusManager);
+        }
+        
         Focusable meAsFocusable;
 
         Focusable asFocusable() {
             if (meAsFocusable != null) {
                 return meAsFocusable;
             }
-            meAsFocusable = new DefaultFocusableBehaviour() {
-
-                @Override
-                public EventHandler canHandle(TerminalEvent<?> te) {
-                    return null;
-                }
-
-                @Override
-                public void handle(TerminalEvent<?> te) {
-                }};
-
+            meAsFocusable = new FocusableFromParts(new DefaultFocusableBehaviour(), null);
             return meAsFocusable;
         }
 

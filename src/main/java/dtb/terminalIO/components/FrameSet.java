@@ -36,6 +36,11 @@ public class FrameSet extends BoundedComponent<FrameSet> implements HasTitleAndB
         return childAsRectangle;
     }
     
+    public FrameSet setName(String name) {
+        super.setName(name);
+        HasName.UTIL.decorateWithParentsNamePrefix(this.container, this);
+        return this;
+    }
 
     
     class VerticalPair {

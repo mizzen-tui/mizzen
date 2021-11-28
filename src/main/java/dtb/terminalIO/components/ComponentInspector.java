@@ -2,6 +2,7 @@ package dtb.terminalIO.components;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.Function;
 
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.input.CheckBoxInput;
@@ -14,10 +15,10 @@ import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.AbstractTimedRequestedController;
 import dtb.terminalIO.events.EventBus;
-import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.FocusManager;
+import dtb.terminalIO.events.focus.FocusManager.FocusManagerHasChildrenAdapter;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
@@ -29,7 +30,7 @@ import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.StringUtils;
 
 public class ComponentInspector extends AbstractComponent<ComponentInspector>
-        implements CanResize, ParentContainer, FocusManager, GetComponentAtOffset {
+        implements CanResize, ParentContainer, GetComponentAtOffset {
 
     static enum VIEW_TYPE {
         COMPONENT_VIEW, FOCUSABLE_VIEW
@@ -70,7 +71,7 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
             if (scrollingArea != null) {
                 this.scrollingArea.setParentContainer(null);
             }
-            
+
             scrollingArea = new ScrollableComponent(Colors.BIGre, d, tvComponents);
             scrollingArea.setParentContainer(this);
         } else {
@@ -140,8 +141,6 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
         }
         return output;
     }
-    
-    
 
     AbstractTimedRequestedController delayedSetView = null;
 
@@ -202,30 +201,6 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
     }
 
     @Override
-    public boolean hasFocus() {
-        return this.scrollingArea.hasFocus();
-    }
-
-    @Override
-    public void setFocus(boolean focus, EventBus eventBus) {
-        this.scrollingArea.setFocus(focus, eventBus);
-    }
-
-    @Override
-    public EventHandler canHandle(TerminalEvent<?> te) {
-        if (this.scrollingArea.canHandle(te) == null) {
-            return null;
-        }
-        return this;
-    }
-
-    @Override
-    public void handle(TerminalEvent<?> te) {
-        this.scrollingArea.handle(te);
-
-    }
-
-    @Override
     public int getCol() {
         return this.scrollingArea.getCol();
     }
@@ -251,23 +226,6 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
     }
 
 
-    @Override
-    public void setChildAsCurrentFocus(Focusable focusableChild, EventBus eventBus) {
-        if (focusableChild != this.scrollingArea) {
-            throw new IllegalStateException("expected scrollingArea as child!");
-        }
-        // dont need to do anything as scrollingArea is always current focusable
-    }
-
-    @Override
-    public Focusable getCurrentChildFocus() {
-        return this.scrollingArea;
-    }
-
-    @Override
-    public Collection<Focusable> getChildFocusables() {
-        return Collections.singleton(this.scrollingArea);
-    }
 
     @Override
     public Position getPositionRelativeToParent(Component<?> child) {
@@ -321,6 +279,31 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
         
     }
 
+    public static class InspectorButton extends AbstractComponentWrappper<Button> {
+
+        ComponentInspector inspector;
+        Function< TerminalEvent<?>, ComponentInspector> builder;
+
+        protected InspectorButton(Color color, Function< TerminalEvent<?>, ComponentInspector> builder ) {
+            super(color, new Button(color, BlockChars.DEFAULT.getBOTTOM_LEFT()+"."));
+
+            this.getWrappedComponent().onChange((te)-> handleClicked(te) );
+        }
+
+        public InspectorButton setBorder(boolean hasBorder) {
+            this.getWrappedComponent().setBorder(hasBorder);
+            return this;
+        }
+
+        protected void handleClicked(TerminalEvent<?> te) {
+            if (inspector == null) {
+                inspector = builder.apply(te);
+                return;
+            }
+
+        }
+
+    }
 
 
 }

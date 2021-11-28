@@ -93,14 +93,14 @@ public class Colors {
     
     
     // Regular                                                        
-    public static final Colors.FgColor Bla= addNamedFGColor( "Bla",Colors.FgColor.instance(30).setInvertTransform( (c) -> Colors.getNamedBGColor("On_Bla") )); 
-    public static final Colors.FgColor Red= addNamedFGColor( "Red",Colors.FgColor.instance(31).setInvertTransform( (c) -> Colors.getNamedBGColor("On_Red") )); 
-    public static final Colors.FgColor Gre= addNamedFGColor( "Gre",Colors.FgColor.instance(32).setInvertTransform( (c) -> Colors.getNamedBGColor("On_Gre") )); 
-    public static final Colors.FgColor Yel= addNamedFGColor( "Yel",Colors.FgColor.instance(33).setInvertTransform( (c) -> Colors.getNamedBGColor("On_Yel") )); 
-    public static final Colors.FgColor Blu= addNamedFGColor( "Blu",Colors.FgColor.instance(34).setInvertTransform( (c) -> Colors.getNamedBGColor("On_Blu") )); 
-    public static final Colors.FgColor Pur= addNamedFGColor( "Pur",Colors.FgColor.instance(35).setInvertTransform( (c) -> Colors.getNamedBGColor("On_Pur") )); 
-    public static final Colors.FgColor Cya= addNamedFGColor( "Cya",Colors.FgColor.instance(36).setInvertTransform( (c) -> Colors.getNamedBGColor("On_Cya") )); 
-    public static final Colors.FgColor Whi= addNamedFGColor( "Whi",Colors.FgColor.instance(37).setInvertTransform( (c) -> Colors.getNamedBGColor("On_Whi") ));     
+    public static final Colors.FgColor Bla= addNamedFGColor( "Bla",Colors.FgColor.instance(30).setInvertTransform( (c) -> new FGBGColors(  Colors.getNamedFGColor("IWhi"), Colors.getNamedBGColor("On_Bla")) )); 
+    public static final Colors.FgColor Red= addNamedFGColor( "Red",Colors.FgColor.instance(31).setInvertTransform( (c) -> new FGBGColors(  Colors.getNamedFGColor("Whi"), Colors.getNamedBGColor("On_Red")) )); 
+    public static final Colors.FgColor Gre= addNamedFGColor( "Gre",Colors.FgColor.instance(32).setInvertTransform( (c) -> new FGBGColors(  Colors.getNamedFGColor("IYel"), Colors.getNamedBGColor("On_Gre")) )); 
+    public static final Colors.FgColor Yel= addNamedFGColor( "Yel",Colors.FgColor.instance(33).setInvertTransform( (c) -> new FGBGColors(  Colors.getNamedFGColor("Bla"), Colors.getNamedBGColor("On_Yel")) )); 
+    public static final Colors.FgColor Blu= addNamedFGColor( "Blu",Colors.FgColor.instance(34).setInvertTransform( (c) -> new FGBGColors(  Colors.getNamedFGColor("Whi"), Colors.getNamedBGColor("On_Blu")) )); 
+    public static final Colors.FgColor Pur= addNamedFGColor( "Pur",Colors.FgColor.instance(35).setInvertTransform( (c) -> new FGBGColors(  Colors.getNamedFGColor("IWhi"), Colors.getNamedBGColor("On_Pur")) )); 
+    public static final Colors.FgColor Cya= addNamedFGColor( "Cya",Colors.FgColor.instance(36).setInvertTransform( (c) -> new FGBGColors(  Colors.getNamedFGColor("IWhi"), Colors.getNamedBGColor("On_Cya")) )); 
+    public static final Colors.FgColor Whi= addNamedFGColor( "Whi",Colors.FgColor.instance(37).setInvertTransform( (c) -> new FGBGColors(  Colors.getNamedFGColor("Bla"), Colors.getNamedBGColor("On_Whi")) ));     
     
     // Bold                                                               
     public static final Colors.FgColor BBla= addNamedFGColor( "BBla",Bla.asBold().setInvertTransform( (c) -> Colors.getNamedBGColor("On_IBla") )); 

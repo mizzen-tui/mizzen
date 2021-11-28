@@ -80,6 +80,15 @@ public class ImageViewerFactory {
         return colorMaps;
     }
     
+    public static RGBToAnsiColorControlCode nameToRGBToAnsiColorControlCode(String name) {
+        for (ColorMapOption option : colorMap()) {
+            if (name.equalsIgnoreCase(option.getDisplayValue())) {
+                return option.getValue();
+            }
+        }
+        return null;
+    }
+     
     public static class PlotPredicateOption extends SimpleDisplayValue<RGBPlotPredicate> {
         public PlotPredicateOption(String displayValue, RGBPlotPredicate value) {
             super(displayValue, value);
@@ -87,16 +96,26 @@ public class ImageViewerFactory {
     }
 
     public static PlotPredicateOption[] plotPointPredicateOptions() {
-        PlotPredicateOption[] colorMaps = new PlotPredicateOption[] {
+        PlotPredicateOption[] predicateOptions = new PlotPredicateOption[] {
                  new PlotPredicateOption("PLOT_ALWAYS",PLOT_ALWAYS),
                  new PlotPredicateOption("PLOT_WHITE_ONLY",PLOT_WHITE_ONLY),
                  new PlotPredicateOption("PLOT_BLACK_ONLY",PLOT_BLACK_ONLY),
                  new PlotPredicateOption("PLOT_DARK_ONLY", PLOT_DARK_ONLY),
                  new PlotPredicateOption("PLOT_LIGHT_ONLY",PLOT_LIGHT_ONLY)
         }; 
-        return colorMaps;
+        return predicateOptions;
     }
 
+    public static RGBPlotPredicate nameToRGBPlotPredicate(String name) {
+        for (PlotPredicateOption option : plotPointPredicateOptions()) {
+            if (name.equalsIgnoreCase(option.getDisplayValue())) {
+                return option.getValue();
+            }
+        }
+        return null;
+    }
+    
+    
     public static class ImageRenderTypeOption extends SimpleDisplayValue<IMAGE_RENDER_TYPE> {
         public ImageRenderTypeOption(String displayValue, IMAGE_RENDER_TYPE value) {
             super(displayValue, value);
@@ -112,6 +131,16 @@ public class ImageViewerFactory {
         return imageRenderTypes;
     }
 
+    public static IMAGE_RENDER_TYPE nameToImageRenderType(String name) {
+        for (ImageRenderTypeOption option : imageRenderTypeOptions()) {
+            if (name.equalsIgnoreCase(option.getDisplayValue())) {
+                return option.getValue();
+            }
+        }
+        return null;
+    }
+    
+    
     public static class ImageRenderer extends AbstractComponentWrappper<Component<?>> {
         
         protected ImageRenderer(Component<?> wrappedComponent) {

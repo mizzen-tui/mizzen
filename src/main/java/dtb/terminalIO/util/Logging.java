@@ -8,7 +8,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.Date;
 
 public class Logging {
 
@@ -78,6 +77,28 @@ public class Logging {
         Logging.setEnabled(true);
         
         Logging.info("here is a test");
+
+    }
+    
+    public static class LogOnInterval {
+        ThrottledRunnable throttled;
+
+        public boolean isEnabled() {
+            return Logging.isEnabled();
+        }
+
+        public LogOnInterval(long interval) {
+            super();
+            this.throttled = new ThrottledRunnable(interval);
+        }
+
+        public LogOnInterval() {
+            this(5000);
+        }
+
+        public void info(String msg) {
+            throttled.run(()-> Logging.info(msg));
+        }
 
     }
 

@@ -9,29 +9,40 @@ import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.focus.FocusBehaviour;
+import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.focus.FocusableComponentMixin;
 
-public abstract class DefaultFocusableBehaviour  implements Focusable {
-     
+public class DefaultFocusableBehaviour implements FocusBehaviour  {
+
     boolean hasFocus = false;
-    
-    @Override
+
     public boolean hasFocus() {
         return hasFocus;
     }
 
-    @Override
     public void setFocus(boolean focus, EventBus eventBus) {
         this.hasFocus = focus;
     }
 
-    public static abstract class ComponentHiliterFocusableBehaviour extends DefaultFocusableBehaviour {
+    protected static abstract class ComponentHiliterFocusableBehaviour extends DefaultFocusableBehaviour {
 
         Component<?> component;
         ColorHiliter colorHiliter;
         ColorHiliter emptyColorHiliter;
-   
-        public ComponentHiliterFocusableBehaviour(Component<?> component, boolean hiliteEmptyColor) {
+
+        protected ComponentHiliterFocusableBehaviour(FocusableComponentMixin<?> component, boolean hiliteEmptyColor) {
+            super();
+            
+            this.component = component;
+            colorHiliter =  new ColorHiliter(this.component.getColor());
+            if (hiliteEmptyColor) {
+                emptyColorHiliter = new ColorHiliter(this.component.getColor());
+            }
+        }
+        
+        protected ComponentHiliterFocusableBehaviour(Component<?> component, boolean hiliteEmptyColor) {
             super();
             this.component = component;
             colorHiliter =  new ColorHiliter(this.component.getColor());
@@ -40,7 +51,11 @@ public abstract class DefaultFocusableBehaviour  implements Focusable {
             }
         }
 
-        public ComponentHiliterFocusableBehaviour(Component<?> component) {
+        protected ComponentHiliterFocusableBehaviour(Component<?> component) {
+            this(component, false);
+        }
+
+        protected ComponentHiliterFocusableBehaviour(FocusableComponentMixin<?> component) {
             this(component, false);
         }
 
@@ -71,7 +86,9 @@ public abstract class DefaultFocusableBehaviour  implements Focusable {
      * A focusable implementation that will hilite a component and then
      * redirect all other events to the passed in ConditionalEventHandler
      */
-    public static class Simple extends ComponentHiliterFocusableBehaviour {
+    public static class Simple extends ComponentHiliterFocusableBehaviour implements Focusable {
+        
+        private FocusManager parentFocusManager;
         
         private ConditionalEventHandler eventHandler;
 
@@ -88,6 +105,14 @@ public abstract class DefaultFocusableBehaviour  implements Focusable {
         public Simple(Component<? extends ConditionalEventHandler> component, boolean hiliteEmptyColor) {
             super(component, hiliteEmptyColor);
             this.eventHandler = (ConditionalEventHandler) component;
+        }
+
+        public FocusManager getParentFocusManager() {
+            return parentFocusManager;
+        }
+
+        public void setParentFocusManager(FocusManager parentFocusManager) {
+            this.parentFocusManager = parentFocusManager;
         }
 
         @Override

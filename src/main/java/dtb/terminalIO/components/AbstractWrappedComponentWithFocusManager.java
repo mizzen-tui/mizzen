@@ -25,7 +25,7 @@ public  abstract class AbstractWrappedComponentWithFocusManager<T extends Compon
                 public void setChildAsCurrentFocus(Focusable focusableChild, EventBus eventBus) {
                     Focusable prevFocus = getCurrentChildFocus();
                     super.setChildAsCurrentFocus(focusableChild, eventBus);
-                    if (getCurrentChildFocus() != prevFocus) {
+                    if (getCurrentChildFocus() != prevFocus && focusableChild != null) {
                         AbstractWrappedComponentWithFocusManager.this.childHasCurrentFocus(focusableChild, eventBus);
                     }
                 }

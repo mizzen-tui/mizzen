@@ -6,7 +6,6 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
-import java.awt.image.PixelGrabber;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -27,7 +26,6 @@ import dtb.terminalIO.components.input.DisplayableValue;
 import dtb.terminalIO.components.input.DisplayableValue.StringDisplayValue;
 import dtb.terminalIO.components.input.DropdownListBox;
 import dtb.terminalIO.components.input.ListBox;
-import dtb.terminalIO.components.plot.Plotter;
 import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.components.plot.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory;
@@ -47,7 +45,6 @@ import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
-import dtb.terminalIO.geom.Rectangle.Simple;
 
 public class ImageViewer {
 

@@ -20,7 +20,6 @@ import dtb.terminalIO.components.input.DropdownListBox;
 import dtb.terminalIO.components.input.HasValue;
 import dtb.terminalIO.components.input.TextInput;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
-import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventBus;
@@ -122,9 +121,10 @@ public class TextBoxTest {
 
             sc_1.setTitle("Scrollable with form");
             
-            SearchFunctionForScrollableComponent.addFinderToScrollable(sc_1);
+            //SearchFunctionForScrollableComponent.addFinderToScrollable(sc_1);
+            
             horizontalPanel.add(sc_1);
-            horizontalPanel.add( new ComponentWithFocusManager(panel2));
+            horizontalPanel.add( new ComponentWithFocusManager<ComponentWithFocusManager<?>>(panel2));
 
             TextComponent eventDisplayer = new TextComponent("                                       ");
 
@@ -179,7 +179,7 @@ public class TextBoxTest {
                 dfalt_fm.setPrevKeyStroke(Keys.SHIFT_TAB_KEYSTROKE);
                 dfalt_fm.setNextKeyStroke(Keys.TAB_KEYSTROKE);
                 dfalt_fm.setNavKeysFirst(false);
-                dfalt_fm.addFocusable(componentInspector);
+                dfalt_fm.addComponentAsFocusables(componentInspector);
             });
 
             refreshTreeviewButton.onChange( componentInspector.refreshEventHandler() );
