@@ -19,17 +19,13 @@ import dtb.terminalIO.util.StringUtils;
 
 public class GameOfLifeComponent extends AbstractComponentWithContainer<Composite> {
 
-    public static int SPEED_SLOW        = 1000;
-    public static int SPEED_MEDIUM      =  500;
-    public static int SPEED_FAST        =  250;
-    public static int SPEED_REALLY_FAST =  100;
 
     private GridData gridData;
     private GameOfLifeEngine gameOfLifeEngine;
     private OnIdleEventEventHandler gameTicker;
     private VerticalPanel mainPanel;
     private GameGridRenderer renderer;
-    private int gameTickInterval = SPEED_FAST;
+    private int gameTickInterval = GameSpeeds.SPEED_FAST;
     Dimension desiredSize;
 
     public GameOfLifeComponent(Color color, Dimension d) {
@@ -45,20 +41,26 @@ public class GameOfLifeComponent extends AbstractComponentWithContainer<Composit
         gridData = new GridData();
 
         DropdownListBox<Integer> speedOptions = new DropdownListBox<Integer>(GameSpeeds.speedOptions());
+        speedOptions.setSelectedValue(gameTickInterval);
         speedOptions.onChange((te)->{
             gameTickInterval = speedOptions.getValue();
             doStart(te.getEventBus());
         });
 
         DropdownListBox<int[][]> shapeOptions = new DropdownListBox<int[][]>(GameOfLifeSampleShapes.shapes(), new DraggableCopiedTextComponentItemFactory<int[][]>());
+        shapeOptions.setSelectedValue(GameOfLifeSampleShapes.glider);
         shapeOptions.onChange((te)->{
             drawShape(shapeOptions.getValue());
         });
 
         DropdownListBox<GameGridRenderer.Builder> rendererOptions = new DropdownListBox<GameGridRenderer.Builder>(GameGridRenderer.UTIL.standardGameRenderers());
+        rendererOptions.setSelected(0);
         rendererOptions.onChange((te)->{
             GameGridRenderer newRenderer = rendererOptions.getValue().build(color);
-            replaceRendererComponent(newRenderer); 
+            replaceRendererComponent(newRenderer);
+            this.mainPanel.markAsDirty();
+            this.markAsDirty();
+            te.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(GameOfLifeComponent.this));
         });
 
         HorizontalPanel optionsPanel = new HorizontalPanel().setHorizontalSpacer(1);
