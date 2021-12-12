@@ -7,8 +7,9 @@ public class TextInputFloat extends TextInputForType<Float> {
 
     public TextInputFloat(Color color, int length) {
         super(color, length, 
-             (t)-> validateText(t),
-             (t)-> toDesiredType(t));
+             (s)-> validateText(s),
+             (s)-> toDesiredType(s),
+             (t)-> typeToString(t));
     }
 
     public TextInputFloat(int length) {
@@ -17,6 +18,10 @@ public class TextInputFloat extends TextInputForType<Float> {
 
     static Float toDesiredType(String text) {
         return Float.parseFloat(text);
+    }
+
+    static String typeToString(Float number) {
+        return String.valueOf(number);
     }
 
     static boolean validateText(String newText) {

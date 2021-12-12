@@ -134,6 +134,7 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
     
     private static final Focusable[] EMPTY_FOCUSABLES = new Focusable[0];
     
+    // links component to its focusables 
     private static class ComponentToFocusables {
         Component<?> component;
         Focusable[] focusables;
@@ -156,8 +157,6 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
     // note - you would think I need a map - nope.. I want a list - don't change it.
     List<ComponentToFocusables> mapChildComponentToFocusables = new ArrayList<ComponentToFocusables>();
     
-    //Map<Component<?>, Focusable> mapChildComponentToFocusable = new HashMap<Component<?>, Focusable> ();
-
     private int findInMap(Component<?> component) {
         for ( int i = 0;  i < mapChildComponentToFocusables.size(); i++) {
             if (component == mapChildComponentToFocusables.get(i).component) {
@@ -203,7 +202,7 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
             }
             return;
         }
-        
+
         // now the fun begins .. we need to figure out where to insert the focusables based on where component
         // is positioned with the childrenlist
         

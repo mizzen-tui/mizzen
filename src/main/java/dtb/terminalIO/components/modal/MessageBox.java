@@ -207,7 +207,7 @@ public class MessageBox {
             buttonsForButtonBar[i].onChange((te)->{
                 removeDialog.handle(te);
                 onCloseHandler.handle(te);
-                te.getEventBus().appendEventHandler( new OnIdleEventEventHandler.OneTime(onPressedButtonEventHandler) );
+                te.getEventBus().asynch(onPressedButtonEventHandler);
             });
         }
 

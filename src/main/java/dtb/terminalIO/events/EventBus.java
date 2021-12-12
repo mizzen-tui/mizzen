@@ -1,5 +1,6 @@
 package dtb.terminalIO.events;
 
+import dtb.terminalIO.events.OnIdleEventEventHandler.OneTimeAfterInterval;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
 
 public interface EventBus extends EventHandlerContainer {
@@ -19,6 +20,14 @@ public interface EventBus extends EventHandlerContainer {
     EventBus appendIdleEventHandler(OnIdleEventEventHandler onIdleEventHandler);
 
     EventBus appendTerminateEventHandler(OnTerminateEventHandler terminateHandler);
+
+    default EventBus asynch(EventHandler handler) {
+        return appendIdleEventHandler(new OnIdleEventEventHandler.OneTime(handler));
+    }
+
+    default EventBus asynchAfter(long interval, EventHandler handler) {
+        return appendIdleEventHandler(new OneTimeAfterInterval(handler, interval));
+    }
 
     void enableIdleEvents();
 

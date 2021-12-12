@@ -2,6 +2,7 @@ package dtb.terminalIO.examples.plot;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -13,15 +14,18 @@ import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.NavButtonsPanel;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.VerticalPanel;
-import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.input.DisplayableValue;
 import dtb.terminalIO.components.input.ListBox;
 import dtb.terminalIO.components.input.RockerButton;
 import dtb.terminalIO.components.input.TextInputInteger;
 import dtb.terminalIO.components.modal.MessageBox;
 import dtb.terminalIO.components.plot.PointPlotter;
+import dtb.terminalIO.components.plot.RotationButtonBar;
+import dtb.terminalIO.components.plot.ScaleButtonBar;
 import dtb.terminalIO.components.plot.braille.BrailleGrid;
+import dtb.terminalIO.components.plot.shape.AbstractCompositeShape;
 import dtb.terminalIO.components.plot.shape.Circle;
+import dtb.terminalIO.components.plot.shape.CompositeShape;
 import dtb.terminalIO.components.plot.shape.Fillable;
 import dtb.terminalIO.components.plot.shape.Line;
 import dtb.terminalIO.components.plot.shape.Polygon;
@@ -80,25 +84,13 @@ public class TestScale {
                    RockerButton fillOption = new RockerButton(grid.getColor(), "Fill", false);
                    controlsInGrid.add(fillOption);
 
-                   TextInputInteger rotationInput = new TextInputInteger(3);
+                   controlsInGrid.add(new TextComponent("|  "));
+                   RotationButtonBar rotationControls = new RotationButtonBar(grid.getColor());
+                   controlsInGrid.add(rotationControls);
 
-                   Button rotateLeft = new Button("<-");
-                   Button rotateRight = new Button("->");
-                   
-                   controlsInGrid.add(new TextComponent("|  Rotatation (degrees)"));
-                   controlsInGrid.add(rotateLeft);
-                   controlsInGrid.add(rotationInput);
-                   controlsInGrid.add(rotateRight);
-
-                   TextInputInteger scaleInput = new TextInputInteger(3);
-                   scaleInput.setText("100");
-                   Button scaleUp = new Button("+");
-                   Button scaleDown = new Button("-");
-
-                   controlsInGrid.add(new TextComponent("|  Scale (%)"));
-                   controlsInGrid.add(scaleUp);
+                   controlsInGrid.add(new TextComponent("|  "));
+                   ScaleButtonBar scaleInput = new ScaleButtonBar(grid.getColor());
                    controlsInGrid.add(scaleInput);
-                   controlsInGrid.add(scaleDown);
 
                    Position controlsInGridPosition = PositionRelativeFactory.fromAlign(VAlign.BOTTOM, 3, Align.LEFT, 0,  grid, controlsInGrid);
 
@@ -120,7 +112,7 @@ public class TestScale {
 
                        Vec2<?>  midPoint = grid.getGridRectangle().centerPosition();
 
-                       PositionTransform.FofG transForm = new PositionTransform.FofG(new RotateAroundFixedPoint(rotationInput.getValue(),midPoint),translateTranFormer);
+                       PositionTransform.FofG transForm = new PositionTransform.FofG(new RotateAroundFixedPoint(rotationControls.getValue(),midPoint),translateTranFormer);
 
                        Integer scaleValuePercent = scaleInput.getValue();
                        if (scaleValuePercent != null && scaleValuePercent != 100) {
@@ -144,7 +136,6 @@ public class TestScale {
                        grid.markAsDirty();
                        tApp.doRefreshCanvasIfModified();
                    };
-                   
 
                    shapesChoiceComponent.onChange((te)->{
                        Shape<?> shape = shapesChoiceComponent.getValue();
@@ -154,7 +145,7 @@ public class TestScale {
                        drawShape.accept(shape);
 
                    });
-                   
+
                    fillOption.onChange((te)->{
                        drawShape.accept(shapesChoiceComponent.getValue());
                    });
@@ -195,34 +186,9 @@ public class TestScale {
                                   ));
 
                    // handle rotate requests
-                   rotateLeft.onChange((te)->{
-                       Integer value = (rotationInput.getValue()==null ? 0 : rotationInput.getValue()) - 1;
-                       rotationInput.setText(String.valueOf(value));
-                       delayedDraw.onRequest(te.getEventBus());
-                   });
-
-                   rotateRight.onChange((te)->{
-                       Integer value = (rotationInput.getValue()==null ? 0 : rotationInput.getValue()) + 1;
-                       rotationInput.setText(String.valueOf(value));
-                       delayedDraw.onRequest(te.getEventBus());
-                   });
-                   
-                   rotationInput.onChange((te)->{
-                       delayedDraw.onRequest(te.getEventBus());
-                   });
-
-                   // handle scale requests
-                   scaleUp.onChange((te)->{
-                       Integer value = (scaleInput.getValue()==null ? 0 : scaleInput.getValue()) + 1;
-                       scaleInput.setText(String.valueOf(value));
-                       delayedDraw.onRequest(te.getEventBus());
-                   });
-
-                   scaleDown.onChange((te)->{
-                       Integer value = (scaleInput.getValue()==null ? 0 : scaleInput.getValue()) - 1;
-                       scaleInput.setText(String.valueOf(value));
-                       delayedDraw.onRequest(te.getEventBus());
-                   });
+                   rotationControls.onChange((te)->{ 
+                                                       delayedDraw.onRequest(te.getEventBus());
+                                                   });
 
                    scaleInput.onChange((te)->{
                        delayedDraw.onRequest(te.getEventBus());
@@ -246,7 +212,7 @@ public class TestScale {
                            InputEventsProducer.IDLE_INTERVAL = newValue;
                        }
                    });
-                   
+
                    vp.add(hp);
                    vp.add(intervalFormContainer);
                    vp.add(msgArea);
@@ -265,11 +231,11 @@ public class TestScale {
                    mainFocusManager.setNextKeyStroke(Keys.TAB_KEYSTROKE);
 
                    tApp.getEventBus().appendEventHandler(  mainFocusManager );
-                   
+
                    FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
 
                }).start();
-        
+
     }
     
     
@@ -325,6 +291,12 @@ public class TestScale {
 
         choices.add(new ShapeDisplayValue(hexagon.getName(), hexagon ));
 
+
+        choices.add(new ShapeDisplayValue("SpiroGraph", new SpiroGraph(10.0f, 10.0f, 20, 30, 10f) ));
+
+        choices.add(new ShapeDisplayValue("Circle+sqr", new CompositeShape().addShape(new Circle(20, 20, 20).setFilled(true))
+                                                                            .addShape(new  RectangleShape( new Rectangle.Simple(0,0,42,42)  ))));
+
         
 
         ListBox<Shape<?>> shapes = new ListBox<Shape<?>>();
@@ -357,6 +329,51 @@ public class TestScale {
             return name;
         }
     }
+    
+    
+    static class SpiroGraph extends AbstractCompositeShape<SpiroGraph> {
 
+        
+        float cx;
+        float cy;
+        int radius1;
+        int radius2;
+        float ratio;
+        
+        
+        public SpiroGraph(float cx, float cy, int radius1, int radius2, float ratio) {
+            super();
+            this.cx = cx;
+            this.cy = cy;
+            this.radius1 = radius1;
+            this.radius2 = radius2;
+            this.ratio = ratio;
+            this.setName("SpiroGraph");
+        }
+
+        Collection<Shape<?>> drawSpirographToLines(float cx, float cy, int radius1, int radius2, float ratio) {
+            double x,y, theta;
+            
+            List<Shape<?>> lines = new ArrayList<Shape<?>>();
+            
+            Vec2<?> currentPosition = new Vec2.BaseVec2(cx + radius1 + radius2,  cy);
+            
+            for (theta = 0; theta <= Math.PI * 2; theta += 0.01) {
+                x = cx + radius1 * Math.cos(theta) + radius2 * Math.cos(theta * ratio);
+                y = cy + radius1 * Math.sin(theta) + radius2 * Math.sin(theta * ratio);
+                Vec2<?> nextPosition = new Vec2.BaseVec2((float)x,  (float)y);
+                lines.add(new Line(currentPosition, nextPosition));
+                currentPosition = nextPosition;
+            }
+            return lines;
+        }
+
+        @Override
+        protected Collection<Shape<?>> buildShapes() {
+            return drawSpirographToLines(cx, cy, radius1, radius2, ratio);
+        }
+
+    }
+    
 
 }

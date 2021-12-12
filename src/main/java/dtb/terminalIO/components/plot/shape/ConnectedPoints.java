@@ -29,7 +29,7 @@ import dtb.terminalIO.textsegments.CleanString;
  * 
  */
 public class ConnectedPoints<T extends ConnectedPoints<?>> extends AbstractShape<T> implements Fillable<T> , AsRectangle2D.AsFloat2D  {
-    
+
     List<PointPlot> points = new ArrayList<PointPlot>();
     boolean filled = false;
     
@@ -44,28 +44,34 @@ public class ConnectedPoints<T extends ConnectedPoints<?>> extends AbstractShape
     }
 
 
-    public void addPoint(int x, int y) {
+    public T addPoint(int x, int y) {
         points.add(new PointPlot(x,y));
+        return (T) this;
     }
 
-    public void addPoint(float x, float y) {
+    public T addPoint(float x, float y) {
         points.add(new PointPlot(x,y));
+        return (T) this;
     }
 
-    public void addPoint(float x, float y, Color color) {
+    public T addPoint(float x, float y, Color color) {
         points.add(new PointPlot(x,y,color));
+        return (T) this;
     }
 
-    public void addPoint(PointPlot point) {
+    public T addPoint(PointPlot point) {
         points.add(point);
+        return (T)this;
     }
-    
-    public void addPoint(Vec2<?> point) {
+
+    public T addPoint(Vec2<?> point) {
         points.add(new PointPlot(point));
+        return (T) this;
     }
-    
-    public void addPoint(Vec2<?> point, Color color) {
+
+    public T addPoint(Vec2<?> point, Color color) {
         points.add(new PointPlot(point, color));
+        return (T) this;
     }
 
     @Override
@@ -92,18 +98,16 @@ public class ConnectedPoints<T extends ConnectedPoints<?>> extends AbstractShape
             line.setPositionTransform(positionTransform);
             line.draw(pointPlotter);
         }
-        
+
     }
-    
+
     protected void drawfilled(PointPlotter pointPlotter, PositionTransform positionTransform) {
 
         //TreeSet<PointPlot> sortedPoints = new TreeSet<PointPlot>(Vec2.UTIL.VEC2_COMPARE);
 
         TreeSet<PointPlot> sortedPoints = new TreeSet<PointPlot>(new Vec2_ScanLineComparator());
         //
-        
-        
-        
+
         PointPlotter plotToColumnEndPointsArray = new PointPlotter() {
 
             @Override
@@ -127,7 +131,7 @@ public class ConnectedPoints<T extends ConnectedPoints<?>> extends AbstractShape
 
         // outline has now been drawn in memory - lets do a "scan-line" fill into
         // the actual destination (real) plotter
-        
+
         float currentY = Float.MIN_VALUE;
         boolean drawToggle = false;
         PointPlot lastPoint = null;
@@ -159,8 +163,7 @@ public class ConnectedPoints<T extends ConnectedPoints<?>> extends AbstractShape
             currentY = Math.round(point.y);
         }
 
-        
-        
+
         //Color preColor = pointPlotter.setNextPlotColor(Colors.BRed);
         drawOutlineWithTransform(pointPlotter,  positionTransform);
         
@@ -171,7 +174,6 @@ public class ConnectedPoints<T extends ConnectedPoints<?>> extends AbstractShape
             pointPlotter.setNextPlotColor(prevColor);
         }
 
-        
         //pointPlotter.setNextPlotColor(preColor);
 
     }
@@ -187,9 +189,7 @@ public class ConnectedPoints<T extends ConnectedPoints<?>> extends AbstractShape
             return Float.compare(vec1.getX(), vec2.getX());
         }
     }
-    
-    
-    
+
     @SuppressWarnings("unchecked")
     @Override
     public T setFilled(boolean filled) {
@@ -200,12 +200,11 @@ public class ConnectedPoints<T extends ConnectedPoints<?>> extends AbstractShape
     @Override
     public Rectangle2D<Float> getRectangle2D() {
         PointPlotterAsRectangle calculatedRectanglePlotter = new PointPlotterAsRectangle();
-        
+
         for (PointPlot point : points) {
             calculatedRectanglePlotter.plot(positionTransform.transform(point));
         }
         return calculatedRectanglePlotter.getRectangle2D();
     }
-    
 
 }

@@ -23,9 +23,9 @@ public class OnIdleEvent extends TerminalEvent<Long> {
     
     public OnIdleEvent(Object source) {
         super(source, TYPE.TIMER, System.currentTimeMillis(),Q_FULL_POLICY.OFFER);
-        if (logger.isEnabled()) {
-           logger.info("idle -event #"+ (++counter));
-        }
+//        if (logger.isEnabled()) {
+//           logger.info("idle -event #"+ (++counter));
+//        }
     }
 
     public long getMilliseconds() {

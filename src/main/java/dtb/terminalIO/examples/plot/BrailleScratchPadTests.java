@@ -27,7 +27,7 @@ public class BrailleScratchPadTests {
         grid.plotPosition(10, 10);
     }
 
-    static class EnemyOneShape extends AbstractShape {
+    static class EnemyOneShape extends AbstractShape<EnemyOneShape> {
 
         CompositeShape componentShapes;
         Line l1;

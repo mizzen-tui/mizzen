@@ -264,7 +264,7 @@ public class MouseEventOrchestrator {
                         if (focusableAndClickable == null) {
                             return;
                         }
-                        eventBus.appendEventHandler( new OnIdleEventEventHandler.OneTime((te2)-> {
+                        eventBus.asynch((te2)-> {
                             if (focusableAndClickable.hasFocus()) {
                                 // map mouse position as an offset into the clicked component
                                 // and pass the component a new mouse event with this offset
@@ -279,7 +279,7 @@ public class MouseEventOrchestrator {
                                 // can't map to an offset into component so just send the eventbus
                                 clickable.onClick( te2.getEventBus() );
                             }
-                        })); 
+                        }); 
                     }
                 }
             }

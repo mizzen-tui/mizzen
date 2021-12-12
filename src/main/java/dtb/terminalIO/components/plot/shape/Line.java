@@ -44,11 +44,11 @@ public class Line extends AbstractShape<Line> {
         this(x1, y1, x2, y2, null);
     }
 
-    public Line(Position p1, Position p2, Color color) {
+    public Line(Vec2<?> p1, Vec2<?> p2, Color color) {
         this(p1.getX(), p1.getY(), p2.getX(), p2.getY(), color);
     }
 
-    public Line(Position p1, Position p2) {
+    public Line(Vec2<?> p1, Vec2<?> p2) {
         this(p1, p2, null);
     }
 

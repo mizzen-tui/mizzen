@@ -6,6 +6,7 @@ import java.util.function.Supplier;
 
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.controlcodes.color.Color;
@@ -30,7 +31,7 @@ import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 
 public class TextInput extends BoundedComponent<TextInput>
-                       implements HasValue<String>, 
+                       implements SettableHasValue<String>, 
                                   ParentContainer, 
                                   Focusable  {
 
@@ -118,6 +119,7 @@ public class TextInput extends BoundedComponent<TextInput>
         this.buffer = new StringBuffer();
         this.caret = new Position.Simple(0, 0);
         this.setFillOnClear(true);
+        this.maxTextWidth = this.getWidth();
         this.textRenderer = makeChildComponent(() -> new TextComponent(TextInput.this.getColor(),
                                                                        TextInput.this.getRectangle(), 
                                                                        TextInput.this.buffer.toString()));
@@ -166,10 +168,21 @@ public class TextInput extends BoundedComponent<TextInput>
         return this.buffer.toString();
     }
 
+    @Override
     public String getValue() {
         return this.getText();
     }
+    
+    @Override
+    public void setValue(String value) {
+        this.setText(value);
+    }
 
+
+    public void setLength(int length) {
+        resize(new Dimension.Simple(getHeight(), length));
+    }
+    
     public void resize(Dimension d) {
         if (d != null && d.isSameDimension(this)) {
             return;
@@ -177,6 +190,9 @@ public class TextInput extends BoundedComponent<TextInput>
         setRectangle(new Rectangle.Simple(this.getPostion_TopLeft(), d));
         this.textRenderer.resize(d);
         this.maxTextWidth = Math.max(this.getWidth(), this.getText().length());
+        if (this.getParentContainer()!=null ) {
+            this.getParentContainer().childResized(this);
+        }
         markAsDirty();
     }
 
@@ -506,10 +522,16 @@ public class TextInput extends BoundedComponent<TextInput>
 
     @Override
     public String toString() {
-        return "TextInput [buffer=" + 
-                           buffer.toString() + "]" + 
+        String identifier = buffer.toString();
+        if (buffer.length()<1) {
+            identifier = "name="+HasName.UTIL.getName(this);
+        } else {
+            identifier = "buffer="+buffer.toString();
+        }
+        return "TextInput [" + identifier + "]" + 
                            "[row=" + getRow() + ", lcol" + getCol() + ", rcol="
                 + getRightMostCol() + " width=" + getWidth() + ", height=" + getHeight() + "]";
     }
+
 
 }

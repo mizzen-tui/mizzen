@@ -47,11 +47,11 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
 
         this.listBox = new ListBox<T>(color) {
             protected void onMouseSelected(EventBus eventBus) {
-                eventBus.appendEventHandler(new OnIdleEventEventHandler.OneTime((te)->{
-                    hideListBox();
-                    setSelectedFromListBox(eventBus);
-                    RequestUpdateCanvasEvent.invoke(eventBus, this);
-                }));
+                eventBus.asynch((te)->{
+                                            hideListBox();
+                                            setSelectedFromListBox(eventBus);
+                                            RequestUpdateCanvasEvent.invoke(eventBus, this);
+                                        });
             }
         };
         this.listBox.setBorder(true);

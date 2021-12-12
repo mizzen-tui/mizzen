@@ -58,6 +58,7 @@ public interface PositionTransform {
     public static class Translate implements PositionTransform {
         float rowDelta;
         float colDelta;
+        
 
         public Translate(float rowDelta, float colDelta) {
             super();

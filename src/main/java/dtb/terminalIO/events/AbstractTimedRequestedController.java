@@ -33,8 +33,12 @@ public abstract class AbstractTimedRequestedController {
         return this;
     }
 
-    public AbstractTimedRequestedController setMaxStarvationTime(int timerDelayMillis) {
-        this.maxStarvationTime = timerDelayMillis;
+    public int getMaxStarvationTime() {
+        return maxStarvationTime;
+    }
+
+    public AbstractTimedRequestedController setMaxStarvationTime(int maxStarvationTime) {
+        this.maxStarvationTime = maxStarvationTime;
         return this;
     }
 

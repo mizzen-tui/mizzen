@@ -14,6 +14,8 @@ import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.CleanString;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegment;
+import dtb.terminalIO.util.ElapsedTime;
+import dtb.terminalIO.util.Logging;
 
 public class ComponentWithHilightedText extends Composite implements Focusable {
 
@@ -22,7 +24,7 @@ public class ComponentWithHilightedText extends Composite implements Focusable {
     private List<Component<?>>   hilightList        = new ArrayList<Component<?>>();
 
     private List<HilightRequest> hilightRequestList = new ArrayList<HilightRequest>();
-    
+
     private Focusable focusable;
 
     private class HilightRequest {
@@ -83,6 +85,12 @@ public class ComponentWithHilightedText extends Composite implements Focusable {
         return addedComponentsList;
     }
 
+    @Override
+    protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
+        Logging.info( "draw()" + ElapsedTime.onRunOf(()-> super.draw(color, segments)));
+    }
+    
+    
     @Override
     synchronized protected void drawChildren(Color color, IScreenLineSegmentsBuffer segments, List<ComponentWithOffset> children,
             boolean boundsFixed) {

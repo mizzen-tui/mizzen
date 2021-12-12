@@ -152,6 +152,10 @@ public interface Vec2<T extends Vec2<?>> {
             return true;
         }
         
+        public String toString() {
+            return UTIL.asString(this);
+        }
+
     }
 
     public static class UTIL {
@@ -184,6 +188,14 @@ public interface Vec2<T extends Vec2<?>> {
             }
             return points;
         }
+        
+        public static String asString(Vec2<?> p) {
+            if (p == null) {
+                return  "Vec2[null, null]";
+            }
+            return String.format("%s[x=%4f, y=%4f]", p.getClass().getSimpleName(), p.getX(), p.getY());
+        }
+        
 
     }
 

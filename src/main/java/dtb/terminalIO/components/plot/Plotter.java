@@ -151,6 +151,7 @@ public class Plotter extends BoundedComponent<Plotter> {
 
     public void clearPlots() {
         plots.clear();
+        markAsDirty();
     }
 
     public String getCharAt(int row, int col) {

@@ -219,7 +219,7 @@ public class Composite extends AbstractComponent<Composite>
         this.onResizeService.resize(this.getPreferredRectangleForLayout());
     }
     
-    protected Rectangle getInnerRectangle() {
+    public Rectangle getInnerRectangle() {
         return new Rectangle() {
 
             @Override

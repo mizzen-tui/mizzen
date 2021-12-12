@@ -138,7 +138,7 @@ public class GameOfLifeComponent extends AbstractComponentWithContainer<Composit
     }
     
     public void start(EventBus eventBus) {
-        eventBus.appendIdleEventHandler(new OnIdleEventEventHandler.OneTime(te->{  doStart(te.getEventBus()); }));
+        eventBus.asynch(te-> doStart(te.getEventBus()));
     }
 
     private void renderNextGeneration() {

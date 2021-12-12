@@ -8,8 +8,9 @@ public class TextInputInteger  extends TextInputForType<Integer> {
     
     public TextInputInteger(Color color, int length) {
         super(color, length, 
-              (t)-> validateText(t),
-              (t)-> toDesiredType(t));
+              (s)-> validateText(s),
+              (s)-> toDesiredType(s),
+              (t)-> typeToString(t));
         this.setText("0");
     }
 
@@ -24,6 +25,12 @@ public class TextInputInteger  extends TextInputForType<Integer> {
         return Integer.parseInt(text);
     }
 
+    static String typeToString(Integer number) {
+        return String.valueOf(number);
+    }
+
+    
+    
     static boolean validateText(String newText) {
         try {
             if (newText == null || newText.trim().length()==0) {

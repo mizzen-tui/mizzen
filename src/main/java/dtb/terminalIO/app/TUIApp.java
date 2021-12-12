@@ -500,7 +500,7 @@ public class TUIApp {
 
         if (this.onReadyStartAction != null) {
             // asynchronously run the application custom startup code
-            eventBus.appendIdleEventHandler(new OnIdleEventEventHandler.OneTime(new EventHandler() {
+            eventBus.asynch(new EventHandler() {
                 @Override
                 public void handle(TerminalEvent<?> te) {
                     // run start up (custom setup) code
@@ -508,7 +508,7 @@ public class TUIApp {
                     // do the first canvas paint (asynchronously)
                     eventBus.raiseEvent(new RequestUpdateCanvasEvent(TUIApp.this));
                 }
-            }));
+            });
         }
     }
 

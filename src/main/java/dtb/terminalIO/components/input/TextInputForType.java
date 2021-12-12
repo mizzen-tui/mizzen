@@ -20,19 +20,22 @@ import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.StringUtils;
 
-public class TextInputForType<T>  extends BoundedComponent<TextInputForType<T>> implements HasValue<T>, ParentContainer, Focusable {
+public class TextInputForType<T>  extends BoundedComponent<TextInputForType<T>> implements SettableHasValue<T>, ParentContainer, Focusable {
 
     private TextInput textInput;
     private Function<String,Boolean> validate;
     private Function<String, T> translateToType;
+    private Function<T, String> translateFromType;
     private ConditionalEventHandler eventHandler;
     private ChainedEventHandler chainedHandler;
 
     public TextInputForType(Color color, int length, 
                             Function<String,Boolean> validate,
-                            Function<String, T> translateToType) {
+                            Function<String, T> translateToType,
+                            Function<T, String> translateFromType) {
         super(color, new Dimension.Simple(1, length));
         this.translateToType = translateToType;
+        this.translateFromType = translateFromType;
         this.validate = validate;
 
         //  build a textbox such that the validate function parameter is injected
@@ -151,6 +154,17 @@ public class TextInputForType<T>  extends BoundedComponent<TextInputForType<T>> 
 
         return this.translateToType.apply(currentText);
     }
+    
+    @Override
+    public void setValue(T value) {
+        String currentText = translateFromType.apply(value);
+        if (! this.validate.apply(currentText)) {
+            return;
+        }
+        setText(currentText);
+    }
+    
+    
 
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer mySegments) {

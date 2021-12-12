@@ -17,65 +17,21 @@ import dtb.terminalIO.traverse.HasChildren;
  * The draw method will draw all
  * 
  */
-public class CompositeShape implements Shape<CompositeShape> , HasChildren<Shape<?>>, AsRectangle2D.AsFloat2D {
+public class CompositeShape extends AbstractCompositeShape<CompositeShape> {
 
-    Collection<Shape<?>> shapes = new ArrayList<Shape<?>>();
-    PositionTransform positionTransform = PositionTransform.NOOP;
-    String name;
+    @Override
+    protected Collection<Shape<?>> buildShapes() {
+        return new ArrayList<Shape<?>>();
+    }
 
     public CompositeShape addShape(Shape<?> shape) {
-        shapes.add(shape);
+        getShapes().add(shape);
         return this;
     }
 
     public CompositeShape removeShape(Shape<?> shape) {
-        shapes.remove(shape);
+        getShapes().remove(shape);
         return this;
-    }
-
-    protected void drawChild(Shape<?> childShape, PointPlotter pointPlotter) {
-        childShape.draw(pointPlotter);
-    }
-
-    @Override
-    public void draw(PointPlotter pointPlotter) {
-        for (Shape<?> shape : shapes) {
-            drawChild(shape, pointPlotter);
-        }
-    }
-
-    @Override
-    public PositionTransform getPositionTransform() {
-        return this.positionTransform;
-    }
-
-    @Override
-    public void setPositionTransform(PositionTransform positionTransform) {
-        this.positionTransform = positionTransform;
-        for (Shape<?> shape : shapes) {
-            shape.setPositionTransform(positionTransform);
-        }
-    }
-
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public CompositeShape setName(String name) {
-        this.name = name;
-        return this;
-    }
-
-    @Override
-    public Collection<? extends Shape<?>> getChildren() {
-        return shapes;
-    }
-
-    @Override
-    public Rectangle2D.Float2D getRectangle2D() {
-        return Shape.UTIL.getAsRectangle( shapes );
     }
 
 }

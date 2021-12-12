@@ -16,8 +16,6 @@ import dtb.terminalIO.components.plot.PathPlotter.LinePathPlotter;
 import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.components.plot.PointPlotter.PointPlot;
 import dtb.terminalIO.components.plot.PointPlotter.PointPlotterList;
-import dtb.terminalIO.components.plot.TransformPointPlotter;
-import dtb.terminalIO.components.plot.XYTranslate;
 import dtb.terminalIO.components.plot.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.shape.Circle;
 import dtb.terminalIO.components.plot.shape.CircleAlgorithm.CircleCounterClockwise_SORT;
@@ -35,7 +33,7 @@ import dtb.terminalIO.events.TerminalEvent.TYPE;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
-import dtb.terminalIO.geom.position.PositionTransform.RotateAroundFixedPoint;
+import dtb.terminalIO.geom.position.PositionTransform;
 
 public class TestSprites {
 
@@ -65,8 +63,8 @@ public class TestSprites {
 
         Dimension gridSize = computeGridSize.get();
 
-        //BlocksGrid grid = new BlocksGrid(Colors.BGre, gridSize);
         BrailleGrid grid = new BrailleGrid(Colors.BGre, gridSize);
+        //BlocksGrid grid = new BlocksGrid(Colors.BGre, gridSize);
 
         if (includeTitle) {
           grid.setTitle(Colors.BPur, "Space Invaders");
@@ -129,25 +127,24 @@ public class TestSprites {
             pathShape.addPathPlotter( new CirclePathPlotter(75,75,60, new CircleCounterClockwise_SORT(75,75)) );
             return pathShape;
         };
-        
-        
-        
+
         Sprite wheel = new Wheel(160);
-        
+
         wheel.setPath(makePathPlotter.get());
         wheel.setRotateRate(10);
-        
+        wheel.setRotateRate(12);
+
         Stick stick = new Stick();
         stick.setPath(makePathPlotter.get());
         stick.setRotateRate(3);
-        
+
         new Thread(()->{
 
             Consumer<Integer> renderAction = (i)->{
                 pointPlotter.clearPlots();
 
                 wheel.drawNextPosition(pointPlotter);
-                
+
                 stick.drawNextPosition(pointPlotter);
 
             };
@@ -183,59 +180,36 @@ public class TestSprites {
     
     static abstract class AbstractShapeSprite implements Sprite {
         
-        Shape shape;
+        Shape<?> shape;
         PathPlotter pathPlotter;
-        XYTranslate delta = new XYTranslate(null, 0, 0);
-        
-        RotateAroundFixedPoint gridPointRotator;
-        TransformPointPlotter gridRotatingPlotter;
 
-        int drawCounter = 0;
         int nextPathPosIncr = 1;
         int rotateRate = 0;
-        
-        protected void setShape(Shape shape) {
+        int theta = 0;
+
+        protected void setShape(Shape<?> shape) {
             this.shape = shape;
         }
-        
-        protected Shape getShape() {
+
+        protected Shape<?> getShape() {
             return shape;
         }
-
-        protected RotateAroundFixedPoint getPointRotator() {
-            if (gridPointRotator == null) {
-               gridPointRotator = new RotateAroundFixedPoint(0, spriteMidPoint());
-               gridRotatingPlotter = new TransformPointPlotter(null, gridPointRotator);
-            }
-            return gridPointRotator;
-        }
-
-        protected TransformPointPlotter getRotatingPlotter() {
-            getPointRotator();
-            return gridRotatingPlotter;
-        }
-
-        public int getTheta() {
-            return getPointRotator().getTheta();
-        }
-
-        public void setTheta(int theta) {
-            this.getPointRotator().setTheta(theta);
+        
+        public void rotate(int thetaInDegrees) {
+            this.theta = thetaInDegrees;
         }
         
+        public int currentAngle() {
+            return this.theta;
+        }
+        
+
         public void draw(PointPlotter pointPlotter) {
-            if (rotateRate != 0) {
-                getRotatingPlotter().setPointPlotter(pointPlotter);
-                getPointRotator().setTheta(drawCounter * rotateRate);
-                this.shape.draw(getRotatingPlotter());
-            } else {
-                this.shape.draw(pointPlotter);
-            }
-            drawCounter++;
+            this.shape.draw(pointPlotter);
         }
 
         abstract protected Rectangle calcBoundingRect();
-        
+
         Position spriteMidPoint() {
 
             Rectangle rect = calcBoundingRect();
@@ -254,29 +228,35 @@ public class TestSprites {
                     }
                 };
         }
-        
+
         @Override
         public void drawNextPosition(PointPlotter pointPlotter) {
             Position p = pathPlotter.nextPosition(nextPathPosIncr);
-            delta.setxDelta(p.getCol());
-            delta.setyDelta(p.getRow());
-            delta.setPointPlotter(pointPlotter);
-            draw(delta);
+
+            theta += rotateRate;
+
+            if (theta != 0) {
+                this.shape.setPositionTransform(new PositionTransform.FofG(new PositionTransform.Translate(p), 
+                                                                           new PositionTransform.RotateAroundFixedPoint(theta, spriteMidPoint())));
+            } else {
+                this.shape.setPositionTransform(new PositionTransform.Translate(p));
+            }
+            
+            draw(pointPlotter);
         }
-        
+
         @Override
         public void setRotateRate(int i) {
             this.rotateRate = i;
             
         }
-        
+
         @Override
         public void setPath(PathPlotter pathPlotter) {
             this.pathPlotter = pathPlotter;
         }
     }
-    
-    
+
     static class Stick extends  AbstractShapeSprite {
         public Stick() {
             RectangleShape shape = new RectangleShape( new Rectangle.Simple(0,0, 3, 50) );
@@ -293,7 +273,7 @@ public class TestSprites {
     static class Wheel extends AbstractShapeSprite {
 
         Rectangle boundingRect;
-        
+
         public Wheel(int radius) {
             CompositeShape shape = new CompositeShape();
             Circle outerCircle = new Circle(0, 0, (int)(15f/19f * radius));
@@ -338,12 +318,15 @@ public class TestSprites {
             shape.addShape(line135);
             shape.addShape(line225);
             shape.addShape(line315);
+            
             shape.addShape(innerCircle);
+            
             shape.addShape(outerCircle);
             shape.addShape(outerCircle2);
+            
             setShape(shape);
         }
-        
+
         @Override
         protected Rectangle calcBoundingRect() {
             if (boundingRect == null) {

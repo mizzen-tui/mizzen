@@ -141,6 +141,19 @@ public interface HasValue<V> {  //TODO:  Make a SettableValue that extends this.
                 }
             };
         }
+        
+        public TimerControlledOnValueChangedEventHandler<V> setTimerDelayMillis(int timerDelayMillis) {
+            timer.setTimerDelayMillis(timerDelayMillis);
+            if (timer.getMaxStarvationTime() < timerDelayMillis) {
+                setMaxStarvationTime(timerDelayMillis * 3);
+            }
+            return this;
+        }
+
+        public TimerControlledOnValueChangedEventHandler<V>  setMaxStarvationTime(int maxStarvationTime) {
+            timer.setMaxStarvationTime(maxStarvationTime);
+            return this;
+        }
 
         @SuppressWarnings("unchecked")
         @Override
@@ -148,7 +161,7 @@ public interface HasValue<V> {  //TODO:  Make a SettableValue that extends this.
             this.lastValue = this.currentValue;
             this.currentValue = ((HasValue<V>) te.getEventData()).getValue();
             timer.onRequest(te.getEventBus());
-            valueChanged(te, (HasValue<V>) te.getEventData());
+            // valueChanged(te, (HasValue<V>) te.getEventData());
         }
 
     }

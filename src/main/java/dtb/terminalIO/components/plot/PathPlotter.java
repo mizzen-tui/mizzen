@@ -18,12 +18,12 @@ import dtb.terminalIO.geom.position.Position;
  * <p/>
  *
  * This is useful when you want to create a path that is in the form of a 
- * shape.   For example.. Maybe you have a box that you wan to move around
+ * shape.   For example.. Maybe you have a box that you want to move around
  * in a circular path.   You can do that with this type of object
  *
  * <p/>
  *
- * See CirclePathPlotter for example uses.
+ * See {@link CirclePathPlotter} for example uses.
  *
  * @author dbalme
  *
@@ -53,18 +53,18 @@ public abstract class PathPlotter {
 
     public static class ShapePathPlotter extends PathPlotter {
         
-        private Shape shape;
+        private Shape<?> shape;
 
-        public ShapePathPlotter(Shape shape) {
+        public ShapePathPlotter(Shape<?> shape) {
             this.shape = shape;
         }
         
         protected void buildPlotPath(PointPlotterList plots) {
             shape.draw(plots);
         }
-        
+
     }
-    
+
     public static class CirclePathPlotter extends ShapePathPlotter {
         Comparator<Position> pointsSorter;
 
@@ -72,7 +72,7 @@ public abstract class PathPlotter {
             super(circle);
             this.pointsSorter = pointsSorter;
         }
-        
+
         public CirclePathPlotter(int x, int y, int radius, Comparator<Position> pointsSorter) {
             this(new Circle(x, y, radius), pointsSorter);
             this.pointsSorter = pointsSorter;
@@ -102,14 +102,14 @@ public abstract class PathPlotter {
         }
 
     }
-    
+
     public static class TrianglePathPlotter extends ShapePathPlotter {
         
         public TrianglePathPlotter(Triangle triangle) {
             super(triangle);
         }
     }
-    
+
     public static class CompositePathPlotter extends PathPlotter {
         
         Collection<PathPlotter> pathPlotters = new ArrayList<PathPlotter>();

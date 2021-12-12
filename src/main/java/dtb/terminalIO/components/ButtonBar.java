@@ -128,7 +128,6 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
 
         count++;
 
-
         getContainer().add(component);
         nonDividerComponents.add(component);
         addComponentFocusablesToFocusManager(component);
@@ -236,7 +235,6 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
     public void removeChildren() {
         super.removeChildren();
         nonDividerComponents.clear();
-//        mapChildComponentToFocusable.clear();
         count = 0;
         lastDivider = null;
     }

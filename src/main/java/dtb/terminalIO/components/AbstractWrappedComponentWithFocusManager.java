@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.function.Function;
 
 import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
@@ -37,6 +38,11 @@ public  abstract class AbstractWrappedComponentWithFocusManager<T extends Compon
         this.focusManager = focusManager;
         DefaultFocusManager.setDefaultNameFromParentObject(focusManager, this);
     }
+
+    public void setCustomExtendedEventHandler(ConditionalEventHandler customExtendedEventHandler) {
+        ((DefaultFocusManager) this.focusManager).setCustomExtendedEventHandler(customExtendedEventHandler);
+    }
+
     
     private FocusManager getFocusManager(EventBus eventBus) {
         if (this.focusManager == null) {
@@ -54,7 +60,7 @@ public  abstract class AbstractWrappedComponentWithFocusManager<T extends Compon
         }
         return this.focusManager;
     }
-    
+
     @Override
     public void setFocus(boolean focus, EventBus eventBus) {
         // I'm avoiding an obscure bug in FocusManager
@@ -75,7 +81,9 @@ public  abstract class AbstractWrappedComponentWithFocusManager<T extends Compon
         getFocusManager(eventBus).setChildAsCurrentFocus(focusableChild, eventBus);
     }
 
-    abstract public void childHasCurrentFocus(Focusable focusableChild, EventBus eventBus);
+    public void childHasCurrentFocus(Focusable focusableChild, EventBus eventBus) {
+        // default - do nothing
+    }
 
     @Override
     public Focusable getCurrentChildFocus() {
@@ -95,6 +103,17 @@ public  abstract class AbstractWrappedComponentWithFocusManager<T extends Compon
         } else {
             throw new IllegalStateException("Can only add a focusable to "+this.getName()+" when focusManager is a DefaultFocusManager");
         }
+    }
+    
+    public void addAllFocusables(Collection<Focusable> focusables) {
+        for (Focusable focusable : focusables) {
+            addFocusable(focusable);
+        }
+    }
+
+    public void registerAllFocusables() {
+        Collection<Focusable> focusables = FocusManager.UTIL.focusablesFromComponent(this.getWrappedComponent());
+        addAllFocusables(focusables);
     }
 
 }

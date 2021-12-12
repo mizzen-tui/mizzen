@@ -3,11 +3,11 @@ package dtb.terminalIO.components;
 import java.util.Collection;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.function.Consumer;
 
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.events.EventBus;
-import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.OnIdleEventEventHandler.RepeatingInterval;
 import dtb.terminalIO.events.RequestScrollToView;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
@@ -17,6 +17,7 @@ import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegment;
 import dtb.terminalIO.textsegments.ScreenLineSegmentsBuffer;
+import dtb.terminalIO.util.DrainableBlockingQueue;
 import dtb.terminalIO.util.ElapsedTime;
 import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.Logging.LogOnInterval;
@@ -97,60 +98,29 @@ public class StdoutViewer extends AbstractComponent<StdoutViewer>  implements Te
     
     // the single Queue in which all events are placed
     private static final int EVENT_Q_CAPACITY = 1024;
-    private BlockingQueue<Runnable> queue = null;
+    private DrainableBlockingQueue<Runnable> queue = null;
     
     private void createQ() {
         if (queue != null) {
             return;
         }
-        queue = new ArrayBlockingQueue<Runnable>(EVENT_Q_CAPACITY);
+        queue = new DrainableBlockingQueue<Runnable>(EVENT_Q_CAPACITY);
     }
     
     private void submitToQ(Runnable runnable) {
         if (queue == null) {
               runnable.run();
+              return;
         }
-        if (queue != null) {
-            try {
-                queue.put(runnable);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
+        queue.submitToQ(runnable);
     }
 
-    private void offerToQXXX(Runnable runnable) {
-        if (queue == null) {
-                  runnable.run();
-        }
-        if (queue != null) {
-             queue.offer(runnable);
-        }
-    }
-    
-    private int queueRemainingCapacity() {
-        if (queue == null) {
-            return 0;
-        }
-        return queue.remainingCapacity();
-    }
     
     private int drainQWithTimeLimit(int millisec) {
         if (queue == null) {
             return 0;
         }
-        int count = 0;
-        long start = System.currentTimeMillis();
-        Runnable task = queue.poll();
-        while (task !=null) {
-            task.run();
-            count++;
-            if ((System.currentTimeMillis() - start) >= millisec) {
-                break;
-            }
-            task = queue.poll();
-        }
-        return count;
+        return queue.drainQWithTimeLimit(millisec, (task)->  task.run() );
     }
 
     boolean firstFlushCall = true;
@@ -180,13 +150,7 @@ public class StdoutViewer extends AbstractComponent<StdoutViewer>  implements Te
     }
     
     public void flushAsynch(EventBus eventBus) {
-        eventBus.appendIdleEventHandler(new OnIdleEventEventHandler.OneTime((te)-> {
-            
-            flush(te.getEventBus());
-
-        }));
-        
-        
+        eventBus.asynch((te)-> flush(te.getEventBus()));
     }
     
     public void enableTimedFlush(int millisec, EventBus eventBus) {

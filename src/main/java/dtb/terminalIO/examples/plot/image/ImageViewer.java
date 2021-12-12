@@ -237,12 +237,9 @@ public class ImageViewer {
                             }
                             tApp.doRefreshCanvasIfModified();
                         };
-                        
+
                         AbstractTimedRequestedController displayImgCTRL = new AbstractTimedRequestedController(()->{
-                            tApp.getEventBus().appendEventHandler(
-                                        new OnIdleEventEventHandler.OneTime((te)->  {
-                                            task_DisplayImage.accept(te);
-                                        }));
+                            tApp.getEventBus().asynch((te)-> task_DisplayImage.accept(te) );
                         }) {
                             @Override
                             protected boolean isRequestDifferentFromPrevious() {
@@ -292,9 +289,7 @@ public class ImageViewer {
                             
                             plotter.resize( new Dimension.Simple(newSize.getHeight()-5, newSize.getWidth() - 40 )  );
 
-                            tApp2.getEventBus().appendEventHandler( new OnIdleEventEventHandler.OneTime((te)->  {
-                                throttledDisplayImageRequestWrapper.accept(te);
-                            }));
+                            tApp2.getEventBus().asynch((te)-> throttledDisplayImageRequestWrapper.accept(te) );
                         });
 
                         DefaultFocusManager mainFocusManager = (DefaultFocusManager)FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),tApp.getEventBus());

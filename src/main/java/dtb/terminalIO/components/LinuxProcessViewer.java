@@ -212,7 +212,7 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
             }
         }
 
-        eventBus.appendIdleEventHandler(new OnIdleEventEventHandler.OneTime(new EventHandler() {
+        eventBus.asynch(new EventHandler() {
             @Override
             public void handle(TerminalEvent<?> te) {
 
@@ -242,7 +242,7 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
                     updateCanvas(te.getEventBus());
                 }
             }
-        }));
+        });
     }
 
     public void stopRequest() {
