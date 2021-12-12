@@ -8,6 +8,7 @@ import java.util.function.Supplier;
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.GetComponentAtOffset;
+import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.events.OnRequestScrollToViewEventHandler;
@@ -20,6 +21,7 @@ import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegmentsView;
 import dtb.terminalIO.traverse.FindPathToTarget;
 import dtb.terminalIO.util.ElapsedTime;
+import dtb.terminalIO.util.Logging;
 
 /**
  * Used exclusively by the ScrollableComponent.  It is the View into the scrollable content.
@@ -28,24 +30,24 @@ public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
                                  implements  ParentContainer, 
                                              GetComponentAtOffset {
 
-    private IScreenLineSegmentsBuffer.Provider viewSource;
+    private Component<?> viewSource;
     private ScreenLineSegmentsView segmentsViewBuffer;
     
     private OnResizeService onViewSourceResizeService = new OnResizeService();
 
-    public WindowViewComponent(Color color, Dimension d, IScreenLineSegmentsBuffer.Provider viewSource) {
+    public WindowViewComponent(Color color, Dimension d, Component<?> viewSource) {
         super(color, d);
         setViewSource(viewSource);
     }
 
-    public void setViewSource(IScreenLineSegmentsBuffer.Provider viewSource) {
-        if (this.viewSource != null && this.viewSource instanceof Component) {
-            ((Component<?>)this.viewSource).setParentContainer(null);
+    public void setViewSource(Component<?> viewSource) {
+        if (this.viewSource != null ) {
+            // remove existing viewsource and tell it that it is 
+            // now orphaned .. Boo hoo..
+            this.viewSource.setParentContainer(null);
         }
         this.viewSource = viewSource;
-        if (viewSource instanceof Component) {
-            ((Component<?>) this.viewSource).setParentContainer(this);
-        }
+        this.viewSource.setParentContainer(this);
         segmentsViewBuffer = new ScreenLineSegmentsView(this.viewSource, WindowViewComponent.this.getRectangle());
         this.markAsDirty();
     }
@@ -172,6 +174,10 @@ public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
                             Position offset = Component.UTIL.getOffsetFromComponentContainer(componentToScrollTo, viewerProvider.get());
                             Position offsetIntoSource = viewerProvider.get().getOffsetIntoSource();
                             if ( ! offsetIntoSource.isSameLocation(Position.ZERO)) {
+                                if (offset == null) {
+                                    // offset should not be null findPathToComponent (above) was true.
+                                    throw new NullPointerException("Bad state: offset null for "+ HasName.UTIL.getName(componentToScrollTo));
+                                }
                                 offset = offset.offsetAdd( offsetIntoSource);
                             }
                             if (offset != null) {

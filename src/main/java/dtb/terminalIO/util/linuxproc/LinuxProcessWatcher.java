@@ -33,7 +33,7 @@ public class LinuxProcessWatcher {
     Thread outputGobbler;
     Thread controllerThread;
     String name;
-    boolean controlledInterrupt = true;
+    volatile boolean controlledInterrupt = true;
     String workingDirectory;
     Map<String, String> environment;
 
@@ -156,7 +156,7 @@ public class LinuxProcessWatcher {
                     invoking.set(false);
                     process = null;
                     outputGobbler = null;
-                    if (controlledInterrupt && e instanceof InterruptedException) {
+                    if (controlledInterrupt && isExceptionCausedByInterruptRequest(e)) {
                         return;
                     }
                     if (consumeException != null) {
@@ -185,6 +185,18 @@ public class LinuxProcessWatcher {
         controllerThread.start();
     }
 
+    private boolean isExceptionCausedByInterruptRequest(Throwable e) {
+        if (e instanceof InterruptedException) {
+            return true;
+        }
+        
+        if (e.getCause() != null) {
+            return isExceptionCausedByInterruptRequest(e.getCause());
+        }
+        
+        return false;
+    }
+    
     private synchronized void killGobblerThread() {
         if (outputGobbler != null && outputGobbler.isAlive()) {
             if (outputGobbler != null && outputGobbler.isAlive()) {

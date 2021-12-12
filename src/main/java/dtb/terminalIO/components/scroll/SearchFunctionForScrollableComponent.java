@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 
 import dtb.terminalIO.components.AbstractWrappedComponentWithFocusManager;
+import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.ComponentWithHilightedText;
@@ -50,8 +51,6 @@ public class SearchFunctionForScrollableComponent extends AbstractWrappedCompone
     private int maxSearchTextWidth = 10;
     private int minSearchLength = 3;
     private CanResize onViewCompResized = CanResize.NOOP;
-    
-    private Component<?> originalComponent;
     
 
     public SearchFunctionForScrollableComponent(Color color, ScrollableComponent viewComp) {
@@ -336,7 +335,6 @@ public class SearchFunctionForScrollableComponent extends AbstractWrappedCompone
         viewComp.setTitle(message);
     }
 
-    
     private static void attachComponentWithHilightedTextIfNeeded(ScrollableComponent viewComp,
             SearchFunctionForScrollableComponent finder) {
 
@@ -347,17 +345,22 @@ public class SearchFunctionForScrollableComponent extends AbstractWrappedCompone
         if (!(viewComp.getComponentBeingViewed() instanceof ComponentWithHilightedText)) {
 
             Component<?> componentBeingViewed = viewComp.getComponentBeingViewed();
-            componentBeingViewed.setParentContainer(null);
+            
+            // important!!  you must do this operation first!
+            // 1) Need to remove componentBeingViewed from viewComp
+            //    - But we need to pass a non-null do-nothing-component to viewComp otherwise 
+            //      it will be upset 
+            viewComp.setComponentBeingViewed(new BoundedComponent.DONOTHING(1,1));
+            
+            // 2) create a hiliting component with componentBeingViewed as its child
             HilitingComponent hilitingComponent = new HilitingComponent(
                     componentBeingViewed.getColor(), componentBeingViewed);
 
             hilitingComponent.setFillOnClear(false);
 
+            // attach to viewComp
             viewComp.setComponentBeingViewed(hilitingComponent);
 
-            viewComp.setComponentBeingViewed(hilitingComponent);
-            
-            finder.originalComponent = componentBeingViewed;
 
         }
 
