@@ -9,9 +9,7 @@ import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
-import dtb.terminalIO.events.focus.RequestFocusEvent;
 import dtb.terminalIO.events.mouse.ApplicationMouseEvent;
-import dtb.terminalIO.events.mouse.Clickable;
 import dtb.terminalIO.events.mouse.Draggable;
 import dtb.terminalIO.geom.CanResize;
 
@@ -21,26 +19,23 @@ public class ResizeAnchor  extends TextComponent implements Focusable , Draggabl
     ChainedEventHandler chainedHandler;
     String baseText;
     String draggingText;
+    Color nonDraggingColor;
     Color draggingColor;
     Draggable draggableBehaviour;
     boolean dragging;
 
     public ResizeAnchor(Color color, String text, Color draggingColor, String draggingText, CanResize componentToResize) {
-        super(color, hilitedText(text, false));
+        super(color, text);
+        this.nonDraggingColor = color;
         this.baseText = text;
         this.draggingText = draggingText;
-        this.draggingColor = draggingColor;
+        this.draggingColor = draggingColor != null ? draggingColor : color.bold();
         draggableBehaviour = new DragAndResizeComponentBehaviour(componentToResize, this);
     }
     
-    // ▮ ▯
     
-//    public ResizeAnchor(Color color, Color draggingColor, CanResize componentToResize) {
-//        this(color, "┌─┤\n┴─┘", draggingColor, "╔═╣\n╩═╝", componentToResize);
-//    }
-
     public ResizeAnchor(Color color, Color draggingColor, CanResize componentToResize) {
-        this(color, "▯▯", draggingColor, "▮▮", componentToResize);
+        this(color, "⠶⠶┘", draggingColor, "⠶⠶⠾", componentToResize);
     }
 
     public ResizeAnchor(Color color, CanResize componentToResize) {
@@ -64,17 +59,20 @@ public class ResizeAnchor  extends TextComponent implements Focusable , Draggabl
             @Override
             public void setFocus(boolean focus, EventBus eventBus) {
                 super.setFocus(focus, eventBus);
-                ResizeAnchor.this.setText(hilitedText(focus?draggingText:baseText, focus));
+                setDisplayAttributesOnDragState();
             }
         };
         return meAsFocusable;
     }
 
-    private static String hilitedText(String baseText, boolean hilited) {
-        if (hilited) {
-            return baseText;
+    private void setDisplayAttributesOnDragState() {
+        if (dragging) {
+            this.setColor(draggingColor);
+            this.setText(draggingText);
+        } else {
+            this.setColor(nonDraggingColor);
+            this.setText(baseText);
         }
-        return baseText;
     }
 
     @Override
@@ -99,13 +97,14 @@ public class ResizeAnchor  extends TextComponent implements Focusable , Draggabl
     @Override
     public boolean onDrag(ApplicationMouseEvent appMouseEvent) {
         dragging = draggableBehaviour.onDrag(appMouseEvent);
-        ResizeAnchor.this.setText(hilitedText(dragging?draggingText:baseText, true));
+        setDisplayAttributesOnDragState();
         return dragging;
     }
 
     @Override
     public boolean onDragStop(ApplicationMouseEvent appMouseEvent) {
         dragging = false;
+        setDisplayAttributesOnDragState();
         return draggableBehaviour.onDragStop(appMouseEvent);
     }
 
