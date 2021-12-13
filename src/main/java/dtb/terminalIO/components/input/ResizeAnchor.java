@@ -9,7 +9,9 @@ import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.focus.RequestFocusEvent;
 import dtb.terminalIO.events.mouse.ApplicationMouseEvent;
+import dtb.terminalIO.events.mouse.Clickable;
 import dtb.terminalIO.events.mouse.Draggable;
 import dtb.terminalIO.geom.CanResize;
 
@@ -31,8 +33,14 @@ public class ResizeAnchor  extends TextComponent implements Focusable , Draggabl
         draggableBehaviour = new DragAndResizeComponentBehaviour(componentToResize, this);
     }
     
+    // ▮ ▯
+    
+//    public ResizeAnchor(Color color, Color draggingColor, CanResize componentToResize) {
+//        this(color, "┌─┤\n┴─┘", draggingColor, "╔═╣\n╩═╝", componentToResize);
+//    }
+
     public ResizeAnchor(Color color, Color draggingColor, CanResize componentToResize) {
-        this(color, "┌─┤\n┴─┘", draggingColor, "╔═╣\n╩═╝", componentToResize);
+        this(color, "▯▯", draggingColor, "▮▮", componentToResize);
     }
 
     public ResizeAnchor(Color color, CanResize componentToResize) {
@@ -81,7 +89,7 @@ public class ResizeAnchor  extends TextComponent implements Focusable , Draggabl
     public void handle(TerminalEvent<?> te) {
         asFocusable().handle(te);
     }
-
+    
     @Override
     public boolean onDragStart(ApplicationMouseEvent appMouseEvent) {
         dragging = draggableBehaviour.onDragStart(appMouseEvent);

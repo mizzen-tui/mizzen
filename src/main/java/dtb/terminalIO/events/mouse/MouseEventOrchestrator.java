@@ -221,13 +221,13 @@ public class MouseEventOrchestrator {
                 // componentClicked - might not be a Focusable .. so go up its ancestors
                 // and find an ancestor that is focusable
 
-                BiFunction<Component<?>,Boolean,Component<?>> findFocusableParent = (c,isClickableRequired) -> {
+                BiFunction<Component<?>,Boolean,Component<?>> findFocusableParent = (c,isClickableOrDraggableRequired) -> {
                     while ( c != null ) {
                         if (ToFocusable.UTIL.isFocusable(c)) {
-                            if ( ! isClickableRequired ) {
+                            if ( ! isClickableOrDraggableRequired ) {
                                 return c;
                             }
-                            if (c instanceof Clickable) {
+                            if (c instanceof Clickable || c instanceof Draggable) {
                                 return c;
                             }
                         }
@@ -258,6 +258,7 @@ public class MouseEventOrchestrator {
 
                     componentClicked = findFocusableParent.apply(componentClicked, true);
 
+                    // handle clickable component
                     if (componentClicked instanceof Clickable) {
                         Clickable clickable = (Clickable)componentClicked;
                         Focusable focusableAndClickable = ToFocusable.UTIL.toFocusable(componentClicked);
@@ -279,7 +280,17 @@ public class MouseEventOrchestrator {
                                 // can't map to an offset into component so just send the eventbus
                                 clickable.onClick( te2.getEventBus() );
                             }
-                        }); 
+                        });
+                        // Handle Draggable
+                    } else if (componentClicked instanceof Draggable) {
+                        Draggable draggable = (Draggable) componentClicked;
+                        Focusable focusableAndDraggable = ToFocusable.UTIL.toFocusable(componentClicked);
+                        if (focusableAndDraggable == null) {
+                            return;
+                        }
+
+                        ApplicationMouseEvent appMouseEventDrag = new ApplicationMouseEvent(appMouseEvent.getSource(), MOUSE_ACTION.DOWN_LEFT_DRAG, appMouseEvent.getEventData());
+                        appMouseEvent.getEventBus().raiseEvent(appMouseEventDrag);
                     }
                 }
             }
