@@ -48,7 +48,7 @@ public class Colors {
     public static Colors.BgColor getNamedBGColor(String name) {
         return namedBackgroundColors.get(name);
     }
-    
+            
     public static String getNameOfFGColor(Colors.FgColor color) {
         return foregroundColorToName.get(color);
     }
@@ -64,8 +64,11 @@ public class Colors {
                 protected int[] buildControlCodes() {
                     return new int[] {0,1};
                 }
+                public String toString() {
+                    return "RCol.bold";
+                }
             };
-            invertTransform = ColorTransform.NULL_colorTransform;
+            invertTransform = (c)-> RCol_invert;
             return new int[] { 0 };
         }
         public Color setInvertTransform(ColorTransform invertTransform) {
@@ -85,6 +88,37 @@ public class Colors {
         
     };
 
+    public static final Color RCol_invert                = new Color() {
+        @Override
+        protected int[] buildControlCodes() {
+            boldTransform = (c)-> new Color() {
+                protected int[] buildControlCodes() {
+                    return new int[] {0,7};
+                }
+                public String toString() {
+                    return "RCol_invert.bold";
+                }
+            };
+            invertTransform = (c)->RCol;
+            return new int[] { 7 };
+        }
+        public Color setInvertTransform(ColorTransform invertTransform) {
+            throw new IllegalStateException("Cannot change DEFAULT color!");
+        }
+        public Color setBoldTransform(ColorTransform boldTransform ) {
+            throw new IllegalStateException("Cannot change DEFAULT color!");
+        }
+        
+        public String getName() {
+            return toString();
+        }
+        
+        public String toString() {
+            return "RCol_invert";
+        }
+    };
+
+    
     static {
         colorsCache.put(RCol.getControlCodes(), RCol);
     }

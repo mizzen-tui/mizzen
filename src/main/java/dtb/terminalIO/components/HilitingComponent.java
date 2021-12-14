@@ -37,6 +37,11 @@ public class HilitingComponent extends AbstractComponent<HilitingComponent>   im
     public Color getHiliteTextColor() {
         return hiliteTextColor;
     }
+
+    public Color getSelectedTextColor() {
+        return selectedTextColor;
+    }
+
     public void setHiliteTextColor(Color hiliteTextColor) {
         this.hiliteTextColor = hiliteTextColor;
     }
@@ -54,7 +59,13 @@ public class HilitingComponent extends AbstractComponent<HilitingComponent>   im
         }
         
         this.selected = hilightRequestList.get(index);
-        this.markAsDirty();
+        
+        // this is a bit of trickery .. 
+        if (getParentContainer() != null) {
+            getParentContainer().markAsDirty();
+        }
+        
+//        this.markAsDirty();
     }
 
     public void addHilitedRegion(Color hiliteColor, Rectangle r) { // assume a height of 1 for now

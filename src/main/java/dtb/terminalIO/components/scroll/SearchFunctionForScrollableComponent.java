@@ -237,7 +237,7 @@ public class SearchFunctionForScrollableComponent extends AbstractWrappedCompone
                 findTextInput.setText("");
             }
             this.getWrappedComponent().addComponent(findTextInput);
-            findTextInput.requestFocus(te);
+            
 
             finishSearchInputEventHandler = RequestUpdateCanvasEvent.UTIL.wrapEventHandlerWithCanvasUpdate(
                                                                 new KeyInputEventHandler(Keys.ESC_KEYSTROKE, 
@@ -264,7 +264,7 @@ public class SearchFunctionForScrollableComponent extends AbstractWrappedCompone
                     setStatsMessage(newValue);
 
                     srcOfText.clearHilights();
-                    
+
                     Logging.info("SearchFunction after clear hilites: " + elapsedTime.recalcElapsed());
 
                     if (newValue == null || newValue.length() < minSearchLength) {
@@ -278,7 +278,7 @@ public class SearchFunctionForScrollableComponent extends AbstractWrappedCompone
                     searchResult = SegmentsSearchUtils.searchTextInSegmentsAll(srcOfText.getSegmentsBuffer(), newValue);
 
                     Logging.info("SearchFunction after searchTextInSegmentsAll: " + elapsedTime.recalcElapsed());
-                    
+
                     addRemoveNavButtonsOnSearchResults(searchResult);
                     
                     if (searchResult != null && searchResult.size() > 0) {
@@ -308,6 +308,13 @@ public class SearchFunctionForScrollableComponent extends AbstractWrappedCompone
             updateTitleOnTextChangedHandler.setMaxStarvationTime(20000);
 
             te.getEventBus().appendEventHandler(updateTitleOnTextChangedHandler);
+            
+ 
+            te.getEventBus().asynch((te2)-> {
+                                            onViewCompResized.resize(viewComp);
+                                            te2.getEventBus().asynch((t)->findTextInput.requestFocus(t));
+                                          });
+
 
         } else {
             findTextInput.requestReleaseFocus(te);
