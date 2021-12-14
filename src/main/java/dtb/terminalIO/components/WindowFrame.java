@@ -73,7 +73,7 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
         this.border = new SimpleBorder(color, bounds);
         this.border.setParentContainer(this);
 
-        this.resizeAnchor = new ResizeAnchor(this);
+        this.resizeAnchor = new ResizeAnchor(color, this);
 
         this.row = p.getRow();
         this.col = p.getCol();
@@ -413,7 +413,8 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
 
     @Override
     public WindowFrame setBorderColor(Color borderColors) {
-        this.setBorderColor(borderColors);
+        this.border.setBorderColor(borderColors);
+        this.resizeAnchor.setColor(borderColors);
         return this;
     }
 
