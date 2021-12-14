@@ -6,6 +6,7 @@ import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegmentsBuffer;
+import dtb.terminalIO.util.StringUtils;
 
 public abstract class AbstractComponent<T extends AbstractComponent<?>> implements 
                                                                          Component<T>, 
@@ -105,20 +106,17 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
     public Color getColor() {
         return color;
     }
+
+    public String toStringDetails() {
+        return new Rectangle.Delegate(this).toStringDetails();
+    }
+
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(this.getClass().getSimpleName()).append(": ");
-        if (this instanceof Rectangle) {
-            Rectangle r = (Rectangle)this;
-            sb.append( new Rectangle.Delegate(r).toStringDetails());
-            sb.append(" ");
-        }
-        sb.append(this.fillPolicy);
-
-        return sb.toString();
+        String prefix = StringUtils.isEmptyStr(getName()) ? this.getClass().getName() : getName();
+        return  prefix + ": " + toStringDetails();
     }
-    
+
     public String getName() {
         return this.name;
     }

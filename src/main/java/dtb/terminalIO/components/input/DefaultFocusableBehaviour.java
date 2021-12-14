@@ -4,6 +4,7 @@ import dtb.terminalIO.components.ColorHiliter;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.EmptyAttributes;
 import dtb.terminalIO.components.FocusSetterToHiliteAction;
+import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.components.Hiliter;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
@@ -79,6 +80,10 @@ public class DefaultFocusableBehaviour implements FocusBehaviour  {
             if (focus) {
                Component.UTIL.bringToFront(component);
             }
+        }
+        
+        public String toString() {
+            return this.getClass().getSimpleName() + ":[" +String.valueOf(component)+"]";
         }
     }
 

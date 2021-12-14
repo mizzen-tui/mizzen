@@ -12,6 +12,7 @@ import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegment;
 import dtb.terminalIO.textsegments.ScreenLineSegmentsBuffer;
+import dtb.terminalIO.util.StringUtils;
 
 
 /**
@@ -275,7 +276,8 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
 
     @Override
     public String toString() {
-        return  HasName.UTIL.getName(this) + toStringDetails();
+            String prefix = StringUtils.isEmptyStr(getName()) ? this.getClass().getName() : getName();
+            return  prefix + ": " + toStringDetails();
     }
 
 	

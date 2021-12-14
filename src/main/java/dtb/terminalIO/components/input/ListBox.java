@@ -769,6 +769,10 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         onChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, onChangeHandler, getChainedEventHandler(), consumeChange);
 
     }
-    
+
+    public String toStringDetails() {
+        T selected = getSelectedValue();
+        return "count:"+this.items.size()+ ((selected != null) ? " selected: " + String.valueOf(getSelectedValue()) : "");
+    }
 
 }
