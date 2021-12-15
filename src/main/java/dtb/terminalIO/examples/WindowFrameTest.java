@@ -1,6 +1,7 @@
 package dtb.terminalIO.examples;
 
 import java.io.IOException;
+import java.util.function.Supplier;
 
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.AbstractComponent;
@@ -16,6 +17,12 @@ import dtb.terminalIO.components.WindowFrameFocusable;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.input.ListBox;
 import dtb.terminalIO.components.input.MultiLineTextInput;
+import dtb.terminalIO.components.plot.image.BufferedImageProvider;
+import dtb.terminalIO.components.plot.image.ImageViewerFactory;
+import dtb.terminalIO.components.plot.image.ResizableImageViewer;
+import dtb.terminalIO.components.plot.image.ImageViewerFactory.IMAGE_RENDER_TYPE;
+import dtb.terminalIO.components.plot.image.ImageViewerFactory.RGBPlotPredicate;
+import dtb.terminalIO.components.plot.image.ImageViewerFactory.RGBToAnsiColorControlCode;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.controlcodes.color.Colors.FGBGColors;
@@ -36,13 +43,49 @@ public class WindowFrameTest {
     
     static boolean useFocusable = false;
     
-    public static void main(String[] args) throws IOException {
-
-        if (args.length>0) {
-            if (args[0].equalsIgnoreCase("FOCUS")) {
+    static String DEFAULT_IMG_PATH="/home/dbalme/workspace/tmpImages/car.jpeg";
+    static String imgFilePath = DEFAULT_IMG_PATH;
+    
+    static RGBPlotPredicate plotPredicate = ImageViewerFactory.PLOT_ALWAYS;
+    static RGBToAnsiColorControlCode colorMapping = ImageViewerFactory.rgbColorMapDIRECT;
+    static IMAGE_RENDER_TYPE  renderType = ImageViewerFactory.IMAGE_RENDER_TYPE.BLOCK;
+    
+    private static void dumbArgsParse(String[] args) {
+        if (args == null || args.length == 0) {
+            return;
+        }
+        
+        for (int i=0; i<args.length; i++) {
+            if ("FOCUS".equalsIgnoreCase(args[i])) {
                 useFocusable = true;
+            } else if ("IMAGE".equalsIgnoreCase(args[i]) && i+1<args.length) {
+                i++;
+                imgFilePath=args[i];
+            } else if ("IMAGEPLOT".equalsIgnoreCase(args[i]) && i+1<args.length) {
+                i++;
+                plotPredicate = NotNull(ImageViewerFactory.nameToRGBPlotPredicate(args[i]),"IMAGEPLOT "+args[i]+" unknown");
+            } else if ("IMAGECOLOR".equalsIgnoreCase(args[i]) && i+1<args.length) {
+                i++;
+                colorMapping = NotNull(ImageViewerFactory.nameToRGBToAnsiColorControlCode(args[i]),"IMAGECOLOR "+args[i]+" unknown");
+            } else if ("IMAGERENDER".equalsIgnoreCase(args[i]) && i+1<args.length) {
+                i++;
+                renderType = NotNull(ImageViewerFactory.nameToImageRenderType(args[i]),"IMAGERENDER "+args[i]+" unknown");
             }
         }
+        
+    }
+    
+    static <T> T NotNull(T t, String error) {
+        if (t == null) {
+            throw new IllegalArgumentException(error);
+        }
+        return t;
+    }
+    
+    
+    public static void main(String[] args) throws IOException {
+
+        dumbArgsParse(args);
         
         Logging.setEnabled(true);
 
@@ -68,13 +111,13 @@ public class WindowFrameTest {
                                                                                                             "at the sea shore"}));
             wf2.setEmptyColor(Colors.On_Bla);
 
-            /*
+            
             Composite sparkLineContainer = new Composite().setBorder(false);
             sparkLineContainer.resize(new Dimension.Simple(24,100));
             SparklineTest.buildSparklineTest(tApp.getEventBus(), sparkLineContainer, null);
             WindowFrame wfSparkline = new WindowFrame(Colors.Blu, "SparkLine Demo", sparkLineContainer);
 
-*/
+
             Composite windowContainer = new Composite();
 
             Component<?> wfFruit = makeWF(Colors.Whi, "Fruit", ListBox.fromStrings(new String[] {"Apples",
@@ -93,6 +136,8 @@ public class WindowFrameTest {
                                                                                                              "Celery",
                                                                                                              "Onions"}));
 
+            
+            
             windowContainer.add(4, 10, wfFruit);
             windowContainer.add(8, 14, wfVegatables);
 
@@ -101,8 +146,30 @@ public class WindowFrameTest {
             tApp.getMainApplicationPanel().add(2, 0, wf1);
             tApp.getMainApplicationPanel().add(2, 30, wf2);
             tApp.getMainApplicationPanel().setDropShadow(true, wf2);
-           // tApp.getMainApplicationPanel().add(10, 30, wfSparkline);
+            tApp.getMainApplicationPanel().add(10, 30, wfSparkline);
             tApp.getMainApplicationPanel().add(20, 40, nestedWindows);
+
+            ResizableImageViewer imageViewer = new ResizableImageViewer (Colors.Whi, new Dimension.Simple(25,50), new BufferedImageProvider.FromFilePath(imgFilePath));
+            
+            
+            
+            imageViewer.setPlotPredicate(plotPredicate);
+            imageViewer.setColorMapping(colorMapping);
+            imageViewer.setImageRenderType(renderType);
+            
+            WindowFrame imageContainerWF = new WindowFrame(Colors.IPur, "Image", imageViewer);
+            tApp.getMainApplicationPanel().add(22, 42, imageContainerWF);
+            
+           // imageContainerWF.onR
+            
+//            setOnResize((size) -> {
+//                imageViewer.resizeImageAsynch(eventBus, size);
+//            });
+//            //eventBus.asynchAfter(interval, handler)
+//            
+              tApp.getEventBus().asynchAfter(10,(te)-> imageViewer.resizeImageAsynch(te.getEventBus(), new Dimension.Simple(40, 150)));
+
+            
 
             Composite expandDownContainer = new Composite() {
                 public void fullrecalcDim() {
@@ -207,7 +274,7 @@ public class WindowFrameTest {
     static Class<?>  usedWindoManagerClass() {
         return makeWF(Colors.DEFAULT_COLOR, "dummy", new TextComponent(" ")).getClass();
     }
-
+    
 
 
 }

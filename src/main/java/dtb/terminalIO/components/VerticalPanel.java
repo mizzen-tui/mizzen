@@ -85,7 +85,7 @@ public class VerticalPanel extends Composite {
             }
         }
     }
-    
+
     public void fullrecalcDim() {
         readjustAllAnchors();
         super.fullrecalcDim();

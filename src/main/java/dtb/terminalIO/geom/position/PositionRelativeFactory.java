@@ -11,7 +11,7 @@ public class PositionRelativeFactory {
                                            alignedComponent, 
                                            (anchor, aligned)-> anchor.getRow(), 
                                            ColumnAlignRelativeTransForm.Factory.fromAlign(align, horizontalSpacer));
-        
+
     }
 
     public static Position fromAlign(Align align, Rectangle anchorComponent, Rectangle alignedComponent) {
@@ -23,7 +23,7 @@ public class PositionRelativeFactory {
         return new PositionAlignedRelative(anchorComponent, 
                                            alignedComponent, 
                                            RowAlignRelativeTransForm.Factory.fromAlign(valign, verticalSpacer), 
-                                           (anchor, aligned)-> anchor.getRow());
+                                           (anchor, aligned)-> anchor.getCol());
     }
 
     public static Position fromVAlign(VAlign valign, Rectangle anchorComponent, Rectangle alignedComponent) {

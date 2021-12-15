@@ -12,7 +12,6 @@ import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.ConditionalEventHandler.HandleOnceHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
-import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
@@ -300,11 +299,11 @@ public class MouseEventOrchestrator {
 
     protected boolean handleDragMode(ApplicationMouseEvent appMouseEvent) {
         // appMouseEvent.getMouseAction() == MOUSE_ACTION.DOWN_LEFT_DRAG || appMouseEvent.getMouseAction() == MOUSE_ACTION.UP)
-        
+
         if (currentDraggable == null) {
             return false;
         }
-        
+
         if (appMouseEvent.getMouseAction() == MOUSE_ACTION.DOWN_LEFT_DRAG) {
             if (currentDraggable.onDrag(appMouseEvent)) {
                 return true;
@@ -320,21 +319,20 @@ public class MouseEventOrchestrator {
             }
             return false;
         }
-        
+
         return false;
     }
-    
-    
+
     protected boolean checkHandleDragStart(Draggable newDraggable, ApplicationMouseEvent appMouseEvent) {
         if (currentDraggable != null) {
             return false;
         }
-        
+
         if (newDraggable.onDragStart(appMouseEvent)) {
             this.currentDraggable = newDraggable;
             return true;
         }
-        
+
         return false;
     }
 

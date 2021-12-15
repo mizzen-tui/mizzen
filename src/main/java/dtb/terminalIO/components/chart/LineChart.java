@@ -1,6 +1,7 @@
 package dtb.terminalIO.components.chart;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -65,11 +66,12 @@ public class LineChart extends Composite {
         public String   name;
         public Color    color;
         public int      count = 0;
-        List<ChartData> data;
+        private List<ChartData> data;
         double          y_topValue;
         double          y_bottomValue;
         double          x_leftValue;
         double          x_rightValue;
+        boolean         needsSorting;
 
         public Series(String name, Color color) {
             super();
@@ -81,6 +83,12 @@ public class LineChart extends Composite {
             this.y_bottomValue = Double.MAX_VALUE;
             this.x_rightValue = Double.MIN_VALUE;
             this.x_leftValue = Double.MAX_VALUE;
+            
+        }
+        
+        void sort() {
+            needsSorting =  false;
+            Collections.sort(data, ChartData.COMPARATOR_BY_XPOS);
         }
 
         public void addData(ChartData cData) {
@@ -90,6 +98,8 @@ public class LineChart extends Composite {
                 } else {
                     cData.x = this.x_rightValue + 1;
                 }
+            } else {
+                needsSorting = true;
             }
 
             this.data.add(cData);
@@ -325,6 +335,10 @@ public class LineChart extends Composite {
             return;
         }
 
+        if (series.needsSorting) {
+            series.sort();
+        }
+        
         int gridLimitWidth = this.grid.getGridRectangle().getWidth();
 
         Color prevColor = null;

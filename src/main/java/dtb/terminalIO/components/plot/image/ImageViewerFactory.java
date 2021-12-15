@@ -81,8 +81,15 @@ public class ImageViewerFactory {
     }
     
     public static RGBToAnsiColorControlCode nameToRGBToAnsiColorControlCode(String name) {
+        String colorName=name;
+        if (colorName.equalsIgnoreCase("NOCOLOR")) {
+            colorName = "No Color (default)";
+        }
+        if (colorName.equalsIgnoreCase("GREYSCALE")) {
+            colorName = "rgbGreyScale";
+        }
         for (ColorMapOption option : colorMap()) {
-            if (name.equalsIgnoreCase(option.getDisplayValue())) {
+            if (colorName.equalsIgnoreCase(option.getDisplayValue())) {
                 return option.getValue();
             }
         }
