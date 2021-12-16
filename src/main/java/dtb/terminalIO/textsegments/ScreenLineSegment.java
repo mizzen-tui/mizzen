@@ -32,7 +32,7 @@ import dtb.terminalIO.geom.position.Position;
  * in.
  * 
  */
-public interface ScreenLineSegment extends Rectangle, CleanString {
+public interface ScreenLineSegment extends Rectangle, CleanString  {
 
     public abstract int getId();
 
@@ -156,8 +156,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
         }
 
         CleanString txt = source.substring(offset, offset + len);
-        SegmentImpl so = new SegmentImpl(source.getColors(), new CursorPos(source.getRow(), source.getCol() + offset),
-                source.getId(), txt);
+        SegmentImpl so = new SegmentImpl(source.getColors(), source.getRow(), source.getCol() + offset, source.getId(), txt);
         return so;
     }
 
@@ -171,15 +170,19 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
             if (so1 == so2)
                 return 0;
 
-            int cmp = Position.UTIL.POS_COMPARE.compare(so1, so2);
+            int cmp = so1.getRow() - so2.getRow();
+            if (cmp != 0) return cmp;
+            
+            cmp = so1.getCol() - so2.getCol();
+
             if (cmp != 0)
                 return cmp;
-            if (so1.overlapsWith(so2)) {
-                // NOTE: reverse sort on id !
-                //       This way higher ids appear first (implies newer) and these
-                //       will then be on top (TODO: I have yet to take advantage of this feature)
-                cmp = Integer.compare(so2.getId(), so1.getId());
-            }
+//            if (so1.overlapsWith(so2)) {
+//                // NOTE: reverse sort on id !
+//                //       This way higher ids appear first (implies newer) and these
+//                //       will then be on top (TODO: I have yet to take advantage of this feature)
+//                cmp = Integer.compare(so2.getId(), so1.getId());
+//            }
             if (cmp != 0)
                 return cmp;
             cmp = so1.getText().compareTo(so2.getText());
@@ -991,6 +994,13 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
         int id;
         String simpleText;
 
+        public SegmentImpl(Color color, int row, int col, int id, CleanString simpleText) {
+            super(color, row, col);
+            this.id = id;
+            this.simpleText = simpleText.getText();
+        }
+        
+        
         public SegmentImpl(Color color, Position position, int id, CleanString simpleText) {
             super(color, position);
             this.id = id;
@@ -1005,12 +1015,8 @@ public interface ScreenLineSegment extends Rectangle, CleanString {
             return this.simpleText = newText.getText();
         }
 
-        public SegmentImpl(Color color, int row, int col, int id, CleanString simpleText) {
-            this(color, new Position.Simple(row, col), id, simpleText);
-        }
-
         public SegmentImpl(Color color, int row, int col, int id, String simpleText) {
-            this(color, new Position.Simple(row, col), id, simpleText);
+            this(color, row, col, id, new CleanString.Simple(simpleText));
         }
 
         @Override

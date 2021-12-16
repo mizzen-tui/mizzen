@@ -36,7 +36,7 @@ public class VerticalLine extends BoundedComponent<VerticalLine> {
         String vertCharStr = String.valueOf(this.verticalLineChar != 0 ? this.verticalLineChar : this.getBlockChars().getVERTICAL_LINE());
         Collection<ScreenLineSegment> newSegments = ScreenLineSegment.UTIL.makeCollection(null);
         for (int row = this.getRow(); row <= bottomRow; row++) {
-            ScreenLineSegment dot = new SegmentImpl(color, new CursorPos(row, getCol()), -1, vertCharStr);
+            ScreenLineSegment dot = new SegmentImpl(color, row, getCol(), -1, vertCharStr);
             newSegments.add(dot);
         }
         segments.clearAndMerge(newSegments);
