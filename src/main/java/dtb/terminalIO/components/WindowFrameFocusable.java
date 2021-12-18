@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 
+import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.input.DraggableTextComponent;
 import dtb.terminalIO.components.input.ResizeAnchor;
 import dtb.terminalIO.components.scroll.CanScrollToView;

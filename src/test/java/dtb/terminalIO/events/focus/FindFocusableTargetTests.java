@@ -2,10 +2,10 @@ package dtb.terminalIO.events.focus;
 
 import java.util.List;
 
-import dtb.terminalIO.components.Composite;
-import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.TextComponent;
-import dtb.terminalIO.components.VerticalPanel;
+import dtb.terminalIO.components.composite.Composite;
+import dtb.terminalIO.components.composite.HorizontalPanel;
+import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.input.DropdownListBox;
 import dtb.terminalIO.components.input.ListBox;
 import dtb.terminalIO.components.input.TextInput;

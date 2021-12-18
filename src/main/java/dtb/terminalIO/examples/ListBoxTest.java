@@ -4,10 +4,10 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.components.Composite;
-import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.TextComponent;
-import dtb.terminalIO.components.VerticalPanel;
+import dtb.terminalIO.components.composite.Composite;
+import dtb.terminalIO.components.composite.HorizontalPanel;
+import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.input.DisplayableValue.StringDisplayValue;
 import dtb.terminalIO.components.input.DropdownListBox;
 import dtb.terminalIO.components.input.HasValue;

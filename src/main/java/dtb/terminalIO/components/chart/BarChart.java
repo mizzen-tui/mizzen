@@ -3,11 +3,14 @@ package dtb.terminalIO.components.chart;
 import java.util.ArrayList;
 import java.util.List;
 
-import dtb.terminalIO.components.Composite;
+import dtb.terminalIO.components.AbstractComponent;
+import dtb.terminalIO.components.AbstractComponentWithContainer;
+import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.geom.Rectangle.Simple;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegment.SegmentImpl;
 import dtb.terminalIO.util.StringUtils;
@@ -15,7 +18,7 @@ import dtb.terminalIO.util.StringUtils;
 /**
  * A Barchart Component
  */
-public class BarChart extends Composite {
+public class BarChart extends AbstractComponentWithContainer<Composite>   {
 
     private List<Double> data;
     private List<String> dataLabels;
@@ -37,8 +40,8 @@ public class BarChart extends Composite {
     private Colors.FgColor dataCOLOR;
 
     public BarChart(Color color, Dimension d) {
-        super(color);
-        setBounds(d.getHeight(), d.getWidth());
+        super(color, new Composite());
+        getWrappedComponent().setBounds(d);
         data = new ArrayList<Double>();
         dataLabels = new ArrayList<String>();
         this.barWidth = 3;
@@ -105,7 +108,7 @@ public class BarChart extends Composite {
     }
 
     private void calcLayout() {
-        Rectangle inner = getInnerRectangle();
+        Rectangle inner = getWrappedComponent().getInnerRectangle();
         int useableWidth = inner.getWidth();
         int dataLen = this.data.size();
         int calcBarGap = dataLen < 1 ? 0 : (useableWidth - dataLen * this.barWidth) / dataLen;
@@ -121,7 +124,7 @@ public class BarChart extends Composite {
 
     private void renderBars(Color color, IScreenLineSegmentsBuffer segments) {
 
-        Rectangle inner = getInnerRectangle();
+        Rectangle inner = getWrappedComponent().getInnerRectangle();
 
         int dataLen = this.data.size();
         String barLine = StringUtils.repeat(this.cellChar, this.barWidth);

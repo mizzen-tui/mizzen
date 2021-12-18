@@ -4,8 +4,8 @@ import java.awt.image.BufferedImage;
 
 import dtb.terminalIO.components.AbstractComponentWithContainer;
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.IMAGE_RENDER_TYPE;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.ImageRenderRequest;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.RGBPlotPredicate;

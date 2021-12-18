@@ -3,6 +3,7 @@ package dtb.terminalIO.components;
 import java.util.ArrayList;
 import java.util.List;
 
+import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventBus;

@@ -6,10 +6,10 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import dtb.terminalIO.components.ButtonBar;
-import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.TextComponent;
-import dtb.terminalIO.components.VerticalPanel;
 import dtb.terminalIO.components.chart.LineChart;
+import dtb.terminalIO.components.composite.Composite;
+import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.input.RockerButton;
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.color.Color;

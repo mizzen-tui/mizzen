@@ -6,8 +6,8 @@ import java.util.function.Function;
 
 import dtb.terminalIO.components.ChildComponentManager;
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.HasName;
+import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.modal.MessageBox;
 import dtb.terminalIO.components.scroll.FindScrollToViewHandler;
 import dtb.terminalIO.controlcodes.ControlCode;

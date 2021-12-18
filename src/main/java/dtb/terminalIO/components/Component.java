@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.StringJoiner;
 
+import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.ColorProvider;
 import dtb.terminalIO.events.EventBus;

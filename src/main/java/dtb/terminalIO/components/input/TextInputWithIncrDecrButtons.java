@@ -1,8 +1,8 @@
 package dtb.terminalIO.components.input;
 
 import dtb.terminalIO.components.AbstractWrappedComponentWithFocusManager;
-import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.EventHandler;

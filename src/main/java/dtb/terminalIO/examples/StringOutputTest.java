@@ -4,8 +4,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.function.Consumer;
 
-import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.components.plot.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.shape.Circle;

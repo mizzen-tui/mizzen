@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.input.DefaultFocusableBehaviour;
 import dtb.terminalIO.components.input.DraggableTextComponent;
 import dtb.terminalIO.components.input.ResizeAnchor;

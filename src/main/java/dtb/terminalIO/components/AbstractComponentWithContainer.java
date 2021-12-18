@@ -1,5 +1,6 @@
 package dtb.terminalIO.components;
 
+import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.position.Position;

@@ -3,9 +3,9 @@ package dtb.terminalIO.examples;
 import java.util.function.Function;
 
 import dtb.terminalIO.app.TUIApp;
-import dtb.terminalIO.components.Composite;
-import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.chart.BarChart;
+import dtb.terminalIO.components.composite.Composite;
+import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.modal.MessageBox;
 import dtb.terminalIO.controlcodes.color.Colors;

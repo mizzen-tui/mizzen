@@ -1,7 +1,10 @@
-package dtb.terminalIO.components;
+package dtb.terminalIO.components.composite;
 
 import java.util.List;
 
+import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.HasName;
+import dtb.terminalIO.components.HasName.UTIL;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;

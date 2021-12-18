@@ -3,9 +3,9 @@ package dtb.terminalIO.examples;
 import java.io.IOException;
 
 import dtb.terminalIO.components.BorderedComponent;
-import dtb.terminalIO.components.Composite;
-import dtb.terminalIO.components.HorizontalPanel;
-import dtb.terminalIO.components.VerticalPanel;
+import dtb.terminalIO.components.composite.Composite;
+import dtb.terminalIO.components.composite.HorizontalPanel;
+import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.geom.position.Position;

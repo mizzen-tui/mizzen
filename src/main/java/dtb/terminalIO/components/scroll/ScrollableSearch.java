@@ -1,7 +1,7 @@
 package dtb.terminalIO.components.scroll;
 
 import dtb.terminalIO.components.AbstractComponentWrappper;
-import dtb.terminalIO.components.HorizontalPanel;
+import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.input.TextInput;
 import dtb.terminalIO.controlcodes.color.Color;

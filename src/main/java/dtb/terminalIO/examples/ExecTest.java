@@ -5,10 +5,10 @@ import java.util.function.Supplier;
 
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.LinuxProcessViewer;
 import dtb.terminalIO.components.TextComponent;
-import dtb.terminalIO.components.VerticalPanel;
+import dtb.terminalIO.components.composite.HorizontalPanel;
+import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;

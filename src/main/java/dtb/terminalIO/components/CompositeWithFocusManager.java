@@ -2,6 +2,7 @@ package dtb.terminalIO.components;
 
 import java.util.Collection;
 
+import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;

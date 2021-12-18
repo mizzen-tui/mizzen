@@ -4,8 +4,8 @@ import java.awt.image.BufferedImage;
 
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.ButtonBar;
-import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.input.DropdownListBox;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.IMAGE_RENDER_TYPE;

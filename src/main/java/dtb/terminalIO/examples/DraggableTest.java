@@ -5,7 +5,7 @@ import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.components.TextComponent;
-import dtb.terminalIO.components.VerticalPanel;
+import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.input.DefaultFocusableBehaviour;
 import dtb.terminalIO.components.input.DraggableTextComponent;
 import dtb.terminalIO.controlcodes.color.Color;

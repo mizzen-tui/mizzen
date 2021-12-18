@@ -2,9 +2,9 @@ package dtb.terminalIO.examples;
 
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.components.Composite;
-import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.components.composite.Composite;
+import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;

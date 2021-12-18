@@ -1,6 +1,6 @@
 package dtb.terminalIO.components.plot.blocks;
 
-import dtb.terminalIO.components.Composite;
+import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.plot.Plotter;
 import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.components.plot.blocks.BlocksUtils.BlocksPlot;

@@ -2,10 +2,10 @@ package dtb.terminalIO.examples.plot.gameoflife;
 
 import dtb.terminalIO.components.AbstractComponentWithContainer;
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.components.Composite;
-import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.TextComponent;
-import dtb.terminalIO.components.VerticalPanel;
+import dtb.terminalIO.components.composite.Composite;
+import dtb.terminalIO.components.composite.HorizontalPanel;
+import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.input.DisplayableValue;
 import dtb.terminalIO.components.input.DropdownListBox;
 import dtb.terminalIO.components.input.ListBox.ComponentItemFactory;

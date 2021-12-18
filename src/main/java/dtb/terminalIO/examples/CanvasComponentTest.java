@@ -4,8 +4,8 @@ import java.io.IOException;
 
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.CanvasComponent;
-import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.components.composite.Composite;
 
 public class CanvasComponentTest {
 

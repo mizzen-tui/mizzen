@@ -9,11 +9,11 @@ import java.util.function.Supplier;
 
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.components.Composite;
-import dtb.terminalIO.components.HorizontalPanel;
 import dtb.terminalIO.components.NavButtonsPanel;
 import dtb.terminalIO.components.TextComponent;
-import dtb.terminalIO.components.VerticalPanel;
+import dtb.terminalIO.components.composite.Composite;
+import dtb.terminalIO.components.composite.HorizontalPanel;
+import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.input.DisplayableValue;
 import dtb.terminalIO.components.input.ListBox;
 import dtb.terminalIO.components.input.RockerButton;

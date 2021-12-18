@@ -2,13 +2,13 @@ package dtb.terminalIO.examples;
 
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.BoundedComponent.DONOTHING;
+import dtb.terminalIO.components.composite.Composite;
+import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.ChildComponentManager;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.ComponentInspector;
-import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.TextComponent;
-import dtb.terminalIO.components.VerticalPanel;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.input.DefaultFocusableBehaviour;
 import dtb.terminalIO.components.input.HasValue;

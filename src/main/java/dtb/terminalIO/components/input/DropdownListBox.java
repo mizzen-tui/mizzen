@@ -6,8 +6,8 @@ import java.util.stream.Stream;
 
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.ComponentWithFocusManager;
-import dtb.terminalIO.components.Composite;
-import dtb.terminalIO.components.VerticalPanel;
+import dtb.terminalIO.components.composite.Composite;
+import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.input.DisplayableValue.BooleanDisplayValue;
 import dtb.terminalIO.components.input.DisplayableValue.StringDisplayValue;
 import dtb.terminalIO.components.input.ListBox.ComponentItemFactory;

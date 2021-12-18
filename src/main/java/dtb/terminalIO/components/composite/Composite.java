@@ -1,4 +1,4 @@
-package dtb.terminalIO.components;
+package dtb.terminalIO.components.composite;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -7,6 +7,14 @@ import java.util.ListIterator;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import dtb.terminalIO.components.AbstractComponent;
+import dtb.terminalIO.components.ChildComponentManager;
+import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.GetComponentAtOffset;
+import dtb.terminalIO.components.HasName;
+import dtb.terminalIO.components.HasTitleAndBorder;
+import dtb.terminalIO.components.SimpleBorder;
+import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.geom.CanResize;
@@ -986,7 +994,7 @@ public class Composite extends AbstractComponent<Composite>
     }
 
     @Override
-    protected Rectangle getRectangleForClearAndFill() {
+    public Rectangle getRectangleForClearAndFill() {
         return bounds;
     }
 

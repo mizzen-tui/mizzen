@@ -9,8 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 
-import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.HasName;
+import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.components.plot.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.shape.ConnectedPoints;

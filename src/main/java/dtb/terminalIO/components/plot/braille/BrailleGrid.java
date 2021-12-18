@@ -1,6 +1,6 @@
 package dtb.terminalIO.components.plot.braille;
 
-import dtb.terminalIO.components.Composite;
+import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.plot.Plotter;
 import dtb.terminalIO.components.plot.Plotter.Plot;
 import dtb.terminalIO.components.plot.PointPlotter;

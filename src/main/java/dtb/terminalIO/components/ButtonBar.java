@@ -3,6 +3,7 @@ package dtb.terminalIO.components;
 import java.util.ArrayList;
 import java.util.List;
 
+import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;

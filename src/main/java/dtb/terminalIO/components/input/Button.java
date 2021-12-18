@@ -5,10 +5,10 @@ import java.util.Collections;
 
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.GetComponentAtOffset;
 import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.ChainedEventHandler;

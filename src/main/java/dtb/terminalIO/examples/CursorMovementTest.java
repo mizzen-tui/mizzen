@@ -7,8 +7,8 @@ import java.util.function.Function;
 
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.components.Composite;
 import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.input.ShowComponentOnFocus;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Colors;
