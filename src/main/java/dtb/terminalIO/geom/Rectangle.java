@@ -1,7 +1,13 @@
 package dtb.terminalIO.geom;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
+import java.util.StringJoiner;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import dtb.terminalIO.geom.Relation.LeftRight;
 import dtb.terminalIO.geom.Relation.OverUnder;
@@ -213,9 +219,68 @@ public interface Rectangle extends Position, Dimension, Movable {
         return new Simple(newRow, newCol, newHeight, newWidth);
     }
     
+    /**
+     * return a collection of "sub" rectangles of 'this' rectangle that
+     * do not intersect with 'other' rectangle
+     */
+    public default Collection<Rectangle> difference(Rectangle other) {
+        Rectangle intersection = this.intersectWith(other);
+        if (intersection == null) {
+           return Collections.singleton(this);
+        }
+        if (intersection.isSameDimension(this)) {
+            return  Collections.emptyList();
+        }
+
+        Rectangle remainingPartOfMe = this;
+
+        TreeSet<Rectangle> diffs = new TreeSet<Rectangle>(Position.UTIL.POS_COMPARE);
+
+        // chop the top off
+        if (remainingPartOfMe.getRow() < other.getRow()) {
+            diffs.add(new Simple(remainingPartOfMe.getRow(), remainingPartOfMe.getCol(), other.getRow()-this.getRow(), this.getWidth()));
+            remainingPartOfMe = new Simple(other.getRow(), remainingPartOfMe.getCol(), remainingPartOfMe.getBottomMostRow() - other.getRow() + 1, this.getWidth());
+        }
+        // chop the bottom off
+        int otherBottomMostRow = other.getBottomMostRow();
+        if (remainingPartOfMe.getBottomMostRow() > otherBottomMostRow) {
+            diffs.add(new Simple(otherBottomMostRow+1, remainingPartOfMe.getCol(), remainingPartOfMe.getBottomMostRow() - otherBottomMostRow, this.getWidth()));
+            remainingPartOfMe =  new Simple(remainingPartOfMe.getRow(), remainingPartOfMe.getCol(), other.getBottomMostRow() - remainingPartOfMe.getRow() + 1, remainingPartOfMe.getWidth());
+        }
+        // chop the left off
+        if (remainingPartOfMe.getCol() < other.getCol()) {
+            diffs.add(new Simple(remainingPartOfMe.getRow(), remainingPartOfMe.getCol(), remainingPartOfMe.getHeight(), other.getCol() - remainingPartOfMe.getCol() ));
+            remainingPartOfMe =  new Simple(remainingPartOfMe.getRow(), other.getCol(), remainingPartOfMe.getHeight(), remainingPartOfMe.getRightMostCol() - other.getCol() + 1);
+        }
+
+        // chop the right off
+        int otherRightMostCol = other.getRightMostCol();
+        if (remainingPartOfMe.getRightMostCol() > otherRightMostCol) {
+            diffs.add(new Simple(remainingPartOfMe.getRow(), otherRightMostCol + 1, remainingPartOfMe.getHeight(), remainingPartOfMe.getRightMostCol() - otherRightMostCol));
+            remainingPartOfMe =  new Simple(remainingPartOfMe.getRow(), remainingPartOfMe.getCol(), remainingPartOfMe.getHeight(), otherRightMostCol - remainingPartOfMe.getCol()+1);
+        }
+
+        if (!intersection.isSameRectangle(remainingPartOfMe)) {
+            
+            StringJoiner sj = new StringJoiner("\n");
+            for (Rectangle diff : diffs) {
+                sj.add(String.valueOf(diff));
+            }
+            throw new IllegalStateException("Rectangle.difference(..) error\n"+String.valueOf(intersection) + "\n not the same as \n" + String.valueOf(remainingPartOfMe)+"\n"+
+                                            "original input:\n"+String.valueOf(this) + "\n" + String.valueOf(other) +"\n\nDIFFS\n-----\n"+sj);
+        }
+
+        return diffs;
+
+    }
+    
     
     public default <T extends Rectangle> boolean overlapsWith(T other) {
         return Rectangle.UTIL.hasOverlap(this, other);
+    }
+
+    public default boolean isSameRectangle(Rectangle other) {
+        return this.isSameLocation(other) && this.isSameDimension(other);
     }
 
     public static final Simple ZERO = new Simple(0, 0, 0, 0);
@@ -229,7 +294,7 @@ public interface Rectangle extends Position, Dimension, Movable {
 
         @Override
         public String toString() {
-            return "Rectangle [row=" + row + ", lcol" + col + ", rcol=" + getRightMostCol() + " width=" + getWidth() + ", height=" + getHeight() + "]";
+            return "Rectangle [row=" + row + ", col=" + col  + ", height=" + getHeight() + ", width=" + getWidth() + "]";
         }
 
         int col;
@@ -292,37 +357,6 @@ public interface Rectangle extends Position, Dimension, Movable {
             int newCol       = Math.min(thisCol, otherCol);
             int newBottomRow = Math.max(thisBottomRow, otherBottomRow);
             int newRightCol  = Math.max(thisRightCol, otherRightCol);
-
-            // calc new dimensions
-            int newHeight = newBottomRow - newRow + 1;
-            int newWidth  = newRightCol - newCol  + 1;
-            
-            // now set
-            setRow(newRow);
-            setCol(newCol);
-            setHeight(newHeight);
-            setWidth(newWidth);
-            
-            return this;
-        }
-
-        public Rectangle intersectWithMySelf(Rectangle other) {
-            
-            int thisRow        = this.getRow();
-            int thisCol        = this.getCol();
-            int thisBottomRow  = this.getBottomMostRow();
-            int thisRightCol   = this.getRightMostCol();
-            
-            int otherRow       = other.getRow();
-            int otherCol       = other.getCol();
-            int otherBottomRow = other.getBottomMostRow();
-            int otherRightCol  = other.getRightMostCol();
-            
-            // get new corners
-            int newRow       = Math.max(thisRow, otherRow);
-            int newCol       = Math.max(thisCol, otherCol);
-            int newBottomRow = Math.min(thisBottomRow, otherBottomRow);
-            int newRightCol  = Math.min(thisRightCol, otherRightCol);
 
             // calc new dimensions
             int newHeight = newBottomRow - newRow + 1;
@@ -588,7 +622,91 @@ public interface Rectangle extends Position, Dimension, Movable {
             }
             return false;
         }
+        
+        /**
+         * return a list of "sub" rectangles of 'this' rectangle that
+         * do not intersect with 'other' rectangle
+         */
+        public static Collection<RectangleAndSubRectangles> differences(List<Rectangle> rectangles) {
+            
+            if (rectangles == null) {
+                throw new NullPointerException("bad param");
+            }
+            
+            int size = rectangles.size();
+            
+            if (size <= 1) {
+                return Collections.emptyList();
+            }
 
+            List<RectangleAndSubRectangles> result = rectangles.subList(1, size).stream().map(r -> new RectangleAndSubRectangles(r)).collect(Collectors.toList());
+
+            for (int i=0; i<(size-1); i++) {
+                Rectangle r1 = rectangles.get(i);
+                for (int j=i; j<(size-1); j++) {
+                    RectangleAndSubRectangles rs = result.get(j);
+                    rs.splitAndAppendToSubsListUsing(r1);
+                }
+            }
+            
+            return result;
+        }
+
+    }
+    
+    public static class RectangleAndSubRectangles {
+        Rectangle rectangle;
+        List<Rectangle> subs;
+        
+        public RectangleAndSubRectangles(Rectangle rectangle) {
+            super();
+            this.rectangle = rectangle;
+        }
+        void add(Rectangle r) {
+            subs.add(r);
+        }
+        
+        public boolean hasSubs() {
+            return (subs != null) && (subs.size()>0);
+        }
+        public Rectangle getRectangle() {
+            return rectangle;
+        }
+
+        public List<Rectangle> getSubs() {
+            if (subs == null) {
+                throw new IllegalStateException("Do not call getSubs() before calling splitAndAppendToSubsListUsing()");
+            }
+            return subs;
+        }
+        
+        public boolean isFullyHidden() {
+            if (subs == null) {
+                throw new IllegalStateException("Do not call isFullyHidden() before calling splitAndAppendToSubsListUsing()");
+            }
+            return subs.size() == 0;
+        }
+        
+        public void splitAndAppendToSubsListUsing(Rectangle other) {
+            
+            if (subs == null) {
+                Collection<Rectangle> diff = rectangle.difference(other);
+                if (diff != null) {
+                    subs = new ArrayList<Rectangle>(diff);
+                }
+                return;
+            }
+            
+            List<Rectangle> newSubs = new ArrayList<Rectangle>(subs.size()+10);
+
+            for (Rectangle sub : subs) {
+                Collection<Rectangle> diff = sub.difference(other);
+                if (diff != null && diff.size()>0) {
+                    newSubs.addAll(diff);
+                }
+            }
+            this.subs = newSubs;
+        }
     }
 
     public static class RectangleComparator implements Comparator<Rectangle> {
