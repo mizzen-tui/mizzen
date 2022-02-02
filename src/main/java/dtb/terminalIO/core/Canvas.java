@@ -292,8 +292,8 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
             // fast case!! 
             component.setCanvasOffset(Position.ZERO);
 
-            ElapsedTime componentDrawTime = ElapsedTime.start();
-            TreeSet<ScreenLineSegment> componentSegments = component.getSegmentsBuffer().getSegments();
+            //ElapsedTime componentDrawTime = ElapsedTime.start();
+            //TreeSet<ScreenLineSegment> componentSegments = component.getSegmentsBuffer().getSegments();
             //Logging.info("componentsDraw: "+ HasName.UTIL.getName(component) + ": segmenents-size: "+ componentSegments.size() + "  t:" + componentDrawTime);
 
             ElapsedTime elapsed = ElapsedTime.onRunOf( ()-> getSegmentsBuffer().clearAndMerge(component.getSegmentsBuffer().getSegments()));

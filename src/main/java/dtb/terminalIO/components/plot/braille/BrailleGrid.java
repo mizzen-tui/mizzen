@@ -3,6 +3,7 @@ package dtb.terminalIO.components.plot.braille;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.plot.Plotter;
 import dtb.terminalIO.components.plot.Plotter.Plot;
+import dtb.terminalIO.components.plot.blocks.BlocksGrid;
 import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.events.EventBus;
@@ -27,6 +28,7 @@ public class BrailleGrid extends Composite implements Clickable, PointPlotter {
         this.plotter = new Plotter(color, new Dimension.Simple(d.getHeight(), d.getWidth()));
         this.add(plotter);
         this.plotter.setName("grid-plotter");
+        this.plotter.setFillOnClear( this.getFillOnClearPolicy().isFillOnClear() );
         gridRectangle = BrailleUtils.componentRectangleToGridRectangle(plotter);
     }
 
@@ -55,6 +57,13 @@ public class BrailleGrid extends Composite implements Clickable, PointPlotter {
         return this;
     }
 
+    public void setFillOnClear(boolean fillOnClear) {
+        super.setFillOnClear(fillOnClear);
+        if (this.plotter != null) {
+           this.plotter.setFillOnClear(fillOnClear);
+        }
+    }
+    
     public Rectangle getGridRectangle() {
         return this.gridRectangle;
     }

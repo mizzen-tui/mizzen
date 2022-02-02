@@ -45,11 +45,13 @@ public class ScrollBarVertical extends BoundedComponent<ScrollBarVertical> imple
     public ScrollBarVertical(Color color, Position pos, int len) {
         super(color, pos, new Dimension.Simple(len, 1));
         handleKeyEvents = true;
+        this.setFillOnClear(false);
     }
     
     public ScrollBarVertical(Color color, int row, int col, int len) {
         super(color, new Position.Simple(row, col), new Dimension.Simple(len, 1));
         handleKeyEvents = true;
+        this.setFillOnClear(false);
     }
 
 

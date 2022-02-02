@@ -171,7 +171,7 @@ public class TUIApp {
     }
 
     public TUIApp setDefaultMainApplicationPanel() {
-        return setMainApplicationPanel(  new Composite().setBounds(this.getCanvas()).setName("defaultMainPanel")
+        return setMainApplicationPanel(  new Composite().setBounds(this.getCanvas())
                                                         .setEmptyChar(this.getCanvas().getEmptyChar()));
     }
 

@@ -55,8 +55,7 @@ public class ButtonBarTest {
                                         if (bbar1.containsChild(textArea)) {
                                             bbar1.remove(textArea);
                                         } else {
-                                            //bbar1.insertComponent(3, textArea);
-                                            bbar1.addComponent(textArea);
+                                            bbar1.insertComponent(0, textArea);
                                         }
                                         te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(te.getSource()));
                                     }).setBorder(true);

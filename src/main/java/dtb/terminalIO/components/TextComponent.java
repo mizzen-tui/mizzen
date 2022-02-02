@@ -101,8 +101,15 @@ public class TextComponent extends BoundedComponent<TextComponent> {
         Color theColor = super.getColor();
         return theColor;
     }
-    
-    
+
+    public void moveTo(int row, int col) {
+        if (row != getRow() || col != getCol()) {
+            this.parsedSegments = null;
+            markAsDirty();
+        }
+        super.moveTo(row, col);
+    }
+
     @Override
     public void draw(Color color, IScreenLineSegmentsBuffer segments) {
         

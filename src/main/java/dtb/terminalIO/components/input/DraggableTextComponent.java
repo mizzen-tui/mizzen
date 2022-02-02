@@ -19,9 +19,10 @@ public class DraggableTextComponent extends TextComponent implements Focusable ,
     String draggingText;
     Color draggingColor;
     Draggable draggableBehaviour;
+    Boolean hasColorInText;
 
     public DraggableTextComponent(Color color, String text, Color draggingColor, String draggingText, Component<?> componentToDrag) {
-        super(color, hilitedText(text, false));
+        super(color, text);
         this.baseText = text;
         this.draggingText = draggingText;
         this.draggingColor = draggingColor;
@@ -51,18 +52,12 @@ public class DraggableTextComponent extends TextComponent implements Focusable ,
             @Override
             public void setFocus(boolean focus, EventBus eventBus) {
                 super.setFocus(focus, eventBus);
-                DraggableTextComponent.this.setText(hilitedText(baseText, focus));
+                //DraggableTextComponent.this.setText(baseText);
             }
         };
         return meAsFocusable;
     }
 
-    private static String hilitedText(String baseText, boolean hilited) {
-        if (hilited) {
-            return "[" + baseText + "]";
-        }
-        return " " + baseText + " ";
-    }
 
     @Override
     public EventHandler canHandle(TerminalEvent<?> te) {

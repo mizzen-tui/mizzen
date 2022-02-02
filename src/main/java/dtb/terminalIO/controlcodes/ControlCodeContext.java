@@ -101,16 +101,16 @@ public interface ControlCodeContext {
      */
     public static class StringContext extends AbstractControlCodeContext {
 
-        public StringBuffer sb;
+        public StringBuilder sb;
         public boolean isRAW = false;
 
         public StringContext() {
-            sb = new StringBuffer();
+            sb = new StringBuilder();
             isRAW = false;
         }
 
         public StringContext(boolean isRAW) {
-            sb = new StringBuffer();
+            sb = new StringBuilder();
             this.isRAW = isRAW;
         }
 
@@ -124,7 +124,7 @@ public interface ControlCodeContext {
         }
 
         public void clear() {
-            sb = new StringBuffer();
+            sb = new StringBuilder();
         }
 
         @Override

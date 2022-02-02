@@ -21,7 +21,7 @@ public class SmallCanvasTest {
 
         TerminalScreen screen = TestsCommon.getTerminalScreenForTesting(args);
 
-        Canvas master_canvas = new Canvas(screen);
+        Canvas master_canvas = TestsCommon.getMasterCanvasForTesting(screen);
         master_canvas.setSize(30, 30);
 
         // screen.setRaw();

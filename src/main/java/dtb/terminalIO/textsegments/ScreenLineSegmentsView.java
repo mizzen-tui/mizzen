@@ -5,13 +5,11 @@ import java.util.Iterator;
 import java.util.TreeSet;
 
 import dtb.terminalIO.components.DirtyFlag;
-import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.util.ElapsedTime;
-import dtb.terminalIO.util.StringUtils;
 
 /**
  * IScreenLineSegmentsBuffer that has a view into a 'source'
@@ -247,103 +245,19 @@ public class ScreenLineSegmentsView extends IScreenLineSegmentsBuffer.Delegate i
         this(sourceSegments, Position.ZERO, maxsize);
     }
 
-    class ScreenLineSegmentView implements ScreenLineSegment {
-
-        ScreenLineSegment sourceSegment;
+    class ScreenLineSegmentView extends AbstractSegmentView {
 
         ScreenLineSegmentView(ScreenLineSegment sourceSegment) {
-            this.sourceSegment = sourceSegment;
+            super(sourceSegment);
         }
-
-        public Color getColor() {
-            return sourceSegment.getColors();
+        
+        protected Position offset() {
+            return ScreenLineSegmentsView.this.offsetIntoSource;
         }
-
-        int rememberedLength = -1; // will this become a problem?
-        String _clippedText = null;
-
-        @Override
-        public int length() {
-            if (rememberedLength == -1) {
-                rememberedLength = this.getText().length();
-            }
-            return rememberedLength;
+        
+        protected int getMaxRightMostCol() {
+            return ScreenLineSegmentsView.this.getRightMostCol();
         }
-
-        @Override
-        public int getRow() {
-            int row = sourceSegment.getRow() - ScreenLineSegmentsView.this.offsetIntoSource.getRow();
-            return row < 0 ? 0 : row;
-        }
-
-        @Override
-        public int getCol() {
-            int col = sourceSegment.getCol() - ScreenLineSegmentsView.this.offsetIntoSource.getCol();
-            return col < 0 ? 0 : col;
-        }
-
-        public String toString() {
-            return String.format("VS(row=%d,lcol=%d,rcol=%d,[id=%d]):'%s'", getRow(), getCol(), getRightMostCol(),
-                                 getId(), getText());
-        }
-
-        @Override
-        public Color getColors() {
-            return sourceSegment.getColors();
-        }
-
-        @Override
-        public void moveTo(int row, int col) {
-            rememberedLength = -1; // unremember my length
-            _clippedText = null;
-            throw new IllegalStateException("No implemented yet!");
-        }
-
-        @Override
-        public int getId() {
-            return sourceSegment.getId();
-        }
-
-        @Override
-        public String getText() {
-
-            if (_clippedText != null) {
-                return _clippedText;
-            }
-
-            String sourceText = sourceSegment.getText();
-            int textBeginIndex = 0;
-            int srcLeftCol = sourceSegment.getCol();
-            int viewerLeftCol = ScreenLineSegmentsView.this.offsetIntoSource.getCol();
-            if (viewerLeftCol > 0) {
-                textBeginIndex = 0;
-            }
-            if (viewerLeftCol > srcLeftCol) {
-                textBeginIndex = viewerLeftCol - srcLeftCol;
-                //rightColOffsetClipLen = textBeginIndex;
-            }
-            int textEndIndex = sourceSegment.getWidth();
-            int viewerRightCol = ScreenLineSegmentsView.this.getRightMostCol();
-
-            if (srcLeftCol + textEndIndex > viewerRightCol) {
-                textEndIndex = textEndIndex - ((srcLeftCol + textEndIndex) - viewerRightCol)+1;
-            }
-
-
-            if (textBeginIndex < 0 || textBeginIndex > textEndIndex)
-                return " ";
-            
-            String clippedText = sourceText.substring(textBeginIndex, textEndIndex);
-            _clippedText = clippedText;
-
-            return clippedText;
-        }
-
-        @Override
-        public ScreenLineSegment fromOffset(Position offset) {
-            return new SegmentImpl(getColor(), Position.Simple.withOffset((Position) this, offset), getId(),
-                    this.getText());
-        }
-
+        
     }
 }

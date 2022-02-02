@@ -20,6 +20,7 @@ public class Logging {
     
     static boolean enabled = false;
     static String loggerFileName;
+    static Object mutex = new Object();
     
     public static void setEnabled(boolean enabled) {
         Logging.enabled = enabled;
@@ -64,7 +65,9 @@ public class Logging {
             Thread.currentThread().getName();
             msg = Thread.currentThread().getName() + ":  " + msg;
             // todo: add date
-            Files.write(Paths.get(getLoggerFileName()), (msg + "\n").getBytes(), StandardOpenOption.APPEND);
+            synchronized (mutex) {
+                Files.write(Paths.get(getLoggerFileName()), (msg + "\n").getBytes(), StandardOpenOption.APPEND);
+            }
         }catch (IOException e) {
             // exception handling left as an exercise for the reader
             System.out.println(e.toString());

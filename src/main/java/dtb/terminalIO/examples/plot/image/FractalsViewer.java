@@ -9,12 +9,12 @@ import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.input.DropdownListBox;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.IMAGE_RENDER_TYPE;
+import dtb.terminalIO.components.plot.image.animate.ImageAnimatorComponent;
+import dtb.terminalIO.components.plot.image.animate.ImageIterator;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.controlcodes.color.Colors.FGBGColors;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
-import dtb.terminalIO.examples.plot.image.RenderFromGraphics2D.AnimatorController;
-import dtb.terminalIO.examples.plot.image.RenderFromGraphics2D.ImageIterator;
 import dtb.terminalIO.geom.Dimension;
 
 /**
@@ -64,7 +64,7 @@ public class FractalsViewer {
 
             Dimension imgSize = new Dimension.ComputedDelegate(tApp.getCanvas(),(s)->s.getHeight()-1, (s)->s.getWidth());
 
-            AnimatorController animator = new AnimatorController(Colors.DEFAULT_COLOR, 
+            ImageAnimatorComponent animator = new ImageAnimatorComponent(Colors.DEFAULT_COLOR, 
                                                                  new ImageIterator() {
                                                                     @Override
                                                                     public boolean hasNext() {

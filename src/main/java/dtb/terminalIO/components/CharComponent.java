@@ -16,15 +16,18 @@ public class CharComponent extends BoundedComponent<CharComponent> {
     public CharComponent(Color color, char ch, ParentContainer parentContainer) {
         super(color, new Dimension.Simple(1,1), parentContainer);
         this.ch = ch;
+        this.setFillOnClear(false);
     }
 
     public CharComponent(Color color, char ch) {
         super(color, new Dimension.Simple(1,1));
+        this.setFillOnClear(false);
         this.ch = ch;
     }
 
     public CharComponent(Color color, int row, int col, char ch, ParentContainer parentContainer) {
         super(color, new Rectangle.Simple(row, col, 1,1), parentContainer);
+        this.setFillOnClear(false);
         this.ch = ch;
     }
 

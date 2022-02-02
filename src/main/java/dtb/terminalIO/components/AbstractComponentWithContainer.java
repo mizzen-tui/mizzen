@@ -60,7 +60,8 @@ public abstract class AbstractComponentWithContainer<T extends Composite>  exten
     }
 
     public AbstractComponentWithContainer<T> setEmptyColor(Color emptyColor) {
-        super.setEmptyColor(emptyColor);
+
+
         if (getWrappedComponent() != null) {
            getWrappedComponent().setEmptyColor(emptyColor);
         }

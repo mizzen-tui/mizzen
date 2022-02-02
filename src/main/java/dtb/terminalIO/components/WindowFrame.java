@@ -3,6 +3,10 @@ package dtb.terminalIO.components;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.TreeSet;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.input.DefaultFocusableBehaviour;
@@ -197,11 +201,11 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
         Component<?> theChild = (viewer != null) ? viewer : this.child;
 
         Position offsetForChild = offset.offsetAdd(this.getPositionRelativeToParent(theChild).negate());
-        if (this.child.containsPosition(offsetForChild)) {
+        if (theChild.containsPosition(offsetForChild)) {
             if (theChild instanceof GetComponentAtOffset) {
                 return ((GetComponentAtOffset) theChild).getComponentAtOffset(offsetForChild);
             }
-            return this.child;
+            return theChild;
         }
 
         return this;
@@ -216,7 +220,7 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
         Component<?> theChild = (viewer != null) ? viewer : this.child;
 
         if (child == theChild) {
-            return this.childPosition;
+            return this.childPosition.offsetAdd(new Position.Simple(child));
         }
 
         if (child == this.resizeAnchor) {
@@ -271,7 +275,6 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
 
         Position anchorPos = calcAnchorPosition();
         this.resizeAnchor.moveTo(anchorPos.getRow(), anchorPos.getCol());
-        this.resizeAnchor.markAsDirty();
 
         if (autoScrollbars) {
             attachScrollbarsIfNeeded(d);
@@ -280,8 +283,6 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
                 ((CanResize) this.child).resize(new Dimension.Simple(d.getHeight() - 2, d.getWidth() - 2));
             }
         }
-        
-        
         // Logging.info(HasName.UTIL.getName(this) + ":resize :" + String.valueOf(new Dimension.Simple(this)));
     }
 
@@ -337,31 +338,64 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
 
         Component<?> theChild = (viewer != null) ? viewer : this.child;
+        
+//        Component.UTIL.assertComponentSegmentsIntegrity(theChild);
+//        Rectangle bounds = new Rectangle.Simple(this);
 
-        // draw child
-        if (this.contains(theChild)) {
-            segments.mergeAt(this.childPosition, theChild.getSegmentsBuffer());
-        } else {
-            Rectangle clippedArea = this;
-            ScreenLineSegment.UTIL.addSegmentsWithOffsetBounded(theChild, clippedArea, segments.getSegments(),
-                    this.child.getSegmentsBuffer().getSegments());
-        }
+        TreeSet<ScreenLineSegment> thisWindowSegments = segments.getSegments();
+        
+//        Component.UTIL.assertSegmentsIntegrity(bounds, thisWindowSegments);
 
         // draw border
-        segments.getSegments().addAll(this.border.getSegmentsBuffer().getSegments());
-        
+        this.border.markAsDirty();
+        this.border.setFillOnClear(false);
+        thisWindowSegments.addAll(this.border.getSegmentsBuffer().getSegments());
+
+//        Component.UTIL.assertSegmentsIntegrity(bounds, thisWindowSegments);
+
+        Rectangle clippedArea = new Rectangle.Simple(this.border.getRow()+1, this.border.getCol()+1, this.border.getHeight()-2, this.border.getWidth()-2);
+        // draw child
+        Rectangle childRectangleWithOffset = new Rectangle.Simple( new Position.Simple(theChild).offsetAdd(this.childPosition), theChild );
+        if (clippedArea.contains(childRectangleWithOffset)) {
+            //Logging.info("WindowFrame - draw1 "+ this.getName());
+            //segments.mergeAt(this.childPosition, theChild.getSegmentsBuffer());
+            //TreeSet<ScreenLineSegment> childSegments = this.child.getSegmentsBuffer().getSegments();
+            Position childOffset = new Position.Simple(theChild).offsetAdd(this.childPosition);
+//            TreeSet<ScreenLineSegment> childTree = theChild.getSegmentsBuffer().getSegments();
+//            List<ScreenLineSegment> childSegmentsList = childTree.stream().map(s -> s.fromOffset(childOffset)).collect(Collectors.toList());
+//            Component.UTIL.assertSegmentsIntegrity(childRectangleWithOffset, ScreenLineSegment.UTIL.makeCollection(childSegmentsList) );
+            
+            theChild.getSegmentsBuffer().getSegments().stream()
+                                                      .map(s -> s.fromOffset(childOffset))
+                                                      .forEach(s-> thisWindowSegments.add(s));
+//            Component.UTIL.assertSegmentsIntegrity(bounds, thisWindowSegments);
+//            Component.UTIL.assertSegmentsIntegrity(bounds, thisWindowSegments);
+        } else {
+            // child does not fit so need to do slower, but more intelligent, merge
+            //Logging.info("WindowFrame - draw2 "+ this.getName());
+            ScreenLineSegment.UTIL.addSegmentsWithOffsetBounded(this.childPosition, 
+                                                                clippedArea, 
+                                                                segments.getSegments(),
+                                                                theChild.getSegmentsBuffer().getSegments());
+            //Component.UTIL.assertSegmentsIntegrity(bounds, thisWindowSegments);
+        }
+
         if (hScrollBar != null) {
             segments.merge(hScrollBar.getSegmentsBuffer());
+            //Component.UTIL.assertSegmentsIntegrity(bounds, thisWindowSegments);
         }
 
         if (vScrollBar != null) {
             segments.merge(vScrollBar.getSegmentsBuffer());
+            //Component.UTIL.assertSegmentsIntegrity(bounds, thisWindowSegments);
         }
 
         // draw the banner
         segments.mergeAt(this.bannerPosition, this.banner.getSegmentsBuffer());
+        //Component.UTIL.assertSegmentsIntegrity(bounds, thisWindowSegments);
 
         segments.merge(this.resizeAnchor.getSegmentsBuffer());
+        //Component.UTIL.assertSegmentsIntegrity(bounds, thisWindowSegments);
 
     }
 
@@ -611,6 +645,7 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
             return;
         }
 
+        // need to set child to null before attaching to viewer - exception thrown otherwise
         this.child.setParentContainer(null);
 
         viewer = new WindowViewComponent(this.child.getColor(),

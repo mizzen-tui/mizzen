@@ -6,6 +6,9 @@ import java.util.StringJoiner;
 import dtb.terminalIO.components.input.DisplayableValue;
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.ControlCodeContext;
+import dtb.terminalIO.controlcodes.color.Colors.BgColor;
+import dtb.terminalIO.controlcodes.color.Colors.FGBGColors;
+import dtb.terminalIO.controlcodes.color.Colors.FgColor;
 import dtb.terminalIO.util.IntArrayComparator;
 
 /**
@@ -65,8 +68,9 @@ public abstract class Color extends ControlCode implements ColorProvider {
         return this;
     }
 
+    
     public Color mergeWith(Color other) {
-        return this; // TODO:  fix!
+        return mergeColors(this, other);
     }
     
     public Color getBackGroundColor() {
@@ -152,5 +156,109 @@ public abstract class Color extends ControlCode implements ColorProvider {
     public Color appendCodes(Color color) {
         return appendCodes(color.getControlCodes());
     }
+    
+    
+    Color mergeColors(Color c1, Color c2) {
+        if (c1 == null && c2 == null) {
+            throw new NullPointerException("Cannot merge to null colors!");
+        }
+        
+        if (c1 == c2 || c2 == Colors.RCol) {
+            return c1;
+        }
+        
+        if (c1 == Colors.RCol) {
+            return c2;
+        }
+        
+        if (c1 instanceof FGBGColors && c2 instanceof FGBGColors) {
+            Color fg = c1.getForeGroundColor() instanceof FgColor ?  c1.getForeGroundColor() : null;
+            Color bg = c2.getBackGroundColor() instanceof BgColor ?  c2.getBackGroundColor() : null;
+            return new FGBGColors((FgColor)fg, (BgColor)bg);
+        }
+
+        if (c1 instanceof FGBGColors && c2 != null) {
+            Color fg = c1.getForeGroundColor() instanceof FgColor ?  c1.getForeGroundColor() : null;
+            Color bg = c2 instanceof BgColor ? c2 : null;
+            if (bg == null && c2 instanceof FgColor) {
+                bg = c2.invert();
+                if (!(bg instanceof BgColor)) {
+                    bg = null;
+                }
+            }
+            
+            if (!(fg instanceof FgColor)) {
+                throw new IllegalStateException("GOT HERE! fg is a " + fg.getClass().getCanonicalName());
+            }
+            
+            return new FGBGColors((FgColor)fg, (BgColor)bg);
+        }
+
+        if (c2 instanceof FGBGColors && c1 != null) {
+            Color bg = c2.getBackGroundColor() instanceof BgColor ?  c2.getBackGroundColor() : null;
+            Color fg = c1 instanceof FgColor ? c2 : null;
+            if (fg == null && c1 instanceof BgColor) {
+                fg = c1.invert();
+                if (!(fg instanceof FgColor)) {
+                    bg = null;
+                }
+            }
+
+            if (fg instanceof FGBGColors) {
+                if (bg != null && bg instanceof BgColor) {
+                    ((FGBGColors)fg).bgc = (BgColor)bg;
+                }
+                return fg;
+            }
+            
+            return new FGBGColors((FgColor)fg, (BgColor)bg);
+        }
+        
+        
+        if ((c1 == null || c1 instanceof FgColor) && (c2 == null || c2 instanceof BgColor)) {
+            return new FGBGColors((FgColor)c1, (BgColor)c2);
+        }
+        
+        if ((c1 == null || c1 instanceof BgColor) && (c2 == null || c2 instanceof FgColor)) {
+            return new FGBGColors((FgColor)c2, (BgColor)c1);
+        }
+
+        if ((c1 == null || c1 instanceof FgColor) && (c2 == null || c2 instanceof FgColor)) {
+            Color cb2 = c2.invert();
+            return new FGBGColors((FgColor)c1, cb2 instanceof BgColor ? (BgColor)cb2 : null);
+        }
+        
+        if ((c1 == null || c1 instanceof BgColor) && (c2 == null || c2 instanceof BgColor)) {
+            Color cb2 = c2.invert();
+            return new FGBGColors(cb2 instanceof FgColor ? (FgColor)cb2 : null, (BgColor)c1);
+        }
+        
+        // TODO:  handle RGB colors
+        
+        return c1;
+        
+    }
+    
+    public static BgColor backgroundColor(Color color) {
+        if (color == null) {
+            return null;
+        }
+        if (color instanceof FGBGColors ) {
+            Color bg = color.getBackGroundColor() == null ? null : (color.getBackGroundColor() instanceof BgColor ? color.getBackGroundColor() : null);
+            return (BgColor)bg;
+        }
+
+        if (color instanceof BgColor ) {
+            return (BgColor) color;
+        }
+        
+        return null;
+    }
+    
+    public static boolean hasBackgroundColor(Color color) {
+        return backgroundColor(color) != null; 
+    }
+    
+    
 
 }

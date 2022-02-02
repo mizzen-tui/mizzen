@@ -26,6 +26,7 @@ import dtb.terminalIO.examples.sampledata.ReadSampleFiles;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
+import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.StringUtils;
 import dtb.terminalIO.util.linuxproc.ExecUtil;
 
@@ -48,7 +49,7 @@ public class ScrollableComponentTest {
             ScrollableComponent sc1 = new ScrollableComponent(Colors.Gre, calcScrollableDimension.get(), new TextViewer().getComponent(Colors.Gre));
             
             sc1.setName("ScrollableComponent-sc1");            
-            SearchFunctionForScrollableComponent.addFinderToScrollable(sc1);  
+            SearchFunctionForScrollableComponent.addFinderToScrollable(sc1.asSearchableView());  
 
             Composite brailleContainer = new Composite(Colors.Blu).setBounds(tApp.getCanvas().getHeight()-7, tApp.getCanvas().getWidth()/2 -2);
             brailleDemoSetup(brailleContainer, tApp.getEventBus());

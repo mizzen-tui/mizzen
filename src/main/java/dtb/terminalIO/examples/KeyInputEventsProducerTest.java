@@ -45,7 +45,7 @@ public class KeyInputEventsProducerTest {
         
         TerminalScreen screen = TestsCommon.getTerminalScreenForTesting(args);
 
-        Canvas master_canvas = new Canvas(screen);
+        Canvas master_canvas = TestsCommon.getMasterCanvasForTesting(screen);
         master_canvas.setSize(10, 110);
         master_canvas.setEmptyChar(' ');
 

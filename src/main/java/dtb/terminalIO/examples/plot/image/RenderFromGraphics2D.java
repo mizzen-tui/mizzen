@@ -9,22 +9,18 @@ import java.awt.RenderingHints;
 import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import dtb.terminalIO.app.TUIApp;
-import dtb.terminalIO.components.AbstractComponentWrappper;
 import dtb.terminalIO.components.AbstractWrappedComponentAndFocusable;
 import dtb.terminalIO.components.AbstractWrappedComponentWithFocusManager;
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.composite.VerticalPanel;
@@ -33,17 +29,20 @@ import dtb.terminalIO.components.input.DropdownListBox;
 import dtb.terminalIO.components.input.HasValue;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.ImageRenderRequest;
+import dtb.terminalIO.components.plot.image.animate.ImageAnimatorComponent;
+import dtb.terminalIO.components.plot.image.animate.ImageIterator;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
-import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.mouse.Clickable;
+import dtb.terminalIO.examples.plot.image.animate.AbstractImageAnimator;
+import dtb.terminalIO.examples.plot.image.animate.BufferedAnimate;
 import dtb.terminalIO.geom.Dimension;
 
 public class RenderFromGraphics2D {
@@ -75,10 +74,10 @@ public class RenderFromGraphics2D {
             
 
             Consumer<ImageIterator> setAnimator = (imageAnimator)-> {
-                AnimatorController animatorController = new AnimatorController(Colors.BGre, imageAnimator, imageViewerSize, tApp.getEventBus());
+                ImageAnimatorComponent animatorController = new ImageAnimatorComponent(Colors.BGre, imageAnimator, imageViewerSize, tApp.getEventBus());
                 
-                if (mainAnimatorPanel.getComponent() != null && mainAnimatorPanel.getComponent() instanceof AnimatorController) {
-                    AnimatorController prevCtrlr = (AnimatorController) mainAnimatorPanel.getComponent();
+                if (mainAnimatorPanel.getComponent() != null && mainAnimatorPanel.getComponent() instanceof ImageAnimatorComponent) {
+                    ImageAnimatorComponent prevCtrlr = (ImageAnimatorComponent) mainAnimatorPanel.getComponent();
                     ImageRenderRequest prevRsqt = prevCtrlr.getImageRenderRequest();
                     ImageRenderRequest curRqst = animatorController.getImageRenderRequest();
                     curRqst.copyFrom(prevRsqt);
@@ -88,7 +87,7 @@ public class RenderFromGraphics2D {
             };
 
             // Supplier<ImageIterator> imageAnimator
-            Supplier<AnimatorController> currentAnimator = ()-> (AnimatorController)mainAnimatorPanel.getComponent();
+            Supplier<ImageAnimatorComponent> currentAnimator = ()-> (ImageAnimatorComponent)mainAnimatorPanel.getComponent();
             Supplier<ImageRenderRequest> currentRequest   = ()-> currentAnimator.get().getImageRenderRequest();
 
             mainPanel.add(mainAnimatorPanel);
@@ -146,7 +145,6 @@ public class RenderFromGraphics2D {
             
             FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
             
-            //throw new IllegalStateException(FocusManager.UTIL.traverseAllFocusablesToString(mainFocusManager));
 
         }).start();
 
@@ -171,7 +169,7 @@ public class RenderFromGraphics2D {
         }
 
         public AnimatorSelector add(Supplier<ImageIterator> imageAnimator, EventBus eventBus) {
-            AnimatorController animatorController = new AnimatorController(Colors.BGre, imageAnimator.get(), this.sizeOfEachChild, eventBus);
+            ImageAnimatorComponent animatorController = new ImageAnimatorComponent(Colors.BGre, imageAnimator.get(), this.sizeOfEachChild, eventBus);
             ClickableAnimator clickable = new ClickableAnimator(animatorController);
             this.getWrappedComponent().add(clickable);
             this.addFocusable(clickable);
@@ -213,8 +211,8 @@ public class RenderFromGraphics2D {
     public static class ClickableAnimator extends AbstractWrappedComponentAndFocusable<BorderedComponent> implements Clickable {
 
         Focusable focusable = null;
-        AnimatorController animatorController;
-        ClickableAnimator(AnimatorController animatorController) {
+        ImageAnimatorComponent animatorController;
+        ClickableAnimator(ImageAnimatorComponent animatorController) {
             super(animatorController.getColor(), new BorderedComponent(animatorController));
             focusable = new DefaultFocusableBehaviour.HiliteOnFocus(this.getWrappedComponent());
         }
@@ -229,175 +227,6 @@ public class RenderFromGraphics2D {
         }
 
     }
-    
-    static public class AnimatorController extends AbstractComponentWrappper<Component<?>> {
-
-        ImageRenderRequest imageRenderRequest = new ImageRenderRequest();
-        OnIdleEventEventHandler idleEventHandler;
-        boolean stopped = false;
-
-        public AnimatorController(dtb.terminalIO.controlcodes.color.Color color, 
-                ImageIterator animation, 
-                Dimension size, 
-                EventBus eventBus) {
-            
-            this(color, animation, size, eventBus, 100);
-        }
-        
-        public void stop() {
-            this.stopped = true;
-            this.idleEventHandler = null;
-        }
-        
-        @Override
-        public void setParentContainer(ParentContainer parentContainer) {
-            super.setParentContainer(parentContainer);
-            if (parentContainer == null) {
-                this.stop();
-            }
-        }
-
-
-        public AnimatorController(dtb.terminalIO.controlcodes.color.Color color, 
-                                  ImageIterator animation, 
-                                  Dimension size, 
-                                  EventBus eventBus,
-                                  int interval) {
-            super(color, null);
-            try {
-                imageRenderRequest.setDesiredImgSizeInCharacters(size);
-                this.setWrappedComponent(ImageViewerFactory.fromImage(imageRenderRequest.setImageToView(animation.next())));
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-
-            if (animation.hasNext()) {
-                this.idleEventHandler = new OnIdleEventEventHandler.RepeatingIntervalWhileCond(interval,
-                                                                        ()->animation.hasNext() && !stopped,
-                                                                        (te)-> {
-                                                                            try {
-                                                                                ImageViewerFactory.fromImage(getWrappedComponent(), imageRenderRequest.setImageToView(animation.next()));
-                                                                                te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(this));
-                                                            
-                                                                            } catch (Exception e) {
-                                                                                throw new RuntimeException(e);
-                                                                            }
-                                                                        }) ;
-                eventBus.appendIdleEventHandler(this.idleEventHandler);
-            }
-
-        }
-
-        public OnIdleEventEventHandler getIdleEventEventHandler() {
-            return this.idleEventHandler;
-        }
-
-        public ImageRenderRequest getImageRenderRequest() {
-            return this.imageRenderRequest;
-        }
-    }
-    
-    
-
-    static interface ImageIterator extends Iterator<BufferedImage> {
-        
-    }
-    
-    static abstract class AbstractImageAnimator implements ImageIterator, Dimension {
-
-        BufferedImage buffer;
-
-        Dimension oldSize;
-        Dimension size;
-
-        AbstractImageAnimator(Dimension size) {
-            setSize(size);
-            buffer = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
-        }
-
-        AbstractImageAnimator() {
-            this(new Dimension.Simple(300, 100));
-        }
-        
-        @Override
-        public boolean hasNext() {
-            return true;
-        }
-
-        @Override
-        public BufferedImage next() {
-            if (hasNext()) {
-                paint(buffer.getGraphics());
-            }
-            return buffer;
-        }
-
-        Dimension getSize() {
-            return size;
-        }
-
-        void setSize(Dimension size) {
-            this.size = size;
-        }
-
-        public int getWidth() {
-            return getSize().getWidth();
-        }
-
-        public int getHeight() {
-            return getSize().getHeight();
-        }
-
-        abstract protected void paint(Graphics g);
-    }
-    
-    
-    static class BufferedAnimate extends AbstractImageAnimator {
-
-        BufferedAnimate() {
-            super();
-        }
-
-        BufferedAnimate(Dimension size) {
-            super(size);
-        }
-
-        Color colors[] = { Color.RED, Color.ORANGE, Color.YELLOW, Color.GREEN, Color.BLUE, Color.MAGENTA };
-
-        protected void paint(Graphics bufferG) {
-
-            // Graphics g = buffer.getGraphics();
-            // Calculate each time in case of resize
-            int x = 0;
-            int y = 0;
-            int width = size.getWidth();
-            int height = size.getHeight();
-            int start = 0;
-            int steps = colors.length;
-            int stepSize = 360 / steps;
-            synchronized (colors) {
-                bufferG.setColor(Color.WHITE);
-                bufferG.fillRect(x, y, width, height);
-                for (int i = 0; i < steps; i++) {
-                    bufferG.setColor(colors[i]);
-                    bufferG.fillArc(x, y, width, height, start, stepSize);
-                    start += stepSize;
-                }
-                nextImageFrame();
-            }
-        }
-
-        private void nextImageFrame() {
-            Color c = colors[0];
-            synchronized (colors) {
-                System.arraycopy(colors, 1, colors, 0, colors.length - 1);
-                colors[colors.length - 1] = c;
-            }
-        }
-
-
-    }
-    
     
     static class AnimateRotatingSquare extends AbstractImageAnimator {
 

@@ -32,7 +32,7 @@ public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
 
     private Component<?> viewSource;
     private ScreenLineSegmentsView segmentsViewBuffer;
-    
+
     private OnResizeService onViewSourceResizeService = new OnResizeService();
 
     public WindowViewComponent(Color color, Dimension d, Component<?> viewSource) {
@@ -56,7 +56,6 @@ public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
         return this.viewSource;
     }
 
-
     public Position calculateScrollToViewOffset(Rectangle targetToView) {
         return segmentsViewBuffer.calculateScrollToViewOffset(targetToView);
     }
@@ -74,12 +73,32 @@ public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
         super.markAsDirty();
     }
 
+    public static interface CustomComponentDrawFunction  {
+        void draw(IScreenLineSegmentsBuffer componentSegments, IScreenLineSegmentsBuffer segmentsViewBuffer);
+    }
+
+    CustomComponentDrawFunction segmentsDrawFunction = (mySegments, clippedSegments) -> {
+        mySegments.clearAndMerge(segmentsViewBuffer.getSegments());
+    };
+
+    public CustomComponentDrawFunction getSegmentsDrawFunction() {
+        return segmentsDrawFunction;
+    }
+
+    public void setSegmentsDrawFunction(CustomComponentDrawFunction segmentsDrawFunction) {
+        this.segmentsDrawFunction = segmentsDrawFunction;
+    }
+
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer mySegments) {
         
+        Logging.info("WindowViewComponent draw callled!" + String.valueOf(this));
+        
         long elapsed = ElapsedTime.onRunOf(()->{
             
-            mySegments.clearAndMerge(segmentsViewBuffer.getSegments());
+            segmentsDrawFunction.draw(mySegments, segmentsViewBuffer);
+            
+            //mySegments.clearAndMerge(segmentsViewBuffer.getSegments());
             
         }).elapsed();
 
@@ -101,7 +120,6 @@ public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
     public Position getOffsetIntoSource() {
         return segmentsViewBuffer.getOffsetIntoSource();
     }
-
 
     @SuppressWarnings("unchecked")
     @Override
@@ -130,8 +148,7 @@ public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
         this.onViewSourceResizeService.setOnResize(onResize);
         return this;
     }
-    
-    
+
     @Override
     public Component<?> getComponentAtOffset(Position offset) {
         if ( ! this.containsPosition(offset)) {
@@ -155,7 +172,6 @@ public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
         return this;
     }
 
-    
     public static class ScrollToViewHandler extends OnRequestScrollToViewEventHandler {
 
         public ScrollToViewHandler(Supplier<WindowViewComponent> viewerProvider, CanScrollToView scrollable) {

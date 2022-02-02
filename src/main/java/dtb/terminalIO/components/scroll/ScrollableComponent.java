@@ -11,6 +11,7 @@ import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.components.Hiliter;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.Composite;
+import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent.SearchableView;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.ConditionalEventHandler;
@@ -131,6 +132,67 @@ public class ScrollableComponent extends Composite implements CanResize, CanScro
         currentFocusable = footerControls;
 
         buildEventHandler();
+    }
+    
+    public SearchableView asSearchableView() {
+        return new SearchableView() {
+
+            @Override
+            public int getHeight() {
+                return ScrollableComponent.this.getHeight();
+            }
+
+            @Override
+            public void refreshFooter() {
+                ScrollableComponent.this.refreshFooter();
+            }
+
+            @Override
+            public int getWidth() {
+                return ScrollableComponent.this.getWidth();
+            }
+
+            @Override
+            public boolean scrollToView(Rectangle targetToView) {
+                return ScrollableComponent.this.scrollToView(targetToView);
+            }
+
+            @Override
+            public void setTitle(String message) {
+                ScrollableComponent.this.setTitle(message);
+            }
+
+            @Override
+            public Component<?> getComponentBeingViewed() {
+                return ScrollableComponent.this.getComponentBeingViewed();
+            }
+
+            @Override
+            public void setComponentBeingViewed(Component<?> component) {
+                ScrollableComponent.this.setComponentBeingViewed(component);
+            }
+
+            @Override
+            public Color getColor() {
+                return ScrollableComponent.this.getColor();
+            }
+
+            @Override
+            public void appendOnResizeRule(CanResize resizeRule) {
+                ScrollableComponent.this.appendOnResizeRule(resizeRule);
+            }
+
+            @Override
+            public void addFooterComponent(Component<?> component) {
+                ScrollableComponent.this.addFooterComponent(component);
+            }
+            
+            @Override
+            public WindowViewComponent getViewPort() {
+                return ScrollableComponent.this.viewer;
+            }
+            
+        };
     }
 
     public ScrollableComponent setColor(Color drawingcolor) {
@@ -690,8 +752,9 @@ public class ScrollableComponent extends Composite implements CanResize, CanScro
             return;
         }
         if (! getChildFocusables().contains(focusable)) {
-            throw new IllegalStateException(
-                    String.valueOf(focusable) + " is not the footer control or the viewer for this scrollable");
+            return ; // ignorem
+//            throw new IllegalStateException(
+//                    String.valueOf(focusable) + " is not the footer control or the viewer for this scrollable");
         }
 
         FocusManager.UTIL.setNewFocusable(focusable, currentFocusable, eventBus, null);

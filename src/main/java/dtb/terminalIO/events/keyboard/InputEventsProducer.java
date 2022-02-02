@@ -56,7 +56,7 @@ public class InputEventsProducer implements Runnable {
             try {
                 Stty.setRaw();
             } catch (Exception e) {
-                System.err.println("Failed to go into raw mode!");
+                System.err.println("Failed to go into raw mode! " + e.getMessage());
                 inputStream = System.in;
             }
         } else {

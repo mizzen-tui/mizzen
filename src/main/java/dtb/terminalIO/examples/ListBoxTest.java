@@ -245,7 +245,7 @@ public class ListBoxTest {
 
         TextComponent eventDisplayer = new TextComponent("                                       ");
         
-        Canvas master_canvas = new Canvas(screen);
+        Canvas master_canvas = TestsCommon.getMasterCanvasForTesting(screen);
 
         Dimension desiredCanvasSize = new Dimension.Simple(listBoxesPanel.getHeight()+anchorPoint.getRow()+2+4, listBoxesPanel.getWidth()+ anchorPoint.getCol()+ 10);
         Dimension terminalSize = TestsCommon.terminalSize();
@@ -377,7 +377,7 @@ public class ListBoxTest {
        fm.addFocusable( lb4, eventBus  );
 
        lb1_sc.prependEventHandler( lb1.asFocusable() );
-       SearchFunctionForScrollableComponent.addFinderToScrollable(lb1_sc);
+       SearchFunctionForScrollableComponent.addFinderToScrollable(lb1_sc.asSearchableView());
 
        eventBus.appendEventHandler(fm);
 

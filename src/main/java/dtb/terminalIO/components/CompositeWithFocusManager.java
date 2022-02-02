@@ -9,9 +9,8 @@ import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
-import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.FocusManagerProvider;
-import dtb.terminalIO.events.keyboard.Keys;
+import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.geom.position.Position;
 
 public class CompositeWithFocusManager  extends Composite implements FocusManager, FocusManagerProvider
@@ -38,7 +37,7 @@ public class CompositeWithFocusManager  extends Composite implements FocusManage
     }
     
     protected DefaultFocusManager buildFocusManager() {
-        DefaultFocusManager focusManager = new DefaultFocusManager(Keys.TAB_KEYSTROKE);
+        DefaultFocusManager focusManager = new DefaultFocusManager();
         focusManager.setNavKeysFirst(false);
         focusManager.setName(this.getClass().getSimpleName()+"-FocusManager");
         return focusManager;

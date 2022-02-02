@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.StringJoiner;
+import java.util.TreeSet;
 
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.controlcodes.color.Color;
@@ -13,7 +14,9 @@ import dtb.terminalIO.events.RequestShowCursorEvent;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.textsegments.ScreenLineSegment;
 import dtb.terminalIO.traverse.FindPathToTarget;
+import dtb.terminalIO.util.StringUtils;
 
 
 /**
@@ -367,7 +370,94 @@ public interface Component<T extends Component<?>>
             return true; // has a parent, but parent cannot hide child
 
         }
+        
+        
+        /**
+         * When true, component draw methods will check that 
+         * built segments do not overlap and segments stay within
+         * the bounds of the components defined bounds.
+         * Only turn this flag on for debug and / or test sessions.
+         * It's expensive to leave it on.
+         */
+        public static boolean COMPONENT_SEGMENTS_INTEGRITY_CHECK_FLAG = false; 
+        
+        /** 
+         *  WARNING WARNING WARNING - very slow .. use only for testing
+         * 
+         *  Asserts that the component is truly the size that it claims by traversing all
+         *  segments and building a bounding rectangle from it.
+         *  Asserts that the component has no overlapping segments
+         *  
+         * @param component
+         */
+        public static void assertComponentSegmentsIntegrity(Component<?> component) {
+            if (!COMPONENT_SEGMENTS_INTEGRITY_CHECK_FLAG) {
+                return;
+            }
+            ScreenLineSegment.UTIL.assertNoOverlapsInSegments(component.getSegmentsBuffer().getSegments());
+            assertComponentBoundsItsSegments(component);
+        }
 
+        /** 
+         * Same as {@link#assertComponentSegmentsIntegrity(Component)} except segments 
+         * do not have to attached to a component
+         * 
+         * @param bounds
+         * @param segmentsTree
+         */
+        public static void assertSegmentsIntegrity(Rectangle bounds, TreeSet<ScreenLineSegment> segmentsTree) {
+            if (!COMPONENT_SEGMENTS_INTEGRITY_CHECK_FLAG) {
+                return;
+            }
+            ScreenLineSegment.UTIL.assertNoOverlapsInSegments(segmentsTree);
+            assertSegmentsWithinBounds(bounds, segmentsTree);
+        }
+
+        private static void assertComponentBoundsItsSegments(Component<?> component) {
+            Rectangle calcRec = Rectangle.UTIL.calcDimensionsWith(component.getSegmentsBuffer().getSegments());
+            if (calcRec.isSameRectangle(Rectangle.ZERO)) {
+                return;
+            }
+            if (!component.contains(calcRec)) {
+                // find offending segments
+                StringJoiner sj = new StringJoiner("\n");
+                component.getSegmentsBuffer().getSegments().stream().filter( s -> !component.contains(s)).forEach(s->sj.add("    -  "+String.valueOf(s)));
+
+                String errorMSG = String.format("Error in %s:\n  calculated segments rect of componment:          %s\n  does not fit inside defined component bounds of: %s\n  # segments : %d\n  offending segments:\n%s\n", 
+                                                StringUtils.truncate(HasName.UTIL.getName(component),20), 
+                                                String.valueOf(calcRec),
+                                                String.valueOf(new Rectangle.Simple(component)),
+                                                component.getSegmentsBuffer().getSegments().size(),
+                                                sj.toString());
+
+                RuntimeException e = new IllegalStateException(errorMSG);
+
+                throw e;
+            }
+        }
+
+        private static void assertSegmentsWithinBounds(Rectangle bounds, TreeSet<ScreenLineSegment> segmentsTree) {
+            Rectangle calcRec = Rectangle.UTIL.calcDimensionsWith(segmentsTree);
+            if (calcRec.isSameRectangle(Rectangle.ZERO)) {
+                return;
+            }
+            if (!bounds.contains(calcRec)) {
+                // find offending segments
+                StringJoiner sj = new StringJoiner("\n");
+                segmentsTree.stream().filter( s -> !bounds.contains(s)).forEach(s->sj.add("    -  "+String.valueOf(s)));
+
+                String errorMSG = String.format("Error in assertComponentBoundsItsSegments:\n  calculated segments rect of segments:          %s\n  does not fit inside defined desired rectangle of: %s\n  # segments : %d\n  offending segments:\n%s\n", 
+                                                String.valueOf(calcRec),
+                                                String.valueOf(new Rectangle.Simple(bounds)),
+                                                segmentsTree.size(),
+                                                sj.toString());
+
+                RuntimeException e = new IllegalStateException(errorMSG);
+
+                throw e;
+            }
+        }
+        
     }
 
 }

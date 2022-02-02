@@ -27,7 +27,7 @@ public class KeySequence {
     }
 
     public String toString() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         StringJoiner sj = new StringJoiner(",");
         for (int i = 0; i < keys.length; i++) {
             sj.add(((int) keys[i]) + "");

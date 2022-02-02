@@ -12,7 +12,6 @@ import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.input.ShowComponentOnFocus;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Colors;
-import dtb.terminalIO.controlcodes.color.Colors.FGBGColors;
 import dtb.terminalIO.core.ScreenCanvasBackend;
 import dtb.terminalIO.core.ScreenCanvasBackend.UpdateStrategy;
 import dtb.terminalIO.events.EventBus;

@@ -127,7 +127,6 @@ public class EventBusImpl implements EventHandlerContainer, EventBus {
                             handleEvent(te);
                         }
                     } catch (Exception e) {
-                        System.err.println("EventBusImpl: " +  e.getLocalizedMessage());
                         handleEvent(new TerminalEvent<Exception>(EventBusImpl.this, TerminalEvent.TYPE.EXCEPTION, e).setEventBus(EventBusImpl.this));
                         // hmm... Should I really be looping after an exception.. or should I
                         //        terminate?..
@@ -438,7 +437,7 @@ public class EventBusImpl implements EventHandlerContainer, EventBus {
     }
 
     public String statsAsStr() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append("EvtBus: Qsize:");
         sb.append(this.queue.size());
         sb.append(" ");

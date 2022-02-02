@@ -25,7 +25,7 @@ public class SparkLineComponent extends AbstractComponent<SparkLineComponent> im
     
     public SparkLineComponent(Color color) {
         super(color);
-        container = new Composite(color);
+        container = new Composite(color).setName("sparkLineContainer");
         chart = new TextComponent(color, SparkLine.render(0));
         container.add(chart);
         container.setParentContainer(this);

@@ -9,7 +9,7 @@ import dtb.terminalIO.components.WindowFrame;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.input.MultiLineTextInput;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
-import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
+import dtb.terminalIO.components.scroll.ScrollableComponent2;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.OnIdleEventEventHandler.RepeatingInterval;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
@@ -35,29 +35,18 @@ public class MultiLineTextInputTest {
 
             mTextBox.setColor(  new Colors.FGBGColors( Colors.BBlu, Colors.On_Bla  )  );
 
-            ScrollableComponent sc = new ScrollableComponent(Colors.Yel, 
-                                                             (Dimension)tApp.getMainApplicationPanel(), 
-                                                             mTextBox,
-                                                             ()-> new DefaultFocusManager().setNavKeysFirst(false)) {
-                public Composite bringToFront(Component<?> component) {
-                    return super.bringToFront(component);
-                }
-            };
+            ScrollableComponent2 sc = new ScrollableComponent2(Colors.Yel, 
+                                                               (Dimension)tApp.getMainApplicationPanel(), 
+                                                                mTextBox);
 
             sc.setFillOnClear(true);
             sc.setEmptyChar('.');
 
             sc.resize(  new Dimension.Simple(sc.getHeight()-2, sc.getWidth()));
             
-            SearchFunctionForScrollableComponent.addFinderToScrollable(sc, 20);
-
             tApp.getMainApplicationPanel().add(2,0, sc);
 
-            FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),
-                    tApp.getEventBus(),
-                    ()-> new DefaultFocusManager().setNavKeysFirst(false).setCycling(false).setName("MainApplicationPanel-FocusManager"));
-
-            tApp.getEventBus().appendEventHandler( mainFocusManager );
+            DefaultFocusManager mainFocusManager = (DefaultFocusManager)FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(), tApp.getEventBus());
 
             ComponentInspector inspector = new ComponentInspector(Colors.BIGre, 
                     new Dimension.Simple(25,60), 
@@ -66,9 +55,6 @@ public class MultiLineTextInputTest {
             
             WindowFrame wfInspector = new WindowFrame(inspector.getColor(),"Components",inspector);
             
-//            DefaultFocusManager.applyIfDefaultFocusManager(mainFocusManager, (dfalt_fm)->{
-//                dfalt_fm.addFocusable(wfInspector);
-//            });
 
             tApp.getEventBus().appendEventHandler( inspector.toggleViewEventHandler() );
             tApp.getEventBus().appendEventHandler( inspector.refreshEventHandler() );
@@ -77,9 +63,14 @@ public class MultiLineTextInputTest {
                                                          inspector.refreshEventHandler().handle(te);
                                                       }));
             
+            mainFocusManager.addComponentAsFocusables(wfInspector);
+            
+            tApp.getEventBus().appendEventHandler(mainFocusManager);
+            
             tApp.getMainApplicationPanel().add(22,44, wfInspector);
             
-            //FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
+            FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
+            
 
         }).start();
 

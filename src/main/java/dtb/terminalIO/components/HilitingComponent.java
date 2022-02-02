@@ -60,7 +60,7 @@ public class HilitingComponent extends AbstractComponent<HilitingComponent>   im
         
         this.selected = hilightRequestList.get(index);
         
-        // this is a bit of trickery .. 
+        // this is a bit of trickery to ensure parent redraws itself.. 
         if (getParentContainer() != null) {
             getParentContainer().markAsDirty();
         }
@@ -148,7 +148,10 @@ public class HilitingComponent extends AbstractComponent<HilitingComponent>   im
 
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
+
+        
         TreeSet<ScreenLineSegment> ts = ScreenLineSegment.UTIL.makeCollection(child.getSegmentsBuffer().getSegments());
+        
         if (hilightRequestList != null ) {
             hilightRequestList.stream().map(r -> r.toScreenLineSegment())
                                        .filter(sc-> sc != null)
@@ -227,8 +230,7 @@ public class HilitingComponent extends AbstractComponent<HilitingComponent>   im
 
                 @Override
                 public ScreenLineSegment fromOffset(Position offset) {
-                    return new SegmentImpl(getColor(), Position.Simple.withOffset((Position) this, offset), getId(),
-                            this.getText());
+                    return new SegmentImpl(getColor(), new Position.Simple(this).offsetAdd(offset), getId(), this.getText());
                 }
                 
             };

@@ -12,6 +12,7 @@ public class Stty {
     static boolean rawSet = false;
 
     public static Dimension terminalSize() throws Exception {
+
         String output = ExecUtil.executeWithShell("stty size < /dev/tty");
 
         // parse output which is the form "cols lines"
@@ -29,14 +30,23 @@ public class Stty {
     }
 
     public static void setRaw() throws Exception {
+        /*
+        ExecUtil
+                .executeWithShell("stty -ignbrk -brkint -parmrk -istrip " + 
+                                  "-inlcr -igncr -icrnl -ixon -opost "+ 
+                                  "-echo -echonl -icanon -isig -iexten " + 
+                                  "-parenb cs8 min 1" + (OSType.isCYGWIN() ? "" : " < /dev/tty"));
+        
+        */
         String output = ExecUtil
                 .executeWithShell("stty -ignbrk -brkint -parmrk -istrip " + "-inlcr -igncr -icrnl -ixon -opost "
                                      + "-echo -echonl -icanon -isig -iexten " + "-parenb cs8 min 1 < /dev/tty");
+
         rawSet = true;
     }
 
     public static void setCooked() throws Exception {
-        String output = ExecUtil.executeWithShell("stty sane cooked < /dev/tty");
+        ExecUtil.executeWithShell("stty sane cooked " + (OSType.isCYGWIN() ? "" : "< /dev/tty"));
 
         rawSet = false;
     }

@@ -680,12 +680,12 @@ public interface BlockChars {
             plotCharAt.setCharAt(0,len-1, drawHorizontalEnd(blockChars, getCharAt.getCharAt(0,len-1)));
         }
         
-        static public void drawHorizontalLine(IScreenLineSegmentsBuffer.Provider segments, Color drawColor, BlockChars blockChars, Position pos, int len ) {
+        static public void drawHorizontalLine(IScreenLineSegmentsBuffer segments, Color drawColor, BlockChars blockChars, Position pos, int len ) {
             GetCharAt  charAT    = (row, col)     -> { 
-                                                      String charStr = segments.getSegmentsBuffer().getCharAt(pos.getRow()+row, pos.getCol()+col);
+                                                      String charStr = segments.getCharAt(pos.getRow()+row, pos.getCol()+col);
                                                       return charStr == null ? 0 : charStr.charAt(0);
                                                    };
-            PlotCharAt setCharAT = (row, col, ch) -> segments.getSegmentsBuffer().setCharAt(pos.getRow()+row, pos.getCol()+col, ch, drawColor );
+            PlotCharAt setCharAT = (row, col, ch) -> segments.setCharAt(pos.getRow()+row, pos.getCol()+col, ch, drawColor );
             drawHorizontalLine(blockChars, len, charAT, setCharAT);
         }
 
@@ -762,9 +762,9 @@ public interface BlockChars {
             if (hasRight) {
                 return blockChars.toBlockChar( BOTTOM_LEFT );
             }
-            
+
             return blockChars.getVERTICAL_LINE();
-            
+
             //return drawLineCharHelper(blockChars, vertical_end, current, blockChars.getVERTICAL_LINE());
         }
 
@@ -776,16 +776,16 @@ public interface BlockChars {
             plotCharAt.setCharAt(len-1,0, drawVerticalEnd(blockChars, (row, col)-> getCharAt.getCharAt(row+len-1, col)  ));
         }
 
-        static public void drawVerticalLine(IScreenLineSegmentsBuffer.Provider segments, Color drawColor, BlockChars blockChars, Position pos, int height ) {
+        static public void drawVerticalLine(IScreenLineSegmentsBuffer segments, Color drawColor, BlockChars blockChars, Position pos, int height ) {
             GetCharAt  charAT    = (row, col)     -> {
-                                                      String charStr = segments.getSegmentsBuffer().getCharAt(pos.getRow()+row, pos.getCol()+col);
+                                                      String charStr = segments.getCharAt(pos.getRow()+row, pos.getCol()+col);
                                                       return charStr == null ? 0 : charStr.charAt(0);
                                                    };
-            PlotCharAt setCharAT = (row, col, ch) -> segments.getSegmentsBuffer().setCharAt(pos.getRow()+row, pos.getCol()+col, ch, drawColor );
+            PlotCharAt setCharAT = (row, col, ch) -> segments.setCharAt(pos.getRow()+row, pos.getCol()+col, ch, drawColor );
             drawVerticalLine(blockChars, height, charAT, setCharAT);
         }
 
-        static public void drawBox(IScreenLineSegmentsBuffer.Provider segments, Color drawColor, BlockChars blockChars, Rectangle rect ) {
+        static public void drawBox(IScreenLineSegmentsBuffer segments, Color drawColor, BlockChars blockChars, Rectangle rect ) {
             drawHorizontalLine(segments, drawColor, blockChars, rect.getPostion_TopLeft(), rect.getWidth());
             drawHorizontalLine(segments, drawColor, blockChars, rect.getPostion_BottomLeft(), rect.getWidth());
             drawVerticalLine(segments, drawColor, blockChars, rect.getPostion_TopLeft(), rect.getHeight());

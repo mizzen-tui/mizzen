@@ -19,6 +19,7 @@ import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.examples.Demo.SimpleDemo;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.util.TerminalDimensions;
 
 /**
  * Demos a barchart
@@ -50,11 +51,7 @@ public class BarChartTest {
         BarChart buildBarChart(Rectangle drawingArea) {
 
             BarChart bc = new BarChart(drawingArea.getHeight(), drawingArea.getWidth());
-            bc.setBorder(true);
-            bc.setPlotColor(new Colors.FGBGColors(Colors.BIYel));
-
-            bc.setTitle("| Import Percentages |");
-
+            // bc.setPlotColor(Colors.On_IYel);
             return bc;
 
         }
@@ -103,11 +100,17 @@ public class BarChartTest {
 
     public static void main(String[] args) {
 
+        Dimension termSize = TerminalDimensions.create();
+        
         TUIApp app = new TUIApp(args).setEmptyChar(' ')
-                                     .setMainApplicationPanel(new Composite().setEmptyChar(' '))
+                                     .setMainApplicationPanel(new Composite(termSize).setEmptyChar(' '))
                                      .confirmOnExit();
                 
         // set to size of canvas
+        
+        
+        app.getCanvas().setSize( termSize );
+        
         ((Composite)app.getMainApplicationPanel()).resize(app.getCanvas());
         
         BarChartDemo barChartDemo = new BarChartDemo() {

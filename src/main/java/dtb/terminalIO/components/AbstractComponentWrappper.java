@@ -32,7 +32,7 @@ public class AbstractComponentWrappper<T extends Component<?>>  extends  Abstrac
         return wrappedComponent;
     }
 
-    protected void setWrappedComponent(T wrappedComponent) {
+    public void setWrappedComponent(T wrappedComponent) {
         if (this.wrappedComponent != null) {
             // removed previous wrapped component
             this.wrappedComponent.setParentContainer(null);
@@ -43,6 +43,7 @@ public class AbstractComponentWrappper<T extends Component<?>>  extends  Abstrac
             HasName.UTIL.decorateWithParentsNamePrefix(this.wrappedComponent, this);
             //lastRecordedSize = new Dimension.Simple(wrappedComponent);
         }
+        this.markAsDirty();
     }
 
     @Override
@@ -151,7 +152,7 @@ public class AbstractComponentWrappper<T extends Component<?>>  extends  Abstrac
 
     @Override
     public String getName() {
-        if (super.getName() == null) {
+        if (super.getName() == null && this.getWrappedComponent() != null) {
             String name = this.getClass().getSimpleName()+"[wrapped:"+HasName.UTIL.getName(this.getWrappedComponent())+"]";
             this.setName(name);
         }

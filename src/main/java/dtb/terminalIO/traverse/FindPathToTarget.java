@@ -55,7 +55,13 @@ public class FindPathToTarget<T> {
         if (current == null) {
             return null;
         }
-        return new ArrayList<T>(theSTACK);
+        
+        ArrayList<T> thePath = new ArrayList<T>(theSTACK.size());
+        while (theSTACK.size()>0) {
+            thePath.add(theSTACK.pop());
+        }
+
+        return thePath;
     }
     
     

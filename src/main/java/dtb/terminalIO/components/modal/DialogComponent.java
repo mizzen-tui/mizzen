@@ -61,6 +61,7 @@ public class DialogComponent extends AbstractComponentWithContainer<CompositeWit
     
     private static Component<?> makeICON(char icon, Color iconColor) {
         BorderedComponent question = new BorderedComponent(iconColor, new TextComponent(iconColor," " + icon + " "));
+        question.setName("icon-"+icon);
         return question;
     }
     

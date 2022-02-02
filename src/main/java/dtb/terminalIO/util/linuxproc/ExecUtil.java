@@ -8,6 +8,7 @@ import java.io.PrintStream;
 import java.util.function.Supplier;
 
 import dtb.terminalIO.util.ConsumeResultAction;
+import dtb.terminalIO.util.OSType;
 
 /**
  * Utilities to exec external processes (usually via bash or sh)
@@ -41,13 +42,17 @@ public class ExecUtil {
             return sb.toString();
         }
     }
+    
+    public static String SSH_Path() {
+        return OSType.DETECTED.equals(OSType.CygWin) ? "sh" : "/bin/sh";
+    }
 
     public static String[] shellCMD(String command) {
-        return new String[] { "/bin/sh", "-c", command };
+        return new String[] { SSH_Path(), "-c", command };
     }
     
     public static String executeWithShell(String command) throws Exception {
-        return executeCMDAndReturnOutput(new String[] { "/bin/sh", "-c", command });
+        return executeCMDAndReturnOutput(new String[] { SSH_Path(), "-c", command });
     }
 
     public static int executeCMD(String[] commands, ConsumeResultAction<String> outputConsumer) throws Exception {
@@ -103,7 +108,7 @@ public class ExecUtil {
 
     public static int executeLongRunningWithShell(String command, ConsumeLineOutput outputConsumer,
             Supplier<Boolean> isActive) throws IOException, InterruptedException {
-        return executeLongRunning(new String[] { "/bin/sh", "-c", command }, outputConsumer, isActive);
+        return executeLongRunning(new String[] { SSH_Path(), "-c", command }, outputConsumer, isActive);
     }
 
 //    public static int executeLongRunningWithShell(String command, 

@@ -1,7 +1,8 @@
 package dtb.terminalIO.components;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import dtb.terminalIO.controlcodes.color.Color;
@@ -62,13 +63,21 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
             return null;
         }
 
-        offset = offset.offsetAdd(componentPosition.negate());
-        if (this.component.containsPosition(offset)) {
+        Position offsetIntoComponent = offset.offsetAdd(componentPosition.negate());
+        if (this.component.containsPosition(offsetIntoComponent)) {
             if (this.component instanceof GetComponentAtOffset) {
-                return ((GetComponentAtOffset)component).getComponentAtOffset(offset);
+                return ((GetComponentAtOffset)component).getComponentAtOffset(offsetIntoComponent);
             }
             return this.component;
         }
+        
+        if (this.border.containsPosition(offset)) {
+            Component<?> c = this.border.getComponentAtOffset(offset);
+            if (c != null) {
+                return c;
+            }
+        }
+        
         return this;
     }
     
@@ -149,7 +158,7 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
     public void markAsDirty() {
         super.markAsDirty();
         
-        if (this.component != null) this.component.markAsDirty();
+      //  if (this.component != null) this.component.markAsDirty();
         
         if (this.border != null) this.border.markAsDirty();
     }
@@ -207,7 +216,7 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
         if (componentPosition.isSameLocation(Position.ZERO)) {
-            // very fast merge (not this case probably does not come up)
+            // very fast merge (note this case probably does not come up)
             segments.getSegments().clear();
             segments.getSegments().addAll(this.component.getSegmentsBuffer().getSegments());
         } else {
@@ -229,6 +238,16 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
 
     public BorderedComponent setTitle(Color titleColor, String title, Align titleAlign) {
         border.setTitle(titleColor, title, titleAlign);
+        return this;
+    }
+    
+    public BorderedComponent setTitle(Component<?> titleComponent, Align titleAlign) {
+        border.setTitle(titleComponent, titleAlign);
+        return this;
+    }
+
+    public BorderedComponent setTitle(Component<?> titleComponent) {
+        border.setTitle(titleComponent);
         return this;
     }
     
@@ -270,6 +289,28 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
         return this;
     }
 
+    public BorderedComponent setFooter(Component<?> footerComponent, Align footerAlign) {
+        this.border.setFooter(footerComponent, footerAlign);
+        return this;
+    }
+
+    public BorderedComponent setFooter(Component<?> footerComponent) {
+        this.border.setFooter(footerComponent);
+        return this;
+    }
+
+
+    
+    public BorderedComponent setFooter(String footerText, Align titleAlign) {
+        this.border.setFooter(footerText, titleAlign);
+        return this;
+    }
+
+    public BorderedComponent setFooter(String footerText) {
+        this.border.setFooter( footerText );
+        return this;
+    }
+    
     @Override
     public void hilite() {
         border.hilite();
@@ -286,8 +327,17 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
 
     @Override
     public Collection<? extends Component<?>> getChildren() {
-        // TODO:  do I need to include the border as a component - maybe yes ( see how it is used in the dirty method)
-        return Collections.singleton( this.component );
+        List<Component<?>> children = new ArrayList<Component<?>>(2);
+        
+        if (this.border != null) {
+            children.add(this.border);
+        }
+
+        if (this.component != null) {
+            children.add(component);
+        }
+
+        return children;
     }
 
     

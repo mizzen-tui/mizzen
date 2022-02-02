@@ -80,12 +80,11 @@ public class OnIdleEventEventHandler extends ConditionalEventHandler.Impl {
         public boolean test(TerminalEvent<?> t) {
             return System.currentTimeMillis() > afterTime;
         }
-        
-        
+
         public String toString() {
             return "IntervalPredicate:"+afterTime;
         }
-        
+
     }
 
     /**

@@ -64,13 +64,14 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
 
         setSelectedOntoTextView();
 
-//        this.listBox.onChange((te)->{
-//            // emit a new ValueChangedEvent event indicating that the 'typed' value of this 
-//            // outer component has changed due to the ListBox component changing
-//            setSelectedOntoTextView();
-//            te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(DropdownListBox.this));
-//            //te.getEventBus().raiseEvent(new HasValue.ValueChangedEvent<T>(DropdownListBox.this));
-//        });
+        this.listBox.onChange((te)->{
+            // emit a new ValueChangedEvent event indicating that the 'typed' value of this 
+            // outer component has changed due to the ListBox component changing
+            setSelectedFromListBox(te.getEventBus());
+            //te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(DropdownListBox.this));
+            RequestUpdateCanvasEvent.invoke(te, DropdownListBox.this);
+            //te.getEventBus().raiseEvent(new HasValue.ValueChangedEvent<T>(DropdownListBox.this));
+        });
         
         this.button.onChange((te)->{
             showListBox();

@@ -102,7 +102,7 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
 
     protected void init() {
         this.buffer = new MultiLineTextBuffer();
-        this.buffer.add(new StringBuffer());
+        this.buffer.add(new StringBuilder());
         this.caret = new Position.Simple(0, 0);
         this.setFillOnClear(true);
         this.textRenderer = new TextComponent(this.getColor(),"");
@@ -149,7 +149,7 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
     }
 
     private void __setText(String text) {
-        this.buffer = new MultiLineTextBuffer(Arrays.stream(text.split("\n", -1)).map(line -> new StringBuffer(line))
+        this.buffer = new MultiLineTextBuffer(Arrays.stream(text.split("\n", -1)).map(line -> new StringBuilder(line))
                                                                                  .collect(Collectors.toList()));
         this.textRendererNeedsUpdate = true;
         signalResized();
@@ -363,7 +363,7 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
     // TODO: needs lots 'o work! Get on it!!
     // returns true if text modified by ch
     private boolean addCharAtCaret(char ch) {
-        StringBuffer currentTextLine = this.buffer.get(caret.getRow());
+        StringBuilder currentTextLine = this.buffer.get(caret.getRow());
         if (modeOverite) {
             return false;
         } else { // insert mode
@@ -386,15 +386,15 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
         if (modeOverite) {
             return false;
         } else { // insert mode
-            StringBuffer currentTextLine = this.buffer.get(caret.getRow());
+            StringBuilder currentTextLine = this.buffer.get(caret.getRow());
             if (caret.getCol() < currentTextLine.length()) { // []ABCDE
                 String left = currentTextLine.substring(0, caret.getCol());
                 String nextLine = currentTextLine.substring(caret.getCol());
-                this.buffer.set(caret.getRow(), new StringBuffer(left));
-                this.buffer.add(caret.getRow() + 1, new StringBuffer(nextLine));
+                this.buffer.set(caret.getRow(), new StringBuilder(left));
+                this.buffer.add(caret.getRow() + 1, new StringBuilder(nextLine));
                 setCaretPosition(new Position.Simple(caret.getRow() + 1, 0));
             } else if (caret.getCol() >= currentTextLine.length()) { // ABCDE[]
-                this.buffer.add(caret.getRow() + 1, new StringBuffer(""));
+                this.buffer.add(caret.getRow() + 1, new StringBuilder(""));
                 setCaretPosition(new Position.Simple(caret.getRow() + 1, 0));
             }
             //this.setMaxTextWidth( Math.max(this.getWidth(), currentTextLine.length()));
@@ -405,7 +405,7 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
     }
 
     private boolean deleteCharBeforeCaret() {
-        StringBuffer currentTextLine = this.buffer.get(caret.getRow());
+        StringBuilder currentTextLine = this.buffer.get(caret.getRow());
         if (modeOverite) {
             return false;
         } else { // insert mode
@@ -440,7 +440,7 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
     }
 
     private boolean deleteCharAtCaret() {
-        StringBuffer currentTextLine = this.buffer.get(caret.getRow());
+        StringBuilder currentTextLine = this.buffer.get(caret.getRow());
         if (modeOverite) {
             return false;
         } else { // insert mode
@@ -771,15 +771,15 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
     class MultiLineTextBuffer implements Dimension {
         
         private int maxTextWidth = 0;
-        private List<StringBuffer> bufferText;
+        private List<StringBuilder> bufferText;
         
 
-        MultiLineTextBuffer(List<StringBuffer> bufferText) {
+        MultiLineTextBuffer(List<StringBuilder> bufferText) {
             this.setBufferText(bufferText);
         }
         
         MultiLineTextBuffer() {
-            this(new ArrayList<StringBuffer>());
+            this(new ArrayList<StringBuilder>());
         }
         
 
@@ -790,13 +790,13 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
         }
 
 
-        public void set(int row, StringBuffer stringBuffer) {
+        public void set(int row, StringBuilder stringBuffer) {
             this.bufferText.set(row, stringBuffer);
             adjustDimensionsFromBufferText(stringBuffer.toString());
         }
 
 
-        public void add(int i, StringBuffer stringBuffer) {
+        public void add(int i, StringBuilder stringBuffer) {
             this.bufferText.add(i, stringBuffer);
             adjustDimensionsFromBufferText(true);
         }
@@ -808,12 +808,12 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
         }
 
 
-        public StringBuffer get(int i) {
+        public StringBuilder get(int i) {
             return this.bufferText.get(i);
         }
 
 
-        void setBufferText(List<StringBuffer> bufferText) {
+        void setBufferText(List<StringBuilder> bufferText) {
             this.bufferText =  bufferText;
             adjustDimensionsFromBufferText(true);
         }
@@ -822,7 +822,7 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
             if (this.bufferText.size()==0) {
                 return;
             }
-            int textMaxWidth = this.bufferText.stream().max(Comparator.comparing(StringBuffer::length)).get().length();
+            int textMaxWidth = this.bufferText.stream().max(Comparator.comparing(StringBuilder::length)).get().length();
             boolean widthChanged = this.setMaxTextWidth( Math.max(this.getWidth(), textMaxWidth) );
             if (heightChanged || widthChanged) {
                 signalResized();
@@ -849,7 +849,7 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
         }
 
 
-        public void add(StringBuffer stringBuffer) {
+        public void add(StringBuilder stringBuffer) {
             this.bufferText.add(stringBuffer);
             adjustDimensionsFromBufferText(true);
         }
@@ -867,7 +867,7 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
         
         public String toString() {
             StringJoiner sj = new StringJoiner("\n");
-            for (StringBuffer sb : this.bufferText) {
+            for (StringBuilder sb : this.bufferText) {
                 sj.add(sb);
             }
             return sj.toString();

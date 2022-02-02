@@ -27,7 +27,7 @@ abstract class AbstractSegment implements ScreenLineSegment {
         return color;
     }
 
-    public Position getCursorPos() {
+    public Position getPosition() {
         return new Position.Simple(row,col);
     }
 
@@ -47,7 +47,7 @@ abstract class AbstractSegment implements ScreenLineSegment {
     }
 
     public String toString() {
-        return String.format("x(row=%d,lcol=%d,rcol=%d,[id=%d]):%s", getRow(), getCol(), getRightMostCol(), getId(), getText());
+        return String.format("(row=%d,col=%d,width=%d,'%s')", getRow(), getCol(), getWidth(), getText());
     }
 
     @Override

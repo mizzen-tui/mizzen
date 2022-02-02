@@ -8,6 +8,7 @@ import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.composite.HorizontalPanel;
+import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.input.tree.TreeView;
 import dtb.terminalIO.components.input.tree.TreeViewModel;
 import dtb.terminalIO.components.input.tree.TreeViewModel.HasChildrenTreeViewModel;
@@ -114,7 +115,9 @@ public class TreeViewTest {
                     tApp.getMainApplicationPanel(), tApp.getEventBus(),
                     () -> new DefaultFocusManager().setNavKeysFirst(false).setCycling(false));
 
-            tApp.getEventBus().appendEventHandler(mainFocusManager);
+            if (mainFocusManager != null) {
+               tApp.getEventBus().appendEventHandler(mainFocusManager);
+            }
             
             
         }).start();

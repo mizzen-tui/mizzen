@@ -64,6 +64,10 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
         this(container.getColor(), container);
     }
 
+    public ComponentWithFocusManager(Color color) {
+        this(color, new Composite());
+    }
+
 
     protected Composite getContainer() {
         return container;
@@ -179,6 +183,20 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
         return mapChildComponentToFocusables.get(idx).focusables;
     }
 
+    protected void addComponentAndItsFocusables(Position offset, Component<?> component) {
+        getContainer().add(offset, component);
+        addComponentFocusablesToFocusManager(component);
+    }
+
+    protected void addComponentAndItsFocusables(Component<?> component) {
+        addComponentAndItsFocusables(Position.ZERO, component);
+    }
+
+    protected void addComponentAndItsFocusables(int row, int col, Component<?> component) {
+        addComponentAndItsFocusables(new Position.Simple(row, col),component);
+    }
+
+    
     // ASSUMPTION:  component has already been added to the container
     protected void addComponentFocusablesToFocusManager(Component<?> component) {
         

@@ -2,7 +2,6 @@ package dtb.terminalIO.examples;
 
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
-import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.RenderingHints;
@@ -321,26 +320,6 @@ public class ReadImageFileToScreenTest {
                                 BasicStroke.JOIN_MITER,
                                 10.0f, dash1, 0.0f);
         g.setStroke(dashed);        
-        
-        g.setColor(java.awt.Color.red);
-
-        int fontSize = 100;
-
-        g.setFont(new Font("TimesRoman", Font.PLAIN, fontSize));
-         
-        g.setColor(java.awt.Color.red);
-        
-        g.drawString("HELLO WORLD!", 10, height - 50);        
-        
-        //g.drawString("Filled Rectangle2D", 0, 0);
-        
-//        g.setStroke(new BasicStroke(5));
-//        g.drawOval(0, 0, width - 5, height -5);
-     
-//        GradientPaint redtowhite = new GradientPaint(0,0,java.awt.Color.RED,100, 0,java.awt.Color.WHITE);
-//        g.setPaint(java.awt.Color.green);
-//        g.fill (new Ellipse2D.Double(0, 0, width - 5, height -20));        
-        
         
         return bufferedImage;
     }

@@ -31,6 +31,7 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
         middleBorderChar = blockChars.getVERTICAL_LINE();
         rightMostBorderChar = blockChars.getVERTICAL_RIGHT();
         this.setName(name==null? "buttonBar" : name);
+        getContainer().setName(getName() +".horizontalPanel");
         this.setFocusManager( new DefaultFocusManager()
                                           .setCycling(false)
                                           .setNavKeysFirst(false)

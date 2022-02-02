@@ -163,7 +163,7 @@ public class LineChart extends Composite {
     }
 
     private static Dimension __brailleGridSizeFromLineChartSize(Dimension lineChartSize) {
-	return new Dimension.Simple(lineChartSize.getHeight() - 3, lineChartSize.getWidth() - 3);
+          return new Dimension.Simple(lineChartSize.getHeight() - 3, lineChartSize.getWidth() - 3);
     }
     
     public LineChart(Color color, Dimension d) {
@@ -176,9 +176,8 @@ public class LineChart extends Composite {
     }
 
     public void resize(Dimension d) {
-	super.resize(d);
-//Logging.info("LineChart.resize():" + d);
-	this.grid.resize(__brailleGridSizeFromLineChartSize(d));
+        super.resize(d);
+        this.grid.resize(__brailleGridSizeFromLineChartSize(d));
         this.clearData();
         this.clear();
     }
@@ -351,7 +350,7 @@ public class LineChart extends Composite {
 
         // plot points
 
-        ConnectedPoints graphedLine = new ConnectedPoints(false);
+        ConnectedPoints<ConnectedPoints<?>> graphedLine = new ConnectedPoints<ConnectedPoints<?>>(false);
 
         for (int i = 0; i < dataLen && i < gridLimitWidth; i++) {
             int y = translate_to_y_plotValue(series.data.get(i).y);
@@ -491,7 +490,7 @@ public class LineChart extends Composite {
         int origY = inner.getHeight() - 1;
         int origX = inner.getCol() + this.labelYSpace;
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
 
         for (int i = 0; i < axisWidth - 1; i++) {
             sb.append(HDASH);
@@ -500,6 +499,7 @@ public class LineChart extends Composite {
         segments.add(new SegmentImpl(color, origY, origX, 1, ORIGIN + sb.toString()));
 
         // draw vertical y-axis
+        
         for (int i = 1; i <= axisHeight; i++) {
             segments.add(new SegmentImpl(color, i, origX, 1, VDASH + ""));
         }

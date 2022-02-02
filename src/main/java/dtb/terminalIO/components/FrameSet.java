@@ -11,8 +11,15 @@ import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.geom.Rectangle.Simple;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.util.ElapsedTime;
+import dtb.terminalIO.util.Logging;
+
+
+//  TODO:   FrameSet is broken - take a look at the draw() method .. I intentionally crippled it for now - it needs to be fixed
+
 
 public class FrameSet extends BoundedComponent<FrameSet> implements HasTitleAndBorder<FrameSet>,  ParentContainer, GetComponentAtOffset {
 
@@ -20,8 +27,7 @@ public class FrameSet extends BoundedComponent<FrameSet> implements HasTitleAndB
 
     List<VerticalPair> vPairs = new ArrayList<VerticalPair>();
     List<HorizontalPair> hPairs = new ArrayList<HorizontalPair>();
-    
-    
+
     public FrameSet(Color color, Dimension d) {
         super(color, d);
         container = new Composite(color);
@@ -65,6 +71,10 @@ public class FrameSet extends BoundedComponent<FrameSet> implements HasTitleAndB
         public Position getPosition() {
             return childComponentAsRectangle(left).getPostion_TopRight().offsetAdd(hasBorder()?-1:0,1);
         }
+        
+        public String toString() {
+            return String.format("VerticalPair[left=(%s),right=(%s)]",String.valueOf(left), String.valueOf(right));
+        }
     }
 
     class HorizontalPair {
@@ -87,6 +97,9 @@ public class FrameSet extends BoundedComponent<FrameSet> implements HasTitleAndB
 
         public Position getPosition() {
             return childComponentAsRectangle(above).getPostion_BottomLeft().offsetAdd(1, hasBorder()?-1:0);
+        }
+        public String toString() {
+            return String.format("HorizontalPair[above=(%s),below=(%s)]",String.valueOf(above), String.valueOf(below));
         }
     }
 
@@ -183,7 +196,24 @@ public class FrameSet extends BoundedComponent<FrameSet> implements HasTitleAndB
     
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer mySegments) {
-        mySegments.merge(container.getSegmentsBuffer().getSegments());
+        ElapsedTime drawContainerTime = new ElapsedTime();
+        if (segments.isEmpty()) {
+            // fast!
+            segments.getSegments().addAll(container.getSegmentsBuffer().getSegments());
+         } else {
+            // slow - but safe
+            segments.merge(container.getSegmentsBuffer().getSegments());
+         }
+        
+        Logging.info(String.format("Parts Frameset container draw: #segments %d   time:  %d",  
+                                   container.getSegmentsBuffer().getSegments().size(), 
+                                   drawContainerTime.elapsed() ));
+        
+        Rectangle bounds = new Rectangle.Simple(this);
+        
+        Component.UTIL.assertSegmentsIntegrity(bounds, mySegments.getSegments());
+        
+        if (1+1==2) return;
         
         int iCount = 0;
         
@@ -192,20 +222,33 @@ public class FrameSet extends BoundedComponent<FrameSet> implements HasTitleAndB
             if (iCount == 3) {
                 iCount = 0;
             }
-            BlockChars.UTIL.drawHorizontalLine(this, this.getColor(), this.getBlockChars(), hPair.getPosition(), hPair.getWidth());
+            BlockChars.UTIL.drawHorizontalLine(mySegments, this.getColor(), this.getBlockChars(), hPair.getPosition(), hPair.getWidth());
+            Component.UTIL.assertSegmentsIntegrity(bounds, mySegments.getSegments());
         }
-        
+
         for (VerticalPair vPair : vPairs) {
-            BlockChars.UTIL.drawVerticalLine(this, this.getColor(), this.getBlockChars(), vPair.getPosition(), vPair.getHeight());
+            if (bounds.containsPosition(vPair.getPosition())) {
+                int lineHeight = vPair.getHeight();
+                if (lineHeight + vPair.getPosition().getRow() > bounds.getBottomMostRow()) {
+                    lineHeight = bounds.getBottomMostRow() - vPair.getPosition().getRow();
+                }
+                BlockChars.UTIL.drawVerticalLine(mySegments, this.getColor(), this.getBlockChars(), vPair.getPosition(), lineHeight);
+            }
+            Component.UTIL.assertSegmentsIntegrity(bounds, mySegments.getSegments());
         }
-        
+
         for (Component<?> child : this.container.getChildren()) {
             if (this.container.isChildVisible(child) && child instanceof FrameHorizontalPanel) {
                 for (VerticalLineSpec vlineSpec : ((FrameHorizontalPanel)child).vLines()) {
-                    BlockChars.UTIL.drawVerticalLine(this, this.getColor(), this.getBlockChars(), vlineSpec.start, vlineSpec.height);
+                    BlockChars.UTIL.drawVerticalLine(mySegments, this.getColor(), this.getBlockChars(), vlineSpec.start, vlineSpec.height);
+                    Component.UTIL.assertSegmentsIntegrity(bounds, mySegments.getSegments());
                 }
             }
         }
+
+        Logging.info(String.format("Parts Frameset full draw: #segments %d   time:  %d",  
+                mySegments.getSegments().size(), 
+                drawContainerTime.recalcElapsed() ));
         
     }
 

@@ -317,8 +317,6 @@ public class LineChartTest {
         
         mOrch.enableMouseHandling(mainPanel);
         
-        master_canvas.refresh();
-
         EventHandler terminate = new EventHandler() {
             @Override
             public void handle(TerminalEvent<?> te) {

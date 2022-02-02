@@ -49,6 +49,7 @@ public class ColorParsingUtils {
         if (!matchFound) {
             return source;
         }
+        // have to use StringBuffer because matcher requirements
         StringBuffer sb = new StringBuffer();
         while (matchFound) {
             matcher.appendReplacement(sb, "");
@@ -71,7 +72,7 @@ public class ColorParsingUtils {
         int codesBuffer[] = new int[50];
         int codesBufferLen = 0;
 
-        StringBuffer sb = new StringBuffer(50);
+        StringBuilder sb = new StringBuilder(50);
         sb.setLength(0);
         CleanString simpleText = null;
         Color color = null;
@@ -93,7 +94,7 @@ public class ColorParsingUtils {
                     PARSE_STATE = PARSE_COLOR_START;
                     simpleText = null;
                     color = null;
-                    sb = new StringBuffer();
+                    sb = new StringBuilder();
                     sb.append(ch);
                 } else {
                     sb.append(ch);
@@ -107,11 +108,11 @@ public class ColorParsingUtils {
                     if (Character.isDigit(ch)) {
                         PARSE_STATE = PARSE_COLOR_CODE;
                         codesBufferLen = 0;
-                        sb = new StringBuffer();
+                        sb = new StringBuilder();
                     } else {
                         if (ch == 'm') {
                             color = Colors.RCol;
-                            sb = new StringBuffer();
+                            sb = new StringBuilder();
                             PARSE_STATE = PARSE_TEXT;
                             break;
                         } else {
@@ -133,14 +134,14 @@ public class ColorParsingUtils {
                     // special case - badly formed RCOL
                     if (num.length() == 0 && ch!='m') {
                         color = Colors.RCol;
-                        sb = new StringBuffer();
+                        sb = new StringBuilder();
                         PARSE_STATE = PARSE_TEXT;
                         break;
                     } else {
                         int code = Integer.parseInt(num);
                         codesBuffer[codesBufferLen] = code;
                         codesBufferLen++;
-                        sb = new StringBuffer();
+                        sb = new StringBuilder();
                         if (ch == 'm' || codesBufferLen >= codesBuffer.length) {
                             PARSE_STATE = PARSE_COLOR_END;
                         }
@@ -168,7 +169,7 @@ public class ColorParsingUtils {
                     PARSE_STATE = PARSE_COLOR_START;
                     simpleText = null;
                     color = null;
-                    sb = new StringBuffer();
+                    sb = new StringBuilder();
                 }
 
                 sb.append(ch);

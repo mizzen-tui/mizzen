@@ -25,6 +25,7 @@ public class AppendOnlyComponent extends AbstractComponent<AppendOnlyComponent> 
     public AppendOnlyComponent(Color color, Dimension d) {
         super(color);
         sizeOfSegments = new Rectangle.Simple(d);
+        this.setFillOnClear(false);
     }
 
     public AppendOnlyComponent(Color color) {

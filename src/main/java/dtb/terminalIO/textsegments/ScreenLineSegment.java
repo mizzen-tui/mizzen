@@ -16,6 +16,7 @@ import dtb.terminalIO.core.CursorPos;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.Relation.LeftRight;
 import dtb.terminalIO.geom.position.Position;
+import dtb.terminalIO.util.StringUtils;
 
 /**
  * This object is the fundamental building block for all text objects that can
@@ -272,37 +273,77 @@ public interface ScreenLineSegment extends Rectangle, CleanString  {
             return __blankScreenObject(color, emptyChar, null, row, col, id, width);
         }
         
-        private static ScreenLineSegment __blankScreenObject(Color color, char emptyChar, String emptyText, int row, int col, int id, int width) {
+        public static class BlankScreenLineSegment extends AbstractSegment {
+            char emptyChar;
+            int id; 
+            int width;
+            String theText;
+            
+            public BlankScreenLineSegment(Color color, char emptyChar,  String emptyText, int row, int col, int id, int width) {
+                super(color, row, col);
+                this.emptyChar = emptyChar;
+                this.id = id; 
+                this.width = width;
+                this.theText = emptyText;
+            }
+            @Override
+            public int getId() {
+                return id;
+            }
 
-            return new AbstractSegment(color, new CursorPos(row, col)) {
-                
-                String theText = emptyText;
-                
-                @Override
-                public int getId() {
-                    return id;
-                }
+            public int length() {
+                return width;
+            }
 
-                public int length() {
-                    return width;
-                }
-
-                @Override
-                public String getText() {
-                    if (theText != null) {
-                        return theText;
-                    }
-                    this.theText = new String(new char[width]).replace("\0", emptyChar + "");
+            @Override
+            public String getText() {
+                if (theText != null) {
                     return theText;
                 }
+                this.theText = StringUtils.repeat(emptyChar, width);
+                return theText;
+            }
 
-                @Override
-                public ScreenLineSegment fromOffset(Position offset) {
-                    Position newPos = Position.Simple.withOffset(getCursorPos(), offset);
-                    // can you say recursive-ish? :-)
-                    return __blankScreenObject(getColor(), emptyChar, theText, newPos.getRow(), newPos.getCol(), getId(), getWidth());
-                }
-            };
+            @Override
+            public ScreenLineSegment fromOffset(Position offset) {
+                Position newPos = this.getPosition().offsetAdd(offset);
+                return new BlankScreenLineSegment(getColor(), emptyChar, theText, newPos.getRow(), newPos.getCol(), getId(), getWidth());
+            }
+        }
+        
+        private static ScreenLineSegment __blankScreenObject(Color color, char emptyChar, String emptyText, int row, int col, int id, int width) {
+
+            return new BlankScreenLineSegment(color, emptyChar, emptyText, row, col, id, width);
+            
+//            return new AbstractSegment(color, new CursorPos(row, col)) {
+//                
+//                String theText = emptyText;
+//                
+//                @Override
+//                public int getId() {
+//                    return id;
+//                }
+//
+//                public int length() {
+//                    return width;
+//                }
+//
+//                @Override
+//                public String getText() {
+//                    if (theText != null) {
+//                        return theText;
+//                    }
+//                    this.theText = StringUtils.repeat(emptyChar, width);
+//                    return theText;
+//                }
+//
+//                @Override
+//                public ScreenLineSegment fromOffset(Position offset) {
+//                    Position newPos = this.getPosition().offsetAdd(offset);
+//                    // can you say recursive-ish? :-)
+//                    return __blankScreenObject(getColor(), emptyChar, theText, newPos.getRow(), newPos.getCol(), getId(), getWidth());
+//                }
+//            };
         }
 
         // [left].....[right]
@@ -353,6 +394,116 @@ public interface ScreenLineSegment extends Rectangle, CleanString  {
                     addTo(destination, bsc);
                 }
             }
+        }
+
+        /**
+         * This operation is fast because just does a TreeSet.add.. So it assumes that there is not data (segments)
+         * at the location where the rectangle will be filled.
+         * @param color
+         * @param fillChar
+         * @param bounds
+         * @param destination
+         */
+        public static void fillRectWithCharFastAdd(Color color, char fillChar, Rectangle bounds,
+                                                   TreeSet<ScreenLineSegment> destination) {
+            int maxRow = bounds.getBottomMostRow();
+            int col = bounds.getCol();
+            int width = bounds.getWidth();
+            if (width > 0) {
+                for (int row = bounds.getRow(); row <= maxRow; row++) {
+                    ScreenLineSegment bsc = blankScreenObject(color, fillChar, row, col, -1, width);
+                    destination.add(bsc);
+                }
+            }
+        }
+
+
+        /**
+         * Looks for empty spaces in the TreeSet of segments that are within the bounds of
+         * rectangle bounds and then fills those empty spots with the fillChar
+         * 
+         * @param fillColor        
+         * @param fillChar    
+         * @param bounds
+         * @param destinationSubset
+         */
+        
+        public static void fillEmptySpacesInRectWithChar(Color fillColor, char fillChar, Rectangle bounds,
+                                                         TreeSet<ScreenLineSegment> destination) {
+
+            int topRow    = bounds.getRow();
+            int bottomRow = bounds.getBottomMostRow();
+            int leftCol   = bounds.getCol();
+            int rightCol  = bounds.getRightMostCol();
+            
+            TreeSet<ScreenLineSegment>  destinationSubset = destination;
+            
+            ScreenLineSegment first = ScreenLineSegment.UTIL.getAtRowCol(destinationSubset, topRow, leftCol);
+
+            
+            if (first != null) {
+                ScreenLineSegment last = ScreenLineSegment.UTIL.getAtRowCol(destinationSubset, 
+                                                                            bottomRow,
+                                                                            rightCol);
+                if (last != null) {
+                    // limit the scope of our loops
+                    destinationSubset = (TreeSet<ScreenLineSegment>)destinationSubset.subSet(first, true, last, true);
+                }
+            }
+            
+            int currentRow = topRow;
+            int currentCol = leftCol;
+            
+            List<ScreenLineSegment> emptySpots = new ArrayList<ScreenLineSegment>();
+            
+            for (ScreenLineSegment sourceSegment : destinationSubset) {
+                int segmentRow = sourceSegment.getRow();
+                if (segmentRow < topRow) {
+                    continue;
+                }
+                if (segmentRow > bottomRow) {
+                    break;
+                }
+
+                if (sourceSegment.getCol() > rightCol) {
+                    continue;
+                }
+
+                if (sourceSegment.getRightMostCol() < leftCol) {
+                    continue;
+                }
+                
+                int sourceSegmentRow = sourceSegment.getRow();
+                
+                while (currentRow < sourceSegmentRow) {
+                    emptySpots.add(blankScreenObject(fillColor, fillChar, currentRow, currentCol, -1, rightCol - currentCol + 1));
+                    currentRow++;
+                    currentCol = leftCol;
+                }
+
+                int sourceSegmentCol = sourceSegment.getCol();
+                
+                if (sourceSegmentCol > currentCol) {
+                    emptySpots.add(blankScreenObject(fillColor, fillChar, currentRow, currentCol, -1, sourceSegmentCol - currentCol));
+                }
+                currentCol = sourceSegment.getRightMostCol()+1;
+                if (currentCol > rightCol) {
+                    currentRow++;
+                    currentCol = leftCol;
+                }
+
+            }
+            
+            
+            while (currentRow < bottomRow) {
+                emptySpots.add(blankScreenObject(fillColor, fillChar, currentRow, currentCol, -1, rightCol - currentCol + 1));
+                currentRow++;
+                currentCol = leftCol;
+            }
+            
+            
+            destination.addAll(emptySpots);
+            
         }
 
         public static void addTo(TreeSet<ScreenLineSegment> ts, ScreenLineSegment sc) {
@@ -464,7 +615,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString  {
             if (tree1.isEmpty()) {
                 return diffResult;
             }
-            StringBuffer srcText = new StringBuffer();
+            StringBuilder srcText = new StringBuilder();
             int srcCurCol  = -1;
             int srcCurRow  = -1;
             Color srcColor = null;
@@ -520,7 +671,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString  {
                                     ScreenLineSegment srcSegment = new SegmentImpl(srcColor, srcCurRow, srcCurCol, -1, srcText.toString());
                                     diffResult.add(srcSegment);
                                     srcCurCol = srcCurCol + srcSegment.getWidth();
-                                    srcText = new StringBuffer();
+                                    srcText = new StringBuilder();
                                 } 
                                 srcCurCol++;  // skip past srcCHR
                             } else {
@@ -541,7 +692,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString  {
                 if (srcText.length()>0) {
                     ScreenLineSegment srcSegment = new SegmentImpl(srcColor, srcCurRow, srcCurCol, -1, srcText.toString());
                     diffResult.add(srcSegment);
-                    srcText = new StringBuffer();
+                    srcText = new StringBuilder();
                 }
             }
             return diffResult;
@@ -968,21 +1119,21 @@ public interface ScreenLineSegment extends Rectangle, CleanString  {
 
                     int cmp = Position.UTIL.POS_COMPARE.compare(so1, so2);
                     if (cmp == 0)
-                        throw new IllegalStateException("so1:'"+so1 + "' same position with '"+so2+"'");
-                    
+                        throw new SegmentOverlappingException(so1, so2);
+
                     if (so1.overlapsWith(so2)) {
-                        throw new IllegalStateException("so1:'"+so1 + "' overlaps with '"+so2+"'");
+                        throw new SegmentOverlappingException(so1, so2);
                     }
                     cmp = so1.getText().compareTo(so2.getText());
                     if (cmp != 0)
                         return cmp;
-                    
+
                     cmp = Color.COLOR_COMPARE.compare(so1.getColors(), so2.getColors());
                     return cmp;
                 }
-                
+
             };
-            
+
             List<ScreenLineSegment> myVerifyList = new ArrayList<ScreenLineSegment>( segments.size() );
             myVerifyList.addAll(segments);
             myVerifyList.sort(NoSamePositionComparator);
@@ -1031,13 +1182,40 @@ public interface ScreenLineSegment extends Rectangle, CleanString  {
 
         @Override
         public ScreenLineSegment fromOffset(Position offset) {
-            return new SegmentImpl(getColor(), Position.Simple.withOffset(getCursorPos(), offset), getId(),
-                    this.simpleText);
+            return new SegmentImpl(getColor(), getPosition().offsetAdd(offset), getId(), this.simpleText);
         }
         
 
     }
 
+    public static class SegmentOverlappingException extends IllegalStateException {
+
+        private static final long serialVersionUID = 1L;
+        ScreenLineSegment so1;
+        ScreenLineSegment so2;
+
+        public SegmentOverlappingException(ScreenLineSegment so1, ScreenLineSegment so2) {
+            this.so1 = so1;
+            this.so2 = so2;
+        }
+        
+        public String getMessage() {
+            int cmp = Position.UTIL.POS_COMPARE.compare(so1, so2);
+            if (cmp == 0)
+                return "\n  '"+so1 + "'\n   same position with \n  '"+so2+"'\n";
+            
+            if (so1.overlapsWith(so2)) {
+                return "\n  '"+so1 + "'\n   overlaps with \n  '"+so2+"'\n";
+            }
+            
+            return "SegmentOverlappingException";
+        }
+
+        
+        
+        
+    }
+    
     public abstract ScreenLineSegment fromOffset(Position offset);
 
 }

@@ -85,6 +85,7 @@ public class SparklineTest {
         sparkLine2.resize(new Dimension.Simple(1, 40));
 
         VerticalPanel vp = new VerticalPanel();
+        vp.setName("vpSparkLineTest");
         TextComponent dataPoints = new TextComponent(" .. ");
 
         vp.add(new HorizontalPanel().add(new TextComponent("Data      : ")).add(dataPoints));

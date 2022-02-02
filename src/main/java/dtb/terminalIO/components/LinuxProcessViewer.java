@@ -44,7 +44,7 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
     static class TextBuffer {
         int height = 0;
         int lastRenderedHeight = -1;
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
 
         void synchHeights() {
             lastRenderedHeight = height;

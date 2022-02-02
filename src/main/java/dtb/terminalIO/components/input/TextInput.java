@@ -36,7 +36,7 @@ public class TextInput extends BoundedComponent<TextInput>
                                   Focusable  {
 
     private TextComponent textRenderer;
-    private StringBuffer buffer;
+    private StringBuilder buffer;
     private Position viewOffset = Position.ZERO; // future use .. maybe ..
     private Position caret = Position.ZERO;
     private int maxTextWidth;
@@ -116,7 +116,7 @@ public class TextInput extends BoundedComponent<TextInput>
     }
 
     protected void init() {
-        this.buffer = new StringBuffer();
+        this.buffer = new StringBuilder();
         this.caret = new Position.Simple(0, 0);
         this.setFillOnClear(true);
         this.maxTextWidth = this.getWidth();
@@ -158,7 +158,7 @@ public class TextInput extends BoundedComponent<TextInput>
 
     protected void setTextOnControl(String text) {
         if (validateText(text)) {
-            this.buffer = new StringBuffer(text);
+            this.buffer = new StringBuilder(text);
             this.textRenderer.setText(this.buffer.toString());
             this.markAsDirty();
         }
@@ -205,7 +205,7 @@ public class TextInput extends BoundedComponent<TextInput>
         this.buffer.append(text);
         if (this.buffer.length() > maxWidth) {
             String str = this.buffer.toString();
-            this.buffer = new StringBuffer().append(str.substring(0, maxWidth));
+            this.buffer = new StringBuilder().append(str.substring(0, maxWidth));
         }
         this.setText(this.buffer.toString());
     }

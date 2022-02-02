@@ -36,11 +36,11 @@ public class OnRequestUpdateCanvasEventHandler implements ConditionalEventHandle
 
 
         public OnRequestUpdateCanvasEventHandler(Runnable canvasUpdater) {
-            
+
             timedOnChangeRequestController = buildTimedUpdateCanvasController(canvasUpdater);
             timedOnChangeRequestController.setTimerDelayMillis(DEFAULT_TIMER_DELAY);
         }
-        
+
         AbstractTimedRequestedController buildTimedUpdateCanvasController(Runnable canvasUpdater) {
             
             timedCanvasUpdater = ()-> {
@@ -48,7 +48,7 @@ public class OnRequestUpdateCanvasEventHandler implements ConditionalEventHandle
                 // update canvas and time how long it takes
                 long elapsed = ElapsedTime.onRunOf(canvasUpdater).elapsed();
 
-               // Logging.info("OnRequestUpdateCanvasEventHandler.timedCanvasUpdater - elapsed: " + elapsed + "  tmrDELAY:  " + this.timedOnChangeRequestController.getTimerDelayMillis());
+                //Logging.info("OnRequestUpdateCanvasEventHandler.timedCanvasUpdater - elapsed: " + elapsed + "  tmrDELAY:  " + this.timedOnChangeRequestController.getTimerDelayMillis());
                // Logging.info(" ");
                 
                 if (OnRequestUpdateCanvasEventHandler.this.timedOnChangeRequestController != null &&

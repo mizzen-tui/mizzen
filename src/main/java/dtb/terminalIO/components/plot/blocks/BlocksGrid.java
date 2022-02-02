@@ -1,6 +1,11 @@
 package dtb.terminalIO.components.plot.blocks;
 
-import dtb.terminalIO.components.composite.Composite;
+import java.util.Collection;
+import java.util.Collections;
+
+import dtb.terminalIO.components.BoundedComponent;
+import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.plot.Plotter;
 import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.components.plot.blocks.BlocksUtils.BlocksPlot;
@@ -9,17 +14,20 @@ import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.CleanString;
+import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.textsegments.ScreenLineSegment;
 
-public class BlocksGrid extends Composite {
+public class BlocksGrid extends BoundedComponent<BlocksGrid>  implements ParentContainer {
 
     Plotter plotter;
     Rectangle gridRectangle;
 
     public BlocksGrid(Color color, Dimension d) {
-        super(color);
+        super(color, d);
         this.plotter = new Plotter(color, new Dimension.Simple(d.getHeight(), d.getWidth()));
-        this.add(plotter);
         this.plotter.setName("grid-plotter");
+        this.plotter.setParentContainer(this);
+        this.plotter.setFillOnClear( this.getFillOnClearPolicy().isFillOnClear() );
         gridRectangle = BlocksUtils.componentRectangleToGridRectangle(plotter);
     }
     
@@ -32,10 +40,12 @@ public class BlocksGrid extends Composite {
         return plotter;
     }
 
+
     public void resize(Dimension d) {
         if (d != null && d.isSameDimension(this)) {
             return;
         }
+        super.resize(d);
         this.plotter.resize(d);
         gridRectangle = BlocksUtils.componentRectangleToGridRectangle(plotter);
     }
@@ -47,13 +57,23 @@ public class BlocksGrid extends Composite {
         return this;
     }
 
+    public BlocksGrid setFillOnClear(boolean fillOnClear) {
+        super.setFillOnClear(fillOnClear);
+        if (this.plotter != null) {
+           this.plotter.setFillOnClear(fillOnClear);
+        }
+        return  this;
+    }
+
     public Rectangle getGridRectangle() {
         return this.gridRectangle;
     }
     
     public void markAsDirty() {
         super.markAsDirty();
-        this.plotter.markAsDirty();
+        if (this.plotter != null) {
+           this.plotter.markAsDirty();
+        }
     }
 
 
@@ -186,6 +206,48 @@ public class BlocksGrid extends Composite {
 
     public void clearPlots() {
         this.plotter.clearPlots();
+    }
+
+    @Override
+    public Collection<? extends Component<?>> getChildren() {
+        return Collections.singleton(this.plotter);
+    }
+
+    @Override
+    public Position getPositionRelativeToParent(Component<?> child) {
+        return Position.ZERO;
+    }
+
+    @Override
+    public void childResized(Component<?> child) {
+        this.markAsDirty();
+        
+//      if (lastRecordedSize.isSameDimension(this)) {
+//          return;
+//      }
+//      
+//      lastRecordedSize = new Dimension.Simple(this);
+      
+//      Logging.info("childResized() --> " + HasName.UTIL.getName(this) +  "    X child = " + HasName.UTIL.getName(child)  + " child size = "+ Dimension.UTIL.shortStr(child));
+      
+      if (this.getParentContainer() != null) {
+          this.getParentContainer().childResized(this);
+      }
+    }
+
+    @Override
+    protected void draw(Color color, IScreenLineSegmentsBuffer mySegments) {
+        // this next call is basically just a fast ptr assignment - so very quick and no added memory requirements
+        if (this.contains(this.plotter)) {
+            segments.clearAndMerge(this.plotter.getSegmentsBuffer().getSegments());
+            
+        } else {
+            Rectangle clippedArea = this;
+            ScreenLineSegment.UTIL.addSegmentsWithOffsetBounded(Position.ZERO, 
+                                                                clippedArea, 
+                                                                segments.getSegments(),
+                                                                this.plotter.getSegmentsBuffer().getSegments());
+        }
     }
     
     

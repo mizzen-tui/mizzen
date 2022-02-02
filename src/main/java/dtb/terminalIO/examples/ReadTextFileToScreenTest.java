@@ -148,7 +148,7 @@ public class ReadTextFileToScreenTest {
                 new  Colors.FGBGColors(Colors.BBla, Colors.On_Whi)
         };
         
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         String digits = "0123456789";
         String alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         String chars = digits + alpha + alpha.toLowerCase();

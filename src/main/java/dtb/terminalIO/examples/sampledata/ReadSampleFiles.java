@@ -14,7 +14,7 @@ public class ReadSampleFiles {
 
     public static String readStreamToString(InputStream stream) throws IOException {
         BufferedInputStream in = new BufferedInputStream(stream);
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         while (in.available() > 0) {
             int ch = in.read();
             sb.append((char) ch);

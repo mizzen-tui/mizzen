@@ -5,6 +5,7 @@ import java.util.List;
 
 import dtb.terminalIO.components.AbstractComponent;
 import dtb.terminalIO.components.AbstractComponentWithContainer;
+import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
@@ -18,40 +19,30 @@ import dtb.terminalIO.util.StringUtils;
 /**
  * A Barchart Component
  */
-public class BarChart extends AbstractComponentWithContainer<Composite>   {
+public class BarChart extends BoundedComponent<BarChart>   {
 
     private List<Double> data;
     private List<String> dataLabels;
-    private String[] labelY;
-    private Color plotColor = Colors.FGBGColors.NO_COLOR_SPECIFIED;
 
-    private int labelYSpace;
-    private boolean autoLabels;
-    private String labelX;
 
     private int barWidth;
     private int barGap;
     private int numBar;
     private double topValue;
     private double scale;
+    //private char cellChar = '⣿';
     private char cellChar = ' ';
-    private Colors.BgColor barCOLOR;
+    private Color barCOLOR;
     private Color labelCOLOR;
-    private Colors.FgColor dataCOLOR;
 
     public BarChart(Color color, Dimension d) {
-        super(color, new Composite());
-        getWrappedComponent().setBounds(d);
+        super(color, new Composite(color, d));
         data = new ArrayList<Double>();
         dataLabels = new ArrayList<String>();
         this.barWidth = 3;
         this.barGap = 1;
         barCOLOR = Colors.On_Blu;
-        labelCOLOR = new Colors.FGBGColors(Colors.BGre);
-        dataCOLOR = Colors.BYel;
-        // this.plotter = new Plotter(color, new Dimension.Simple(d.getHeight()
-        // - 3, d.getWidth() - 3));
-        // this.add(this.plotter);
+        labelCOLOR = Colors.BGre;
     }
 
     public BarChart(Color color, Dimension dim, double[] data) {
@@ -102,14 +93,14 @@ public class BarChart extends AbstractComponentWithContainer<Composite>   {
         scale = 0;
     }
 
-    public BarChart setPlotColor(Color fgbgColors) {
-        // throw new IllegalStateException("Not implemented yet!");
+    public BarChart setPlotColor(Color color) {
+        this.barCOLOR = color;
         return this;
     }
 
     private void calcLayout() {
-        Rectangle inner = getWrappedComponent().getInnerRectangle();
-        int useableWidth = inner.getWidth();
+        Rectangle meAsRectangle = this;
+        int useableWidth = meAsRectangle.getWidth();
         int dataLen = this.data.size();
         int calcBarGap = dataLen < 1 ? 0 : (useableWidth - dataLen * this.barWidth) / dataLen;
         if (calcBarGap > this.barGap) {
@@ -118,20 +109,20 @@ public class BarChart extends AbstractComponentWithContainer<Composite>   {
 
         this.numBar = useableWidth / (this.barGap + this.barWidth);
 
-        this.scale = this.topValue / (double) (inner.getHeight() - 3);
+        this.scale = this.topValue / (double) (meAsRectangle.getHeight() - 3);
 
     }
 
     private void renderBars(Color color, IScreenLineSegmentsBuffer segments) {
 
-        Rectangle inner = getWrappedComponent().getInnerRectangle();
+        Rectangle meAsRectangle = this;
 
         int dataLen = this.data.size();
         String barLine = StringUtils.repeat(this.cellChar, this.barWidth);
 
-        int bottomRow = inner.getBottomMostRow();
+        int bottomRow = meAsRectangle.getBottomMostRow();
 
-        Color c = new Colors.FGBGColors(this.barCOLOR);
+        Color numberCOLOR = barCOLOR.mergeWith(labelCOLOR);
 
         // render the bars
         for (int i = 0; i < this.numBar && i < dataLen; i++) {
@@ -140,7 +131,7 @@ public class BarChart extends AbstractComponentWithContainer<Composite>   {
             int offset = i * (this.barWidth + this.barGap) + 1 + this.barGap;
 
             for (int h = 0; h < height; h++) {
-                segments.add(new SegmentImpl(c, bottomRow - h - 2, offset, 1, barLine));
+                segments.add(new SegmentImpl(barCOLOR, bottomRow - h - 2, offset, 1, barLine));
             }
         }
 
@@ -157,10 +148,9 @@ public class BarChart extends AbstractComponentWithContainer<Composite>   {
         // render the numbers
         for (int i = 0; i < this.numBar && i < dataLen; i++) {
             double d = this.data.get(i);
-            int height = (int) Math.round(d / this.scale);
             int offset = i * (this.barWidth + this.barGap) + 1 + this.barGap;
 
-            segments.add(new SegmentImpl(c, bottomRow - 2, offset + 1, 1, shortenFloatVal(d)));
+            segments.add(new SegmentImpl(numberCOLOR, bottomRow - 2, offset + 1, 1, shortenFloatVal(d)));
         }
 
     }
@@ -178,11 +168,8 @@ public class BarChart extends AbstractComponentWithContainer<Composite>   {
 
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
-        // this.plotter.clearPlots();
         calcLayout();
-        // plotAxes(color, segments);
         renderBars(color, segments);
-        super.draw(color, segments);
     }
 
 

@@ -70,7 +70,7 @@ public class InputBytesEventParser {
 
         public InputBytesDEBUGEvent(byte[] buffer, int readIn) {
             super(InputBytesEventParser.this, TYPE.DEBUG, null, Q_FULL_POLICY.OFFER);
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             StringJoiner sj = new StringJoiner(",");
             for (int i = 0; i < readIn; i++) {
                 int theCHAR = buffer[i] & 0xff;

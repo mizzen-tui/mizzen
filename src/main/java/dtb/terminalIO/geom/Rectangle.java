@@ -261,13 +261,16 @@ public interface Rectangle extends Position, Dimension, Movable {
         }
 
         if (!intersection.isSameRectangle(remainingPartOfMe)) {
-            
+
             StringJoiner sj = new StringJoiner("\n");
             for (Rectangle diff : diffs) {
                 sj.add(String.valueOf(diff));
             }
-            throw new IllegalStateException("Rectangle.difference(..) error\n"+String.valueOf(intersection) + "\n not the same as \n" + String.valueOf(remainingPartOfMe)+"\n"+
-                                            "original input:\n"+String.valueOf(this) + "\n" + String.valueOf(other) +"\n\nDIFFS\n-----\n"+sj);
+            throw new IllegalStateException("Rectangle.difference(..) error\n"+String.valueOf(intersection) + 
+                                            "\n not the same as \n" + String.valueOf(remainingPartOfMe)+"\n"+
+                                            "original input:\n"+String.valueOf(this) + 
+                                            "\n" + String.valueOf(other) +
+                                            "\n\nDIFFS\n-----\n"+sj);
         }
 
         return diffs;
@@ -292,10 +295,6 @@ public interface Rectangle extends Position, Dimension, Movable {
      */
     public static class Simple extends Dimension.Simple implements Rectangle {
 
-        @Override
-        public String toString() {
-            return "Rectangle [row=" + row + ", col=" + col  + ", height=" + getHeight() + ", width=" + getWidth() + "]";
-        }
 
         int col;
         int row;
@@ -376,6 +375,11 @@ public interface Rectangle extends Position, Dimension, Movable {
             this.setRow(row);
             this.setCol(col);
         }
+        
+        @Override
+        public String toString() {
+            return "Rectangle [row=" + row + ", col=" + col  + ", height=" + getHeight() + ", width=" + getWidth() + "]";
+        }
 
     }
     
@@ -419,7 +423,7 @@ public interface Rectangle extends Position, Dimension, Movable {
         }
 
         public String toStringDetails() {
-            return "[row=" + getRow() + ", lcol" + getCol() + ", rcol=" + getRightMostCol() + " width="
+            return "[row=" + getRow() + ", lcol=" + getCol() + ", rcol=" + getRightMostCol() + " width="
                     + getWidth() + ", height=" + getHeight() + "]";
         }
     }
@@ -553,9 +557,19 @@ public interface Rectangle extends Position, Dimension, Movable {
          * a new Rectangle that encloses all of the Rectangles
          */
         public static Rectangle calcDimensionsWith(Collection<? extends Rectangle> others) {
-            Rectangle.Simple result = new Simple(ZERO); // start at zero size
+            if (others == null ) {
+                throw new NullPointerException("calcDimensionsWith error: null rectangles");
+            }
+            if (others.size() == 0) {
+                return new Simple(ZERO);
+            }
+            Rectangle.Simple result = null;
             for (Rectangle other : others) {
-                result.mergeAndExpandDimensionsWithMySelf(other);  // now expand its size
+                if (result == null) {
+                    result = new Rectangle.Simple(other);
+                } else {
+                    result.mergeAndExpandDimensionsWithMySelf(other);  // now expand its size
+                }
             }
             return result;
         }
@@ -627,7 +641,7 @@ public interface Rectangle extends Position, Dimension, Movable {
          * return a list of "sub" rectangles of 'this' rectangle that
          * do not intersect with 'other' rectangle
          */
-        public static Collection<RectangleAndSubRectangles> differences(List<Rectangle> rectangles) {
+        public static Collection<RectangleAndSubRectangles> differences(List<? extends Rectangle> rectangles) {
             
             if (rectangles == null) {
                 throw new NullPointerException("bad param");
@@ -680,6 +694,13 @@ public interface Rectangle extends Position, Dimension, Movable {
             return subs;
         }
         
+        public boolean isNotObscured() {
+            if (subs == null) {
+                throw new IllegalStateException("Do not call isNotHidden() before calling splitAndAppendToSubsListUsing()");
+            }
+            return (subs.size() == 1 && subs.get(0).isSameRectangle(this.rectangle));
+        }
+
         public boolean isFullyHidden() {
             if (subs == null) {
                 throw new IllegalStateException("Do not call isFullyHidden() before calling splitAndAppendToSubsListUsing()");
@@ -722,6 +743,26 @@ public interface Rectangle extends Position, Dimension, Movable {
         }
     }
 
+    public static class RectangleComparatorFull implements Comparator<Rectangle> {
+        @Override
+        public int compare(Rectangle r1, Rectangle r2) {
+            if (r1 == r2)
+                return 0;
+            int cmp = Integer.compare(r1.getRow(), r2.getRow());
+            if (cmp != 0)
+                return cmp;
+            cmp = Integer.compare(r1.getCol(), r2.getCol());
+            if (cmp != 0) 
+                return cmp;
+            cmp = Integer.compare(r1.getHeight(), r2.getHeight());
+            if (cmp != 0)
+                return cmp;
+            cmp = Integer.compare(r1.getWidth(), r2.getWidth());
+            return cmp;
+        }
+    }
+
     public static RectangleComparator DEFAULT_COMPARATOR = new RectangleComparator();
+    public static Comparator<Rectangle>  DEFAULT_COMPARATOR_FULL = new RectangleComparatorFull();
 
 }

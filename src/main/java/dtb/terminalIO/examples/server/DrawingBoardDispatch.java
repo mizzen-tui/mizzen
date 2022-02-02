@@ -180,7 +180,7 @@ public class DrawingBoardDispatch {
 
         DrawingBoardDispatch dispatch = new DrawingBoardDispatch(new EventBusImpl());
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
 
         Consumer<String[]> buildStream = new Consumer<String[]>() {
 

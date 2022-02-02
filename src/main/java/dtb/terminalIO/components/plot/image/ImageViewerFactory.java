@@ -8,6 +8,7 @@ import java.awt.image.PixelGrabber;
 
 import dtb.terminalIO.components.AbstractComponentWrappper;
 import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.input.DisplayableValue;
 import dtb.terminalIO.components.input.DisplayableValue.SimpleDisplayValue;
 import dtb.terminalIO.components.input.DisplayableValue.StringDisplayValue;
@@ -17,9 +18,11 @@ import dtb.terminalIO.components.plot.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.braille.BrailleUtils;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
+import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
+import dtb.terminalIO.util.Logging;
 
 public class ImageViewerFactory {
 
@@ -88,6 +91,9 @@ public class ImageViewerFactory {
         if (colorName.equalsIgnoreCase("GREYSCALE")) {
             colorName = "rgbGreyScale";
         }
+        if (colorName.equalsIgnoreCase("ALL")) {
+            colorName = "rgbColorMapDIRECT";
+        }
         for (ColorMapOption option : colorMap()) {
             if (colorName.equalsIgnoreCase(option.getDisplayValue())) {
                 return option.getValue();
@@ -108,7 +114,22 @@ public class ImageViewerFactory {
                  new PlotPredicateOption("PLOT_WHITE_ONLY",PLOT_WHITE_ONLY),
                  new PlotPredicateOption("PLOT_BLACK_ONLY",PLOT_BLACK_ONLY),
                  new PlotPredicateOption("PLOT_DARK_ONLY", PLOT_DARK_ONLY),
-                 new PlotPredicateOption("PLOT_LIGHT_ONLY",PLOT_LIGHT_ONLY)
+                 new PlotPredicateOption("PLOT_DARKISH_ONLY",PLOT_DARKISH_ONLY),
+                 new PlotPredicateOption("PLOT_LIGHT_ONLY",PLOT_LIGHT_ONLY),
+                 new PlotPredicateOption("PLOT_LIGHTER_THAN_50",plotLighterThan(50)),
+                 new PlotPredicateOption("PLOT_LIGHTER_THAN_75",plotLighterThan(75)),
+                 new PlotPredicateOption("PLOT_LIGHTER_THAN_100",plotLighterThan(100)),
+                 new PlotPredicateOption("PLOT_LIGHTER_THAN_150",plotLighterThan(150)),
+                 new PlotPredicateOption("PLOT_DARKER_THAN_50",plotDarkerThan(50)),
+                 new PlotPredicateOption("PLOT_DARKER_THAN_75",plotDarkerThan(75)),
+                 new PlotPredicateOption("PLOT_DARKER_THAN_125",plotDarkerThan(125)),
+                 new PlotPredicateOption("PLOT_DARKER_THAN_150",plotDarkerThan(150)),
+                 new PlotPredicateOption("PLOT_DARKER_THAN_200",plotDarkerThan(200)),
+                 new PlotPredicateOption("PLOT_DARKER_THAN_225",plotDarkerThan(225)),
+                 new PlotPredicateOption("PLOT_DARKER_THAN_240",plotDarkerThan(240)),
+                 new PlotPredicateOption("PLOT_DARKER_THAN_250",plotDarkerThan(250)),
+                 new PlotPredicateOption("PLOT_DARKER_THAN_255",plotDarkerThan(254)),
+                 
         }; 
         return predicateOptions;
     }
@@ -150,8 +171,9 @@ public class ImageViewerFactory {
     
     public static class ImageRenderer extends AbstractComponentWrappper<Component<?>> {
         
-        protected ImageRenderer(Component<?> wrappedComponent) {
+        public ImageRenderer(Component<?> wrappedComponent) {
             super(wrappedComponent.getColor(), wrappedComponent);
+            this.setFillOnClear(false);
         }
 
         void rebuildWrappedComponentIfNeeded(ImageRenderRequest rqst) {
@@ -166,6 +188,23 @@ public class ImageViewerFactory {
                 this.setWrappedComponent(plotter);
             }
         }
+        
+        @Override
+        public void resize(Dimension d) {
+            if (this.isSameDimension(d)) {
+                return ;
+            }
+            
+            if (getWrappedComponent() instanceof CanResize) {
+                ((CanResize) getWrappedComponent()).resize(d);
+            }
+            
+            if (this.getParentContainer() != null) {
+                this.getParentContainer().childResized(this);
+            }
+            
+        }
+        
 
     }
 
@@ -249,17 +288,63 @@ public class ImageViewerFactory {
             return this;
         }
 
-        public void copyFrom(ImageRenderRequest srcRqst) {
-            this.colorMap = srcRqst.getColorMap();
-            this.desiredImgSizeInCharacters = srcRqst.desiredImgSizeInCharacters;
-            this.gradientStr = srcRqst.gradientStr;
-            this.toPlotOrNot = srcRqst.toPlotOrNot;
+        public ImageRenderRequest copyFrom(ImageRenderRequest srcRqst) {
             this.imageRenderType = srcRqst.imageRenderType;
+            this.desiredImgSizeInCharacters = srcRqst.desiredImgSizeInCharacters;
+            this.toPlotOrNot = srcRqst.toPlotOrNot;
+            this.colorMap = srcRqst.getColorMap();
+            this.gradientStr = srcRqst.gradientStr;
+            return this;
+        }
+
+        public ImageRenderRequest copyAllFrom(ImageRenderRequest srcRqst) {
+            this.copyFrom(srcRqst);
+            this.imageToView = srcRqst.imageToView;
+            return this;
+        }
+
+        public boolean isSameRequest(ImageRenderRequest other) {
+            if (this == other)
+                return true;
+            if (other == null)
+                return false;
+            if (colorMap == null) {
+                if (other.colorMap != null)
+                    return false;
+            } else if (!colorMap.equals(other.colorMap))
+                return false;
+            if (desiredImgSizeInCharacters == null) {
+                if (other.desiredImgSizeInCharacters != null)
+                    return false;
+            } else if (!desiredImgSizeInCharacters.isSameDimension(other.desiredImgSizeInCharacters))
+                return false;
+            if (gradientStr == null) {
+                if (other.gradientStr != null)
+                    return false;
+            } else if (!gradientStr.equals(other.gradientStr))
+                return false;
+            if (imageRenderType != other.imageRenderType)
+                return false;
+            if (imageToView == null) {
+                if (other.imageToView != null)
+                    return false;
+            } else if (!imageToView.equals(other.imageToView))
+                return false;
+            if (toPlotOrNot == null) {
+                if (other.toPlotOrNot != null)
+                    return false;
+            } else if (!toPlotOrNot.equals(other.toPlotOrNot))
+                return false;
+            return true;
         }
 
     }
+
+    public static ImageRenderer emptyImage(Color color) {
+        return new ImageRenderer(new TextComponent(color, ""));
+    }
     
-    public static Component<?> fromImage(ImageRenderRequest rqst) throws Exception {
+    public static ImageRenderer fromImage(ImageRenderRequest rqst) throws Exception {
 
         if (rqst.isBlocksType()) {
             return new ImageRenderer(simpleImageToBlocksView(rqst.getImageToView(), 
@@ -335,7 +420,7 @@ public class ImageViewerFactory {
         Plotter plotterComponent = new Plotter(Colors.On_Whi, desiredImgSizeInCharacters);
         plotterComponent.setEmptyColor(Colors.Whi);
         plotterComponent.setEmptyChar(' ');
-        plotterComponent.setFillOnClear(true);
+        plotterComponent.setFillOnClear(false);
         plotterComponent.setName("imageViewer-plotter");
 
         return simpleImageToStringView(plotterComponent,
@@ -418,7 +503,7 @@ public class ImageViewerFactory {
         BrailleGrid brailleGrid = new BrailleGrid(Colors.On_Bla, desiredImgSizeInCharacters);
         brailleGrid.setEmptyColor(Colors.Whi);
         brailleGrid.setEmptyChar(' ');
-        brailleGrid.setFillOnClear(true);
+        brailleGrid.setFillOnClear(false);
         brailleGrid.setName("imageViewer-brailleGrid");
 
         return simpleImageToBrailleView(brailleGrid, 
@@ -479,7 +564,7 @@ public class ImageViewerFactory {
                        int blue  = (pixel & 0xff);
                        int green = ((pixel & 0xff00) >> 8);
                        int red   = ((pixel & 0xff0000) >> 16);
-                       if (toPlotOrNot.test(red, green, blue)) {
+                       if (/*!isTransparentPixel(pixel) &&*/ toPlotOrNot.test(red, green, blue)) {
                            blueAVG  += blue;
                            greenAVG += green;
                            redAVG   += red;
@@ -503,12 +588,20 @@ public class ImageViewerFactory {
         return brailleGrid;
     }
 
+    public static boolean isTransparentPixel(int pixel) {
+        if (pixel == -16777216 ) {
+        //if ( pixel < 2 ) {
+            return true;
+        }
+        return false;
+    }
+    
     public static Component<?> simpleImageToBlocksView(Image inputImage, Dimension desiredImgSizeInCharacters, RGBPlotPredicate toPlotOrNot, RGBToAnsiColorControlCode colorMap) throws Exception {
         
         BlocksGrid blocksGrid = new BlocksGrid(Colors.On_Whi, desiredImgSizeInCharacters);
         blocksGrid.setEmptyColor(Colors.Whi);
         blocksGrid.setEmptyChar(' ');
-        blocksGrid.setFillOnClear(true);
+        blocksGrid.setFillOnClear(false);
         blocksGrid.setName("imageViewer-BlocksGrid");
 
         return simpleImageToBlocksView(blocksGrid, 
@@ -636,14 +729,29 @@ public class ImageViewerFactory {
 
     public static RGBPlotPredicate PLOT_WHITE_ONLY = (r,g,b) -> r > 200 && g > 200 && b > 200;
 
-    public static RGBPlotPredicate PLOT_BLACK_ONLY = (r,g,b) -> r < 100 && g < 100 && b < 100;
+//    public static RGBPlotPredicate PLOT_BLACK_ONLY = (r,g,b) -> r < 100 && g < 100 && b < 100;
+    
+    public static RGBPlotPredicate PLOT_BLACK_ONLY = (r,g,b) -> ! PLOT_WHITE_ONLY.test(r, g, b);
 
-    public static RGBPlotPredicate PLOT_DARK_ONLY = (r,g,b) -> (r + g + b)/3 < 100;
+    public static RGBPlotPredicate PLOT_DARK_ONLY = plotDarkerThan(100);
+
+    public static RGBPlotPredicate PLOT_DARKISH_ONLY = plotDarkerThan(150);
 // 
-    public static RGBPlotPredicate PLOT_LIGHT_ONLY = (r,g,b) -> {
-        //Logging.info(String.format("r %d g %d b %d",r,g,b));
-        return (r + g + b)/3 >= 9;
-    };
+    public static RGBPlotPredicate PLOT_LIGHT_ONLY = plotLighterThan(9);
+
+    static RGBPlotPredicate plotLighterThan(int grey) {
+        return (r,g,b) -> (r + g + b)/3 >= grey;
+    }
+
+    static RGBPlotPredicate plotDarkerThan(int grey) {
+        return (r,g,b) -> {
+            
+            //  Logging.info(String.format("r %d g %d b %d = %d",r,g,b,(r + g + b)/3 ));
+              return(r + g + b)/3 < grey;
+        };
+    }
+    
+//    public static RGBPlotPredicate PLOT_LIGHT_ONLY = (r,g,b) -> (r + g + b)/3 >= 9;
 
     @FunctionalInterface
     public static interface RGBToAnsiColorControlCode {

@@ -111,14 +111,14 @@ public class LinuxProcessWatcher {
             public void run() {
                 try {
 
-                    String[] commands = new String[] { "/bin/sh", "-c", LinuxProcessWatcher.this.invokeScript };
+                    String[] commands = new String[] { ExecUtil.SSH_Path(), "-c", LinuxProcessWatcher.this.invokeScript };
 
                     ProcessBuilder procBuilder = new ProcessBuilder(commands);
                     
                     if (LinuxProcessWatcher.this.workingDirectory != null) {
                         procBuilder.directory(new File(LinuxProcessWatcher.this.workingDirectory ));
                     }
-                    
+
                     if (LinuxProcessWatcher.this.environment != null) {
                         Map<String, String> procENV = procBuilder.environment();
                         for (String envVarName : LinuxProcessWatcher.this.environment.keySet()) {

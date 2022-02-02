@@ -11,6 +11,7 @@ import dtb.terminalIO.components.input.tree.TreeView;
 import dtb.terminalIO.components.input.tree.TreeViewModel.CachingTreeviewModel;
 import dtb.terminalIO.components.input.tree.TreeViewModel.HasChildrenTreeViewModel;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
+import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.AbstractTimedRequestedController;
@@ -73,7 +74,9 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
             }
 
             scrollingArea = new ScrollableComponent(Colors.BIGre, d, tvComponents);
+            SearchFunctionForScrollableComponent.addFinderToScrollable(scrollingArea.asSearchableView());
             scrollingArea.setParentContainer(this);
+            
         } else {
 
             TreeView<Focusable> tvFocusable = new TreeView<Focusable>(Colors.IBlu, new Dimension.Simple(90, 60),
@@ -96,9 +99,10 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
                 this.scrollingArea.setParentContainer(null);
             }
             scrollingArea = new ScrollableComponent(Colors.BIGre, d, tvFocusable);
+            SearchFunctionForScrollableComponent.addFinderToScrollable(scrollingArea.asSearchableView());
             scrollingArea.setParentContainer(this);
         }
-
+        
         //scrollingArea.appendEventHandler(toggleViewEventHandler());
 
         //scrollingArea.appendEventHandler(refreshEventHandler());
@@ -107,6 +111,14 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
 
     }
 
+    public void setFillOnClear(boolean fillOnClear) {
+        super.setFillOnClear(fillOnClear);
+        if (this.scrollingArea != null) {
+            this.scrollingArea.setFillOnClear(fillOnClear);
+        }
+    }
+    
+    
     private String nodeName(Object node) {
         String suffix=null;
         if (node instanceof CheckBoxInput) {

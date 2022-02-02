@@ -2,10 +2,14 @@ package dtb.terminalIO.components.composite;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.StringJoiner;
+import java.util.TreeSet;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import dtb.terminalIO.components.AbstractComponent;
 import dtb.terminalIO.components.ChildComponentManager;
@@ -13,6 +17,7 @@ import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.GetComponentAtOffset;
 import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.components.HasTitleAndBorder;
+import dtb.terminalIO.components.MultiCharComponent;
 import dtb.terminalIO.components.SimpleBorder;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.controlcodes.color.Color;
@@ -23,11 +28,19 @@ import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.geom.position.PositionHorizontalRelative;
 import dtb.terminalIO.geom.position.PositionVerticalRelative;
+import dtb.terminalIO.geom.position.Position.Simple;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegment;
+import dtb.terminalIO.textsegments.SegmentsViewUtils;
+import dtb.terminalIO.util.ElapsedTime;
+import dtb.terminalIO.util.Logging;
+import dtb.terminalIO.util.StringUtils;
 
 /**
  * A component with child components
+ * 
+ * This is easily the most complex of components.
+ * 
  */
 public class Composite extends AbstractComponent<Composite>
                        implements ChildComponentManager<Composite>, 
@@ -50,6 +63,7 @@ public class Composite extends AbstractComponent<Composite>
         private Rectangle rectangleForLayout; // used only by layout managers ( Horizontal/VerticalPanels )
         private boolean hasShadow;
         private boolean visible = true;
+        ComponentWithOffset simpleComponentWithOffset;
 
         public ComponentWithOffset(Position offset, Component<?> component) {
             super();
@@ -75,6 +89,28 @@ public class Composite extends AbstractComponent<Composite>
             };
             
         }
+        
+        void clearPrecomputedOffset() {
+            if (simpleComponentWithOffset != null) {
+                simpleComponentWithOffset = null;
+            }
+        }
+        
+        ComponentWithOffset getComponentWithPrecomputedOffset() {
+            if (simpleComponentWithOffset != null) {
+                return simpleComponentWithOffset;
+            }
+            if (this.offset == null || this.offset instanceof Position.Simple) {
+                return this;
+            }
+            ComponentWithOffset simpleMe = new ComponentWithOffset(new Position.Simple(offset), component);
+            simpleMe.hasShadow = hasShadow;
+            simpleMe.visible = visible;
+            simpleComponentWithOffset=  simpleMe;
+            return simpleComponentWithOffset;
+        }
+
+
 
         // this function is used by Composites that want to 
         // layout components relative to other components
@@ -110,6 +146,7 @@ public class Composite extends AbstractComponent<Composite>
             
             return this;
         }
+        
 
         public void setComponent(Component<?> component) {
             this.component = component;
@@ -150,6 +187,12 @@ public class Composite extends AbstractComponent<Composite>
             this.offset = new Position.Simple(row, col);
             calcBounds();
         }
+        
+        public String toString() {
+            return "ComponentWithOffset:[row=" + getRow() + ", col=" + getCol()  + ", height=" + getHeight() + ", width=" + getWidth() + "][component="+(HasName.UTIL.getName(component))+"]";
+        }
+        
+        
     }
 
     public Composite(Color color) {
@@ -157,10 +200,34 @@ public class Composite extends AbstractComponent<Composite>
         this.setFillOnClear(false);
     }
 
+    public Composite(Color color, Dimension bounds) {
+        this(color);
+        this.setBounds(bounds);
+    }
+
     public Composite() {
         this(Colors.FGBGColors.NO_COLOR_SPECIFIED);
     }
 
+    public Composite(Dimension bounds) {
+        this(Colors.FGBGColors.NO_COLOR_SPECIFIED, bounds);
+    }
+
+    private boolean clearComputedChildPositions_REQUEST_FLAG = false;
+    
+    private void clearComputedChildPositions() {
+        clearComputedChildPositions_REQUEST_FLAG = true;
+    }
+
+    private void clearComputedChildPositionsIfNeeded() {
+        if (!clearComputedChildPositions_REQUEST_FLAG) {
+            return;
+        }
+        clearComputedChildPositions_REQUEST_FLAG = false;
+        this.children.stream().forEach(c-> c.clearPrecomputedOffset());
+    }
+
+    
     public Composite setBounds(Dimension d) {
         if (d == null) {
             this.boundsFixed = false;
@@ -211,6 +278,7 @@ public class Composite extends AbstractComponent<Composite>
                 this.boundsFixed = isFixed;
             }
             markAsDirty();
+            clearComputedChildPositions();
         } finally {
             resizing = false;
         }
@@ -237,7 +305,7 @@ public class Composite extends AbstractComponent<Composite>
 
             @Override
             public int getCol() {
-                return Composite.this.getWidth() + (hasBorder()?1:0) ;
+                return Composite.this.getCol() + (hasBorder()?1:0) ;
             }
 
             @Override
@@ -393,10 +461,12 @@ public class Composite extends AbstractComponent<Composite>
         
     }
 
+        
     // calculates size of this component based on size and
     // layout (positions) of all of its children
     private void fullrecalcDim(boolean includeBorder) {
 
+        
         if (boundsFixed) {  // if size is fixed (based on flag)
             return;         // then don't recalculate
         }
@@ -409,7 +479,7 @@ public class Composite extends AbstractComponent<Composite>
             }
         }
 
-        Rectangle calculatedBounds = Rectangle.UTIL.calcDimensionsWith(visibleChildren);
+        Rectangle calculatedBounds = Rectangle.UTIL.calcDimensionsWith(visibleChildren).mergeAndExpandDimensionsWith( Rectangle.UTIL.calcDimensionsFromPositions(this.getPostion_TopLeft()) );
         if (includeBorder) {
             rebuildBorder(calcBorderSize(calculatedBounds));
             bounds = new Rectangle.Simple(this.border);
@@ -484,16 +554,19 @@ public class Composite extends AbstractComponent<Composite>
     }
 
     private void addChild(ComponentWithOffset componentWithOffset) {
+        clearComputedChildPositions();
         children.add(componentWithOffset);
         childrenInZOrder.add(componentWithOffset);
     }
 
     private void addChild(int index, ComponentWithOffset componentWithOffset) {
+        clearComputedChildPositions();
         children.add(index, componentWithOffset);
         childrenInZOrder.add(componentWithOffset);
     }
 
     private void removeChild(ComponentWithOffset componentWithOffset) {
+        clearComputedChildPositions();
         children.remove(componentWithOffset);
         childrenInZOrder.remove(componentWithOffset);
     }
@@ -515,7 +588,7 @@ public class Composite extends AbstractComponent<Composite>
         component.setParentContainer(this);
         return componentWithOffset;
     }
-    
+
     public boolean isChildVisible(Component<?> component) {
         if (component == null) {
             throw new NullPointerException("Component isChildVisible failure: Null component!");
@@ -547,6 +620,7 @@ public class Composite extends AbstractComponent<Composite>
         child.visible = false;
         fullrecalcDim();
         this.markAsDirty();
+        clearComputedChildPositions();
         return this;
     }
 
@@ -563,6 +637,7 @@ public class Composite extends AbstractComponent<Composite>
         child.visible = true;
         fullrecalcDim();
         this.markAsDirty();
+        clearComputedChildPositions();
         return this;
     }
 
@@ -580,6 +655,7 @@ public class Composite extends AbstractComponent<Composite>
         addComponentWithOffset(index, offset, component);
         fullrecalcDim();
         markAsDirty();
+        clearComputedChildPositions();
         return this;
     }
 
@@ -601,6 +677,7 @@ public class Composite extends AbstractComponent<Composite>
         addComponentWithOffset(offset, component);
         fullrecalcDim();
         markAsDirty();
+        clearComputedChildPositions();
         return this;
     }
 
@@ -784,6 +861,7 @@ public class Composite extends AbstractComponent<Composite>
         found.offset = offset;
         fullrecalcDim();
         markAsDirty();
+        clearComputedChildPositions();
         return this;
     }
 
@@ -792,6 +870,7 @@ public class Composite extends AbstractComponent<Composite>
         found.offset = found.offset.offsetAdd(offset);
         fullrecalcDim();
         markAsDirty();
+        clearComputedChildPositions();
         return this;
     }
 
@@ -823,10 +902,10 @@ public class Composite extends AbstractComponent<Composite>
             return this.add(cp.getRow(), rightMost + 1, component);
         }
 
-        Rectangle calculatedBounds = Rectangle.UTIL.calcDimensionsWith(children);
+        Rectangle calculatedBounds = Rectangle.UTIL.calcDimensionsWith(children).mergeAndExpandDimensionsWith( Rectangle.UTIL.calcDimensionsFromPositions(this.getPostion_TopLeft()) );
 
         int bottomMost = calculatedBounds.getBottomMostRow();
-        return this.add(bottomMost + 1, 0, component);
+        return this.add(bottomMost + 1, this.getPostion_TopLeft().getCol(), component);
 
     }
 
@@ -873,25 +952,56 @@ public class Composite extends AbstractComponent<Composite>
 
     }
 
+    
+    public static boolean DRAW_VIA_PARTS = true; //false;
+    //public static boolean DRAW_VIA_PARTS = false;
+    
+    protected void clearBeforeDraw() {
+       // if (!DRAW_VIA_PARTS) {
+            super.clearBeforeDraw();
+//            return;
+//        }
+        
+    }
+
+    
     protected void drawBorderIfNeeded(IScreenLineSegmentsBuffer segments) {
         if (hasBorder()) {
-            IScreenLineSegmentsBuffer borderSegments = this.border.getSegmentsBuffer();
-            segments.merge(borderSegments);
+            if (segments.isEmpty()) {
+               // fast!
+               segments.getSegments().addAll(this.border.getSegmentsBuffer().getSegments());
+            } else {
+                //if (!DRAW_VIA_PARTS || this.border.isDirty()) {
+                   IScreenLineSegmentsBuffer borderSegments = this.border.getSegmentsBuffer();
+                   segments.merge(borderSegments);
+               // }
+            }
         }
     }
 
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
+        ElapsedTime el = ElapsedTime.start();
         draw(color, segments, boundsFixed);
+        //if ("TUIApp-mainPanel".equals(HasName.UTIL.getName(this))) {
+           Logging.info(String.format("%-20s : %-20s  #kids %4d  elapsed  %4d", "draw"+(DRAW_VIA_PARTS?"-parts":"traditional"), StringUtils.truncate(HasName.UTIL.getName(this),20), children.size(),el.elapsed()));
+        //}
     }
+
 
     protected void draw(Color color, IScreenLineSegmentsBuffer segments, boolean boundsFixed) {
         drawBorderIfNeeded(segments);
-        drawChildren(color, segments, childrenInZOrder, boundsFixed);
+        if (DRAW_VIA_PARTS /*&& children != null && children.size()>1*/) {
+            clearComputedChildPositionsIfNeeded();
+           DRAW_PARTS_UTIL.drawParts(this, segments.getSegments(), boundsFixed);
+        } else {
+           drawChildren(color, segments, childrenInZOrder, boundsFixed);
+        }
     }
 
     private static Color shadowColor = new Colors.FGBGColors(Colors.IBla, Colors.On_Bla);
     private static char  shadowChar = '░';
+    //private static char  shadowChar = ' ';
     
     protected void drawChildren(Color color, IScreenLineSegmentsBuffer destinationSegments, List<ComponentWithOffset> children, boolean boundsFixed) {
 
@@ -991,6 +1101,7 @@ public class Composite extends AbstractComponent<Composite>
         this.markAsDirty();
         fullrecalcDim();
         this.onResizeService.resize(this.getPreferredRectangleForLayout());
+        clearComputedChildPositions();
     }
 
     @Override
@@ -1033,6 +1144,124 @@ public class Composite extends AbstractComponent<Composite>
 
     public List<? extends Component<?>> getChildrenList() {
         return (List<? extends Component<?>>) getChildren();
+    }
+    
+    @FunctionalInterface
+    static interface DrawChildTask {
+        void draw(ComponentWithOffset child);
+    }
+
+    
+    static class DRAW_PARTS_UTIL {
+        
+        static boolean suppressSTATS=true;
+        
+        
+        static List<ComponentWithOffset> dropShadowRectangles(Rectangle child) {
+            List<ComponentWithOffset> shadows = new ArrayList<ComponentWithOffset>(2);
+            
+            Rectangle bottom = new Rectangle.Simple(child.getBottomMostRow()+1, child.getCol()+1, 1, child.getWidth());
+            Rectangle right  = new Rectangle.Simple(child.getRow()+1, child.getRightMostCol()+1, child.getHeight(), 1);
+            
+            shadows.add( new ComponentWithOffset(Position.ZERO, new MultiCharComponent(shadowColor, shadowChar, bottom)));
+            shadows.add( new ComponentWithOffset(Position.ZERO, new MultiCharComponent(shadowColor, shadowChar, right)));
+            return shadows;
+        }
+        
+        
+
+        static void drawParts(Composite parent, TreeSet<ScreenLineSegment> destination, boolean boundsFixed) {
+            
+            
+            Rectangle clippedArea = parent.bounds;
+            
+            // loop thru children and draw each
+            Position offsetForBorder;
+            if (parent.hasBorder()) {
+                offsetForBorder = Position.ZERO.offsetToRowCol(1, 1);
+                if (boundsFixed) {
+                    clippedArea = new Rectangle.Simple(clippedArea.getRow()+1, clippedArea.getCol()+1, clippedArea.getHeight()-2, clippedArea.getWidth()-2);
+                }
+            } else {
+                offsetForBorder = Position.ZERO;
+            }
+            Rectangle boundingRectangle = clippedArea;
+            
+            
+            ElapsedTime el = ElapsedTime.start();
+            List<ComponentWithOffset> reverseZOrderChildren = new ArrayList<ComponentWithOffset>(parent.childrenInZOrder).stream()
+                                                                                                               .filter(c->c.visible && c.getWidth()>0 && c.getHeight()>0)
+                                                                                                               .map(c->c.getComponentWithPrecomputedOffset())
+                                                                                                               .flatMap(c-> c.hasShadow ? Stream.concat(Stream.of(c), dropShadowRectangles(c).stream()) 
+                                                                                                                                        : Stream.of(c))
+                                                                                                               .collect(Collectors.toList());
+
+            if (reverseZOrderChildren.size()==0) {
+                return ;
+            }
+            
+
+            Component.UTIL.assertSegmentsIntegrity(parent.bounds, destination);
+
+            Collections.reverse(reverseZOrderChildren);
+            Collection<RectangleAndSubRectangles> recs = Rectangle.UTIL.differences(reverseZOrderChildren);
+
+            int count = recs.stream().mapToInt(r -> 1 + (r.getSubs()==null?0 : r.getSubs().size())).sum();
+            
+      //      Logging.info(String.format("Parts %-20s : %-20s  #squares %4d  elapsed  %4d", "differences", StringUtils.truncate(HasName.UTIL.getName(parent),20), count,el.elapsed()));
+
+            
+            DrawChildTask drawFullChildComponent = (childToDraw) -> {
+                               //noOverLapsCheck.assertTest("testing child before draw:"+String.valueOf(childToDraw), childToDraw.component.getSegmentsBuffer().getSegments());
+                               Component.UTIL.assertComponentSegmentsIntegrity(childToDraw.component);
+                               Rectangle boundsForChild =  new Rectangle.Simple(((Position)childToDraw).offsetAdd(offsetForBorder),((Dimension)childToDraw) ).intersectWith(boundingRectangle);
+                               if (boundsForChild == null) {
+                                   return ;
+                               }
+                               
+                               ElapsedTime drawChildTime = new ElapsedTime();
+                               
+                               childToDraw.component.getSegmentsBuffer().getSegments().stream()
+                                                                        .map(s->s.fromOffset(childToDraw.offset.offsetAdd(offsetForBorder)))
+                                                                        .map(s-> ScreenLineSegment.UTIL.sliceIfNeededToFitRect(s, boundsForChild))
+                                                                        .filter(s-> s!=null)
+                                                                        .forEach(s->destination.add(s));
+
+                               Logging.info(String.format("Parts-child %-20s : child: %-20s  #segments %4d  elapsed  %4d",
+                                                          StringUtils.truncate(HasName.UTIL.getName(parent),20),
+                                                          StringUtils.truncate(HasName.UTIL.getName(childToDraw.component),20),
+                                                          childToDraw.component.getSegmentsBuffer().getSegments().size(),
+                                                          drawChildTime.elapsed()));
+
+            };
+
+            // do the first (on top) child
+            drawFullChildComponent.draw(reverseZOrderChildren.get(0));
+            Component.UTIL.assertSegmentsIntegrity(parent.bounds, destination);
+
+            for (RectangleAndSubRectangles rec : recs) {
+                if (rec.isFullyHidden()) {
+                    continue;
+                }
+                ComponentWithOffset child = (ComponentWithOffset) rec.getRectangle();
+                if (rec.isNotObscured()) {
+                    drawFullChildComponent.draw(child);
+                    Component.UTIL.assertSegmentsIntegrity(parent.bounds, destination);
+                } else {
+                    int rowDelta =  offsetForBorder.getRow();
+                    int colDelta =  offsetForBorder.getCol();
+                    List<Rectangle> srcPartsNormalized = rec.getSubs().stream().map(r -> new Rectangle.Simple(r.getRow()+rowDelta, r.getCol()+colDelta, r.getHeight(), r.getWidth())).collect(Collectors.toList());
+                    SegmentsViewUtils.copyComponentParts(destination, boundingRectangle, child.component, srcPartsNormalized, child.offset.offsetAdd(offsetForBorder));
+                    Component.UTIL.assertSegmentsIntegrity(parent.bounds, destination);
+                }
+            }
+
+            Logging.info(String.format("%-20s : %-20s  #kids %4d  elapsed  %4d", "drawViaParts", StringUtils.truncate(HasName.UTIL.getName(parent),20), reverseZOrderChildren.size(),el.recalcElapsed()));
+
+            Component.UTIL.assertSegmentsIntegrity(parent.bounds, destination);
+
+        }
+
     }
 
 }

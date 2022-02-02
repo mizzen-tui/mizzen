@@ -88,7 +88,10 @@ public interface FillOnClearPolicy<T> extends EmptyAttributes<T> {
             Color emptyColor = getEmptyColor();
             char emptyChar = getEmptyChar();
             Rectangle bounds = this.getRectangleForClearAndFill();
-            this.getSegmentsBuffer().fillRectWithChar(emptyColor, emptyChar, bounds);
+            
+            // TODO:  why is this commented out?  -- figure out why then remove
+            
+            //this.getSegmentsBuffer().fillRectWithChar(emptyColor, emptyChar, bounds);
         }
 
         @Override

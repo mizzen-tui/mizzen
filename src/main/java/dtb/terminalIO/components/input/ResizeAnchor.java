@@ -26,11 +26,13 @@ public class ResizeAnchor  extends TextComponent implements Focusable , Draggabl
 
     public ResizeAnchor(Color color, String text, Color draggingColor, String draggingText, CanResize componentToResize) {
         super(color, text);
+        this.setName("ResizeAnchor");
         this.nonDraggingColor = color;
         this.baseText = text;
         this.draggingText = draggingText;
         this.draggingColor = draggingColor != null ? draggingColor : color.bold();
         draggableBehaviour = new DragAndResizeComponentBehaviour(componentToResize, this);
+        this.setFillOnClear(false);
     }
     
     

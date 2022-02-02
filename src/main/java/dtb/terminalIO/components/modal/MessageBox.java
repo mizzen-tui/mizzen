@@ -131,6 +131,7 @@ public class MessageBox {
         dialog.setTitle(DialogComponent.iconToIconColor(icon), " " + title + " ");
         dialog.setFillOnClear(true);
         dialog.setEmptyColor(dialogColor);
+        dialog.setName("dialog");
 
         if (icon != null && Dimension.UTIL.stringToDimension(message).getHeight()==1) {
             message = "\n" + message;
@@ -139,8 +140,10 @@ public class MessageBox {
         TextComponent messageText = new TextComponent(dialog.getColor(), message);
         messageText.setFillOnClear(true);
         messageText.setEmptyColor(dialogColor);
+        messageText.setName("dialog.messageText");
 
         VerticalPanel mainPanel = new VerticalPanel(dialogColor).setVerticalSpacer(1);
+        mainPanel.setName("dialog.mainPanel");
 
         HorizontalPanel messagePanel = new HorizontalPanel(dialogColor).setHorizontalSpacer(2);
         messagePanel.setFillOnClear(true);
@@ -149,6 +152,7 @@ public class MessageBox {
             messagePanel.add(DialogComponent.iconToIconComponent(icon));
         }
         messagePanel.add(messageText);
+        messagePanel.setName("dialog.messagePanel");
 
         Position messageTextPosition = new Position.Simple(1,1);
 
@@ -166,6 +170,7 @@ public class MessageBox {
         buttons.setColor(dialog.getColor());
         buttons.setNoBorderChars();
         buttons.setHorizontalSpacer(3);
+        buttons.setName("dialog.buttonBar");
 
         Button[] buttonsForButtonBar = new Button[buttonSpec.length];
 

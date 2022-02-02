@@ -7,9 +7,9 @@ import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.FrameSet;
 import dtb.terminalIO.components.FrameSet.FrameHorizontalPanel;
-import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.WindowFrame;
+import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
@@ -21,7 +21,12 @@ import dtb.terminalIO.geom.Dimension;
 
 public class FrameSetTest {
     
+    
+    
     public static void main(String[] args) throws Exception {
+        
+        //Logging.setEnabled(true);
+        
         new TUIApp(args)
         //.setCanvasSize(24, 100)
         .setEmptyChar(' ')
@@ -133,23 +138,23 @@ public class FrameSetTest {
         
         Component<?> first = new TextComponent("ABC-123");
         fs.add(first);
-        
+
         Component<?> second = new TextComponent("XYZ");
         fs.addRight(second, first);
        
         TextComponent third = new TextComponent("3rd one ...............");
         third.setEmptyColor(Colors.On_Yel);
         third.setFillOnClear(true);
-        
+
         fs.addRight(third, second);
 
         fs.onResizeExpandRight(first, 33);
         fs.onResizeExpandRight(second, 33);
         fs.onResizeExpandDownAndRight(third);
-        
+
         return fs;
     }
-    
+
     static FrameSet test3() {
         FrameSet fs = new FrameSet(Colors.BIWhi, new Dimension.Simple(10,20));
         fs.setBorder(true);

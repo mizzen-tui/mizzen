@@ -5,6 +5,7 @@ import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.textsegments.ScreenLineSegment;
 import dtb.terminalIO.textsegments.ScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.StringUtils;
 
@@ -37,7 +38,7 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
     boolean hasDrawn = false;
 
     private Position canvasOffset;
-    
+
     private String name;
 
     protected AbstractComponent(Color color) {
@@ -48,15 +49,47 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
     protected void clearBeforeDraw() {
         clear();
     }
+
+    private boolean busyDrawingFLAG = false;
     
-    protected void drawIfNeeded() {
+    // making final to ensure behavior
+    final protected void drawIfNeeded11() {
         if (isDirty()) {
             clearBeforeDraw();
            // hasDrawn = true;
             draw(color, segments);
             hasDrawn = true;
+            fillOnClear();
+            Component.UTIL.assertComponentSegmentsIntegrity(this);
         }
     }
+
+    // making final to ensure behavior
+    final protected void drawIfNeeded() {
+        try {
+            if (isDirty()) {
+                //hasDrawn = true;
+                if (busyDrawingFLAG) {
+                    throw new IllegalStateException("Already in the draw function.  Recursive call!");
+                }
+                busyDrawingFLAG = true;
+                clearBeforeDraw();
+                Color currentColor = getColor();
+                draw(currentColor, segments);
+                fillOnClear();
+                hasDrawn = true;
+            }
+        } finally {
+            busyDrawingFLAG= false;
+        }
+    }
+
+    protected void fillOnClear() {
+        if (fillPolicy.isFillOnClear()) {
+            ScreenLineSegment.UTIL.fillEmptySpacesInRectWithChar(getEmptyColor(), getEmptyChar(), this, segments.getSegments());
+        }
+    }
+    
     
     public boolean isDirty() {
         return !this.hasDrawn;
@@ -77,7 +110,6 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
         if (this.segments != null) {
             segments.clear();
         }
-        fillPolicy.fillEmptyIfConfigured();
         markAsDirty();
     }
 

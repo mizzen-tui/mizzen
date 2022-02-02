@@ -9,7 +9,6 @@ import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
-import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegment;
 import dtb.terminalIO.textsegments.ScreenLineSegment.SegmentImpl;
 import dtb.terminalIO.util.linuxproc.TerminalStreamOutputParser.TerminalStreamConsumer;

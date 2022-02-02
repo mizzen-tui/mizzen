@@ -14,6 +14,8 @@ public class ColorsTest {
     
     public static void main(String args[]) {
         
+        //Logging.setEnabled(true);
+        
         new TUIApp(args)
         .setEmptyChar(' ')
         .setDefaultMainApplicationPanel()
@@ -54,7 +56,7 @@ public class ColorsTest {
             colorsOfTheRainbow.add(foregroundColors);
             
             
-            Composite combinedColors = new Composite();
+            Composite combinedColors = new Composite().setName("combinedColors");
             combinedColors.setFillOnClear(false);
             
             combinedColors.setBulkAdd(true);

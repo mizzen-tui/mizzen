@@ -22,6 +22,7 @@ import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.util.MapChars;
+import dtb.terminalIO.util.OSType;
 import dtb.terminalIO.util.SparkLine;
 import dtb.terminalIO.util.TerminalDimensions;
 
@@ -121,6 +122,12 @@ public class TestsCommon {
         Dimension size = terminalSize();
         Canvas master_canvas = new Canvas(screen);
         master_canvas.setSize(size.getHeight(), size.getWidth());
+
+        if (OSType.isCYGWIN()) {
+            ScreenCanvasBackend backEnd = (ScreenCanvasBackend) master_canvas.getCanvasBackend();
+            backEnd.setUpdateStrategy(ScreenCanvasBackend.UpdateStrategy.UPDATE_FULL); // <-- TODO: hopefully this is temporary
+        }
+
         return master_canvas;
     }
 

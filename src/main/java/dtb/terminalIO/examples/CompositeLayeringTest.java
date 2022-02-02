@@ -19,6 +19,7 @@ public class CompositeLayeringTest {
 
     public static void main(String[] args) throws IOException { 
         
+        
         new TUIApp(args).setCanvasSize(new Dimension.Simple(20,50))
                     .setDefaultMainApplicationPanel()
                     .confirmOnExit()

@@ -123,11 +123,25 @@ public class Plotter extends BoundedComponent<Plotter> {
         // to build the tree of segments.
         TreeSet<ScreenLineSegment> treeSetOfSegments = segments.getSegments();
         
+        int minRow = this.getRow();
+        int maxRow = this.getBottomMostRow();
+        int minCol = this.getCol();
+        int maxCol = this.getRightMostCol();
 
         for (Plotter.Plot plot : plots) {
-            if (lastRow != plot.pos.getRow()     || 
+            int plotPosRow = plot.getRow();
+            int plotPosCol = plot.getCol();
+            // doing a fast contains check inside bounds
+            if (plotPosRow>maxRow) {
+                break;
+            }
+            if (plotPosRow<minRow || plotPosCol<minCol || plotPosCol>maxCol) {
+                continue;
+            }
+            
+            if (lastRow != plotPosRow     || 
                 !plot.plotColor.equals(lastColor)||
-                plot.pos.getCol() != lastCol+1) {
+                plotPosCol != lastCol+1) {
                 if (lastText.length() != 0) {
                     lastSegment = new SegmentImpl(lastColor, lastSegmentPosition, -1, lastText.toString());
                     treeSetOfSegments.add(lastSegment);
@@ -135,18 +149,17 @@ public class Plotter extends BoundedComponent<Plotter> {
                     lastText = new StringBuilder();
                 }
                 lastColor = plot.plotColor;
-                lastRow = plot.pos.getRow();
+                lastRow = plotPosRow;
                 lastSegmentPosition = plot.pos;
             }
             lastText.append(plot.plotChar);
-            lastCol = plot.pos.getCol();
+            lastCol = plotPosCol;
         }
 
         if (lastText.length() != 0) {
             lastSegment = new SegmentImpl(lastColor, lastSegmentPosition, -1, lastText.toString());
             treeSetOfSegments.add(lastSegment);
         }
-
     }
 
     public void clearPlots() {

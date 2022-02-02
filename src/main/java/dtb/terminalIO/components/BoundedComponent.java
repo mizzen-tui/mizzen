@@ -43,9 +43,9 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
                                                  };
 
     private ParentContainer parentContainer;
-    
+
     private Position canvasOffset;
-    
+
     private String name;
 
     protected IScreenLineSegmentsBuffer createSegmentsBuffer() {
@@ -65,7 +65,6 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
         this.setParentContainer(parentContainer);
     }
 
-    
     public BoundedComponent(Color color, Rectangle r) {
         this(color, r, (ParentContainer)null);
     }
@@ -99,17 +98,16 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
         markAsDirty();
     }
 
-
     public void clear() {
         segments.clear();
-        fillPolicy.fillEmptyIfConfigured();
+        //fillPolicy.fillEmptyIfConfigured();
         markAsDirty();
     }
-    
+
     public boolean isDirty() {
         return !this.hasDrawn;
     }
-    
+
     public void markAsDirty() {
         if (isDirty()) {
             //Component.UTIL.markParentDirtyIfChildDirty(this);
@@ -123,17 +121,36 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
         Component.UTIL.markParentDirtyIfChildDirty(this);
 
     }
-    
-    protected void drawIfNeeded() {
-        if (isDirty()) {
-            clear();
-            hasDrawn = true;
-            Color currentColor = getColor();
-            draw(currentColor, segments);
-            hasDrawn = true;
+
+    private boolean busyDrawingFLAG = false;
+
+    // making final to ensure behavior
+    final protected void drawIfNeeded() {
+        try {
+            if (isDirty()) {
+                if (busyDrawingFLAG) {
+                    throw new IllegalStateException("Already in the draw function.  Recursive call!");
+                }
+                busyDrawingFLAG = true;
+                clear();
+                Color currentColor = getColor();
+                draw(currentColor, segments);
+                fillOnClear();
+                hasDrawn = true;
+                Component.UTIL.assertComponentSegmentsIntegrity(this);
+            }
+        } finally {
+            busyDrawingFLAG= false;
         }
     }
-    
+
+    protected void fillOnClear() {
+        if (fillPolicy.isFillOnClear()) {
+            //Logging.info("fillOnClear() after draw !" + String.valueOf(this));
+            ScreenLineSegment.UTIL.fillEmptySpacesInRectWithChar(getEmptyColor(), getEmptyChar(), this, segments.getSegments());
+        }
+    }
+
     protected abstract void draw(Color color, IScreenLineSegmentsBuffer mySegments);
 
     @Override
@@ -165,7 +182,6 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
     public FillOnClearPolicy getFillOnClearPolicy() {
         return this.fillPolicy;
     }
-    
 
     @Override
     public char getEmptyChar() {
@@ -176,7 +192,7 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
     public Color getEmptyColor() {
         return this.fillPolicy.getEmptyColor();
     }
-    
+
     public T setEmptyChar(char emptyChar) {
         this.fillPolicy.setEmptyChar(emptyChar);
         return (T) this;
@@ -191,7 +207,7 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
         this.fillPolicy.setFillOnClear(fillOnClear);
         return (T) this;
     }
-    
+
     public boolean isFillOnClear() {
         return this.getFillOnClearPolicy().isFillOnClear();
     }
@@ -200,7 +216,6 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
         return this;
     }
 
-    
     @Override
     public void setParentContainer(ParentContainer parentContainer) {
         if (parentContainer != null && this.getParentContainer() != null && this.getParentContainer() != parentContainer) {
@@ -208,24 +223,23 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
         }
 
         this.parentContainer = parentContainer;
-        
+
         Component.UTIL.markParentDirtyIfChildDirty(this);
     }
-    
+
     public ParentContainer getParentContainer() {
         return this.parentContainer;
     }
-    
-    
+
     public String getName() {
         return this.name;
     }
-    
+
     public T setName(String name) {
         this.name = name;
         return (T) this;
     }
-    
+
     /**
      * Make a component that has the same empty char and empty color as well as making this its parent
      * @param createComponent
@@ -243,6 +257,13 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
        component.getFillOnClearPolicy().setEmptyColor(this.getFillOnClearPolicy().getEmptyColor());
        component.getFillOnClearPolicy().setFillOnClear(this.getFillOnClearPolicy().isFillOnClear());
        return component;
+    }
+
+    public void moveTo(int row, int col) {
+        if (row != getRow() || col != getCol()) {
+            markAsDirty();
+        }
+        super.moveTo(row, col);
     }
 
     @Override
@@ -280,7 +301,6 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
             return  prefix + ": " + toStringDetails();
     }
 
-	
     }
 
 }

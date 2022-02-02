@@ -19,17 +19,16 @@ public class StringUtils {
     }
 
     public static String repeat(char ch, int count) {
-        StringBuffer sb = new StringBuffer(count);
-        if (count > 0) {
-            for (int i = 0; i < count; i++) {
-                sb.append(ch);
-            }
+        if (count <= 0) {
+            return "";
         }
-        return sb.toString();
+        char[] charData = new char[count];
+        Arrays.fill(charData, ch);
+        return new String(charData);
     }
 
     public static String repeat(String s, int count) {
-        StringBuffer sb = new StringBuffer(count*s.length());
+        StringBuilder sb = new StringBuilder(count*s.length());
         if (count > 0) {
             for (int i = 0; i < count; i++) {
                 sb.append(s);
@@ -106,6 +105,7 @@ public class StringUtils {
         if (!matchFound) {
             return source;
         }
+        // matcher requires that we use StringBuffer
         StringBuffer sb = new StringBuffer();
         while (matchFound) {
             matcher.appendReplacement(sb, "");
@@ -193,7 +193,7 @@ public class StringUtils {
         }
         int inputLineLength = str.length();
         int offset = 0;
-        StringBuffer wrappedLine = new StringBuffer(inputLineLength + 32);
+        StringBuilder wrappedLine = new StringBuilder(inputLineLength + 32);
 
         while ((inputLineLength - offset) > wrapLength) {
             if (str.charAt(offset) == ' ') {
@@ -513,7 +513,7 @@ public class StringUtils {
             return s;
         }
 
-        StringBuffer sb = new StringBuffer(s.length() * 2 + 30);
+        StringBuilder sb = new StringBuilder(s.length() * 2 + 30);
 
         int len = s.length();
 
