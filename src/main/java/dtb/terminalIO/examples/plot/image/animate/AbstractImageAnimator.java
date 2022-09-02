@@ -15,7 +15,7 @@ public abstract class AbstractImageAnimator implements ImageIterator, Dimension 
 
     public AbstractImageAnimator(Dimension size) {
         setSize(size);
-        buffer = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
+        buffer = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
     }
 
     public AbstractImageAnimator() {

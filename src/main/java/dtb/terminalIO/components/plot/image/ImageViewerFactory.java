@@ -21,6 +21,7 @@ import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.geom.Rectangle.Simple;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.util.Logging;
 
@@ -444,7 +445,7 @@ public class ImageViewerFactory {
         plotterComponent.clearPlots();
         plotterComponent.clear();
 
-        Image image = resize(inputImage, desiredImgSizeInCharacters);
+        Image image = resize(inputImage, desiredImgSizeInCharacters, ASCII_ADJUST_TO_CONTAINER_SIZE_PRESERVE_ASPECT_RATIO);
 
         Rectangle imgSize = new ImageRectangleAdapter(image);
 
@@ -514,10 +515,10 @@ public class ImageViewerFactory {
     }
 
     public static Component<?> simpleImageToBrailleView(Component<?> plotterDestination,
-            Image inputImage, 
-            Dimension desiredImgSizeInCharacters, 
-            RGBPlotPredicate toPlotOrNot, 
-            RGBToAnsiColorControlCode colorMap) throws Exception {
+                                                        Image inputImage, 
+                                                        Dimension desiredImgSizeInCharacters, 
+                                                        RGBPlotPredicate toPlotOrNot, 
+                                                        RGBToAnsiColorControlCode colorMap) throws Exception {
 
         BrailleGrid brailleGrid = (BrailleGrid) plotterDestination;
 
@@ -536,9 +537,9 @@ public class ImageViewerFactory {
         PixelGrabber pxGrabber = new PixelGrabber(image, 0, 0, width, height, pixels, 0, width);
 
         pxGrabber.grabPixels();
-
-        int charsWidth  = desiredImgSizeInCharacters.getWidth();
-        int charsHeight = desiredImgSizeInCharacters.getHeight();
+        
+        int charsWidth  = width / 2 ;  // desiredImgSizeInCharacters.getWidth();
+        int charsHeight = height / 4 ; // desiredImgSizeInCharacters.getHeight();
         int pixelLen = pixels.length;
 
         for (int charsRow = 0; charsRow < charsHeight; charsRow++) {
@@ -574,7 +575,6 @@ public class ImageViewerFactory {
                    }
                }
                if (charPlotCount>0) {
-                   
                    blueAVG  = blueAVG  / charPlotCount;
                    greenAVG = greenAVG / charPlotCount;
                    redAVG   = redAVG   / charPlotCount;
@@ -635,8 +635,8 @@ public class ImageViewerFactory {
 
         pxGrabber.grabPixels();
 
-        int charsWidth  = desiredImgSizeInCharacters.getWidth();
-        int charsHeight = desiredImgSizeInCharacters.getHeight();
+        int charsWidth  = width ; // desiredImgSizeInCharacters.getWidth();
+        int charsHeight = height / 2; desiredImgSizeInCharacters.getHeight();
         int pixelLen = pixels.length;
 
         for (int charsRow = 0; charsRow < charsHeight; charsRow++) {
@@ -656,8 +656,10 @@ public class ImageViewerFactory {
                        int blue  = (pixel & 0xff);
                        int green = ((pixel & 0xff00) >> 8);
                        int red   = ((pixel & 0xff0000) >> 16);
-                       Color mappedColor = colorMap.toControlCode(red, green, blue);
-                       blocksGrid.plotPosition(curPixelRow, curPixelCol, mappedColor);
+                       if (toPlotOrNot.test(red, green, blue)) {
+                           Color mappedColor = colorMap.toControlCode(red, green, blue);
+                           blocksGrid.plotPosition(curPixelRow, curPixelCol, mappedColor);
+                       }
                    }
                }
             }
@@ -697,27 +699,68 @@ public class ImageViewerFactory {
 
     }
     
-    public static Image resize(Image inputImage, Dimension d) {
+    private static Dimension preserveAspectRatio(Dimension inputImageSize, Dimension desiredDimension) {
+//        Rectangle imgRect = new ImageRectangleAdapter(inputImageSize);
+        
+        float curImgHeight = inputImageSize.getHeight();
+        float curImgWidth = inputImageSize.getWidth();
+        
+        float heightRatio = ((float)desiredDimension.getHeight()) / curImgHeight;
+        float newWidth = curImgWidth * heightRatio;
+        if (newWidth <= desiredDimension.getWidth()) {
+            desiredDimension = new Dimension.Simple( desiredDimension.getHeight(),  (int) newWidth); 
+        } else {
+            float widthRatio = ((float)desiredDimension.getWidth()) / curImgWidth;
+            float newHeight = curImgHeight * widthRatio;
+            desiredDimension = new Dimension.Simple( (int) newHeight,  desiredDimension.getWidth()); 
+        }
+        return desiredDimension;
+    }
+
+    @FunctionalInterface
+    interface ContainerToImageSize {
+        Dimension calcDimension(Dimension inputImageSize, Dimension containerDimension);
+    }
+
+    public static ContainerToImageSize ADJUST_NONE = (inputImageSize, containerDimension) -> inputImageSize;
+    public static ContainerToImageSize ADJUST_TO_CONTAINER_SIZE_PRESERVE_ASPECT_RATIO = (inputImageSize, containerDimension) -> preserveAspectRatio(inputImageSize, containerDimension);
+    public static ContainerToImageSize ADJUST_TO_CONTAINER_SIZE = (inputImageSize, containerDimension) -> containerDimension;
+    public static ContainerToImageSize ASCII_ADJUST_TO_CONTAINER_SIZE_PRESERVE_ASPECT_RATIO = (inputImageSize, containerDimension) -> preserveAspectRatio(new Dimension.Simple(inputImageSize.getHeight(), inputImageSize.getWidth()*2), containerDimension);
+
+    public static Image resize(Image inputImage, Dimension d, int imageTYPE, ContainerToImageSize containerToImageSize) {
 
         // creates output image
+
+        Dimension desiredDimension = d;
+
+        Rectangle imgRect = new ImageRectangleAdapter(inputImage);
         
-        
-        BufferedImage outputImage = new BufferedImage(d.getWidth(), d.getHeight(), BufferedImage.TYPE_INT_RGB);
-        
-        //ImageRectangleAdapter original = new ImageRectangleAdapter(inputImage);
-        
+        desiredDimension =  containerToImageSize.calcDimension(imgRect, desiredDimension);
+
+        BufferedImage outputImage = new BufferedImage(desiredDimension.getWidth(), desiredDimension.getHeight(), imageTYPE);
+
         // scales the input image to the output image
         Graphics2D g2d = outputImage.createGraphics();
         g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
                              RenderingHints.VALUE_INTERPOLATION_BILINEAR);
 
-        g2d.drawImage(inputImage, 0, 0, d.getWidth(), d.getHeight(), null);
+        g2d.drawImage(inputImage, 0, 0, desiredDimension.getWidth(), desiredDimension.getHeight(), null);
 
         g2d.dispose();
 
         return outputImage;
     }
+
+    public static Image resize(Image inputImage, Dimension d, ContainerToImageSize containerToImageSize) {
+        return resize(inputImage, d, BufferedImage.TYPE_INT_ARGB, containerToImageSize);
+    }
     
+    
+    
+    public static Image resize(Image inputImage, Dimension d) {
+        return resize(inputImage, d, BufferedImage.TYPE_INT_ARGB, ADJUST_TO_CONTAINER_SIZE_PRESERVE_ASPECT_RATIO);
+    }
+
     
     
     @FunctionalInterface

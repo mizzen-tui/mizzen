@@ -67,7 +67,7 @@ public class FractalGenerator {
         int width = raw[0].length;
 
         if (height > 0 && width > 0) {
-            img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+            img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 
             for (int row = 0; row < height; row++) {
                 for (int column = 0; column < width; column++) {

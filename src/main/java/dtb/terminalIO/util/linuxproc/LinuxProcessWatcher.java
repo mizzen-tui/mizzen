@@ -10,6 +10,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import dtb.terminalIO.util.ConsumeResultAction;
+import dtb.terminalIO.util.Logging;
+import dtb.terminalIO.util.StringUtils;
 import dtb.terminalIO.util.linuxproc.ExecUtil.StreamLineGobbler;
 
 public class LinuxProcessWatcher {
@@ -28,6 +30,7 @@ public class LinuxProcessWatcher {
 
     AtomicBoolean invoking = new AtomicBoolean(false);
     String invokeScript;
+    String pidScript;
     int lastResult = -123;
     Process process = null;
     Thread outputGobbler;
@@ -46,6 +49,11 @@ public class LinuxProcessWatcher {
 
     public LinuxProcessWatcher setInvokeScript(String invokeScript) {
         this.invokeScript = invokeScript;
+        return this;
+    }
+
+    public LinuxProcessWatcher setPIDScript(String pidScript) {
+        this.pidScript = pidScript;
         return this;
     }
 
@@ -132,7 +140,7 @@ public class LinuxProcessWatcher {
                     procBuilder.redirectErrorStream(true);
 
                     LinuxProcessWatcher.this.process = procBuilder.start();
-
+                    
                     outputGobbler = gobblerThreadBuilder.apply(LinuxProcessWatcher.this.process.getInputStream()); // new
                                                                                                                    // Thread(new
                                                                                                                    // StreamLineGobbler(LinuxProcessWatcher.this.process.getInputStream(),
@@ -189,11 +197,10 @@ public class LinuxProcessWatcher {
         if (e instanceof InterruptedException) {
             return true;
         }
-        
+
         if (e.getCause() != null) {
             return isExceptionCausedByInterruptRequest(e.getCause());
         }
-        
         return false;
     }
     
@@ -208,6 +215,7 @@ public class LinuxProcessWatcher {
     }
 
     private synchronized void killControllerThread() {
+
         if (controllerThread != null && controllerThread.isAlive()) {
             if (controllerThread != null && controllerThread.isAlive()) {
                 controlledInterrupt = true;
@@ -217,6 +225,28 @@ public class LinuxProcessWatcher {
         controllerThread = null;
     }
 
+    private boolean killViaPIDScriptIfDefined() {
+
+        if (StringUtils.isEmptyStr(this.pidScript)) {
+            return false;
+        }
+        
+        try {
+            
+            int pid = LinuxPIDsUtil.getPidFromScript(this.pidScript);
+            
+            LinuxPIDsUtil.killAllRelatedProcessesFromPID(pid);
+            
+            return true;
+            
+        } catch (Exception e) {
+            // assume script is no good - which might happen a lot so let's not be noisy
+            Logging.info("Attempted to kill using script cmd '"+this.pidScript+"' .  exception " + e.getMessage());
+            return false;
+        }
+        
+    }
+    
     public synchronized void stopRequest() {
         invoking.set(false);
         Process theProcess = process;
@@ -234,6 +264,9 @@ public class LinuxProcessWatcher {
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
+                    killViaPIDScriptIfDefined();
+                    // if the above kill destroys the process
+                    // not sure how the following call will behave - time to experiment
                     theProcess.destroy();
                 }
             }
@@ -268,7 +301,7 @@ public class LinuxProcessWatcher {
         }
     }
 
-    public static LinuxProcessWatcher tailFile(String name, String fileName) throws Exception {
+    public static String tailCommand(String fileName) throws Exception {
 
         File fileToTail = new File(fileName);
 
@@ -278,6 +311,27 @@ public class LinuxProcessWatcher {
 
         String tailCMD = "/usr/bin/tail -f " + fileToTail.getAbsolutePath();
 
+        return tailCMD;
+    }
+
+    public static String pidScriptForTailCommand(String fileName) throws Exception{
+        
+        File fileToTail = new File(fileName);
+
+        if (!fileToTail.exists()) {
+            throw new FileNotFoundException(fileName + " not found.  Cannot perform tail.");
+        }
+
+        // the weakness with the following is if there are 2 or more processes tailing the same file
+        String pidScript = String.format("ps -ef | grep %s | grep -v -w grep | grep "+ExecUtil.SSH_Path()+" | grep -w tail | awk '{print $2}'",fileToTail.getAbsolutePath());
+
+        return pidScript;
+    }
+
+    public static LinuxProcessWatcher tailFile(String name, String fileName) throws Exception {
+
+        String tailCMD = tailCommand(fileName);
+
         LinuxProcessWatcher watcher = new LinuxProcessWatcher();
 
         if (name != null) {
@@ -285,13 +339,14 @@ public class LinuxProcessWatcher {
         }
 
         watcher.setInvokeScript(tailCMD);
+        watcher.setPIDScript(pidScriptForTailCommand(fileName));
 
         return watcher;
 
     }
 
     public static LinuxProcessWatcher tailFile(String fileName) throws Exception {
-        return tailFile(null, fileName);
+        return tailFile("tail", fileName);
     }
 
     public static LinuxProcessWatcher tailFile(String fileName, ConsumeResultAction<String> consumeOutput) throws Exception {
@@ -312,7 +367,7 @@ public class LinuxProcessWatcher {
             throw new FileNotFoundException(fileName + " not found.  Cannot perform tail.");
         }
 
-        // todo: Should not use cat !!!-- should just read the damn file!!!! yeesh..
+        // TODO: Should not use cat !!!-- should just read the damn file!!!! yeesh..
 
         String tailCMD = "cat " + fileToTail.getAbsolutePath();
 

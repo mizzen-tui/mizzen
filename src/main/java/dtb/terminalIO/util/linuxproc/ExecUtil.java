@@ -54,7 +54,7 @@ public class ExecUtil {
     public static String executeWithShell(String command) throws Exception {
         return executeCMDAndReturnOutput(new String[] { SSH_Path(), "-c", command });
     }
-
+    
     public static int executeCMD(String[] commands, ConsumeResultAction<String> outputConsumer) throws Exception {
 
         Process proc = new ProcessBuilder(commands).start();
@@ -110,35 +110,8 @@ public class ExecUtil {
             Supplier<Boolean> isActive) throws IOException, InterruptedException {
         return executeLongRunning(new String[] { SSH_Path(), "-c", command }, outputConsumer, isActive);
     }
+    
 
-//    public static int executeLongRunningWithShell(String command, 
-//                                                  TerminalStreamOutputParser parser,
-//                                                  Supplier<Boolean> isActive) throws IOException, InterruptedException {
-//        
-//        String commands[] = new String[] { "/bin/sh", "-c", command }
-//        
-//        Runtime rt = Runtime.getRuntime();
-//
-//        Process proc = rt.exec(commands);
-//        
-//        Thread errorGobbler = new Thread(new StreamLineGobbler(proc.getErrorStream(), outputConsumer, isActive),"errorGobbler");
-//
-//        Thread outputGobbler = new Thread(new StreamLineGobbler(proc.getInputStream(), outputConsumer, isActive),"outputGobbler");
-//
-//        errorGobbler.start();
-//        outputGobbler.start();
-//
-//        int exitVal = proc.waitFor();
-//
-//        errorGobbler.join();
-//
-//        outputGobbler.join();  // TODO:  fixme  this does not come back look at LinuxProcessWatcher for a solution (join stdout and stderr)
-//
-//        return exitVal;
-//        
-//        
-//        return executeLongRunning(new String[] { "/bin/sh", "-c", command }, outputConsumer, isActive);
-//    }
 
     public static class StreamLineGobbler implements Runnable {
 

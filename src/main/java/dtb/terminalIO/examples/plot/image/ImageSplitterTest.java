@@ -55,17 +55,16 @@ public class ImageSplitterTest {
                };
 
                HorizontalPanel hp = new HorizontalPanel();
-               
-               
+
                VerticalPanel controls = new VerticalPanel().setVerticalSpacer(2);
-               
+
                DropdownListBox<ImageViewerFactory.IMAGE_RENDER_TYPE> imageRendererTypeDDLB = new DropdownListBox<ImageViewerFactory.IMAGE_RENDER_TYPE>(ImageViewerFactory.imageRenderTypeOptions());
                imageRendererTypeDDLB.setSelected(0);
-               
-               imageRendererTypeDDLB.onChange((te)->{
+
+               imageRendererTypeDDLB.onChange((te) -> {
                    rqst.setImageRenderType(imageRendererTypeDDLB.getValue());
                });
-               
+
                controls.add(imageRendererTypeDDLB);
 
                DropdownListBox<ImageViewerFactory.RGBToAnsiColorControlCode> colorMapDDLB = new DropdownListBox<ImageViewerFactory.RGBToAnsiColorControlCode>(ImageViewerFactory.colorMap());

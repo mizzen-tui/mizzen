@@ -126,8 +126,8 @@ public class ReadImageFileToScreenTest {
                                                              (Dimension)tApp.getMainApplicationPanel(), 
                                                              loadingImage,
                                                              ()-> new DefaultFocusManager(Keys.SHIFT_TAB_KEYSTROKE, Keys.TAB_KEYSTROKE).setNavKeysFirst(false));
-            sc.setFillOnClear(true);
-            sc.setEmptyChar('░');
+            sc.setFillOnClear(false);
+            //sc.setEmptyChar('░');
 
             sc.resize(  new Dimension.Simple(sc.getHeight()-4, sc.getWidth()));
 
@@ -299,7 +299,7 @@ public class ReadImageFileToScreenTest {
     
     static BufferedImage getCircle(int width, int height) {
 
-        BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         java.awt.Color transparent = new java.awt.Color(0x00FFFFFF, true);
 
         java.awt.Color fg = java.awt.Color.black;

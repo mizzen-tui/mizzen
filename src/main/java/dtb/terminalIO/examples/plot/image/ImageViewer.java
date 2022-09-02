@@ -314,7 +314,7 @@ public class ImageViewer {
     
     static BufferedImage getCircle(int width, int height) {
 
-        BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         java.awt.Color transparent = new java.awt.Color(0x00FFFFFF, true);
 
         Graphics2D g = (Graphics2D) bufferedImage.getGraphics();

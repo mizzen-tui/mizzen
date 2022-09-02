@@ -17,33 +17,58 @@ function colorMarkupON() { # turns colors on
     export Whi='\e[0;37m';     export BWhi='\e[1;37m';    export UWhi='\e[4;37m';    export IWhi='\e[0;97m';    export BIWhi='\e[1;97m';   export On_Whi='\e[47m';    export On_IWhi='\e[0;107m';
 }
 
+function doWait {  # interactively waits $1 seconds - displaying a message $2 and a progress bar
+    local count=0
+    local total=$1
+    local msg=$2
+    local sleepInterval="${3:-1}"
+    local pstr="[========]"
+    while [ $count -lt $total ]; do
+      sleep $sleepInterval
+      count=$(( $count + $sleepInterval ))
+      local pd=$(( $count * 10 / $total ))
+      printf "\r${RCol}%s - ${IYel}%3d ${Yel}seconds  ${Blu}%.${pd}s ${RCol}" "$msg" $(( $total - $count  ))  $pstr
+    done
+    printf "\n${Bla}Done waiting${RCol}\n"
+}
+
+
+
+
 colorMarkupON
 
 echo "PARM 1 = $1"
 
 echo "slow runner : $(pwd)"
 
-
 $(pwd)/runDBG.sh NOCLEAR dtb.terminalIO.examples.StringOutputTest
+
+echo "LABMANAGER_DIR     = $LABMANAGER_DIR"
+echo "DTB_TERMINALIO_DIR = $DTB_TERMINALIO_DIR"
 
 echo "sleeping for 5 seconds .. "
 
-sleep 5
-echo "done sleep .."
 
+doWait 5 "Testing cursor handling"
 
-echo " "
-echo " "
 echo " "
 echo " .. "
-# $(pwd)/runDBG.sh  NOCLEAR dtb.terminalIO.examples.SmallCanvasTest
+$(pwd)/runDBG.sh  NOCLEAR dtb.terminalIO.examples.SmallCanvasTest
 
+
+doWait 10 "Let's wait for a bit"
+
+echo ""
+echo ""
 
 ls -l
 
 echo "sleeping for 5 seconds .. "
 sleep 5
 echo "done sleep .."
+
+clear
+echo "cleared screen?"
 
 echo "A"
 echo "B"
@@ -57,9 +82,34 @@ echo "2"
 echo "3"
 
 
+#pushd /home/dbalme/workspace/LabManager
+
+#mvn clean install
+
+#popd
+
+
 echo "------------brought to you by ----------------------------------"
 printf "${Cya}"
 cat $(pwd)/slowRunner.sh
 printf "${RCol}"
 
-echo "Done! ........................................."
+
+echo "Some text images"
+
+cat ../tmpImages/roltLargeIMG.txt
+
+echo -e "\n\n 24 bit colors \n\n"
+
+cat ../tmpImages/24BitColors.txt
+
+
+echo -e "\n\n BANNER \n\n"
+
+cat ../tmpImages/AcmeBannner.txt 
+
+
+find .. -name "*.sh" | xargs cat
+
+
+echo "$0 Done! ............................................."
