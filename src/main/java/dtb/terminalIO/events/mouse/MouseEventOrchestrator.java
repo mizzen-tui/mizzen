@@ -110,7 +110,7 @@ public class MouseEventOrchestrator {
                           Logging.info("current app mouse pos: " + String.valueOf(applicationMousePosition));
 
                           if (lastRequestedCursorPosition != null) {
-                              screen.showCursorAt(lastRequestedCursorPosition);
+                              screen.showCursorAt(lastRequestedCursorPosition, false);
                               screen.refresh();
                           }
 

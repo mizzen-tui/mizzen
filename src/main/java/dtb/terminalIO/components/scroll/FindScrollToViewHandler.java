@@ -9,7 +9,7 @@ import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.ToFocusable;
 
 /**
- * A ScrollToViewEventHandler that searches for a components ancestor that can handle
+ * A {@link OnRequestScrollToViewEventHandler} that searches for a components ancestor that can handle
  * it's REQUEST_SCROLL_TO_VIEW request
  * 
  * @author dbalme
@@ -30,12 +30,12 @@ public class FindScrollToViewHandler extends OnRequestScrollToViewEventHandler {
 
     /**
      * loop up the component's ancestor looking for a component that can handle the scroll to view request
-     * Component asking to scrolled to is embedded within the te
+     * Component asking to be scrolled to is embedded within the te
      * @param te the scroll to view request event
      * @return ancestor component that can handle request, null otherwise
      */
     private static ConditionalEventHandler findEventHandlerToHandle(TerminalEvent<?> te) {
-        
+
         Component<?> component = ((RequestScrollToView)te).getScrollToComponent();
         if (component == null) {
             return null;
@@ -55,7 +55,7 @@ public class FindScrollToViewHandler extends OnRequestScrollToViewEventHandler {
         }
         return null;
     }
-    
+
     private static ConditionalEventHandler asConditionalEventHandlerOrNull(Component<?> component) {
         if (component instanceof ConditionalEventHandler) {
             return (ConditionalEventHandler) component;

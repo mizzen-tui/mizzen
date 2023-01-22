@@ -30,12 +30,11 @@ public class BlocksGrid extends BoundedComponent<BlocksGrid>  implements ParentC
         this.plotter.setFillOnClear( this.getFillOnClearPolicy().isFillOnClear() );
         gridRectangle = BlocksUtils.componentRectangleToGridRectangle(plotter);
     }
-    
+
     public BlocksGrid(Color color, int height, int width) {
         this(color, new Dimension.Simple(height, width));
     }
-    
-    
+
     public Plotter getPlotter() {
         return plotter;
     }

@@ -21,6 +21,7 @@ import dtb.terminalIO.components.AbstractWrappedComponentWithFocusManager;
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.ComponentInspector.InspectorButton;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.composite.VerticalPanel;
@@ -44,45 +45,54 @@ import dtb.terminalIO.events.mouse.Clickable;
 import dtb.terminalIO.examples.plot.image.animate.AbstractImageAnimator;
 import dtb.terminalIO.examples.plot.image.animate.BufferedAnimate;
 import dtb.terminalIO.geom.Dimension;
+import dtb.terminalIO.util.Logging;
 
 public class RenderFromGraphics2D {
 
     public static void main(String args[]) {
 
+        Logging.setEnabled(true);
+        
         new TUIApp(args).setDefaultMainApplicationPanel().confirmOnExit().setOnReadyStart((tApp) -> {
 
             ButtonBar controls = new ButtonBar();
             tApp.getMainApplicationPanel().add(controls);
 
+            ((Component<?>)tApp.getMainApplicationPanel()).setColor(Colors.On_IBlu);
+            tApp.setEmptyColors(Colors.On_IBlu);
+
             HorizontalPanel mainPanel = new HorizontalPanel();
 
             Dimension.ComputedDelegate imageViewerOptionsSize = new Dimension.ComputedDelegate((Dimension)tApp.getCanvas(), (s)->(s.getHeight()-2)/4 - 2, (s)->(int)((s.getWidth()-2)*.24));
 
-            AnimatorSelector animatorOptionsPanel = new AnimatorSelector(imageViewerOptionsSize);
+            Logging.info("imageViewerOptionsSize: size = " + imageViewerOptionsSize);
+
+            AnimatorSelector animatorOptionsPanel = new AnimatorSelector(new Dimension.Simple(imageViewerOptionsSize));
 
             mainPanel.add(animatorOptionsPanel);
-
 
             animatorOptionsPanel.add(()->new AnimateRotatingSquare(new Dimension.Simple(600,200)), tApp.getEventBus());
             animatorOptionsPanel.add(()->new BufferedAnimate(), tApp.getEventBus());
             animatorOptionsPanel.add(()->new HourGlassAnimator(), tApp.getEventBus());
             animatorOptionsPanel.add(()->new RotateEllipseAnimator(), tApp.getEventBus());
 
-            Dimension.ComputedDelegate imageViewerSize = new Dimension.ComputedDelegate((Dimension)tApp.getCanvas(), (s)->s.getHeight()-4, (s)->s.getWidth()-4 - imageViewerOptionsSize.getWidth()-2);
-            
+            Dimension.ComputedDelegate imageViewerSize = new Dimension.ComputedDelegate((Dimension)tApp.getCanvas(), (s)->s.getHeight()-4, (s)->s.getWidth()-4 - animatorOptionsPanel.getWidth()-2);
+            Logging.info("imageViewerSize: size = " + imageViewerSize);
+
             BorderedComponent mainAnimatorPanel = new BorderedComponent("animator");
-            
 
             Consumer<ImageIterator> setAnimator = (imageAnimator)-> {
-                ImageAnimatorComponent animatorController = new ImageAnimatorComponent(Colors.BGre, imageAnimator, imageViewerSize, tApp.getEventBus());
-                
+                ImageAnimatorComponent animatorController = new ImageAnimatorComponent(Colors.BGre, imageAnimator, new Dimension.Simple(imageViewerSize), tApp.getEventBus());
+
                 if (mainAnimatorPanel.getComponent() != null && mainAnimatorPanel.getComponent() instanceof ImageAnimatorComponent) {
+                    // stop and remove previous
                     ImageAnimatorComponent prevCtrlr = (ImageAnimatorComponent) mainAnimatorPanel.getComponent();
                     ImageRenderRequest prevRsqt = prevCtrlr.getImageRenderRequest();
                     ImageRenderRequest curRqst = animatorController.getImageRenderRequest();
                     curRqst.copyFrom(prevRsqt);
                     prevCtrlr.stop();
                 }
+                // set and start new controller
                 mainAnimatorPanel.setComponent(animatorController);
             };
 
@@ -111,7 +121,7 @@ public class RenderFromGraphics2D {
             imageRendererTypeDDLB.onChange((te)->{
                 currentRequest.get().setImageRenderType( imageRendererTypeDDLB.getValue());
             });
-            
+
             controls.addComponent(new TextComponent(" | Color map: "));
 
             DropdownListBox<ImageViewerFactory.RGBToAnsiColorControlCode> colorMapDDLB = new DropdownListBox<ImageViewerFactory.RGBToAnsiColorControlCode>(ImageViewerFactory.colorMap());
@@ -134,7 +144,10 @@ public class RenderFromGraphics2D {
 
             tApp.appendOnResizeAction((t,size)->{
                 imageViewerSize.setBaseSize(size);
-                mainAnimatorPanel.resize(imageViewerSize);
+                mainAnimatorPanel.resize(new Dimension.Simple((imageViewerSize)));
+
+                imageViewerOptionsSize.setBaseSize(size);
+                //animatorOptionsPanel.resize(new Dimension.Simple(imageViewerOptionsSize));
             });
 
             FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),
@@ -142,10 +155,12 @@ public class RenderFromGraphics2D {
                                                                                              ()-> new DefaultFocusManager().setNavKeysFirst(false).setCycling(false));
 
             tApp.getEventBus().appendEventHandler( mainFocusManager );
+
+            controls.addComponent(new InspectorButton(Colors.IGre, tApp, (DefaultFocusManager)mainFocusManager));
             
             FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
-            
 
+            
         }).start();
 
     }

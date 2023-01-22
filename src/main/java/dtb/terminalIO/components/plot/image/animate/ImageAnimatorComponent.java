@@ -9,6 +9,7 @@ import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
+import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
 
 public class ImageAnimatorComponent extends AbstractComponentWrappper<Component<?>> {
@@ -65,6 +66,21 @@ public class ImageAnimatorComponent extends AbstractComponentWrappper<Component<
     }
 
     
+    @Override
+    public void resize(Dimension d) {
+        
+        if (this.isSameDimension(d)) {
+            return ;
+        }
+        
+        if (this.animation != null && this.animation instanceof CanResize) {
+            ((CanResize)this.animation).resize(d);
+        }
+        
+        super.resize(d);
+        
+    }
+
 
     public ImageAnimatorComponent(Color color, 
                                   ImageIterator animation, 

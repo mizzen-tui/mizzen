@@ -174,7 +174,7 @@ public class LineTrackingCLIEmmitter implements CLIEmitter {
      * 
      * @param showCursorPosition
      */
-    private void showCursorAtFromTopDown(Position showCursorPosition) {
+    private void showCursorAtFromTopDown(Position showCursorPosition, boolean showCursor) {
 
         clearLastTrackedLines(false);  // false = go to top but don't erase previous content
 
@@ -193,7 +193,9 @@ public class LineTrackingCLIEmmitter implements CLIEmitter {
         } else if (delta.getCol() < 0) {
             outputRenderer(new ControlCode.CursorBackward(delta.getCol()));
         }
-
+        if (showCursor) {
+            outputRenderer(ControlCode.SHOW_CURSOR);
+        }
         lastShowCursorPosition = showCursorPosition;
     }
 
@@ -203,9 +205,9 @@ public class LineTrackingCLIEmmitter implements CLIEmitter {
      * 
      * @param showCursorPosition
      */
-    public void showCursorAt(Position showCursorPosition) {
+    public void showCursorAt(Position showCursorPosition, boolean showCursor) {
 
-        showCursorAtFromTopDown(showCursorPosition);
+        showCursorAtFromTopDown(showCursorPosition, showCursor);
 
     }
 

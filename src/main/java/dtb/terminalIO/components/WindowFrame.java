@@ -62,7 +62,6 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
     private Focusable               meAsFocusable;
 
 
-
     public WindowFrame(Color color, String title, Component<?> child) {
         super(color);
         this.child = child;

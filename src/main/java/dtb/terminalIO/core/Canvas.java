@@ -320,16 +320,12 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
             backend.hideCursor(); // this takes effect on next refresh just below
         }
         
-        if (showCursorRequested) {
-            showCursorRequested = false;
-            // append a show cursor on the next request
-            backend.showCursor();
-        }
 
         backend.refresh();
 
         if (last_RequestShowCursorPosition != null) {
-            backend.showCursorAt(last_RequestShowCursorPosition);
+            backend.showCursorAt(last_RequestShowCursorPosition, showCursorRequested);
+            showCursorRequested = false;
         }
     }
 

@@ -170,13 +170,13 @@ public class TerminalScreen implements ControlCodeContext {
 	return this.out;
     }
 
-    public void showCursorAt(Position showCursorPosition) {
+    public void showCursorAt(Position showCursorPosition, boolean showCursor) {
         if (showCursorPosition == null ||
             showCursorPosition.getRow()<0 || 
             showCursorPosition.getCol()<0) {
             throw new IllegalStateException("showCursor request illegal " + String.valueOf(showCursorPosition));
         }
-        out.showCursorAt(showCursorPosition);
+        out.showCursorAt(showCursorPosition, showCursor);
     }
 
     public void showCursor() {

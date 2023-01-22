@@ -66,34 +66,34 @@ public class OnIdleEventEventHandler extends ConditionalEventHandler.Impl {
 
     static class IntervalPredicate implements Predicate<TerminalEvent<?>> {
 
-        protected long afterTime;
+        protected long afterTimeInMilliSeconds;
 
-        IntervalPredicate(long interval) {
-            this.afterTime = System.currentTimeMillis() + interval;
+        IntervalPredicate(long intervalInMilliSeconds) {
+            this.afterTimeInMilliSeconds = System.currentTimeMillis() + intervalInMilliSeconds;
         }
         
-        public void setInterval(long interval) {
-            this.afterTime = System.currentTimeMillis() + interval;
+        public void setInterval(long intervalInMilliSeconds) {
+            this.afterTimeInMilliSeconds = System.currentTimeMillis() + intervalInMilliSeconds;
         }
 
         @Override
         public boolean test(TerminalEvent<?> t) {
-            return System.currentTimeMillis() > afterTime;
+            return System.currentTimeMillis() > afterTimeInMilliSeconds;
         }
 
         public String toString() {
-            return "IntervalPredicate:"+afterTime;
+            return "IntervalPredicate:"+afterTimeInMilliSeconds;
         }
 
     }
 
     /**
-     * Executes handler one-time after a defined time-interval has passed
+     * Executes handler one-time after a defined millisecond time-interval has passed
      */
     public static class OneTimeAfterInterval extends OneTime {
 
-        public OneTimeAfterInterval(EventHandler handler, long interval) {
-            super(new IntervalPredicate(interval), handler);
+        public OneTimeAfterInterval(EventHandler handler, long intervalInMilliSeconds) {
+            super(new IntervalPredicate(intervalInMilliSeconds), handler);
         }
 
     }
@@ -103,19 +103,19 @@ public class OnIdleEventEventHandler extends ConditionalEventHandler.Impl {
      */
     public static class RepeatingInterval extends OnIdleEventEventHandler {
 
-        long interval;
+        long intervalInMilliSeconds;
 
-        public RepeatingInterval(long interval, EventHandler handler) {
-            super(new IntervalPredicate(interval), handler);
-            this.interval = interval;
+        public RepeatingInterval(long intervalInMilliSeconds, EventHandler handler) {
+            super(new IntervalPredicate(intervalInMilliSeconds), handler);
+            this.intervalInMilliSeconds = intervalInMilliSeconds;
         }
         
         public void setInterval(long interval) {
-            this.interval = interval;
+            this.intervalInMilliSeconds = interval;
         }
 
         public long getInterval() {
-            return this.interval;
+            return this.intervalInMilliSeconds;
         }
 
         @Override
@@ -124,7 +124,7 @@ public class OnIdleEventEventHandler extends ConditionalEventHandler.Impl {
             super.handle(te);
             // Second we build a new Interval predicate specifying when to
             // run next
-            this.setCanHandlePredicate(new IntervalPredicate(interval));
+            this.setCanHandlePredicate(new IntervalPredicate(intervalInMilliSeconds));
         }
 
     }
@@ -136,8 +136,8 @@ public class OnIdleEventEventHandler extends ConditionalEventHandler.Impl {
 
         Supplier<Boolean> continueConditional;
 
-        public RepeatingIntervalWhileCond(long interval, Supplier<Boolean> continueConditional, EventHandler handler) {
-            super(interval, handler);
+        public RepeatingIntervalWhileCond(long intervalInMilliSeconds, Supplier<Boolean> continueConditional, EventHandler handler) {
+            super(intervalInMilliSeconds, handler);
             this.continueConditional = continueConditional;
         }
 
@@ -183,11 +183,11 @@ public class OnIdleEventEventHandler extends ConditionalEventHandler.Impl {
             }
         }
         
-        long interval;
+        long intervalInMilliSeconds;
 
-        public Countdown(long interval, int count, BiConsumer<TerminalEvent<?>, Integer> handler) {
+        public Countdown(long intervalInMilliSeconds, int count, BiConsumer<TerminalEvent<?>, Integer> handler) {
             super( new CounterHandler(count, handler));
-            this.interval = interval;
+            this.intervalInMilliSeconds = intervalInMilliSeconds;
         }
 
         @Override
@@ -208,7 +208,7 @@ public class OnIdleEventEventHandler extends ConditionalEventHandler.Impl {
             
             // Second we build a new Interval predicate specifying when to
             // run next
-            this.setCanHandlePredicate(new IntervalPredicate(interval));
+            this.setCanHandlePredicate(new IntervalPredicate(intervalInMilliSeconds));
         }
 
     }

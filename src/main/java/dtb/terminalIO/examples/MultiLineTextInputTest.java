@@ -49,12 +49,11 @@ public class MultiLineTextInputTest {
             DefaultFocusManager mainFocusManager = (DefaultFocusManager)FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(), tApp.getEventBus());
 
             ComponentInspector inspector = new ComponentInspector(Colors.BIGre, 
-                    new Dimension.Simple(25,60), 
-                    (Component<?>)tApp.getMainApplicationPanel(), 
-                    mainFocusManager);
-            
+                                                                  new Dimension.Simple(25,60), 
+                                                                  (Component<?>)tApp.getMainApplicationPanel(), 
+                                                                  mainFocusManager);
+
             WindowFrame wfInspector = new WindowFrame(inspector.getColor(),"Components",inspector);
-            
 
             tApp.getEventBus().appendEventHandler( inspector.toggleViewEventHandler() );
             tApp.getEventBus().appendEventHandler( inspector.refreshEventHandler() );
@@ -62,15 +61,14 @@ public class MultiLineTextInputTest {
             tApp.getEventBus().appendIdleEventHandler(new RepeatingInterval(2000, (te)->{
                                                          inspector.refreshEventHandler().handle(te);
                                                       }));
-            
+
             mainFocusManager.addComponentAsFocusables(wfInspector);
-            
+
             tApp.getEventBus().appendEventHandler(mainFocusManager);
-            
+
             tApp.getMainApplicationPanel().add(22,44, wfInspector);
-            
+
             FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
-            
 
         }).start();
 

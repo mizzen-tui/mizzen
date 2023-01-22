@@ -21,9 +21,7 @@ import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
-import dtb.terminalIO.geom.Rectangle.Simple;
 import dtb.terminalIO.geom.position.Position;
-import dtb.terminalIO.util.Logging;
 
 public class ImageViewerFactory {
 
@@ -168,10 +166,9 @@ public class ImageViewerFactory {
         }
         return null;
     }
-    
-    
+
     public static class ImageRenderer extends AbstractComponentWrappper<Component<?>> {
-        
+
         public ImageRenderer(Component<?> wrappedComponent) {
             super(wrappedComponent.getColor(), wrappedComponent);
             this.setFillOnClear(false);
@@ -189,7 +186,7 @@ public class ImageViewerFactory {
                 this.setWrappedComponent(plotter);
             }
         }
-        
+
         @Override
         public void resize(Dimension d) {
             if (this.isSameDimension(d)) {
@@ -223,20 +220,20 @@ public class ImageViewerFactory {
         RGBPlotPredicate toPlotOrNot;
         RGBToAnsiColorControlCode colorMap;
         String gradientStr;
-        
+
         public Image getImageToView() {
             return imageToView;
         }
-        
+
         public ImageRenderRequest setImageToView(Image imageToView) {
             this.imageToView = imageToView;
             return this;
         }
-        
+
         public Dimension getDesiredImgSizeInCharacters() {
             return desiredImgSizeInCharacters;
         }
-        
+
         public ImageRenderRequest setDesiredImgSizeInCharacters(Dimension desiredImgSizeInCharacters) {
             this.desiredImgSizeInCharacters = desiredImgSizeInCharacters;
             return this;
@@ -344,7 +341,7 @@ public class ImageViewerFactory {
     public static ImageRenderer emptyImage(Color color) {
         return new ImageRenderer(new TextComponent(color, ""));
     }
-    
+
     public static ImageRenderer fromImage(ImageRenderRequest rqst) throws Exception {
 
         if (rqst.isBlocksType()) {
@@ -410,7 +407,6 @@ public class ImageViewerFactory {
     public static Component<?> simpleImageToStringView(Image inputImage, Dimension desiredImgSizeInCharacters, String gradientStr) throws Exception {
         return simpleImageToStringView(inputImage, desiredImgSizeInCharacters, plotPointPredicateOptions()[0].getValue(),  colorMap()[0].getValue(), gradientStr);
     }
-    
 
     public static Component<?> simpleImageToStringView(Image inputImage, 
                                                        Dimension desiredImgSizeInCharacters, 
@@ -445,7 +441,8 @@ public class ImageViewerFactory {
         plotterComponent.clearPlots();
         plotterComponent.clear();
 
-        Image image = resize(inputImage, desiredImgSizeInCharacters, ASCII_ADJUST_TO_CONTAINER_SIZE_PRESERVE_ASPECT_RATIO);
+        //Image image = resize(inputImage, desiredImgSizeInCharacters, ASCII_ADJUST_TO_CONTAINER_SIZE_PRESERVE_ASPECT_RATIO);
+        Image image = resize(inputImage, desiredImgSizeInCharacters, ADJUST_TO_CONTAINER_SIZE);
 
         Rectangle imgSize = new ImageRectangleAdapter(image);
 
@@ -537,7 +534,7 @@ public class ImageViewerFactory {
         PixelGrabber pxGrabber = new PixelGrabber(image, 0, 0, width, height, pixels, 0, width);
 
         pxGrabber.grabPixels();
-        
+
         int charsWidth  = width / 2 ;  // desiredImgSizeInCharacters.getWidth();
         int charsHeight = height / 4 ; // desiredImgSizeInCharacters.getHeight();
         int pixelLen = pixels.length;
@@ -754,15 +751,12 @@ public class ImageViewerFactory {
     public static Image resize(Image inputImage, Dimension d, ContainerToImageSize containerToImageSize) {
         return resize(inputImage, d, BufferedImage.TYPE_INT_ARGB, containerToImageSize);
     }
-    
-    
-    
+
     public static Image resize(Image inputImage, Dimension d) {
         return resize(inputImage, d, BufferedImage.TYPE_INT_ARGB, ADJUST_TO_CONTAINER_SIZE_PRESERVE_ASPECT_RATIO);
     }
 
-    
-    
+
     @FunctionalInterface
     public static interface RGBPlotPredicate {
         boolean test(int r,int g, int b);

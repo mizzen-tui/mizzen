@@ -43,7 +43,7 @@ public class StringCanvasBackEnd implements CanvasBackend {
     }
 
     @Override
-    public void showCursorAt(Position showCursorPosition) {
+    public void showCursorAt(Position showCursorPosition, boolean showCursor) {
         // do nothing
     }
 

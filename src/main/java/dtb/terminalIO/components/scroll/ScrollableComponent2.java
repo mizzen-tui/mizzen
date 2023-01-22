@@ -13,7 +13,7 @@ import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
 
-public class ScrollableComponent2  extends ComponentWithFocusManager<ScrollableComponent2> {
+public class ScrollableComponent2  extends ComponentWithFocusManager<ScrollableComponent2> implements CanScrollToView{
 
     WindowViewComponent viewer;
     BorderedComponent borderedComponent;
@@ -77,6 +77,8 @@ public class ScrollableComponent2  extends ComponentWithFocusManager<ScrollableC
 
         this.addComponentAndItsFocusables(hScrollBar);
         this.addComponentAndItsFocusables(vScrollBar);
+        
+        this.appendEventHandler(new  WindowViewComponent.ScrollToViewHandler(()->this.viewer, this));
 
     }
 

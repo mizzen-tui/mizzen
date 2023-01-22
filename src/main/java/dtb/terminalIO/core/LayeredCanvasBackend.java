@@ -115,7 +115,7 @@ public class LayeredCanvasBackend implements CanvasBackend, Rectangle {
     }
 
     @Override
-    public void showCursorAt(Position showCursorPosition) {
+    public void showCursorAt(Position showCursorPosition, boolean showCursor) {
         // TODO Auto-generated method stub
 
     }

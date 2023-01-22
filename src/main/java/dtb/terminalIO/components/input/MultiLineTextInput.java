@@ -655,7 +655,7 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
 
         // ensure desired cursor location will be in view
         new ShowComponentOnFocus().onFocus(MultiLineTextInput.this, 
-                                           new Rectangle.Simple(caret, new Dimension.Simple(1,1)),  
+                                           new Rectangle.Simple(caret, new Dimension.Simple(1,1)),
                                            eventBus);
         // now move cursor to caret and then request a canvas update
         eventBus.appendEventHandler( new OnIdleEventEventHandler.OneTime(()-> {

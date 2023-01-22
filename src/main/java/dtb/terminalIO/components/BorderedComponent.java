@@ -162,8 +162,7 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
         
         if (this.border != null) this.border.markAsDirty();
     }
-    
-    
+
     public void resize(Dimension d) {
         if (d.isSameDimension(this)) {
             return;
@@ -180,7 +179,7 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
         border.setEmptyChar(emptyChar);
         return result;
     }
-    
+
     @Override
     public int getCol() {
         return this.border.getCol();

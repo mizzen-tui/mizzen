@@ -97,14 +97,14 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
     
     protected FocusManager getFocusManager() {
         if (this.focusManager == null) {
-            throw new NullPointerException("getFocusManager(): focusManager is null - cannot get access to a focusManager for "+ this.getClass().getName());
+            throw new NullPointerException("getFocusManager(): focusManager is null - cannot get access to a focusManager for "+ HasName.UTIL.getName(this));
         }
         return this.focusManager;
     }
 
     private void addFocusable(Focusable focusable) {
         if (this.focusManager == null) {
-            throw new NullPointerException("addFocusable(): focusManager is null - cannot get access to a focusManager for "+ this.getClass().getName());
+            throw new NullPointerException("addFocusable(): focusManager is null - cannot get access to a focusManager for "+ HasName.UTIL.getName(this));
         }
         // bad form here.. 
         ((DefaultFocusManager)this.focusManager).addFocusable(focusable);
@@ -113,7 +113,7 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
 
     private void insertFocusable(int index, Focusable focusable) {
         if (this.focusManager == null) {
-            throw new NullPointerException("addFocusable(): focusManager is null - cannot get access to a focusManager for "+ this.getClass().getName());
+            throw new NullPointerException("addFocusable(): focusManager is null - cannot get access to a focusManager for "+ HasName.UTIL.getName(this));
         }
         // bad form here.. 
         ((DefaultFocusManager)this.focusManager).insertFocusable(index, focusable);
@@ -122,7 +122,7 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
 
     private void removeFocusable(Focusable focusable) {
         if (this.focusManager == null) {
-            throw new NullPointerException("removeFocusable(): focusManager is null - cannot get access to a focusManager for "+ this.getClass().getName());
+            throw new NullPointerException("removeFocusable(): focusManager is null - cannot get access to a focusManager for "+ HasName.UTIL.getName(this));
         }
         // bad form here.. 
         ((DefaultFocusManager)this.focusManager).removeFocusable(focusable);

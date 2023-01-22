@@ -4,13 +4,13 @@ import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 
 import dtb.terminalIO.components.plot.image.animate.ImageIterator;
+import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
 
-public abstract class AbstractImageAnimator implements ImageIterator, Dimension {
+public abstract class AbstractImageAnimator implements ImageIterator, Dimension, CanResize {
 
     protected BufferedImage buffer;
 
-    protected Dimension oldSize;
     protected Dimension size;
 
     public AbstractImageAnimator(Dimension size) {
@@ -34,6 +34,15 @@ public abstract class AbstractImageAnimator implements ImageIterator, Dimension 
         }
         return buffer;
     }
+    
+    public void resize(Dimension newSize) {
+        if (getSize().isSameDimension(newSize)) {
+            return;
+        }
+        setSize(size);
+        buffer = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+    }
+
 
     Dimension getSize() {
         return size;

@@ -87,7 +87,10 @@ public interface Position extends Vec2<Position>, Row, Column{
         public Simple(int row, int col) {
             this((float)row,(float) col);
         }
-    
+        /**
+         * Creates a new (simple) position from pos parameter
+         * @param pos
+         */
         public Simple(Vec2<?> pos) {
             this(pos.getY(), pos.getX());
         }

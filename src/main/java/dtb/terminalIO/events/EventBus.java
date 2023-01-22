@@ -21,12 +21,31 @@ public interface EventBus extends EventHandlerContainer {
 
     EventBus appendTerminateEventHandler(OnTerminateEventHandler terminateHandler);
 
+    /**
+     * Convenience method for enqueuing a task (EventHandler) for execution on the Event thread.
+     * The Task will run on the next idle event loop iteration that processes idle event messages.
+     * @param handler
+     * @return
+     */
     default EventBus asynch(EventHandler handler) {
         return appendIdleEventHandler(new OnIdleEventEventHandler.OneTime(handler));
     }
 
-    default EventBus asynchAfter(long interval, EventHandler handler) {
-        return appendIdleEventHandler(new OneTimeAfterInterval(handler, interval));
+    /**
+     * Convenience method for enqueuing a task (EventHandler) for later (delayed) execution.
+     * Task will run on the Event thread at a later time specified by intervalInMilliSeconds.
+     * 
+     * <p/>
+     * 
+     * The task is enqueued onto the EventBus.  Upon execution it is removed from  the eventbus
+     * which means that it only executes once.
+     * 
+     * @param intervalInMilliSeconds
+     * @param handler
+     * @return
+     */
+    default EventBus asynchAfter(long intervalInMilliSeconds, EventHandler handler) {
+        return appendIdleEventHandler(new OneTimeAfterInterval(handler, intervalInMilliSeconds));
     }
 
     void enableIdleEvents();

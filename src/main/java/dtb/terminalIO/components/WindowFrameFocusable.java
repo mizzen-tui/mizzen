@@ -32,7 +32,8 @@ import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegment;
 import dtb.terminalIO.util.Logging;
 
-public class WindowFrameFocusable extends AbstractComponent<WindowFrameFocusable> implements ParentContainer, 
+public class WindowFrameFocusable extends AbstractComponent<WindowFrameFocusable> 
+                                                                implements ParentContainer, 
                                                                            CanResize,
                                                                            CanScrollToView,
                                                                            GetComponentAtOffset, 
@@ -42,7 +43,7 @@ public class WindowFrameFocusable extends AbstractComponent<WindowFrameFocusable
 
     private SimpleBorder border;
     private Component<?> child;
-    private Position childPosition;
+    private Position childOffsetPosition;
     private Position bannerPosition;
     private Composite banner;
     private ResizeAnchor resizeAnchor;
@@ -72,18 +73,19 @@ public class WindowFrameFocusable extends AbstractComponent<WindowFrameFocusable
         this.banner.add(new DraggableTextComponent(color, title, this));
         this.banner.setBounds(new Dimension.Simple(1, this.child.getWidth()));
 
-        this.childPosition = new Position.Simple(1, 1);
+        this.childOffsetPosition = new Position.Simple(1, 1);
         this.bannerPosition = new Position.Simple(0, 1);
-        Position.Simple p = new Position.Simple(child);
-        Rectangle bounds = new Rectangle.Simple(p,
-                new Dimension.Simple(child.getHeight() + 2, Math.max(child.getWidth(), this.banner.getWidth()) + 2));
+        Position.Simple pChildPosition = new Position.Simple(child);
+        Rectangle bounds = new Rectangle.Simple(pChildPosition,
+                                                new Dimension.Simple(child.getHeight() + 2, 
+                                                                     Math.max(child.getWidth(), this.banner.getWidth()) + 2));
         this.border = new SimpleBorder(color, bounds);
         this.border.setParentContainer(this);
 
         this.resizeAnchor = new ResizeAnchor(this);
 
-        this.row = p.getRow();
-        this.col = p.getCol();
+        this.row = pChildPosition.getRow();
+        this.col = pChildPosition.getCol();
         this.height = Math.max(this.border.getHeight(), this.minHeight);
         this.width = Math.max(this.border.getWidth(), this.minWidth);
         populateChildrenList();
@@ -126,7 +128,7 @@ public class WindowFrameFocusable extends AbstractComponent<WindowFrameFocusable
         // tell children who their parent is
         this.banner.setParentContainer(this);
         if (viewer == null) {
-            this.child.setParentContainer(null); // avoids a check
+            this.child.setParentContainer(null); // setting to null first avoids a check sanity check below 
             this.child.setParentContainer(this);
         } else {
             this.viewer.setParentContainer(this);
@@ -203,11 +205,11 @@ public class WindowFrameFocusable extends AbstractComponent<WindowFrameFocusable
         Component<?> theChild = (viewer != null) ? viewer : this.child;
 
         Position offsetForChild = offset.offsetAdd(this.getPositionRelativeToParent(theChild).negate());
-        if (this.child.containsPosition(offsetForChild)) {
+        if (theChild.containsPosition(offsetForChild)) {
             if (theChild instanceof GetComponentAtOffset) {
                 return ((GetComponentAtOffset) theChild).getComponentAtOffset(offsetForChild);
             }
-            return this.child;
+            return theChild;
         }
 
         return this;
@@ -222,7 +224,7 @@ public class WindowFrameFocusable extends AbstractComponent<WindowFrameFocusable
         Component<?> theChild = (viewer != null) ? viewer : this.child;
 
         if (child == theChild) {
-            return this.childPosition;
+            return this.childOffsetPosition;
         }
 
         if (child == this.resizeAnchor) {
@@ -257,8 +259,6 @@ public class WindowFrameFocusable extends AbstractComponent<WindowFrameFocusable
             return;
         }
 
-        //Logging.info(HasName.UTIL.getName(this) + ":resize:" + String.valueOf(d));
-
         this.height = Math.max(this.border.getHeight(), this.minHeight);
         this.width = Math.max(this.border.getWidth(), this.minWidth);
 
@@ -288,14 +288,12 @@ public class WindowFrameFocusable extends AbstractComponent<WindowFrameFocusable
                 ((CanResize) this.child).resize(new Dimension.Simple(d.getHeight() - 2, d.getWidth() - 2));
             }
         }
-        
-        
         // Logging.info(HasName.UTIL.getName(this) + ":resize :" + String.valueOf(new Dimension.Simple(this)));
     }
 
     @Override
     public void childResized(Component<?> child) {
-        Logging.info(HasName.UTIL.getName(this) + ":childResized :" + String.valueOf(child));
+        
         Dimension dimensionOfChildren = sizeFromChildren();
         if (dimensionOfChildren.isSameDimension(this)) {
             return;
@@ -322,8 +320,22 @@ public class WindowFrameFocusable extends AbstractComponent<WindowFrameFocusable
                 }
             }
         } else {
+            
             // size is bounded scenario - meaning we have done an explicit resize in the past...
             //                            now we want to adjust scrollbars display based on change of child size
+            
+            if (this.viewer == null) {
+                Dimension desiredBoundedSize = new Dimension.Simple(this.getHeight(), this.getWidth());
+                if (autoScrollbars) {
+                    attachScrollbarsIfNeeded(desiredBoundedSize);
+                } else {
+                    if (this.child instanceof CanResize) {
+                        ((CanResize) this.child).resize(new Dimension.Simple(desiredBoundedSize.getHeight() - 2, desiredBoundedSize.getWidth() - 2));
+                    }
+                }
+                
+            }
+            
             /*
             Dimension d = new Dimension.Simple(this.getHeight(), this.getWidth());
             
@@ -349,16 +361,20 @@ public class WindowFrameFocusable extends AbstractComponent<WindowFrameFocusable
 
         // draw child
         if (this.contains(theChild)) {
-            segments.mergeAt(this.childPosition, theChild.getSegmentsBuffer());
+            Logging.info(this.getName() + " draw-contains:   child = " +  HasName.UTIL.getName(theChild) );
+            segments.mergeAt(this.childOffsetPosition, theChild.getSegmentsBuffer());
         } else {
-            Rectangle clippedArea = this;
-            ScreenLineSegment.UTIL.addSegmentsWithOffsetBounded(theChild, clippedArea, segments.getSegments(),
-                    this.child.getSegmentsBuffer().getSegments());
+            Rectangle clippedArea = new Rectangle.Simple(this.getRow(), this.getCol(),this.getHeight()-2, this.getWidth()-2);
+            Logging.info(this.getName() + " draw-clipped " +  HasName.UTIL.getName(theChild) );
+            ScreenLineSegment.UTIL.addSegmentsWithOffsetBounded(this.childOffsetPosition, 
+                                                                clippedArea, 
+                                                                segments.getSegments(),
+                                                                this.child.getSegmentsBuffer().getSegments());
         }
 
         // draw border
         segments.getSegments().addAll(this.border.getSegmentsBuffer().getSegments());
-        
+
         if (hScrollBar != null) {
             segments.merge(hScrollBar.getSegmentsBuffer());
         }
@@ -395,7 +411,7 @@ public class WindowFrameFocusable extends AbstractComponent<WindowFrameFocusable
         if (this.focusManager == null) {
             throw new NullPointerException(
                     "getFocusManager(): focusManager is null - cannot get access to a focusManager for "
-                            + this.getClass().getName());
+                            + HasName.UTIL.getName(this));
         }
         return this.focusManager;
     }
@@ -459,7 +475,7 @@ public class WindowFrameFocusable extends AbstractComponent<WindowFrameFocusable
             return focusManager;
         };
 
-        this.focusManager = this.focusManagerBuilder.apply(new EventBus.STUBBED());
+        this.focusManager = this.focusManagerBuilder.apply(new EventBus.STUBBED());  // stubbed eventbus needed temporarily by focusManagerBuilder
         this.eventHandlerAsChainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(HasName.UTIL.getName(this)+"-chainOfResponsibility");
         this.eventHandler = this.eventHandlerAsChainedEventHandler.asConditionalEventHandler();
 
@@ -672,14 +688,14 @@ public class WindowFrameFocusable extends AbstractComponent<WindowFrameFocusable
         });
 
         populateChildrenList();
-        
+
         viewer.setOnViewSourcResize((dimChild)->childResizedInsideViewer());
 
         // force focusManager to rebuild itself on its next access
         this.focusManager = null;
 
     }
-    
+
     void childResizedInsideViewer() {
         Logging.info("childResizedInsideViewer(): "+this.child.toString());
     }

@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.StringJoiner;
 import java.util.TreeSet;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -28,7 +27,6 @@ import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.geom.position.PositionHorizontalRelative;
 import dtb.terminalIO.geom.position.PositionVerticalRelative;
-import dtb.terminalIO.geom.position.Position.Simple;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegment;
 import dtb.terminalIO.textsegments.SegmentsViewUtils;
@@ -984,7 +982,7 @@ public class Composite extends AbstractComponent<Composite>
         ElapsedTime el = ElapsedTime.start();
         draw(color, segments, boundsFixed);
         //if ("TUIApp-mainPanel".equals(HasName.UTIL.getName(this))) {
-           Logging.info(String.format("%-20s : %-20s  #kids %4d  elapsed  %4d", "draw"+(DRAW_VIA_PARTS?"-parts":"traditional"), StringUtils.truncate(HasName.UTIL.getName(this),20), children.size(),el.elapsed()));
+           //Logging.info(String.format("%-20s : %-20s  #kids %4d  elapsed  %4d", "draw"+(DRAW_VIA_PARTS?"-parts":"traditional"), StringUtils.truncate(HasName.UTIL.getName(this),20), children.size(),el.elapsed()));
         //}
     }
 
@@ -1227,11 +1225,11 @@ public class Composite extends AbstractComponent<Composite>
                                                                         .filter(s-> s!=null)
                                                                         .forEach(s->destination.add(s));
 
-                               Logging.info(String.format("Parts-child %-20s : child: %-20s  #segments %4d  elapsed  %4d",
-                                                          StringUtils.truncate(HasName.UTIL.getName(parent),20),
-                                                          StringUtils.truncate(HasName.UTIL.getName(childToDraw.component),20),
-                                                          childToDraw.component.getSegmentsBuffer().getSegments().size(),
-                                                          drawChildTime.elapsed()));
+//                               Logging.info(String.format("Parts-child %-20s : child: %-20s  #segments %4d  elapsed  %4d",
+//                                                          StringUtils.truncate(HasName.UTIL.getName(parent),20),
+//                                                          StringUtils.truncate(HasName.UTIL.getName(childToDraw.component),20),
+//                                                          childToDraw.component.getSegmentsBuffer().getSegments().size(),
+//                                                          drawChildTime.elapsed()));
 
             };
 
@@ -1256,7 +1254,7 @@ public class Composite extends AbstractComponent<Composite>
                 }
             }
 
-            Logging.info(String.format("%-20s : %-20s  #kids %4d  elapsed  %4d", "drawViaParts", StringUtils.truncate(HasName.UTIL.getName(parent),20), reverseZOrderChildren.size(),el.recalcElapsed()));
+         //   Logging.info(String.format("%-20s : %-20s  #kids %4d  elapsed  %4d", "drawViaParts", StringUtils.truncate(HasName.UTIL.getName(parent),20), reverseZOrderChildren.size(),el.recalcElapsed()));
 
             Component.UTIL.assertSegmentsIntegrity(parent.bounds, destination);
 

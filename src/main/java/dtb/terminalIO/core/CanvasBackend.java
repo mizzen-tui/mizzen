@@ -20,7 +20,10 @@ public interface CanvasBackend {
 
     void cr();
 
-    void showCursorAt(Position showCursorPosition);
+    default void showCursorAt(Position showCursorPosition) {
+        showCursorAt(showCursorPosition, false);
+    }
+    void showCursorAt(Position showCursorPosition, boolean showCursor);
 
     void hideCursor();
 
@@ -48,7 +51,7 @@ public interface CanvasBackend {
         }
     
         @Override
-        public void showCursorAt(Position showCursorPosition) {
+        public void showCursorAt(Position showCursorPosition, boolean showCursor) {
             // TODO Auto-generated method stub
             
         }

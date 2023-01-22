@@ -101,8 +101,8 @@ public class ScreenCanvasBackend implements CanvasBackend {
     }
 
     @Override
-    public void showCursorAt(Position showCursorPosition) {
-        screenUpdateStrategy.showCursorAt(showCursorPosition);
+    public void showCursorAt(Position showCursorPosition, boolean showCursor) {
+        screenUpdateStrategy.showCursorAt(showCursorPosition, showCursor);
     }
     
     @Override
@@ -129,7 +129,7 @@ public class ScreenCanvasBackend implements CanvasBackend {
 
         void writeToBackend(ScreenLineSegment sc);
 
-        void showCursorAt(Position showCursorPosition);
+        void showCursorAt(Position showCursorPosition, boolean showCursor);
 
         void setSize(int height, int width);
 
@@ -141,29 +141,34 @@ public class ScreenCanvasBackend implements CanvasBackend {
         
     }
 
-    protected void simpleScreenRefresh() {
+    /**
+     * outputs contents of screen.rb to terminal.
+     * @return true if screen.rb was written to terminal, false if nothing written (because nothing to write)
+     */
+    private boolean simpleScreenRefresh() {
         int count = screen.rb.size();
-        long elapsed = ElapsedTime.onRunOf(()->{
-                                      screen.refresh();
-                                }
-                           ).elapsed();
-        //Logging.info("terminal output time: "+elapsed + " renders: "+ count);
+        if (count >0) {
+            long elapsed = ElapsedTime.onRunOf(()->{
+                screen.refresh();
+            }
+                    ).elapsed();
+            //Logging.info("terminal output time: "+elapsed + " renders: "+ count);
+            return true;
+        }
+        return false;
     }
 
     Color lastColor = Colors.DEFAULT_COLOR;
 
     private void addColor(Color color) {
-       // if (Color.COLOR_COMPARE.compare(lastColor, color) != 0) {
+        if (Color.COLOR_COMPARE.compare(lastColor, color) != 0) {
             screen.add(color);
             lastColor = color;
-       //   }
+          }
     }
 
     ScreenUpdateStrategy fullUpdateStrategy = new  ScreenUpdateStrategy() {
-        
-        
-        
-        
+
         @Override
         public void writeToBackend(ScreenLineSegment sc) {
             addColor(sc.getColors());
@@ -188,8 +193,8 @@ public class ScreenCanvasBackend implements CanvasBackend {
             // nothing to do
         }
         @Override
-        public void showCursorAt(Position showCursorPosition) {
-            screen.showCursorAt(showCursorPosition);
+        public void showCursorAt(Position showCursorPosition, boolean showCursor) {
+            screen.showCursorAt(showCursorPosition, showCursor);
         }
     };
     
@@ -301,8 +306,10 @@ public class ScreenCanvasBackend implements CanvasBackend {
                         }
                     }
                     addColor( Colors.RCol );
-                    simpleScreenRefresh();
-                    screen.home();
+                    boolean writeOccurred = simpleScreenRefresh();
+                    if (writeOccurred) {
+                        screen.home();
+                    }
                 }
             }
             TreeSet<ScreenLineSegment> temp = previous;
@@ -359,9 +366,9 @@ public class ScreenCanvasBackend implements CanvasBackend {
         }
 
         @Override
-        public void showCursorAt(Position showCursorPosition) {
+        public void showCursorAt(Position showCursorPosition, boolean showCursor) {
             gotoHomePosition();
-            screen.showCursorAt(showCursorPosition);
+            screen.showCursorAt(showCursorPosition, showCursor);
         }
 
     };
