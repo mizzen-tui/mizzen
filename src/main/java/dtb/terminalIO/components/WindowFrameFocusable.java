@@ -467,10 +467,11 @@ public class WindowFrameFocusable extends AbstractComponent<WindowFrameFocusable
                                                                                                  () -> new DefaultFocusManager().setPrevKeyStroke(Keys.SHIFT_TAB_KEYSTROKE)
                                                                                                                                 .setNextKeyStroke(Keys.TAB_KEYSTROKE)
                                                                                                                                 .setNavKeysFirst(false)
+                                                                                                                                .setNameFromOwner(this)
                                                                                                                                 .setCycling(false));
             if (focusManager == null) {
-                focusManager = new DefaultFocusManager(); // FocusManager.UTIL.buildFocusManagerFromComponent() is weird
-                                                          // - that's why this extra call
+                focusManager = new DefaultFocusManager().setNameFromOwner(this);  // FocusManager.UTIL.buildFocusManagerFromComponent() is weird
+                                                                                  // - that's why this extra call
             }
             return focusManager;
         };

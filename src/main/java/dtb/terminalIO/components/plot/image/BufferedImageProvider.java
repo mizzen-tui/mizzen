@@ -56,7 +56,7 @@ public interface BufferedImageProvider extends Supplier<BufferedImage> {
                 image = ImageIO.read(ImageCache.class.getResourceAsStream(resourceName));
                 put(resourceName, image);
             } catch (IOException e) {
-                throw new IllegalArgumentException("could not load image from named resource " + resourceName + ".'nDetails: "+ e.getMessage());
+                throw new IllegalArgumentException("could not load image from named resource " + resourceName + ".\nDetails: "+ e.getMessage());
             }
             return image;
         }
@@ -70,7 +70,7 @@ public interface BufferedImageProvider extends Supplier<BufferedImage> {
                 image = ImageIO.read(new FileInputStream(new File(filePath)));
                 put(filePath, image);
             } catch (IOException e) {
-                throw new IllegalArgumentException("Could not load image from path " + filePath + ".'nDetails: "+ e.getMessage());
+                throw new IllegalArgumentException("Could not load image from path " + filePath + ".\nDetails: "+ e.getMessage());
             }
             return image;
         }

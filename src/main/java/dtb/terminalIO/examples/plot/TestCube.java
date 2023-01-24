@@ -238,8 +238,10 @@ public class TestCube {
             
             plot2D = new Plot2DFromProjection();
 
+            float[] distanceValue = new float[]{50.0f};
+            
             EventHandler evtHandlerBroadcastValueChanged = (te) -> {
-                plot2D.setDistance(distance.getValue());
+                plot2D.setDistance(distanceValue[0]);
                 plot2D.setThetaX(anglesInput.getValue().getX());
                 plot2D.setThetaY(anglesInput.getValue().getY());
                 plot2D.setThetaZ(anglesInput.getValue().getZ());
@@ -247,8 +249,9 @@ public class TestCube {
             };
             
             distance.onChange((te)->{
-                if (distance.getValue() < 0.01) {
-                    distance.setText( String.valueOf( "0.01" ) );
+                distanceValue[0] = distance.getValue(); 
+                if (distanceValue[0] < 0.01) {
+                    distanceValue[0] = 0.01f;
                 }
                 evtHandlerBroadcastValueChanged.handle(te);
             });

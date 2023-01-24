@@ -78,9 +78,7 @@ public class ImageRectangleAdapter implements Rectangle {
 
         return img.getHeight(observer);
     }
-    
-    
-    
+
     private class ImageHandler implements ImageObserver {
 
         public synchronized boolean imageUpdate(Image img, int infoFlags, int x, int y, int width, int height) {

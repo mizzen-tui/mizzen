@@ -31,8 +31,6 @@ import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegment;
 import dtb.terminalIO.textsegments.SegmentsViewUtils;
 import dtb.terminalIO.util.ElapsedTime;
-import dtb.terminalIO.util.Logging;
-import dtb.terminalIO.util.StringUtils;
 
 /**
  * A component with child components

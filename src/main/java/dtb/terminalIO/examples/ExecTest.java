@@ -181,6 +181,7 @@ public class ExecTest {
             focusManager.addFocusable(lprocViewer, tApp.getEventBus() );
 
             focusManager.addFocusable(lprocViewer2, tApp.getEventBus() );
+            focusManager.setName("mainFocusManager");
             tApp.getEventBus().appendEventHandler(focusManager);
             String fileToTail = fileNameToTail(args);
 

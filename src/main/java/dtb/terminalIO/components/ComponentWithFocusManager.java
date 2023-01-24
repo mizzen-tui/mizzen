@@ -55,7 +55,7 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
         this.container.setParentContainer(this);
         this.focusManager = FocusManager.UTIL.buildFocusManagerFromComponent(this.container, null);
         if (this.focusManager == null) {
-            this.focusManager = new DefaultFocusManager(); // FocusManager.UTIL.buildFocusManagerFromComponent() is weird - that's why this extra call
+            this.focusManager = new DefaultFocusManager().setNameFromOwner(this);
         }
         this.focusManager.setParentFocusManager(this);
     }

@@ -33,6 +33,7 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
         this.setName(name==null? "buttonBar" : name);
         getContainer().setName(getName() +".horizontalPanel");
         this.setFocusManager( new DefaultFocusManager()
+                                          .setNameFromOwner(this)
                                           .setCycling(false)
                                           .setNavKeysFirst(false)
                                           .setPrevKeyStroke(Keys.SHIFT_TAB_KEYSTROKE)
@@ -165,7 +166,7 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
         if (nonDividerComponents.size()==0) {
             return addComponent(component);
         }
-        
+
         Component<?> originalComponentAtIndex = nonDividerComponents.get(index);
         int indexInContainer = getContainer().indexOf(originalComponentAtIndex);
         

@@ -201,7 +201,7 @@ public interface FocusManager extends Focusable {
          * @return
          */
         public static FocusManager buildFocusManagerFromComponent(Object component, EventBus eventBus) {
-            return buildFocusManagerFromComponent(component, eventBus, ()-> new DefaultFocusManager());
+            return buildFocusManagerFromComponent(component, eventBus, ()-> new DefaultFocusManager().setNameFromOwner(component));
         }
 
         public static FocusManager buildFocusManagerFromComponent(Object component, 
@@ -229,7 +229,7 @@ public interface FocusManager extends Focusable {
 
         public static FocusManager buildFocusManagerFromComponentChildren(Object component, 
                                                                           EventBus eventBus) {
-            return buildFocusManagerFromComponentChildren(component, eventBus, ()-> new DefaultFocusManager());
+            return buildFocusManagerFromComponentChildren(component, eventBus, ()-> new DefaultFocusManager().setNameFromOwner(component));
         }
 
         public static FocusManager buildFocusManagerFromComponentChildren(Object component, 
@@ -272,7 +272,7 @@ public interface FocusManager extends Focusable {
 
 
         public static Focusable findOrBuildFocusableFromComponent(Object component, EventBus eventBus) {
-            return findOrBuildFocusableFromComponent(component, eventBus, ()-> new DefaultFocusManager());
+            return findOrBuildFocusableFromComponent(component, eventBus, ()-> new DefaultFocusManager().setNameFromOwner(component));
         }
 
         public static Focusable findOrBuildFocusableFromComponent(Object component, EventBus eventBus, Supplier<DefaultFocusManager> defaultFocusManagerBuilder) {

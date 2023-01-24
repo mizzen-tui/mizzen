@@ -800,7 +800,7 @@ public class ScrollableComponent extends Composite implements CanResize, CanScro
 
     }
 
-    private Supplier<DefaultFocusManager> defaultFocusManagerBuilder = ()-> new DefaultFocusManager();
+    private Supplier<DefaultFocusManager> defaultFocusManagerBuilder = ()-> new DefaultFocusManager().setNameFromOwner(this);;
 
     public ScrollableComponent setDefaultFocusManagerBuilder(Supplier<DefaultFocusManager> defaultFocusManagerBuilder) {
         this.defaultFocusManagerBuilder = defaultFocusManagerBuilder;

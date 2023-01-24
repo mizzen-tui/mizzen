@@ -58,6 +58,7 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
 
         DefaultFocusManager fm = new DefaultFocusManager(Keys.UP_KEYSTROKE, Keys.DOWN_KEYSTROKE).setNavKeysFirst(false)
                                                                                                 .setCycling(false);
+        fm.setNameFromOwner(this);
         this.setFocusManager( fm );
         fm.addFocusable(button);
         fm.addFocusable(listBox);

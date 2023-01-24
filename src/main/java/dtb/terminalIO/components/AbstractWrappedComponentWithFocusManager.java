@@ -31,6 +31,7 @@ public  abstract class AbstractWrappedComponentWithFocusManager<T extends Compon
                     }
                 }
             };
+            ((DefaultFocusManager)this.focusManager).setNameFromOwner(this);
         }
     }
 

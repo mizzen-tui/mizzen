@@ -86,6 +86,7 @@ public class DraggableTest {
                                                 () -> new DefaultFocusManager().setPrevKeyStroke(Keys.SHIFT_TAB_KEYSTROKE)
                                                                                .setNextKeyStroke(Keys.TAB_KEYSTROKE)
                                                                                .setNavKeysFirst(false)
+                                                                               .setName("mainFocusManager")
                                                                                .setCycling(false));
 
             tApp.getEventBus().appendEventHandler(mainFocusManager);

@@ -85,6 +85,12 @@ public class DefaultFocusManager implements FocusManager,
         this.name = name;
         return this;
     }
+    
+    public DefaultFocusManager setNameFromOwner(Object owner) {
+        setDefaultNameFromParentObject(this, owner);
+        return this;
+    }
+
 
     public DefaultFocusManager setPrevKeyStroke(KeyStroke prevKeyStroke) {
         this.prevKeyStroke = prevKeyStroke;

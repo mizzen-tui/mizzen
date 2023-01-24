@@ -103,7 +103,7 @@ public class FractalsViewer {
 
             FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),
                     tApp.getEventBus(),
-                    ()-> new DefaultFocusManager().setNavKeysFirst(false).setCycling(false));
+                    ()-> new DefaultFocusManager().setNavKeysFirst(false).setCycling(false).setName("mainFocusManager"));
 
             tApp.getEventBus().appendEventHandler( mainFocusManager );
             
