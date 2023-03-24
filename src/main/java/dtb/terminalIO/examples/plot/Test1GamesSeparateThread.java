@@ -251,7 +251,7 @@ public class Test1GamesSeparateThread {
         _enemyONE.draw(pointPlotter);
     }
 
-    static class EnemyOneShape extends Sprite {
+    static class EnemyOneShape extends RotatingShape {
 
         CompositeShape componentShapes;
         Line l1;
@@ -295,7 +295,7 @@ public class Test1GamesSeparateThread {
         }
 
         @Override
-        Rectangle calcBoundingRect() {
+        public Rectangle calcBoundingRect() {
             if (boundingRectangle == null) {
                 boundingRectangle = new Rectangle.Simple(0, 0, 9, 18);
 
@@ -303,9 +303,15 @@ public class Test1GamesSeparateThread {
             return boundingRectangle;
         }
 
+        @Override
+        public void drawShape(int drawCounter, PointPlotter pointPlotter) {
+            // TODO Auto-generated method stub
+            
+        }
+
     }
 
-    static class EnemyTwoShape extends Sprite {
+    static class EnemyTwoShape extends RotatingShape {
 
         CompositeShape componentShapes;
         Triangle t1;
@@ -360,30 +366,17 @@ public class Test1GamesSeparateThread {
             return Colors.IYel;
         }
 
-//        @Override
-//        public void draw(PointPlotter pointPlotter) {
-//            drawCounter++;
-//            if (drawCounter % 6 == 0) {
-//                t1.setColor(getLineColor(t1));
-//            }
-//            this.componentShapes.draw(pointPlotter);
-//        }
 
         @Override
-        protected Shape getCurrentShape() {
-            return this.componentShapes;
-        }
-
-        @Override
-        public void drawShape(int drawCounter, Shape currentShape, PointPlotter pointPlotter) {
+        public void drawShape(int drawCounter,  PointPlotter pointPlotter) {
             if (drawCounter % 6 == 0) {
                 t1.setColor(getLineColor(t1));
             }
-            currentShape.draw(pointPlotter);
+            componentShapes.draw(pointPlotter);
         }
 
         @Override
-        Rectangle calcBoundingRect() {
+        public Rectangle calcBoundingRect() {
             return boundingRect;
         }
 

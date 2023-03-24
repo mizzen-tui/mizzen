@@ -25,6 +25,10 @@ public class Logging {
     public static void setEnabled(boolean enabled) {
         Logging.enabled = enabled;
     }
+
+    public static void setEnabledFromArgs(String args[]) {
+        VeryBasicArgsHelper.onNamedBooleanArg(args,"LoggingEnabled",(value)-> setEnabled(value));
+    }
     
     public static boolean isEnabled() {
         return Logging.enabled ;

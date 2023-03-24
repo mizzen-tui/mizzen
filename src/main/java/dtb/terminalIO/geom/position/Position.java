@@ -69,6 +69,8 @@ public interface Position extends Vec2<Position>, Row, Column{
     }
 
     public static final Position ZERO = new Simple(0, 0);
+    public static final Position LEFT_BY_1 = new Simple(0, -1);
+    public static final Position RIGHT_BY_1 = new Simple(0, 1);
 
     /**
      * Simple implementation of {@link Position}

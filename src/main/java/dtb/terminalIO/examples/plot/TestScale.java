@@ -208,8 +208,9 @@ public class TestScale {
                    intervalControl.onChange((te)-> {
                        Integer newValue = intervalControl.getValue();
                        msg.accept("NBR  "+ newValue);
-                       if (newValue != null && newValue > 1) {
-                           InputEventsProducer.IDLE_INTERVAL = newValue;
+                       if (newValue != null && newValue > 2) {
+                           tApp.setIdleEventStarvationLimit(newValue);
+                           //InputEventsProducer.IDLE_STARVATION_INTERVAL_LIMIT = newValue;
                        }
                    });
 

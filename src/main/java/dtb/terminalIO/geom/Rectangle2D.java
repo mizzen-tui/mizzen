@@ -8,10 +8,13 @@ public interface Rectangle2D<T extends Number> extends Dimension2D<T>{
     T getY1();
     T getX2();
     T getY2();
-    
+
     Vec2<?> newFrom(T x, T y);
     T castFromLong(long l);
-    
+    default long toLong(T n) {
+        return n.longValue();
+    }
+
     public default Vec2<?> centered(Dimension2D<?> d, Vec2<?> defaultPos) {
         if (!contains(d)) {
             return defaultPos;
@@ -26,8 +29,7 @@ public interface Rectangle2D<T extends Number> extends Dimension2D<T>{
     public default Vec2<?> centerPosition() {
         return centered(Dimension2D.ZERO, null);
    }
-    
-    
+
     public static class Float2D implements Rectangle2D<Float> {
 
         float x1;
@@ -36,7 +38,6 @@ public interface Rectangle2D<T extends Number> extends Dimension2D<T>{
         float y2;
 
         public Float2D() {
-            
         }
 
         public Float2D(float x1, float y1, float x2, float y2) {
@@ -110,6 +111,7 @@ public interface Rectangle2D<T extends Number> extends Dimension2D<T>{
         }
 
         public static final Float2D ZERO = new Float2D(0,0,0,0);
+
     }
 
 }

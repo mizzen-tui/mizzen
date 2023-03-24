@@ -8,6 +8,8 @@ import dtb.terminalIO.components.plot.PointPlotterAsRectangle;
 import dtb.terminalIO.components.plot.shape.Shape.AbstractShape;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.geom.AsRectangle2D;
+import dtb.terminalIO.geom.Dimension;
+import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.Rectangle2D;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.geom.position.PositionTransform;
@@ -153,6 +155,13 @@ public class Triangle extends AbstractShape<Triangle> implements Fillable<Triang
         this.p3 = points.get(2);
         this.color = color;
         this.algorithm = drawOutline;
+    }
+    
+    public Rectangle asRectangle() {
+        return new Rectangle.Simple((Position)this.p1, Dimension.ZERO)
+                   .mergeAndExpandDimensionsWith((Position)this.p2)
+                   .mergeAndExpandDimensionsWith((Position)this.p3);
+        
     }
 
     public Triangle(Position p1, Position p2, Position p3) {

@@ -19,11 +19,11 @@ public interface TreeViewModel<T> {
     public static class CachingTreeviewModel<NODE> implements TreeViewModel<NODE> {
 
         TreeViewModel<NODE> baseTreeviewModel;
-        
+
         NODE root;
         Map<NODE,List<NODE>> parentToChild;
         Map<NODE,Integer> parentToChildCount;
-        
+
         public CachingTreeviewModel(TreeViewModel<NODE> baseTreeviewModel) {
             this.baseTreeviewModel = baseTreeviewModel;
             this.parentToChild = new HashMap<NODE,List<NODE>>();

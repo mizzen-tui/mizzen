@@ -31,7 +31,7 @@ public interface Rectangle extends Position, Dimension, Movable {
     public default Position getPostion_TopLeft() {
 	return this;
     }
-
+    
     public default Position getPostion_TopRight() {
 	return new Position.Simple(this.getRow(), this.getRightMostCol());
     }
@@ -180,6 +180,11 @@ public interface Rectangle extends Position, Dimension, Movable {
         return new Simple(this).mergeAndExpandDimensionsWithMySelf(other);
     }
 
+    public default Rectangle mergeAndExpandDimensionsWith(Position other) {
+        return new Simple(this).mergeAndExpandDimensionsWithMySelf(other);
+    }
+
+
     public default Rectangle mergeAndExpandDimensionsWith(Collection<? extends Rectangle> others) {
         Rectangle.Simple result = new Simple(this);
         for (Rectangle other : others) {
@@ -313,6 +318,13 @@ public interface Rectangle extends Position, Dimension, Movable {
             this(r.getRow(), r.getCol(), r.getHeight(), r.getWidth());
         }
 
+        public <T extends Number> Simple(Rectangle2D<T> r2D) {
+            this( (int)r2D.toLong(r2D.getY1()), 
+                  (int)r2D.toLong(r2D.getX1()), 
+                  (int)r2D.toLong(r2D.getHeight()), 
+                  (int)r2D.toLong(r2D.getWidth()));
+        }
+
         public Simple(Position p, Dimension d) {
             this(p.getRow(), p.getCol(), d.getHeight(), d.getWidth());
         }
@@ -337,6 +349,28 @@ public interface Rectangle extends Position, Dimension, Movable {
 
         public void setRow(int row) {
             this.row = row;
+        }
+        
+        public Rectangle mergeAndExpandDimensionsWithMySelf(Position position) {
+            int thisRow        = this.getRow();
+            int thisCol        = this.getCol();
+            int thisBottomRow  = this.getBottomMostRow();
+            int thisRightCol   = this.getRightMostCol();
+            // deal with row
+            if (position.getRow() < thisRow) {
+                setRow(position.getRow());
+            } else if (position.getRow() > thisBottomRow) {
+                int newHeight = position.getRow() - thisRow + 1;
+                this.setHeight(newHeight);
+            }
+            // deal with col
+            if (position.getCol() < thisCol) {
+                setCol(position.getCol());
+            } else if (position.getCol() > thisRightCol) {
+                int newWidth = position.getRow() - thisCol + 1;
+                this.setWidth(newWidth);
+            }
+            return this;
         }
 
         public Rectangle mergeAndExpandDimensionsWithMySelf(Rectangle other) {

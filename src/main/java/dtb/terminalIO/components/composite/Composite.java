@@ -83,15 +83,14 @@ public class Composite extends AbstractComponent<Composite>
                     return super.getRow() + offset.getRow();
                 }
             };
-            
         }
-        
+
         void clearPrecomputedOffset() {
             if (simpleComponentWithOffset != null) {
                 simpleComponentWithOffset = null;
             }
         }
-        
+
         ComponentWithOffset getComponentWithPrecomputedOffset() {
             if (simpleComponentWithOffset != null) {
                 return simpleComponentWithOffset;
@@ -105,8 +104,6 @@ public class Composite extends AbstractComponent<Composite>
             simpleComponentWithOffset=  simpleMe;
             return simpleComponentWithOffset;
         }
-
-
 
         // this function is used by Composites that want to 
         // layout components relative to other components
@@ -358,7 +355,7 @@ public class Composite extends AbstractComponent<Composite>
         }
 
         appendOnResizeRule( percent>0 
-                            ?  new  ExpandRightByPercent(getInnerRectangle(), Position.ZERO,  child, (CanResize)child.component, percent)
+                            ? new  ExpandRightByPercent(getInnerRectangle(), Position.ZERO,  child, (CanResize)child.component, percent)
                             : new  ExpandRight(getInnerRectangle(), Position.ZERO,  child, (CanResize)child.component));
 
     }

@@ -1,5 +1,6 @@
 package dtb.terminalIO.components.plot;
 
+import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.geom.position.PositionTransform;
 
 /**
@@ -19,6 +20,10 @@ public class XYTranslate extends TransformPointPlotter {
 
     public XYTranslate(PointPlotter pointPlotter, int xDelta, int yDelta) {
         super(pointPlotter, new PositionTransform.Translate(yDelta, xDelta));
+    }
+
+    public XYTranslate(PointPlotter pointPlotter, Position delta) {
+        this(pointPlotter, delta.getCol(), delta.getRow());
     }
 
     public void setyDelta(float yDelta) {

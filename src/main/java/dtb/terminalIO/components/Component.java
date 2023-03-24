@@ -126,7 +126,7 @@ public interface Component<T extends Component<?>>
                 if (!(parentContainer instanceof Component<?>)) {
                     return null;
                 }
-                
+
                 Component<?> parent = (Component<?>) parentContainer;
                 if ( ! parent.isDirty()) {
                     return parent;

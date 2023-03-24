@@ -31,7 +31,6 @@ public class Relation<T, U extends T, V extends T> {
 			                                   + " and " 
 			                                   + String.valueOf(r2));
 		}
-			
 	}
 	
 	

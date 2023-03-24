@@ -33,14 +33,17 @@ import dtb.terminalIO.util.Stty;
  */
 public class InputEventsProducer implements Runnable { 
 
-    public static int IDLE_INTERVAL = 60;
+    public static int IDLE_STARVATION_INTERVAL_LIMIT = 60;
     
     private InputStream   inputStream;
     private EventBus      eventBus;
 //    private Reader        input;
     Thread                readThread;
     InputBytesEventParser readerParser = new InputBytesEventParser();
-
+    
+    int idleEventStarvationLimit = IDLE_STARVATION_INTERVAL_LIMIT;
+    int sleepInterval = IDLE_STARVATION_INTERVAL_LIMIT - 10;
+    
     /* For auto-numbering KeyInputEventsProducer threads. */
     private static int threadInitNumber;
     private static synchronized int nextThreadNum() {
@@ -126,7 +129,7 @@ public class InputEventsProducer implements Runnable {
             }
 
             try {
-                Thread.sleep(inputStreamHasMoreData ? 1 : 50);
+                Thread.sleep(inputStreamHasMoreData ? 1 : sleepInterval);
             } catch (InterruptedException e) {
                 // Ignoring intentionally
             }
@@ -157,7 +160,7 @@ public class InputEventsProducer implements Runnable {
     private void generateStarvedIdleEvent() {
         // we will do an idle event if too much time has elapsed
         long elapsed = System.currentTimeMillis() - lastIdleEventTime;
-        if (elapsed > IDLE_INTERVAL) {
+        if (elapsed > sleepInterval) {
                 eventBus.raiseEvent(new OnIdleEvent(this));
                 lastIdleEventTime = System.currentTimeMillis();
         }
@@ -169,6 +172,20 @@ public class InputEventsProducer implements Runnable {
 
     private void handleReaderInput(byte[] buffer, int readIn) {
         readerParser.parseInput(buffer, readIn, eventBus);
+    }
+
+    public void setIdleEventStarvationLimit(int interval) {
+        if (interval < 2) {
+            throw new IllegalArgumentException("idle interval of "+ interval + " is too low!");
+        }
+        if (interval < 60) {
+            if ( (interval - 10) > 1 ) {
+                this.sleepInterval = interval - 10;
+            } else {
+                this.sleepInterval = 1;
+            }
+        }
+        this.idleEventStarvationLimit = interval;
     }
 
 }

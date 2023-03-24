@@ -19,6 +19,10 @@ public class ElapsedTime {
         return elapsed;
     }
 
+    public void reset() {
+        this.start = System.currentTimeMillis();
+    }
+    
     public long recalcElapsed() {
         elapsed = System.currentTimeMillis() - start;
         return elapsed;

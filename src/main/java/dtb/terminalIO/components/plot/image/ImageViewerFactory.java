@@ -441,8 +441,8 @@ public class ImageViewerFactory {
         plotterComponent.clearPlots();
         plotterComponent.clear();
 
-        //Image image = resize(inputImage, desiredImgSizeInCharacters, ASCII_ADJUST_TO_CONTAINER_SIZE_PRESERVE_ASPECT_RATIO);
-        Image image = resize(inputImage, desiredImgSizeInCharacters, ADJUST_TO_CONTAINER_SIZE);
+        Image image = resize(inputImage, desiredImgSizeInCharacters, ASCII_ADJUST_TO_CONTAINER_SIZE_PRESERVE_ASPECT_RATIO);
+        //Image image = resize(inputImage, desiredImgSizeInCharacters); //, ADJUST_TO_CONTAINER_SIZE);
 
         Rectangle imgSize = new ImageRectangleAdapter(image);
 

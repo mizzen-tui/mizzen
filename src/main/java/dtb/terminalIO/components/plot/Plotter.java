@@ -29,8 +29,8 @@ public class Plotter extends BoundedComponent<Plotter> {
 
     TreeSet<Plotter.Plot> plots = new TreeSet<Plotter.Plot>(Position.UTIL.POS_COMPARE);
 
-    public Plotter(Color color, Dimension d) {
-        super(color, d);
+    public Plotter(Color color, Dimension dimensionInCharacters) {
+        super(color, dimensionInCharacters);
         this.setFillOnClear(false);
     }
 

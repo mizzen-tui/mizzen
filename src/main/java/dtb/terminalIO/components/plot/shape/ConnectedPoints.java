@@ -43,9 +43,13 @@ public class ConnectedPoints<T extends ConnectedPoints<?>> extends AbstractShape
         this.closedShape = closedShape;
     }
 
-
     public T addPoint(int x, int y) {
         points.add(new PointPlot(x,y));
+        return (T) this;
+    }
+
+    public T addPoint(int x, int y, Color color) {
+        points.add(new PointPlot(x,y,color));
         return (T) this;
     }
 
@@ -167,12 +171,13 @@ public class ConnectedPoints<T extends ConnectedPoints<?>> extends AbstractShape
         //Color preColor = pointPlotter.setNextPlotColor(Colors.BRed);
         drawOutlineWithTransform(pointPlotter,  positionTransform);
         
+        /*
         for (PointPlot point : points) {
             Color prevColor = pointPlotter.setNextPlotColor(Colors.IYel);
             ((BrailleGrid)pointPlotter).plot(new Position.Simple(positionTransform.transform(point)));
             ((BrailleGrid)pointPlotter).plotPosition(new Position.Simple(point.y,point.x+2), new CleanString.Simple("(x="+point.x+",y="+point.y+")"));
             pointPlotter.setNextPlotColor(prevColor);
-        }
+        }*/
 
         //pointPlotter.setNextPlotColor(preColor);
 

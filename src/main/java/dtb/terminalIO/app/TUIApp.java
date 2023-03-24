@@ -1,5 +1,6 @@
 package dtb.terminalIO.app;
 
+import java.io.UnsupportedEncodingException;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -35,6 +36,8 @@ import dtb.terminalIO.events.resize.TerminalResizeDetection;
 import dtb.terminalIO.examples.TestsCommon;
 import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
+import dtb.terminalIO.util.ElapsedTime;
+import dtb.terminalIO.util.Logging;
 
 /**
  * 
@@ -92,9 +95,24 @@ public class TUIApp {
     ChildComponentManager<?> mainApplicationPanel;
     Component<?>  rootPanelForMouseEvents;   // usually rootPanelForMouseEvents and mainApplicationPanel are the same
 
+    InputEventsProducer eventsProducer = null;
+    
+    Function<EventBus, InputEventsProducer> inputEventsProducerBuilder = (eventBus)-> {
+        try {
+            return new InputEventsProducer(eventBus);
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+    };
+
     boolean useMouse = true;
 
     boolean started = false;
+
+    public TUIApp(Function<EventBus, InputEventsProducer> inputEventsProducerBuilder ) {
+        super();
+        this.inputEventsProducerBuilder = inputEventsProducerBuilder;
+    }
 
     public TUIApp() {
         super();
@@ -102,6 +120,11 @@ public class TUIApp {
 
     public TUIApp(String[] args) {
         this();
+        initFromArgs(args);
+    }
+
+    public TUIApp(Function<EventBus, InputEventsProducer> inputEventsProducerBuilder, String[] args) {
+        this(inputEventsProducerBuilder);
         initFromArgs(args);
     }
 
@@ -246,11 +269,23 @@ public class TUIApp {
     private void makeEventBus() {
         eventBus = new EventBusImpl();
         try {
-            new InputEventsProducer(eventBus);
+            //new InputEventsProducer(eventBus);
+            if (this.eventsProducer != null) {
+                // TODO:  GOTTA HAZARD A GUESS:  But I dont think this will work properly because effects eventbus - need to test!!!
+                this.eventsProducer.terminateReads();
+            }
+            this.eventsProducer = inputEventsProducerBuilder.apply(eventBus);
         } catch (Exception e) {
             eventBus.stopConsuming();
             return;
         }
+    }
+    
+    public void setIdleEventStarvationLimit(int interval) {
+        if (this.eventsProducer == null) {
+            throw new IllegalStateException("ERROR in setIdleEventStarvationLimit()!  You cannot call setIdleEventStarvationLimit() until InputEventsProducer has been created.  Make the call in the onReadyStartAction callback. ");
+        }
+        this.eventsProducer.setIdleEventStarvationLimit(interval);
     }
 
     public TUIApp setCanvasSize(Dimension size) {
@@ -402,11 +437,11 @@ public class TUIApp {
                     return false; // false means no GUI update required
                 }
 
-                //ElapsedTime canvasUpdateTime = ElapsedTime.start();
+                ElapsedTime canvasUpdateTime = ElapsedTime.start();
 
                 tApp.getCanvas().clearAndAddComponentSegments( __mainPanel );
 
-                //Logging.info("Canvas.addComponentSegments() time: " + canvasUpdateTime.toString());
+                Logging.info("Canvas.addComponentSegments() time: " + canvasUpdateTime.toString());
  
                 return true; // true means updated
             });

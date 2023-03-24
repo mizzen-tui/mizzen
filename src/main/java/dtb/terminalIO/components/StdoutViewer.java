@@ -1,9 +1,6 @@
 package dtb.terminalIO.components;
 
 import java.util.Collection;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.function.Consumer;
 
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.color.Color;

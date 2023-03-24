@@ -8,21 +8,21 @@ import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.EventHandler;
 
 public abstract class TextInputWithIncrDecrButtons<T> extends AbstractWrappedComponentWithFocusManager<HorizontalPanel> implements SettableHasValue<T> {
-    
+
     ChainedEventHandler chainedEventHandler;
     TextInputForType<T> input;
 
     public TextInputWithIncrDecrButtons(Color color, String labelText, String downButtonText, String upButtonText) {
         super(color, new HorizontalPanel());
-        
+
         HorizontalPanel controlsInGrid = getWrappedComponent();
-        
+
         input = buildTextInputForType();
         input.setValue( getValue() );
-        
+
         Button decrementButton = new Button(downButtonText);
         Button incrementButton = new Button(upButtonText);
-        
+
         controlsInGrid.add(new TextComponent(labelText));
         controlsInGrid.add(decrementButton);
         controlsInGrid.add(input);

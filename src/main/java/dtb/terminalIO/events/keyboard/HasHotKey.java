@@ -11,9 +11,9 @@ import dtb.terminalIO.traverse.Traverser;
 public interface HasHotKey {
 
     public KeyStroke getHotKey();
-    
+
     public static class UTIL {
-        
+
         /**
          * Recursively traverse parent + children and get a list of hotkeys
          */
@@ -38,12 +38,12 @@ public interface HasHotKey {
             });
             return hotKeys;
         }
-        
+
         public static Focusable getFocusableFromHotKey(Object parent, KeyStroke hotKey) {
             Set<Focusable> foundFocusable = new HashSet<Focusable>();
 
             Traverser<Object> objectTraverser = new Traverser<Object>();
-            
+
             objectTraverser.traverse(parent, new Traverser.Visitor<Object>() {
                 @Override
                 public int visit(Object c) {
@@ -63,9 +63,7 @@ public interface HasHotKey {
             });
             return foundFocusable.size()==0 ? null : foundFocusable.iterator().next();
         }
-        
-        
-        
+
     }
-    
+
 }

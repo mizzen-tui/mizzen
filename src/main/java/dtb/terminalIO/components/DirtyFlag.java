@@ -10,6 +10,5 @@ public interface DirtyFlag {
     boolean isDirty();
 
     void markAsDirty();
-    
-    
+
 }

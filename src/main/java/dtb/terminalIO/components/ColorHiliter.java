@@ -29,7 +29,7 @@ public class ColorHiliter implements Hiliter, ColorProvider {
         }
         return getColorToHilite().getColor();
     }
-    
+
     @Override
     public void hilite() {
         this.hilited = true;

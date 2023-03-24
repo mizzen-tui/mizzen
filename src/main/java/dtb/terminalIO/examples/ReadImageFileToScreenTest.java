@@ -1,6 +1,5 @@
 package dtb.terminalIO.examples;
 
-import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Graphics2D;
 import java.awt.Image;
@@ -8,6 +7,9 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -22,6 +24,7 @@ import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.input.DropdownListBox;
 import dtb.terminalIO.components.input.TextInput;
+import dtb.terminalIO.components.modal.MessageBox;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.IMAGE_RENDER_TYPE;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.RGBPlotPredicate;
@@ -30,11 +33,14 @@ import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.controlcodes.color.Colors.FGBGColors;
+import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.ScreenCanvasBackend;
+import dtb.terminalIO.core.StringCanvasBackEnd;
 import dtb.terminalIO.events.AbstractTimedRequestedController;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
+import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
@@ -70,6 +76,10 @@ public class ReadImageFileToScreenTest {
             bannerPanel.setNoBorderChars();
 
             bannerPanel.addComponent(new TextComponent(new FGBGColors(Colors.BCya,Colors.On_Whi),"Image to ASCII"));
+
+            
+            Button saveButton = new Button("Save");
+            bannerPanel.addComponent(saveButton);
 
             Button updateToggler = new Button(Colors.IYel,"             ");
             updateToggler.setHotKey(Keys.CTRL_U_KEYSTROKE);
@@ -243,6 +253,68 @@ public class ReadImageFileToScreenTest {
                 }
                 onOptionChanged.handle(te);
             });
+            
+            
+            Consumer<TerminalEvent> save1 = (te)->{
+                // app.getMainApplicationPanel()
+                
+                Component<?> imgComponent = sc.getComponentBeingViewed();
+                
+                StringCanvasBackEnd canvasBackEndToStr = new StringCanvasBackEnd();
+                Canvas canvasToStr = new Canvas(canvasBackEndToStr);
+                canvasToStr.setEmptyChar(' ');
+                canvasToStr.setSize(imgComponent);
+                canvasToStr.addComponentSegments(imgComponent);
+                canvasToStr.refresh();
+                String content = canvasBackEndToStr.toString();
+                
+                String filename = outputFileName(args);
+                
+                try {
+                    
+                    if (new File(filename).exists()) {
+                        new File(filename).delete();
+                    }
+                    Files.write( Paths.get(filename), content.getBytes(), StandardOpenOption.CREATE_NEW);
+                    MessageBox.showInfoDialog(te.getEventBus(), tApp.getMainApplicationPanel(), "Saved to file:\n\n"+outputFileName(args)+" ");
+                } catch (IOException e) {
+                    MessageBox.showErrorDialog(te.getEventBus(), tApp.getMainApplicationPanel(), "EXCEPTION:\n"+e);
+                }
+            };
+            
+            Consumer<TerminalEvent> save2 = (te)->{
+                // app.getMainApplicationPanel()
+                
+                Component<?> imgComponent = reverseGradientText;//sc; //.getComponentBeingViewed();
+                
+                StringCanvasBackEnd canvasBackEndToStr = new StringCanvasBackEnd();
+                Canvas canvasToStr = new Canvas(canvasBackEndToStr);
+                canvasToStr.setSize(imgComponent);
+                canvasToStr.addComponentSegments(imgComponent);
+                canvasToStr.refresh();
+                String content = canvasBackEndToStr.toString();
+                
+                String filename = outputFileName(args);
+                
+                try {
+                    
+                    if (new File(filename).exists()) {
+                        new File(filename).delete();
+                    }
+                    Files.write( Paths.get(filename), content.getBytes(), StandardOpenOption.CREATE_NEW);
+                    MessageBox.showInfoDialog(te.getEventBus(), tApp.getMainApplicationPanel(), "Saved to file:\n\n"+outputFileName(args)+" ");
+                } catch (IOException e) {
+                    MessageBox.showErrorDialog(te.getEventBus(), tApp.getMainApplicationPanel(), "EXCEPTION:\n"+e);
+                }
+            };
+            
+            saveButton.onChange((te)->{
+                // app.getMainApplicationPanel()
+                
+                save1.accept(te);
+                //save2.accept(te);
+                
+            });
 
             FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
 
@@ -276,6 +348,13 @@ public class ReadImageFileToScreenTest {
         return image;
     }
     
+    private static String outputFileName(String[] args) {
+        if (args.length < 2) {
+            return "sampleFileIMG.txt";
+        }
+        return args[1];
+    }
+
     private static Image genImageData() {
         return getCircle(500,600);
     }
@@ -283,17 +362,16 @@ public class ReadImageFileToScreenTest {
     private static Image genImageData2() {
         BufferedImage image = new BufferedImage(500, 600, BufferedImage.TYPE_INT_ARGB);
         Graphics2D graphics2D = image.createGraphics();
-        
+
       //  BasicShapes.doDrawing(graphics2D);
-        
+
         graphics2D.setColor(java.awt.Color.WHITE);
         graphics2D.setStroke(new BasicStroke(5));
         
         graphics2D.drawLine(10, 20, 500, 200);
         graphics2D.drawLine(500, 200, 10, 100);
-        //graphics2D.drawLine(10, 20, 500, 200);
-        
-        
+        graphics2D.drawLine(10, 100, 500, 200);
+
         return image;
     }
     
@@ -302,29 +380,26 @@ public class ReadImageFileToScreenTest {
         BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         java.awt.Color transparent = new java.awt.Color(0x00FFFFFF, true);
 
-        java.awt.Color fg = java.awt.Color.black;
-        
+        java.awt.Color fg = java.awt.Color.white;
+
         Graphics2D g = (Graphics2D) bufferedImage.getGraphics();
         //trying to make the bufferedImage transparent 
-        g.setComposite(AlphaComposite.Src);
-        g.setColor(transparent);
-        g.setBackground(transparent);
+        //g.setComposite(AlphaComposite.Src);
+        g.setColor(fg);
+        //g.setBackground(transparent);
         g.fillRect(0, 0, bufferedImage.getWidth(), bufferedImage.getHeight());
         //drawing the circle 
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        
+
         float dash1[] = {10.0f};
         BasicStroke dashed =
                 new BasicStroke(1.0f,
                                 BasicStroke.CAP_BUTT,
                                 BasicStroke.JOIN_MITER,
                                 10.0f, dash1, 0.0f);
-        g.setStroke(dashed);        
-        
+        g.setStroke(dashed);
+
         return bufferedImage;
     }
-    
-    
-    
-    
+
 }

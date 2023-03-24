@@ -23,9 +23,9 @@ public class BrailleGrid extends Composite implements Clickable, PointPlotter {
     Plotter plotter;
     Rectangle gridRectangle;
 
-    public BrailleGrid(Color color, Dimension d) {
+    public BrailleGrid(Color color, Dimension dimensionInCharacters) {
         super(color);
-        this.plotter = new Plotter(color, new Dimension.Simple(d.getHeight(), d.getWidth()));
+        this.plotter = new Plotter(color, new Dimension.Simple(dimensionInCharacters.getHeight(), dimensionInCharacters.getWidth()));
         this.add(plotter);
         this.plotter.setName("grid-plotter");
         this.plotter.setFillOnClear( this.getFillOnClearPolicy().isFillOnClear() );

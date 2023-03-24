@@ -43,8 +43,7 @@ public class RectangleShape extends AbstractShape<RectangleShape> implements Rec
             Triangle.drawFilled.draw(topRight, bottomRight, bottomLeft, color, plotter);
         }
     };
-    
-    
+
     public RectangleShape(Rectangle rect, Color color) {
         this.rectangle = rect;
         this.color = color;

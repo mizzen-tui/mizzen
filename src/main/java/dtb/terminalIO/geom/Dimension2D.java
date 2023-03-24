@@ -16,7 +16,6 @@ public interface Dimension2D<T extends Number> {
         return this.getWidth() == other.getWidth() && this.getHeight() == other.getHeight();
     }
 
-    
     public static final Dimension2D<Long> ZERO = new Dimension2D<Long>() {
 
         @Override
@@ -27,7 +26,6 @@ public interface Dimension2D<T extends Number> {
         public Long getHeight() {
             return 0L;
         }
-        
     };
     
 }

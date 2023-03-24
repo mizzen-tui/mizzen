@@ -11,7 +11,6 @@ import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
-import dtb.terminalIO.geom.Rectangle.Simple;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.ElapsedTime;
@@ -330,10 +329,7 @@ public class FrameSet extends BoundedComponent<FrameSet> implements HasTitleAndB
         return this.container.getComponentAtOffset(offset);
     }
 
-    
 
-    
-    
     static class VerticalLineSpec {
         Position start;
         int height;

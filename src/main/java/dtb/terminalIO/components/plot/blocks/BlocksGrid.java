@@ -10,6 +10,7 @@ import dtb.terminalIO.components.plot.Plotter;
 import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.components.plot.blocks.BlocksUtils.BlocksPlot;
 import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors.FgColor;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
@@ -247,6 +248,11 @@ public class BlocksGrid extends BoundedComponent<BlocksGrid>  implements ParentC
                                                                 segments.getSegments(),
                                                                 this.plotter.getSegmentsBuffer().getSegments());
         }
+    }
+
+    public void setTitle(FgColor bpur, String string) {
+        // TODO Auto-generated method stub
+        
     }
     
     
