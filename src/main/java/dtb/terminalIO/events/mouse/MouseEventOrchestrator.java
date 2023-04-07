@@ -68,11 +68,11 @@ public class MouseEventOrchestrator {
             return;
         }
 
-        // setup event handlers
+        // Setup event handlers
 
-        // when mouse handling is enabled, we need to capture raw console mouse events, which contain the
-        // full console row/col coordinates of the mouse click..
-        // then we need to map that row/col to the row/col within the application canvas - this is 
+        // When mouse handling is enabled, we need to capture raw console mouse events, which contain the
+        // full console row/col coordinates of the mouse click.
+        // Then we need to map that row/col to the row/col within the application canvas - this is 
         // referred to as the applicationMousePosition ..  if the canvas is not full screen, then 
         // resulting applicationMousePosition will be different from console row/col position.
 
@@ -87,7 +87,7 @@ public class MouseEventOrchestrator {
                       if (rme.getMouseAction()==null) {
                           throw new NullPointerException(String.valueOf(rme));
                       }
-                      
+
                       Position lastRequestedCursorPosition = canvas.getLastRequestCursorPosition();
 
                       // (1) now let's move the screen cursor position to its top-left ( its 0,0 )
@@ -104,10 +104,10 @@ public class MouseEventOrchestrator {
                           // let's map the raw mouse position to the application position 
                           Position applicationMousePosition = cpr.getPosition().offsetAdd(-1, -1).negate().offsetAdd( rme.getEventData() );
 
-                          Logging.info("\n\n------ mouse captured: ---------------");
-                          Logging.info("mouse info: " + String.valueOf(rme));
-                          Logging.info("current cursor pos: " + String.valueOf(cpr));
-                          Logging.info("current app mouse pos: " + String.valueOf(applicationMousePosition));
+                          //Logging.info("\n\n------ mouse captured: ---------------");
+                          //Logging.info("mouse info: " + String.valueOf(rme));
+                          //Logging.info("current cursor pos: " + String.valueOf(cpr));
+                          //Logging.info("current app mouse pos: " + String.valueOf(applicationMousePosition));
 
                           if (lastRequestedCursorPosition != null) {
                               screen.showCursorAt(lastRequestedCursorPosition, false);
@@ -118,9 +118,9 @@ public class MouseEventOrchestrator {
                               // (4) raise an ApplicationMouseEvent event only if within canvas rectangle
                               ApplicationMouseEvent aMe = new ApplicationMouseEvent( rme.getSource() , rme.getMouseAction(), applicationMousePosition);
                               te2.getEventBus().raiseEvent( aMe );
-                              Logging.info("app mouse info:: " + String.valueOf(aMe));
+                             // Logging.info("app mouse info:: " + String.valueOf(aMe));
                           }
-                          Logging.info("--------------------------------------\n\n");
+                          //Logging.info("--------------------------------------\n\n");
                       }));
 
                   });
@@ -163,7 +163,7 @@ public class MouseEventOrchestrator {
      * It determines the clicked component by mapping row/col mouse event with component row/col
      * and if the component is clickable.
      */
-    public void appendApplicationMouseEventToClickable(Component<?> mainApplicationPanel, MOUSE_ACTION mouseAction) {
+    public void appendApplicationMouseEventToClickable(Component<?> mainApplicationPanel, MOUSE_ACTION mouseAction1) {
         // for now add to eventbus - but later - instead add to chained event handler
 
         if (appMouseToFocusableComponent != null) {
@@ -174,9 +174,9 @@ public class MouseEventOrchestrator {
             throw new IllegalArgumentException("mainApplicationPanel null - cannot append ApplicationMouseEventHandler");
         }
 
-        if (mouseAction == null) {
-            mouseAction = MOUSE_ACTION.DOWN_LEFT;
-        }
+//        if (mouseAction == null) {
+//            mouseAction = MOUSE_ACTION.DOWN_LEFT;
+//        }
 
         ConditionalEventHandler appMouseToFocusableComponent = new ConditionalEventHandler() {
 
@@ -193,7 +193,6 @@ public class MouseEventOrchestrator {
             @Override
             public void handle(TerminalEvent<?> te) {
                 ApplicationMouseEvent appMouseEvent = (ApplicationMouseEvent) te;
-
                 if (currentDraggable != null && (appMouseEvent.getMouseAction() == MOUSE_ACTION.DOWN_LEFT_DRAG || appMouseEvent.getMouseAction() == MOUSE_ACTION.UP)) {
                     boolean handled = handleDragMode(appMouseEvent);
                     if (handled) {
@@ -201,7 +200,10 @@ public class MouseEventOrchestrator {
                     }
                 }
 
-                if (appMouseEvent.getMouseAction() != MOUSE_ACTION.DOWN_LEFT && appMouseEvent.getMouseAction() != MOUSE_ACTION.DOWN_LEFT_DRAG) {
+                if (appMouseEvent.getMouseAction() != MOUSE_ACTION.DOWN_LEFT && 
+                    //appMouseEvent.getMouseAction() != MOUSE_ACTION.UP &&  // TODO!!! PUT THIS BACK!!! and fix places that are broken! - checkout workbench buttons
+                    appMouseEvent.getMouseAction() != MOUSE_ACTION.DOWN_LEFT_DRAG
+                    ) {
                     return;
                 }
 
@@ -220,7 +222,7 @@ public class MouseEventOrchestrator {
                 // componentClicked - might not be a Focusable .. so go up its ancestors
                 // and find an ancestor that is focusable
 
-                BiFunction<Component<?>,Boolean,Component<?>> findFocusableParent = (c,isClickableOrDraggableRequired) -> {
+                BiFunction<Component<?>,Boolean,Component<?>> findFocusableParent = (c, isClickableOrDraggableRequired) -> {
                     while ( c != null ) {
                         if (ToFocusable.UTIL.isFocusable(c)) {
                             if ( ! isClickableOrDraggableRequired ) {
@@ -240,6 +242,7 @@ public class MouseEventOrchestrator {
                 if (componentClicked == null) {
                     return;
                 }
+                
 
                 Focusable focusableComponent = ToFocusable.UTIL.toFocusable(componentClicked);
 
@@ -249,7 +252,7 @@ public class MouseEventOrchestrator {
                         if (currentDraggable == null && componentClicked instanceof Draggable) {
                             if (checkHandleDragStart((Draggable)componentClicked, appMouseEvent)) {
                                 currentDraggable = (Draggable)componentClicked;
-                                Logging.info("onDragStart!!!");
+                                //Logging.info("onDragStart!!!");
                                 return ;
                             }
                         }
@@ -264,7 +267,8 @@ public class MouseEventOrchestrator {
                         if (focusableAndClickable == null) {
                             return;
                         }
-                        eventBus.asynch((te2)-> {
+
+                        EventHandler mapMouseClickToComponentsClickHandler = (te2)->{
                             if (focusableAndClickable.hasFocus()) {
                                 // map mouse position as an offset into the clicked component
                                 // and pass the component a new mouse event with this offset
@@ -279,7 +283,19 @@ public class MouseEventOrchestrator {
                                 // can't map to an offset into component so just send the eventbus
                                 clickable.onClick( te2.getEventBus() );
                             }
-                        });
+                        };
+                        
+                        if (focusableAndClickable.hasFocus()) {
+                            // component already has focus so lets process click
+                            eventBus.asynch((te2)-> mapMouseClickToComponentsClickHandler.handle(te2));
+                        } else {
+                            eventBus.raiseEvent( new RequestFocusEvent(focusableComponent).then(() -> { 
+                                                                                                      eventBus.asynch((te2)-> mapMouseClickToComponentsClickHandler.handle(te2));
+                                                                                                      }
+                                                                                               )
+                                               );
+                        }
+                        
                         // Handle Draggable
                     } else if (componentClicked instanceof Draggable) {
                         Draggable draggable = (Draggable) componentClicked;

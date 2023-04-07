@@ -4,6 +4,8 @@ import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.geom.AsRectangle2D;
 import dtb.terminalIO.geom.Rectangle2D;
 import dtb.terminalIO.geom.Rectangle2D.Float2D;
+import dtb.terminalIO.geom.position.PositionTransform;
+import dtb.terminalIO.geom.position.Vec2;
 
 /**
  * A point plotter that only records plots in order to capture the 
@@ -23,7 +25,7 @@ public class PointPlotterAsRectangle implements PointPlotter, AsRectangle2D.AsFl
 
     Rectangle2D.Float2D minMax;
     boolean plotStarted = false;
-    
+
     public PointPlotterAsRectangle() {
         minMax = new Rectangle2D.Float2D();
         minMax.setX1(Float.MAX_VALUE);
@@ -70,5 +72,34 @@ public class PointPlotterAsRectangle implements PointPlotter, AsRectangle2D.AsFl
 
 
 
+    public static class TrackPlottedRectangleTransform implements PositionTransform {
+
+        PointPlotterAsRectangle boundingRectanglePlotter;
+        PositionTransform.FofG  f_of_g_transform;
+
+        public TrackPlottedRectangleTransform(PositionTransform baseTransform) {
+            PointPlotterAsRectangle boundingRectanglePlotter = new PointPlotterAsRectangle();
+            f_of_g_transform = new PositionTransform.FofG(new PositionTransform() {
+                @Override
+                public Vec2<?> transform(Vec2<?> position) {
+                    boundingRectanglePlotter.plot(position);
+                    return position;
+                }},baseTransform);
+        }
+
+        public TrackPlottedRectangleTransform() {
+            this(PositionTransform.NOOP);
+        }
+
+        @Override
+        public Vec2<?> transform(Vec2<?> position) {
+            return f_of_g_transform.transform(position);
+        }
+
+        public Rectangle2D.Float2D getRectangle2D() {
+            return boundingRectanglePlotter.getRectangle2D();
+        }
+
+    }
 
 }

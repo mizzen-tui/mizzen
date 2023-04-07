@@ -144,6 +144,7 @@ public class EventBusImpl implements EventHandlerContainer, EventBus {
         te.setEventBus(EventBusImpl.this);
         eventsHandlerChain.handle(te);
         te.setEventBus(null);
+        te.onEventProcessed();
     }
 
     /* (non-Javadoc)

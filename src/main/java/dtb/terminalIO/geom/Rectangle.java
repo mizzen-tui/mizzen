@@ -329,6 +329,10 @@ public interface Rectangle extends Position, Dimension, Movable {
             this(p.getRow(), p.getCol(), d.getHeight(), d.getWidth());
         }
 
+        public Simple(Position p, int height, int width) {
+            this(p.getRow(), p.getCol(), height, width);
+        }
+
         public Simple(Dimension d) {
             this(Position.ZERO.getRow(), Position.ZERO.getCol(), d.getHeight(), d.getWidth());
         }
@@ -359,6 +363,7 @@ public interface Rectangle extends Position, Dimension, Movable {
             // deal with row
             if (position.getRow() < thisRow) {
                 setRow(position.getRow());
+                this.setHeight( this.getHeight() + (thisRow - position.getRow()) );
             } else if (position.getRow() > thisBottomRow) {
                 int newHeight = position.getRow() - thisRow + 1;
                 this.setHeight(newHeight);
@@ -366,8 +371,9 @@ public interface Rectangle extends Position, Dimension, Movable {
             // deal with col
             if (position.getCol() < thisCol) {
                 setCol(position.getCol());
+                this.setWidth(this.getWidth() + (thisCol - position.getCol()));
             } else if (position.getCol() > thisRightCol) {
-                int newWidth = position.getRow() - thisCol + 1;
+                int newWidth = position.getCol() - thisCol + 1;
                 this.setWidth(newWidth);
             }
             return this;

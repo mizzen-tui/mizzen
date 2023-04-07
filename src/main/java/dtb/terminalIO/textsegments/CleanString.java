@@ -2,6 +2,10 @@ package dtb.terminalIO.textsegments;
 
 /**
  * A clean string is a string without control codes -- chars <= ascii 27
+ * 
+ * ScreenLineSegment objects need to deal with CleanString's because
+ * if it contains any control-codes this wrecks havoc with the rendering logic
+ * 
  */
 public interface CleanString {
     

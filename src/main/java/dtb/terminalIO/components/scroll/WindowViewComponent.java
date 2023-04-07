@@ -92,7 +92,7 @@ public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer mySegments) {
         
-        Logging.info("WindowViewComponent draw callled!" + String.valueOf(this));
+        //Logging.info("WindowViewComponent draw callled!" + String.valueOf(this));
         
         long elapsed = ElapsedTime.onRunOf(()->{
             

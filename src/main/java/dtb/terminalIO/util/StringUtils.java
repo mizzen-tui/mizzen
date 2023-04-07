@@ -1,6 +1,7 @@
 package dtb.terminalIO.util;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.StringJoiner;
@@ -87,6 +88,42 @@ public class StringUtils {
         return source;
     }
 
+    
+    
+    /**
+     * returns height of string based on # of 
+     * carriage returns in string.
+     */
+    public static int strHeight(String s) {
+        if (s==null){
+            return 0;
+        }
+        int len = s.length();
+        int count = 0;
+        for (int i=0;i<len;i++) {
+            if (s.charAt(i) == '\n') {
+                count++;
+            }
+        }
+        return count + 1;
+    }
+    
+    /**
+     * splits string in to array of lines
+     * returns length of longest line 
+     */
+    public static int strWidth(String s) {
+        return strWidth(s, "\n");
+    }
+
+    public static int strWidth(String s, String delim) {
+        if (s==null){
+            return 0;
+        }
+        return Arrays.stream(s.split(delim)).max(Comparator.comparingInt(String::length)).get().length();
+    }
+    
+    
     // [0;37;5;47;107m
 
     static String  colorCODE_patternStr = "\\e\\[[0-9,;]*m";
@@ -144,7 +181,7 @@ public class StringUtils {
      * @return a line with newlines inserted, <code>null</code> if null input
      */
     public static String wrap(String str, int wrapLength) {
-        return wrap(str, wrapLength, null, false);
+        return wrap(str, wrapLength, null, false, -1);
     }
 
     /**
@@ -172,13 +209,43 @@ public class StringUtils {
      *            true if long words (such as URLs) should be wrapped
      * @return a line with newlines inserted, <code>null</code> if null input
      */
-    public static String wrap(String str, int wrapLength, String newLineStr, boolean wrapLongWords) {
+    public static String wrap(String str, int wrapLength, String newLineStr, boolean wrapLongWords, int maxHeight) {
         if (str == null) {
             return null;
         }
-        if (str.indexOf('\n') == -1)
-            return __wrap(str, wrapLength, newLineStr, wrapLongWords);
-        return Arrays.stream(str.split("\n", -1)).map(s -> __wrap(s, wrapLength, newLineStr, wrapLongWords)).collect(Collectors.joining("\n"));
+        if (maxHeight < -1) {
+            if (str.indexOf('\n') == -1)
+                return __wrap(str, wrapLength, newLineStr, wrapLongWords);
+            return Arrays.stream(str.split("\n", -1)).map(s -> __wrap(s, wrapLength, newLineStr, wrapLongWords)).collect(Collectors.joining("\n"));
+        }
+
+        if (str.indexOf('\n') == -1) {
+            String s = __wrap(str, wrapLength, newLineStr, wrapLongWords);
+            int height = strHeight(s);
+            if (height < maxHeight) {
+                return s;
+            }
+        }
+        int curHeight = 0;
+        StringJoiner sj = new StringJoiner("\n");
+        String[] lines = str.split("\n",-1);
+
+        for (int i=0; i< lines.length && curHeight<maxHeight; i++) {
+            String s =  __wrap(str, wrapLength, newLineStr, wrapLongWords);
+            int height = strHeight(s);
+            if (curHeight + height <= maxHeight) {
+                sj.add(s);
+                curHeight += height;
+            } else {
+                String [] s_lines = s.split("\n",-1);
+                for (int j=0; j<s_lines.length  && curHeight<maxHeight; j++) {
+                    sj.add(s_lines[j]);
+                    curHeight++;
+                }
+            }
+        }
+        return sj.toString();
+        
     }
 
     public static String __wrap(String str, int wrapLength, String newLineStr, boolean wrapLongWords) {

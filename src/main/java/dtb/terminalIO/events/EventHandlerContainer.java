@@ -16,7 +16,7 @@ public interface EventHandlerContainer {
     
     public static class Simple implements EventHandlerContainer {
 
-        private List<ConditionalEventHandler> eventHandlers = new ArrayList<ConditionalEventHandler>();
+        protected List<ConditionalEventHandler> eventHandlers = new ArrayList<ConditionalEventHandler>();
         
         @Override
         public EventHandlerContainer prependEventHandler(ConditionalEventHandler eventHandler) {
@@ -35,7 +35,7 @@ public interface EventHandlerContainer {
             eventHandlers.remove(eventHandler);
             return this;
         }
-        
+
         public void appendTo(EventHandlerContainer dest) {
             for (ConditionalEventHandler eventHandler : eventHandlers) {
                 dest.appendEventHandler(eventHandler);
@@ -47,7 +47,7 @@ public interface EventHandlerContainer {
                 dest.prependEventHandler(eventHandler);
             }
         }
-        
+
         public void removeFrom(EventHandlerContainer dest) {
             for (ConditionalEventHandler eventHandler : eventHandlers) {
                 dest.removeEventHandler(eventHandler);
@@ -55,6 +55,17 @@ public interface EventHandlerContainer {
         }
     }
     
+    public static class SimpleList extends Simple {
+        public List<ConditionalEventHandler> getEventHandlers() {
+            return this.eventHandlers;
+        }
+        public void copyTo(EventHandlerContainer dest) {
+            for (ConditionalEventHandler handler : getEventHandlers()) {
+                dest.appendEventHandler(handler);
+            }
+        }
+    }
+
     public static class Delegate implements EventHandlerContainer {
 
         EventHandlerContainer delegate;

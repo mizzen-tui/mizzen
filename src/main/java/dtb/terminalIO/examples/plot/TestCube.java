@@ -303,13 +303,13 @@ public class TestCube {
             xInput = new FloatInputWithIncrDecrButtons(color, x_label,"-","+");
             yInput = new FloatInputWithIncrDecrButtons(color, y_label,"-","+");
             zInput = new FloatInputWithIncrDecrButtons(color, z_label,"-","+");
-            
+
             setValue(vector);
-            
+
             controlsInGrid.add(new TextComponent(label+" : "));
-            
+
             controlsInGrid.add(xInput);
-            
+
             controlsInGrid.add(yInput);
 
             controlsInGrid.add(zInput);

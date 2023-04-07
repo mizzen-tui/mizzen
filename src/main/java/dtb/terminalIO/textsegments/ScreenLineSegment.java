@@ -1162,6 +1162,10 @@ public interface ScreenLineSegment extends Rectangle, CleanString  {
             this(color, position, id, new CleanString.Simple(simpleText));
         }
 
+        public SegmentImpl(Color color, Position position, String simpleText) {
+            this(color, position, -1, new CleanString.Simple(simpleText));
+        }
+
         public Object setText(CleanString newText) {
             return this.simpleText = newText.getText();
         }

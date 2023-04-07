@@ -22,6 +22,10 @@ public class ColorHiliter implements Hiliter, ColorProvider {
     protected Color getColorToHilite() {
         return colorToHilite.getColor();
     }
+    
+    public boolean isHiltited() {
+        return hilited;
+    }
 
     public Color getColor() {
         if (hilited) {

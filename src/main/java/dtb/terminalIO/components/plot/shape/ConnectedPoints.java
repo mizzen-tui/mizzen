@@ -146,6 +146,10 @@ public class ConnectedPoints<T extends ConnectedPoints<?>> extends AbstractShape
             pointCount++;
             
             
+            // TODO:  THIS DOES NOT WORK -- but problem is simple..
+            // We are scanning the edges.. check to ensure that the previous plot (if on the same line) is greater than
+            // one pixel away.  If not, do not trigger the drawToggle logic
+            
             boolean newLine = Math.round(point.y) != Math.round(currentY);
             if (newLine) {
                 linePointCount = 0;
@@ -158,10 +162,10 @@ public class ConnectedPoints<T extends ConnectedPoints<?>> extends AbstractShape
                     pointPlotter.plot(x, currentY);
                 }
             }
-            if (point.y > 40) {
+            if (newLine || (point==null) || (lastPoint == null)|| ( (Math.round(point.x) - Math.round(lastPoint.x)>1))) {
                 linePointCount = linePointCount + 1;
-            } else {
-                linePointCount++;
+//            } else {
+//                linePointCount++;
             }
             lastPoint = point;
             currentY = Math.round(point.y);

@@ -218,20 +218,20 @@ public class ScrollBarVertical extends BoundedComponent<ScrollBarVertical> imple
             return;
         }
 
-        Logging.setEnabled(true);
+        //Logging.setEnabled(true);
 
-        Logging.info("clicked on " + this.getClass().getSimpleName() );
-        Logging.info("           " + appMouseEvent.getMousePosition() );
+        //Logging.info("clicked on " + this.getClass().getSimpleName() );
+        //Logging.info("           " + appMouseEvent.getMousePosition() );
 
         
         setOffset( calcOffset(appMouseEvent.getMousePosition()));
 
-        Logging.info("  offset         " + this.offset );
+        //Logging.info("  offset         " + this.offset );
         
         
         appMouseEvent.getEventBus().raiseEvent( new HasValue.ValueChangedEvent<>(this) );
         
-        Logging.setEnabled(false);
+        //Logging.setEnabled(false);
         
     }
     

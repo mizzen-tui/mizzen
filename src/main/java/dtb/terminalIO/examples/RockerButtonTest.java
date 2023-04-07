@@ -229,14 +229,6 @@ public class RockerButtonTest {
            
         }
         
-        public void onClick(ApplicationMouseEvent appMouseEvent) {
-            if (MOUSE_ACTION.DOWN_LEFT.equals(appMouseEvent.getMouseAction())) {
-                MessageBox.showInfoDialog(appMouseEvent.getEventBus(), (ChildComponentManager<?>)getParentContainer(), "Mouse Clicked:\n\n"+appMouseEvent.getEventData());
-            } else {
-                onClick( appMouseEvent.getEventBus());
-            }
-        }
-
         @Override
         public EventHandler canHandle(TerminalEvent<?> te) {
             return asFocusable().canHandle(te);

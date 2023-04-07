@@ -56,12 +56,12 @@ public interface Rectangle2D<T extends Number> extends Dimension2D<T>{
         
         @Override
         public Float getWidth() {
-            return getX2() - getX1();
+            return getX2() - getX1() + 1;
         }
 
         @Override
         public Float getHeight() {
-            return getY2() - getY1();
+            return getY2() - getY1() + 1;
         }
 
         @Override

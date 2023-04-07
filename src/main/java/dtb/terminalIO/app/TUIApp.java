@@ -251,14 +251,14 @@ public class TUIApp {
     }
 
     public TUIApp appendOnResizeAction(BiConsumer<TUIApp, Dimension> resizeAction) {
-        
+
         BiConsumer<TUIApp, Dimension> previousOnResizeAction =   this.getResizeAction()!=null ? this.getResizeAction() : (t,s)->{};
 
         setOnResizeAction((tApp,size)->{
             previousOnResizeAction.accept(tApp, size);
             resizeAction.accept(tApp, size);
         });
-        
+
         return this;
     }
 
@@ -312,9 +312,9 @@ public class TUIApp {
         
         return setCanvasSize(terminalDimension.contains(desiredDimension)?desiredDimension:terminalDimension);
     }
-    
+
     boolean canvasClearedAndNowEmpty = true;
-    
+
     public TUIApp clearCanvas() {
         getCanvas().clearCanvas();
         canvasClearedAndNowEmpty = true;
@@ -381,7 +381,7 @@ public class TUIApp {
         this.rootPanelForMouseEvents = rootPanelForMouseEvents;
         return this;
     }
-    
+
     public void start() {
 
         this.started = true;
@@ -441,7 +441,7 @@ public class TUIApp {
 
                 tApp.getCanvas().clearAndAddComponentSegments( __mainPanel );
 
-                Logging.info("Canvas.addComponentSegments() time: " + canvasUpdateTime.toString());
+                // Logging.info("Canvas.addComponentSegments() time: " + canvasUpdateTime.toString());
  
                 return true; // true means updated
             });

@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Stack;
 import java.util.StringJoiner;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
@@ -19,11 +18,11 @@ import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
-import dtb.terminalIO.events.focus.ToFocusable.FocusableComponentPair;
 import dtb.terminalIO.traverse.FindPathToTarget;
 import dtb.terminalIO.traverse.HasChildren;
 import dtb.terminalIO.traverse.HasChildrenAdapter;
 import dtb.terminalIO.traverse.Traverser;
+import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.StringUtils;
 import dtb.terminalIO.util.TerminalDimensions;
 
@@ -422,6 +421,10 @@ public interface FocusManager extends Focusable {
                     // NOTE:  what a waste .. I'm throwing result away
                     //        to be recalc'd in the handle method - oh well.
                     //        I cannot save state - reentrant issues otherwise.
+                    
+                    
+                    // Logging.info("REQUEST_FOCUS - handled");
+                    
                     return true;
                 }
             };

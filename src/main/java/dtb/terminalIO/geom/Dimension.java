@@ -136,6 +136,7 @@ public interface Dimension {
         }
 
         public void setWidth(int width) {
+
             this.width = width;
         }
 
@@ -155,6 +156,7 @@ public interface Dimension {
     }
 
     public static final Dimension ZERO = new Simple(0, 0);
+    public static final Dimension ONE = new Simple(1, 1);
 
     // UTILITIES ..
 
@@ -186,7 +188,6 @@ public interface Dimension {
 
             return new Dimension.Simple(1, s.length());
         }
-        
     }
 
       // TODO: move this to a unit test

@@ -89,7 +89,7 @@ public class WindowFrameTest {
 
         dumbArgsParse(args);
         
-        //Logging.setEnabled(true);
+        Logging.setEnabledFromArgs(args);
 
         
         new TUIApp(args)

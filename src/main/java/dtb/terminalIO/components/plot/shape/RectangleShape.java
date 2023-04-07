@@ -3,11 +3,12 @@ package dtb.terminalIO.components.plot.shape;
 import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.components.plot.shape.Shape.AbstractShape;
 import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.ColorProvider;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.PositionTransform;
 import dtb.terminalIO.geom.position.Vec2;
 
-public class RectangleShape extends AbstractShape<RectangleShape> implements Rectangle, Fillable<RectangleShape> {
+public class RectangleShape extends AbstractShape<RectangleShape> implements Rectangle, Fillable<RectangleShape>, ColorProvider {
 
     Rectangle rectangle;
     Color color;

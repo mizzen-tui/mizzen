@@ -412,6 +412,20 @@ public class Composite extends AbstractComponent<Composite>
 
     boolean bulkAdd = false;
     
+    /** 
+     * Adding components to a composite can get expensive as the number
+     * of child components grows.  
+     * To alleviate this, you can call
+     * <pre> 
+     *   setBulkAdd(true) 
+     *   -- this disables fullrecalcDim() <- this can be expensive 
+     *   -- then add a lot of components
+     *   -- then
+     *   setBulkAdd(false)
+     *   -- this re-enables fullrecalcDim()
+     * </pre>  
+     * @param b
+     */
     public void setBulkAdd(boolean b) {
         if (b != bulkAdd) {
             

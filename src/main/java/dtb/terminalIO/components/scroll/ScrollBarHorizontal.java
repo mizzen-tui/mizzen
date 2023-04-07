@@ -215,7 +215,7 @@ public class ScrollBarHorizontal  extends BoundedComponent<ScrollBarVertical>  i
         setOffset( calcOffset(appMouseEvent.getMousePosition()));
 
         appMouseEvent.getEventBus().raiseEvent( new HasValue.ValueChangedEvent<>(this) );
-        
+
     }
     
     

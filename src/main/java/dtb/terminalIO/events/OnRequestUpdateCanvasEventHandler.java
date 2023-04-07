@@ -12,7 +12,7 @@ import dtb.terminalIO.util.Logging;
  * <p/>
  * 
  * A big part of this handler's job ( along with updating the canvas ) is to slow
- * down frequent canvas updates..  This is done by delegating to an AbstractTimedRequestedController
+ * down frequent canvas updates..  This is done by delegating to an {@link AbstractTimedRequestedController}
  * which will only invoke the canvasUpdater once the rate of requests have slowed down.
  * 
  * <p/>
@@ -49,8 +49,8 @@ public class OnRequestUpdateCanvasEventHandler implements ConditionalEventHandle
                 // update canvas and time how long it takes
                 long elapsed = ElapsedTime.onRunOf(canvasUpdater).elapsed();
 
-                Logging.info("OnRequestUpdateCanvasEventHandler.timedCanvasUpdater - elapsed: " + elapsed + "  tmrDELAY:  " + this.timedOnChangeRequestController.getTimerDelayMillis());
-                Logging.info(" ");
+                //Logging.info("OnRequestUpdateCanvasEventHandler.timedCanvasUpdater - elapsed: " + elapsed + "  tmrDELAY:  " + this.timedOnChangeRequestController.getTimerDelayMillis());
+                //Logging.info(" ");
                 
                 if (OnRequestUpdateCanvasEventHandler.this.timedOnChangeRequestController != null &&
                     elapsed <= MAX_WAIT &&  // ignore really long times .. hopefully just an anomaly

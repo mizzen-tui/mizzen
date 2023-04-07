@@ -12,13 +12,106 @@ public interface Draggable {
     boolean onDragStart(ApplicationMouseEvent appMouseEvent);
     boolean onDrag(ApplicationMouseEvent appMouseEvent);
     boolean onDragStop(ApplicationMouseEvent appMouseEvent);
+    
+    
+    public static final Draggable NOOP = new Draggable() {
+
+        @Override
+        public boolean onDragStart(ApplicationMouseEvent appMouseEvent) {
+            return false;
+        }
+
+        @Override
+        public boolean onDrag(ApplicationMouseEvent appMouseEvent) {
+            return false;
+        }
+
+        @Override
+        public boolean onDragStop(ApplicationMouseEvent appMouseEvent) {
+            return false;
+        }};
+
+     public static class DragAND implements Draggable {
+            
+            Draggable d1;
+            Draggable d2;
+            
+            public DragAND(Draggable d1, Draggable d2) {
+                super();
+                this.d1 = d1;
+                this.d2 = d2;
+            }
+
+            @Override
+            public boolean onDragStart(ApplicationMouseEvent appMouseEvent) {
+                boolean result = d1.onDragStart(appMouseEvent);
+                if (!result) {
+                    return result;
+                }
+                return d2.onDragStart(appMouseEvent);
+            }
+
+            @Override
+            public boolean onDrag(ApplicationMouseEvent appMouseEvent) {
+                boolean result = d1.onDrag(appMouseEvent);
+                if (!result) {
+                    return result;
+                }
+                return d2.onDrag(appMouseEvent);
+            }
+
+            @Override
+            public boolean onDragStop(ApplicationMouseEvent appMouseEvent) {
+                boolean result = d1.onDragStop(appMouseEvent);
+                if (!result) {
+                    return result;
+                }
+                return d2.onDragStop(appMouseEvent);
+            }
+            
+        }
+
+      public static class DragOR implements Draggable {
+
+            Draggable d1;
+            boolean d1_started = false;
+            Draggable d2;
+            boolean d2_started = false;
+
+            public DragOR(Draggable d1, Draggable d2) {
+                super();
+                this.d1 = d1;
+                this.d2 = d2;
+            }
+
+            @Override
+            public boolean onDragStart(ApplicationMouseEvent appMouseEvent) {
+                d1_started = false;
+                d1_started = d1.onDragStart(appMouseEvent);
+                d2_started = d2.onDragStart(appMouseEvent);
+                return  d2_started || d1_started;
+            }
+
+            @Override
+            public boolean onDrag(ApplicationMouseEvent appMouseEvent) {
+                d1_started = d1_started && d1.onDrag(appMouseEvent);
+                d2_started = d2_started && d2.onDrag(appMouseEvent);
+                return  d2_started || d1_started;
+            }
+
+            @Override
+            public boolean onDragStop(ApplicationMouseEvent appMouseEvent) {
+                d1_started = d1.onDragStop(appMouseEvent);
+                d2_started = d2.onDragStop(appMouseEvent);
+                return  d2_started || d1_started;
+            }
+        }
 
     public static class DragAndMoveComponentBehaviour implements Draggable {
-        
         Component<?>  draggableComponent;
         Component<?>  componentToMove;
         Position offsetFromComponentPosition;
-        
+
         public DragAndMoveComponentBehaviour(Component<?> draggedComponent) {
             super();
             this.draggableComponent = draggedComponent;
@@ -57,7 +150,6 @@ public interface Draggable {
             //                             only allow drag movements that do not decrease it area inside 
             return true;
         }
-        
 
         @Override
         public boolean onDragStop(ApplicationMouseEvent appMouseEvent) {
@@ -66,7 +158,6 @@ public interface Draggable {
             componentToMove = null;
             return true;
         }
-        
     }
 
     /**
@@ -111,20 +202,20 @@ public interface Draggable {
         public boolean onDrag(ApplicationMouseEvent appMouseEvent) {
 
             Position componentOffset = Component.UTIL.getCanvasOffsetFor((Component<?>)componentToResize);
-            
+
             Dimension newSize = new Dimension.Simple(appMouseEvent.getMousePosition().getRow()-componentOffset.getRow()+1, 
                                                      appMouseEvent.getMousePosition().getCol()-componentOffset.getCol()+1);
 
             if (newSize.getHeight()<2 || newSize.getWidth() < 2) {
                 return false;
             }
-            
+
             // TODO:  stop resizes that cause the one edge from moving outside of the parent
 
             componentToResize.resize(newSize);
             this.dragAnchor.markAsDirty();
             appMouseEvent.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(componentToResize)  );
-            
+
             return true;
         }
 
@@ -135,7 +226,6 @@ public interface Draggable {
         }
         
     }
-    
-    
-    
+
+
 }

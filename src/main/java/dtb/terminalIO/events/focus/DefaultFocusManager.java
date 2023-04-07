@@ -111,6 +111,11 @@ public class DefaultFocusManager implements FocusManager,
         return this;
     }
 
+    public DefaultFocusManager setNavKeysNone() {
+        this.navKeysStyle = NAV_STYLE.NAVKEYS_NONE;
+        return this;
+    }
+
     public DefaultFocusManager setOnFocusChanged(BiConsumer<Focusable, EventBus> onFocusChanged) {
         this.onFocusChanged = onFocusChanged;
         return this;
