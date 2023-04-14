@@ -3,15 +3,11 @@ package dtb.terminalIO.components.chart;
 import java.util.ArrayList;
 import java.util.List;
 
-import dtb.terminalIO.components.AbstractComponent;
-import dtb.terminalIO.components.AbstractComponentWithContainer;
 import dtb.terminalIO.components.BoundedComponent;
-import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
-import dtb.terminalIO.geom.Rectangle.Simple;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegment.SegmentImpl;
 import dtb.terminalIO.util.StringUtils;
@@ -36,7 +32,7 @@ public class BarChart extends BoundedComponent<BarChart>   {
     private Color labelCOLOR;
 
     public BarChart(Color color, Dimension d) {
-        super(color, new Composite(color, d));
+        super(color, d);
         data = new ArrayList<Double>();
         dataLabels = new ArrayList<String>();
         this.barWidth = 3;

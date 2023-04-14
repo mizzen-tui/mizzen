@@ -9,7 +9,6 @@ import dtb.terminalIO.components.HorizontalLine;
 import dtb.terminalIO.components.input.DefaultFocusableBehaviour;
 import dtb.terminalIO.components.input.HasValue;
 import dtb.terminalIO.controlcodes.color.Color;
-import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
@@ -276,7 +275,7 @@ public class ScrollBarHorizontal  extends BoundedComponent<ScrollBarVertical>  i
 
         this.conditionalHandler = this.eventHandlerContainer.asConditionalEventHandler();
 
-        meAsFocusable = new FocusableFromParts(new DefaultFocusableBehaviour(),this.conditionalHandler);
+        meAsFocusable = new FocusableFromParts(this, new DefaultFocusableBehaviour(),this.conditionalHandler);
             
         return meAsFocusable;
     }

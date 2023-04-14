@@ -225,9 +225,8 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
                 }
             }
 
-            
         };
-        
+
         FocusBehaviour focusBehaviour = new DefaultFocusableBehaviour.ComponentHiliterFocusableBehaviour(this) {
 
             @Override
@@ -241,14 +240,13 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
                 }
             }
 
-            
             public String toString() {
                 return "ToFocusable(CheckBoxInput, value="+CheckBoxInput.this.getValue()+")";
             }
 
         };
         
-        meAsFocusable = new FocusableFromParts(focusBehaviour, evtHandler);
+        meAsFocusable =   new FocusableFromParts(this, focusBehaviour, evtHandler);
         
         return meAsFocusable;
     }

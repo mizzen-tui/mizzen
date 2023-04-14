@@ -263,6 +263,9 @@ public class EventBusImpl implements EventHandlerContainer, EventBus {
                             }
                             return null;
                         }
+                        public String toString() {
+                            return "BUS:master_terminateEventHandlerBRIDGE";
+                        }
                     };
                     
                     this.appendEventHandler(master_terminateEventHandlerBRIDGE);
@@ -339,7 +342,7 @@ public class EventBusImpl implements EventHandlerContainer, EventBus {
             }
         };
 
-        this.appendEventHandler(master_idlEventHandlerBRIDGE);
+        this.prependEventHandler(master_idlEventHandlerBRIDGE);
         idleEventsSuppressed = false;
 
     }

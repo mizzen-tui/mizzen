@@ -25,11 +25,11 @@ public interface Dimension {
         return this.getWidth() == other.getWidth() && this.getHeight() == other.getHeight();
     }
 
-    
+
     public static abstract class AbstractDelegate implements Dimension {
-        
+
         abstract protected Dimension getBaseSize();
-        
+
         @Override
         public int getWidth() {
             return getBaseSize().getWidth();
@@ -39,11 +39,11 @@ public interface Dimension {
         public int getHeight() {
             return getBaseSize().getHeight();
         }
-        
+
         public String toString() {
             return new Simple(this).toString();
         }
-        
+
     }
 
     public static class Delegate extends AbstractDelegate {
@@ -70,7 +70,7 @@ public interface Dimension {
     
     public static class ComputedDelegate extends Delegate {
         Dimension size;
-        
+
         Function<Dimension, Integer> computeHeight;
         Function<Dimension, Integer> computeWidth;
 
@@ -91,12 +91,11 @@ public interface Dimension {
         }
 
     }
-    
-    
+
     public static class SupplierAsDimension extends AbstractDelegate {
-        
+
         Supplier<Dimension> derivedDimension;
-        
+
         public SupplierAsDimension(Supplier<Dimension> derivedDimension) {
             this.derivedDimension = derivedDimension;
         }
@@ -105,11 +104,10 @@ public interface Dimension {
         protected Dimension getBaseSize() {
             return derivedDimension.get();
         }
-        
+
     }
 
-    
-    
+
     /**
      * Simple implementation of {@link Dimension}
      */
@@ -192,17 +190,16 @@ public interface Dimension {
 
       // TODO: move this to a unit test
     public static void main(String[] args) {
-        
+
         System.out.println("Hello World");
-        
+
         System.out.println("len = " + "1\n\2\n3".split("\n").length);
-        
+
         System.out.println("len = " + "1\n\2\n3\n\n".split("\n").length);
-        
+
         System.out.println("len = " + "1\n\2\n3\n\n".split("\n",-1).length);
 
         System.out.println("len = " + "1\n\2\n\n3".split("\n",-1).length);
-        
+
     }
-    
 }

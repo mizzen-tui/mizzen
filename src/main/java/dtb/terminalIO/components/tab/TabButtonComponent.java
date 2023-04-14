@@ -1,16 +1,27 @@
 package dtb.terminalIO.components.tab;
 
-import dtb.terminalIO.components.BlockChars;
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.CharComponent;
 import dtb.terminalIO.components.Hiliter;
 import dtb.terminalIO.components.HorizontalLine;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.VerticalLine;
-import dtb.terminalIO.components.BlockChars.BlockHiliter;
+import dtb.terminalIO.components.input.DefaultFocusableBehaviour;
+import dtb.terminalIO.components.input.HasValue;
+import dtb.terminalIO.components.input.SettableHasValue;
 import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.events.ChainedEventHandler;
+import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.RequestUpdateCanvasEvent;
+import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
-import dtb.terminalIO.events.focus.ToFocusable;
+import dtb.terminalIO.events.focus.RequestFocusEvent;
+import dtb.terminalIO.events.keyboard.HasHotKey;
+import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
+import dtb.terminalIO.events.keyboard.KeyStroke;
+import dtb.terminalIO.events.mouse.Clickable;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
@@ -18,7 +29,8 @@ import dtb.terminalIO.textsegments.CleanString;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 
 /**
- * A TabComponent is part of the TabPanel.
+ * A TabButtonComponent is part of the TabPanel clickable components used to
+ * change tab content.
  * 
  * It is one of the Tab 'button's rendered at the top of the TabPanel
  * 
@@ -29,7 +41,7 @@ import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
  * @author dbalme
  *
  */
-public class TabComponent extends BoundedComponent<TabComponent> implements ToFocusable, Hiliter  {
+public class TabButtonComponent extends BoundedComponent<TabButtonComponent> implements Focusable, Hiliter , HasHotKey, Clickable, SettableHasValue<Boolean> {
 
     // implementation note:  Its important that TabComponenet implement ToFocusable and that
     // ToFocusable points to its TabAction - which is a focusable managed by the TabPanel FocusManager
@@ -41,16 +53,26 @@ public class TabComponent extends BoundedComponent<TabComponent> implements ToFo
     boolean active = false;
     CleanString tabText;
     Color textActiveTabColor;
-    TabAction tabAction;
-    private BlockHiliter blockHiliter = new BlockChars.BlockHiliter();
+    TabAction<?> tabAction;
+    Focusable meAsFocusable;
+    KeyStroke hotKey;
 
 
-    TabComponent(Color color, String tabText, boolean active, TabAction tabAction) {
+    TabButtonComponent(Color color, String tabText, boolean active, TabAction<?> tabAction, KeyStroke hotKey) {
         super(color, new Dimension.Simple(3, tabText.length() + 4));
         this.active = active;
         this.tabText = new CleanString.Simple(tabText);
         this.textActiveTabColor = color.bold();
         this.tabAction = tabAction;
+        this.hotKey = hotKey;
+    }
+
+    public KeyStroke getHotKey() {
+        return this.hotKey;
+    }
+
+    public String getTabText() {
+        return this.tabText.toString();
     }
 
     @Override
@@ -94,10 +116,6 @@ public class TabComponent extends BoundedComponent<TabComponent> implements ToFo
                                 .getSegmentsBuffer());
     }
 
-    public BlockChars getBlockChars() {
-        return blockHiliter.getBlockChars();
-    }
-    
     public boolean isActive() {
         return active;
     }
@@ -110,10 +128,6 @@ public class TabComponent extends BoundedComponent<TabComponent> implements ToFo
             unHilite();
         }
         this.markAsDirty();
-    }
-
-    public CleanString getTabText() {
-        return tabText;
     }
 
     public void setTabText(String tabText) {
@@ -136,18 +150,14 @@ public class TabComponent extends BoundedComponent<TabComponent> implements ToFo
         this.textActiveTabColor = colortextActiveTabColor;
     }
 
-    @Override
-    public Focusable asFocusable() {
-        return tabAction;
-    }
-
+    
+    
     @Override
     public void hilite() {
         if ( ! this.hilited) {
             markAsDirty();
         }
         //colorHiliter.hilite();
-        blockHiliter.hilite();
         this.hilited = true;
     }
 
@@ -157,8 +167,114 @@ public class TabComponent extends BoundedComponent<TabComponent> implements ToFo
             markAsDirty();
         }
         //colorHiliter.unHilite();
-        blockHiliter.unHilite();
         this.hilited = false;
+    }
+
+    ChainedEventHandler chainedEventHandler;
+    
+    private Focusable asFocusable() {
+        if (meAsFocusable != null) {
+            return meAsFocusable;
+        }
+        
+        chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
+
+        if (this.getHotKey() != null) {
+            KeyInputEventHandler keyInputEventHandler = new KeyInputEventHandler((te)->onClick(te.getEventBus()), this.hotKey);
+            chainedEventHandler.appendEventHandler(keyInputEventHandler); 
+        }
+
+        meAsFocusable = new DefaultFocusableBehaviour.Simple(this, chainedEventHandler.asConditionalEventHandler()) {
+            
+            @Override
+            public void setFocus(boolean focus, EventBus eventBus) {
+                super.setFocus(focus, eventBus);
+                if (focus) {
+                    // if we get focus, we can activate - but this does not mean
+                    // on lose focus we de-activate
+                    //setActive(true);
+                    if (!isActive()) {
+                        setActive(true);
+                        hilite();
+                        onClick(eventBus);
+                    }
+                    
+                }
+                //setActive(focus);
+            }
+
+        };
+        return meAsFocusable;
+    }
+
+    private ChainedEventHandler getchainedHandler() {
+        asFocusable(); // ensure built
+        return this.chainedEventHandler;
+    }
+    
+    
+    @Override
+    public EventHandler canHandle(TerminalEvent<?> te) {
+        if (asFocusable().canHandle(te) != null) {
+            return this;
+        }
+        return null;
+    }
+
+    @Override
+    public void handle(TerminalEvent<?> te) {
+        asFocusable().handle(te);
+    }
+
+    @Override
+    public boolean hasFocus() {
+        return asFocusable().hasFocus();
+    }
+
+    @Override
+    public void setFocus(boolean focus, EventBus eventBus) {
+        asFocusable().setFocus(focus, eventBus);
+    }
+
+    @Override
+    public FocusManager getParentFocusManager() {
+        return asFocusable().getParentFocusManager();
+    }
+
+    @Override
+    public void setParentFocusManager(FocusManager focusManager) {
+        asFocusable().setParentFocusManager(focusManager);
+    }
+
+    @Override
+    public Boolean getValue() {
+        return isActive();
+    }
+
+    @Override
+    public void setValue(Boolean value) {
+        setActive(value);
+    }
+
+    
+    public void onClick(EventBus eventBus) {
+        if (!hasFocus()) {
+            // focus manager should have already put focus here - but just in case ..
+            eventBus.raiseEvent(new RequestFocusEvent(this));
+        }
+        TabButtonComponent.this.setValue( (true) ); 
+        eventBus.raiseEvent( new HasValue.ValueChangedEvent<>(TabButtonComponent.this) );
+        eventBus.raiseEvent( new RequestUpdateCanvasEvent(this));
+      //  Logging.info( HasName.UTIL.getName(this)+ " clicked!!!!!!!!  "  + Component.UTIL.pathToCanvasAsString(this) );
+    }
+
+
+    OnValueChangedEventHandler<Boolean> actionOnChangeHandler;
+
+    public void onChange(EventHandler handler) {
+
+        actionOnChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, actionOnChangeHandler, getchainedHandler(), handler);
+
     }
 
 }

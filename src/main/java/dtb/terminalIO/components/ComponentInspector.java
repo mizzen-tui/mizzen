@@ -78,6 +78,7 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
             scrollingArea = new ScrollableComponent(Colors.BIGre, d, tvComponents);
             SearchFunctionForScrollableComponent.addFinderToScrollable(scrollingArea.asSearchableView());
             scrollingArea.setParentContainer(this);
+            scrollingArea.setTitle("Components : " + currentViewType);
             
         } else {
 
@@ -103,6 +104,7 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
             scrollingArea = new ScrollableComponent(Colors.BIGre, d, tvFocusable);
             SearchFunctionForScrollableComponent.addFinderToScrollable(scrollingArea.asSearchableView());
             scrollingArea.setParentContainer(this);
+            scrollingArea.setTitle("Components : " + currentViewType);
         }
         
         //scrollingArea.appendEventHandler(toggleViewEventHandler());
@@ -188,6 +190,7 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
         }
         __toggleViewEventHandler = new KeyInputEventHandler(Keys.CTRL_T_KEYSTROKE, (te) -> {
             toggleViewType();
+            scrollingArea.setTitle("Components : " + currentViewType);
             requestSetView(te.getEventBus());
         });
         return __toggleViewEventHandler;

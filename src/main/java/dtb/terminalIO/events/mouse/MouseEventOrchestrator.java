@@ -55,6 +55,9 @@ public class MouseEventOrchestrator {
         public HandleOnceCPREvent(EventHandler handler) {
             super(new ConditionalEventHandler.Impl(canHandle_CPR_Event, handler));
         }
+        public String toString() {
+            return "HandleOnceCPREvent";
+        }
     }
 
     public void enableMouseHandling(Component<?> rootComponent) {
@@ -123,7 +126,7 @@ public class MouseEventOrchestrator {
                           //Logging.info("--------------------------------------\n\n");
                       }));
 
-                  });
+                  }).setName("MouseEventOrchestrator:RAW:mouseTrackingEventHandler");
 
         eventBus.appendEventHandler( mouseTrackingEventHandler );
         // add enable mouse control code to screen
@@ -180,6 +183,10 @@ public class MouseEventOrchestrator {
 
         ConditionalEventHandler appMouseToFocusableComponent = new ConditionalEventHandler() {
 
+            public String toString() {
+                return "MouseEventOrchestrator:appMouseToFocusableComponent";
+            }
+            
             IS_Event_TYPE appMouseType = new IS_Event_TYPE(TYPE.APPLICATION_MOUSE);
 
             @Override

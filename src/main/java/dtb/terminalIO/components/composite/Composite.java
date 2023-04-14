@@ -838,7 +838,7 @@ public class Composite extends AbstractComponent<Composite>
         ComponentWithOffset child = findChild(component);
         if (child == null) {
             throw new IllegalArgumentException(
-                    (errorPrefix == null ? "" : errorPrefix + ": ") + "Could not find component!");
+                    (errorPrefix == null ? "" : errorPrefix + ": ") + "Could not find component! : "  + HasName.UTIL.getName(component) );
         }
         return child;
     }

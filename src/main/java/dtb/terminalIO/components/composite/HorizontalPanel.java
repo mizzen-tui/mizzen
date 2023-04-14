@@ -4,6 +4,7 @@ import java.util.List;
 
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.HasName;
+import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.geom.position.PositionHorizontalRelative;
@@ -58,6 +59,11 @@ public class HorizontalPanel extends Composite {
         return super.add(  new PositionHorizontalRelative(anchor, horizontalSpacer) , component);
     }
 
+    public Composite addText(String text) {
+        return add(new TextComponent(getColor(), text));
+    }
+
+    
     private void readjustAllAnchors() {
         List<ComponentWithOffset> visibleChildren = getVisibleChildrenComponentsWithOffset();
         int childCount = visibleChildren.size();

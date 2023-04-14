@@ -19,14 +19,13 @@ import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.Keys;
-import dtb.terminalIO.examples.BarChartTest.BarChartDemo;
+import dtb.terminalIO.examples.BarChartTest.BarChartRandomDataDemo;
 import dtb.terminalIO.examples.GridBrailleTest.BrailleDemo;
 import dtb.terminalIO.examples.LineChartTest.LineChartDemo;
 import dtb.terminalIO.examples.sampledata.ReadSampleFiles;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
-import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.StringUtils;
 import dtb.terminalIO.util.linuxproc.ExecUtil;
 
@@ -55,15 +54,10 @@ public class ScrollableComponentTest {
             brailleDemoSetup(brailleContainer, tApp.getEventBus());
             ScrollableComponent sc2 = new ScrollableComponent(Colors.Blu, calcScrollableDimension.get(), brailleContainer);
             sc2.setName("ScrollableComponent-sc2");
- //           SearchFunctionForScrollableComponent.addFinderToScrollable(sc2);
 
             Composite  lineChart = new Composite(Colors.Cya);
             lineChart.setBorder(true);
             lineChartDemoSetup(lineChart, tApp.getEventBus());
-
-            Composite  barChart = new Composite(Colors.Cya);
-            barChart.setBorder(true);
-            barChartDemoSetup(barChart, tApp.getEventBus());
 
             Supplier<Dimension> lineChartDim = ()-> {
                 return new Dimension.Simple( ((int)(tApp.getCanvas().getHeight() - calcScrollableDimension.get().getHeight())), sc1.getWidth());
@@ -72,6 +66,8 @@ public class ScrollableComponentTest {
             Supplier<Dimension> barChartDim = ()-> {
                 return new Dimension.Simple( ((int)(tApp.getCanvas().getHeight() - calcScrollableDimension.get().getHeight()  )), sc2.getWidth());
             };
+
+            BarChartRandomDataDemo  barChart = new BarChartRandomDataDemo(Colors.Cya, barChartDim.get()).setupTimer(tApp.getEventBus());
 
             lineChart.resize(lineChartDim.get());
             barChart.resize(barChartDim.get());
@@ -147,22 +143,6 @@ public class ScrollableComponentTest {
 
        container.setOnResize((newSize)-> brailleDemo.resize(newSize) );
     }
-
-    private static void barChartDemoSetup(Composite container, EventBus eventBus) {
-        BarChartDemo barChartDemo = new BarChartDemo();
-        Supplier<Rectangle> clippedAreaForBarchart = ()-> new Rectangle.Simple(Position.ZERO, new Dimension.Simple(container.getHeight()-2, container.getWidth()-2));
-
-        barChartDemo.setUpDemo(eventBus, clippedAreaForBarchart.get());
-        container.add(barChartDemo.getBarChart(clippedAreaForBarchart.get()));
-        
-        barChartDemo.setFlushDemoOutput(()->{
-            eventBus.raiseEvent(new RequestUpdateCanvasEvent(barChartDemo));
-        });
-        
-        container.setOnResize((newSize)-> barChartDemo.resize(clippedAreaForBarchart.get()) );
-
-    }
-
 
     private static void lineChartDemoSetup(Composite container, EventBus eventBus) {
         

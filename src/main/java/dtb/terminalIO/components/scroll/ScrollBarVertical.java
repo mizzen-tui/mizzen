@@ -24,7 +24,6 @@ import dtb.terminalIO.events.mouse.MOUSE_ACTION;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
-import dtb.terminalIO.util.Logging;
 
 /**
  * A ScrollBar in the Vertical orientation.
@@ -293,7 +292,7 @@ public class ScrollBarVertical extends BoundedComponent<ScrollBarVertical> imple
 
 
         this.conditionalHandler = this.eventHandlerContainer.asConditionalEventHandler();
-        meAsFocusable = new FocusableFromParts(new DefaultFocusableBehaviour(),this.conditionalHandler);
+        meAsFocusable = new FocusableFromParts(this, new DefaultFocusableBehaviour(),this.conditionalHandler);
 
         return meAsFocusable;
     }

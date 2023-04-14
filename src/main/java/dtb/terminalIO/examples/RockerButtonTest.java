@@ -2,13 +2,13 @@ package dtb.terminalIO.examples;
 
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.BoundedComponent.DONOTHING;
-import dtb.terminalIO.components.composite.Composite;
-import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.ChildComponentManager;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.ComponentInspector;
 import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.components.composite.Composite;
+import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.input.DefaultFocusableBehaviour;
 import dtb.terminalIO.components.input.HasValue;
@@ -32,9 +32,7 @@ import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
-import dtb.terminalIO.events.mouse.ApplicationMouseEvent;
 import dtb.terminalIO.events.mouse.Clickable;
-import dtb.terminalIO.events.mouse.MOUSE_ACTION;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
@@ -266,7 +264,7 @@ public class RockerButtonTest {
             if (meAsFocusable != null) {
                 return meAsFocusable;
             }
-            meAsFocusable = new FocusableFromParts(new DefaultFocusableBehaviour(), null);
+            meAsFocusable = new FocusableFromParts(this, new DefaultFocusableBehaviour(), null);
             return meAsFocusable;
         }
 

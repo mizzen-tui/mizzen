@@ -17,22 +17,32 @@ import dtb.terminalIO.util.TerminalDimensions;
  */
 public class TerminalResizeEventGenerator implements Runnable {
 
+
+    private static final int RESIZE_DELAY_INTERVAL_MILLISECS = 300;
+
     private Dimension lastSize = Dimension.ZERO;
     private AtomicLong lastChange = new AtomicLong(0);
     private TerminalScreen screen;
     private EventBus eventBus;
     private DelayedResizer delayedResizer = new DelayedResizer(); 
-    
-    
+
+    /**
+     * Purpose of this internal class (DelayedResizer) is to delay (or slow down) the resize events getting fired into the
+     * event bus.   The purpose is to not overwhelm the application layer with
+     * a flood or resize events because usually when the app needs to react to a 
+     * resize, it has a lot of work to do to redraw everything.  We only send resize events (TerminalEvent.TYPE.RESIZE)
+     * after a specified interval
+     * We use a very short-lived thread to perform this task.
+     */
     private class DelayedResizer  {
-        
+
         Object myLock = new Object();
         Dimension size;
         Thread resizer = null;
-        
+
         DelayedResizer() {
         }
-        
+
         void addResizerThreadIfNeeded() {
             synchronized (myLock) {
                 if (resizer != null) {
@@ -48,7 +58,7 @@ public class TerminalResizeEventGenerator implements Runnable {
                         while (keepChecking) {
                             
                             long now = System.currentTimeMillis();
-                            if (now - lastChange.get() >= 300) {
+                            if (now - lastChange.get() >= RESIZE_DELAY_INTERVAL_MILLISECS) {
                                 keepChecking = false;
                             }
                             try {
@@ -67,12 +77,12 @@ public class TerminalResizeEventGenerator implements Runnable {
                         }
                     }
                 });
-                
+
                 this.resizer.start();
             }
         }
-        
-        
+
+
         synchronized public void addDelayResize(Dimension size) {
             synchronized (myLock) {
                 this.size = size;

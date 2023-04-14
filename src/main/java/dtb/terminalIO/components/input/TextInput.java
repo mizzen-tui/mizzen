@@ -53,6 +53,7 @@ public class TextInput extends BoundedComponent<TextInput>
     public TextInput(Color color, int length) {
         super(color, new Dimension.Simple(1, length));
         init();
+        setLength(length); // necessary
     }
 
     public TextInput(int length) {

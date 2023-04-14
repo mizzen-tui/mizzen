@@ -11,12 +11,13 @@ import dtb.terminalIO.components.HasName;
  *
  */
 public interface ConditionalEventHandler extends EventHandler {
+
+    public EventHandler canHandle(TerminalEvent<?> te);
     
     public static interface AsAConditionalEventHandler {
         ConditionalEventHandler asEventHandler();
     }
     
-    public EventHandler canHandle(TerminalEvent<?> te);
     
     public default Predicate<TerminalEvent<?>>  asPredicate() {
         return new Predicate<TerminalEvent<?>>() {
@@ -149,7 +150,7 @@ public interface ConditionalEventHandler extends EventHandler {
     public static class HandleOnceHandler extends Delegate {
 
         int counter = 0;
-        
+
         public HandleOnceHandler(ConditionalEventHandler handler) {
             super(handler);
         }

@@ -145,10 +145,21 @@ public class DefaultFocusManager implements FocusManager,
     public void setChildAsCurrentFocus(Focusable focusable, EventBus eventBus) {
 
         if (!eventConsumers.contains(focusable)) {
-            String focusableName = focusable != null ? HasName.UTIL.getName(focusable) : "<NULL_FOCUSABLE>";
-            throw new IllegalArgumentException(
-                    "DefaultFocusManager("+getName()+"):  Cannot set as focusable ("+
-                            focusableName+") that has not been first added to the DefaultFocusManager "+HasName.UTIL.getName(this)+". ");
+            FocusManager parent = focusable.getParentFocusManager();
+            if (focusable != null && eventConsumers.contains(parent)) {
+                //focusable = focusable.getParentFocusManager();
+                setChildAsCurrentFocus(focusable.getParentFocusManager(), eventBus);
+            } else {
+                if (focusable != null && (focusable instanceof Component) && eventConsumers.contains(((Component)focusable).getParentContainer()) ) {
+                    setChildAsCurrentFocus((Focusable)((Component)focusable).getParentContainer(), eventBus);
+                } else {
+                    String focusableName = focusable != null ? HasName.UTIL.getName(focusable) : "<NULL_FOCUSABLE>";
+                    throw new IllegalArgumentException(
+                            "DefaultFocusManager("+getName()+"):  Cannot set as focusable ("+
+                                    focusableName+") that has not been first added to the DefaultFocusManager "+HasName.UTIL.getName(this)+". ");
+                }
+                
+            }
         }
 
         if (this.hasFocus()) {
@@ -510,7 +521,8 @@ public class DefaultFocusManager implements FocusManager,
                 }
             } else {  // not a key press
                 if (size()>0) {
-                    for (Focusable otherFocusable : getChildFocusables()) {
+                    List<Focusable> childFocusables = new ArrayList<Focusable>(getChildFocusables());
+                    for (Focusable otherFocusable : childFocusables) {
                         if (otherFocusable != focusable) {
                             if (otherFocusable.canHandle(te) != null) {
                                 otherFocusable.handle(te);

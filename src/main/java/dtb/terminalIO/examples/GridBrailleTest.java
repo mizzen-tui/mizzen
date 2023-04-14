@@ -76,30 +76,35 @@ public class GridBrailleTest {
 
         public void resize(Dimension size) {
 
-            brailleComponent.setBounds(size.getHeight() - 4, size.getWidth() - 4);
+            getBrailleComponent().setBounds(size.getHeight() - 4, size.getWidth() - 4);
 
             Dimension textHelpDim = Dimension.UTIL.stringToDimension(tc.getText());
 
             tc.resize(new Dimension.Simple(Math.min(textHelpDim.getHeight(), size.getHeight() - 4),
                     Math.min(textHelpDim.getWidth(), size.getWidth() / 2)));
 
-            grid.resize(new Dimension.Simple(brailleComponent.getHeight() - 4,
-                                             brailleComponent.getWidth() - 4 - tc.getWidth()));
+            grid.resize(new Dimension.Simple(getBrailleComponent().getHeight() - 4,
+                                             getBrailleComponent().getWidth() - 4 - tc.getWidth()));
 
-            brailleComponent.moveChildTo(new Position.Simple(2, tc.getWidth() + 2), grid);
+            getBrailleComponent().moveChildTo(new Position.Simple(2, tc.getWidth() + 2), grid);
 
         }
 
-        public Component<?> getBrailleComponent() {
+        public Composite getBrailleComponent() {
+            if (brailleComponent == null) {
+                brailleComponent = new Composite();
+            }
             return brailleComponent;
         }
 
         public void setUpDemo(EventHandlerContainer eventBus, Rectangle bounds) {
 
-            brailleComponent = new Composite();
-            brailleComponent.setBounds(bounds.getHeight() - 4, bounds.getWidth() - 4);
-            brailleComponent.setBorder(true);
-            brailleComponent.setName("brailleComponent");
+
+            getBrailleComponent().clearAndRemoveAllChildren();
+
+            getBrailleComponent().setBounds(bounds.getHeight() - 4, bounds.getWidth() - 4);
+            getBrailleComponent().setBorder(true);
+            getBrailleComponent().setName("brailleComponent");
 
             Color textCOLOR = Colors.DEFAULT_COLOR;
             Color textColorBOLD = textCOLOR.bold();
@@ -121,14 +126,14 @@ public class GridBrailleTest {
                             + "to build terminal-based charts for\n" + "monitoring values stored in the OLT-MGR\n"
                             + "and rendered via CLIApp.java");
 
-            brailleComponent.add(tcBrailleChars);
-            brailleComponent.add(2, 0, tc);
+            getBrailleComponent().add(tcBrailleChars);
+            getBrailleComponent().add(2, 0, tc);
 
-            grid = new BrailleGrid(Colors.DEFAULT_COLOR, new Dimension.Simple(brailleComponent.getHeight() - 4,
-                    brailleComponent.getWidth() - 4 - tc.getWidth()));
+            grid = new BrailleGrid(Colors.DEFAULT_COLOR, new Dimension.Simple(getBrailleComponent().getHeight() - 4,
+                    getBrailleComponent().getWidth() - 4 - tc.getWidth()));
             grid.setPlottingColor(new Colors.FGBGColors(Colors.Yel));
 
-            brailleComponent.add(new Position.Simple(2, tc.getWidth() + 2), grid);
+            getBrailleComponent().add(new Position.Simple(2, tc.getWidth() + 2), grid);
 
             XYTranslate pointPlotter = new XYTranslate(grid.asPointPlotter(), 0, 0);
 
@@ -169,7 +174,7 @@ public class GridBrailleTest {
 
                     renderPreUPdate();
 
-                    brailleComponent.markAsDirty();
+                    getBrailleComponent().markAsDirty();
 
                     grid.clear(); // clears and marks as dirty
                     grid.clearPlots();
@@ -244,7 +249,7 @@ public class GridBrailleTest {
 
             
             // brailleComponent
-            ButtonBar movementKeys = new ButtonBar(brailleComponent.getColor()).setName("movementKeys");
+            ButtonBar movementKeys = new ButtonBar(getBrailleComponent().getColor()).setName("movementKeys");
             movementKeys.setBorder(true);
             movementKeys.setLeftMostBorderChar((char) 0);
             movementKeys.setRightMostBorderChar((char) 0);
@@ -287,8 +292,8 @@ public class GridBrailleTest {
             movementKeys.addComponent(leftButton);
             movementKeys.addComponent(rightButton);
 
-            Position movementKeysPosition = PositionRelativeFactory.fromAlign(VAlign.BOTTOM, 3, Align.MIDDLE, 0,  brailleComponent, movementKeys);
-            brailleComponent.add(movementKeysPosition, movementKeys);
+            Position movementKeysPosition = PositionRelativeFactory.fromAlign(VAlign.BOTTOM, 3, Align.MIDDLE, 0,  getBrailleComponent(), movementKeys);
+            getBrailleComponent().add(movementKeysPosition, movementKeys);
 
             addAndRememberEventHandler(eventBus, movementKeys);
 

@@ -45,7 +45,7 @@ public class ClickableDraggableComponentWrapper extends AbstractWrappedComponent
             focusBehaviour = (FocusBehaviour) this.getWrappedComponent();
         }
 
-        meAsFocusable = new FocusableFromParts(focusBehaviour, null);
+        meAsFocusable = new FocusableFromParts(this, focusBehaviour, null);
         
         return meAsFocusable;
     }

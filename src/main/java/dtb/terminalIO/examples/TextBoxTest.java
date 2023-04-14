@@ -28,7 +28,7 @@ import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.Keys;
-import dtb.terminalIO.examples.BarChartTest.BarChartDemo;
+import dtb.terminalIO.examples.BarChartTest.BarChartRandomDataDemo;
 import dtb.terminalIO.examples.GridBrailleTest.BrailleDemo;
 import dtb.terminalIO.examples.plot.Test1GamesSeparateThread;
 import dtb.terminalIO.examples.plot.TestSprites;
@@ -252,11 +252,10 @@ public class TextBoxTest {
 
         ChildComponentManager<?> barChartDemoContainer = tApp.getMainApplicationPanel();
 
-        BarChartDemo barChartDemo = new BarChartDemo();
         Rectangle clippedAreaForBarchart = new Rectangle.Simple(Position.ZERO, new Dimension.Simple(barChartDemoContainer.getHeight()-2, barChartDemoContainer.getWidth()-2));
+        BarChartRandomDataDemo barChartDemo = new BarChartRandomDataDemo(clippedAreaForBarchart);
 
-        barChartDemo.setUpDemo(tApp.getEventBus(), clippedAreaForBarchart);
-        barChartDemoContainer.add(barChartDemo.getBarChart(clippedAreaForBarchart));
+        barChartDemoContainer.add(barChartDemo);
 
         BiConsumer<TUIApp, Dimension> defaultOnResizeAction = 
                 tApp.getResizeAction()!=null ? tApp.getResizeAction() : (t,s)->{};
@@ -267,7 +266,7 @@ public class TextBoxTest {
             barChartDemo.resize( newSize );
         });
 
-        return barChartDemo.bc;
+        return barChartDemo;
     }
 
     static Component<?> addBackGround_GridBrailleDemo(TUIApp tApp) {

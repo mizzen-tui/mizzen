@@ -1,5 +1,6 @@
 package dtb.terminalIO.events.focus;
 
+import dtb.terminalIO.components.Component;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
@@ -26,7 +27,6 @@ public interface Focusable extends FocusBehaviour, ConditionalEventHandler {
     FocusManager getParentFocusManager();
 
     void setParentFocusManager(FocusManager focusManager);
-    
     
     public static class NOOPFocusable implements Focusable {
 
@@ -63,9 +63,11 @@ public interface Focusable extends FocusBehaviour, ConditionalEventHandler {
         FocusManager parentContainer;
         FocusBehaviour behaviour;
         ConditionalEventHandler eventHandler;
+        Component<?> component;
         
-        public FocusableFromParts(FocusBehaviour behaviour, ConditionalEventHandler eventHandler) {
+        public FocusableFromParts(Component<?> component, FocusBehaviour behaviour, ConditionalEventHandler eventHandler) {
             super();
+            this.component = component;
             this.behaviour = behaviour;
             this.eventHandler = eventHandler;
         }
@@ -124,6 +126,10 @@ public interface Focusable extends FocusBehaviour, ConditionalEventHandler {
         @Override
         public void setParentFocusManager(FocusManager focusManager) {
             this.parentContainer = focusManager;
+        }
+        
+        public Component<?> getComponent() {
+            return this.component;
         }
         
     }

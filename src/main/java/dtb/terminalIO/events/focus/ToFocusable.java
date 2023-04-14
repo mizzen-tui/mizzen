@@ -5,7 +5,7 @@ import dtb.terminalIO.components.Component;
 public interface ToFocusable {
     Focusable asFocusable();
 
-    public static class FocusableComponentPair {
+    public static class FocusableComponentPair implements ToFocusable {
         public Focusable    focusable;
         public Component<?> component;
 
@@ -15,6 +15,10 @@ public interface ToFocusable {
             super();
             this.focusable = focusable;
             this.component = component;
+        }
+
+        public Focusable asFocusable() {
+            return focusable;
         }
 
     }

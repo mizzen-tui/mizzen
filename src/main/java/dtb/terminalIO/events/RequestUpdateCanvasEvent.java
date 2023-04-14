@@ -23,10 +23,7 @@ public class RequestUpdateCanvasEvent extends TerminalEvent<Object> {
     public static void invoke(EventBus eventBus, Object source) {
         eventBus.raiseEvent(new RequestUpdateCanvasEvent(source));
     }
-    
-    
-    
-    
+
     public static class UTIL {
         public static ConditionalEventHandler wrapEventHandlerWithCanvasUpdate(ConditionalEventHandler eventHandler) {
             ConditionalEventHandler handler = new ConditionalEventHandler.Delegate(eventHandler) {
@@ -38,7 +35,6 @@ public class RequestUpdateCanvasEvent extends TerminalEvent<Object> {
             };
             return handler;
         }
-        
     }
 
 }

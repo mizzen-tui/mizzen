@@ -71,6 +71,9 @@ public class LineChartTest {
         }
 
         public Composite getLineChartPanelComponent() {
+            if (panel == null) {
+                this.panel = new VerticalPanel().setVerticalSpacer(0);
+            }
             return panel;
         }
 
@@ -81,7 +84,7 @@ public class LineChartTest {
                 throw new NullPointerException("drawingArea parameter null!");
             }
 
-            this.panel = new VerticalPanel().setVerticalSpacer(0);
+            getLineChartPanelComponent().clearAndRemoveAllChildren();
 
             this.lineChartSize = (size) -> new Dimension.Simple(size.getHeight(), size.getWidth());
             
@@ -96,8 +99,8 @@ public class LineChartTest {
             menuButtonBar = new ButtonBar(Colors.BIBla);
             menuButtonBar.setNoBorderChars();
 
-            panel.add(lc);
-            panel.add(menuButtonBar);
+            getLineChartPanelComponent().add(lc);
+            getLineChartPanelComponent().add(menuButtonBar);
 
             class SeriesDemo {
 
@@ -384,7 +387,7 @@ public class LineChartTest {
                 //lineChartDemo.resize(newBounds);
                 //panel.resize(size);
 
-                Position lc_Pos = bounds.centered(lineChartDemo.panel, Position.ZERO);
+                Position lc_Pos = bounds.centered(lineChartDemo.getLineChartPanelComponent(), Position.ZERO);
                 Rectangle rectToRemove = new Rectangle.Simple(lineChartDemo.lc);
                 rectToRemove.moveDelta(lc_Pos.getRow(), lc_Pos.getCol());
 

@@ -22,9 +22,9 @@ import dtb.terminalIO.events.EventHandlerContainer;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
-import dtb.terminalIO.events.keyboard.KeyStroke;
+import dtb.terminalIO.events.keyboard.KeyEvent;
 import dtb.terminalIO.events.keyboard.Keys;
-import dtb.terminalIO.examples.BarChartTest.BarChartDemo;
+import dtb.terminalIO.examples.BarChartTest.BarChartRandomDataDemo;
 import dtb.terminalIO.examples.GridBrailleTest.BrailleDemo;
 import dtb.terminalIO.examples.LineChartTest.LineChartDemo;
 import dtb.terminalIO.examples.sampledata.ReadSampleFiles;
@@ -43,8 +43,8 @@ public class TabPanelTest {
             this.retrieveComponentForTabFunction = retrieveComponentFunction;
         }
 
-        TabAction getTabAction(KeyStroke hotKey, String tabText) {
-            return new TabAction(hotKey, tabText) {
+        TabAction<Component<?>> getTabAction() {
+            return new TabAction<Component<?>>() {
 
                 EventHandlerContainer.Simple demoInTabEventHandlers = new EventHandlerContainer.Simple();
 
@@ -52,7 +52,8 @@ public class TabPanelTest {
                     demo.resize(tabContext.getBounds());
                 }
 
-                public void activateComponent(EventBus eventBus, TabContext tabContext) {
+                @Override
+                public void activateComponent(EventBus eventBus, TabContext tabContext, Component<?> component) {
                     if (!firstSetup) {
                         firstSetup = true;
                         demo.setUpDemo(demoInTabEventHandlers, tabContext.getBounds() );
@@ -64,7 +65,7 @@ public class TabPanelTest {
                 }
 
                 @Override
-                public void deactivateComponent(EventBus eventBus, TabContext tabContext) {
+                public void deactivateComponent(EventBus eventBus, TabContext tabContext, Component<?> component) {
                     // demo.tearDownDemo(te.getEventBus());
                     // on Tab deactivate, we will disable (remove) all eventHandlers related to the
                     // demo
@@ -88,11 +89,12 @@ public class TabPanelTest {
 
         char emptyChar = '░';
         Color emptyColor = new Colors.FGBGColors(Colors.IYel, Colors.On_IBlu);
-        tabPanelDemoApp.getCanvas().setEmptyAttributes(emptyColor, emptyChar);
+       // tabPanelDemoApp.getCanvas().setEmptyAttributes(emptyColor, emptyChar);
 
         Composite topFrame = new Composite();
         topFrame.setEmptyChar(emptyChar);
         topFrame.setEmptyColor(emptyColor);
+        topFrame.setFillOnClear(false);
 
         // Dimension d_80 = acmeLOGOfileDimension(80);
         Dimension d_100 = acmeLOGOfileDimension(100);
@@ -140,17 +142,20 @@ public class TabPanelTest {
         VerticalPanel vPanel = new VerticalPanel();
         vPanel.setEmptyChar(emptyChar);
         vPanel.setEmptyColor(emptyColor);
+        vPanel.setFillOnClear(false);
         vPanel.setVerticalSpacer(1);
         topFrame.add(vPanel);
 
         TabPanel tb = new TabPanel(Colors.DEFAULT_COLOR, new Colors.FGBGColors(Colors.Blu).bold(), sizeOfTabPanelWindow);
-        tb.setBorder(false);
         tb.setEmptyChar(emptyChar);
         tb.setEmptyColor(emptyColor);
-        
+        tb.setFillOnClear(false);
+        tb.setPrevKeyStroke(Keys.CTRL_LEFT_KEYSTROKE);
+        tb.setNextKeyStroke(Keys.CTRL_RIGHT_KEYSTROKE);
+
         HorizontalPanel hp = new HorizontalPanel();
         hp.add(tb);
-        
+
         vPanel.add(hp);
 
         DefaultFocusManager focusManager = new DefaultFocusManager(Keys.LEFT_KEYSTROKE, Keys.RIGHT_KEYSTROKE);
@@ -171,7 +176,7 @@ public class TabPanelTest {
         AtomicInteger counter = new AtomicInteger(0);
 
         tabPanelDemoApp.enableMouseHandling();
-        
+
         tabPanelDemoApp.setUpdateCanvas((tApp) -> {
             if (!topFrame.isDirty()) {
                 return false; // false means no GUI change to update
@@ -183,7 +188,7 @@ public class TabPanelTest {
             return true;
         });
 
-        tb.addTab(new TabAction(Keys.F5_KEYSTROKE, "Acme Demo") {
+        tb.addTab("Acme Demo", Keys.F5_KEYSTROKE, new TabAction<Composite>() {
 
             TextComponent tc;
             Composite panel;
@@ -206,25 +211,14 @@ public class TabPanelTest {
                 }
 
                 // hack to ensure component is built
-                getComponent(tabCtx);
-                
+                getComponentForTab(tabCtx);
                 tc.setTextAndResize(imgText);
                 panel.resize(tabCtx.getBounds());
                 panel.moveChildTo(panel.centered(tc, Position.ZERO), tc);
             }
 
             @Override
-            public void activateComponent(EventBus eventBus, TabContext tabCtx) {
-                resize(tabCtx);
-            }
-
-            @Override
-            public void deactivateComponent(EventBus eventBus, TabContext tabCtx) {
-                // nothing to do ..
-            }
-
-            @Override
-            public Component<?> getComponent(TabContext tabCtx) {
+            public Composite getComponent(TabContext tabCtx) {
                 if (this.tc == null) {
                     panel = new Composite(tabCtx.getColor()).setBounds( tabCtx.getBounds());
                     tc = new TextComponent(tabCtx.getColor(), "ACME LOGO");
@@ -235,19 +229,32 @@ public class TabPanelTest {
 
         });
 
-        BarChartDemo barChartDemo = new BarChartDemo();
-        tb.addTab(new DemoInTab(barChartDemo, (tc) -> barChartDemo.getBarChart(tc.getBounds()))
-                .getTabAction(Keys.F6_KEYSTROKE, "BarChart Example"));
+        tb.addTab("BarChart Example11", Keys.F5_KEYSTROKE,  new TabAction<BarChartRandomDataDemo>() {
+            @Override
+            public BarChartRandomDataDemo getComponent(TabContext tabContext) {
+                return new BarChartRandomDataDemo(tabContext.getBounds());
+            }
+            public void activateComponent(EventBus eventBus, TabContext tabContext, BarChartRandomDataDemo barChartDemo) {
+                eventBus.appendIdleEventHandler( barChartDemo.getDrawChartTimedEventHandler()  );
+            }
 
-        
+            public void deactivateComponent(EventBus eventBus, TabContext tabContext, BarChartRandomDataDemo barChartDemo) {
+                eventBus.removeEventHandler( barChartDemo.getDrawChartTimedEventHandler()  );
+            }
+        });
+
+
         LineChartDemo lineChartDemo = new LineChartDemo();
-        tb.addTab(new DemoInTab(lineChartDemo, 
-                                (tc) -> lineChartDemo.getLineChartPanelComponent()).getTabAction(Keys.F7_KEYSTROKE,
-                                "LineChart Example"));
+        tb.addTab("LineChart Example", 
+                  Keys.F7_KEYSTROKE,
+                  new DemoInTab(lineChartDemo, 
+                                (tc) -> lineChartDemo.getLineChartPanelComponent()).getTabAction());
 
         BrailleDemo brailleDemo = new BrailleDemo();
-        tb.addTab(new DemoInTab(brailleDemo, (tc) -> brailleDemo.getBrailleComponent()).getTabAction(Keys.F8_KEYSTROKE,
-                                "Braille Character Graphics Demo"));
+        tb.addTab("Braille Character Graphics Demo", 
+                  Keys.F8_KEYSTROKE,
+                  new DemoInTab(brailleDemo, 
+                                (tc) -> brailleDemo.getBrailleComponent()).getTabAction());
 
         tabPanelDemoApp.setOnResizeAction((tApp, size) -> {
             tApp.getCanvas().setSize(size.getHeight(), size.getWidth());
@@ -272,7 +279,7 @@ public class TabPanelTest {
 
             // select first tab once eventBus is rdy to go
             tApp.getEventBus().appendEventHandler(
-                    new OnIdleEventEventHandler.OneTime((te) -> tb.selectAsActive(te, Keys.F5_KEYSTROKE)));
+                    new OnIdleEventEventHandler.OneTime((te) ->  te.getEventBus().raiseEvent(new KeyEvent(tApp, Keys.F5_KEYSTROKE)) ));
 
             tApp.getEventBus().appendEventHandler(new OnIdleEventEventHandler.RepeatingInterval(100, (te) -> {
                         int count = counter.incrementAndGet();

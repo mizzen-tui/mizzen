@@ -22,7 +22,6 @@ import dtb.terminalIO.traverse.FindPathToTarget;
 import dtb.terminalIO.traverse.HasChildren;
 import dtb.terminalIO.traverse.HasChildrenAdapter;
 import dtb.terminalIO.traverse.Traverser;
-import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.StringUtils;
 import dtb.terminalIO.util.TerminalDimensions;
 
@@ -142,6 +141,17 @@ public interface FocusManager extends Focusable {
             
             return findCurrentFocus((FocusManager)focusableChild);
         }
+        
+        public static Focusable focusableFromComponent(Component<?> component) {
+            if (component instanceof Focusable) {
+                return (Focusable) component;
+            }
+            if (component instanceof ToFocusable) {
+                return ((ToFocusable) component).asFocusable();
+            }
+            return  null;
+        }
+
         
         /**
          * Traverse this object and all its child (and grand-child .. ) objects looking for
