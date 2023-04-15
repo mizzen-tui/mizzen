@@ -1,8 +1,13 @@
 package dtb.terminalIO.examples;
 
+import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+
+import javax.imageio.ImageIO;
 
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.Component;
@@ -11,6 +16,11 @@ import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.composite.VerticalPanel;
+import dtb.terminalIO.components.input.DropdownListBox;
+import dtb.terminalIO.components.plot.image.ImageViewerFactory;
+import dtb.terminalIO.components.plot.image.ImageViewerFactory.ImageRenderRequest;
+import dtb.terminalIO.components.plot.image.animate.ImageAnimatorComponent;
+import dtb.terminalIO.components.plot.image.animate.ImageSplitter;
 import dtb.terminalIO.components.tab.TabAction;
 import dtb.terminalIO.components.tab.TabPanel;
 import dtb.terminalIO.components.tab.TabPanel.TabContext;
@@ -188,6 +198,80 @@ public class TabPanelTest {
             return true;
         });
 
+        tb.addTab("Animation", Keys.F4_KEYSTROKE, new TabAction<VerticalPanel>() {
+            ImageAnimatorComponent animatorComponent;
+            @Override
+            protected VerticalPanel getComponent(TabContext tabContext) {
+                int IMAGEWIDTH=150;
+                int IMAGEHEIGHT=70;
+
+                                          //  0  10   150  10    300 10    450 10    0 10   150  10   300  10   450  10   0  105   150  105   300  105   450  105   0  200   150  200   300  200   450  200
+                int[] offsetNbrs = new int[] {0, 10,  150, 10,  300, 10,  450, 10,  0, 10,  150, 10,  300, 10,  450, 10,  0, 105,  150, 105,  300, 105,  450, 105,  0, 200,  150, 200,  300, 200,  450, 200};
+                List<Position> offsets = new ArrayList<Position>();
+                for (int i=0; i< offsetNbrs.length; i+=2) {
+                    offsets.add(new Position.Simple(offsetNbrs[i+1],offsetNbrs[i]));
+                }
+                ImageRenderRequest imageRequest = new ImageRenderRequest();
+                imageRequest.setDesiredImgSizeInCharacters(tabContext.getBounds());
+                imageRequest.setColorMap(ImageViewerFactory.rgbColorMapRCol);
+                imageRequest.setToPlotOrNot(ImageViewerFactory.PLOT_ALWAYS);
+                imageRequest.setImageRenderType(ImageViewerFactory.IMAGE_RENDER_TYPE.ASCII);
+                Function<Dimension, Dimension> imgSizeCalculator = (size)-> new Dimension.Simple(tabContext.getBounds().getHeight()-2, tabContext.getBounds().getWidth());
+                imageRequest.setDesiredImgSizeInCharacters(imgSizeCalculator.apply(tabContext.getBounds()));
+                try {
+                    BufferedImage img = ImageIO.read(this.getClass().getResource("/lionRunning.jpg"));
+                    imageRequest.setImageToView(img);
+                    ImageSplitter splitter = new ImageSplitter(imageRequest.getImageToView(), offsets, IMAGEHEIGHT, IMAGEWIDTH);
+                    animatorComponent = new ImageAnimatorComponent(Colors.DEFAULT_COLOR, imageRequest, splitter, imageRequest.getDesiredImgSizeInCharacters());
+                    VerticalPanel vp = new VerticalPanel();
+                    vp.add(animatorComponent);
+                    HorizontalPanel drawingControlSettings = new HorizontalPanel(Colors.BBlu);
+                    vp.add(drawingControlSettings);
+                    
+                    DropdownListBox<ImageViewerFactory.IMAGE_RENDER_TYPE> imageRendererTypeDDLB = new DropdownListBox<ImageViewerFactory.IMAGE_RENDER_TYPE>(ImageViewerFactory.imageRenderTypeOptions());
+                    imageRendererTypeDDLB.setSelected(0);
+                    imageRendererTypeDDLB.onChange((te) -> {
+                        imageRequest.setImageRenderType(imageRendererTypeDDLB.getValue());
+                    });
+                    drawingControlSettings.addText("Render Type:");
+                    drawingControlSettings.add(imageRendererTypeDDLB);
+
+                    DropdownListBox<ImageViewerFactory.RGBToAnsiColorControlCode> colorMapDDLB = new DropdownListBox<ImageViewerFactory.RGBToAnsiColorControlCode>(ImageViewerFactory.colorMap());
+                    colorMapDDLB.setSelected(0);
+                    colorMapDDLB.onChange((te)->{
+                        imageRequest.setColorMap( colorMapDDLB.getValue()  );
+                    });
+                    drawingControlSettings.addText("Color Map:");
+                    drawingControlSettings.add(colorMapDDLB);
+
+
+                    DropdownListBox<ImageViewerFactory.RGBPlotPredicate> plotPredicatesDDLB = new DropdownListBox<ImageViewerFactory.RGBPlotPredicate>(ImageViewerFactory.plotPointPredicateOptions());
+                    plotPredicatesDDLB.setSelected(0);
+                    plotPredicatesDDLB.onChange((te)->{
+                        imageRequest.setToPlotOrNot( plotPredicatesDDLB.getValue() );
+                    });
+
+                    drawingControlSettings.addText("Plot Condition:");
+                    drawingControlSettings.add(plotPredicatesDDLB);
+                    
+                    vp.appendOnResize((sizeOfPanel)->  animatorComponent.resize(imgSizeCalculator.apply(sizeOfPanel)) );
+                    return vp;
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            public void activateComponent(EventBus eventBus, TabContext tabContext, VerticalPanel vp) {
+                animatorComponent.buildTimer(250);
+                eventBus.appendIdleEventHandler( animatorComponent.getIdleEventEventHandler()  );
+            }
+
+            public void deactivateComponent(EventBus eventBus, TabContext tabContext, VerticalPanel vp) {
+                eventBus.removeEventHandler( animatorComponent.getIdleEventEventHandler()  );
+            }
+            
+        });
+        
+        
         tb.addTab("Acme Demo", Keys.F5_KEYSTROKE, new TabAction<Composite>() {
 
             TextComponent tc;
@@ -229,7 +313,7 @@ public class TabPanelTest {
 
         });
 
-        tb.addTab("BarChart Example11", Keys.F5_KEYSTROKE,  new TabAction<BarChartRandomDataDemo>() {
+        tb.addTab("BarChart Example", Keys.F6_KEYSTROKE,  new TabAction<BarChartRandomDataDemo>() {
             @Override
             public BarChartRandomDataDemo getComponent(TabContext tabContext) {
                 return new BarChartRandomDataDemo(tabContext.getBounds());

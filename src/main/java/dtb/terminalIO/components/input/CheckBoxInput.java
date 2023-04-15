@@ -33,7 +33,7 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
              implements HasValue<Boolean>, ParentContainer, ToFocusable, Clickable   {
 
     private TextComponent textRenderer;
-    
+
     boolean value = false;
 
     public CheckBoxInput(Color color, int width) {
@@ -44,12 +44,11 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
     public CheckBoxInput(Color color) {
         this(color, 5); // [x]
     }
-    
+
     public CheckBoxInput() {
         this(Colors.DEFAULT_COLOR);
     }
-    
-    
+
     public Boolean getValue() {
         return value;
     }
@@ -60,16 +59,16 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
             this.textRenderer.markAsDirty();
         }
     }
-    
+
     public boolean isDirty() {
         return super.isDirty() || (this.textRenderer != null && this.textRenderer.isDirty());
     }
-    
+
     public void setValue(boolean value) {
         this.value = value;
         this.markAsDirty();
     }
-    
+
     String buildRenderText() {
         String valueStr = (value) ? "x" : " ";
         String output = " [" + valueStr + "] ";
@@ -79,7 +78,7 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
         }
         return output;
     }
-    
+
     @Override
     public CheckBoxInput setColor(Color drawingcolor) {
         super.setColor(drawingcolor);
@@ -90,8 +89,7 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
         this.markAsDirty();
         return this;
     }
-    
-    
+
     public CheckBoxInput setEmptyColor(Color emptyColor) {
         super.setEmptyColor(emptyColor);
         if (this.textRenderer != null) {
@@ -107,7 +105,7 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
         }
         return this;
     }
-    
+
     @Override
     public Position getPositionRelativeToParent(Component<?> child) {
         if (child == this.textRenderer) {
@@ -115,7 +113,7 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
         }
         return null;
     }
-    
+
     @Override
     public void childResized(Component<?> child) {
         this.markAsDirty();
@@ -188,12 +186,11 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
 
             @Override
             public EventHandler canHandle(TerminalEvent<?> te) {
-                
+
                 if (canHandleOnChangeEvent.test(te)) {
                     return this;
                 }
-                
-                
+
                 if (!(te instanceof KeyEvent)) {
                     return null;
                 }
@@ -205,7 +202,7 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
                 }
                 return null;
             }
-            
+
             @Override
             public void handle(TerminalEvent<?> te) {
 
@@ -219,7 +216,7 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
                 }
 
                 KeyEvent ke = (KeyEvent) te; 
-                
+
                 if (ke.isKeyStroke( Keys.ENTER_KEYSTROKE )  || ke.isKeyStroke(Keys.SPACE_KEYSTROKE)) {
                     checkBoxPressed(te.getEventBus());
                 }

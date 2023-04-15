@@ -48,7 +48,7 @@ public class TextInput extends BoundedComponent<TextInput>
 
     Focusable focusable;
 
-    private boolean modeOverite = false; // true means insertMode
+    private boolean modeOverite = false; // true means insertMode   (not used?)
 
     public TextInput(Color color, int length) {
         super(color, new Dimension.Simple(1, length));

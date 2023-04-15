@@ -122,21 +122,33 @@ public class TabPanel extends AbstractWrappedComponentWithFocusManager<Composite
         TabButtonComponent tabButton = new TabButtonComponent(TabPanel.this.getColor(), tabTxt, false, tabAction, hotKey);
 
         tabButton.onChange((te)->{
+
+            if ( current ==  tabButton ) {
+                return ;
+            }
+
             if (current != null) {
                 current.tabAction.deactivate(te.getEventBus(), getTabContext());
                 current.setActive(false);
                 TabPanel.this.getWrappedComponent().remove( currentComponentInTab );
                 currentComponentInTab = null;
             }
+
             current = tabButton;
             currentComponentInTab = tabAction.getComponentForTab(getTabContext());
             if (currentComponentInTab == null) {
                 throw new NullPointerException("tabAction.getComponentForTab(ctx) returned null for tabAction : '"+tabButton.getTabText()+"'");
             }
+
             TabPanel.this.getWrappedComponent().add(workAreaPosition, currentComponentInTab);
-            current.tabAction.activate(te.getEventBus(), getTabContext());
-            te.getEventBus().asynch((te2)->current.setActive(true));
-            te.getEventBus().asynch((te2)->  te2.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(currentComponentInTab)));
+
+            te.getEventBus().asynch((te2) -> {
+                // activate the panel on the next event loop
+                current.tabAction.activate(te2.getEventBus(), getTabContext());
+                current.setActive(true);
+                te2.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(currentComponentInTab));
+            });
+            
         });
 
         tabsButtonBar.addComponent(tabButton);

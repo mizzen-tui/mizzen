@@ -72,7 +72,7 @@ public class ImageSplitterTest {
                colorMapDDLB.onChange((te)->{
                    rqst.setColorMap( colorMapDDLB.getValue()  );
                });
-               
+
                controls.add(colorMapDDLB);
 
                DropdownListBox<ImageViewerFactory.RGBPlotPredicate> plotPredicatesDDLB = new DropdownListBox<ImageViewerFactory.RGBPlotPredicate>(ImageViewerFactory.plotPointPredicateOptions());
@@ -80,31 +80,29 @@ public class ImageSplitterTest {
                plotPredicatesDDLB.onChange((te)->{
                    rqst.setToPlotOrNot( plotPredicatesDDLB.getValue() );
                });
+
                controls.add(plotPredicatesDDLB);
-               
-               
-               
-               
+
                ImageAnimatorComponent animatorComponent = new ImageAnimatorComponent(Colors.DEFAULT_COLOR, rqst, splitter, rqst.getDesiredImgSizeInCharacters());
 
                animatorComponent.setupTimer(tApp.getEventBus(), interval);
 
-               
                imageViewer.setComponent(animatorComponent);
 
                hp.add(imageViewer);
                hp.add(controls);
-               
+
                tApp.getMainApplicationPanel().add(0, 0, hp);
-               
-               
+
                FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(), tApp.getEventBus());
                tApp.getEventBus().appendEventHandler(  mainFocusManager );
 
-               
-
            }).start();
 
+    }
+    
+    public static class ImageSplitterViewer {
+        
     }
 
 
@@ -112,18 +110,17 @@ public class ImageSplitterTest {
     static int interval = 250;
     static String DEFAULT_IMG_PATH="/home/dbalme/workspace/tmpImages/car.jpeg";
     static String imgFilePath = DEFAULT_IMG_PATH;
-    
+
     static List<Vec2<?>> offsets;
-    
+
     static int image_width = 47;
     static int image_height = 46;
-    
-    
+
     static RGBPlotPredicate plotPredicate = ImageViewerFactory.PLOT_ALWAYS;
     static RGBToAnsiColorControlCode colorMapping = ImageViewerFactory.rgbColorMapDIRECT;
     static IMAGE_RENDER_TYPE  renderType = ImageViewerFactory.IMAGE_RENDER_TYPE.BLOCK;
     static String gradientStr = "ÆÑÊŒØMÉËÈÃÂWQBÅæ#NÁþEÄÀHKRŽœXgÐêqÛŠÕÔA€ßpmãâG¶øðé8ÚÜ$ëdÙýèÓÞÖåÿÒb¥FDñáZPäšÇàhû§ÝkŸ®S9žUTe6µOyxÎ¾f4õ5ôú&aü™2ùçw©Y£0VÍL±3ÏÌóC@nöòs¢u‰½¼‡zJƒ%¤Itocîrjv1lí=ïì<>i7†[¿?×}*{+()\\/»«•¬|!¡÷¦¯—^ª„”“~³º²–°­¹‹›;:’‘‚’˜ˆ¸…·¨´`";
-    
+
     private static ImageRenderRequest dumbArgsParse(String[] args) throws IOException {
         if (args == null || args.length == 0) {
             return null;

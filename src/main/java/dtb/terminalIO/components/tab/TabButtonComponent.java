@@ -32,11 +32,19 @@ import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
  * A TabButtonComponent is part of the TabPanel clickable components used to
  * change tab content.
  * 
+ * <p/>
+ * 
  * It is one of the Tab 'button's rendered at the top of the TabPanel
+ * 
+ * <p/>
+ * 
+ * <pre>
  * 
  *     +-----------------+
  *     | Sample Tab Text |
  *     +---------------- +
+ * 
+ * </pre>
  * 
  * @author dbalme
  *
@@ -150,8 +158,6 @@ public class TabButtonComponent extends BoundedComponent<TabButtonComponent> imp
         this.textActiveTabColor = colortextActiveTabColor;
     }
 
-    
-    
     @Override
     public void hilite() {
         if ( ! this.hilited) {
@@ -171,7 +177,7 @@ public class TabButtonComponent extends BoundedComponent<TabButtonComponent> imp
     }
 
     ChainedEventHandler chainedEventHandler;
-    
+
     private Focusable asFocusable() {
         if (meAsFocusable != null) {
             return meAsFocusable;
@@ -211,8 +217,7 @@ public class TabButtonComponent extends BoundedComponent<TabButtonComponent> imp
         asFocusable(); // ensure built
         return this.chainedEventHandler;
     }
-    
-    
+
     @Override
     public EventHandler canHandle(TerminalEvent<?> te) {
         if (asFocusable().canHandle(te) != null) {

@@ -44,7 +44,7 @@ public class ReadTextFileToScreenTest {
             AtomicBoolean stripColorCodes = new AtomicBoolean(false);
 
             Color viewerTextColor = new Colors.FGBGColors(Colors.BIYel, Colors.On_Blu);
-            
+
             TextComponent image = new TextComponent(fileData) {
                 @Override
                 public void draw(Color color, IScreenLineSegmentsBuffer segments) {

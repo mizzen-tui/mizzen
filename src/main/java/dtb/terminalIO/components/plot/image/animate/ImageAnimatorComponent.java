@@ -76,6 +76,7 @@ public class ImageAnimatorComponent extends AbstractComponentWrappper<Component<
         if (this.animation != null && this.animation instanceof CanResize) {
             ((CanResize)this.animation).resize(d);
         }
+        imageRenderRequest.setDesiredImgSizeInCharacters(d);
         
         super.resize(d);
         
@@ -108,19 +109,29 @@ public class ImageAnimatorComponent extends AbstractComponentWrappper<Component<
         this.markAsDirty();
         return true;
     }
+    
+    public OnIdleEventEventHandler buildTimer(int interval) {
+        if (this.idleEventHandler != null) {
+            stopped = false;
+            return this.idleEventHandler;
+        }
+        this.idleEventHandler = new OnIdleEventEventHandler.RepeatingIntervalWhileCond(interval,
+                ()->canShowNext(),
+                (te)-> {
+                    try {
+                        showNext();
+                        te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(this));
+    
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }) ;
+        stopped = false;
+        return this.idleEventHandler;
+    }
 
     public void setupTimer(EventBus eventBus, int interval) {
-        this.idleEventHandler = new OnIdleEventEventHandler.RepeatingIntervalWhileCond(interval,
-                                                                ()->canShowNext(),
-                                                                (te)-> {
-                                                                    try {
-                                                                        showNext();
-                                                                        te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(this));
-                                                    
-                                                                    } catch (Exception e) {
-                                                                        throw new RuntimeException(e);
-                                                                    }
-                                                                }) ;
+        this.idleEventHandler = buildTimer(interval);
         eventBus.appendIdleEventHandler(this.idleEventHandler);
     }
 

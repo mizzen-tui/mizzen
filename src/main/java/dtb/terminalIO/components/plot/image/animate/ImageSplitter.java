@@ -36,13 +36,16 @@ public class ImageSplitter implements ImageIterator {
 
     Image fullImage;
     List<Vec2<?>> offsets;
+    
+    // please note: This is the height/width of image segment in pixels 
+    //              It is not meant to represent size in chars
     int height_subImage;
     int width_subImage;
 
     int currentImageIDX = 0;
     boolean looping = true;
 
-    public ImageSplitter(Image fullImage, Collection<Vec2<?>> offsets, int height_subImage, int width_subImage) {
+    public ImageSplitter(Image fullImage, Collection<? extends Vec2<?>> offsets, int height_subImage, int width_subImage) {
         super();
         this.fullImage = fullImage;
         this.offsets = new ArrayList<Vec2<?>>(offsets);
