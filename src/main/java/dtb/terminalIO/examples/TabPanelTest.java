@@ -17,8 +17,10 @@ import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.input.DropdownListBox;
+import dtb.terminalIO.components.plot.image.BufferedImageProvider;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.ImageRenderRequest;
+import dtb.terminalIO.components.plot.image.ResizableImageViewer;
 import dtb.terminalIO.components.plot.image.animate.ImageAnimatorComponent;
 import dtb.terminalIO.components.plot.image.animate.ImageSplitter;
 import dtb.terminalIO.components.tab.TabAction;
@@ -39,6 +41,7 @@ import dtb.terminalIO.examples.GridBrailleTest.BrailleDemo;
 import dtb.terminalIO.examples.LineChartTest.LineChartDemo;
 import dtb.terminalIO.examples.sampledata.ReadSampleFiles;
 import dtb.terminalIO.geom.Dimension;
+import dtb.terminalIO.geom.Rectangle.Simple;
 import dtb.terminalIO.geom.position.Position;
 
 public class TabPanelTest {
@@ -253,7 +256,7 @@ public class TabPanelTest {
 
                     drawingControlSettings.addText("Plot Condition:");
                     drawingControlSettings.add(plotPredicatesDDLB);
-                    
+
                     vp.appendOnResize((sizeOfPanel)->  animatorComponent.resize(imgSizeCalculator.apply(sizeOfPanel)) );
                     return vp;
                 } catch (IOException e) {
@@ -268,10 +271,64 @@ public class TabPanelTest {
             public void deactivateComponent(EventBus eventBus, TabContext tabContext, VerticalPanel vp) {
                 eventBus.removeEventHandler( animatorComponent.getIdleEventEventHandler()  );
             }
-            
         });
-        
-        
+
+        tb.addTab("Image", Keys.F5_KEYSTROKE, new TabAction<Composite>() {
+
+            ResizableImageViewer imageViewer;
+            Function<Dimension, Dimension> imgSizeCalculator = (size)-> new Dimension.Simple(size.getHeight()-2, size.getWidth());
+            boolean resizeRuleAdded = false;
+            
+            @Override
+            protected Composite getComponent(TabContext tabContext) {
+                VerticalPanel vp = new VerticalPanel();
+                // "/lionRunning.jpg"
+                // "/grannySmithAppleSingle.jpg"
+                imageViewer = new ResizableImageViewer(Colors.DEFAULT_COLOR, imgSizeCalculator.apply(tabContext.getBounds()), new BufferedImageProvider.FromResource("/grannySmithAppleSingle.jpg") );
+                vp.add(imageViewer);
+
+                HorizontalPanel drawingControlSettings = new HorizontalPanel(Colors.BBlu);
+                vp.add(drawingControlSettings);
+
+                DropdownListBox<ImageViewerFactory.IMAGE_RENDER_TYPE> imageRendererTypeDDLB = new DropdownListBox<ImageViewerFactory.IMAGE_RENDER_TYPE>(ImageViewerFactory.imageRenderTypeOptions());
+                imageRendererTypeDDLB.setSelected(0);
+                imageRendererTypeDDLB.onChange((te) -> {
+                    imageViewer.setImageRenderType(imageRendererTypeDDLB.getValue());
+                    imageViewer.resizeImageAsynch(te.getEventBus(), new Dimension.Simple(imageViewer)); 
+                });
+                drawingControlSettings.addText("Render Type:");
+                drawingControlSettings.add(imageRendererTypeDDLB);
+
+                DropdownListBox<ImageViewerFactory.RGBToAnsiColorControlCode> colorMapDDLB = new DropdownListBox<ImageViewerFactory.RGBToAnsiColorControlCode>(ImageViewerFactory.colorMap());
+                colorMapDDLB.setSelected(0);
+                colorMapDDLB.onChange((te)->{
+                    imageViewer.setColorMapping(colorMapDDLB.getValue()  );
+                    imageViewer.resizeImageAsynch(te.getEventBus(), new Dimension.Simple(imageViewer)); 
+                });
+                drawingControlSettings.addText("Color Map:");
+                drawingControlSettings.add(colorMapDDLB);
+
+                DropdownListBox<ImageViewerFactory.RGBPlotPredicate> plotPredicatesDDLB = new DropdownListBox<ImageViewerFactory.RGBPlotPredicate>(ImageViewerFactory.plotPointPredicateOptions());
+                plotPredicatesDDLB.setSelected(0);
+                plotPredicatesDDLB.onChange((te)->{
+                    imageViewer.setPlotPredicate( plotPredicatesDDLB.getValue() );
+                    imageViewer.resizeImageAsynch(te.getEventBus(), new Dimension.Simple(imageViewer)); 
+                });
+                drawingControlSettings.addText("Plot Condition:");
+                drawingControlSettings.add(plotPredicatesDDLB);
+
+                return vp;
+            }
+            public void activateComponent(EventBus eventBus, TabContext tabContext, Composite vp) {
+                imageViewer.resizeImageAsynch(eventBus, imgSizeCalculator.apply(tabContext.getBounds()));
+                if (resizeRuleAdded) {
+                    resizeRuleAdded = true;
+                    vp.appendOnResize((sizeOfPanel)-> imageViewer.resizeImageAsynch(eventBus, imgSizeCalculator.apply(sizeOfPanel)));
+                }
+            }
+        });
+
+/*
         tb.addTab("Acme Demo", Keys.F5_KEYSTROKE, new TabAction<Composite>() {
 
             TextComponent tc;
@@ -312,7 +369,7 @@ public class TabPanelTest {
             }
 
         });
-
+*/
         tb.addTab("BarChart Example", Keys.F6_KEYSTROKE,  new TabAction<BarChartRandomDataDemo>() {
             @Override
             public BarChartRandomDataDemo getComponent(TabContext tabContext) {
@@ -321,12 +378,10 @@ public class TabPanelTest {
             public void activateComponent(EventBus eventBus, TabContext tabContext, BarChartRandomDataDemo barChartDemo) {
                 eventBus.appendIdleEventHandler( barChartDemo.getDrawChartTimedEventHandler()  );
             }
-
             public void deactivateComponent(EventBus eventBus, TabContext tabContext, BarChartRandomDataDemo barChartDemo) {
                 eventBus.removeEventHandler( barChartDemo.getDrawChartTimedEventHandler()  );
             }
         });
-
 
         LineChartDemo lineChartDemo = new LineChartDemo();
         tb.addTab("LineChart Example", 

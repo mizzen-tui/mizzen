@@ -149,7 +149,6 @@ public class ResizableImageViewer extends AbstractComponentWrappper<ImageRendere
 
         new Thread(() -> {
 
-
             try {
                 this.imageRequest.setImageToView(imageToView.get());
                 this.imageRequest.setDesiredImgSizeInCharacters(size);
@@ -161,7 +160,6 @@ public class ResizableImageViewer extends AbstractComponentWrappper<ImageRendere
                     this.setWrappedComponent( new ImageRenderer(resizingMessage) );
                 }
                 ImageViewerFactory.fromImage(imgRenderer, this.imageRequest);
-                
 
             } catch (Exception e) {
                 eventBus.raiseEvent(new TerminalEvent<Exception>(this, TerminalEvent.TYPE.EXCEPTION, e));
@@ -186,8 +184,6 @@ public class ResizableImageViewer extends AbstractComponentWrappper<ImageRendere
                 }
                 ResizableImageViewer.this.markAsDirty();
                 eventBus.raiseEvent(new RequestUpdateCanvasEvent(ResizableImageViewer.this));
-                
-
             });
 
         }).start();

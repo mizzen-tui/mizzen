@@ -11,8 +11,7 @@ import java.util.function.Supplier;
 import javax.imageio.ImageIO;
 
 public interface BufferedImageProvider extends Supplier<BufferedImage> {
-    
-    
+
     public static class Simple implements BufferedImageProvider {
 
         BufferedImage image;
@@ -38,7 +37,7 @@ public interface BufferedImageProvider extends Supplier<BufferedImage> {
 
 
     }
-    
+
     static class ImageCache {
         
         static Map<String, BufferedImage> namedImages = new HashMap<String, BufferedImage>();
@@ -74,7 +73,6 @@ public interface BufferedImageProvider extends Supplier<BufferedImage> {
             }
             return image;
         }
-        
     }
 
     public static class FromResource implements BufferedImageProvider {

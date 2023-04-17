@@ -65,21 +65,20 @@ public class ImageAnimatorComponent extends AbstractComponentWrappper<Component<
         }
     }
 
-    
     @Override
     public void resize(Dimension d) {
-        
+
         if (this.isSameDimension(d)) {
             return ;
         }
-        
+
         if (this.animation != null && this.animation instanceof CanResize) {
             ((CanResize)this.animation).resize(d);
         }
         imageRenderRequest.setDesiredImgSizeInCharacters(d);
-        
+
         super.resize(d);
-        
+
     }
 
 
@@ -94,9 +93,8 @@ public class ImageAnimatorComponent extends AbstractComponentWrappper<Component<
         if (ImageAnimatorComponent.this.animation.hasNext()) {
             setupTimer(eventBus, interval);
         }
-
     }
-    
+
     public boolean canShowNext() {
         return ImageAnimatorComponent.this.animation.hasNext() && !stopped;
     }
@@ -109,7 +107,7 @@ public class ImageAnimatorComponent extends AbstractComponentWrappper<Component<
         this.markAsDirty();
         return true;
     }
-    
+
     public OnIdleEventEventHandler buildTimer(int interval) {
         if (this.idleEventHandler != null) {
             stopped = false;

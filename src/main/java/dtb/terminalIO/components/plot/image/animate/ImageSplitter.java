@@ -150,7 +150,7 @@ public class ImageSplitter implements ImageIterator {
 
         ImageRenderer viewer = ImageViewerFactory.fromImage(imageRequest);
         long t2 = timer.recalcElapsed() - t1;
-        
+
         if (msg != null) {
             canvas.t(0,0, msg+"   ");
         }
@@ -159,7 +159,6 @@ public class ImageSplitter implements ImageIterator {
 
         canvas.addComponentSegments(15,20,new BorderedComponent(new TextComponent("As the world churns\nWe need to realize our\nmistakes of the past.")));
 
-        
         canvas.refresh();
 
       //  System.out.println(t1 + "  " + t2 + " " + t3 + " " + timer.recalcElapsed());

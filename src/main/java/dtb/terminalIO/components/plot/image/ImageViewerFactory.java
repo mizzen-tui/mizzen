@@ -192,18 +192,13 @@ public class ImageViewerFactory {
             if (this.isSameDimension(d)) {
                 return ;
             }
-            
             if (getWrappedComponent() instanceof CanResize) {
                 ((CanResize) getWrappedComponent()).resize(d);
             }
-            
             if (this.getParentContainer() != null) {
                 this.getParentContainer().childResized(this);
             }
-            
         }
-        
-
     }
 
     public static enum IMAGE_RENDER_TYPE {
