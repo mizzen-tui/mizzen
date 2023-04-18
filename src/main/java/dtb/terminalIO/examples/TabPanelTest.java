@@ -39,9 +39,7 @@ import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.examples.BarChartTest.BarChartRandomDataDemo;
 import dtb.terminalIO.examples.GridBrailleTest.BrailleDemo;
 import dtb.terminalIO.examples.LineChartTest.LineChartDemo;
-import dtb.terminalIO.examples.sampledata.ReadSampleFiles;
 import dtb.terminalIO.geom.Dimension;
-import dtb.terminalIO.geom.Rectangle.Simple;
 import dtb.terminalIO.geom.position.Position;
 
 public class TabPanelTest {
@@ -102,17 +100,12 @@ public class TabPanelTest {
 
         char emptyChar = '░';
         Color emptyColor = new Colors.FGBGColors(Colors.IYel, Colors.On_IBlu);
-       // tabPanelDemoApp.getCanvas().setEmptyAttributes(emptyColor, emptyChar);
 
         Composite topFrame = new Composite();
         topFrame.setEmptyChar(emptyChar);
         topFrame.setEmptyColor(emptyColor);
         topFrame.setFillOnClear(false);
 
-        // Dimension d_80 = acmeLOGOfileDimension(80);
-        Dimension d_100 = acmeLOGOfileDimension(100);
-        Dimension d_150 = acmeLOGOfileDimension(150);
-        Dimension d_200 = acmeLOGOfileDimension(200);
 
         Dimension sizeOfTabPanelWindow = new Dimension() {
             @Override
@@ -159,7 +152,7 @@ public class TabPanelTest {
         vPanel.setVerticalSpacer(1);
         topFrame.add(vPanel);
 
-        TabPanel tb = new TabPanel(Colors.DEFAULT_COLOR, new Colors.FGBGColors(Colors.Blu).bold(), sizeOfTabPanelWindow);
+        TabPanel tb = new TabPanel(Colors.BIYel, new Colors.FGBGColors(Colors.Blu).bold(), sizeOfTabPanelWindow);
         tb.setEmptyChar(emptyChar);
         tb.setEmptyColor(emptyColor);
         tb.setFillOnClear(false);
@@ -328,48 +321,6 @@ public class TabPanelTest {
             }
         });
 
-/*
-        tb.addTab("Acme Demo", Keys.F5_KEYSTROKE, new TabAction<Composite>() {
-
-            TextComponent tc;
-            Composite panel;
-
-            public void resize(TabContext tabCtx) {
-                int fileID = 80;
-                if (tabCtx.getBounds().contains(d_200)) {
-                    fileID = 200;
-                } else if (tabCtx.getBounds().contains(d_150)) {
-                    fileID = 150;
-                } else if (tabCtx.getBounds().contains(d_100)) {
-                    fileID = 100;
-                }
-
-                String imgText;
-                try {
-                    imgText = acmeLOGO(fileID);
-                } catch (IOException e) {
-                    imgText = "Failed to read file.  Exception " + e;
-                }
-
-                // hack to ensure component is built
-                getComponentForTab(tabCtx);
-                tc.setTextAndResize(imgText);
-                panel.resize(tabCtx.getBounds());
-                panel.moveChildTo(panel.centered(tc, Position.ZERO), tc);
-            }
-
-            @Override
-            public Composite getComponent(TabContext tabCtx) {
-                if (this.tc == null) {
-                    panel = new Composite(tabCtx.getColor()).setBounds( tabCtx.getBounds());
-                    tc = new TextComponent(tabCtx.getColor(), "ACME LOGO");
-                    panel.add(tc);
-                }
-                return panel;
-            }
-
-        });
-*/
         tb.addTab("BarChart Example", Keys.F6_KEYSTROKE,  new TabAction<BarChartRandomDataDemo>() {
             @Override
             public BarChartRandomDataDemo getComponent(TabContext tabContext) {
@@ -437,17 +388,5 @@ public class TabPanelTest {
 
     }
 
-    static private String acmeLOGOFileName(int sizeInName) {
-        String fileName = "acme-white-" + sizeInName + ".txt";
-        return fileName;
-    }
-
-    static private Dimension acmeLOGOfileDimension(int sizeInName) throws IOException {
-        return Dimension.UTIL.stringToDimension(ReadSampleFiles.readSampleFile(acmeLOGOFileName(sizeInName), true));
-    }
-
-    static private String acmeLOGO(int sizeInName) throws IOException {
-        return ReadSampleFiles.readSampleFile(acmeLOGOFileName(sizeInName), false);
-    }
 
 }
