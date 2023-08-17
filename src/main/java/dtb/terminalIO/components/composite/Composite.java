@@ -369,12 +369,9 @@ public class Composite extends AbstractComponent<Composite>
         if ( ! (child.component instanceof CanResize)) {
             throw new IllegalArgumentException("child component ("+HasName.UTIL.getName(child.component)+") does not implement "+CanResize.class.getSimpleName());
         }
-        appendOnResizeRule( new  ExpandDownAndRight(getInnerRectangle(), Position.ZERO,  child, (CanResize)child.component));
-        
+        appendOnResizeRule( new ExpandDownAndRight(getInnerRectangle(), Position.ZERO,  child, (CanResize)child.component));
     }
-    
-    
-    
+
     public Composite appendOnResize(Consumer<Dimension> onResize) {
         return appendOnResizeRule(CanResize.UTIL.resizableFromService(onResize));
     }

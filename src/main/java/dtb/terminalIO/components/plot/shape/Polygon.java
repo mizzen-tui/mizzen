@@ -12,7 +12,7 @@ import dtb.terminalIO.geom.position.Vec2;
 public class Polygon extends ConnectedPoints<Polygon> {
     
     public Polygon() {
-        super(true);
+        super(true); // true means last point and first point are connected, causing a closed shape
     }
 
     public Polygon(int[][] dots) {

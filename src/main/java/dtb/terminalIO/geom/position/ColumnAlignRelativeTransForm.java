@@ -28,7 +28,7 @@ public interface ColumnAlignRelativeTransForm {
                 };
             }
 
-            if (Align.MIDDLE.equals(align)) {
+            if (Align.CENTER.equals(align)) {
                 return (anchorComponent, alignedComponent) -> {
                     if (anchorComponent.getWidth() <= alignedComponent.getWidth()) {
                         return anchorComponent.getCol();

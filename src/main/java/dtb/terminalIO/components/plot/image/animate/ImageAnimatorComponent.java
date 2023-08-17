@@ -7,10 +7,12 @@ import dtb.terminalIO.components.plot.image.ImageViewerFactory;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.ImageRenderRequest;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
+import dtb.terminalIO.events.TerminalEvent;
 
 public class ImageAnimatorComponent extends AbstractComponentWrappper<Component<?>> {
 
@@ -108,6 +110,14 @@ public class ImageAnimatorComponent extends AbstractComponentWrappper<Component<
         return true;
     }
 
+    public boolean showNextAndDisplay(TerminalEvent<?> te) throws Exception {
+        boolean result = this.showNext();
+        if (result) {
+            te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(this));
+        }
+        return result;
+    }
+
     public OnIdleEventEventHandler buildTimer(int interval) {
         if (this.idleEventHandler != null) {
             stopped = false;
@@ -119,7 +129,6 @@ public class ImageAnimatorComponent extends AbstractComponentWrappper<Component<
                     try {
                         showNext();
                         te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(this));
-    
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
@@ -128,9 +137,10 @@ public class ImageAnimatorComponent extends AbstractComponentWrappper<Component<
         return this.idleEventHandler;
     }
 
-    public void setupTimer(EventBus eventBus, int interval) {
+    public EventHandler setupTimer(EventBus eventBus, int interval) {
         this.idleEventHandler = buildTimer(interval);
         eventBus.appendIdleEventHandler(this.idleEventHandler);
+        return this.idleEventHandler;
     }
 
     public OnIdleEventEventHandler getIdleEventEventHandler() {

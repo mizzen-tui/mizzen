@@ -11,6 +11,7 @@ import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.FocusManagerProvider;
 import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
 
 public class CompositeWithFocusManager  extends Composite implements FocusManager, FocusManagerProvider
@@ -21,11 +22,18 @@ public class CompositeWithFocusManager  extends Composite implements FocusManage
     public CompositeWithFocusManager(Color color)
     {
         super(color);
+        getFocusManager();
+    }
+    
+    public CompositeWithFocusManager(Color color, Dimension bounds)  {
+        super(color, bounds);
+        getFocusManager();
     }
 
     public CompositeWithFocusManager()
     {
         super();
+        getFocusManager();
     }
 
     public DefaultFocusManager getFocusManager() {

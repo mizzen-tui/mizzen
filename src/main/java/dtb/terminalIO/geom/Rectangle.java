@@ -336,7 +336,12 @@ public interface Rectangle extends Position, Dimension, Movable {
         public Simple(Dimension d) {
             this(Position.ZERO.getRow(), Position.ZERO.getCol(), d.getHeight(), d.getWidth());
         }
+        
+        public Simple(int height, int width) {
+            this(new Dimension.Simple(height, width));
+        }
 
+        
         @Override
         public int getCol() {
             return col;

@@ -10,6 +10,8 @@ import dtb.terminalIO.util.StringUtils;
  * Objects that have names as well as useful utility functions
  * to extract name from objects that do not implement this interface.
  * 
+ * <p/>
+ * 
  * Useful for labeling objects so that it makes it easier to identify them
  * when doing debugging.
  * 
@@ -18,12 +20,11 @@ import dtb.terminalIO.util.StringUtils;
  * @param <T>  Type of object implementing HasName
  */
 public interface HasName<T> {
-    
+
     public String getName();
-    
+
     public T setName(String name);
-    
-    
+
     public static class UTIL {
         public static void setDefaultNameFromParentObject(Object objectWithName, Object parentContainer, String nameSuffix) {
             if (objectWithName == null || parentContainer == null) {

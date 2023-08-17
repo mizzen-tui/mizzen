@@ -33,6 +33,10 @@ public interface HasValue<V> {  //TODO:  Make a SettableValue that extends this.
         public ValueChangedEvent(HasValue<V> eventData) {
             super(eventData, TYPE.VALUE_CHANGED, eventData);
         }
+        
+        public String toString() {
+            return "HasValue.ValueChangedEvent [source=" + getSource() + ", eventData=" + this.getEventData() + "]";
+        }
     }
 
     public abstract class OnValueChangedEventHandler<V> implements ConditionalEventHandler , HasName<OnValueChangedEventHandler<V>> {

@@ -43,16 +43,16 @@ public class ExecUtil {
         }
     }
     
-    public static String SSH_Path() {
+    public static String SH_Path() {
         return OSType.DETECTED.equals(OSType.CygWin) ? "sh" : "/bin/sh";
     }
 
     public static String[] shellCMD(String command) {
-        return new String[] { SSH_Path(), "-c", command };
+        return new String[] { SH_Path(), "-c", command };
     }
     
     public static String executeWithShell(String command) throws Exception {
-        return executeCMDAndReturnOutput(new String[] { SSH_Path(), "-c", command });
+        return executeCMDAndReturnOutput(new String[] { SH_Path(), "-c", command });
     }
     
     public static int executeCMD(String[] commands, ConsumeResultAction<String> outputConsumer) throws Exception {
@@ -108,7 +108,7 @@ public class ExecUtil {
 
     public static int executeLongRunningWithShell(String command, ConsumeLineOutput outputConsumer,
             Supplier<Boolean> isActive) throws IOException, InterruptedException {
-        return executeLongRunning(new String[] { SSH_Path(), "-c", command }, outputConsumer, isActive);
+        return executeLongRunning(new String[] { SH_Path(), "-c", command }, outputConsumer, isActive);
     }
     
 

@@ -40,6 +40,17 @@ import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.StringUtils;
 
+/**
+ * Presents a list of items to user to select from.
+ * 
+ * <p/>
+ * 
+ * User the {@link #onChange} method to detect and 'handle' selection changed events
+ * 
+ * @author dbalme
+ *
+ * @param <T>
+ */
 public class ListBox<T> extends AbstractComponent<ListBox<T>>  
                                 implements HasValue<T>, 
                                            ToFocusable, 
@@ -54,15 +65,24 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
     KeyStroke      keystrokeNext           = Keys.DOWN_KEYSTROKE;
     Color          selectedColor           = new Colors.FGBGColors(Colors.IYel);
 
+    
+    public static interface ItemComponent  {
+        Component<?> getComponent();
+        void selectWithFocus();
+        void selectWithNoFocus();
+        void unSelect();
+    }
+
+    
     // Components that are rendered in the list
-    abstract class ItemComponent  {
+    public static abstract class AbstractItemComponent  implements ItemComponent {
          Component<?> component;
 
          public Component<?> getComponent() {
             return component;
         }
 
-        ItemComponent(Component<?> component) {
+        AbstractItemComponent(Component<?> component) {
              this.component = component;
          }
 
@@ -105,10 +125,13 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         }
 
     }
-    
+
     ItemComponent itemComponentfactory(Component<?> component) {
+             if (component instanceof ItemComponent) {
+                 return (ItemComponent) component;
+             }
              if (component instanceof TextComponent) {
-                 return new ItemComponent(component) {
+                 return new AbstractItemComponent(component) {
 
                     @Override
                     public void selectWithFocus() {
@@ -130,7 +153,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
              }
 
              if (component instanceof BorderedComponent) {
-                 return new ItemComponent(component) {
+                 return new AbstractItemComponent(component) {
 
                     @Override
                     public void selectWithFocus() {
@@ -157,7 +180,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
              }
 
              if (component instanceof ListItemComponent) {
-                 return new ItemComponent(component) {
+                 return new AbstractItemComponent(component) {
 
                     @Override
                     public void selectWithFocus() {
@@ -189,7 +212,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
              }
 
              if (component instanceof Composite) {
-                 return new ItemComponent(component) {
+                 return new AbstractItemComponent(component) {
 
                     @Override
                     public void selectWithFocus() {
@@ -213,7 +236,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
                     }
                  };
              }
-             return new ItemComponent(component) {
+             return new AbstractItemComponent(component) {
 
                  @Override
                  public void selectWithFocus() {
@@ -234,7 +257,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
 
     // DisplayValue ItemComponent pair - this is what is managed by the ListBox
     class ListItem {
-        
+
         private DisplayableValue<T> hasValue;
         private ItemComponent  itemComponent;
                     
@@ -251,7 +274,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         public void setDisplayValue(DisplayableValue<T> displayValue) {
             this.hasValue = displayValue;
         }
-        
+
         public ItemComponent getItemComponent() {
             return itemComponent;
         }
@@ -275,11 +298,11 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         itemsContainer.setFillOnClear(true);
         this.setFillOnClear(true);
     }
-    
+
     public ListBox() {
         this(Colors.FGBGColors.NO_COLOR_SPECIFIED);
     }
-    
+
     public ListBox(DisplayableValue<T>[] listItems) {
         this();
         setItems(Arrays.asList(listItems));
@@ -320,7 +343,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
     public interface ComponentItemFactory<T> {
         Component<?> makeComponentFromdisplayableItem(Color color, int maxWidthStr, DisplayableValue<T> displayableItem);
     }
-    
+
     public static class TextComponentItemFactory<T> implements ComponentItemFactory<T> {
 
         @Override
@@ -332,12 +355,14 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
             return tc;
         }
     }
-    
-    
+
     ComponentItemFactory<T> DEFAULT_COMPONENT_FACTORY = (color, maxWidthStr, displayableItem) -> new ListItemComponent<T>(this.getColor(), maxWidthStr, displayableItem);
-    
-    
-    public void setItems( List<DisplayableValue<T>> displayableItems , ComponentItemFactory<T> displayItemToComponent) {
+
+    public void setSelectedColor(Color selectedColor) {
+        this.selectedColor = selectedColor;
+    }
+
+    public void setItems( List<? extends DisplayableValue<T>> displayableItems , ComponentItemFactory<T> displayItemToComponent) {
         this.items = new ArrayList<ListItem>(displayableItems.size());
         this.itemsContainer.clearAndRemoveAllChildren();
         int maxWidthStr = displayableItems.stream().map( (dv)-> Dimension.UTIL.stringToDimension( dv.getDisplayValue()) ).mapToInt((d)->d.getWidth()).max().orElse(0);
@@ -345,28 +370,26 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         if (maxHeightStr>1 && itemsContainer.getVerticalSpacer()==0) {
             itemsContainer.setVerticalSpacer(1);
         }
-        
-        int padding = 2;
-        
+
         for (DisplayableValue<T> displayableItem : displayableItems) {
 
             Component<?> component = displayItemToComponent.makeComponentFromdisplayableItem(this.getColor(), maxWidthStr, displayableItem);
-            if (component instanceof Composite) {
-                padding = 4;
-            }
+//            if (component instanceof Composite) {
+//                padding = 4;
+//            }
 
             ListItem item = new ListItem(displayableItem, component);
             item.itemComponent.unSelect();
             items.add( item );
-            
+
             this.itemsContainer.add(component);
         }
-        itemsContainer.setBounds( null ); // forces recalc of dimensions
-        itemsContainer.setBounds( new Dimension.Simple( itemsContainer.getHeight()+padding , itemsContainer.getWidth()+padding) );
+        //itemsContainer.setBounds( null ); // forces recalc of dimensions
+        //itemsContainer.setBounds( new Dimension.Simple( itemsContainer.getHeight() , itemsContainer.getWidth()) );
         selected = -1;
     }
-    
-    public void setItems( List<DisplayableValue<T>> displayableItems) {
+
+    public void setItems( List<? extends DisplayableValue<T>> displayableItems) {
         setItems(displayableItems, DEFAULT_COMPONENT_FACTORY);
     }
     
@@ -377,7 +400,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         }
         setSelected(idx);
     }
-    
+
     public int indexOf(ListItem item) {
         if (item == null) {
             throw new NullPointerException(HasName.UTIL.getName(this)+": item paramater null!");
@@ -385,11 +408,10 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         if (this.items == null) {
             return -1;
         }
-        
+
         return this.items.indexOf(item);
     }
-    
-    
+
     public int indexOf(T value) {
         if (value == null) {
             throw new NullPointerException(HasName.UTIL.getName(this)+": value paramater null!");
@@ -429,7 +451,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
     public int size() {
         return items.size();
     }
-    
+
     /**
      * @return selected item index (position in list)
      */
@@ -439,7 +461,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         }
         return selected;
     }
-    
+
     /**
      * returns value of item at index
      */
@@ -457,7 +479,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         ItemComponent itemComponent = items.get(index).itemComponent;
         return itemComponent;
     }
-    
+
     /**
      * @param index
      * @return  true if success in selecting item referenced by index
@@ -486,9 +508,9 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
                 curSelectedComponent.selectWithFocus();
             }
         }
-        
+
         this.markAsDirty();
-        
+
         return true;
     }
 
@@ -541,8 +563,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         }
         return setSelected(selected + 1);
     }
-    
-    
+
     public DisplayableValue<T> getSelected() {
         int selected = getSelectedIndex();
         if (selected < 0) {
@@ -755,7 +776,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
 
         }
     }
-    
+
     protected void onMouseSelected(EventBus eventBus) {
         // now let the rest of the app know that changes have happened to this ListBox
         eventBus.raiseEvent(  new HasValue.ValueChangedEvent<>(ListBox.this) );
@@ -764,6 +785,12 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
 
     HasValue.OnValueChangedEventHandler<T> onChangeHandler;
 
+    /**
+     * 
+     * Use this method to detect selection changed events
+     * 
+     * @param consumeChange
+     */
     public void onChange(EventHandler consumeChange) {
 
         onChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, onChangeHandler, getChainedEventHandler(), consumeChange);

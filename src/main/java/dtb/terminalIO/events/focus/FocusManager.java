@@ -180,6 +180,32 @@ public interface FocusManager extends Focusable {
 
             return null;
         }
+        
+        public static FocusManager getRootFocusManager(Focusable focusable) {
+            List<FocusManager> path = pathToRootFocusManager(focusable);
+            if (path.size()>0) {
+                return path.get(path.size()-1);
+            }
+            return null;
+        }
+
+        public static List<FocusManager> pathToRootFocusManager(Focusable focusable) {
+            if (focusable == null) {
+                throw new NullPointerException("pathToRootFocusManager() ERROR: focusable parameter null!");
+            }
+            if (focusable.getParentFocusManager() == null) {
+                return Collections.emptyList();
+            }
+            List<FocusManager> path = new ArrayList<FocusManager>();
+            FocusManager  focusManager =  focusable.getParentFocusManager();
+            path.add(focusManager);
+            
+            while (focusManager.getParentFocusManager() != null) {
+                focusManager = focusManager.getParentFocusManager();
+                path.add(focusManager);
+            }
+            return path;
+        }
 
 
         private static void addFocusableChildren(List<Focusable> focusableContainer, Object component) {

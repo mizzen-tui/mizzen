@@ -36,6 +36,7 @@ public interface TableModel {
         public Object getValueAt(int rowIndex, int columnIndex) {
             return delegate.getValueAt(rowIndex,columnIndex);
         }
+
         
     }
     

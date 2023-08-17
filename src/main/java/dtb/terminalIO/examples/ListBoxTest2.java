@@ -73,9 +73,7 @@ public class ListBoxTest2 {
 
             tApp.getMainApplicationPanel().add(2,2,hpMain);
 
-
             FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(), tApp.getEventBus());
-            
             
             tApp.getEventBus().appendEventHandler(  mainFocusManager );
 

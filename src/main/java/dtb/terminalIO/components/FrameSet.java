@@ -17,15 +17,13 @@ import dtb.terminalIO.util.ElapsedTime;
 import dtb.terminalIO.util.Logging;
 
 
-//  TODO:   FrameSet is broken - take a look at the draw() method .. I intentionally crippled it for now - it needs to be fixed
-
 
 public class FrameSet extends BoundedComponent<FrameSet> implements HasTitleAndBorder<FrameSet>,  ParentContainer, GetComponentAtOffset {
 
     Composite container;
 
-    List<VerticalPair> vPairs = new ArrayList<VerticalPair>();
-    List<HorizontalPair> hPairs = new ArrayList<HorizontalPair>();
+    List<VerticalDivider> vDividers = new ArrayList<VerticalDivider>();
+    List<HorizontalDivider> hDividers = new ArrayList<HorizontalDivider>();
 
     public FrameSet(Color color, Dimension d) {
         super(color, d);
@@ -50,55 +48,66 @@ public class FrameSet extends BoundedComponent<FrameSet> implements HasTitleAndB
     }
 
     
-    class VerticalPair {
+    class VerticalDivider {
         Component<?> left;
         Component<?> right;
-        public VerticalPair(Component<?> left, Component<?> right) {
+        public VerticalDivider(Component<?> left, Component<?> right) {
             super();
             this.left = left;
             this.right = right;
         }
-        public int getHeight() {
-            Rectangle nextComponentBelow = findNextBelowChildComponent(getPosition());
+        public int getHeightOfVerticalDivider() {
+            Rectangle nextComponentBelow = findNextBelowChildComponent(getPositionOfVerticalDivider());
             int row = nextComponentBelow != null 
                              ? nextComponentBelow.getPostion_BottomLeft().getRow() - 1
                              : FrameSet.this.getHeight() + (hasBorder()?1:0);
                              
-            return row - Math.min(container.getPositionRelativeToParent(left).getRow(), container.getPositionRelativeToParent(right).getRow()) ;
+            return row - Math.min(container.getPositionRelativeToParent(left).getRow(), container.getPositionRelativeToParent(right).getRow());
         }
 
-        public Position getPosition() {
+        public Position getPositionOfVerticalDivider() {
             return childComponentAsRectangle(left).getPostion_TopRight().offsetAdd(hasBorder()?-1:0,1);
         }
         
         public String toString() {
-            return String.format("VerticalPair[left=(%s),right=(%s)]",String.valueOf(left), String.valueOf(right));
+            return String.format("VerticalDivider[left=(%s),right=(%s)]",String.valueOf(left), String.valueOf(right));
         }
     }
 
-    class HorizontalPair {
+    class HorizontalDivider {
         Component<?> above;
         Component<?> below;
-        public HorizontalPair(Component<?> above, Component<?> below) {
+
+        public HorizontalDivider(Component<?> above, Component<?> below) {
             super();
             this.above = above;
             this.below = below;
         }
-        public int getWidth() {
-            
-            Rectangle nextComponentToTheRight = findNextRightChildComponent(getPosition());
-            int col = nextComponentToTheRight != null 
-                             ? nextComponentToTheRight.getPostion_TopLeft().getCol()  + (FrameSet.this.hasBorder() ? 0 : -1)
-                             : FrameSet.this.getWidth() + (FrameSet.this.hasBorder() ? 1 : 1);
 
-            return col - Math.min(container.getPositionRelativeToParent(above).getCol(), container.getPositionRelativeToParent(below).getCol()) ;
+        public int getWidthOfHorizontalDivider() {
+            
+            Rectangle nextComponentToTheRight = findNextRightChildComponent(getStartPositionOfHorizontalDivider());
+            if (nextComponentToTheRight != null) {
+                int rightCol = nextComponentToTheRight.getPostion_TopLeft().getCol()  ;
+                int leftColForLine = getStartPositionOfHorizontalDivider().getCol();
+                return (rightCol - leftColForLine);
+            } else {
+                int rightCol = FrameSet.this.getWidth() + (FrameSet.this.hasBorder() ? 1 : 1);
+                int leftColForLine = getStartPositionOfHorizontalDivider().getCol();
+                return (rightCol - leftColForLine) -1 ;
+            }
         }
 
-        public Position getPosition() {
+        public Position getStartPositionOfHorizontalDivider() {
+            Position bottomLeft = childComponentAsRectangle(above).getPostion_BottomLeft();
+            if (bottomLeft.getCol()> 0) {
+                return bottomLeft.offsetAdd(1,-1);
+            }
             return childComponentAsRectangle(above).getPostion_BottomLeft().offsetAdd(1, hasBorder()?-1:0);
         }
+
         public String toString() {
-            return String.format("HorizontalPair[above=(%s),below=(%s)]",String.valueOf(above), String.valueOf(below));
+            return String.format("HorizontalDivider[above=(%s),below=(%s)]",String.valueOf(above), String.valueOf(below));
         }
     }
 
@@ -118,14 +127,13 @@ public class FrameSet extends BoundedComponent<FrameSet> implements HasTitleAndB
         
         int row = offset.getRow();
         int col = offset.getCol();
-        
+
         Optional<Rectangle> found = container.getChildren().stream()
                                                            .filter((c)-> container.isChildVisible(c) )
                                                            .map((c)-> childComponentAsRectangle(c))
                                                            .filter((c)-> c.containsRow( row ) && c.getCol()>col)
                                                            .sorted( (c1,c2) -> c1.getCol() - c2.getCol()  )
                                                            .findFirst();
-        
         return found.isPresent() ? found.get() : null ;
     }
 
@@ -146,13 +154,13 @@ public class FrameSet extends BoundedComponent<FrameSet> implements HasTitleAndB
 
     public FrameSet addRight(Component<?> component, Component<?> anchorComponent) {
         container.addRight(component, anchorComponent, 1);
-        vPairs.add(new VerticalPair(anchorComponent, component));
+        vDividers.add(new VerticalDivider(anchorComponent, component));
         return this;
     }
 
     public FrameSet addBelow(Component<?> component, Component<?> anchorComponent) {
         container.addBelow(component, anchorComponent, 1);
-        hPairs.add(new HorizontalPair(anchorComponent, component));
+        hDividers.add(new HorizontalDivider(anchorComponent, component));
         return this;
     }
 
@@ -178,7 +186,6 @@ public class FrameSet extends BoundedComponent<FrameSet> implements HasTitleAndB
         container.onResizeExpandDownAndRight(component);
     }
 
-    
     @Override
     public void resize(Dimension d) {
         if (this.isSameDimension(d)) {
@@ -207,31 +214,41 @@ public class FrameSet extends BoundedComponent<FrameSet> implements HasTitleAndB
         Logging.info(String.format("Parts Frameset container draw: #segments %d   time:  %d",  
                                    container.getSegmentsBuffer().getSegments().size(), 
                                    drawContainerTime.elapsed() ));
-        
-        Rectangle bounds = new Rectangle.Simple(this);
-        
-        Component.UTIL.assertSegmentsIntegrity(bounds, mySegments.getSegments());
-        
-        if (1+1==2) return;
-        
-        int iCount = 0;
-        
-        for (HorizontalPair hPair : hPairs) {
-            iCount++;
-            if (iCount == 3) {
-                iCount = 0;
-            }
-            BlockChars.UTIL.drawHorizontalLine(mySegments, this.getColor(), this.getBlockChars(), hPair.getPosition(), hPair.getWidth());
-            Component.UTIL.assertSegmentsIntegrity(bounds, mySegments.getSegments());
-        }
 
-        for (VerticalPair vPair : vPairs) {
-            if (bounds.containsPosition(vPair.getPosition())) {
-                int lineHeight = vPair.getHeight();
-                if (lineHeight + vPair.getPosition().getRow() > bounds.getBottomMostRow()) {
-                    lineHeight = bounds.getBottomMostRow() - vPair.getPosition().getRow();
+        Rectangle bounds = new Rectangle.Simple(this);
+
+        Component.UTIL.assertSegmentsIntegrity(bounds, mySegments.getSegments());
+
+        int iCount = 0;
+
+        
+        // please note:  There is a bug in the line drawing such that it favors drawing vertical lines first 
+        //               and then horizontal lines 2nd.  If you do the reverse, the code might not the correct
+        //               intersection character.
+        //boolean doHorizonal = true;
+        boolean doHorizonal = false;
+        
+        if (doHorizonal) {
+            for (HorizontalDivider hDivider : hDividers) {
+                iCount++;
+                if (iCount == 1) {
+                    iCount = 0;
                 }
-                BlockChars.UTIL.drawVerticalLine(mySegments, this.getColor(), this.getBlockChars(), vPair.getPosition(), lineHeight);
+                Position startPos = hDivider.getStartPositionOfHorizontalDivider();
+                int hLineLen = hDivider.getWidthOfHorizontalDivider();
+                BlockChars.UTIL.drawHorizontalLine(mySegments, this.getColor(), this.getBlockChars(), startPos, hLineLen);
+                Component.UTIL.assertSegmentsIntegrity(bounds, mySegments.getSegments());
+            }
+        }
+//        if (1+1==2) return;
+
+        for (VerticalDivider vDivider : vDividers) {
+            if (bounds.containsPosition(vDivider.getPositionOfVerticalDivider())) {
+                int lineHeight = vDivider.getHeightOfVerticalDivider();
+                if (lineHeight + vDivider.getPositionOfVerticalDivider().getRow() > bounds.getBottomMostRow()) {
+                    lineHeight = bounds.getBottomMostRow() - vDivider.getPositionOfVerticalDivider().getRow() + 1;
+                }
+                BlockChars.UTIL.drawVerticalLine(mySegments, this.getColor(), this.getBlockChars(), vDivider.getPositionOfVerticalDivider(), lineHeight);
             }
             Component.UTIL.assertSegmentsIntegrity(bounds, mySegments.getSegments());
         }
@@ -244,11 +261,22 @@ public class FrameSet extends BoundedComponent<FrameSet> implements HasTitleAndB
                 }
             }
         }
+        if (!doHorizonal) {
+            for (HorizontalDivider hDivider : hDividers) {
+                iCount++;
+                if (iCount == 1) {
+                    iCount = 0;
+                }
+                Position startPos = hDivider.getStartPositionOfHorizontalDivider();
+                int hLineLen = hDivider.getWidthOfHorizontalDivider();
+                BlockChars.UTIL.drawHorizontalLine(mySegments, this.getColor(), this.getBlockChars(), startPos, hLineLen);
+                Component.UTIL.assertSegmentsIntegrity(bounds, mySegments.getSegments());
+            }
+        }
 
         Logging.info(String.format("Parts Frameset full draw: #segments %d   time:  %d",  
                 mySegments.getSegments().size(), 
                 drawContainerTime.recalcElapsed() ));
-        
     }
 
 
@@ -303,7 +331,6 @@ public class FrameSet extends BoundedComponent<FrameSet> implements HasTitleAndB
         return container.getTitle();
     }
 
-    
     @Override
     public Collection<? extends Component<?>> getChildren() {
         return Collections.singleton(this.container);
@@ -323,7 +350,7 @@ public class FrameSet extends BoundedComponent<FrameSet> implements HasTitleAndB
            this.resize(child.getPreferredRectangleForLayout());
         }
     }
-    
+
     @Override
     public Component<?> getComponentAtOffset(Position offset) {
         return this.container.getComponentAtOffset(offset);

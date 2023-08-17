@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import dtb.terminalIO.events.TerminalEvent.TYPE;
 import dtb.terminalIO.events.keyboard.InputEventsProducer;
+import dtb.terminalIO.util.Logging;
 
 /**
  * Warning: This object will spawn a new thread in its constructor.
@@ -142,6 +143,9 @@ public class EventBusImpl implements EventHandlerContainer, EventBus {
     
     protected void handleEvent(TerminalEvent<?> te) {
         te.setEventBus(EventBusImpl.this);
+//        if (!(te instanceof OnIdleEvent)) {
+//            Logging.info("EVENT IN QUEUE " + te.toString());
+//        }
         eventsHandlerChain.handle(te);
         te.setEventBus(null);
         te.onEventProcessed();
@@ -406,6 +410,11 @@ public class EventBusImpl implements EventHandlerContainer, EventBus {
      */
     @Override
     public EventBus appendEventHandler(ConditionalEventHandler eventHandler) {
+        
+        if (eventHandler == null) {
+            throw new NullPointerException("appendEventHandler() error:  eventHandler null!");
+        }
+        
         if (eventHandler instanceof OnIdleEventEventHandler) {
 
             return appendIdleEventHandler((OnIdleEventEventHandler) eventHandler);

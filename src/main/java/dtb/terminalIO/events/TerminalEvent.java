@@ -39,7 +39,8 @@ public class TerminalEvent<T> extends EventObject {
         RESIZE,
         EXCEPTION,
         TERMINATE,
-        DEBUG
+        DEBUG,
+        STUBBED
     }
     
     public static enum Q_FULL_POLICY {
@@ -146,6 +147,14 @@ public class TerminalEvent<T> extends EventObject {
     public TerminalEvent<T> then(Runnable onEventProcessed) {
         this.onEventProcessed = onEventProcessed;
         return this;
+    }
+    
+    public static TerminalEvent<?> STUBBED(TYPE type) {
+        return new TerminalEvent(TerminalEvent.class, type, null, new EventBus.STUBBED());
+    }
+
+    public static TerminalEvent<?> STUBBED() {
+        return STUBBED(TYPE.STUBBED);
     }
 
 

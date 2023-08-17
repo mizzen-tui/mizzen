@@ -57,7 +57,6 @@ abstract class AbstractSegment implements ScreenLineSegment {
 
     @Override
     public void moveTo(int row, int col) {
-        // TODO: this.getCursorPos().moveTo(row, col);
         throw new IllegalStateException("No implemented yet!");
     }
 }

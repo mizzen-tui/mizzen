@@ -231,7 +231,7 @@ public class LineChart extends Composite {
     
     public LineChart setSeriesColor(String seriesName, Color seriesColor) {
         Series series = nameToSeries(seriesName);
-        series.color = mergeGraphColorWithComponentBackgroundColor(seriesColor);
+        series.color = seriesColor; // mergeGraphColorWithComponentBackgroundColor(seriesColor);
         return this;
     }
 

@@ -35,7 +35,6 @@ public class OnIdleEventEventHandler extends ConditionalEventHandler.Impl {
         }
         return null;
     }
-    
 
     /**
      * Executes on an IdleEvent once and then removes itself from the eventBus.
@@ -200,12 +199,12 @@ public class OnIdleEventEventHandler extends ConditionalEventHandler.Impl {
 
             // Now we handle the event
             super.handle(te);
-            
+
             if (handler.countdown <= 0) {
                 te.getEventBus().removeEventHandler(this);
                 return;
             }
-            
+
             // Second we build a new Interval predicate specifying when to
             // run next
             this.setCanHandlePredicate(new IntervalPredicate(intervalInMilliSeconds));

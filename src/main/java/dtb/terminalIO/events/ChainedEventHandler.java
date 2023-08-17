@@ -85,7 +85,7 @@ public class ChainedEventHandler implements EventHandler, EventHandlerContainer,
     }
 
     /**
-     * Builds a ChainedEventHandler that delegates incoming events to its child
+     * Builds a {@link ChainedEventHandler} that delegates incoming events to its child
      * event handlers in a Child-of-Responsibility style.
      * 
      * <p/>
@@ -105,6 +105,10 @@ public class ChainedEventHandler implements EventHandler, EventHandlerContainer,
         return chainedEventHandler;
     }
 
+    /**
+     * For details see {@link #useChainOfResponsibilityStrategy(String name)}
+     * @return
+     */
     public static ChainedEventHandler useChainOfResponsibilityStrategy() {
         return useChainOfResponsibilityStrategy("chainOfResponsibility");
     }
@@ -302,6 +306,10 @@ public class ChainedEventHandler implements EventHandler, EventHandlerContainer,
         }
     };
 
+    /**
+     * An adapter that makes this ChainedHandler look like a {@link ConditionalEventHandler}
+     * @return
+     */
     public ConditionalEventHandler asConditionalEventHandler() {
 
         // make sure our current handler list is up to date

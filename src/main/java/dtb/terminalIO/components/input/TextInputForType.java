@@ -45,8 +45,9 @@ public class TextInputForType<T>  extends BoundedComponent<TextInputForType<T>> 
                 return TextInputForType.this.validate.apply(newText);
             }
         };
+
         this.textInput.setParentContainer(this);
-        
+
         this.textInput.onChange((te)->{
             if (getValue() == null) {
                 return;
@@ -79,12 +80,12 @@ public class TextInputForType<T>  extends BoundedComponent<TextInputForType<T>> 
         if (this.eventHandler != null) {
             return this.eventHandler;
         }
-        
+
         this.eventHandler = getChainedEventHandler().asConditionalEventHandler();
-        
+
         return this.eventHandler;
     }
-    
+
     private ChainedEventHandler getChainedEventHandler() {
         if (this.chainedHandler != null) {
             return this.chainedHandler;
@@ -94,7 +95,6 @@ public class TextInputForType<T>  extends BoundedComponent<TextInputForType<T>> 
         return this.chainedHandler;
     }
 
-    
     @Override
     public EventHandler canHandle(TerminalEvent<?> te) {
         if (getEventHandler().canHandle(te) != null) {
@@ -141,10 +141,12 @@ public class TextInputForType<T>  extends BoundedComponent<TextInputForType<T>> 
 
     @Override
     public T getValue() {
+
         String currentText = this.textInput.getText();
         if (currentText == null || currentText.trim().length()==0) {
             return null;
         }
+
         currentText = currentText.trim();
 
         // for robustness validate first - even tho' TextInput should have already been validated
@@ -154,7 +156,7 @@ public class TextInputForType<T>  extends BoundedComponent<TextInputForType<T>> 
 
         return this.translateToType.apply(currentText);
     }
-    
+
     @Override
     public void setValue(T value) {
         String currentText = translateFromType.apply(value);
@@ -163,14 +165,12 @@ public class TextInputForType<T>  extends BoundedComponent<TextInputForType<T>> 
         }
         setText(currentText);
     }
-    
-    
 
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer mySegments) {
         mySegments.clearAndMerge(this.textInput.getSegmentsBuffer().getSegments());
     }
-    
+
     public String toStringDetails() {
         return "[value=" + StringUtils.truncate(String.valueOf(this.getValue()),10)+"]";
     }

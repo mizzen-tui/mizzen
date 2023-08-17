@@ -2,6 +2,7 @@ package dtb.terminalIO.events.mouse;
 
 import dtb.terminalIO.events.EventBus;
 
+@FunctionalInterface
 public interface Clickable {
 
     public void onClick(EventBus eventBus);

@@ -160,7 +160,7 @@ public abstract class Color extends ControlCode implements ColorProvider {
     
     Color mergeColors(Color c1, Color c2) {
         if (c1 == null && c2 == null) {
-            throw new NullPointerException("Cannot merge to null colors!");
+            throw new NullPointerException("Cannot merge two null colors!");
         }
         
         if (c1 == c2 || c2 == Colors.RCol) {

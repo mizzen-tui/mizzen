@@ -4,8 +4,10 @@ import java.util.Collection;
 import java.util.Collections;
 
 import dtb.terminalIO.components.BoundedComponent;
+import dtb.terminalIO.components.ColorHiliter;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.GetComponentAtOffset;
+import dtb.terminalIO.components.Hiliter;
 import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.Composite;
@@ -35,6 +37,7 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
                                                                 Focusable, 
                                                                 HasHotKey, 
                                                                 Clickable, 
+                                                                Hiliter,
                                                                 ParentContainer, 
                                                                 GetComponentAtOffset  {
 
@@ -49,14 +52,15 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
     boolean useCursor = false;
     Focusable meAsFocusable;
     ChainedEventHandler chainedHandler;
-    
+    Hiliter hiliter;
+
     private KeyStroke hotKey;
-    
+
     @FunctionalInterface
     public static interface Action {
         void buttonPressed( boolean toggleOn);
     }
-    
+
     public Button(Color color, int row, int col, String buttonText, boolean toggle) {
         super(color, new Rectangle.Simple(row, col, 0, 0));
         this.toggleButton = toggle;
@@ -66,6 +70,7 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
         this.container.add(renderedText);
         this.container.setParentContainer(this);
         this.setButtonTextAndResize(buttonText);
+        this.hiliter = new ColorHiliter(this);
     }
     public Button(Color color, String buttonText, boolean toggle) {
         this(color, 0, 0, buttonText, toggle);
@@ -74,7 +79,7 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
     public Button(Color color, String buttonText) {
         this(color, buttonText, false);
     }
-    
+
     public Button(String buttonText, boolean toggle) {
         this(Colors.FGBGColors.NO_COLOR_SPECIFIED, buttonText, toggle);
     }
@@ -133,7 +138,7 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
         }
         this.markAsDirty();
     }
-    
+
     private String lbracket(String brackStr) {
         if (toggleButton) {
             return brackStr + (pressed? "▪" : " ");
@@ -149,7 +154,7 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
         // not a toggle button
         return brackStr;
     }
-    
+
     protected String getTextForRendering(boolean hasFocus) {
          String outputStr = this.buttonText;
 
@@ -177,6 +182,21 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
             this.renderedText.setColor(drawingcolor);
         }
         return this;
+    }
+
+
+    @Override
+    public void hilite() {
+        this.hiliter.hilite();
+    }
+
+    @Override
+    public void unHilite() {
+        this.hiliter.unHilite();
+    }
+    
+    public void setHiliter(Hiliter hiliter) {
+        this.hiliter = hiliter;
     }
 
     public void setValue(boolean value) {

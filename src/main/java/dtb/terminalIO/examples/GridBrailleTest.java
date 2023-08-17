@@ -292,7 +292,7 @@ public class GridBrailleTest {
             movementKeys.addComponent(leftButton);
             movementKeys.addComponent(rightButton);
 
-            Position movementKeysPosition = PositionRelativeFactory.fromAlign(VAlign.BOTTOM, 3, Align.MIDDLE, 0,  getBrailleComponent(), movementKeys);
+            Position movementKeysPosition = PositionRelativeFactory.fromAlign(VAlign.BOTTOM, 3, Align.CENTER, 0,  getBrailleComponent(), movementKeys);
             getBrailleComponent().add(movementKeysPosition, movementKeys);
 
             addAndRememberEventHandler(eventBus, movementKeys);

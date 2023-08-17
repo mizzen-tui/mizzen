@@ -123,7 +123,9 @@ public class StringUtils {
         return Arrays.stream(s.split(delim)).max(Comparator.comparingInt(String::length)).get().length();
     }
     
-    
+    public static int longestWord(String s) {
+        return strWidth(s, " ");
+    }
     // [0;37;5;47;107m
 
     static String  colorCODE_patternStr = "\\e\\[[0-9,;]*m";
@@ -213,7 +215,7 @@ public class StringUtils {
         if (str == null) {
             return null;
         }
-        if (maxHeight < -1) {
+        if (maxHeight <= -1) {
             if (str.indexOf('\n') == -1)
                 return __wrap(str, wrapLength, newLineStr, wrapLongWords);
             return Arrays.stream(str.split("\n", -1)).map(s -> __wrap(s, wrapLength, newLineStr, wrapLongWords)).collect(Collectors.joining("\n"));
@@ -231,7 +233,7 @@ public class StringUtils {
         String[] lines = str.split("\n",-1);
 
         for (int i=0; i< lines.length && curHeight<maxHeight; i++) {
-            String s =  __wrap(str, wrapLength, newLineStr, wrapLongWords);
+            String s =  __wrap(lines[i], wrapLength, newLineStr, wrapLongWords);
             int height = strHeight(s);
             if (curHeight + height <= maxHeight) {
                 sj.add(s);
@@ -620,6 +622,19 @@ public class StringUtils {
         // "+Colors.Cya.asString()+"here"+ControlCode.RCol.asString()+".. How did that
         // work?",10) );
 
+    }
+    
+    public static boolean isNumber(String s) {
+        if (isEmptyStr(s)) {
+            return false;
+        }
+        String trimmed = s.trim();
+        try {
+            Double.parseDouble(trimmed);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
 }

@@ -400,7 +400,7 @@ public interface Component<T extends Component<?>>
 
         /** 
          * Same as {@link#assertComponentSegmentsIntegrity(Component)} except segments 
-         * do not have to attached to a component
+         * do not have be to attached to a component
          * 
          * @param bounds
          * @param segmentsTree

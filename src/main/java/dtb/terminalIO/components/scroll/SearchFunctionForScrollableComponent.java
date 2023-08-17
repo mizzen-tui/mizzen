@@ -278,8 +278,6 @@ public class SearchFunctionForScrollableComponent extends AbstractWrappedCompone
        super.setChildAsCurrentFocus(focusableChild, eventBus);
     }
 
-    
-
     private Color textInputSelectedColor() {
         return SearchFunctionForScrollableComponent.this.getColor().invert();
     }

@@ -8,7 +8,10 @@ public class DefaultTableModel implements TableModel {
     List<String> columnNames;
     List<Object[]> data;
     
-    public DefaultTableModel() {}
+    public DefaultTableModel() {
+        this.columnNames = new ArrayList<String>();
+        this.data = new ArrayList<Object[]>();
+    }
     
     public DefaultTableModel(List<String> columnNames) {
         this.columnNames = columnNames;

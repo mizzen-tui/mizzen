@@ -4,7 +4,6 @@ import dtb.terminalIO.components.ColorHiliter;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.EmptyAttributes;
 import dtb.terminalIO.components.FocusSetterToHiliteAction;
-import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.components.Hiliter;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
@@ -37,18 +36,18 @@ public class DefaultFocusableBehaviour implements FocusBehaviour  {
             super();
             
             this.component = component;
-            colorHiliter =  new ColorHiliter(this.component.getColor());
+            colorHiliter =  new ColorHiliter(this.component);
             if (hiliteEmptyColor) {
-                emptyColorHiliter = new ColorHiliter(this.component.getColor());
+                emptyColorHiliter = new ColorHiliter(this.component);
             }
         }
         
         protected ComponentHiliterFocusableBehaviour(Component<?> component, boolean hiliteEmptyColor) {
             super();
             this.component = component;
-            colorHiliter =  new ColorHiliter(this.component.getColor());
+            colorHiliter =  new ColorHiliter(this.component);
             if (hiliteEmptyColor) {
-                emptyColorHiliter = new ColorHiliter(this.component.getColor());
+                emptyColorHiliter = new ColorHiliter(this.component);
             }
         }
 

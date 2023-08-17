@@ -8,8 +8,8 @@ import dtb.terminalIO.components.ComponentInspector;
 import dtb.terminalIO.components.WindowFrame;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.input.MultiLineTextInput;
-import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.components.scroll.ScrollableComponent2;
+import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.OnIdleEventEventHandler.RepeatingInterval;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
@@ -41,6 +41,8 @@ public class MultiLineTextInputTest {
 
             sc.setFillOnClear(true);
             sc.setEmptyChar('.');
+
+            SearchFunctionForScrollableComponent.addFinderToScrollable(sc.asSearchableView());
 
             sc.resize(  new Dimension.Simple(sc.getHeight()-2, sc.getWidth()));
             

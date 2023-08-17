@@ -288,6 +288,7 @@ public class WindowFrameFocusable extends AbstractComponent<WindowFrameFocusable
                 ((CanResize) this.child).resize(new Dimension.Simple(d.getHeight() - 2, d.getWidth() - 2));
             }
         }
+        
         // Logging.info(HasName.UTIL.getName(this) + ":resize :" + String.valueOf(new Dimension.Simple(this)));
     }
 
@@ -320,10 +321,9 @@ public class WindowFrameFocusable extends AbstractComponent<WindowFrameFocusable
                 }
             }
         } else {
-            
+
             // size is bounded scenario - meaning we have done an explicit resize in the past...
             //                            now we want to adjust scrollbars display based on change of child size
-            
             if (this.viewer == null) {
                 Dimension desiredBoundedSize = new Dimension.Simple(this.getHeight(), this.getWidth());
                 if (autoScrollbars) {
@@ -619,7 +619,7 @@ public class WindowFrameFocusable extends AbstractComponent<WindowFrameFocusable
 
     private void attachScrollbarsIfNeeded(Dimension d) {
         Dimension desiredViewPortSize = new Dimension.Simple(d.getHeight() - 2, d.getWidth() - 2);
-        if (this.child instanceof CanResize) {
+        if (this.child instanceof CanResize && !this.child.isSameDimension(d)) {
             ((CanResize) this.child).resize(desiredViewPortSize);
         }
 

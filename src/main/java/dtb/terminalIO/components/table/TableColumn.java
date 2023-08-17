@@ -2,14 +2,23 @@ package dtb.terminalIO.components.table;
 
 import java.util.Comparator;
 
+import dtb.terminalIO.geom.Align;
 import dtb.terminalIO.util.CompareUtil;
+import dtb.terminalIO.util.StringUtils;
 
+
+/** 
+ * Used by {@link TableComponent}.  
+ * 
+ * Defines characteristics of a Column in TableComponent
+ * 
+ **/
 public interface TableColumn {
 
-    public enum Align
-    {
-        LEFT, CENTER, RIGHT
-    }
+//    public enum Align
+//    {
+//        LEFT, CENTER, RIGHT
+//    }
 
     public static Align          DEFAULT_ALIGN    = Align.CENTER;
     
@@ -105,5 +114,109 @@ public interface TableColumn {
 
 
     TableColumnRenderer getRenderer();
+
+    void setHeaderRenderer(TableColumnRenderer renderer);
+
+    default TableColumnRenderer getHeaderRenderer() {
+        return TableColumnRenderer.DEFAULT;
+    }
+    
+    public static class Delegate implements TableColumn {
+
+        private TableColumn delegate;
+        
+        public Delegate(TableColumn delegate) {
+            super();
+            this.delegate = delegate;
+        }
+
+        @Override
+        public String getHeaderText() {
+            return delegate.getHeaderText();
+        }
+
+        @Override
+        public Integer getPreferredWidth() {
+            return delegate.getPreferredWidth();
+        }
+
+        @Override
+        public String getColumnName() {
+            return delegate.getColumnName();
+        }
+
+        @Override
+        public Integer getPosition() {
+            return delegate.getPosition();
+        }
+
+        @Override
+        public Align getAlign() {
+            return delegate.getAlign();
+        }
+
+        @Override
+        public Integer getColumnDroppable() {
+            return delegate.getColumnDroppable();
+        }
+
+        @Override
+        public Boolean isWordWrappable() {
+            return delegate.isWordWrappable();
+        }
+
+        @Override
+        public Boolean isTruncationAllowed() {
+            return delegate.isTruncationAllowed();
+        }
+
+        @Override
+        public void setColumnRenderer(TableColumnRenderer renderer) {
+            delegate.setColumnRenderer(renderer);
+        }
+
+        @Override
+        public TableColumnRenderer getRenderer() {
+            return delegate.getRenderer();
+        }
+        
+        @Override
+        public void setHeaderRenderer(TableColumnRenderer renderer) {
+            delegate.setHeaderRenderer(renderer);
+        }
+
+        @Override
+        public TableColumnRenderer getHeaderRenderer() {
+            return delegate.getHeaderRenderer();
+        }
+    }
+
+
+    public static class UTIL {
+
+        public  static String padAndAlignColumnData(TableColumn columnDataItem, String displayString, int allowedDataWidth, Align align ) 
+        {
+            String str = displayString;
+            if (columnDataItem.isWordWrappable())
+            {
+                str = StringUtils.wrap(str, columnDataItem.getPreferredWidth(), "\n", false, columnDataItem.getPreferredHeight());
+            }
+//            if (columnDataItem.isTruncationAllowed() && StringUtils.strWidth(str)>allowedDataWidth)
+//            {
+//                str = StringUtils.truncate(str, columnDataItem.getPreferredWidth());
+//            }
+            String[] sArray = str.split("\n");
+            for (int i = 0; i < sArray.length ; i++) 
+            {
+                String s = sArray[i];
+                sArray[i] = Align.UTIL.formatToAlignedData(s, columnDataItem.getPreferredWidth(), align, allowedDataWidth, columnDataItem.isTruncationAllowed());
+            }
+
+            String result = String.join("\n", sArray);
+            return result;
+        }
+        
+    }
+    
     
 }

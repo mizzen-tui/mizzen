@@ -119,7 +119,7 @@ public class LinuxProcessWatcher {
             public void run() {
                 try {
 
-                    String[] commands = new String[] { ExecUtil.SSH_Path(), "-c", LinuxProcessWatcher.this.invokeScript };
+                    String[] commands = new String[] { ExecUtil.SH_Path(), "-c", LinuxProcessWatcher.this.invokeScript };
 
                     ProcessBuilder procBuilder = new ProcessBuilder(commands);
                     
@@ -323,7 +323,7 @@ public class LinuxProcessWatcher {
         }
 
         // the weakness with the following is if there are 2 or more processes tailing the same file
-        String pidScript = String.format("ps -ef | grep %s | grep -v -w grep | grep "+ExecUtil.SSH_Path()+" | grep -w tail | awk '{print $2}'",fileToTail.getAbsolutePath());
+        String pidScript = String.format("ps -ef | grep %s | grep -v -w grep | grep "+ExecUtil.SH_Path()+" | grep -w tail | awk '{print $2}'",fileToTail.getAbsolutePath());
 
         return pidScript;
     }

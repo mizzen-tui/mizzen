@@ -12,7 +12,7 @@ import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.components.table.DefaultTableModel;
-import dtb.terminalIO.components.table.TableColumn.Align;
+import dtb.terminalIO.components.table.TableColumn;
 import dtb.terminalIO.components.table.TableColumnImpl;
 import dtb.terminalIO.components.table.TableColumnRenderer;
 import dtb.terminalIO.components.table.TableColumnRenderer.TableColumnRendererFromTextComponent;
@@ -23,6 +23,7 @@ import dtb.terminalIO.controlcodes.color.Colors.FGBGColors;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.examples.sampledata.ReadSampleFiles;
+import dtb.terminalIO.geom.Align;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.util.ElapsedTime;
 import dtb.terminalIO.util.Logging;
@@ -81,10 +82,6 @@ public class ColorsTestWithTable {
             TableComponent combinedColorsTable = new TableComponent(Colors.Gre, new Dimension.Simple(40*3+1,16*8+20),tModel);
             combinedColorsTable.setFillOnClear(false);
             combinedColorsTable.setFillOnClear(true);
-            
-
-            //combinedColorsTable.setEmptyColor( new Colors.FGBGColors(Colors.BBlu, Colors.On_IGre));
-            //combinedColorsTable.setEmptyChar('X');
             combinedColorsTable.setFillOnClear(false);
 
             TableColumnRenderer renderer = new ColorAndTextRenderer();
@@ -170,12 +167,30 @@ public class ColorsTestWithTable {
 
     static class ColorAndTextRenderer  extends TableColumnRendererFromTextComponent  {
 
-        @Override
-        protected void renderObjectOntoComponent(Component<?> componentForRendering2, Object cellValue, int preferredWidth, int maxCellHeight) {
+        protected void renderObjectOntoComponent(Component<?> componentForRendering2, TableColumn tableColumn, Object cellValue, int preferredWidth, int maxCellHeight, Align align) {
             ColorAndText colorAndText = (ColorAndText) cellValue;
             setCellColor(colorAndText.color);
             Logging.info(" setCellText() : " + ElapsedTime.onRunOf(()-> setCellText(colorAndText.text, preferredWidth, maxCellHeight)));
         }
+        
+        @Override
+        protected void renderHeaderOntoComponent(Component<?> componentForRendering2, TableColumn tableColumn, String cellValue, int preferredWidth, int maxCellHeight, Align align) {
+            ColorAndText colorAndText = new ColorAndText(Colors.IGre, cellValue);
+            renderObjectOntoComponent(componentForRendering2, tableColumn, colorAndText, preferredWidth, maxCellHeight, align);
+        }
+
+
+//        @Override
+//        public IScreenLineSegmentsBuffer render(TableColumn tableColumn, Object cellValue, int preferredWidth, int maxCellHeight, Align align) {
+//            // TODO Auto-generated method stub
+//            return null;
+//        }
+//
+//        @Override
+//        public IScreenLineSegmentsBuffer render(TableColumn tableColumn, Object cellValue, int preferredWidth, int maxCellHeight) {
+//            // TODO Auto-generated method stub
+//            return render(tableColumn, cellValue, preferredWidth, maxCellHeight, tableColumn.getAlign());
+//        }
     }
 
     private static String largeText;

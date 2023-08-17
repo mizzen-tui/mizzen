@@ -68,10 +68,24 @@ public interface Position extends Vec2<Position>, Row, Column{
         return new Position.Simple(this.getY()*-1, this.getX()*-1);
     }
 
+    /** Position offset 0  (0, 0)*/
     public static final Position ZERO = new Simple(0, 0);
+
+    /** Position offset to the left by one position (0, -1) */
     public static final Position LEFT_BY_1 = new Simple(0, -1);
+
+    /** Position offset to the right by one position (0, 1) */
     public static final Position RIGHT_BY_1 = new Simple(0, 1);
 
+    /** Position offset down by one position (1, 0) */
+    public static final Position DOWN_BY_1 = new Simple(1, 0);
+
+    /** Position offset up by one position (-1, 0) */
+    public static final Position UP_BY_1 = new Simple(-1, 0);
+
+    /** Position offset down by one and right by one position (1, 1) */
+    public static final Position DOWN_BY_1_AND_RIGHT_BY_1 = new Simple(1, 1);
+    
     /**
      * Simple implementation of {@link Position}
      */
@@ -143,18 +157,18 @@ public interface Position extends Vec2<Position>, Row, Column{
             this.y = row;
             this.x = col;
         }
-    
+
         @Override
         public void moveDelta(int rowOffset, int colOffset) {
             this.y += rowOffset;
             this.x += colOffset;
         }
-    
+
         @Override
         public String toString() {
             return UTIL.asString(this);
         }
-    
+
         public static Position withOffset(Position position, Position offset) {
             Position.Simple newPos = new Simple(position);
             newPos.moveDelta(offset.getRow(), offset.getCol());
@@ -180,7 +194,7 @@ public interface Position extends Vec2<Position>, Row, Column{
     public static class UTIL {
 
         public static final PositionComparator POS_COMPARE = new PositionComparator();
-    
+
         public static String asString(Position position) {
             if (position == null) {
                 return "Position[null, null]";

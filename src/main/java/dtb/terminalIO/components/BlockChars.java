@@ -3,7 +3,6 @@ package dtb.terminalIO.components;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
-import dtb.terminalIO.geom.position.Row;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.MapChars;
 
@@ -433,14 +432,30 @@ public interface BlockChars {
     static interface GetCharAt {
         char getCharAt(int row, int col);
     }
-    
+
+    public static class SimpleGetCharAt implements GetCharAt {
+
+        char ch;
+
+        public SimpleGetCharAt(char ch) {
+            super();
+            this.ch = ch;
+        }
+
+        @Override
+        public char getCharAt(int row, int col) {
+            if (row == 0 && col == 0) {
+                return ch;
+            }
+            return 0;
+        }
+    }
+
     @FunctionalInterface
     static interface PlotCharAt {
         void setCharAt(int row, int col, char ch);
     }
-    
 
-    
     public static class UTIL {
 
         private static final BlockChars[] ALL_BLOCK_CHARS = new BlockChars[] {

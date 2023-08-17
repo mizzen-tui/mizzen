@@ -85,7 +85,7 @@ public class Colors {
         public String toString() {
             return "RCol";
         }
-        
+                
     };
 
     public static final Color RCol_invert                = new Color() {
@@ -157,14 +157,14 @@ public class Colors {
     public static final Colors.FgColor UWhi= addNamedFGColor( "UWhi",Whi.asUnderline().setInvertTransform( (c) -> Colors.getNamedBGColor("On_Whi") ));    
     
     // High Intensity                                                    
-    public static final Colors.FgColor IBla= addNamedFGColor( "IBla",Colors.FgColor.instance(90).setInvertTransform( (c) -> Colors.getNamedBGColor("On_IBla") ));
-    public static final Colors.FgColor IRed= addNamedFGColor( "IRed",Colors.FgColor.instance(91).setInvertTransform( (c) -> Colors.getNamedBGColor("On_IRed") ));
-    public static final Colors.FgColor IGre= addNamedFGColor( "IGre",Colors.FgColor.instance(92).setInvertTransform( (c) -> Colors.getNamedBGColor("On_IGre") ));
-    public static final Colors.FgColor IYel= addNamedFGColor( "IYel",Colors.FgColor.instance(93).setInvertTransform( (c) -> Colors.getNamedBGColor("On_IYel") ));
-    public static final Colors.FgColor IBlu= addNamedFGColor( "IBlu",Colors.FgColor.instance(94).setInvertTransform( (c) -> Colors.getNamedBGColor("On_IBlu") ));
-    public static final Colors.FgColor IPur= addNamedFGColor( "IPur",Colors.FgColor.instance(95).setInvertTransform( (c) -> Colors.getNamedBGColor("On_IPur") ));
-    public static final Colors.FgColor ICya= addNamedFGColor( "ICya",Colors.FgColor.instance(96).setInvertTransform( (c) -> Colors.getNamedBGColor("On_ICya") ));
-    public static final Colors.FgColor IWhi= addNamedFGColor( "IWhi",Colors.FgColor.instance(97).setInvertTransform( (c) -> Colors.getNamedBGColor("On_IWhi") ));    
+    public static final Colors.FgColor IBla= addNamedFGColor( "IBla",Colors.FgColor.instance(90).setInvertTransform( (c) -> ColorFromCodes.instance(RCol, Colors.getNamedBGColor("On_IBla") )));
+    public static final Colors.FgColor IRed= addNamedFGColor( "IRed",Colors.FgColor.instance(91).setInvertTransform( (c) -> ColorFromCodes.instance(RCol, Colors.getNamedBGColor("On_IRed") )));
+    public static final Colors.FgColor IGre= addNamedFGColor( "IGre",Colors.FgColor.instance(92).setInvertTransform( (c) -> ColorFromCodes.instance(RCol, Colors.getNamedBGColor("On_IGre") )));
+    public static final Colors.FgColor IYel= addNamedFGColor( "IYel",Colors.FgColor.instance(93).setInvertTransform( (c) -> ColorFromCodes.instance(Bla, Colors.getNamedBGColor("On_IYel") )));
+    public static final Colors.FgColor IBlu= addNamedFGColor( "IBlu",Colors.FgColor.instance(94).setInvertTransform( (c) -> ColorFromCodes.instance(RCol, Colors.getNamedBGColor("On_IBlu") )));
+    public static final Colors.FgColor IPur= addNamedFGColor( "IPur",Colors.FgColor.instance(95).setInvertTransform( (c) -> ColorFromCodes.instance(RCol, Colors.getNamedBGColor("On_IPur") )));
+    public static final Colors.FgColor ICya= addNamedFGColor( "ICya",Colors.FgColor.instance(96).setInvertTransform( (c) -> ColorFromCodes.instance(RCol, Colors.getNamedBGColor("On_ICya") )));
+    public static final Colors.FgColor IWhi= addNamedFGColor( "IWhi",Colors.FgColor.instance(97).setInvertTransform( (c) -> ColorFromCodes.instance(Bla, Colors.getNamedBGColor("On_IWhi") )));    
     
     // BoldHigh Intensity                                                    
     public static final Colors.FgColor BIBla= addNamedFGColor( "BIBla",IBla.asBold().setInvertTransform( (c) -> Colors.getNamedBGColor("On_IBla") ));
@@ -297,6 +297,13 @@ public class Colors {
 
         public static Color instance(Color color) {
             return getColorFromCacheOrBuild(color.getControlCodes(), ()->new ColorFromCodes(color));
+        }
+        
+        public static Color instance(Color color1, Color color2) {
+            int[] codes = new int[color1.getControlCodes().length + color2.getControlCodes().length];
+            System.arraycopy(color1.getControlCodes(), 0, codes, 0, color1.getControlCodes().length);
+            System.arraycopy(color2.getControlCodes(), 0, codes, color1.getControlCodes().length, color2.getControlCodes().length);
+            return getColorFromCacheOrBuild(codes, ()->new ColorFromCodes(codes));
         }
         
         public ColorFromCodes(int[] codes) {

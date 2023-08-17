@@ -18,6 +18,7 @@ import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
+import dtb.terminalIO.util.Logging;
 
 public class FrameSetTest {
     
@@ -25,7 +26,7 @@ public class FrameSetTest {
     
     public static void main(String[] args) throws Exception {
         
-        //Logging.setEnabled(true);
+        Logging.setEnabled(true);
         
         new TUIApp(args)
         //.setCanvasSize(24, 100)
@@ -167,8 +168,13 @@ public class FrameSetTest {
         Component<?> second = new TextComponent("Column-B");
         fs.addRight(second, first);
        
+        TextComponent second2B = new TextComponent("Column-B-2");
+        fs.addBelow(second2B, second);
+        second2B.setEmptyColor(Colors.On_Yel);
+        second2B.setFillOnClear(true);
+       
         TextComponent third = new TextComponent("Column-C");
-        third.setEmptyColor(Colors.On_Yel);
+        third.setEmptyColor(Colors.On_Gre);
         third.setFillOnClear(true);
         
         fs.addRight(third, second);
@@ -179,7 +185,9 @@ public class FrameSetTest {
         
         fs.onResizeExpandRight(first, 33);
         fs.onResizeExpandRight(second, 33);
-        fs.onResizeExpandDown(second, 0);
+        fs.onResizeExpandDown(second, 50);
+        fs.onResizeExpandRight(second2B, 33);
+        fs.onResizeExpandDown(second2B, 50);
         fs.onResizeExpandDownAndRight(third);
         
         return fs;
