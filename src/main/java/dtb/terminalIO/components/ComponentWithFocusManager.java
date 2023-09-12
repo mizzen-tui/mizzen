@@ -336,8 +336,24 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
         getFocusManager(eventBus).setFocus(focus, eventBus);
     }
 
-    
-    
+    @Override
+    public void unFocus(Focusable newFocusable, EventBus eventBus) {
+        // I'm avoiding an obscure bug in FocusManager
+        if (getFocusManager(eventBus).getChildFocusables().size()<1) {
+            return;
+        }
+        getFocusManager(eventBus).unFocus(newFocusable, eventBus);
+    }
+
+    @Override
+    public void focus(Focusable oldFocusable, EventBus eventBus) {
+        // I'm avoiding an obscure bug in FocusManager
+        if (getFocusManager(eventBus).getChildFocusables().size()<1) {
+            return;
+        }
+        getFocusManager(eventBus).focus(oldFocusable, eventBus);
+    }
+
     @Override
     public EventHandler canHandle(TerminalEvent<?> te) {
         

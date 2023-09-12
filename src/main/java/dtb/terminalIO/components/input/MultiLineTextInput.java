@@ -195,7 +195,7 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
         this.caret = new Position.Simple(newRow, newCol);
         // markAsDirty();
     }
-    
+
     boolean caretHome() {
         setCaretPosition(new Position.Simple(this.caret.getRow(), 0));
         return true;
@@ -228,8 +228,7 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
         caretEnd();
         return true;
     }
-    
-    
+
     boolean canMoveCaretRight() {
         if (caret.getCol() < lengthAtCaretLine()) {
             return true;
@@ -530,6 +529,17 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
     }
 
     @Override
+    public void unFocus(Focusable newFocusable, EventBus eventBus) {
+        this.unFocus(newFocusable, eventBus);
+    }
+    
+    @Override
+    public void focus(Focusable oldFocusable, EventBus eventBus) {
+        this.focus(oldFocusable, eventBus);
+    }
+
+    
+    @Override
     public boolean hasFocus() {
         return asFocusable().hasFocus();
     }
@@ -817,7 +827,7 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
             this.bufferText =  bufferText;
             adjustDimensionsFromBufferText(true);
         }
-        
+
         private void adjustDimensionsFromBufferText(boolean heightChanged) {
             if (this.bufferText.size()==0) {
                 return;

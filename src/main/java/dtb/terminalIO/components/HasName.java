@@ -40,6 +40,13 @@ public interface HasName<T> {
             }
         }
 
+        public static String getName(Object o, String defaultOnNull) {
+            if (o == null) {
+                return String.valueOf(defaultOnNull);
+            }
+            return getName(o);
+        }
+        
         public static String getName(Object o) {
             if (o == null) {
                 throw new NullPointerException("getName():  Object null!");

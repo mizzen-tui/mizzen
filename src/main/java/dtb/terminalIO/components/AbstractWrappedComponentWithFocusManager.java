@@ -1,6 +1,7 @@
 package dtb.terminalIO.components;
 
 import java.util.Collection;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import dtb.terminalIO.controlcodes.color.Color;
@@ -9,8 +10,10 @@ import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.focus.Focusables;
 
-public  abstract class AbstractWrappedComponentWithFocusManager<T extends Component<?>> extends AbstractWrappedComponentAndFocusable<T> implements FocusManager {
+public  abstract class AbstractWrappedComponentWithFocusManager<T extends Component<?>> 
+     extends AbstractWrappedComponentAndFocusable<T> implements FocusManager, Focusables {
 
     private FocusManager focusManager;
     private Function<EventBus, FocusManager> focusManagerBuilder;
@@ -70,8 +73,25 @@ public  abstract class AbstractWrappedComponentWithFocusManager<T extends Compon
         }
         getFocusManager(eventBus).setFocus(focus, eventBus);
     }
-    
-    
+
+    @Override
+    public void unFocus(Focusable newFocusable, EventBus eventBus) {
+        // I'm avoiding an obscure bug in FocusManager
+        if (getFocusManager(eventBus).getChildFocusables().size()<1) {
+            return;
+        }
+        getFocusManager(eventBus).unFocus(newFocusable, eventBus);
+    }
+
+    @Override
+    public void focus(Focusable oldFocusable, EventBus eventBus) {
+        // I'm avoiding an obscure bug in FocusManager
+        if (getFocusManager(eventBus).getChildFocusables().size()<1) {
+            return;
+        }
+        getFocusManager(eventBus).focus(oldFocusable, eventBus);
+    }
+
     @Override
     protected Focusable asFocusable() {
         return getFocusManager();
@@ -98,12 +118,24 @@ public  abstract class AbstractWrappedComponentWithFocusManager<T extends Compon
         //return Collections.singleton(getFocusManager());
     }
     
-    public void addFocusable(Focusable focusable) {
+    private void focusableOp(Consumer<Focusables> operation, String operationName) {
         if (getFocusManager() instanceof DefaultFocusManager) {
-            ((DefaultFocusManager) getFocusManager()).addFocusable(focusable);
+            operation.accept((DefaultFocusManager) getFocusManager());
         } else {
-            throw new IllegalStateException("Can only add a focusable to "+this.getName()+" when focusManager is a DefaultFocusManager");
+            throw new IllegalStateException("Can only perform "+operationName+" operation on "+this.getName()+" when focusManager is a DefaultFocusManager");
         }
+    }
+    
+    public void insertFocusable(int index, Focusable focusable) {
+        focusableOp( fm -> fm.insertFocusable(index,focusable), "insertFocusable()" );
+    }
+
+    public void addFocusable(Focusable focusable) {
+        focusableOp( fm -> fm.addFocusable(focusable), "addFocusable()" );
+    }
+    
+    public void removeFocusable(Focusable focusable) {
+        focusableOp( fm -> fm.removeFocusable(focusable), "removeFocusable()" );
     }
     
     public void addAllFocusables(Collection<Focusable> focusables) {

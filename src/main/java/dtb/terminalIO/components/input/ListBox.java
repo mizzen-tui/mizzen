@@ -22,8 +22,10 @@ import dtb.terminalIO.components.input.DisplayableValue.StringDisplayValue;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.ChainedEventHandler;
+import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.EventHandlerContainer;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.RequestFocusEvent;
@@ -56,7 +58,8 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
                                            ToFocusable, 
                                            ParentContainer, 
                                            GetComponentAtOffset,
-                                           Clickable {
+                                           Clickable,
+                                           EventHandlerContainer {
 
     List<ListItem> items = new ArrayList<ListItem>();
     VerticalPanel  itemsContainer;
@@ -64,12 +67,27 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
     KeyStroke      keystrokePrevious       = Keys.UP_KEYSTROKE;
     KeyStroke      keystrokeNext           = Keys.DOWN_KEYSTROKE;
     Color          selectedColor           = new Colors.FGBGColors(Colors.IYel);
-
+    int            eventTriggerForValueChanged = DEFAULT_TRIGGER_FOR_ONVALUE_CHANGED;
+    
+    public static final int VALUE_CHANGED_ON_PREV_KEYSTROKE = 1;
+    public static final int VALUE_CHANGED_ON_NEXT_KEYSTROKE = 2;
+    public static final int VALUE_CHANGED_ON_FOCUS = 4;
+    public static final int VALUE_CHANGED_ON_ENTER_KEY = 8;
+    public static final int VALUE_CHANGED_ON_MOUSE_CLICK = 16;
+    
+    public static final int DEFAULT_TRIGGER_FOR_ONVALUE_CHANGED = VALUE_CHANGED_ON_PREV_KEYSTROKE | 
+                                                                  VALUE_CHANGED_ON_NEXT_KEYSTROKE |
+                                                                  VALUE_CHANGED_ON_FOCUS |
+                                                                  VALUE_CHANGED_ON_ENTER_KEY |
+                                                                  VALUE_CHANGED_ON_MOUSE_CLICK;
     
     public static interface ItemComponent  {
         Component<?> getComponent();
         void selectWithFocus();
         void selectWithNoFocus();
+        default void selectWithNoFocus(Focusable newFocusable) {
+            this.selectWithNoFocus();
+        }
         void unSelect();
     }
 
@@ -95,7 +113,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
 
         TextComponent tc;
         CharComponent bullet;
-        
+
         ListItemComponent(Color color, int maxWidthStr, DisplayableValue<T> displayableItem) {
             super(color);
 
@@ -110,7 +128,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
             this.add( 0,0, bullet);
             this.add( 0,2, tc);
         }
-        
+
         public void setBulletChar(char ch) {
             this.bullet.setChar(ch);
         }
@@ -118,8 +136,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         public void setUnSelectedBullet() {
             this.bullet.setChar('□');
         }
-        
-        
+
         public void setSelectedBullet() {
             this.bullet.setChar('■');
         }
@@ -362,6 +379,14 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         this.selectedColor = selectedColor;
     }
 
+    public int getEventTriggerForValueChanged() {
+        return eventTriggerForValueChanged;
+    }
+
+    public void setEventTriggerForValueChanged(int eventTriggerForValueChanged) {
+        this.eventTriggerForValueChanged = eventTriggerForValueChanged;
+    }
+
     public void setItems( List<? extends DisplayableValue<T>> displayableItems , ComponentItemFactory<T> displayItemToComponent) {
         this.items = new ArrayList<ListItem>(displayableItems.size());
         this.itemsContainer.clearAndRemoveAllChildren();
@@ -465,7 +490,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
     /**
      * returns value of item at index
      */
-    public DisplayableValue<T> indexOf(int index) {
+    public DisplayableValue<T> getValueAt(int index) {
         if (index < 0 || index >= size()) {
             return null;
         }
@@ -491,7 +516,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
 
         // unhilite
         int curSelected = getSelectedIndex();
-        if (curSelected>-1) {
+        if (curSelected>-1 && curSelected != index) {
             ItemComponent curSelectedComponent = getItemComponentAt(curSelected);
             if (curSelectedComponent != null) {
                 curSelectedComponent.unSelect();
@@ -627,6 +652,32 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         return new DefaultFocusableBehaviour.Simple(this, chainedHandler.asConditionalEventHandler()) {
 
             @Override
+            public void unFocus(Focusable newFocusable, EventBus eventBus) {
+                super.unFocus(newFocusable, eventBus);
+                int curSelected = getSelectedIndex();
+                if (curSelected > -1) {
+                   ItemComponent curSelectedComponent = getItemComponentAt(curSelected);
+                   if (curSelectedComponent != null) {
+                       curSelectedComponent.selectWithNoFocus(newFocusable);
+                   }
+                }
+            }
+
+            public void focus(Focusable oldFocusable, EventBus eventBus) {
+                super.focus(oldFocusable, eventBus);
+                int curSelected = getSelectedIndex();
+                if (curSelected>-1) {
+                    setSelected(curSelected);
+                } else {
+                    setSelected(0);
+                    if ((getEventTriggerForValueChanged() & VALUE_CHANGED_ON_FOCUS) > 0 ) {
+                        eventBus.raiseEvent(  new HasValue.ValueChangedEvent<>(ListBox.this) );
+                    }
+                }
+                raiseEventRequestShowSelected(eventBus);
+            }
+
+            @Override
             public void setFocus(boolean focus, EventBus eventBus) {
                 super.setFocus(focus, eventBus);
                 if (focus) {
@@ -635,7 +686,9 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
                         setSelected(curSelected);
                     } else {
                         setSelected(0);
-                        eventBus.raiseEvent(  new HasValue.ValueChangedEvent<>(ListBox.this) );
+                        if ((getEventTriggerForValueChanged() & VALUE_CHANGED_ON_FOCUS) > 0 ) {
+                            eventBus.raiseEvent(  new HasValue.ValueChangedEvent<>(ListBox.this) );
+                        }
                     }
                     raiseEventRequestShowSelected(eventBus);
                 } else {
@@ -658,14 +711,16 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         if (chainedHandler != null) {
             return chainedHandler;
         }
-        
+
         chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
 
         chainedHandler.appendEventHandler(new KeyInputEventHandler(this.keystrokePrevious, 
                 (te)->  canSetSelectedPrev(),
                 (te)->  {
                             if (setSelectedPrev()) {
-                                te.getEventBus().raiseEvent(  new HasValue.ValueChangedEvent<>(ListBox.this) );
+                                if ((getEventTriggerForValueChanged() & VALUE_CHANGED_ON_PREV_KEYSTROKE) > 0 ) {
+                                    te.getEventBus().raiseEvent(  new HasValue.ValueChangedEvent<>(ListBox.this) );
+                                }
                                 raiseEventRequestShowSelected(te.getEventBus());
                             }
                         }));
@@ -674,10 +729,24 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
                 (te)->  canSetSelectedNext(),
                 (te)->  {
                             if (setSelectedNext()) {
-                                te.getEventBus().raiseEvent(  new HasValue.ValueChangedEvent<>(ListBox.this) );
+                                if ((getEventTriggerForValueChanged() & VALUE_CHANGED_ON_NEXT_KEYSTROKE) > 0 ) {
+                                    te.getEventBus().raiseEvent(  new HasValue.ValueChangedEvent<>(ListBox.this) );
+                                }
                                 raiseEventRequestShowSelected(te.getEventBus());
                             }
                         }));
+
+        chainedHandler.appendEventHandler(new KeyInputEventHandler(Keys.ENTER_KEYSTROKE, 
+                (te)->  getSelectedIndex()>-1,
+                (te)->  {
+                            if (getSelectedIndex()>-1) {
+                                if ((getEventTriggerForValueChanged() & VALUE_CHANGED_ON_ENTER_KEY) > 0 ) {
+                                    te.getEventBus().raiseEvent(  new HasValue.ValueChangedEvent<>(ListBox.this) );
+                                }
+                                raiseEventRequestShowSelected(te.getEventBus());
+                            }
+                        }));
+
         return chainedHandler;
     }
 
@@ -779,7 +848,10 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
 
     protected void onMouseSelected(EventBus eventBus) {
         // now let the rest of the app know that changes have happened to this ListBox
-        eventBus.raiseEvent(  new HasValue.ValueChangedEvent<>(ListBox.this) );
+        if ((getEventTriggerForValueChanged() & VALUE_CHANGED_ON_MOUSE_CLICK) > 0 ) {
+            eventBus.raiseEvent(  new HasValue.ValueChangedEvent<>(ListBox.this) );
+        }
+        
         raiseEventRequestShowSelected(eventBus);
     }
 
@@ -792,7 +864,6 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
      * @param consumeChange
      */
     public void onChange(EventHandler consumeChange) {
-
         onChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, onChangeHandler, getChainedEventHandler(), consumeChange);
 
     }
@@ -800,6 +871,21 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
     public String toStringDetails() {
         T selected = getSelectedValue();
         return "count:"+this.items.size()+ ((selected != null) ? " selected: " + String.valueOf(getSelectedValue()) : "");
+    }
+
+    @Override
+    public EventHandlerContainer prependEventHandler(ConditionalEventHandler eventHandler) {
+        return getChainedEventHandler().prependEventHandler(eventHandler);
+    }
+
+    @Override
+    public EventHandlerContainer appendEventHandler(ConditionalEventHandler eventHandler) {
+        return getChainedEventHandler().appendEventHandler(eventHandler);
+    }
+
+    @Override
+    public EventHandlerContainer removeEventHandler(ConditionalEventHandler eventHandler) {
+        return getChainedEventHandler().removeEventHandler(eventHandler);
     }
 
 }

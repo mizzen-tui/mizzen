@@ -545,6 +545,28 @@ public class WindowFrameFocusable extends AbstractComponent<WindowFrameFocusable
     }
 
     @Override
+    public void unFocus(Focusable newFocusable, EventBus eventBus) {
+        // I'm avoiding an obscure bug in FocusManager
+        if (getFocusManager(eventBus).getChildFocusables().size() < 1) {
+            return;
+        }
+        getFocusManager(eventBus).unFocus(newFocusable, eventBus);
+
+        this.unHilite();
+    }
+    
+    @Override
+    public void focus(Focusable oldFocusable, EventBus eventBus) {
+        // I'm avoiding an obscure bug in FocusManager
+        if (getFocusManager(eventBus).getChildFocusables().size() < 1) {
+            return;
+        }
+        getFocusManager(eventBus).focus(oldFocusable, eventBus);
+
+        this.hilite();
+    }
+    
+    @Override
     public FocusManager getParentFocusManager() {
         return getFocusManager().getParentFocusManager();
     }

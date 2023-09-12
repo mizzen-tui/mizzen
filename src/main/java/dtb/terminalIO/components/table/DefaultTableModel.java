@@ -7,7 +7,7 @@ public class DefaultTableModel implements TableModel {
 
     List<String> columnNames;
     List<Object[]> data;
-    
+
     public DefaultTableModel() {
         this.columnNames = new ArrayList<String>();
         this.data = new ArrayList<Object[]>();
@@ -30,8 +30,7 @@ public class DefaultTableModel implements TableModel {
             }
         }
     }
-    
-    
+
     public List<String> getColumnNames() {
         return columnNames;
     }

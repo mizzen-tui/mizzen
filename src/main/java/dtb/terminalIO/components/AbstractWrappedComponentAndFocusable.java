@@ -41,6 +41,16 @@ public abstract class AbstractWrappedComponentAndFocusable<T extends Component<?
     }
 
     @Override
+    public void unFocus(Focusable newFocusable, EventBus eventBus) {
+        asFocusable().unFocus(newFocusable, eventBus);
+    }
+    
+    @Override
+    public void focus(Focusable oldFocusable, EventBus eventBus) {
+        asFocusable().focus(oldFocusable, eventBus);
+    }
+    
+    @Override
     public FocusManager getParentFocusManager() {
         return asFocusable().getParentFocusManager();
     }

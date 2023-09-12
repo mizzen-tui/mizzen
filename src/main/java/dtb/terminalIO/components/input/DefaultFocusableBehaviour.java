@@ -18,12 +18,24 @@ public class DefaultFocusableBehaviour implements FocusBehaviour  {
 
     boolean hasFocus = false;
 
+    @Override
     public boolean hasFocus() {
         return hasFocus;
     }
 
+    @Override
     public void setFocus(boolean focus, EventBus eventBus) {
         this.hasFocus = focus;
+    }
+
+    @Override
+    public void unFocus(Focusable newFocusable, EventBus eventBus) {
+        this.hasFocus = false;
+    }
+
+    @Override
+    public void focus(Focusable oldFocusable, EventBus eventBus) {
+        this.hasFocus = true;
     }
 
     protected static abstract class ComponentHiliterFocusableBehaviour extends DefaultFocusableBehaviour {
@@ -79,6 +91,38 @@ public class DefaultFocusableBehaviour implements FocusBehaviour  {
             if (focus) {
                Component.UTIL.bringToFront(component);
             }
+        }
+        
+        @Override
+        public void unFocus(Focusable newFocusable, EventBus eventBus) {
+            super.unFocus(newFocusable, eventBus);
+            new FocusSetterToHiliteAction().hiliteAction(this, colorHiliter); // hilite
+            if (this.component instanceof Hiliter) {
+                     ((Hiliter)this.component).unHilite();
+            }
+            else {
+                this.component.setColor( colorHiliter.asColor() );
+            }
+            if (this.emptyColorHiliter != null && this.component instanceof EmptyAttributes) {
+                new FocusSetterToHiliteAction().hiliteAction(this, emptyColorHiliter); // hilite
+                ((EmptyAttributes<?>)this.component).setEmptyColor( emptyColorHiliter.asColor() );
+            }
+        }
+        
+        public void focus(Focusable oldFocusable, EventBus eventBus) {
+            super.focus(oldFocusable, eventBus);
+            new FocusSetterToHiliteAction().hiliteAction(this, colorHiliter); // hilite
+            if (this.component instanceof Hiliter) {
+                 ((Hiliter)this.component).hilite(); 
+            }
+            else {
+                this.component.setColor( colorHiliter.asColor() );
+            }
+            if (this.emptyColorHiliter != null && this.component instanceof EmptyAttributes) {
+                new FocusSetterToHiliteAction().hiliteAction(this, emptyColorHiliter); // hilite
+                ((EmptyAttributes<?>)this.component).setEmptyColor( emptyColorHiliter.asColor() );
+            }
+            Component.UTIL.bringToFront(component);
         }
         
         public String toString() {

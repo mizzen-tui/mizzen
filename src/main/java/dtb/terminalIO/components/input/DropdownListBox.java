@@ -54,6 +54,7 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
                                         });
             }
         };
+
         this.listBox.setBorder(true);
 
         DefaultFocusManager fm = new DefaultFocusManager(Keys.UP_KEYSTROKE, Keys.DOWN_KEYSTROKE).setNavKeysFirst(false)
@@ -73,12 +74,11 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
             RequestUpdateCanvasEvent.invoke(te, DropdownListBox.this);
             //te.getEventBus().raiseEvent(new HasValue.ValueChangedEvent<T>(DropdownListBox.this));
         });
-        
+
         this.button.onChange((te)->{
             showListBox();
             RequestUpdateCanvasEvent.invoke(te, this);
         });
-        
 
         appendEventHandler( new KeyInputEventHandler(Keys.ENTER_KEYSTROKE, (te)-> { 
                                                                                     hideListBox(); 
@@ -98,25 +98,12 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
                                                         showListBox(); 
                                                         RequestUpdateCanvasEvent.invoke(te, this);
                                                      }));
-        
-        
-        this.preferredRectangleForLayout = new Rectangle.AbstractDelegate() {
 
+        this.preferredRectangleForLayout = new Rectangle.AbstractDelegate() {
             @Override
             public Rectangle getRectangle() {
                 return DropdownListBox.this.button;
             }
-            
-//            @Override
-//            public int getWidth() {
-//                return super.getWidth() + 4 + (hasBorder() ? 2 : 0);
-//            }
-
-//            @Override
-//            public int getHeight() {
-//                return super.getHeight() + (hasBorder() ? 2 : 0);
-//            }
-
         };
 
     }
@@ -128,13 +115,13 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
     private void calcAndSetMaxItemWidth(List<DisplayableValue<T>> displayableItems) {
         setMaxItemWidth( 2 + displayableItems.stream().map( (li) -> Dimension.UTIL.stringToDimension( li.toString() ).getWidth()).max( Integer::compareTo).get());
     }
-    
+
     public DropdownListBox(DisplayableValue<T>[] listItems) {
         this();
         setItems(Arrays.asList(listItems), new TextComponentItemFactory<T>());
         calcAndSetMaxItemWidth(Arrays.asList(listItems));
     }
-    
+
     public DropdownListBox(Color color, DisplayableValue<T>[] listItems, ComponentItemFactory<T> displayItemToComponent) {
         this(color);
         setItems(Arrays.asList(listItems), displayItemToComponent);
@@ -313,7 +300,7 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
         }
         return false;
     }
-    
+
     public void showListBox() {
         if (listBoxVisibleAndOnTop()) {
             return;
@@ -382,7 +369,7 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
     public void onChange(EventHandler consumeChange) {
         onChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, onChangeHandler, this, consumeChange);
     }
-    
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

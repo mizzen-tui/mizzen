@@ -254,6 +254,5 @@ public class BlocksGrid extends BoundedComponent<BlocksGrid>  implements ParentC
         // TODO Auto-generated method stub
         
     }
-    
-    
+
 }

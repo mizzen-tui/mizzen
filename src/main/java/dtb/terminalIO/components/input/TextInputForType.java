@@ -56,7 +56,6 @@ public class TextInputForType<T>  extends BoundedComponent<TextInputForType<T>> 
             // outer component has changed due to the inner TextInput component changing
             te.getEventBus().raiseEvent(new HasValue.ValueChangedEvent<T>(TextInputForType.this));
         });
-
     }
 
     @Override
@@ -75,7 +74,7 @@ public class TextInputForType<T>  extends BoundedComponent<TextInputForType<T>> 
         onChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, onChangeHandler, getChainedEventHandler(), consumeChange);
 
     }
-    
+
     private ConditionalEventHandler getEventHandler() {
         if (this.eventHandler != null) {
             return this.eventHandler;
@@ -118,6 +117,16 @@ public class TextInputForType<T>  extends BoundedComponent<TextInputForType<T>> 
         this.textInput.setFocus(focus, eventBus);
     }
 
+    @Override
+    public void unFocus(Focusable newFocusable, EventBus eventBus) {
+        this.textInput.unFocus(newFocusable, eventBus);
+    }
+    
+    @Override
+    public void focus(Focusable oldFocusable, EventBus eventBus) {
+        this.textInput.focus(oldFocusable, eventBus);
+    }
+    
     @Override
     public FocusManager getParentFocusManager() {
         return this.textInput.getParentFocusManager();

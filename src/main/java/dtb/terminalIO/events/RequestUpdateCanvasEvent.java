@@ -6,9 +6,7 @@ public class RequestUpdateCanvasEvent extends TerminalEvent<Object> {
 
     public RequestUpdateCanvasEvent(Object source) {
         super(source, TYPE.REQUEST_UPDATE_CANVAS, null, Q_FULL_POLICY.OFFER);
-        
        // Logging.forceLogInfo("RequestUpdateCanvasEvent " + String.valueOf(source));
-        
     }
 
     @Override

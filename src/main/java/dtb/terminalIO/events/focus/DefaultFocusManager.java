@@ -684,6 +684,19 @@ public class DefaultFocusManager implements FocusManager,
                     super.setFocus(focus, eventBus);
                     getCurrentOrSet(eventBus).setFocus(focus, eventBus);
                 }
+                
+                @Override
+                public void unFocus(Focusable newFocusable, EventBus eventBus) {
+                    super.unFocus(newFocusable, eventBus);
+                    getCurrentOrSet(eventBus).unFocus(newFocusable, eventBus);
+                }
+
+                @Override
+                public void focus(Focusable oldFocusable, EventBus eventBus) {
+                    super.focus(oldFocusable, eventBus);
+                    getCurrentOrSet(eventBus).focus(oldFocusable, eventBus);
+                }
+                
             };
         }
         return meAsFocusable;
@@ -719,6 +732,14 @@ public class DefaultFocusManager implements FocusManager,
         getAsFocusable().setFocus(focus, eventBus);
     }
 
+    public void unFocus(Focusable newFocusable, EventBus eventBus) {
+        getAsFocusable().unFocus(newFocusable, eventBus);
+    }
+    
+    public void focus(Focusable oldFocusable, EventBus eventBus) {
+        getAsFocusable().focus(oldFocusable, eventBus);
+    }
+    
     @Override
     public String toString() {
         return (this.getName()!=null?this.getName():"DefaultFocusManager")+

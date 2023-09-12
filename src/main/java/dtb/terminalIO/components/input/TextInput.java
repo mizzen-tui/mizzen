@@ -341,6 +341,16 @@ public class TextInput extends BoundedComponent<TextInput>
         asFocusable().setFocus(focus, eventBus);
     }
 
+    @Override
+    public void unFocus(Focusable newFocusable, EventBus eventBus) {
+        asFocusable().unFocus(newFocusable, eventBus);
+    }
+    
+    @Override
+    public void focus(Focusable oldFocusable, EventBus eventBus) {
+        asFocusable().focus(oldFocusable, eventBus);
+    }
+
 
     @Override
     public FocusManager getParentFocusManager() {
@@ -503,7 +513,7 @@ public class TextInput extends BoundedComponent<TextInput>
         onChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, onChangeHandler, getChainedEventHandler(), consumeChange);
 
     }
-    
+
     @Override
     public Collection<? extends Component<?>> getChildren() {
         return Collections.singleton(this.textRenderer);

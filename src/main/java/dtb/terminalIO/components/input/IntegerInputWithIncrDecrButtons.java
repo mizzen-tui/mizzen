@@ -8,13 +8,11 @@ public class IntegerInputWithIncrDecrButtons extends TextInputWithIncrDecrButton
         super(color, labelText, downButtonText, upButtonText);
     }
 
-
     @Override
     protected TextInputForType<Integer> buildTextInputForType() {
         return new TextInputInteger(this.getColor(),3);
     }
-    
-    
+
     @Override
     protected Integer decr() {
         if (getValue() == null) {

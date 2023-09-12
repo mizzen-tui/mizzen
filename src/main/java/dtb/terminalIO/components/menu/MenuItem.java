@@ -11,7 +11,7 @@ import dtb.terminalIO.util.Logging;
 public interface MenuItem extends DisplayableValue<Object> {
 
     public void onSelected(TerminalEvent<?> te);
-    
+
     public static class Simple extends SimpleDisplayValue<Object> implements MenuItem {
 
         EventHandler handleSelected;
@@ -31,20 +31,20 @@ public interface MenuItem extends DisplayableValue<Object> {
         }
 
     }
-    
+
     public static class SubMenu extends SimpleDisplayValue<Object> implements MenuItem {
 
         Menu parentMenu;
-        
+
         public SubMenu(String displayValue, Menu menu, Menu parentMenu) {
             super(displayValue, menu);
             this.parentMenu = parentMenu;
         }
-        
+
         public Menu getMenu() {
             return (Menu)this.getValue();
         }
-        
+
         public Menu getParentMenu() {
             return parentMenu;
         }
@@ -62,7 +62,7 @@ public interface MenuItem extends DisplayableValue<Object> {
             
             //getMenu().
             
-            
+
         }
 
     }
@@ -82,5 +82,14 @@ public interface MenuItem extends DisplayableValue<Object> {
 
     }
     
+    public static interface SelectNextLeft {
+        public void selectNextLeft(TerminalEvent<?> te);
+    }
+    
+    public static interface SelectNextRight {
+        public void selectNextRight(TerminalEvent<?> te);
+    }
+    
+    public static interface LeftRightSelector extends SelectNextLeft, SelectNextRight {}
 
 }

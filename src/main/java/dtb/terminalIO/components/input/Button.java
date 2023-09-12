@@ -14,8 +14,10 @@ import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.ChainedEventHandler;
+import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.EventHandlerContainer;
 import dtb.terminalIO.events.RequestHideCursorEvent;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
@@ -39,7 +41,8 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
                                                                 Clickable, 
                                                                 Hiliter,
                                                                 ParentContainer, 
-                                                                GetComponentAtOffset  {
+                                                                GetComponentAtOffset,
+                                                                EventHandlerContainer{
 
     String buttonText;
     Composite container;  // <-- having a composite for something as simple as a button seems a bit heavy
@@ -111,7 +114,7 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
     public void setButtonText(String buttonText) {
         setButtonTextAndResize(buttonText);
     }
-    
+
     public String getButtonText() {
         return this.buttonText;
     }
@@ -127,7 +130,7 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
             //this.container.resize(d);
         }
     }
-    
+
     private void setButtonTextAndResize(String buttonText) {
         Dimension prevSize = new Dimension.Simple(this.renderedText);
         this.buttonText = buttonText;
@@ -163,11 +166,11 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
 
              outputStr = (this.renderedText.getColor().bold().asString()) + hotKeyStr + this.renderedText.getColor().asString() + " " + outputStr;
          }
-         
+
          if (hasFocus) {
              outputStr = lbracket(leftSelectedBracket) + outputStr + rbracket(rightSelectedBracket);
          } else {
-             // output black brackets ..
+             // output brackets ..
              outputStr = lbracket(StringUtils.repeat(' ', leftSelectedBracket != null ? leftSelectedBracket.length():0)) + 
                          outputStr + 
                          rbracket(StringUtils.repeat(' ', rightSelectedBracket != null ? leftSelectedBracket.length():0));
@@ -284,7 +287,7 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
         }
 
         chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
-        
+
         KeyStroke[] actionKeys = new KeyStroke[getHotKey()!=null?2:1];
         actionKeys[0] = Keys.ENTER_KEYSTROKE;
         if (getHotKey() != null) {
@@ -296,6 +299,21 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
 
         meAsFocusable = new DefaultFocusableBehaviour.Simple(this, chainedHandler.asConditionalEventHandler()) {
  
+            @Override
+            public void unFocus(Focusable newFocusable, EventBus eventBus) {
+                super.unFocus(newFocusable, eventBus);
+                renderedText.setTextAndResize(getTextForRendering(false));
+                requestHideCursor(eventBus);
+            }
+            
+            @Override
+            public void focus(Focusable oldFocusable, EventBus eventBus) {
+                super.focus(oldFocusable, eventBus);
+                renderedText.setTextAndResize(getTextForRendering(true));
+                new ShowComponentOnFocus().onFocus(Button.this, eventBus);
+                requestShowCursorAtComponent(eventBus);
+            }
+            
             @Override
             public void setFocus(boolean focus, EventBus eventBus) {
                 super.setFocus(focus, eventBus);
@@ -333,6 +351,16 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
     @Override
     public void setFocus(boolean focus, EventBus eventBus) {
         asFocusable().setFocus(focus, eventBus);
+    }
+
+    @Override
+    public void unFocus(Focusable newFocusable, EventBus eventBus) {
+        asFocusable().unFocus(newFocusable, eventBus);
+    }
+    
+    @Override
+    public void focus(Focusable oldFocusable, EventBus eventBus) {
+        asFocusable().focus(oldFocusable, eventBus);
     }
 
     @Override
@@ -395,6 +423,18 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
     
     public String toStringDetails() {
         return "["+this.getTextForRendering(false)+", value="+String.valueOf(getValue())+"]";
+    }
+    @Override
+    public EventHandlerContainer prependEventHandler(ConditionalEventHandler eventHandler) {
+        return getchainedHandler().prependEventHandler(eventHandler);
+    }
+    @Override
+    public EventHandlerContainer appendEventHandler(ConditionalEventHandler eventHandler) {
+        return getchainedHandler().appendEventHandler(eventHandler);
+    }
+    @Override
+    public EventHandlerContainer removeEventHandler(ConditionalEventHandler eventHandler) {
+        return getchainedHandler().removeEventHandler(eventHandler);
     }
     
 }

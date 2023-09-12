@@ -22,6 +22,7 @@ import dtb.terminalIO.traverse.FindPathToTarget;
 import dtb.terminalIO.traverse.HasChildren;
 import dtb.terminalIO.traverse.HasChildrenAdapter;
 import dtb.terminalIO.traverse.Traverser;
+import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.StringUtils;
 import dtb.terminalIO.util.TerminalDimensions;
 
@@ -109,13 +110,15 @@ public interface FocusManager extends Focusable {
         public static void setNewFocusable(Focusable focusableChild, Focusable oldFocusableChild, EventBus eventBus, BiConsumer<Focusable, EventBus> onFocusChanged) {
             
             // unfocus the previous (old)
-            if (oldFocusableChild != null) {
-                oldFocusableChild.setFocus(false, eventBus);
+            if (oldFocusableChild != null && oldFocusableChild != focusableChild) {
+                Logging.info(HasName.UTIL.getName(oldFocusableChild)+ " unfocus  will change to: " +  HasName.UTIL.getName(focusableChild, "NONE-SELECTED"));
+                oldFocusableChild.unFocus(focusableChild, eventBus);  //setFocus(false, eventBus);
             }
             
             // focus the new
-            if ( focusableChild != null) {    
-                focusableChild.setFocus(true, eventBus);
+            if ( focusableChild != null && !focusableChild.hasFocus()) {    
+                Logging.info(HasName.UTIL.getName(focusableChild)+ " focus  from previous: " + HasName.UTIL.getName(oldFocusableChild, "NONE-SELECTED"));
+                focusableChild.focus(oldFocusableChild, eventBus);
             }
             
             // run action ( typically to update the canvas )

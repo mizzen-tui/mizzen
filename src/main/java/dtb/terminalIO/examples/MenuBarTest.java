@@ -1,20 +1,21 @@
 package dtb.terminalIO.examples;
 
 import java.io.IOException;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.Composite;
+import dtb.terminalIO.components.input.TextInput;
 import dtb.terminalIO.components.menu.Menu;
 import dtb.terminalIO.components.menu.MenuBar;
-import dtb.terminalIO.components.menu.MenuItem;
 import dtb.terminalIO.controlcodes.color.Colors;
+import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.FocusManager;
+import dtb.terminalIO.events.focus.RequestFocusEvent;
 import dtb.terminalIO.util.Logging;
-
 public class MenuBarTest {
     
     public static void main(String[] args) throws IOException {
@@ -32,28 +33,42 @@ public class MenuBarTest {
 
             tApp.getMainApplicationPanel().add(10, 10, bc);
 
-            Consumer<String> displayText = (theText) -> {
+            TextInput testInput = new TextInput(30);
+            testInput.setText("Type something here");
+            
+            BiConsumer<String, TerminalEvent<?>> displayText = (theText, te) -> {
+                 Logging.info("Display-Text called with: " + theText);
                  textView.setTextAndResize(theText);
+                 te.getEventBus().raiseEvent(new RequestFocusEvent(testInput));
             };
 
             Menu menu1 = new Menu("Menu-1")
                             .addItem("New", new Menu("Menu-1-1")
-                                                .addItem("New what?",(te)-> displayText.accept("What could you possible want"))
-                                                .addItem("New Car",(te)-> displayText.accept("Are you kidding?  A new Car?"))
-                                                .addItem("New Boat",(te)->  displayText.accept("OK now you are crazy.\nA hole in which to pour money!")))
+                                                .addItem("New what?",(te)-> displayText.accept("What could you possible want", te))
+                                                .addItem("New Car",(te)-> displayText.accept("Are you kidding?  A new Car?", te))
+                                                .addItem("New Boat",(te)->  displayText.accept("OK now you are crazy.\nA hole in which to pour money!", te)))
                             .addDivider()
-                            .addItem("Open File",(te)-> displayText.accept("Here I would open a file"))
-                            .addItem("Close",(te)->  displayText.accept("OK time to close the file"));
+                            .addItem("Open File",(te)-> displayText.accept("Here I would open a file", te))
+                            .addItem("Close",(te)->  displayText.accept("OK time to close the file", te));
 
             Menu menu2 = new Menu("Menu-2")
-                    .addItem("Find/Replace",(te)-> displayText.accept("OK let's find something.\nWhat should we look for?\nSomething interesting\nI should hope!"))
-                    .addItem("Delete",(te)-> displayText.accept("Let's delete something shall we?\nMaybe our purpose?\nMaybe the next character?\nLet's go for the gusto!\nLet's delete the next word!\nYeah!! We're so brave!"));
+                    .addItem("Find/Replace",(te)-> displayText.accept("OK let's find something.\nWhat should we look for?\nSomething interesting\nI should hope!", te))
+                    .addItem("Delete",(te)-> displayText.accept("Let's delete something shall we?\nMaybe our purpose?\nMaybe the next character?\nLet's go for the gusto!\nLet's delete the next word!\nYeah!! We're so brave!", te));
+
+            Menu menu3 = new Menu("Menu-3")
+                    .addItem("Surf",(te)-> displayText.accept("OK let's go surfing!", te))
+                    .addItem("Sleep",(te)-> displayText.accept("Sleep?  Now yer talking!", te));
 
             MenuBar mBar = new MenuBar(Colors.IBlu);
             mBar.addDropDownMenu("File", menu1);
             mBar.addDropDownMenu("Edit", menu2);
+            mBar.addDropDownMenu("Misc", menu3);
+            
 
+            
+            
             tApp.getMainApplicationPanel().add(0, 1, mBar);
+            tApp.getMainApplicationPanel().add(20, 1, testInput);
 
             FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(), tApp.getEventBus());
 

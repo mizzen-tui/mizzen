@@ -53,7 +53,6 @@ public interface DisplayableValue<V> extends HasValue<V> {
         public String toString() {
             return getDisplayValue();
         }
-
     }
 
     public class StringDisplayValue extends  SimpleDisplayValue<String> {
