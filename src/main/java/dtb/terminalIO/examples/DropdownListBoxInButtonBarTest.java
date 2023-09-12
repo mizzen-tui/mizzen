@@ -47,10 +47,11 @@ public class DropdownListBoxInButtonBarTest {
                 MessageBox.showInfoDialog(te.getEventBus(), tApp.getMainApplicationPanel(), "b2 popup msg");
             });
 
-            DropdownListBox<String> ddlb = DropdownListBox.fromStrings(new String[] {"Test1","Test2","Test3"});
+            DropdownListBox<String> ddlb = DropdownListBox.fromStrings(new String[] {"Test1","Test2","Test3"}).setName("Test123-ddlb");
             ddlb.setSelectedValue("Test2");
 
             DropdownListBox<String> ddlb2 = DropdownListBox.fromStrings(new String[] {"Silly Sally","Sold SeaShells","At the SeahShore!"});
+            ddlb2.setName("Silly-Sally-ddlb2");
 
             hpMain.add(bbar);
 

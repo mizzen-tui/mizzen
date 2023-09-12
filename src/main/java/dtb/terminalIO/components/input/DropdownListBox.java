@@ -6,6 +6,7 @@ import java.util.stream.Stream;
 
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.ComponentWithFocusManager;
+import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.input.DisplayableValue.BooleanDisplayValue;
@@ -19,6 +20,7 @@ import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
+import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
@@ -26,6 +28,7 @@ import dtb.terminalIO.events.mouse.Clickable;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
+import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.StringUtils;
 
 public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBox<T>>  
@@ -169,7 +172,7 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
     public static DropdownListBox<Boolean> yesNoDropDown(Color color) {
         return new DropdownListBox<Boolean>(color, 
                 new BooleanDisplayValue[] {new BooleanDisplayValue("yes", true),
-                                           new BooleanDisplayValue("no", false)});
+                                           new BooleanDisplayValue("no", false)}).setName("Yes-No-ddlb");
     }
 
     public static DropdownListBox<Boolean> yesNoDropDown() {
@@ -356,6 +359,15 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
             hideListBox();
         }
         Component.UTIL.bringToFront(DropdownListBox.this);
+    }
+
+    @Override
+    public void unFocus(Focusable oldFocusable, EventBus eventBus) {
+        setFocus(false, eventBus);
+    }
+    @Override
+    public void focus(Focusable newFocusable, EventBus eventBus) {
+        setFocus(true, eventBus);
     }
 
     @Override
