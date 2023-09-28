@@ -316,6 +316,7 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
 
     protected void refreshBackend() {
         if (hideCursorRequested || showCursorRequested) {
+            //Logging.info("Canvas.refreshBackend()-start() hideCursorRequested = " + hideCursorRequested + "  showCursorRequested = " + showCursorRequested);
             hideCursorRequested = false;
             backend.hideCursor(); // this takes effect on next refresh just below
         }
@@ -324,6 +325,7 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
         backend.refresh();
 
         if (last_RequestShowCursorPosition != null) {
+            //Logging.info("Canvas.refreshBackend()-end() hideCursorRequested = " + hideCursorRequested + "  showCursorRequested = " + showCursorRequested  + "  last_RequestShowCursorPosition = " + last_RequestShowCursorPosition);
             backend.showCursorAt(last_RequestShowCursorPosition, showCursorRequested);
             showCursorRequested = false;
         }
@@ -468,7 +470,8 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
     public OnRequestShowCursorEventHandler asShowCursorEventHandler() {
         return new OnRequestShowCursorEventHandler() {
             @Override
-            protected void handleRequestShowCursorAt(Position position) {
+            protected void handleRequestShowCursorAt(Object source, Position position) {
+//Logging.info("\nOnRequestShowCursorEventHandler -- source " +  HasName.UTIL.getName(source) + "   " + position+"\n");
                 Canvas.this.showCursorAt(position);
             }
         };
@@ -487,6 +490,7 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
         return new OnRequestHideCursorEventHandler() {
 
             public void handle(TerminalEvent<?> te) {
+//Logging.info("OnRequestHideCursorEventHandler -- ");
                 Canvas.this.showCursorRequested = false;
                 Canvas.this.last_RequestShowCursorPosition = null;
                 Canvas.this.hideCursorRequested = true;

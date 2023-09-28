@@ -6,14 +6,11 @@ import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.ComponentInspector;
 import dtb.terminalIO.components.WindowFrame;
-import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.input.MultiLineTextInput;
 import dtb.terminalIO.components.scroll.ScrollableComponent2;
 import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.OnIdleEventEventHandler.RepeatingInterval;
-import dtb.terminalIO.events.focus.DefaultFocusManager;
-import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.util.Logging;
 
@@ -26,12 +23,12 @@ public class MultiLineTextInputTest {
         new TUIApp(args)
         .setCanvasSize(50, 100)
         .setEmptyChar(' ')
-        .setMainApplicationPanel(new Composite().setBounds(30, 120).setEmptyChar('X').setBorder(false))
+        .setDefaultMainApplicationPanel()
         .confirmOnExit()
         .setOnReadyStart((tApp)-> {
 
             MultiLineTextInput mTextBox = new MultiLineTextInput(); 
-            mTextBox.setText("Silly Sally sold\nSeaShells at the seashore\nWhat a silly thing to do!");
+            mTextBox.setText("Silly Sally sold\nSeaShells at the seashore\nWhat a Silly Sally thing to do!");
 
             mTextBox.setColor(  new Colors.FGBGColors( Colors.BBlu, Colors.On_Bla  )  );
 
@@ -47,30 +44,22 @@ public class MultiLineTextInputTest {
             sc.resize(  new Dimension.Simple(sc.getHeight()-2, sc.getWidth()));
             
             tApp.getMainApplicationPanel().add(2,0, sc);
-
-            DefaultFocusManager mainFocusManager = (DefaultFocusManager)FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(), tApp.getEventBus());
-
+            
             ComponentInspector inspector = new ComponentInspector(Colors.BIGre, 
                                                                   new Dimension.Simple(25,60), 
                                                                   (Component<?>)tApp.getMainApplicationPanel(), 
-                                                                  mainFocusManager);
+                                                                  tApp.getApplicationFocusManager());
 
             WindowFrame wfInspector = new WindowFrame(inspector.getColor(),"Components",inspector);
 
             tApp.getEventBus().appendEventHandler( inspector.toggleViewEventHandler() );
             tApp.getEventBus().appendEventHandler( inspector.refreshEventHandler() );
             // every 1/4 second we update ComponentInspector with current component hierarchy and focus data
-            tApp.getEventBus().appendIdleEventHandler(new RepeatingInterval(2000, (te)->{
+            tApp.getEventBus().appendIdleEventHandler(new RepeatingInterval(250, (te)->{
                                                          inspector.refreshEventHandler().handle(te);
                                                       }));
 
-            mainFocusManager.addComponentAsFocusables(wfInspector);
-
-            tApp.getEventBus().appendEventHandler(mainFocusManager);
-
             tApp.getMainApplicationPanel().add(22,44, wfInspector);
-
-            FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
 
         }).start();
 

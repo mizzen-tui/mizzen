@@ -17,8 +17,6 @@ import dtb.terminalIO.components.modal.MessageBox;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventBus;
-import dtb.terminalIO.events.focus.DefaultFocusManager;
-import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.mouse.Clickable;
 
@@ -86,12 +84,6 @@ public class HideShowTest {
             Component<?> hTest3 = new ClickableRectangle(Colors.On_Gre, "hTest3");
             testHoriz.add(hTest3);
             horizMainMenu.addComponent(hideShowButton(vTest3.getColor(), "(3)", hTest3));
-
-            FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(
-                    tApp.getMainApplicationPanel(), tApp.getEventBus(),
-                    () -> new DefaultFocusManager().setNavKeysFirst(false).setCycling(false));
-
-            tApp.getEventBus().appendEventHandler(mainFocusManager);
 
         }).start();
 

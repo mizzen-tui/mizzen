@@ -10,6 +10,7 @@ import java.util.function.Function;
 import javax.imageio.ImageIO;
 
 import dtb.terminalIO.app.TUIApp;
+import dtb.terminalIO.components.ChildComponentManager;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.ComponentInspector;
 import dtb.terminalIO.components.TextComponent;
@@ -26,15 +27,12 @@ import dtb.terminalIO.components.plot.image.animate.ImageSplitter;
 import dtb.terminalIO.components.tab.TabAction;
 import dtb.terminalIO.components.tab.TabPanel;
 import dtb.terminalIO.components.tab.TabPanel.TabContext;
-import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventBusImpl;
 import dtb.terminalIO.events.EventHandlerContainer;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
-import dtb.terminalIO.events.focus.DefaultFocusManager;
-import dtb.terminalIO.events.keyboard.KeyEvent;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.examples.BarChartTest.BarChartRandomDataDemo;
 import dtb.terminalIO.examples.GridBrailleTest.BrailleDemo;
@@ -94,18 +92,7 @@ public class TabPanelTest {
 
     public static void main(String args[]) throws Exception {
 
-        TUIApp tabPanelDemoApp = new TUIApp();
-
-        tabPanelDemoApp.initFromArgs(args);
-
-        char emptyChar = '░';
-        Color emptyColor = new Colors.FGBGColors(Colors.IYel, Colors.On_IBlu);
-
-        Composite topFrame = new Composite();
-        topFrame.setEmptyChar(emptyChar);
-        topFrame.setEmptyColor(emptyColor);
-        topFrame.setFillOnClear(false);
-
+        TUIApp tabPanelDemoApp = new TUIApp(args).setDefaultMainApplicationPanel();
 
         Dimension sizeOfTabPanelWindow = new Dimension() {
             @Override
@@ -146,16 +133,10 @@ public class TabPanelTest {
         };
 
         VerticalPanel vPanel = new VerticalPanel();
-        vPanel.setEmptyChar(emptyChar);
-        vPanel.setEmptyColor(emptyColor);
-        vPanel.setFillOnClear(false);
         vPanel.setVerticalSpacer(1);
-        topFrame.add(vPanel);
+        tabPanelDemoApp.getMainApplicationPanel().add(vPanel);
 
         TabPanel tb = new TabPanel(Colors.BIYel, new Colors.FGBGColors(Colors.Blu).bold(), sizeOfTabPanelWindow);
-        tb.setEmptyChar(emptyChar);
-        tb.setEmptyColor(emptyColor);
-        tb.setFillOnClear(false);
         tb.setPrevKeyStroke(Keys.CTRL_LEFT_KEYSTROKE);
         tb.setNextKeyStroke(Keys.CTRL_RIGHT_KEYSTROKE);
 
@@ -164,15 +145,6 @@ public class TabPanelTest {
 
         vPanel.add(hp);
 
-        DefaultFocusManager focusManager = new DefaultFocusManager(Keys.LEFT_KEYSTROKE, Keys.RIGHT_KEYSTROKE);
-
-        ComponentInspector inspector = new ComponentInspector(Colors.BIGre, sizeOfInspectorWindow, vPanel, focusManager);
-
-        hp.add(inspector);
-
-        focusManager.addFocusable(tb);
-        focusManager.addComponentAsFocusables(inspector);
-
         TextComponent debugSTATs = new TextComponent(Colors.IYel, "");
         Composite debugWindow = new Composite(Colors.IGre).setBounds(sizeOfDebugWindow);
         debugWindow.setTitle(new Colors.FGBGColors(Colors.BYel, Colors.On_Gre), "DEBUG");
@@ -180,19 +152,6 @@ public class TabPanelTest {
         vPanel.add(debugWindow);
 
         AtomicInteger counter = new AtomicInteger(0);
-
-        tabPanelDemoApp.enableMouseHandling();
-
-        tabPanelDemoApp.setUpdateCanvas((tApp) -> {
-            if (!topFrame.isDirty()) {
-                return false; // false means no GUI change to update
-            }
-
-            tApp.clearCanvas();
-            tApp.getCanvas().addComponentSegments(1,2,topFrame);
-
-            return true;
-        });
 
         tb.addTab("Animation", Keys.F4_KEYSTROKE, new TabAction<VerticalPanel>() {
             ImageAnimatorComponent animatorComponent;
@@ -346,30 +305,33 @@ public class TabPanelTest {
                   new DemoInTab(brailleDemo, 
                                 (tc) -> brailleDemo.getBrailleComponent()).getTabAction());
 
-        tabPanelDemoApp.setOnResizeAction((tApp, size) -> {
-            tApp.getCanvas().setSize(size.getHeight(), size.getWidth());
-            tApp.getCanvas().clearCanvas();
-            tb.resize(sizeOfTabPanelWindow);
-            inspector.resize(sizeOfInspectorWindow);
-            hp.fullrecalcDim();
-            vPanel.fullrecalcDim();
-            debugWindow.resize(sizeOfDebugWindow);
-        });
 
-        tabPanelDemoApp.setMainApplicationPanel(topFrame);
         tabPanelDemoApp.confirmOnExit();
 
         tabPanelDemoApp.setOnReadyStart((tApp) -> {
 
-            tApp.getEventBus().appendEventHandler(inspector.refreshEventHandler());
+            // ComponentInspector inspector = new ComponentInspector(Colors.BIGre, sizeOfInspectorWindow, vPanel, focusManager);
+            
+//            ComponentInspector inspector = new ComponentInspector(Colors.IGre, sizeOfInspectorWindow, (Component<?>)tApp.getMainApplicationPanel(), tApp.getApplicationFocusManager());
+//            
+//            tApp.getEventBus().appendEventHandler(inspector.refreshEventHandler());
+//
+//            tApp.getEventBus().appendEventHandler(inspector.toggleViewEventHandler());
 
-            tApp.getEventBus().appendEventHandler(inspector.toggleViewEventHandler());
-
-            tApp.getEventBus().appendEventHandler(focusManager);
-
+            tabPanelDemoApp.setOnResizeAction((tApp2, size) -> {
+                tApp2.getCanvas().setSize(size.getHeight(), size.getWidth());
+                tApp2.getCanvas().clearCanvas();
+                tb.resize(sizeOfTabPanelWindow);
+//                inspector.resize(sizeOfInspectorWindow);
+                hp.fullrecalcDim();
+                vPanel.fullrecalcDim();
+                debugWindow.resize(sizeOfDebugWindow);
+            });
+            
+            
             // select first tab once eventBus is rdy to go
-            tApp.getEventBus().appendEventHandler(
-                    new OnIdleEventEventHandler.OneTime((te) ->  te.getEventBus().raiseEvent(new KeyEvent(tApp, Keys.F5_KEYSTROKE)) ));
+//            tApp.getEventBus().appendEventHandler(
+//                    new OnIdleEventEventHandler.OneTime((te) ->  te.getEventBus().raiseEvent(new KeyEvent(tApp, Keys.F5_KEYSTROKE)) ));
 
             tApp.getEventBus().appendEventHandler(new OnIdleEventEventHandler.RepeatingInterval(100, (te) -> {
                         int count = counter.incrementAndGet();
@@ -381,6 +343,9 @@ public class TabPanelTest {
         
                         te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(tApp));
             }));
+            
+            tb.displayCurrentTab(tApp.getEventBus());
+
 
         });
 

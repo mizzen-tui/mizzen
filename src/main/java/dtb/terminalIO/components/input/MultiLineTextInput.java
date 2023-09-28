@@ -530,12 +530,12 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
 
     @Override
     public void unFocus(Focusable newFocusable, EventBus eventBus) {
-        this.unFocus(newFocusable, eventBus);
+        asFocusable().unFocus(newFocusable, eventBus);
     }
     
     @Override
     public void focus(Focusable oldFocusable, EventBus eventBus) {
-        this.focus(oldFocusable, eventBus);
+        asFocusable().focus(oldFocusable, eventBus);
     }
 
     
@@ -552,7 +552,7 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
 
     @Override
     public void setParentFocusManager(FocusManager focusManager) {
-        asFocusable().setParentFocusManager(focusManager);
+        Focusable.UTIL.setParentFocusManager(this, focusManager, (fm)-> asFocusable().setParentFocusManager(fm));
     }
     
 

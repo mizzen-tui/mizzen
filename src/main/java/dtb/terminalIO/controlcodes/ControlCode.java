@@ -304,8 +304,8 @@ public abstract class ControlCode implements Renderer, HasName<ControlCode> {
     }
 
     public static class CursorBackward extends CursorMovementWithCount {
-        public CursorBackward(int nLines) {
-            super(nLines, "D");
+        public CursorBackward(int positionsBackCount) {
+            super(positionsBackCount, "D");
         }
 
         public int getCursorDelta() {
@@ -343,6 +343,20 @@ public abstract class ControlCode implements Renderer, HasName<ControlCode> {
             return -nLines;
         }
 
+    }
+    
+    public static interface HasBackgroundColor {
+        boolean hasBackGroundColor();
+
+        public static class UTIL {
+            public static boolean hasBackGroundColor(Renderer r) {
+                if (!(r instanceof HasBackgroundColor)) {
+                    return false;
+                }
+                return ((HasBackgroundColor)r).hasBackGroundColor();
+            }
+        }
+        
     }
 
     public static void main(String[] args) {

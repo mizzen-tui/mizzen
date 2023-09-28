@@ -80,17 +80,6 @@ public class DraggableTest {
             horizontalComposite.add(new TextComponent("With 2 text components\nRight here in Texas!"));
             tApp.getMainApplicationPanel().add(33, 3, horizontalComposite );
 
-            FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(
-                                                tApp.getMainApplicationPanel(), 
-                                                tApp.getEventBus(),
-                                                () -> new DefaultFocusManager().setPrevKeyStroke(Keys.SHIFT_TAB_KEYSTROKE)
-                                                                               .setNextKeyStroke(Keys.TAB_KEYSTROKE)
-                                                                               .setNavKeysFirst(false)
-                                                                               .setName("mainFocusManager")
-                                                                               .setCycling(false));
-
-            tApp.getEventBus().appendEventHandler(mainFocusManager);
-
         })
         .start();
         
@@ -210,7 +199,7 @@ public class DraggableTest {
 
         @Override
         public void setParentFocusManager(FocusManager focusManager) {
-            asFocusable().setParentFocusManager(focusManager);
+            Focusable.UTIL.setParentFocusManager(this, focusManager, (fm)-> asFocusable().setParentFocusManager(fm));
         }
         
         

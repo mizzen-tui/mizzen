@@ -7,6 +7,7 @@ import java.util.List;
 
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.geom.Align;
+import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.VAlign;
@@ -71,6 +72,9 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>
     public void resize(Dimension d) {
         super.resize(d);
         this.border.resize(d);
+        if (this.titleComponent != null && this.titleComponent instanceof CanResize) {
+            
+        }
     }
 
     @Override
@@ -107,6 +111,9 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>
                 titleComponent = makeChildComponent(() -> new TextComponent(getTitleColor(), getTitle()));
                 if (titlePosition == null) {
                     titlePosition = PositionRelativeFactory.fromAlign(this.titleAlign, this, titleComponent, 1);
+                }
+                if (titleComponent.getWidth() > (this.getWidth()-2)) {
+                    ((TextComponent) titleComponent).resize(new Dimension.Simple(titleComponent.getHeight(), this.getWidth()-2));
                 }
             }
             // need to do a "smart(slow) merge" here

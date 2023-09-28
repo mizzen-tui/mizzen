@@ -127,7 +127,7 @@ public class ResizeAnchor  extends TextComponent implements Focusable , Draggabl
 
     @Override
     public void setParentFocusManager(FocusManager focusManager) {
-        asFocusable().setParentFocusManager(focusManager);
+        Focusable.UTIL.setParentFocusManager(this, focusManager, (fm)-> asFocusable().setParentFocusManager(fm));
     }
 
     

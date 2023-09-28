@@ -61,12 +61,6 @@ public class TestCube {
                                                    } );
                    
                    cube3D.as2DShape(plot2DInputForm.getValue()).draw(grid.asPointPlotter());
-                   
-                   DefaultFocusManager mainFocusManager = (DefaultFocusManager)FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),tApp.getEventBus());
-
-                   tApp.getEventBus().appendEventHandler(  mainFocusManager );
-
-                   FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
 
 
                }).start();

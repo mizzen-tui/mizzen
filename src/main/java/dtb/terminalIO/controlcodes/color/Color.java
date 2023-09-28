@@ -5,6 +5,7 @@ import java.util.StringJoiner;
 
 import dtb.terminalIO.components.input.DisplayableValue;
 import dtb.terminalIO.controlcodes.ControlCode;
+import dtb.terminalIO.controlcodes.ControlCode.HasBackgroundColor;
 import dtb.terminalIO.controlcodes.ControlCodeContext;
 import dtb.terminalIO.controlcodes.color.Colors.BgColor;
 import dtb.terminalIO.controlcodes.color.Colors.FGBGColors;
@@ -14,7 +15,7 @@ import dtb.terminalIO.util.IntArrayComparator;
 /**
  * A {@link ControlCode} that encapsulates a Color
  */
-public abstract class Color extends ControlCode implements ColorProvider {
+public abstract class Color extends ControlCode implements ColorProvider, HasBackgroundColor {
 
     public static class ColorComparator implements Comparator<Color> {
     
@@ -72,7 +73,7 @@ public abstract class Color extends ControlCode implements ColorProvider {
     public Color mergeWith(Color other) {
         return mergeColors(this, other);
     }
-    
+
     public Color getBackGroundColor() {
         return this;
     }

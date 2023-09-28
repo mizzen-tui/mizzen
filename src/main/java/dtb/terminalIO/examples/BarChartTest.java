@@ -18,7 +18,6 @@ import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
-import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
@@ -114,7 +113,7 @@ public class BarChartTest {
         Dimension termSize = TerminalDimensions.create();
 
         TUIApp app = new TUIApp(args).setEmptyChar(' ')
-                                     .setMainApplicationPanel(new Composite(termSize).setEmptyChar(' '))
+                                     .setDefaultMainApplicationPanel()
                                      .confirmOnExit();
         // set to size of canvas
 
@@ -168,8 +167,6 @@ public class BarChartTest {
 
         app.setOnReadyStart((tApp) -> {
                     tApp.getMainApplicationPanel().add(2,0,barChartDemo);
-                    FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),tApp.getEventBus());
-                    tApp.getEventBus().appendEventHandler(  mainFocusManager );
                     barChartDemo.setupTimer(tApp.getEventBus());
                 });
 

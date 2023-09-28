@@ -13,8 +13,6 @@ import dtb.terminalIO.components.plot.image.animate.ImageAnimatorComponent;
 import dtb.terminalIO.components.plot.image.animate.ImageIterator;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.controlcodes.color.Colors.FGBGColors;
-import dtb.terminalIO.events.focus.DefaultFocusManager;
-import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.geom.Dimension;
 
 /**
@@ -100,12 +98,6 @@ public class FractalsViewer {
                 animator.getImageRenderRequest().setGradientStr( gradientsDDLB.getValue() );
             });
 
-
-            FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),
-                    tApp.getEventBus(),
-                    ()-> new DefaultFocusManager().setNavKeysFirst(false).setCycling(false).setName("mainFocusManager"));
-
-            tApp.getEventBus().appendEventHandler( mainFocusManager );
             
         })
         .start();

@@ -13,7 +13,6 @@ import java.util.function.Function;
 import dtb.terminalIO.components.BlockChars;
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.controlcodes.color.Color;
-import dtb.terminalIO.geom.Align;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
@@ -68,7 +67,7 @@ public class TableComponent extends BoundedComponent<TableComponent> {
 
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer mySegments) {
-        Logging.setEnabled(false);
+        //Logging.setEnabled(false);
 
         new TableColumnDataBuilderDropColumnsWhenNeeded(this);
         

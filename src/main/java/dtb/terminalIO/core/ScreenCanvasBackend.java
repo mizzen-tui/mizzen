@@ -83,7 +83,6 @@ public class ScreenCanvasBackend implements CanvasBackend {
         ElapsedTime.Average refreshStats = screenUpdateStrategy == changedSegmentsUpdateStrategy 
                                                ? elapsedChangedRefreshTimeStats
                                                : elapsedFullRefreshTimeStats;
-        
         if (Logging.isEnabled()) {
             refreshStats.startTimer();
            // Logging.info("\n\nrefresh-START");
@@ -178,7 +177,7 @@ public class ScreenCanvasBackend implements CanvasBackend {
         public void signal_eol() {
             addColor(Colors.RCol);
         }
-        
+
         @Override
         public void refresh() {
             simpleScreenRefresh();
@@ -197,10 +196,10 @@ public class ScreenCanvasBackend implements CanvasBackend {
             screen.showCursorAt(showCursorPosition, showCursor);
         }
     };
-    
+
     TreeSet<ScreenLineSegment> previous = ScreenLineSegment.UTIL.makeCollection(null);
     TreeSet<ScreenLineSegment> current  = ScreenLineSegment.UTIL.makeCollection(null);
-    
+
     ScreenUpdateStrategy changedSegmentsUpdateStrategy = new ScreenUpdateStrategy() {
 
         int counter = 0;
@@ -346,11 +345,9 @@ public class ScreenCanvasBackend implements CanvasBackend {
         
         @Override
         public void setSize(int height, int width) {
-            
-            
+
             TerminalDimensions termDim = TerminalDimensions.create();
-            
-            
+
             screenHeight = termDim.getHeight();
             screenWidth = termDim.getWidth();
 
@@ -360,9 +357,9 @@ public class ScreenCanvasBackend implements CanvasBackend {
             // should allow more than enough refresh cycles for the app to
             // fully repaint itself.. then after that, we revert to 
             // partial updates again.. 
-            
+
             revertToFullUPdateForNext_n_refreshs(5);
-            
+
         }
 
         @Override

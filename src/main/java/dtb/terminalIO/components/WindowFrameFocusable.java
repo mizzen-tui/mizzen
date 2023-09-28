@@ -573,7 +573,8 @@ public class WindowFrameFocusable extends AbstractComponent<WindowFrameFocusable
 
     @Override
     public void setParentFocusManager(FocusManager focusManager) {
-        getFocusManager().setParentFocusManager(focusManager);
+        //getFocusManager().setParentFocusManager(focusManager);
+        Focusable.UTIL.setParentFocusManager(this, focusManager, (fm)-> getFocusManager().setParentFocusManager(fm));
     }
     
     @Override

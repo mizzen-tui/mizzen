@@ -87,7 +87,7 @@ public class MenuBar extends AbstractWrappedComponentWithFocusManager<ButtonBar>
                     }
                 }
 
-                menu.popUpMenu( Component.UTIL.getCanvasOffsetFor(menuButton).addRows(0) , menuButton);
+                menu.popUpMenu( Component.UTIL.getCanvasOffsetFor(menuButton).addRows(1) , menuButton);
                 if (menu.isVisible()) {
                     currentActiveMenu = menu;
                     currentMenuButton = menuButton;

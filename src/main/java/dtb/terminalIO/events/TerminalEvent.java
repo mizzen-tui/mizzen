@@ -40,7 +40,8 @@ public class TerminalEvent<T> extends EventObject {
         EXCEPTION,
         TERMINATE,
         DEBUG,
-        STUBBED
+        STUBBED,
+        CUSTOM_APPLICATION_EVENT
     }
     
     public static enum Q_FULL_POLICY {

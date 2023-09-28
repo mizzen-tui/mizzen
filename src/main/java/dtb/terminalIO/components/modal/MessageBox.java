@@ -203,6 +203,7 @@ public class MessageBox {
 
         EventHandler removeDialog = (te)->{
             parentPanel.remove(dialog);
+            dialog.setFocus(false, te.getEventBus());
             te.getEventBus().removeEventHandler(modalDialogEvents);
             te.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(dialog)  );
         };

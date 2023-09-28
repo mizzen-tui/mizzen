@@ -248,7 +248,7 @@ public class TabButtonComponent extends BoundedComponent<TabButtonComponent> imp
 
     @Override
     public void setParentFocusManager(FocusManager focusManager) {
-        asFocusable().setParentFocusManager(focusManager);
+        Focusable.UTIL.setParentFocusManager(this, focusManager, (fm)-> asFocusable().setParentFocusManager(fm));
     }
 
     @Override

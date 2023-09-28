@@ -53,11 +53,12 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
         super(color);
         this.container = container;
         this.container.setParentContainer(this);
-        this.focusManager = FocusManager.UTIL.buildFocusManagerFromComponent(this.container, null);
-        if (this.focusManager == null) {
-            this.focusManager = new DefaultFocusManager().setNameFromOwner(this);
+        FocusManager focusManager = FocusManager.UTIL.buildFocusManagerFromComponent(this.container, null);
+        if (focusManager == null) {
+            focusManager = new DefaultFocusManager().setNameFromOwner(this);
         }
-        this.focusManager.setParentFocusManager(this);
+        this.setFocusManager(focusManager);
+        //this.focusManager.setParentFocusManager(this);
     }
 
     public ComponentWithFocusManager(Composite container) {
@@ -75,7 +76,11 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
 
     public void setFocusManager(FocusManager focusManager) {
         this.focusManager = focusManager;
-        DefaultFocusManager.setDefaultNameFromParentObject(focusManager, this);
+        // now give the focusManager a name that relates to this object (for debugging purposes) and also
+        // if focusManager is DefaultFocusManager, tell DefaultFocusManager that this object is the actual FocusManager
+        // which tells DefaultFocusManager it is purely acting as a proxy only needed for its "behaviour"
+        // And yes .. this feels all very "hacky" - A weakness in my model I suspect
+        DefaultFocusManager.setDefaultNameAndActualFromParentObject(focusManager, this);
     }
     
     public void setFocusManagerBuilder(Function<EventBus, FocusManager> focusManagerBuilder) {
@@ -319,7 +324,7 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
 
     @Override
     public void setParentFocusManager(FocusManager parentFocusManager) {
-        this.getFocusManager().setParentFocusManager(parentFocusManager);
+        Focusable.UTIL.setParentFocusManager(this, parentFocusManager, (fm)-> this.getFocusManager().setParentFocusManager(fm));
     }
 
     @Override

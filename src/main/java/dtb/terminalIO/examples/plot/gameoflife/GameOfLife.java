@@ -3,9 +3,7 @@ package dtb.terminalIO.examples.plot.gameoflife;
 import java.io.IOException;
 
 import dtb.terminalIO.app.TUIApp;
-import dtb.terminalIO.components.Component;
 import dtb.terminalIO.controlcodes.color.Colors;
-import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.geom.Dimension;
 
 public class GameOfLife {
@@ -25,13 +23,7 @@ public class GameOfLife {
                     gameComponent.resize( new Dimension.Simple(size.getHeight(), size.getWidth()));
                 });
 
-                FocusManager fm = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(), tApp.getEventBus());
-                tApp.getEventBus().appendEventHandler(fm);
-
-                FocusManager.UTIL.verifyPathsToFocusables(fm, (Component<?>)tApp.getMainApplicationPanel());
-                
-                
-                gameComponent.start(tApp.getEventBus());
+                    gameComponent.start(tApp.getEventBus());
 
         }).start();
         

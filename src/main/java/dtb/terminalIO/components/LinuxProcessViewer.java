@@ -313,7 +313,7 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
 
     @Override
     public void setParentFocusManager(FocusManager focusManager) {
-        scrollableView.setParentFocusManager(focusManager);
+        Focusable.UTIL.setParentFocusManager(this, focusManager, (fm)-> scrollableView.setParentFocusManager(fm));
     }
     
     

@@ -32,14 +32,13 @@ import dtb.terminalIO.components.plot.image.ImageViewerFactory;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.ImageRenderRequest;
 import dtb.terminalIO.components.plot.image.animate.ImageAnimatorComponent;
 import dtb.terminalIO.components.plot.image.animate.ImageIterator;
+import dtb.terminalIO.controlcodes.color.ColorBGPipe;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
-import dtb.terminalIO.events.focus.DefaultFocusManager;
-import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.mouse.Clickable;
 import dtb.terminalIO.examples.plot.image.animate.AbstractImageAnimator;
@@ -150,16 +149,8 @@ public class RenderFromGraphics2D {
                 //animatorOptionsPanel.resize(new Dimension.Simple(imageViewerOptionsSize));
             });
 
-            FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),
-                                                                                             tApp.getEventBus(),
-                                                                                             ()-> new DefaultFocusManager().setNavKeysFirst(false).setCycling(false).setName("mainFocusManager"));
 
-            tApp.getEventBus().appendEventHandler( mainFocusManager );
-
-            controls.addComponent(new InspectorButton(Colors.IGre, tApp, (DefaultFocusManager)mainFocusManager));
-            
-            FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
-
+            controls.addComponent(new InspectorButton(Colors.IGre, tApp));
             
         }).start();
 

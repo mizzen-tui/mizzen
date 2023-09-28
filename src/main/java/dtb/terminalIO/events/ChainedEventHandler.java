@@ -365,9 +365,32 @@ public class ChainedEventHandler implements EventHandler, EventHandlerContainer,
         this.name = name;
         return this;
     }
-    
+
+    public boolean hasEventHandlerOfType(Predicate<ConditionalEventHandler> eventHandlerTypeTester) {
+        return eventHandlers.stream().filter(eventHandlerTypeTester).findAny().isPresent();
+    }
+
     public String toString() {
         return statsAsStr();
+    }
+
+    public ConditionalEventHandler findFirstEventHandlerOfType(
+            Predicate<ConditionalEventHandler> eventHandlerTypeTester) {
+        
+        ConditionalEventHandler found = preppendList.stream().filter(eventHandlerTypeTester).findFirst().orElse(null);
+        if (found != null) {
+            return found;
+        }
+        found = eventHandlers.stream().filter(eventHandlerTypeTester).findFirst().orElse(null);
+        if (found != null) {
+            return found;
+        }
+        found = appendList.stream().filter(eventHandlerTypeTester).findFirst().orElse(null);
+        if (found != null) {
+            return found;
+        }
+        return null;
+
     }
 
 }

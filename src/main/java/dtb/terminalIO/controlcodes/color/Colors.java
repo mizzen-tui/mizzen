@@ -67,6 +67,10 @@ public class Colors {
                 public String toString() {
                     return "RCol.bold";
                 }
+                @Override
+                public boolean hasBackGroundColor() {
+                    return false;
+                }
             };
             invertTransform = (c)-> RCol_invert;
             return new int[] { 0 };
@@ -85,8 +89,41 @@ public class Colors {
         public String toString() {
             return "RCol";
         }
+        @Override
+        public boolean hasBackGroundColor() {
+            return false;
+        }
                 
     };
+
+    public static final Color BackGroundColorRESET    = new Color() {
+        @Override
+        protected int[] buildControlCodes() {
+            boldTransform = (c)-> this;
+            invertTransform = (c)-> RCol;
+            return new int[] { 49 };
+        }
+        public Color setInvertTransform(ColorTransform invertTransform) {
+            throw new IllegalStateException("Cannot change DEFAULT BACKGROUND color!");
+        }
+        public Color setBoldTransform(ColorTransform boldTransform ) {
+            throw new IllegalStateException("Cannot change DEFAULT BACKGROUND color!");
+        }
+        
+        public String getName() {
+            return toString();
+        }
+        
+        public String toString() {
+            return "BackGroundColorRESET";
+        }
+        @Override
+        public boolean hasBackGroundColor() {
+            return false;
+        }
+    };
+
+    //\033[49m
 
     public static final Color RCol_invert                = new Color() {
         @Override
@@ -97,6 +134,10 @@ public class Colors {
                 }
                 public String toString() {
                     return "RCol_invert.bold";
+                }
+                @Override
+                public boolean hasBackGroundColor() {
+                    return false;
                 }
             };
             invertTransform = (c)->RCol;
@@ -116,7 +157,14 @@ public class Colors {
         public String toString() {
             return "RCol_invert";
         }
+        @Override
+        public boolean hasBackGroundColor() {
+            return true; // maybe - need to test
+        }
     };
+    
+    
+    
 
     
     static {
@@ -233,6 +281,11 @@ public class Colors {
         public Color getBackGroundColor() {
             return this.invert();
         }
+
+        @Override
+        public boolean hasBackGroundColor() {
+            return false;
+        }
         
     }
 
@@ -248,6 +301,11 @@ public class Colors {
 
         public Color getForeGroundColor() {
             return this.invert();
+        }
+
+        @Override
+        public boolean hasBackGroundColor() {
+            return true;
         }
         
     }
@@ -286,6 +344,11 @@ public class Colors {
         public Color getForeGroundColor() {
             return fromRGBFG(this.codes[BG_R_IDX],this.codes[BG_G_IDX], this.codes[BG_B_IDX]);
         }
+        
+        public boolean hasBackGroundColor() {
+            return true;
+        }
+
 
     }
 
@@ -318,6 +381,13 @@ public class Colors {
         public int[] buildControlCodes() {
             return codes;
         }
+
+        @Override
+        public boolean hasBackGroundColor() {
+            // TODO Auto-generated method stub
+            // HERE I MIGHT HAVE TO INSPECT 4th color
+            return false;
+        }
     }
 
 
@@ -338,6 +408,12 @@ public class Colors {
         @Override
         public int[] buildControlCodes() {
             return codes;
+        }
+
+        @Override
+        public boolean hasBackGroundColor() {
+            // TODO:  Need to use forth rule
+            return false;
         }
         
     }
@@ -451,6 +527,11 @@ public class Colors {
             }
             return "[FG=" + name + "]";
         }
+
+        @Override
+        public boolean hasBackGroundColor() {
+            return false;
+        }
     
     }
 
@@ -489,6 +570,11 @@ public class Colors {
                 name = this.buildColorControlCode();
             }
             return "[BG=" + name + "]";
+        }
+
+        @Override
+        public boolean hasBackGroundColor() {
+            return true;
         }
         
         
@@ -670,6 +756,12 @@ public class Colors {
             public interface HasRowChange {
                 int deltaRow();
             }
+
+            @Override
+            public boolean hasBackGroundColor() {
+                Color bgColor = getBackGroundColor();
+                return (bgColor != null/* && bgColor.hasBackGroundColor()*/);
+            }
     
         }
 
@@ -709,6 +801,12 @@ public class Colors {
     static public Color fromRGBToGreyScaleFG(int r, int g, int b) {
         // take the average of all 3 colors -> translates to grey scale.. who knew?
         int h = (r / 3 + g / 3 + b / 3);
+        return fromRGBFG(h, h, h);
+    }
+
+    static public Color fromRGBToGreyScaleFGReducer(int r, int g, int b, int reduceBy) {
+        // take the average of all 3 colors -> translates to grey scale.. who knew?
+        int h = ((int)( (r / 3 + g / 3 + b / 3) / reduceBy))*reduceBy;
         return fromRGBFG(h, h, h);
     }
     

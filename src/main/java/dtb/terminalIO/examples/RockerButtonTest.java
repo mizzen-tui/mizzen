@@ -157,10 +157,6 @@ public class RockerButtonTest {
 
             tApp.getMainApplicationPanel().add(new Position.Simple(5,2), vp);
 
-            FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),
-                                                                                             tApp.getEventBus());
-
-            tApp.getEventBus().appendEventHandler( mainFocusManager );
             tApp.getEventBus().appendEventHandler( new KeyInputEventHandler(Keys.CTRL_T_KEYSTROKE,componentInspector.toggleViewEventHandler()) );
             
             // every 1/4 second we update ComponentInspector with current component hierarchy and focus data
@@ -255,7 +251,7 @@ public class RockerButtonTest {
 
         @Override
         public void setParentFocusManager(FocusManager focusManager) {
-            asFocusable().setParentFocusManager(focusManager);
+            Focusable.UTIL.setParentFocusManager(this, focusManager, (fm)-> asFocusable().setParentFocusManager(fm));
         }
         
         Focusable meAsFocusable;

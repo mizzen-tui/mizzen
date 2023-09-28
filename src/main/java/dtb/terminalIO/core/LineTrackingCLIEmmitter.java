@@ -1,9 +1,9 @@
 package dtb.terminalIO.core;
 
 import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.color.Colors.FGBGColors.HasRowChange;
 import dtb.terminalIO.controlcodes.ControlCodeContext;
 import dtb.terminalIO.controlcodes.Renderer;
+import dtb.terminalIO.controlcodes.color.Colors.FGBGColors.HasRowChange;
 import dtb.terminalIO.geom.position.Position;
 
 /**
@@ -209,6 +209,10 @@ public class LineTrackingCLIEmmitter implements CLIEmitter {
 
         showCursorAtFromTopDown(showCursorPosition, showCursor);
 
+    }
+
+    public void hideCursor() {
+        outputRenderer(ControlCode.HIDE_CURSOR);
     }
 
 }

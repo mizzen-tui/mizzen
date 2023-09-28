@@ -52,6 +52,7 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
         this.menuItems = new ArrayList<MenuItem>();
         this.name = name;
     }
+
     public Menu() {
         this(null);
     }
@@ -85,6 +86,16 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
         this.addItem(new MenuItem.Divider(this));
         return this;
     }
+    
+    public Menu getRootMenu() {
+        if (this.menuBar != null) {
+            return this;
+        }
+        if (this.parentMenu == null) {
+            return this;
+        }
+        return this.parentMenu.getRootMenu();
+    }
 
     private List<DisplayableValue<Object>> menuItemsAsDisplayableItems() {
         List<DisplayableValue<Object>> displayableItems = new ArrayList<DisplayableValue<Object>>();
@@ -94,7 +105,7 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
         }
         return displayableItems;
     }
-    
+
     protected MenuContainer getMenuContainer() {
         if (this.menuContainer == null) {
             throw new NullPointerException("Tried to access MenuContainer when it is null!");
@@ -137,43 +148,49 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
         getMenuRootPanel(parent).add(position, this.menuContainer);
         getMenuRootPanel(this.menuContainer).bringToFront(this.menuContainer);
 
-        Focusable parentAsFocusable = ToFocusable.UTIL.toFocusable(parent);
-        if (parentAsFocusable == null) {
-            throw new IllegalArgumentException("Error in popUpMenu().  Parent Parameter is not a focusable and a focusable cannot be derived from it");
-        }
+        if (this.menuContainer.getParentFocusManager() == null) {
+            Focusable parentAsFocusable = ToFocusable.UTIL.toFocusable(parent);
+            if (parentAsFocusable == null) {
+                throw new IllegalArgumentException("Error in popUpMenu().  Parent Parameter is not a focusable and a focusable cannot be derived from it");
+            }
 
-        Focusables fm;
-        if (parent instanceof Focusables) {
-            fm = (Focusables) parent;
-        } else {
-            fm = ((FocusablesContainer)FocusManager.UTIL.getRootFocusManager( parentAsFocusable ));
+            Focusables fm;
+            if (parent instanceof Focusables) {
+                fm = (Focusables) parent;
+            } else {
+                fm = ((FocusablesContainer)FocusManager.UTIL.getRootFocusManager( parentAsFocusable ));
+            }
+            fm.addFocusable(this.menuContainer);
         }
-
-        fm.addFocusable(this.menuContainer);
-        Logging.info("Added menuItem " + HasName.UTIL.getName(this.menuContainer) + " to " + HasName.UTIL.getName(fm));
 
         this.menuContainer.onChange((te)-> {
             try {
-                //Logging.info("menuContainer changed on event " + String.valueOf(te));
                 MenuItem menuItem = getMenuContainer().getSelected();
+                // Logging.info("this.menuContainer.onChange()-------- " + menuItem.toString());
                 menuItem.onSelected(te);
+                if (menuItem instanceof MenuItem.Simple) {
+                     this.getRootMenu().popDownMenu();
+                     if (this.getRootMenu().menuBar != null) {
+                         this.getRootMenu().menuBar.unFocus(null, te.getEventBus());
+                     }
+                }
             } catch (Exception e) {
                 Logging.info("ERROR!!!!! menuContainer null for "+HasName.UTIL.getName(this)+"-------------------------------");
             }
         });
 
-        //this.menuContainer.getSelected()
-
     }
 
     public void popDownMenu() {
         if (this.menuContainer != null) {
-            Logging.info(HasName.UTIL.getName(this) + " popDownMenu()" );
             this.traverseAllSubMenus((m)-> m.popDownMenu());
             getMenuRootPanel(this.menuContainer).remove(this.menuContainer);
             Focusable listBoxAsFocusable = ToFocusable.UTIL.toFocusable(this.menuContainer);
-            Logging.info("Removed menuItem " + HasName.UTIL.getName(this.menuContainer) + " from " + HasName.UTIL.getName((FocusablesContainer)listBoxAsFocusable.getParentFocusManager()));
-            ((Focusables)listBoxAsFocusable.getParentFocusManager()).removeFocusable(listBoxAsFocusable);
+            if (listBoxAsFocusable.getParentFocusManager() != null && listBoxAsFocusable.getParentFocusManager() instanceof FocusablesContainer) {
+                // At this point Root panel is not a FocusManager (its just a component) so we need to manually remove the focusable from its parent
+                //Logging.info("Removed menuItem " + HasName.UTIL.getName(this.menuContainer) + " from " + HasName.UTIL.getName((FocusablesContainer)listBoxAsFocusable.getParentFocusManager()));
+                ((Focusables)listBoxAsFocusable.getParentFocusManager()).removeFocusable(listBoxAsFocusable);
+            }
             this.menuContainer = null;
             return;
         }
@@ -206,13 +223,24 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
         }
         return false;
     }
+    
+    
 
     boolean isFocusablePartOfMenu(Focusable focusable) {
         if (this.menuBar != null && ToFocusable.UTIL.toFocusable(this.menuBar)  == focusable) {
             return true;
         }
-        if (this.menuContainer != null && ToFocusable.UTIL.toFocusable(this.menuContainer)  == focusable) {
-            return true;
+        if (this.menuContainer != null) {
+            if (ToFocusable.UTIL.toFocusable(this.menuContainer)  == focusable) {
+                return true;
+            }
+            if (focusable instanceof MenuContainer) {
+                
+                MenuContainer focusableAsMenuContainer = (MenuContainer)focusable;
+                if (focusableAsMenuContainer.menu.parentMenu != null && focusableAsMenuContainer.menu.parentMenu == this) {
+                    return true;   
+                }
+            }
         }
         return false;
     }
@@ -321,14 +349,10 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
 
         @Override
         public void selectWithFocus() {
-            Logging.info("selectWithFocus() ----- " + HasName.UTIL.getName(this));
-//            if (getMenu().isVisible()) {
-//                getMenu().popDownMenu();
-//                return;
-//            }
+//            Logging.info("selectWithFocus() ----- " + HasName.UTIL.getName(this));
             getWrappedComponent().setColor( getMenu().selectedColor );
             Position offset = Component.UTIL.getOffsetFromComponentContainer(getWrappedComponent(), getMenu().getMenuRootPanel(getWrappedComponent()));
-            getMenu().popUpMenu(getWrappedComponent().getPostion_TopRight().offsetAdd(offset).offsetAdd(-2,1), subMenuItem.getParentMenu().menuContainer); 
+            getMenu().popUpMenu(getWrappedComponent().getPostion_TopRight().offsetAdd(offset).offsetAdd(-1,1), subMenuItem.getParentMenu().menuContainer); 
         }
 
         @Override
@@ -346,7 +370,7 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
 
         @Override
         public void selectWithNoFocus(Focusable newFocusable) {
-            Logging.info("selectWithNoFocus" + HasName.UTIL.getName(newFocusable));
+//            Logging.info("selectWithNoFocus" + HasName.UTIL.getName(newFocusable));
             Menu menu = getMenu();
             Color color = menu.color;
             color = color.bold();
@@ -359,7 +383,6 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
                 if (newFocusable instanceof MenuContainer) {
                     MenuContainer clickedMenuContainer = (MenuContainer)newFocusable;
                     if (clickedMenuContainer.menu == this.getMenu()) {
-                        Logging.info("XXXXXXXXXXXXXXXX");
                         return;
                     }
                     getMenu().popDownMenu();
@@ -417,6 +440,7 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
         }
 
         public void onChange(EventHandler consumeChange) {
+            Logging.info("onChange()  idx = " +  getListBox().getSelectedIndex());
             getListBox().onChange(consumeChange);
             
         }
@@ -434,6 +458,7 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
         }
 
         public void unFocus(Focusable newFocusable, EventBus eventBus) {
+            Logging.info(HasName.UTIL.getName(this)+ " unFocus   to next: " + HasName.UTIL.getName(newFocusable));
 
             super.unFocus(newFocusable, eventBus);
             if (!this.menu.isFocusablePartOfMenu(newFocusable)) {
@@ -445,7 +470,7 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
         }
 
         public void focus(Focusable oldFocusable, EventBus eventBus) {
-            //Logging.info(HasName.UTIL.getName(this)+ " focus  from prev: " + HasName.UTIL.getName(oldFocusable));
+            Logging.info(HasName.UTIL.getName(this)+ " focus  from prev: " + HasName.UTIL.getName(oldFocusable));
             super.focus(oldFocusable, eventBus);
         }
 
@@ -489,7 +514,6 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
     public void selectNextLeft(TerminalEvent<?> te) {
         this.popDownMenu();
         if (this.parentMenu != null) {
-            //this.parentMenu.getMenuContainer().focus(null, te.getEventBus());
             this.parentMenu.getMenuContainer().selectFirst(te);
         } else if (this.menuBar != null) {
             this.menuBar.focus(null, te.getEventBus());

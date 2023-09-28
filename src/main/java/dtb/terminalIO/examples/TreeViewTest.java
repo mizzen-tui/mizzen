@@ -88,9 +88,9 @@ public class TreeViewTest {
         };
         
         new TUIApp(args)
-        .setCanvasSize(30, 100)
+        .setCanvasSize(40, 100)
         .setEmptyChar(' ')
-        .setMainApplicationPanel(new Composite().setBounds(40, 100).setEmptyChar(' ').setBorder(true))
+        .setDefaultMainApplicationPanel()
         .confirmOnExit()
         .setOnReadyStart((tApp)->{ 
 
@@ -111,14 +111,6 @@ public class TreeViewTest {
 
             hp.add( new ScrollableComponent(tv2.getColor(), tv2.getRectangle(), tv2));
 
-            FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(
-                    tApp.getMainApplicationPanel(), tApp.getEventBus(),
-                    () -> new DefaultFocusManager().setNavKeysFirst(false).setCycling(false));
-
-            if (mainFocusManager != null) {
-               tApp.getEventBus().appendEventHandler(mainFocusManager);
-            }
-            
             
         }).start();
     }

@@ -29,7 +29,9 @@ public class DefaultFocusManager implements FocusManager,
     private static final BiConsumer<Focusable, EventBus> DEFAULT_ONFOCUS_CHANGED = (f,e)-> e.raiseEvent(new RequestUpdateCanvasEvent(f)); 
     
     private FocusManager parentFocusManager;
+    private FocusManager actualFocusmanager; // this is use
     private List<Focusable> eventConsumers;
+    private List<Focusable> removeList;
     private Focusable current;
 
 //    private KeyStroke prevKeyStroke = Keys.UP_KEYSTROKE;
@@ -55,6 +57,7 @@ public class DefaultFocusManager implements FocusManager,
     
     public DefaultFocusManager() {
         eventConsumers = new ArrayList<Focusable>();
+        removeList= new ArrayList<Focusable>();
         this.navKeysStyle = NAV_STYLE.NAVKEYS_FIRST;
     }
 
@@ -618,22 +621,35 @@ public class DefaultFocusManager implements FocusManager,
     }
 
     public void removeFocusable(Focusable focusable) {
+        if (removeList.contains(focusable)) {
+            // recursive situation - its ok (and sometimes expected) .. but let's get out
+        }
         if (!eventConsumers.contains(focusable)) {
             throw new IllegalArgumentException(HasName.UTIL.getName(this)+".removeFocusable("+HasName.UTIL.getName(focusable)+"): Trying to remove a focusable that is not in the list of focusables!");
         }
         if (current == focusable) {
             current = null;
         }
+        removeList.add(focusable);
         eventConsumers.remove(focusable);
         focusable.setParentFocusManager(null);
+        removeList.remove(focusable);
     }
 
+    private FocusManager meOrActual() {
+        return this.actualFocusmanager != null ? this.actualFocusmanager : this;
+    }
+
+    public void setActual(FocusManager actualFocusmanager) {
+        this.actualFocusmanager = actualFocusmanager;
+    }
+    
     public void insertFocusable(int index, Focusable focusable) {
         if (eventConsumers.contains(focusable)) {
             throw new IllegalArgumentException(HasName.UTIL.getName(this)+".insertFocusable("+HasName.UTIL.getName(focusable)+"): Duplicate add error: Focusable already added to this FocusManager.");
         }
         eventConsumers.add(index, focusable);
-        focusable.setParentFocusManager(this);
+        focusable.setParentFocusManager(this.meOrActual());
     }
     
     public void addFocusable(Focusable focusable) {
@@ -641,7 +657,7 @@ public class DefaultFocusManager implements FocusManager,
             throw new IllegalArgumentException(HasName.UTIL.getName(this)+".addFocusable("+HasName.UTIL.getName(focusable)+"): Duplicate add error: Focusable already added to this FocusManager.");
         }
         eventConsumers.add(focusable);
-        focusable.setParentFocusManager(this);
+        focusable.setParentFocusManager(this.meOrActual());
     }
     
     public void addFocusable(Focusable focusable, EventBus eventBus) {
@@ -711,10 +727,12 @@ public class DefaultFocusManager implements FocusManager,
 
     @Override
     public void setParentFocusManager(FocusManager parentFocusManager) {
-        if (parentFocusManager == this) {
+        if (parentFocusManager == this.meOrActual()) {
             throw new IllegalArgumentException("Attempted to assign parentFocusManager to itself.");
         }
-        this.parentFocusManager = parentFocusManager;
+
+        Focusable.UTIL.setParentFocusManager(this, parentFocusManager, (fm)-> this.parentFocusManager = fm);
+        //this.parentFocusManager = parentFocusManager;
     }
 
     @Override
@@ -766,6 +784,14 @@ public class DefaultFocusManager implements FocusManager,
         return false;
     }
     
+    public static void setDefaultNameAndActualFromParentObject(FocusManager focusManager, Object parentContainer) {
+        if (focusManager instanceof DefaultFocusManager && parentContainer instanceof FocusManager) {
+            HasName.UTIL.setDefaultNameFromParentObject(focusManager, parentContainer, "FocusManager");
+            ((DefaultFocusManager)focusManager).setActual((FocusManager)parentContainer);
+            return;
+        }
+        HasName.UTIL.setDefaultNameFromParentObject(focusManager, parentContainer, "FocusManager");
+    }
     public static void setDefaultNameFromParentObject(FocusManager focusManager, Object parentContainer) {
         HasName.UTIL.setDefaultNameFromParentObject(focusManager, parentContainer, "FocusManager");
     }

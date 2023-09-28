@@ -30,6 +30,10 @@ public interface MenuItem extends DisplayableValue<Object> {
             handleSelected.handle(te);
         }
 
+        public String toString() {
+            return "MenuItem.Simple("+this.getDisplayValue()+")";
+        }
+
     }
 
     public static class SubMenu extends SimpleDisplayValue<Object> implements MenuItem {
@@ -53,20 +57,21 @@ public interface MenuItem extends DisplayableValue<Object> {
         public void onSelected(TerminalEvent<?> te) {
             // handleSelected.handle(te);
             Logging.info("SUBMENU.onSelected()! [" + this.getDisplayValue()+"]");
-            
+
             StringJoiner sj = new StringJoiner("\n");
             Arrays.asList(Thread.currentThread().getStackTrace()).stream().forEach(st-> sj.add(st.toString()));
             //Logging.info( "      " + sj.toString() );
             //Logging.info( "-----" );
-            
-            
-            //getMenu().
-            
 
+            //getMenu().
+        }
+
+        public String toString() {
+            return "MenuItem.SubMenu("+this.getDisplayValue()+")";
         }
 
     }
-    
+
     public static class Divider extends SimpleDisplayValue<Object> implements MenuItem {
 
         Menu menu;

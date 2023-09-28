@@ -94,20 +94,12 @@ public class ReadTextFileToScreenTest {
 
             tApp.getMainApplicationPanel().add(4,0, sc);
 
-            FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),
-                    tApp.getEventBus(),
-                    ()-> new DefaultFocusManager().setNavKeysFirst(false).setCycling(false));
-
-            tApp.getEventBus().appendEventHandler( mainFocusManager );
-
             BiConsumer<TUIApp, Dimension> baseResizeAction = tApp.getResizeAction();
 
             tApp.setOnResizeAction( (ptApp, newSize) ->{
                 baseResizeAction.accept(ptApp, newSize);
                 sc.resize(  new Dimension.Simple(newSize.getHeight()-4, newSize.getWidth()));
             } );
-
-            FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
 
         }).start();
 

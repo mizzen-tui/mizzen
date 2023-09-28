@@ -146,12 +146,6 @@ public class ReadImageFileToScreenTest {
 
             tApp.getMainApplicationPanel().add(4,0, sc);
 
-            FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),
-                                                                                             tApp.getEventBus(),
-                                                                                             ()-> new DefaultFocusManager().setNavKeysFirst(false).setCycling(false));
-
-            tApp.getEventBus().appendEventHandler( mainFocusManager );
-
             Consumer<Dimension>  buildImageViewer = (size) -> {
 
                 Dimension newImageSize = new Dimension.Simple(sc.getHeight()-2, sc.getWidth()-2);
@@ -315,8 +309,6 @@ public class ReadImageFileToScreenTest {
                 //save2.accept(te);
                 
             });
-
-            FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
 
             ScreenCanvasBackend canvasBackend = ((ScreenCanvasBackend)tApp.getCanvas().getCanvasBackend());
 

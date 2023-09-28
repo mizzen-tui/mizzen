@@ -57,7 +57,7 @@ public abstract class AbstractWrappedComponentAndFocusable<T extends Component<?
 
     @Override
     public void setParentFocusManager(FocusManager focusManager) {
-        asFocusable().setParentFocusManager(focusManager);
+        Focusable.UTIL.setParentFocusManager(this, focusManager, (fm)-> asFocusable().setParentFocusManager(fm));
     }
     
     private ConditionalEventHandler conditionalEventHandler;

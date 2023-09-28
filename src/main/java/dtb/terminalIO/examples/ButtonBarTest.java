@@ -24,7 +24,7 @@ public class ButtonBarTest {
         new TUIApp(args)
                 .setCanvasSize(24, 55)
                 .setEmptyChar('.')
-                .setMainApplicationPanel(new Composite().setBounds(20, 50).setEmptyChar('░'))
+                .setDefaultMainApplicationPanel()
                 .confirmOnExit()
                 .setOnReadyStart((tApp) -> {
 
@@ -61,7 +61,6 @@ public class ButtonBarTest {
                                     }).setBorder(true);
 
 
-                    tApp.getEventBus().appendEventHandler( FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(), tApp.getEventBus())  );
 
                     tApp.getEventBus().appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE,
                             (te) ->  {
@@ -71,8 +70,6 @@ public class ButtonBarTest {
                                 tApp.doRefreshCanvasIfModified();
                             }));
 
-                    // sanity check
-                    FocusManager.UTIL.verifyPathsToFocusables(bbar1, (Component<?>)tApp.getMainApplicationPanel());
 
                 }).start();
 

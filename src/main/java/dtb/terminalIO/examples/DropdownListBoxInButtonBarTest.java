@@ -23,7 +23,7 @@ public class DropdownListBoxInButtonBarTest {
 
         new TUIApp(args)
         .setCanvasSize(24, 100)
-        .setMainApplicationPanel(new Composite().setBounds(20, 100).setEmptyChar(' ').setBorder(true))
+        .setDefaultMainApplicationPanel()
         .confirmOnExit()
         .setOnReadyStart((tApp)-> {
 
@@ -88,19 +88,6 @@ public class DropdownListBoxInButtonBarTest {
             desktop.add(statusBar);
 
             tApp.getMainApplicationPanel().add(2,2,desktop);
-
-            FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),
-                                                                                             tApp.getEventBus(),
-                                                                                             ()-> new DefaultFocusManager().setNavKeysFirst(false)
-                                                                                                                           .setCycling(true)
-                                                                                                                           .setPrevKeyStroke(Keys.SHIFT_TAB_KEYSTROKE)
-                                                                                                                           .setNextKeyStroke(Keys.TAB_KEYSTROKE)
-                                                                                                                           .setName("ApplicationFocusManager"));
-
-            tApp.getEventBus().appendEventHandler(  mainFocusManager );
-
-            // sanity check
-            FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
 
         }).start();
 

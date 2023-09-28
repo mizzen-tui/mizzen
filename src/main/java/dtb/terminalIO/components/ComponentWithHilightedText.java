@@ -183,7 +183,7 @@ public class ComponentWithHilightedText extends Composite implements Focusable {
         if (focusable == null) {
             return;
         }
-        focusable.setParentFocusManager(focusManager);
+        Focusable.UTIL.setParentFocusManager(this, focusManager, (fm)-> focusable.setParentFocusManager(fm));
     }
     
     

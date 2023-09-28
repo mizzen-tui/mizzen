@@ -6,7 +6,7 @@ import java.util.stream.Stream;
 
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.ComponentWithFocusManager;
-import dtb.terminalIO.components.HasName;
+import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.input.DisplayableValue.BooleanDisplayValue;
@@ -17,7 +17,6 @@ import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
-import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.Focusable;
@@ -28,11 +27,10 @@ import dtb.terminalIO.events.mouse.Clickable;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
-import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.StringUtils;
 
 public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBox<T>>  
-                                implements HasValue<T> , 
+                                implements SettableHasValue<T> , 
                                            Clickable {
 
     private ListBox<T> listBox;
@@ -62,6 +60,8 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
 
         DefaultFocusManager fm = new DefaultFocusManager(Keys.UP_KEYSTROKE, Keys.DOWN_KEYSTROKE).setNavKeysFirst(false)
                                                                                                 .setCycling(false);
+        
+        this.setName("DropdownListBox");
         fm.setNameFromOwner(this);
         this.setFocusManager( fm );
         fm.addFocusable(button);
@@ -178,6 +178,36 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
     public static DropdownListBox<Boolean> yesNoDropDown() {
         return yesNoDropDown(Colors.FGBGColors.NO_COLOR_SPECIFIED);
     }
+    
+    public DropdownListBox<T> setName(String name) {
+        super.setName(name);
+        if (this.listBox != null) {
+            this.listBox.setName(name+"-listBox");
+        }
+        if (this.button != null) {
+            this.button.setName(name+"-button");
+        }
+        return this;
+    }
+    
+    @Override
+    public DropdownListBox<T> setColor(Color drawingcolor) {
+        super.setColor(drawingcolor);
+        if (this.listBox != null) {
+            this.listBox.setColor(drawingcolor);
+        }
+        if (this.button != null) {
+            this.button.setColor(drawingcolor);
+        }
+        return this;
+    }
+
+    public void setParentContainer(ParentContainer parentContainer) {
+        if (parentContainer == null) {
+            this.hideListBox();
+        }
+        super.setParentContainer(parentContainer);
+    }
 
     public void setMaxItemWidth(int maxItemWidth) {
         if (maxItemWidth<1) {
@@ -220,6 +250,11 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
             setDisplayableValueOntoTextView(null);
         }
     }
+    
+    public void setValue(T value) {
+        setSelectedValue(value);
+    }
+
 
     private void setSelectedFromListBox(EventBus eventBus) {
         setSelectedOntoTextView();
@@ -247,8 +282,9 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
             }
         } else {
             boolean hasFocus = hasFocus();
-            Color arrowColor = hasFocus ? getColor().bold() : Colors.BIBla;
-            String arrow = arrowColor.asString() +"[v]" + getColor().asString();
+//            Color arrowColor = hasFocus ? getColor().bold() : Colors.BIBla;
+//            String arrow = arrowColor.asString() +"[v]" + getColor().asString();
+            String arrow =  "[v]" ;
             int padLen = maxItemWidth; //-(hasFocus?1:0);
             if (selected == null) {
                 buttonText = String.format("%-"+(padLen)+"s"+arrow, StringUtils.repeat(emptyCH, padLen));
@@ -278,6 +314,12 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
     }
     
     protected Composite getListBoxParent() {
+        
+        if (this.listBox != null) {
+            if (this.listBox.getParentContainer() != null) {
+                return (Composite) this.listBox.getParentContainer();
+            }
+        }
 
         Composite rootPanel = getListBoxRootPanel();
         if (rootPanel != null) {

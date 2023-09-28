@@ -32,7 +32,7 @@ public class ListBoxTest2 {
         new TUIApp(args)
         .setCanvasSize(appHeight, appWidth)
         //.setEmptyChar(' ')
-        .setMainApplicationPanel(new Composite().setBounds(appHeight, appWidth).setEmptyChar(' ').setBorder(true))
+        .setDefaultMainApplicationPanel()
         .confirmOnExit()
         .setOnReadyStart((tApp)-> {
             
@@ -72,14 +72,6 @@ public class ListBoxTest2 {
             hpMain.add(droppablesPanel);
 
             tApp.getMainApplicationPanel().add(2,2,hpMain);
-
-            FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(), tApp.getEventBus());
-            
-            tApp.getEventBus().appendEventHandler(  mainFocusManager );
-
-            // sanity check
-            FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
-
 
         }).start();
         

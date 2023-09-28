@@ -77,6 +77,9 @@ public class ImageViewerFactory {
                  new ColorMapOption("rgbColorPlotBlackAndGreyAsWhite",rgbColorPlotBlackAndGreyAsWhite),
                  new ColorMapOption("rgbColorMapSimple1",rgbColorMapSimple1),
                  new ColorMapOption("rgbGreyScale",rgbGreyScale),
+                 new ColorMapOption("rgbGreyScale-small",rgbGreyScaleSmall),
+                 new ColorMapOption("rgbGreyScale-smaller",rgbGreyScaleSmaller),
+                 new ColorMapOption("rgbGreyScale-smallest",rgbGreyScaleSmallest),
                  new ColorMapOption("No Color (default)", rgbColorMapRCol)
         }; 
         return colorMaps;
@@ -106,7 +109,33 @@ public class ImageViewerFactory {
             super(displayValue, value);
         }
     }
+    
+    static private PlotPredicateOption[] predicateOptions = null; 
+    static {
+        
+    }
+    
+/*
+ *     public static RGBPlotPredicate PLOT_LIGHTER_THAN_25  = plotLighterThan(25);
+    public static RGBPlotPredicate PLOT_LIGHTER_THAN_50  = plotLighterThan(50);
+    public static RGBPlotPredicate PLOT_LIGHTER_THAN_75  = plotLighterThan(75);
+    public static RGBPlotPredicate PLOT_LIGHTER_THAN_100 = plotLighterThan(100);
+    public static RGBPlotPredicate PLOT_LIGHTER_THAN_125 = plotLighterThan(125);
+    public static RGBPlotPredicate PLOT_LIGHTER_THAN_150 = plotLighterThan(150);
+    public static RGBPlotPredicate PLOT_LIGHTER_THAN_200 = plotLighterThan(200);
+    public static RGBPlotPredicate PLOT_DARKER_THAN_50   = plotDarkerThan(50);
+    public static RGBPlotPredicate PLOT_DARKER_THAN_75   = plotDarkerThan(75);
+    public static RGBPlotPredicate PLOT_DARKER_THAN_125  = plotDarkerThan(125);
+    public static RGBPlotPredicate PLOT_DARKER_THAN_150  = plotDarkerThan(150);
+    public static RGBPlotPredicate PLOT_DARKER_THAN_200  = plotDarkerThan(200);
+    public static RGBPlotPredicate PLOT_DARKER_THAN_225  = plotDarkerThan(225);
+    public static RGBPlotPredicate PLOT_DARKER_THAN_240  = plotDarkerThan(240);
+    public static RGBPlotPredicate PLOT_DARKER_THAN_250  = plotDarkerThan(250);
+    public static RGBPlotPredicate PLOT_DARKER_THAN_255  = plotDarkerThan(255);
 
+ * 
+ * */    
+    
     public static PlotPredicateOption[] plotPointPredicateOptions() {
         PlotPredicateOption[] predicateOptions = new PlotPredicateOption[] {
                  new PlotPredicateOption("PLOT_ALWAYS",PLOT_ALWAYS),
@@ -115,19 +144,21 @@ public class ImageViewerFactory {
                  new PlotPredicateOption("PLOT_DARK_ONLY", PLOT_DARK_ONLY),
                  new PlotPredicateOption("PLOT_DARKISH_ONLY",PLOT_DARKISH_ONLY),
                  new PlotPredicateOption("PLOT_LIGHT_ONLY",PLOT_LIGHT_ONLY),
-                 new PlotPredicateOption("PLOT_LIGHTER_THAN_50",plotLighterThan(50)),
-                 new PlotPredicateOption("PLOT_LIGHTER_THAN_75",plotLighterThan(75)),
-                 new PlotPredicateOption("PLOT_LIGHTER_THAN_100",plotLighterThan(100)),
-                 new PlotPredicateOption("PLOT_LIGHTER_THAN_150",plotLighterThan(150)),
-                 new PlotPredicateOption("PLOT_DARKER_THAN_50",plotDarkerThan(50)),
-                 new PlotPredicateOption("PLOT_DARKER_THAN_75",plotDarkerThan(75)),
-                 new PlotPredicateOption("PLOT_DARKER_THAN_125",plotDarkerThan(125)),
-                 new PlotPredicateOption("PLOT_DARKER_THAN_150",plotDarkerThan(150)),
-                 new PlotPredicateOption("PLOT_DARKER_THAN_200",plotDarkerThan(200)),
-                 new PlotPredicateOption("PLOT_DARKER_THAN_225",plotDarkerThan(225)),
-                 new PlotPredicateOption("PLOT_DARKER_THAN_240",plotDarkerThan(240)),
-                 new PlotPredicateOption("PLOT_DARKER_THAN_250",plotDarkerThan(250)),
-                 new PlotPredicateOption("PLOT_DARKER_THAN_255",plotDarkerThan(254)),
+                 new PlotPredicateOption("PLOT_LIGHTER_THAN_50",PLOT_LIGHTER_THAN_50),
+                 new PlotPredicateOption("PLOT_LIGHTER_THAN_75",PLOT_LIGHTER_THAN_75),
+                 new PlotPredicateOption("PLOT_LIGHTER_THAN_100",PLOT_LIGHTER_THAN_100),
+                 new PlotPredicateOption("PLOT_LIGHTER_THAN_125",PLOT_LIGHTER_THAN_125),
+                 new PlotPredicateOption("PLOT_LIGHTER_THAN_150",PLOT_LIGHTER_THAN_150),
+                 new PlotPredicateOption("PLOT_LIGHTER_THAN_200",PLOT_LIGHTER_THAN_200),
+                 new PlotPredicateOption("PLOT_DARKER_THAN_50",PLOT_DARKER_THAN_50),
+                 new PlotPredicateOption("PLOT_DARKER_THAN_75",PLOT_DARKER_THAN_75),
+                 new PlotPredicateOption("PLOT_DARKER_THAN_125",PLOT_DARKER_THAN_125),
+                 new PlotPredicateOption("PLOT_DARKER_THAN_150",PLOT_DARKER_THAN_150),
+                 new PlotPredicateOption("PLOT_DARKER_THAN_200",PLOT_DARKER_THAN_200),
+                 new PlotPredicateOption("PLOT_DARKER_THAN_225",PLOT_DARKER_THAN_225),
+                 new PlotPredicateOption("PLOT_DARKER_THAN_240",PLOT_DARKER_THAN_240),
+                 new PlotPredicateOption("PLOT_DARKER_THAN_250",PLOT_DARKER_THAN_250),
+                 new PlotPredicateOption("PLOT_DARKER_THAN_255",PLOT_DARKER_THAN_255),
                  
         }; 
         return predicateOptions;
@@ -771,6 +802,23 @@ public class ImageViewerFactory {
 // 
     public static RGBPlotPredicate PLOT_LIGHT_ONLY = plotLighterThan(9);
 
+    public static RGBPlotPredicate PLOT_LIGHTER_THAN_25  = plotLighterThan(25);
+    public static RGBPlotPredicate PLOT_LIGHTER_THAN_50  = plotLighterThan(50);
+    public static RGBPlotPredicate PLOT_LIGHTER_THAN_75  = plotLighterThan(75);
+    public static RGBPlotPredicate PLOT_LIGHTER_THAN_100 = plotLighterThan(100);
+    public static RGBPlotPredicate PLOT_LIGHTER_THAN_125 = plotLighterThan(125);
+    public static RGBPlotPredicate PLOT_LIGHTER_THAN_150 = plotLighterThan(150);
+    public static RGBPlotPredicate PLOT_LIGHTER_THAN_200 = plotLighterThan(200);
+    public static RGBPlotPredicate PLOT_DARKER_THAN_50   = plotDarkerThan(50);
+    public static RGBPlotPredicate PLOT_DARKER_THAN_75   = plotDarkerThan(75);
+    public static RGBPlotPredicate PLOT_DARKER_THAN_125  = plotDarkerThan(125);
+    public static RGBPlotPredicate PLOT_DARKER_THAN_150  = plotDarkerThan(150);
+    public static RGBPlotPredicate PLOT_DARKER_THAN_200  = plotDarkerThan(200);
+    public static RGBPlotPredicate PLOT_DARKER_THAN_225  = plotDarkerThan(225);
+    public static RGBPlotPredicate PLOT_DARKER_THAN_240  = plotDarkerThan(240);
+    public static RGBPlotPredicate PLOT_DARKER_THAN_250  = plotDarkerThan(250);
+    public static RGBPlotPredicate PLOT_DARKER_THAN_255  = plotDarkerThan(255);
+    
     static RGBPlotPredicate plotLighterThan(int grey) {
         return (r,g,b) -> (r + g + b)/3 >= grey;
     }
@@ -818,6 +866,17 @@ public class ImageViewerFactory {
         return Colors.fromRGBToGreyScaleFG(r, g, b);
     };
 
+    static RGBToAnsiColorControlCode rgbGreyScaleSmall = (r,g,b) ->  {
+        return Colors.fromRGBToGreyScaleFGReducer(r, g, b, 5);
+    };
+
+    static RGBToAnsiColorControlCode rgbGreyScaleSmaller = (r,g,b) ->  {
+        return Colors.fromRGBToGreyScaleFGReducer(r, g, b, 15);
+    };
+
+    static RGBToAnsiColorControlCode rgbGreyScaleSmallest = (r,g,b) ->  {
+        return Colors.fromRGBToGreyScaleFGReducer(r, g, b, 20);
+    };
 
     static RGBToAnsiColorControlCode rgbColorMapSimple1 = (r,g,b) ->  {
 

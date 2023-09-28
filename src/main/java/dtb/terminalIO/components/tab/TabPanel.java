@@ -1,6 +1,6 @@
 package dtb.terminalIO.components.tab;
 
-import dtb.terminalIO.components.AbstractWrappedComponentWithFocusManager;
+import dtb.terminalIO.components.AbstractComponentWrappper;
 import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.CompositeWithFocusManager;
@@ -11,8 +11,11 @@ import dtb.terminalIO.components.SimpleBorder;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
+import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.focus.FocusManager;
+import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.focus.ToFocusable;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Align;
@@ -23,13 +26,14 @@ import dtb.terminalIO.geom.VAlign;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.geom.position.PositionRelativeFactory;
 
-public class TabPanel extends AbstractWrappedComponentWithFocusManager<CompositeWithFocusManager> 
-                      implements CanResize, FocusManager, ParentContainer, GetComponentAtOffset, Hiliter {
+public class TabPanel extends AbstractComponentWrappper<CompositeWithFocusManager> 
+                      implements CanResize, ParentContainer, GetComponentAtOffset, Hiliter {
 
     private ButtonBar tabsButtonBar;
     private Button previousButton;
     private Button nextButton;
     private ButtonBar prevNextButtonBar;
+    private TabButtonComponent initial;
     private TabButtonComponent current;
     Component<?> currentComponentInTab;
     private SimpleBorder border;
@@ -53,17 +57,22 @@ public class TabPanel extends AbstractWrappedComponentWithFocusManager<Composite
 
         previousButton = new Button(getColor(), "<-");
         previousButton.setHotKey(previousTabHotKey);
-        previousButton.setDisplayHotKey(true);
+        previousButton.setDisplayHotKey(false);
+        previousButton.onChange((te)-> this.setPreviousAsCurrentFocus(te.getEventBus()));
+
         prevNextButtonBar.addComponent(previousButton);
 
         nextButton = new Button(getColor(),"->");
         nextButton.setHotKey(nextTabHotKey);
-        nextButton.setDisplayHotKey(true);
+        nextButton.setDisplayHotKey(false);
+        nextButton.onChange((te)-> this.setNextAsCurrentFocus(te.getEventBus()));
 
         prevNextButtonBar.addComponent(nextButton);
 
         Position navControlsPosition = PositionRelativeFactory.fromAlign(VAlign.BOTTOM, Align.RIGHT,  this, this.prevNextButtonBar);
         getWrappedComponent().add(navControlsPosition, prevNextButtonBar);
+        
+        FocusManager.UTIL.verifyPathsToFocusables(getWrappedComponent(), getWrappedComponent());
 
     }
 
@@ -120,6 +129,9 @@ public class TabPanel extends AbstractWrappedComponentWithFocusManager<Composite
 
         // todo:  hotkey not handled ( I think )
         TabButtonComponent tabButton = new TabButtonComponent(TabPanel.this.getColor(), tabTxt, false, tabAction, hotKey);
+        if (initial == null) {
+            initial = tabButton;
+        }
 
         tabButton.onChange((te)->{
 
@@ -149,6 +161,8 @@ public class TabPanel extends AbstractWrappedComponentWithFocusManager<Composite
                 te2.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(currentComponentInTab));
             });
             
+            FocusManager.UTIL.verifyPathsToFocusables(getWrappedComponent(), getWrappedComponent());
+            
         });
 
         tabsButtonBar.addComponent(tabButton);
@@ -169,14 +183,60 @@ public class TabPanel extends AbstractWrappedComponentWithFocusManager<Composite
                 return new Rectangle.Simple(Position.ZERO, new Dimension.Simple(TabPanel.this.getHeight()-4, TabPanel.this.getWidth()-2));
             }
 
+            @Override
+            public Focusable toFocusable(Component<?> componentForTab) {
+                Focusable focusable = ToFocusable.UTIL.toFocusable(componentForTab);
+                if (focusable != null) {
+                    return focusable;
+                }
+                // see if container knows the associated focusable
+                if (!getWrappedComponent().containsChild(componentForTab)) {
+                    return null;
+                }
+                focusable = getWrappedComponent().getFocusableForChild(componentForTab);
+
+                return focusable;
+            }
+
         };
     }
 
+    public boolean displayCurrentTab(EventBus eventBus) {
+        if (this.current == null  && initial != null) {
+            initial.onClick(eventBus);
+        }
+        if (this.tabsButtonBar.getCurrentFocus() != null && this.tabsButtonBar.getCurrentFocus() instanceof TabButtonComponent) {
+            ((TabButtonComponent)tabsButtonBar.getCurrentFocus()).onClick(eventBus);
+            return true;
+        }
+        return false;
+    }
+
+    
+    public boolean setPreviousAsCurrentFocus(EventBus eventBus) {
+        boolean previousSet = this.tabsButtonBar.setPreviousAsCurrentFocus(eventBus);
+        
+        if (previousSet  && this.tabsButtonBar.getCurrentFocus() instanceof TabButtonComponent) {
+            ((TabButtonComponent)tabsButtonBar.getCurrentFocus()).onClick(eventBus);
+        }
+        return previousSet;
+    }
+
+    public boolean setNextAsCurrentFocus(EventBus eventBus) {
+        boolean nextSet = this.tabsButtonBar.setNextAsCurrentFocus(eventBus);
+        if (nextSet  && this.tabsButtonBar.getCurrentFocus() instanceof TabButtonComponent) {
+            ((TabButtonComponent)tabsButtonBar.getCurrentFocus()).onClick(eventBus);
+        }
+        return nextSet;
+    }
+    
     public static interface TabContext {
 
         Color getColor();
 
         Rectangle getBounds();
+
+        Focusable toFocusable(Component<?> componentForTab);
 
     }
 
@@ -205,5 +265,6 @@ public class TabPanel extends AbstractWrappedComponentWithFocusManager<Composite
     public void unHilite() {
         hiliter.unHilite();
     }
+
 
 }

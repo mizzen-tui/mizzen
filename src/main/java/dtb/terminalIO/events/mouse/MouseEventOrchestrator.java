@@ -269,6 +269,10 @@ public class MouseEventOrchestrator {
 
                     // handle clickable component
                     if (componentClicked instanceof Clickable) {
+                        
+//Logging.info("-------------------------------");
+//Logging.info("componentClicked = " + componentClicked);
+//Logging.info("-------------------------------");
                         Clickable clickable = (Clickable)componentClicked;
                         Focusable focusableAndClickable = ToFocusable.UTIL.toFocusable(componentClicked);
                         if (focusableAndClickable == null) {

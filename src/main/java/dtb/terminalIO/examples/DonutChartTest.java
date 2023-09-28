@@ -30,7 +30,7 @@ public class DonutChartTest {
         .setOnReadyStart((tApp)->{
             
             int[] dataPoint = new int[] {0};
-            DonutChart donutChart = new DonutChart(Colors.BIGre, tApp.getCanvas() );
+            DonutChart donutChart = new DonutChart(Colors.BRed ,  tApp.getCanvas() );
             donutChart.setData(dataPoint[0],100,String.format("%3d",dataPoint[0])+"%");
             
             tApp.getMainApplicationPanel().add(donutChart);
@@ -79,18 +79,6 @@ public class DonutChartTest {
                 
             }));
 
-            FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(
-                    tApp.getMainApplicationPanel(), tApp.getEventBus(),
-                    () -> new DefaultFocusManager().setPrevKeyStroke(Keys.SHIFT_TAB_KEYSTROKE)
-                                                   .setNextKeyStroke(Keys.TAB_KEYSTROKE)
-                                                   .setNavKeysFirst(false)
-                                                   .setName("mainFocusManager")
-                                                   .setCycling(false));
-
-            tApp.getEventBus().appendEventHandler(mainFocusManager);
-            
-            FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
-            
         })
         .start();
         

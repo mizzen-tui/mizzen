@@ -1,5 +1,7 @@
 package dtb.terminalIO.events.focus;
 
+import java.util.function.Consumer;
+
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
@@ -125,7 +127,7 @@ public interface Focusable extends FocusBehaviour, ConditionalEventHandler {
 
         @Override
         public void setParentFocusManager(FocusManager focusManager) {
-            this.parentContainer = focusManager;
+            Focusable.UTIL.setParentFocusManager(this, focusManager, (fm)-> this.parentContainer = fm);
         }
         
         public Component<?> getComponent() {
@@ -215,11 +217,34 @@ public interface Focusable extends FocusBehaviour, ConditionalEventHandler {
 
         @Override
         public void setParentFocusManager(FocusManager focusManager) {
-            delegate.setParentFocusManager(focusManager);
+            Focusable.UTIL.setParentFocusManager(this, focusManager, (fm)-> delegate.setParentFocusManager(fm));
         }
     
         
         
+    }
+    
+    public static class UTIL {
+        
+        // default behaviour for setting parent is to remove it from old parent first (if we can and if not null)
+        public static void setParentFocusManager(Focusable focusable, FocusManager parentFocusManager, Consumer<FocusManager> setParentAfterCleanUp) {
+            
+            // clean up
+            if (focusable.getParentFocusManager() != null) {
+                if (focusable.getParentFocusManager() instanceof FocusablesContainer) {
+                    if (focusable.getParentFocusManager() instanceof FocusablesContainer) {
+                        if (((FocusablesContainer)focusable.getParentFocusManager()).getChildren().contains(focusable)) {
+                            ((FocusablesContainer)focusable.getParentFocusManager()).removeFocusable(focusable);
+                        }
+                    } else {
+                        ((FocusablesContainer)focusable.getParentFocusManager()).removeFocusable(focusable);
+                    }
+                }
+            }
+            // now set parent
+            setParentAfterCleanUp.accept(parentFocusManager);
+            
+        }
     }
 
 

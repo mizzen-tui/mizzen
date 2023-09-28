@@ -268,7 +268,8 @@ public class Composite extends AbstractComponent<Composite>
             setBounds(size);
             handleResizeDependants(size);
             if (size != null) {
-                this.boundsFixed = isFixed;
+                // why am I doing this?
+                 //this.boundsFixed = isFixed;
             }
             markAsDirty();
             clearComputedChildPositions();
@@ -472,7 +473,7 @@ public class Composite extends AbstractComponent<Composite>
 
         
         if (boundsFixed) {  // if size is fixed (based on flag)
-            return;         // then don't recalculate
+            return;         // then don't recalculate - because expensive
         }
 
         List<ComponentWithOffset> visibleChildren = getVisibleChildrenComponentsWithOffset();
@@ -986,20 +987,20 @@ public class Composite extends AbstractComponent<Composite>
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
         ElapsedTime el = ElapsedTime.start();
-        draw(color, segments, boundsFixed);
+        draw(color, segments, this.boundsFixed);
         //if ("TUIApp-mainPanel".equals(HasName.UTIL.getName(this))) {
            //Logging.info(String.format("%-20s : %-20s  #kids %4d  elapsed  %4d", "draw"+(DRAW_VIA_PARTS?"-parts":"traditional"), StringUtils.truncate(HasName.UTIL.getName(this),20), children.size(),el.elapsed()));
         //}
     }
 
 
-    protected void draw(Color color, IScreenLineSegmentsBuffer segments, boolean boundsFixed) {
+    protected void draw(Color color, IScreenLineSegmentsBuffer segments, boolean boundsFixedFlag) {
         drawBorderIfNeeded(segments);
         if (DRAW_VIA_PARTS /*&& children != null && children.size()>1*/) {
             clearComputedChildPositionsIfNeeded();
-           DRAW_PARTS_UTIL.drawParts(this, segments.getSegments(), boundsFixed);
+           DRAW_PARTS_UTIL.drawParts(this, segments.getSegments(), boundsFixedFlag);
         } else {
-           drawChildren(color, segments, childrenInZOrder, boundsFixed);
+           drawChildren(color, segments, childrenInZOrder, boundsFixedFlag);
         }
     }
 
@@ -1007,7 +1008,7 @@ public class Composite extends AbstractComponent<Composite>
     private static char  shadowChar = '░';
     //private static char  shadowChar = ' ';
     
-    protected void drawChildren(Color color, IScreenLineSegmentsBuffer destinationSegments, List<ComponentWithOffset> children, boolean boundsFixed) {
+    protected void drawChildren(Color color, IScreenLineSegmentsBuffer destinationSegments, List<ComponentWithOffset> children, boolean boundsFixedFlag) {
 
         Rectangle clippedArea = bounds;
 
@@ -1015,7 +1016,7 @@ public class Composite extends AbstractComponent<Composite>
         Position offset = Position.ZERO;
         if (this.hasBorder()) {
             offset = offset.offsetToRowCol(1, 1);
-            if (boundsFixed) {
+            if (boundsFixedFlag) {
                 clippedArea = new Rectangle.Simple(bounds.getRow()+1, bounds.getCol()+1, bounds.getHeight()-2, bounds.getWidth()-2);
             }
         }
@@ -1028,7 +1029,7 @@ public class Composite extends AbstractComponent<Composite>
 
             Position childOffset = child.offset.offsetAdd(offset);
 
-            if (boundsFixed) {
+            if (boundsFixedFlag) {
                 ScreenLineSegment.UTIL.addSegmentsWithOffsetBounded(childOffset, clippedArea, destinationSegments.getSegments(),
                                                                     child.component.getSegmentsBuffer().getSegments());
                 addDropShadowIfNeeded(childOffset, child, clippedArea, destinationSegments);
@@ -1174,7 +1175,7 @@ public class Composite extends AbstractComponent<Composite>
         
         
 
-        static void drawParts(Composite parent, TreeSet<ScreenLineSegment> destination, boolean boundsFixed) {
+        static void drawParts(Composite parent, TreeSet<ScreenLineSegment> destination, boolean boundsFixedFlag) {
             
             
             Rectangle clippedArea = parent.bounds;
@@ -1183,7 +1184,7 @@ public class Composite extends AbstractComponent<Composite>
             Position offsetForBorder;
             if (parent.hasBorder()) {
                 offsetForBorder = Position.ZERO.offsetToRowCol(1, 1);
-                if (boundsFixed) {
+                if (boundsFixedFlag) {
                     clippedArea = new Rectangle.Simple(clippedArea.getRow()+1, clippedArea.getCol()+1, clippedArea.getHeight()-2, clippedArea.getWidth()-2);
                 }
             } else {

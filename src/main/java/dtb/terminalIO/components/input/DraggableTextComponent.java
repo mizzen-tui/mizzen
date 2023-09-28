@@ -103,7 +103,8 @@ public class DraggableTextComponent extends TextComponent implements Focusable ,
 
     @Override
     public void setParentFocusManager(FocusManager focusManager) {
-        asFocusable().setParentFocusManager(focusManager);
+        Focusable.UTIL.setParentFocusManager(this, focusManager, (fm)-> asFocusable().setParentFocusManager(fm));
+
     }
 
 }

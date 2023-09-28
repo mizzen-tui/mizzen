@@ -134,7 +134,7 @@ public class TextInputForType<T>  extends BoundedComponent<TextInputForType<T>> 
 
     @Override
     public void setParentFocusManager(FocusManager focusManager) {
-        this.textInput.setParentFocusManager(focusManager);
+        Focusable.UTIL.setParentFocusManager(this, focusManager, (fm)-> this.textInput.setParentFocusManager(fm));
     }
     
     

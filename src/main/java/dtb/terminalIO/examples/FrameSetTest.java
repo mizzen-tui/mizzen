@@ -29,9 +29,9 @@ public class FrameSetTest {
         Logging.setEnabled(true);
         
         new TUIApp(args)
-        //.setCanvasSize(24, 100)
+         .setCanvasSize(40, 130)
         .setEmptyChar(' ')
-        .setMainApplicationPanel(new Composite().setBounds(40, 130).setEmptyChar('X').setBorder(false))
+        .setDefaultMainApplicationPanel()
         .confirmOnExit()
         .setOnReadyStart((tApp)-> {
             
@@ -80,21 +80,9 @@ public class FrameSetTest {
             
             tApp.getMainApplicationPanel().add(1,2, bbar);
             
-            
-            
             tApp.getMainApplicationPanel().add(4,4, wf);
             
-            FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),
-                    tApp.getEventBus(),
-                    ()-> new DefaultFocusManager().setNavKeysFirst(false).setCycling(false).setName("MainApplicationPanel-FocusManager"));
-
-            tApp.getEventBus().appendEventHandler( mainFocusManager );
-            
         }).start();
-        
-        
-        
-        
         
     }
     

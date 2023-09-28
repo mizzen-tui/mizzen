@@ -160,7 +160,7 @@ public class DefaultFocusableBehaviour implements FocusBehaviour  {
         }
 
         public void setParentFocusManager(FocusManager parentFocusManager) {
-            this.parentFocusManager = parentFocusManager;
+            Focusable.UTIL.setParentFocusManager(this, parentFocusManager, (fm)-> this.parentFocusManager = fm);
         }
 
         @Override

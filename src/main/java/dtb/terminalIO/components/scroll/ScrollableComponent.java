@@ -669,7 +669,7 @@ public class ScrollableComponent extends Composite implements CanResize, CanScro
 
     @Override
     public void setParentFocusManager(FocusManager focusManager) {
-        this.parentFocusManager = focusManager;
+        Focusable.UTIL.setParentFocusManager(this, focusManager, (fm)-> this.parentFocusManager = fm);
     }
     
     

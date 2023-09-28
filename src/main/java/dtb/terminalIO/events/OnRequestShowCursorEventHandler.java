@@ -22,11 +22,11 @@ public abstract class OnRequestShowCursorEventHandler implements ConditionalEven
         
       Position position = (Position) te.getEventData();
 
-      handleRequestShowCursorAt(position);
+      handleRequestShowCursorAt(te.getSource(), position);
         
     }
     
-    abstract protected void handleRequestShowCursorAt(Position eventData);
+    abstract protected void handleRequestShowCursorAt(Object source, Position eventData);
     
 
 

@@ -9,6 +9,7 @@ import dtb.terminalIO.controlcodes.ControlCodeContext;
 import dtb.terminalIO.controlcodes.Renderer;
 import dtb.terminalIO.controlcodes.Renderer.RendererBuffer;
 import dtb.terminalIO.controlcodes.Renderer.TextRenderer;
+import dtb.terminalIO.controlcodes.color.ColorBGPipe;
 import dtb.terminalIO.core.CLIEmitter.DelegateEmitter;
 import dtb.terminalIO.core.CLIEmitter.MapCharsEmitter;
 import dtb.terminalIO.core.CLIEmitter.PrintStreamEmitter;
@@ -35,6 +36,7 @@ public class TerminalScreen implements ControlCodeContext {
                                         });
 
     RendererBuffer          rb          = new RendererBuffer();
+    ColorBGPipe             colorPipe   = new ColorBGPipe();
 
     public void setPrintStream(PrintStream out) {
         if (out == null) {
@@ -130,7 +132,7 @@ public class TerminalScreen implements ControlCodeContext {
             out.clearLastTrackedLines(false);
             refreshed = false;
         }
-        rb.append(r);
+        rb.append( colorPipe.wrap(r));
         return this;
     }
 
@@ -180,11 +182,16 @@ public class TerminalScreen implements ControlCodeContext {
     }
 
     public void showCursor() {
+        //Logging.info("TerminalScreen.showCursor()");
         add(ControlCode.SHOW_CURSOR);
     }
 
     public void hideCursor() {
-        add(ControlCode.HIDE_CURSOR);
+        
+      //  Logging.info("TerminalScreen.hideCursor()");
+       // add(ControlCode.HIDE_CURSOR);
+        out.hideCursor();
+        
     }
 
 }

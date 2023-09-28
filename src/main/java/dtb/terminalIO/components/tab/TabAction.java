@@ -12,6 +12,7 @@ import dtb.terminalIO.geom.Dimension;
 public abstract class TabAction<T extends Component<?>> {
     
     T theComponent;
+    boolean isActivated = false;
     
     public TabAction() {
     }
@@ -36,7 +37,8 @@ public abstract class TabAction<T extends Component<?>> {
 
     final void activate(EventBus eventBus, TabContext tabContext) {
         activateComponent(eventBus, tabContext, theComponent);
-        Focusable focusable = ToFocusable.UTIL.toFocusable(getComponentForTab(tabContext));
+        isActivated = true;
+        Focusable focusable =  tabContext.toFocusable(getComponentForTab(tabContext));
         resize(tabContext);
         
         if (focusable != null) {
@@ -45,7 +47,11 @@ public abstract class TabAction<T extends Component<?>> {
     }
 
     protected final void deactivate(EventBus eventBus, TabContext tabContext) {
-        deactivateComponent(eventBus, tabContext, theComponent);
+        if (isActivated) {
+            deactivateComponent(eventBus, tabContext, theComponent);
+            isActivated = false;
+        }
+        
     }
 
     public void activateComponent(EventBus eventBus, TabContext tabContext, T theComponent) {

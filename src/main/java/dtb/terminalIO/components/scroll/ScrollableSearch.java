@@ -82,6 +82,7 @@ public class ScrollableSearch extends AbstractComponentWrappper<HorizontalPanel>
     @Override
     public void setParentFocusManager(FocusManager focusManager) {
         this.findButton.setParentFocusManager(focusManager);
+        Focusable.UTIL.setParentFocusManager(this, focusManager, (fm)-> this.findButton.setParentFocusManager(fm));
     }
 
     

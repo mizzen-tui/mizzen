@@ -363,7 +363,6 @@ public class ListBoxTest {
                                           mainPanel,
                                           "  Exit application?  ",
                                           (e)->terminate.handle(te));
-
        };
 
        eventBus.appendEventHandler(new KeyInputEventHandler(confirmTerminate, Keys.CTRL_C_KEYSTROKE, Keys.ESC_KEYSTROKE));

@@ -144,14 +144,6 @@ public class ColorsTestWithTable {
 
             });
 
-            // traverse main app panel find focusable's and build a focusManager and attach to Eventbus
-            FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),tApp.getEventBus());
-
-            tApp.getEventBus().appendEventHandler(  mainFocusManager );
-
-            // sanity check
-            FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
-
         }).start();
     }
 

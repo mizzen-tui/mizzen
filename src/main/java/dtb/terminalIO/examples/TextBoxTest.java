@@ -11,6 +11,7 @@ import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.ComponentInspector;
 import dtb.terminalIO.components.ComponentWithFocusManager;
 import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.components.WindowFrame;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.composite.VerticalPanel;
@@ -57,7 +58,7 @@ public class TextBoxTest {
         
         new TUIApp(args)
         .setEmptyChar(' ')
-        .setMainApplicationPanel(new Composite().setBounds(TestsCommon.terminalSize()).setEmptyChar(' ').setTitle("MainPanel").setBorder(true))
+        .setDefaultMainApplicationPanel()
         .confirmOnExit()
         .setOnReadyStart((tApp)-> {
             
@@ -155,32 +156,22 @@ public class TextBoxTest {
             bannerMenu.addComponent(quitButton);
 
             VerticalPanel deskTopPanel = new VerticalPanel().setVerticalSpacer(1);
-            deskTopPanel.setTitle("DeskTopPanel");
 
             deskTopPanel.add(bannerMenu);
             deskTopPanel.add(topPanel);
 
             deskTopPanel.add(new TextComponent("\n\n")); // cheap way to get a spacer
             deskTopPanel.add(eventDisplayer);
+            
+            WindowFrame desktopWF = new WindowFrame(Colors.RCol, "DeskTopPanel", deskTopPanel);
 
-            tApp.getMainApplicationPanel().add(3, 5, deskTopPanel); 
+            tApp.getMainApplicationPanel().add(3, 5, desktopWF); 
 
-            FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),tApp.getEventBus());
-
-
-            tApp.getEventBus().appendEventHandler(  mainFocusManager );
 
             ComponentInspector componentInspector = new ComponentInspector(Colors.BIGre, new Dimension.Simple((int)(tApp.getMainApplicationPanel().getHeight()*.55),
                                                                                                               (int)(tApp.getMainApplicationPanel().getWidth()*.35)), 
-                    (Component<?>)tApp.getMainApplicationPanel(), mainFocusManager);
+                    (Component<?>)tApp.getMainApplicationPanel(), tApp.getApplicationFocusManager());
             horizontalPanel.add(componentInspector);
-
-            DefaultFocusManager.applyIfDefaultFocusManager(mainFocusManager, (dfalt_fm)->{
-                dfalt_fm.setPrevKeyStroke(Keys.SHIFT_TAB_KEYSTROKE);
-                dfalt_fm.setNextKeyStroke(Keys.TAB_KEYSTROKE);
-                dfalt_fm.setNavKeysFirst(false);
-                dfalt_fm.addComponentAsFocusables(componentInspector);
-            });
 
             refreshTreeviewButton.onChange( componentInspector.refreshEventHandler() );
             toggleTreeviewButton.onChange(componentInspector.toggleViewEventHandler());
@@ -230,10 +221,6 @@ public class TextBoxTest {
 
             ((Composite)tApp.getMainApplicationPanel()).bringToBack(demo);
 
-            FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
-
-            // necessary?
-            tApp.getScreen().add(ControlCode.SHOW_CURSOR);
 
         }).start();
     }

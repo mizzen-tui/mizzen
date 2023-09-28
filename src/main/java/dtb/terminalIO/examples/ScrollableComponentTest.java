@@ -29,6 +29,9 @@ import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.util.StringUtils;
 import dtb.terminalIO.util.linuxproc.ExecUtil;
 
+// THIS DEMO NO LONGER WORKS .. I need to diagnose and fix
+
+
 public class ScrollableComponentTest {
 
     public static void main(String[] args) {
@@ -46,7 +49,7 @@ public class ScrollableComponentTest {
             };
    
             ScrollableComponent sc1 = new ScrollableComponent(Colors.Gre, calcScrollableDimension.get(), new TextViewer().getComponent(Colors.Gre));
-            
+
             sc1.setName("ScrollableComponent-sc1");            
             SearchFunctionForScrollableComponent.addFinderToScrollable(sc1.asSearchableView());  
 
@@ -88,13 +91,6 @@ public class ScrollableComponentTest {
 
             tApp.getMainApplicationPanel().add(vp);
 
-            FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),
-                                                                                             tApp.getEventBus(),
-                                                                                             ()-> new DefaultFocusManager(Keys.SHIFT_TAB_KEYSTROKE, Keys.TAB_KEYSTROKE)
-                                                                                                       .setNavKeysFirst(false)
-                                                                                                       .setCycling(true));
-
-            tApp.getEventBus().appendEventHandler( mainFocusManager );
 
             BiConsumer<TUIApp, Dimension> baseResizeAction = tApp.getResizeAction();
 
@@ -108,12 +104,6 @@ public class ScrollableComponentTest {
                 
             } );
 
-            //ScreenCanvasBackend canvasBackend = ((ScreenCanvasBackend)tApp.getCanvas().getCanvasBackend());
-            //canvasBackend.setUpdateStrategy(UpdateStrategy.UPDATE_FULL);
-            
-            FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>) tApp.getMainApplicationPanel());
-            
-            
         }).start();
         
     }

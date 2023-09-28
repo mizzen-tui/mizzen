@@ -10,7 +10,6 @@ import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
-import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.util.Logging;
 
@@ -23,8 +22,8 @@ public class CompositeSimpleTest {
 
         new TUIApp(args)
                 .setCanvasSize(24, 55)
-                .setEmptyChar('.')
-                .setMainApplicationPanel(new Composite().setBounds(24, 55).setEmptyChar('░'))
+                .setEmptyChar('░')
+                .setDefaultMainApplicationPanel()
                 .confirmOnExit()
                 .setOnReadyStart((tApp) -> {
 
@@ -54,8 +53,6 @@ public class CompositeSimpleTest {
                     bb.addButton("F1", Keys.F1_KEYSTROKE, (te)-> textStatus.setText("F1 pressed .. ") );
                     bb.addButton("F2", Keys.F2_KEYSTROKE, (te)-> textStatus.setText("F2 pressed .. ") );
 
-                    FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),tApp.getEventBus());
-                    tApp.getEventBus().appendEventHandler( mainFocusManager );
 
                 }).start();
 

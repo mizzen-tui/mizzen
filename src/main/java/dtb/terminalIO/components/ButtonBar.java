@@ -7,8 +7,10 @@ import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
+import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
+import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
 
@@ -72,6 +74,18 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
         return this;
     }
 
+    public boolean setPreviousAsCurrentFocus(EventBus eventBus) {
+        return getDefaultFocusManager().setPreviousAsCurrentFocus(eventBus);
+    }
+
+    public Focusable getCurrentFocus() {
+        return getDefaultFocusManager().getCurrentChildFocus();
+    }
+
+    public boolean setNextAsCurrentFocus(EventBus eventBus) {
+        return getDefaultFocusManager().setNextAsCurrentFocus(eventBus);
+    }
+    
     public ButtonBar setCycling(boolean cycling) {
         getDefaultFocusManager().setCycling(cycling);
         return this;

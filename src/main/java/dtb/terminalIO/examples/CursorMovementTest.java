@@ -34,7 +34,7 @@ public class CursorMovementTest {
         Logging.setEnabled(true);
 
         new TUIApp(args).setCanvasSize(24, 100).setEmptyChar(' ')
-                .setMainApplicationPanel(new Composite().setBounds(30, 120).setEmptyChar('X').setBorder(false))
+                .setDefaultMainApplicationPanel()
                 .confirmOnExit().setOnReadyStart((tApp) -> {
 
                     Position[] cursorPositionContainer = new Position[] { new Position.Simple(0, 0) };
@@ -111,15 +111,6 @@ public class CursorMovementTest {
                     tApp.getMainApplicationPanel().add(2, 4, helpText);
                     tApp.getMainApplicationPanel().add(4, 4, debugText);
                     tApp.getMainApplicationPanel().add(6, 4, sc);
-
-                    FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(
-                            tApp.getMainApplicationPanel(), tApp.getEventBus(),
-                            () -> new DefaultFocusManager().setNavKeysFirst(false).setCycling(false).setName("mainFocusManager"));
-
-                    tApp.getEventBus().appendEventHandler(mainFocusManager);
-
-                    FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager,
-                            (Component<?>) tApp.getMainApplicationPanel());
 
                     BiConsumer<TUIApp, Dimension> baseResizeAction = tApp.getResizeAction();
 

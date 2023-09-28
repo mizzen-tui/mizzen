@@ -96,7 +96,8 @@ public class WindowFrameTest {
         //.setCanvasSize(24, 100)
         .setEmptyChar(' ')
         .setEmptyColors(Colors.On_Blu)
-        .setMainApplicationPanel(new Composite().setBounds(40, 130).setEmptyChar('X').setBorder(false))
+        .setCanvasSize(40, 130)
+        .setDefaultMainApplicationPanel()
         .confirmOnExit()
         .setOnReadyStart((tApp)-> {
 

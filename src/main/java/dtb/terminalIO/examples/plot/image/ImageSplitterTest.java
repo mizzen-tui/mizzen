@@ -9,28 +9,28 @@ import java.util.List;
 import javax.imageio.ImageIO;
 
 import dtb.terminalIO.app.TUIApp;
-import dtb.terminalIO.components.BorderedComponent;
-import dtb.terminalIO.components.TextComponent;
-import dtb.terminalIO.components.composite.HorizontalPanel;
-import dtb.terminalIO.components.composite.VerticalPanel;
-import dtb.terminalIO.components.input.DropdownListBox;
+import dtb.terminalIO.components.WindowFrame;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.IMAGE_RENDER_TYPE;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.ImageRenderRequest;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.RGBPlotPredicate;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.RGBToAnsiColorControlCode;
-import dtb.terminalIO.components.plot.image.animate.ImageAnimatorComponent;
+import dtb.terminalIO.components.plot.image.MovingPicturesViewer;
+import dtb.terminalIO.components.plot.image.animate.AnimatedGifImageIterator;
+import dtb.terminalIO.components.plot.image.animate.ImageIterator;
 import dtb.terminalIO.components.plot.image.animate.ImageSplitter;
 import dtb.terminalIO.controlcodes.color.Colors;
-import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.geom.position.Vec2;
+import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.TerminalDimensions;
 
 public class ImageSplitterTest {
 
     public static void main(String[] args) throws Exception {
+
+       Logging.setEnabled(true);
 
         Dimension termsize = TerminalDimensions.create();
 
@@ -42,60 +42,59 @@ public class ImageSplitterTest {
            .confirmOnExit()
            .setOnReadyStart((tApp)->{
 
-               BorderedComponent imageViewer = new BorderedComponent(new TextComponent("Placeholder"));
+               
+               if (imgFilePathes.size()<1) {
+                   imgFilePathes.add(DEFAULT_IMG_PATH);
+               }
+               
+               int offset = 0;
+               
+               for (String imgFilePath : imgFilePathes) {
+                   ImageIterator imageIterator;
+                   
+                   try {
+                   BufferedImage image = ImageIO.read(new File(imgFilePath));
 
-               ImageSplitter splitter = new ImageSplitter(rqst.getImageToView(), offsets, image_height, image_width) {
-                   @Override
-                   public BufferedImage next() {
-                       BufferedImage nextImage = super.next();
-                       String titleMsg = String.format("%3d [ %s:  offset: %3d %3d ]",currentIDX(), title, ((int)getcurrentOffset().getX()),((int)getcurrentOffset().getY()));
-                       imageViewer.setTitle(titleMsg);
-                       return nextImage;
+                   int imageWidth = image.getWidth();
+                   int imageHeight = image.getHeight();
+                   
+                   float widthToHeightRatio = ((float)imageWidth)/ ((float)imageHeight);
+
+                   Dimension imgSize = new Dimension.Simple(termsize.getHeight()-8, Math.min((int)((termsize.getHeight()-4)*widthToHeightRatio)*2, termsize.getWidth()-40));
+
+                   ImageRenderRequest imageRequest = new ImageRenderRequest();
+                   imageRequest.setDesiredImgSizeInCharacters(imgSize);
+
+                   imageRequest.setColorMap(colorMapping);
+                   imageRequest.setImageRenderType(renderType);
+                   imageRequest.setToPlotOrNot(plotPredicate);
+                   imageRequest.setImageToView(image);
+                   imageRequest.setGradientStr(gradientStr);
+
+                   
+                   if (imgFilePath.endsWith(".gif")) {
+                        imageIterator = new AnimatedGifImageIterator(imgFilePath);
+                   } else {
+                       imageIterator = new ImageSplitter(rqst.getImageToView(), offsets, image_height, image_width);
                    }
-               };
+                   
+                   MovingPicturesViewer movingPicturesViewer = new MovingPicturesViewer(Colors.DEFAULT_COLOR, imageIterator, imageRequest); 
+                   
+                   movingPicturesViewer.setBorder(false);
+                   
+                   WindowFrame wf = new WindowFrame(movingPicturesViewer.getColor(), imgFilePath, movingPicturesViewer);
+                   
+                   
+                   tApp.getMainApplicationPanel().add(offset, offset, wf);
+                   movingPicturesViewer.start(tApp.getEventBus(), interval);
+                   
+                   offset++;
 
-               HorizontalPanel hp = new HorizontalPanel();
+                   } catch (IOException e) {
+                       throw new RuntimeException(e);
+                   }
 
-               VerticalPanel controls = new VerticalPanel().setVerticalSpacer(2);
-
-               DropdownListBox<ImageViewerFactory.IMAGE_RENDER_TYPE> imageRendererTypeDDLB = new DropdownListBox<ImageViewerFactory.IMAGE_RENDER_TYPE>(ImageViewerFactory.imageRenderTypeOptions());
-               imageRendererTypeDDLB.setSelected(0);
-
-               imageRendererTypeDDLB.onChange((te) -> {
-                   rqst.setImageRenderType(imageRendererTypeDDLB.getValue());
-               });
-
-               controls.add(imageRendererTypeDDLB);
-
-               DropdownListBox<ImageViewerFactory.RGBToAnsiColorControlCode> colorMapDDLB = new DropdownListBox<ImageViewerFactory.RGBToAnsiColorControlCode>(ImageViewerFactory.colorMap());
-               colorMapDDLB.setSelected(0);
-               colorMapDDLB.onChange((te)->{
-                   rqst.setColorMap( colorMapDDLB.getValue()  );
-               });
-
-               controls.add(colorMapDDLB);
-
-               DropdownListBox<ImageViewerFactory.RGBPlotPredicate> plotPredicatesDDLB = new DropdownListBox<ImageViewerFactory.RGBPlotPredicate>(ImageViewerFactory.plotPointPredicateOptions());
-               plotPredicatesDDLB.setSelected(0);
-               plotPredicatesDDLB.onChange((te)->{
-                   rqst.setToPlotOrNot( plotPredicatesDDLB.getValue() );
-               });
-
-               controls.add(plotPredicatesDDLB);
-
-               ImageAnimatorComponent animatorComponent = new ImageAnimatorComponent(Colors.DEFAULT_COLOR, rqst, splitter, rqst.getDesiredImgSizeInCharacters());
-
-               animatorComponent.setupTimer(tApp.getEventBus(), interval);
-
-               imageViewer.setComponent(animatorComponent);
-
-               hp.add(imageViewer);
-               hp.add(controls);
-
-               tApp.getMainApplicationPanel().add(0, 0, hp);
-
-               FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(), tApp.getEventBus());
-               tApp.getEventBus().appendEventHandler(  mainFocusManager );
+               }
 
            }).start();
 
@@ -109,7 +108,7 @@ public class ImageSplitterTest {
     static String title = "Rotating earth";
     static int interval = 250;
     static String DEFAULT_IMG_PATH="/home/dbalme/workspace/tmpImages/car.jpeg";
-    static String imgFilePath = DEFAULT_IMG_PATH;
+    static List<String> imgFilePathes =  new ArrayList<String>(); // DEFAULT_IMG_PATH;
 
     static List<Vec2<?>> offsets;
 
@@ -136,7 +135,7 @@ public class ImageSplitterTest {
             if ("IMAGE".equalsIgnoreCase(args[i]) && i+1<args.length) {
                 readingOffsets = false;
                 i++;
-                imgFilePath=args[i];
+                imgFilePathes.add(args[i]);
             } else if ("TITLE".equalsIgnoreCase(args[i]) && i+1<args.length) {
                 readingOffsets = false;
                 i++;
@@ -189,27 +188,7 @@ public class ImageSplitterTest {
             }
         }
 
-        BufferedImage image = ImageIO.read(new File(imgFilePath));
-
-        int imageWidth = image.getWidth();
-        int imageHeight = image.getHeight();
-
-        //float heightToWidthRatio = ((float)imageHeight) / ((float)imageWidth);
-        float widthToHeightRatio = ((float)imageWidth)/ ((float)imageHeight);
-
-        Dimension termsize = TerminalDimensions.create();
-        Dimension imgSize = new Dimension.Simple(termsize.getHeight()-8, Math.min((int)((termsize.getHeight()-4)*widthToHeightRatio)*2, termsize.getWidth()-40));
-
-        ImageRenderRequest imageRequest = new ImageRenderRequest();
-        imageRequest.setDesiredImgSizeInCharacters(imgSize);
-
-        imageRequest.setColorMap(colorMapping);
-        imageRequest.setImageRenderType(renderType);
-        imageRequest.setToPlotOrNot(plotPredicate);
-        imageRequest.setImageToView(image);
-        imageRequest.setGradientStr(gradientStr);
-
-        return imageRequest;
+        return null;
 
     }
 

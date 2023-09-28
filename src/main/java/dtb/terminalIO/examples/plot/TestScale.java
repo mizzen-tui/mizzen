@@ -35,10 +35,6 @@ import dtb.terminalIO.components.plot.shape.Triangle;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.AbstractTimedRequestedController;
 import dtb.terminalIO.events.EventHandler;
-import dtb.terminalIO.events.focus.DefaultFocusManager;
-import dtb.terminalIO.events.focus.FocusManager;
-import dtb.terminalIO.events.keyboard.InputEventsProducer;
-import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.events.mouse.ApplicationMouseEvent;
 import dtb.terminalIO.geom.Align;
 import dtb.terminalIO.geom.Dimension;
@@ -226,14 +222,6 @@ public class TestScale {
 
                    ((Composite)tApp.getMainApplicationPanel()).setBorder(true);
 
-                   DefaultFocusManager mainFocusManager = (DefaultFocusManager)FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),tApp.getEventBus());
-
-                   mainFocusManager.setPrevKeyStroke(Keys.SHIFT_TAB_KEYSTROKE);
-                   mainFocusManager.setNextKeyStroke(Keys.TAB_KEYSTROKE);
-
-                   tApp.getEventBus().appendEventHandler(  mainFocusManager );
-
-                   FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
 
                }).start();
 

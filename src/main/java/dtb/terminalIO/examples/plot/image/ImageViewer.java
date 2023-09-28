@@ -38,10 +38,7 @@ import dtb.terminalIO.core.ScreenCanvasBackend;
 import dtb.terminalIO.core.ScreenCanvasBackend.UpdateStrategy;
 import dtb.terminalIO.events.AbstractTimedRequestedController;
 import dtb.terminalIO.events.EventHandler;
-import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.TerminalEvent;
-import dtb.terminalIO.events.focus.DefaultFocusManager;
-import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
@@ -291,17 +288,6 @@ public class ImageViewer {
 
                             tApp2.getEventBus().asynch((te)-> throttledDisplayImageRequestWrapper.accept(te) );
                         });
-
-                        DefaultFocusManager mainFocusManager = (DefaultFocusManager)FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),tApp.getEventBus());
-
-                        //mainFocusManager.setNavKeysFirst(false);
-                        mainFocusManager.setNextKeyStroke(Keys.TAB_KEYSTROKE);
-                        mainFocusManager.setPrevKeyStroke(Keys.SHIFT_TAB_KEYSTROKE);
-
-                        tApp.getEventBus().appendEventHandler(  mainFocusManager );
-
-                        // sanity check
-                        FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
 
                     })
                     .start();

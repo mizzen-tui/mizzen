@@ -25,7 +25,7 @@ public  abstract class AbstractWrappedComponentWithFocusManager<T extends Compon
             setFocusManager((FocusManager)componentToWrap);
         } else {
             this.focusManagerBuilder = null;
-            this.focusManager = new DefaultFocusManager() {
+            DefaultFocusManager fm = new DefaultFocusManager() {
                 public void setChildAsCurrentFocus(Focusable focusableChild, EventBus eventBus) {
                     Focusable prevFocus = getCurrentChildFocus();
                     super.setChildAsCurrentFocus(focusableChild, eventBus);
@@ -34,7 +34,7 @@ public  abstract class AbstractWrappedComponentWithFocusManager<T extends Compon
                     }
                 }
             };
-            ((DefaultFocusManager)this.focusManager).setNameFromOwner(this);
+            this.setFocusManager(fm);
         }
     }
 

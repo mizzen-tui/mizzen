@@ -50,17 +50,6 @@ public class RockerButtonTest2 {
             
             tApp.getMainApplicationPanel().add(10, 10, controls);
             
-            FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),
-                    tApp.getEventBus(),
-                    ()-> new DefaultFocusManager().setNavKeysFirst(false)
-                                                  .setCycling(false)
-                                                  .setPrevKeyStroke(Keys.SHIFT_TAB_KEYSTROKE)
-                                                  .setNextKeyStroke(Keys.TAB_KEYSTROKE));
-
-            tApp.getEventBus().appendEventHandler( mainFocusManager );
-            
-            FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>) tApp.getMainApplicationPanel());
-
         });
         
         app.start();

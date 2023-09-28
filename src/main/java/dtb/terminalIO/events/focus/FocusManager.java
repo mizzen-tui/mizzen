@@ -97,6 +97,18 @@ public interface FocusManager extends Focusable {
      */
     public static class UTIL {
         
+        
+        public static boolean isAncestorOf(Focusable maybeAncestor, Focusable maybeDescendant) {
+            if (maybeAncestor == null || maybeDescendant == null || (!(maybeAncestor instanceof FocusManager))) {
+                return false;
+            }
+            if (maybeAncestor == maybeDescendant.getParentFocusManager()) {
+                return true;
+            }
+            return isAncestorOf(maybeAncestor, maybeDescendant.getParentFocusManager());
+        }
+        
+        
         /**
          * utility method to unfocus old focusable and focus new focusable and then optionally 
          * run a function to perform "whatever" desired action. Usually the action is to update the
@@ -110,7 +122,7 @@ public interface FocusManager extends Focusable {
         public static void setNewFocusable(Focusable focusableChild, Focusable oldFocusableChild, EventBus eventBus, BiConsumer<Focusable, EventBus> onFocusChanged) {
             
             // unfocus the previous (old)
-            if (oldFocusableChild != null && oldFocusableChild != focusableChild) {
+            if (oldFocusableChild != null && oldFocusableChild != focusableChild && ! isAncestorOf(oldFocusableChild, focusableChild)) {
                 Logging.info(HasName.UTIL.getName(oldFocusableChild)+ " unfocus  will change to: " +  HasName.UTIL.getName(focusableChild, "NONE-SELECTED"));
                 oldFocusableChild.unFocus(focusableChild, eventBus);  //setFocus(false, eventBus);
             }
@@ -393,7 +405,6 @@ public interface FocusManager extends Focusable {
 
         }
 
-        
         public static String traverseAllFocusablesToString(Focusable focusable)  { 
             StringBuilder sb = new StringBuilder();
 

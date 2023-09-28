@@ -1,5 +1,7 @@
 package dtb.terminalIO.events;
 
+import java.util.function.Predicate;
+
 import dtb.terminalIO.events.OnIdleEventEventHandler.OneTimeAfterInterval;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
 
@@ -10,6 +12,9 @@ public interface EventBus extends EventHandlerContainer {
     boolean isActive();
 
     boolean isEmptyQueue();
+    
+    ConditionalEventHandler findFirstEventHandlerOfType(Predicate<ConditionalEventHandler> eventHandlerTypeTester);
+    boolean hasEventHandlerOfType(Predicate<ConditionalEventHandler> eventHandlerTypeTester);
 
     // TODO: If queue is full event wont get enqueued.. I dont tell caller - isn't
     // that a bad design?
@@ -126,6 +131,17 @@ public interface EventBus extends EventHandlerContainer {
             delegate.removeEventHandler(eventHandler);
             return this;
         }
+        
+        public boolean hasEventHandlerOfType(Predicate<ConditionalEventHandler> eventHandlerTypeTester) {
+            return delegate.hasEventHandlerOfType(eventHandlerTypeTester);
+        }
+
+        @Override
+        public ConditionalEventHandler findFirstEventHandlerOfType(
+                Predicate<ConditionalEventHandler> eventHandlerTypeTester) {
+            return delegate.findFirstEventHandlerOfType(eventHandlerTypeTester);
+        }
+
     }
     
     /**
@@ -192,6 +208,17 @@ public interface EventBus extends EventHandlerContainer {
         @Override
         public void disableIdleEvents() {
         }
+        
+        public boolean hasEventHandlerOfType(Predicate<ConditionalEventHandler> eventHandlerTypeTester) {
+            return false;
+        }
+
+        @Override
+        public ConditionalEventHandler findFirstEventHandlerOfType(
+                Predicate<ConditionalEventHandler> eventHandlerTypeTester) {
+            return null;
+        }
+
         
     }
     

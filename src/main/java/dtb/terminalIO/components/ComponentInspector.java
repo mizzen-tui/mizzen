@@ -19,7 +19,6 @@ import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.OnIdleEventEventHandler.RepeatingInterval;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
-import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.FocusManager.FocusManagerHasChildrenAdapter;
 import dtb.terminalIO.events.focus.Focusable;
@@ -73,6 +72,7 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
 
             if (scrollingArea != null) {
                 this.scrollingArea.setParentContainer(null);
+                this.scrollingArea.setParentFocusManager(null);
             }
 
             scrollingArea = new ScrollableComponent(Colors.BIGre, d, tvComponents);
@@ -100,6 +100,7 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
 
             if (scrollingArea != null) {
                 this.scrollingArea.setParentContainer(null);
+                this.scrollingArea.setParentFocusManager(null);
             }
             scrollingArea = new ScrollableComponent(Colors.BIGre, d, tvFocusable);
             SearchFunctionForScrollableComponent.addFinderToScrollable(scrollingArea.asSearchableView());
@@ -299,12 +300,10 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
 
         WindowFrame inspector;
         TUIApp      tApp;
-        DefaultFocusManager mainFocusManager;
 
-        public InspectorButton(Color color, TUIApp tApp, DefaultFocusManager mainFocusManager) {
+        public InspectorButton(Color color, TUIApp tApp) {
             super(color, new Button(color, BlockChars.DEFAULT.getBOTTOM_LEFT()+"."));
             this.tApp = tApp;
-            this.mainFocusManager = mainFocusManager;
             this.getWrappedComponent().onChange((te)-> handleClicked(te) );
         }
 
@@ -315,20 +314,19 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
 
         protected void handleClicked(TerminalEvent<?> te) {
             if (inspector == null) {
-                inspector = resizableInspector(tApp, mainFocusManager);
+                inspector = resizableInspector(tApp);
                 return;
             }
         }
     }
 
-    private static final WindowFrame resizableInspector(TUIApp tApp, 
-                                                        DefaultFocusManager mainFocusManager) {
+    private static final WindowFrame resizableInspector(TUIApp tApp) {
 
         
         ComponentInspector inspector = new ComponentInspector(Colors.BIGre, 
                                                               new Dimension.Simple(25, 60),
                                                               (Component<?>) tApp.getMainApplicationPanel(), 
-                                                              mainFocusManager);
+                                                              tApp.getApplicationFocusManager());
 
         WindowFrame wfInspector = new WindowFrame(inspector.getColor(), "Components", inspector);
 
@@ -339,7 +337,7 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
             inspector.refreshEventHandler().handle(te);
         }));
 
-        mainFocusManager.addComponentAsFocusables(wfInspector);
+        //mainFocusManager.addComponentAsFocusables(wfInspector);
         tApp.getMainApplicationPanel().add(22,44, wfInspector);
 
         return wfInspector;

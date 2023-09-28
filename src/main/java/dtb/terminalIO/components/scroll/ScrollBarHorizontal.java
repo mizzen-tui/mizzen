@@ -246,7 +246,7 @@ public class ScrollBarHorizontal  extends BoundedComponent<ScrollBarVertical>  i
 
     @Override
     public void setParentFocusManager(FocusManager focusManager) {
-        asFocusable().setParentFocusManager(focusManager);
+        Focusable.UTIL.setParentFocusManager(this, focusManager, (fm)-> asFocusable().setParentFocusManager(fm));
     }
     
     Focusable meAsFocusable;

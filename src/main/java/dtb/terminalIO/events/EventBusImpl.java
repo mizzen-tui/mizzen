@@ -4,10 +4,10 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 
 import dtb.terminalIO.events.TerminalEvent.TYPE;
 import dtb.terminalIO.events.keyboard.InputEventsProducer;
-import dtb.terminalIO.util.Logging;
 
 /**
  * Warning: This object will spawn a new thread in its constructor.
@@ -457,6 +457,23 @@ public class EventBusImpl implements EventHandlerContainer, EventBus {
         sb.append((idleEventsHandlerChain == null ? "BUS:idle: empty" : idleEventsHandlerChain.statsAsStr()));
         sb.append(" "+ eventsHandlerChain.statsAsStr());
         return sb.toString();
+    }
+
+    @Override
+    public boolean hasEventHandlerOfType(Predicate<ConditionalEventHandler> eventHandlerTypeTester) {
+        if (eventsHandlerChain == null) {
+            return false;
+        }
+        return eventsHandlerChain.hasEventHandlerOfType(eventHandlerTypeTester);
+    }
+
+    @Override
+    public ConditionalEventHandler findFirstEventHandlerOfType(
+            Predicate<ConditionalEventHandler> eventHandlerTypeTester) {
+        if (eventsHandlerChain == null) {
+            return null;
+        }
+        return eventsHandlerChain.findFirstEventHandlerOfType(eventHandlerTypeTester);
     }
 
 }

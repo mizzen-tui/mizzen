@@ -54,7 +54,7 @@ import dtb.terminalIO.util.StringUtils;
  * @param <T>
  */
 public class ListBox<T> extends AbstractComponent<ListBox<T>>  
-                                implements HasValue<T>, 
+                                implements SettableHasValue<T>, 
                                            ToFocusable, 
                                            ParentContainer, 
                                            GetComponentAtOffset,
@@ -303,6 +303,8 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         public T getValue() {
             return getHasValue().getValue();
         }
+        
+
 
     }
 
@@ -470,6 +472,12 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
     public ListBox<T> setColor(Color drawingcolor) {
         super.setColor(drawingcolor);
         this.itemsContainer.setColor(drawingcolor);
+        if (this.items != null) {
+            for (ListBox<T>.ListItem item : this.items) {
+                Component<?> listItemComponent = item.itemComponent.getComponent();
+                listItemComponent.setColor(drawingcolor);
+            }
+        }
         return this;
     }
 
@@ -610,6 +618,12 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         HasValue<T> selectedItem = getSelected();
         return selectedItem == null ? null : selectedItem.getValue();
     }
+    
+    @Override
+    public void setValue(T value) {
+        this.setSelectedValue(value);
+    }
+
 
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
@@ -780,8 +794,9 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         return itemsContainer;
     }
 
-    public void setBorder(boolean hasBorder) {
+    public ListBox<T> setBorder(boolean hasBorder) {
         itemsContainer.setBorder(hasBorder);
+        return this;
     }
 
     public void setTitle(String title) {
@@ -887,5 +902,6 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
     public EventHandlerContainer removeEventHandler(ConditionalEventHandler eventHandler) {
         return getChainedEventHandler().removeEventHandler(eventHandler);
     }
+
 
 }

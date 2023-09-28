@@ -94,6 +94,14 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
     public KeyStroke getHotKey() {
         return hotKey;
     }
+    
+    public Button setName(String name) {
+        super.setName(name);
+        this.container.setName(name+"-container");
+        this.renderedText.setName(name+"-renderer");
+        return this;
+    }
+
 
     public Button setHotKey(KeyStroke hotKey) {
         this.hotKey = hotKey;
@@ -203,6 +211,11 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
     }
 
     public void setValue(boolean value) {
+        doSetValue(value);
+        renderedText.setText(getTextForRendering(hasFocus()));
+    }
+
+    private void doSetValue(boolean value) {
         this.pressed = value;
         this.markAsDirty();
     }
@@ -226,7 +239,7 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
             // focus manager should have already put focus here - but just in case ..
             eventBus.raiseEvent(new RequestFocusEvent(this));
         }
-        Button.this.setValue( (toggleButton? !pressed :true) );  // toggle the value
+        Button.this.doSetValue( (toggleButton? !pressed :true) );  // toggle the value
         renderedText.setText(getTextForRendering(true));
         eventBus.raiseEvent( new HasValue.ValueChangedEvent<>(Button.this) );
         eventBus.raiseEvent( new RequestUpdateCanvasEvent(this));
@@ -279,7 +292,6 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
         addKeyStroke(new KeyStroke(ch));
     }
 
-        
     private Focusable asFocusable() {
 
         if (meAsFocusable != null) {
@@ -305,7 +317,7 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
                 renderedText.setTextAndResize(getTextForRendering(false));
                 requestHideCursor(eventBus);
             }
-            
+
             @Override
             public void focus(Focusable oldFocusable, EventBus eventBus) {
                 super.focus(oldFocusable, eventBus);
@@ -313,7 +325,7 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
                 new ShowComponentOnFocus().onFocus(Button.this, eventBus);
                 requestShowCursorAtComponent(eventBus);
             }
-            
+
             @Override
             public void setFocus(boolean focus, EventBus eventBus) {
                 super.setFocus(focus, eventBus);
@@ -357,7 +369,7 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
     public void unFocus(Focusable newFocusable, EventBus eventBus) {
         asFocusable().unFocus(newFocusable, eventBus);
     }
-    
+
     @Override
     public void focus(Focusable oldFocusable, EventBus eventBus) {
         asFocusable().focus(oldFocusable, eventBus);
@@ -370,9 +382,11 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
 
     @Override
     public void setParentFocusManager(FocusManager focusManager) {
-        asFocusable().setParentFocusManager(focusManager);
+        //asFocusable().setParentFocusManager(focusManager);
+        // below causes issue in workbench .. need to diagnose
+        Focusable.UTIL.setParentFocusManager(this, focusManager, (fm)-> asFocusable().setParentFocusManager(fm));
     }
-    
+
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer mySegments) {
         if (this.getPostion_TopLeft().isSameLocation(Position.ZERO)) {

@@ -308,6 +308,7 @@ public class TextInput extends BoundedComponent<TextInput>
 
     private void updateCursorPositionAndRefreshCanvas(EventBus eventBus) {
         requestShowCursor(eventBus);
+        this.markAsDirty();
         eventBus.raiseEvent(new RequestUpdateCanvasEvent(this));
     }
 
@@ -359,7 +360,7 @@ public class TextInput extends BoundedComponent<TextInput>
 
     @Override
     public void setParentFocusManager(FocusManager focusManager) {
-        asFocusable().setParentFocusManager(focusManager);
+        Focusable.UTIL.setParentFocusManager(this, focusManager, (fm)-> asFocusable().setParentFocusManager(fm));
     }
 
     @Override
@@ -495,11 +496,22 @@ public class TextInput extends BoundedComponent<TextInput>
                 public void setFocus(boolean focus, EventBus eventBus) {
                     super.setFocus(focus, eventBus);
                     if (focus) {
+                        updateCursorPositionAndRefreshCanvas(eventBus);
                         new ShowComponentOnFocus().onFocus(TextInput.this, eventBus);
-                        requestShowCursor(eventBus);
                     } else {
                         requestHideCursor(eventBus);
                     }
+                }
+                @Override
+                public void unFocus(Focusable newFocusable, EventBus eventBus) {
+                    super.unFocus(newFocusable, eventBus);
+                    requestHideCursor(eventBus);
+                }
+                @Override
+                public void focus(Focusable oldFocusable, EventBus eventBus) {
+                    super.focus(oldFocusable, eventBus);
+                    updateCursorPositionAndRefreshCanvas(eventBus);
+                    new ShowComponentOnFocus().onFocus(TextInput.this, eventBus);
                 }
             };
         }
