@@ -20,14 +20,11 @@ import dtb.terminalIO.components.input.CheckBoxInput;
 import dtb.terminalIO.components.input.DropdownListBox;
 import dtb.terminalIO.components.input.HasValue;
 import dtb.terminalIO.components.input.TextInput;
-import dtb.terminalIO.components.scroll.ScrollableComponent;
-import dtb.terminalIO.controlcodes.ControlCode;
+import dtb.terminalIO.components.scroll.ScrollableComponent2;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.OnIdleEventEventHandler.RepeatingInterval;
 import dtb.terminalIO.events.TerminalEvent;
-import dtb.terminalIO.events.focus.DefaultFocusManager;
-import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.examples.BarChartTest.BarChartRandomDataDemo;
 import dtb.terminalIO.examples.GridBrailleTest.BrailleDemo;
@@ -53,21 +50,19 @@ import dtb.terminalIO.util.Logging;
 public class TextBoxTest {
 
     public static void main(String[] args) throws IOException {
-        
+
         Logging.setEnabled(true);
-        
+
         new TUIApp(args)
         .setEmptyChar(' ')
         .setDefaultMainApplicationPanel()
         .confirmOnExit()
         .setOnReadyStart((tApp)-> {
-            
+
             Component<?> demo = addBackGround_Test1Games(tApp, args);
-            
-            
+
             VerticalPanel panel1 = new VerticalPanel();
-            
-            
+
             VerticalPanel panel2 = new VerticalPanel();
             panel2.setTitle("Panel 2");
 
@@ -81,20 +76,19 @@ public class TextBoxTest {
 
             ti_2.setText("Test 2");
             panel1.add(ti_2);
-            
 
             TextInput ti_3 = new TextInput(15);
             ti_3.setText("Test3");
             panel2.add(ti_3);
-            
+
             TextInput ti_4 = new TextInput(15);
             ti_4.setText("Test4");
             panel2.add(ti_4);
-            
+
             CheckBoxInput cb_1 = new CheckBoxInput();
             cb_1.setValue(false);
             panel1.add(cb_1);
-            
+
             Button b_1 = new Button("Press Me", true);
             panel1.add(b_1);
 
@@ -107,7 +101,7 @@ public class TextBoxTest {
             } catch (IOException e) {
                 largeText = e.toString();
             }  
-            
+
             //panel1.add(  new TextComponent(largeText).setColor(Colors.Cya) );
             panel1.add(  new BorderedComponent(new TextComponent(largeText)).setColor(Colors.Cya) );
             
@@ -118,12 +112,12 @@ public class TextBoxTest {
 
             topPanel.add(2,1, horizontalPanel);
 
-            ScrollableComponent sc_1 = new ScrollableComponent(Colors.Blu, new Dimension.Simple(Math.min(tApp.getCanvas().getHeight()-12, panel1.getHeight()+2), 60), panel1);
+            ScrollableComponent2 sc_1 = new ScrollableComponent2(Colors.Blu, new Dimension.Simple(Math.min(tApp.getCanvas().getHeight()-12, panel1.getHeight()+2), 60), panel1);
 
             sc_1.setTitle("Scrollable with form");
-            
+
             //SearchFunctionForScrollableComponent.addFinderToScrollable(sc_1);
-            
+
             horizontalPanel.add(sc_1);
             horizontalPanel.add( new ComponentWithFocusManager<ComponentWithFocusManager<?>>(panel2));
 
@@ -136,16 +130,16 @@ public class TextBoxTest {
             toggleTreeviewButton.setHotKey( Keys.CTRL_T_KEYSTROKE );
             toggleTreeviewButton.setDisplayHotKey(true);
             bannerMenu.addComponent(toggleTreeviewButton);
-            
+
             bannerMenu.addComponent(new TextComponent(" switch Treeview Components/Focusables  "));
 
             Button refreshTreeviewButton = new Button(Colors.BIGre," ");
             refreshTreeviewButton.setHotKey(Keys.CTRL_R_KEYSTROKE);
             refreshTreeviewButton.setDisplayHotKey(true);
             bannerMenu.addComponent(refreshTreeviewButton);
-            
+
             bannerMenu.addComponent(new TextComponent(" refresh Treeview"));
-            
+
             DropdownListBox<String>  ddlbBackground =  DropdownListBox.fromStrings(new String[]{"A","B","C"});
             bannerMenu.addComponent(ddlbBackground);
             

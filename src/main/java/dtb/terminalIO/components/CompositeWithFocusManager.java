@@ -1,6 +1,5 @@
 package dtb.terminalIO.components;
 
-import java.util.ArrayList;
 import java.util.Collection;
 
 import dtb.terminalIO.components.composite.Composite;
@@ -19,6 +18,8 @@ public class CompositeWithFocusManager  extends Composite implements FocusManage
 {
 
     DefaultFocusManager focusManager;
+    private BehaviourForCompositeAndFocusManager focusBehaviourManager;
+
 
     public CompositeWithFocusManager(Color color)
     {
@@ -42,9 +43,9 @@ public class CompositeWithFocusManager  extends Composite implements FocusManage
             getFocusManager(); // this will build it
             return;
         }
-        // delete existing focusables - now rebuild
-        for (Focusable focusable : new ArrayList<Focusable>(getFocusManager().getChildren())) {
-            removeFocusable(focusable);
+        // delete existing focusables - then rebuild
+        for (Component<?> child : getChildren()) {
+            this.focusBehaviourManager.removeComponentFocusablesFromFocusManager(child);
         }
         populateFocusManagerWithFocusablesFromChildren();
     }
@@ -52,6 +53,7 @@ public class CompositeWithFocusManager  extends Composite implements FocusManage
     public DefaultFocusManager getFocusManager() {
         if (focusManager == null) {
             this.focusManager = buildFocusManager();
+            this.focusBehaviourManager = new BehaviourForCompositeAndFocusManager(this, getFocusManager());
             populateFocusManagerWithFocusablesFromChildren();
         }
         return focusManager;
@@ -68,37 +70,15 @@ public class CompositeWithFocusManager  extends Composite implements FocusManage
     // only call this once
     private void populateFocusManagerWithFocusablesFromChildren() {
         for (Component<?> child : getChildren()) {
-            addFocusableFromChildComponent(child);
+            addComponentFocusablesToFocusManager(child);
         }
     }
 
-    private void addFocusableFromChildComponent(Component<?> component) {
-
-        ComponentWithOffsetWithFocusable child = (ComponentWithOffsetWithFocusable)findChildOrFail(component, "addFocusableFromChildComponent");
-        // add as a focusable if relevant
-        
-        Focusable asFocusable = FocusManager.UTIL.findOrBuildFocusableFromComponent(component, null);
-        
-        if (asFocusable != null) {
-            addFocusable(asFocusable);
-            child.asFocusable = asFocusable;
-        }
-        
+    
+    protected void addComponentFocusablesToFocusManager(Component<?> component) { 
+        this.focusBehaviourManager.addComponentFocusablesToFocusManager(component);
     }
 
-    static class ComponentWithOffsetWithFocusable extends ComponentWithOffset {
-
-        Focusable asFocusable;
-        
-        public ComponentWithOffsetWithFocusable(Position offset, Component<?> component) {
-            super(offset, component);
-        }
-        
-    }
-
-    protected ComponentWithOffset buildCompositeWithOffset(Position offset, Component<?> component) {
-        return new ComponentWithOffsetWithFocusable(offset, component);
-    }
 
     @Override
     protected ComponentWithOffset addComponentWithOffset(Position offset, Component<?> component) {
@@ -106,7 +86,7 @@ public class CompositeWithFocusManager  extends Composite implements FocusManage
         if (focusManager == null) {
             return result;
         }
-        addFocusableFromChildComponent(component);
+        addComponentFocusablesToFocusManager(component);
         return result;
     }
 
@@ -115,26 +95,15 @@ public class CompositeWithFocusManager  extends Composite implements FocusManage
         if (focusManager == null) {
             return result;
         }
-        addFocusableFromChildComponent(component);
+        addComponentFocusablesToFocusManager(component);
         return result;
     }
     
 
-    public void addFocusable(Focusable focusable) {
-        getFocusManager().addFocusable(focusable);
-    }
-
-    public void removeFocusable(Focusable focusable) {
-        getFocusManager().removeFocusable(focusable);
-    }
-
     @Override
     public Composite remove(Component<?> component) {
-        ComponentWithOffsetWithFocusable child = (ComponentWithOffsetWithFocusable)findChildOrFail(component, "remove");
         Composite result = super.remove(component);
-        if (child.asFocusable != null) {
-            removeFocusable(child.asFocusable);
-        }
+        this.focusBehaviourManager.removeComponentFocusablesFromFocusManager(component);
         return result;
     }
 
@@ -144,11 +113,13 @@ public class CompositeWithFocusManager  extends Composite implements FocusManage
     }
 
     public Focusable getFocusableForChild(Component<?> component) {
-        ComponentWithOffsetWithFocusable child = (ComponentWithOffsetWithFocusable)findChildOrFail(component, "getFocusableForChild");
-        return child.asFocusable;
+        Focusable[] focusables = this.focusBehaviourManager.toFocusables(component);
+        if (focusables == null || focusables.length == 0) {
+            return null;
+        }
+        return focusables[0];
     }
-    
-    
+
     @Override
     public Focusable getCurrentChildFocus() {
         return getFocusManager().getCurrentChildFocus();

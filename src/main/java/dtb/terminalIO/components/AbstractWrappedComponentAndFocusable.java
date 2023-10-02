@@ -44,12 +44,12 @@ public abstract class AbstractWrappedComponentAndFocusable<T extends Component<?
     public void unFocus(Focusable newFocusable, EventBus eventBus) {
         asFocusable().unFocus(newFocusable, eventBus);
     }
-    
+
     @Override
     public void focus(Focusable oldFocusable, EventBus eventBus) {
         asFocusable().focus(oldFocusable, eventBus);
     }
-    
+
     @Override
     public FocusManager getParentFocusManager() {
         return asFocusable().getParentFocusManager();
@@ -59,7 +59,7 @@ public abstract class AbstractWrappedComponentAndFocusable<T extends Component<?
     public void setParentFocusManager(FocusManager focusManager) {
         Focusable.UTIL.setParentFocusManager(this, focusManager, (fm)-> asFocusable().setParentFocusManager(fm));
     }
-    
+
     private ConditionalEventHandler conditionalEventHandler;
 
     public ConditionalEventHandler getConditionalEventHandler() {
@@ -74,11 +74,11 @@ public abstract class AbstractWrappedComponentAndFocusable<T extends Component<?
     private ConditionalEventHandler evtHandler;
 
     protected ConditionalEventHandler eventHandler() {
-        
+
         if (evtHandler != null) {
             return evtHandler;
         }
-        
+
         evtHandler = new ConditionalEventHandler() {
 
             @Override
@@ -97,19 +97,18 @@ public abstract class AbstractWrappedComponentAndFocusable<T extends Component<?
                 if ( asFocusable().canHandle(te) != null ) {
                     return AbstractWrappedComponentAndFocusable.this;
                 }
-                
+
                 if (conditionalEventHandler != null && conditionalEventHandler.canHandle(te) != null) {
                     return AbstractWrappedComponentAndFocusable.this;
                 }
-
                 return null;
             }
-            
+
         };
-        
+
         return evtHandler;
     }
-    
+
     abstract protected Focusable asFocusable();
 
 }

@@ -47,7 +47,6 @@ public  abstract class AbstractWrappedComponentWithFocusManager<T extends Compon
         ((DefaultFocusManager) this.focusManager).setCustomExtendedEventHandler(customExtendedEventHandler);
     }
 
-    
     private FocusManager getFocusManager(EventBus eventBus) {
         if (this.focusManager == null) {
             if (focusManagerBuilder == null) {

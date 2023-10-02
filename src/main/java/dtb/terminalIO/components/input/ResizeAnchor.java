@@ -34,8 +34,7 @@ public class ResizeAnchor  extends TextComponent implements Focusable , Draggabl
         draggableBehaviour = new DragAndResizeComponentBehaviour(componentToResize, this);
         this.setFillOnClear(false);
     }
-    
-    
+
     public ResizeAnchor(Color color, Color draggingColor, CanResize componentToResize) {
         this(color, "⠶⠶┘", draggingColor, "⠶⠶⠾", componentToResize);
     }
@@ -56,7 +55,7 @@ public class ResizeAnchor  extends TextComponent implements Focusable , Draggabl
         }
 
         chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
-        
+
         meAsFocusable =  new DefaultFocusableBehaviour.HiliteOnFocus(this) {
             @Override
             public void setFocus(boolean focus, EventBus eventBus) {
@@ -89,7 +88,7 @@ public class ResizeAnchor  extends TextComponent implements Focusable , Draggabl
     public void handle(TerminalEvent<?> te) {
         asFocusable().handle(te);
     }
-    
+
     @Override
     public boolean onDragStart(ApplicationMouseEvent appMouseEvent) {
         dragging = draggableBehaviour.onDragStart(appMouseEvent);
@@ -130,5 +129,4 @@ public class ResizeAnchor  extends TextComponent implements Focusable , Draggabl
         Focusable.UTIL.setParentFocusManager(this, focusManager, (fm)-> asFocusable().setParentFocusManager(fm));
     }
 
-    
 }

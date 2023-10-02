@@ -243,11 +243,10 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
         }
         return this;
     }
-    
+
     public ButtonBar removeAt(int index) {
         return remove(nonDividerComponents.get(index));
     }
-
 
     public void removeChildren() {
         super.removeChildren();
@@ -255,7 +254,7 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
         count = 0;
         lastDivider = null;
     }
-    
+
     protected void clearAndRebuild() {
         // clear
         super.removeChildren();

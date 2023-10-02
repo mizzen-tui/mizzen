@@ -2,6 +2,7 @@ package dtb.terminalIO.components.input;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 import dtb.terminalIO.components.BoundedComponent;
@@ -25,10 +26,12 @@ import dtb.terminalIO.events.focus.RequestReleaseFocusEvent;
 import dtb.terminalIO.events.keyboard.KeyEvent;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
+import dtb.terminalIO.geom.Align;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.util.StringUtils;
 
 public class TextInput extends BoundedComponent<TextInput>
                        implements SettableHasValue<String>, 
@@ -47,13 +50,20 @@ public class TextInput extends BoundedComponent<TextInput>
     ChainedEventHandler chainedEventHandler;
 
     Focusable focusable;
+    
+    
+    private static final BiFunction<TextInput, String, String> TEXT_FORMATTER_BASIC = (t,s)->s;
+
+    BiFunction<TextInput, String, String>  textDisplayFormatter = TEXT_FORMATTER_BASIC;
 
     private boolean modeOverite = false; // true means insertMode   (not used?)
+    private Object align;
 
     public TextInput(Color color, int length) {
         super(color, new Dimension.Simple(1, length));
         init();
         setLength(length); // necessary
+        setText("");
     }
 
     public TextInput(int length) {
@@ -63,11 +73,27 @@ public class TextInput extends BoundedComponent<TextInput>
     public TextInput(Color color, Dimension d) {
         super(color, d);
         init();
+        setText("");
     }
 
     public TextInput(Color color, Position p, Dimension d) {
         super(color, p, d);
         init();
+        setText("");
+    }
+    
+    public TextInput align(Align align) {
+        this.align = align;
+        this.textDisplayFormatter = (t,s) -> Align.UTIL.formatToAlignedData(s, t.getWidth(), align, t.getWidth(), true);
+        this.setText(getText());
+        return this;
+    }
+
+    public TextInput setAsPassword() {
+        this.align = Align.LEFT;
+        this.textDisplayFormatter = (t,s) -> Align.UTIL.formatToAlignedData(StringUtils.repeat("*", s.length()), t.getWidth(), Align.LEFT, t.getWidth(), true);
+        this.setText(getText());
+        return this;
     }
 
     public void markAsDirty() {
@@ -160,7 +186,8 @@ public class TextInput extends BoundedComponent<TextInput>
     protected void setTextOnControl(String text) {
         if (validateText(text)) {
             this.buffer = new StringBuilder(text);
-            this.textRenderer.setText(this.buffer.toString());
+            String textForDisplay = textDisplayFormatter.apply(this,this.buffer.toString());
+            this.textRenderer.setText(textForDisplay);
             this.markAsDirty();
         }
     }

@@ -102,11 +102,11 @@ public class DialogComponent extends AbstractComponentWithContainer<CompositeWit
     
     public DialogComponent(Color color, IconStyle icon,  String title) {
         super(color, new CompositeWithFocusManager(color));
-        
+
         this.icon = icon;
-        
+
         Color iconColor = iconToIconColor(icon);
-        
+
         setBorderColor(iconColor);
         setBorder(true); 
         if (icon != null) {
@@ -116,7 +116,7 @@ public class DialogComponent extends AbstractComponentWithContainer<CompositeWit
         }
         setFillOnClear(true);
         setEmptyColor(getColor());
-        
+
         mainVerticalPanelForLayout = new VerticalPanel(color).setVerticalSpacer(1);
         add(1,1, mainVerticalPanelForLayout);
 

@@ -276,6 +276,7 @@ public interface FocusManager extends Focusable {
 
             return focusManager;
         }
+        
 
         public static FocusManager buildFocusManagerFromComponentChildren(Object component, 
                                                                           EventBus eventBus) {
@@ -320,6 +321,12 @@ public interface FocusManager extends Focusable {
 
         }
 
+        public List<Focusable> getFocusablesFromComponent(Object component) {
+            List<Focusable> focusables = new ArrayList<Focusable>();
+            addFocusableChildren(focusables, component);
+            return focusables;
+        }
+        
 
         public static Focusable findOrBuildFocusableFromComponent(Object component, EventBus eventBus) {
             return findOrBuildFocusableFromComponent(component, eventBus, ()-> new DefaultFocusManager().setNameFromOwner(component));

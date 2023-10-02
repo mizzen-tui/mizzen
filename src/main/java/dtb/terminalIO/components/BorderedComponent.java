@@ -56,7 +56,7 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
         }
         return componentPosition;
     }
-    
+
     @Override
     public Component<?> getComponentAtOffset(Position offset) {
         if ( ! this.containsPosition(offset)) {
@@ -77,10 +77,10 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
                 return c;
             }
         }
-        
+
         return this;
     }
-    
+
     @Override
     public void childResized(Component<?> child) {
         if (child == this.border) {
@@ -101,7 +101,7 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
             this.getParentContainer().childResized(this);
         }
     }
-    
+
     public BorderedComponent(Color color, Component<?> component) {
         this(color, component, (ParentContainer)null);
     }
@@ -150,7 +150,6 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
     }
     
 
-    
     public boolean visibleBorder() {
         return this.showBorder;
     }
@@ -239,7 +238,7 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
         border.setTitle(titleColor, title, titleAlign);
         return this;
     }
-    
+
     public BorderedComponent setTitle(Component<?> titleComponent, Align titleAlign) {
         border.setTitle(titleComponent, titleAlign);
         return this;
@@ -249,12 +248,12 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
         border.setTitle(titleComponent);
         return this;
     }
-    
+
     public BorderedComponent setTitle(String title) {
         border.setTitle(title);
         return this;
     }
-    
+
     @Override
     protected Rectangle getRectangleForClearAndFill() {
         return this;
@@ -264,7 +263,7 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
         // see setBorder() below for reason for hard-coded true value
         return true;
     }
-    
+
     @Override
     public BorderedComponent setBorder(boolean hasBorder) {
         if (!hasBorder) 
@@ -298,8 +297,6 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
         return this;
     }
 
-
-    
     public BorderedComponent setFooter(String footerText, Align titleAlign) {
         this.border.setFooter(footerText, titleAlign);
         return this;
@@ -309,7 +306,7 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
         this.border.setFooter( footerText );
         return this;
     }
-    
+
     @Override
     public void hilite() {
         border.hilite();
@@ -339,5 +336,4 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
         return children;
     }
 
-    
 }

@@ -28,7 +28,6 @@ import dtb.terminalIO.controlcodes.color.Colors.FGBGColors;
 import dtb.terminalIO.core.ScreenCanvasBackend;
 import dtb.terminalIO.events.OnIdleEventEventHandler.RepeatingInterval;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
-import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Align;
@@ -184,21 +183,9 @@ public class WindowFrameTest {
                 }
             };
             tApp.getMainApplicationPanel().add(18, 42, imageContainerWF);
-            
-            
-            
-            
-           // imageContainerWF.onR
-            
-            
-//            setOnResize((size) -> {
-//                imageViewer.resizeImageAsynch(eventBus, size);
-//            });
-//            //eventBus.asynchAfter(interval, handler)
-//            
-              tApp.getEventBus().asynchAfter(10,(te)-> imageViewer.resizeImageAsynch(te.getEventBus(), new Dimension.Simple(40, 150)));
 
-            
+
+              tApp.getEventBus().asynchAfter(10,(te)-> imageViewer.resizeImageAsynch(te.getEventBus(), new Dimension.Simple(40, 150)));
 
             Composite expandDownContainer = new Composite() {
                 public void fullrecalcDim() {
@@ -235,21 +222,12 @@ public class WindowFrameTest {
 
             tApp.getMainApplicationPanel().add(13, 65, expandDownWindows);
 
-
-            DefaultFocusManager mainFocusManager = (DefaultFocusManager)FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),
-                    tApp.getEventBus(),
-                    ()-> new DefaultFocusManager().setNavKeysFirst(false).setCycling(false).setName("MainApplicationPanel-FocusManager"));
-
-            tApp.getEventBus().appendEventHandler( mainFocusManager );
-
             ComponentInspector inspector = new ComponentInspector(Colors.BIGre, 
                                                                   new Dimension.Simple(25,60), 
                                                                   (Component<?>)tApp.getMainApplicationPanel(), 
-                                                                  mainFocusManager);
+                                                                  tApp.getApplicationFocusManager());
 
             AbstractComponent<?> wfInspector = makeWF(inspector.getColor(),"Components",inspector);
-
-            mainFocusManager.addComponentAsFocusables(wfInspector);
 
             tApp.getEventBus().appendEventHandler( inspector.toggleViewEventHandler() );
             tApp.getEventBus().appendEventHandler( inspector.refreshEventHandler() );
@@ -267,20 +245,16 @@ public class WindowFrameTest {
             // every 1/4 second we update ComponentInspector with current component hierarchy and focus data
             tApp.getEventBus().appendIdleEventHandler(new RepeatingInterval(2000, (te)->{
                                                          inspector.refreshEventHandler().handle(te);
-                                                         Object currentFocus = FocusManager.UTIL.findCurrentFocus(mainFocusManager);
+                                                         Object currentFocus = FocusManager.UTIL.findCurrentFocus(tApp.getApplicationFocusManager());
                                                          if (currentFocus == null) {
                                                              return;
                                                          }
                                                          stats.setTextAndResize(HasName.UTIL.getName(currentFocus));
                                                       }));
 
-
             tApp.getMainApplicationPanel().add(22,44, wfInspector);
 
             tApp.getMainApplicationPanel().add(0,0,new TextComponent("WindowFrame class: " + usedWindoManagerClass().getSimpleName()));
-
-
-            FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
 
             tApp.getResizeAction().accept(tApp, TerminalDimensions.create());
 
@@ -301,7 +275,5 @@ public class WindowFrameTest {
     static Class<?>  usedWindoManagerClass() {
         return makeWF(Colors.DEFAULT_COLOR, "dummy", new TextComponent(" ")).getClass();
     }
-    
-
 
 }

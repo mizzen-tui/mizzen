@@ -986,11 +986,7 @@ public class Composite extends AbstractComponent<Composite>
 
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
-        ElapsedTime el = ElapsedTime.start();
         draw(color, segments, this.boundsFixed);
-        //if ("TUIApp-mainPanel".equals(HasName.UTIL.getName(this))) {
-           //Logging.info(String.format("%-20s : %-20s  #kids %4d  elapsed  %4d", "draw"+(DRAW_VIA_PARTS?"-parts":"traditional"), StringUtils.truncate(HasName.UTIL.getName(this),20), children.size(),el.elapsed()));
-        //}
     }
 
 
@@ -1158,10 +1154,9 @@ public class Composite extends AbstractComponent<Composite>
 
     
     static class DRAW_PARTS_UTIL {
-        
+
         static boolean suppressSTATS=true;
-        
-        
+
         static List<ComponentWithOffset> dropShadowRectangles(Rectangle child) {
             List<ComponentWithOffset> shadows = new ArrayList<ComponentWithOffset>(2);
             
@@ -1172,14 +1167,11 @@ public class Composite extends AbstractComponent<Composite>
             shadows.add( new ComponentWithOffset(Position.ZERO, new MultiCharComponent(shadowColor, shadowChar, right)));
             return shadows;
         }
-        
-        
 
         static void drawParts(Composite parent, TreeSet<ScreenLineSegment> destination, boolean boundsFixedFlag) {
-            
-            
+
             Rectangle clippedArea = parent.bounds;
-            
+
             // loop thru children and draw each
             Position offsetForBorder;
             if (parent.hasBorder()) {
@@ -1191,8 +1183,7 @@ public class Composite extends AbstractComponent<Composite>
                 offsetForBorder = Position.ZERO;
             }
             Rectangle boundingRectangle = clippedArea;
-            
-            
+
             ElapsedTime el = ElapsedTime.start();
             List<ComponentWithOffset> reverseZOrderChildren = new ArrayList<ComponentWithOffset>(parent.childrenInZOrder).stream()
                                                                                                                .filter(c->c.visible && c.getWidth()>0 && c.getHeight()>0)

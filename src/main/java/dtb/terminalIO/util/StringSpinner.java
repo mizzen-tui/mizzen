@@ -1,8 +1,8 @@
 package dtb.terminalIO.util;
 
 public class StringSpinner {
-    
-    
+
+
     public static void main(String[] args) {
         
         StringSpinner s = new StringSpinner(GROW_VERTICAL);
@@ -48,7 +48,7 @@ public class StringSpinner {
             "⠇",
             "⠏"
     };
-    
+
     public static String[] DOTS2 = new String[] {
             "⠋",
             "⣾",
@@ -60,7 +60,7 @@ public class StringSpinner {
             "⣯",
             "⣷"
     };
-    
+
     public static String[] DOTS3 = new String[] {
             "⠋",
             "⠙",

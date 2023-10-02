@@ -8,6 +8,7 @@ import dtb.terminalIO.components.GetComponentAtOffset;
 import dtb.terminalIO.components.Hiliter;
 import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.SimpleBorder;
+import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
@@ -32,7 +33,7 @@ public class TabPanel extends AbstractComponentWrappper<CompositeWithFocusManage
     private ButtonBar tabsButtonBar;
     private Button previousButton;
     private Button nextButton;
-    private ButtonBar prevNextButtonBar;
+    private HorizontalPanel prevNextButtonBar;
     private TabButtonComponent initial;
     private TabButtonComponent current;
     Component<?> currentComponentInTab;
@@ -53,21 +54,21 @@ public class TabPanel extends AbstractComponentWrappper<CompositeWithFocusManage
         getWrappedComponent().add(Position.ZERO.addCols(1), tabsButtonBar);
 
         // Prev / Next
-        prevNextButtonBar = new ButtonBar( getColor() ).setHorizontalSpacer(2);
+        prevNextButtonBar = new HorizontalPanel( getColor() ).setHorizontalSpacer(2);
 
         previousButton = new Button(getColor(), "<-");
         previousButton.setHotKey(previousTabHotKey);
         previousButton.setDisplayHotKey(false);
         previousButton.onChange((te)-> this.setPreviousAsCurrentFocus(te.getEventBus()));
 
-        prevNextButtonBar.addComponent(previousButton);
+        prevNextButtonBar.add(previousButton);
 
         nextButton = new Button(getColor(),"->");
         nextButton.setHotKey(nextTabHotKey);
         nextButton.setDisplayHotKey(false);
         nextButton.onChange((te)-> this.setNextAsCurrentFocus(te.getEventBus()));
 
-        prevNextButtonBar.addComponent(nextButton);
+        prevNextButtonBar.add(nextButton);
 
         Position navControlsPosition = PositionRelativeFactory.fromAlign(VAlign.BOTTOM, Align.RIGHT,  this, this.prevNextButtonBar);
         getWrappedComponent().add(navControlsPosition, prevNextButtonBar);

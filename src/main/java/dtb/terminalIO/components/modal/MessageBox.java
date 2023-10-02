@@ -1,6 +1,5 @@
 package dtb.terminalIO.components.modal;
 
-import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.ChildComponentManager;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.CompositeWithFocusManager;
@@ -14,7 +13,6 @@ import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
-import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.focus.RequestFocusEvent;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
@@ -111,7 +109,7 @@ public class MessageBox {
      * @param parentPanel
      * @param message
      */
-    private static void simpleDialog(IconStyle icon,
+    public static void simpleDialog(IconStyle icon,
                                      String title,
                                      ButtonSpec[] buttonSpec,
                                      EventBus eventBus, 
@@ -128,7 +126,9 @@ public class MessageBox {
 
         dialog.setBorderColor(DialogComponent.iconToIconColor(icon));
         dialog.setBorder(true); 
-        dialog.setTitle(DialogComponent.iconToIconColor(icon), " " + title + " ");
+        if (title != null && title.length()>0) {
+            dialog.setTitle(DialogComponent.iconToIconColor(icon), " " + title + " ");
+        }
         dialog.setFillOnClear(true);
         dialog.setEmptyColor(dialogColor);
         dialog.setName("dialog");
@@ -163,19 +163,22 @@ public class MessageBox {
 
         dialog.add(messageTextPosition, mainPanel);
 
-        ButtonBar buttons = new ButtonBar().setCycling(true);
+        HorizontalPanel buttons = new HorizontalPanel();
         buttons.setFillOnClear(true);
         buttons.setEmptyColor(dialog.getColor());
 
         buttons.setColor(dialog.getColor());
-        buttons.setNoBorderChars();
         buttons.setHorizontalSpacer(3);
-        buttons.setName("dialog.buttonBar");
+        buttons.setName("dialog.buttons");
 
         Button[] buttonsForButtonBar = new Button[buttonSpec.length];
 
         for (int i=0; i<buttonSpec.length; i++) {
-            buttonsForButtonBar[i] = buttons.addButton(buttonSpec[i].buttonLabel, buttonSpec[i].onPressedKeyStroke, null).setBorder(true);
+            Button theButton = new Button(dialog.getColor(), buttonSpec[i].buttonLabel);
+            theButton.setHotKey(buttonSpec[i].onPressedKeyStroke);
+            theButton.setBorder(true);
+            buttons.add(theButton);
+            buttonsForButtonBar[i] = theButton; //buttons.addButton(buttonSpec[i].buttonLabel, buttonSpec[i].onPressedKeyStroke, null).setBorder(true);
         }
 
         int buttonPositionCol = (dialog.getWidth() - buttons.getWidth()) / 2 ;
@@ -212,8 +215,12 @@ public class MessageBox {
             EventHandler onPressedButtonEventHandler = buttonSpec[i].onPressed;
             buttonsForButtonBar[i].onChange((te)->{
                 removeDialog.handle(te);
-                onCloseHandler.handle(te);
-                te.getEventBus().asynch(onPressedButtonEventHandler);
+                if (onCloseHandler != null) {
+                    onCloseHandler.handle(te);
+                }
+                if (onPressedButtonEventHandler != null) {
+                    te.getEventBus().asynch(onPressedButtonEventHandler);
+                }
             });
         }
 
@@ -234,7 +241,6 @@ public class MessageBox {
 
     }
 
-    
     public static void showDialogNew(DialogComponent.IconStyle icon,
             String title,
             ButtonSpec[] buttonSpec,
@@ -243,21 +249,18 @@ public class MessageBox {
             String message,
             Component<?> customComponent,
             EventHandler onCloseHandler ) {
-        
-        
+
         Color dialogColor = new Colors.FGBGColors(Colors.Bla,Colors.On_Whi);
         dialogColor.setBoldTransform((c)-> new Colors.FGBGColors(Colors.BIWhi, Colors.On_Bla));
         dialogColor.setInvertTransform((c)-> new Colors.FGBGColors(Colors.BIWhi, Colors.On_Bla));
 
-        
         DialogComponent dialog = new DialogComponent(dialogColor, icon, title);
-        
-        
+
         dialog.show(eventBus);
-        
+
     }
-    
-    private static void simpleDialog(IconStyle icon,
+
+    public static void simpleDialog(IconStyle icon,
             String title,
             ButtonSpec[] buttonSpec,
             EventBus eventBus, 
@@ -267,7 +270,6 @@ public class MessageBox {
         simpleDialog(icon, title, buttonSpec, eventBus, parentPanel, message, customComponent, EventHandler.NULL_HANDLER);
     }
 
-    
     public static void showInfoDialog(EventBus eventBus, 
                                       ChildComponentManager<?> parentPanel,
                                       String message,
@@ -305,14 +307,13 @@ public class MessageBox {
         showInfoDialog(eventBus, parentPanel, message, customComponent, EventHandler.NULL_HANDLER);
     }
 
-
     public static void showWarningDialog(EventBus  eventBus, 
                                          ChildComponentManager<?> parentPanel,
                                          String message,
                                          EventHandler onPressed) {
          simpleDialog(IconStyle.WARNING, "Warning", new ButtonSpec[] {new ButtonSpec("OK", Keys.ENTER_KEYSTROKE, onPressed)}, eventBus, parentPanel, message, null);
     }
-    
+
     public static void showWarningDialog(EventBus eventBus, 
             ChildComponentManager<?> parentPanel,
             String message) {
@@ -325,7 +326,7 @@ public class MessageBox {
                                        EventHandler onPressed) {
           simpleDialog(IconStyle.ERROR, "Error", new ButtonSpec[] {new ButtonSpec("OK", Keys.ENTER_KEYSTROKE, onPressed)}, eventBus, parentPanel, message, null);
     }
-    
+
     public static void showErrorDialog(EventBus eventBus, 
             ChildComponentManager<?> parentPanel,
             String message) {
@@ -333,7 +334,7 @@ public class MessageBox {
     }
     
     static boolean integrate = true;
-    
+
     public static void showYesNoDialog(EventBus eventBus, 
                                        ChildComponentManager<?> parentPanel,
                                        String message,
