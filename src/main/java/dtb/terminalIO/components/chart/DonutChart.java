@@ -44,6 +44,12 @@ public class DonutChart extends AbstractComponent<DonutChart> implements ParentC
         return this;
     }
     
+    
+    public DonutChart setPlottingColor(Color color) {
+        this.grid.setPlottingColor(color);
+        return this;
+     }
+    
     public DonutChart setTextColor(Color drawingcolor) {
        this.stats.setColor(drawingcolor);
         return this;

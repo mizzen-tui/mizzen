@@ -13,7 +13,7 @@ import dtb.terminalIO.textsegments.ScreenLineSegment;
 public class HorizontalLine extends BoundedComponent<HorizontalLine> {
 
     private char horizontalLineChar = 0;
-    
+
     public HorizontalLine(Color color, Position pos, int len) {
         super(color, pos, new Dimension.Simple(1, len));
     }

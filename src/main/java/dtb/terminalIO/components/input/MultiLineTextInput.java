@@ -12,8 +12,11 @@ import java.util.stream.Collectors;
 
 import dtb.terminalIO.components.AbstractComponent;
 import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.components.scroll.HasViewPortWindow;
+import dtb.terminalIO.components.scroll.ViewPortNavigable;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.AbstractTimedRequestedController;
@@ -40,6 +43,7 @@ import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.StringUtils;
 
 
@@ -48,7 +52,8 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
                                            ParentContainer, 
                                            Focusable, 
                                            EventHandlerContainer,
-                                           Clickable {
+                                           Clickable,
+                                           HasViewPortWindow.OnChange {
 
     private TextComponent textRenderer;
     private boolean textRendererNeedsUpdate = false;
@@ -60,6 +65,9 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
     ChainedEventHandler chainedEventHandler;  // test
 
     Focusable focusable;
+    
+    // when external component (usually parent) is paging up / down etc we want to control behaviour here
+    ViewPortNavigable viewPortNavigator = new DefaultMultiLineTextViewPortNavigableImpl();
 
     private boolean modeOverite = false; // true means insertMode
 
@@ -170,7 +178,7 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
     }
     
 
-    void setCaretPosition(Position newRequestedPosition) {
+    public void setCaretPosition(Position newRequestedPosition) {
 
         int newRow = 0;
         int newCol = 0;
@@ -301,34 +309,52 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
         return caretRight();
     }
 
-    boolean canMoveCaretUp() {
-        if (this.caret.getRow() > 0) {
+    boolean canMoveCaretUp(int iLines) {
+        if (this.caret.getRow()-iLines >= 0) {
             return true;
         }
         return false;
     }
+    
+    
+    boolean canMoveCaretUp() {
+        return canMoveCaretUp(1);
+    }
 
-    boolean caretUp() {
-        if (!canMoveCaretUp()) {
+    boolean caretUp(int iLines) {
+        if (!canMoveCaretUp(iLines)) {
             return false;
         }
 
-        int targetRow = this.caret.getRow() - 1;
+        int targetRow = this.caret.getRow() - iLines;
         int strLineLen = this.buffer.get(targetRow).length();
 
         setCaretPosition(new Position.Simple(targetRow, Math.min(this.caret.getCol(),strLineLen)));
         return true;
     }
 
+    boolean caretUp() {
+        return caretUp(1);
+    }
+    
+    
     boolean canMoveCaretDown() {
-        if (this.caret.getRow() + 1 >= this.buffer.size()) {
+        return canMoveCaretDown(1);
+    }
+
+    boolean canMoveCaretDown(int delta) {
+        if (this.caret.getRow() + delta >= this.buffer.size()) {
             return false;
         }
         return true;
     }
 
     boolean caretDown() {
-        if (!canMoveCaretDown()) {
+        return caretDown(1);
+    }
+
+    boolean caretDown(int delta) {
+        if (!canMoveCaretDown(delta)) {
             return false;
         }
         int targetRow = this.caret.getRow() + 1;
@@ -494,6 +520,77 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
             timedOnChangeRequestController.onRequest(eventBus);
         }
     }
+
+    public void onViewPortWindowChange(HasViewPortWindow source, TerminalEvent<?> te) {
+        Rectangle viewPort = source.getViewPortAsRectangle();
+        if (viewPort.containsPosition(this.caret)) {
+            Logging.info(HasName.UTIL.getName(this)+"  onViewPortWindowChange -> "+viewPort);
+            if (te != null) {
+                raiseEventOnChanged(te.getEventBus(), ()-> true);
+            }
+            return;
+        }
+        
+        Rectangle viewIntoThis = viewPort.intersectWith(this);
+        
+        if ( viewIntoThis == null) {
+            // This component is not visible in viewport so nothing to do
+            return;
+        }
+
+        //  caret needs to be moved - try to find a new sensible position based on its current
+        //  location and viewport size and location
+
+        Position newCaretPosition = new Position.Simple(this.caret);
+        
+        if (newCaretPosition.getRow() < viewIntoThis.getRow()) {
+            newCaretPosition = newCaretPosition.offsetAdd(viewIntoThis.getRow()-newCaretPosition.getRow(), 0);
+        } else if (this.caret.getRow() > viewIntoThis.getRow()) {
+            newCaretPosition = newCaretPosition.offsetAdd(newCaretPosition.getRow()-viewIntoThis.getRow(), 0);
+        }
+        
+        if (newCaretPosition.getCol() < viewIntoThis.getCol()) {
+            newCaretPosition = newCaretPosition.offsetAdd(0, viewIntoThis.getCol() -  newCaretPosition.getCol());
+        } else if (newCaretPosition.getCol() > viewIntoThis.getCol()) {
+            newCaretPosition = newCaretPosition.offsetAdd(0, newCaretPosition.getCol() - viewIntoThis.getCol());
+        }
+
+        if (newCaretPosition.isSameLocation(this.caret)) {
+            // TODO: IllegalState - should not be possible 
+            Logging.info(HasName.UTIL.getName(this)+": Illegal CURSOR state: Caret was not moved on viewport change: "+this.caret+ " viewport" + viewIntoThis);
+            // maybe throw exception?
+            return;
+        }
+
+        setCaretPosition(newCaretPosition);
+
+        if (te != null) {
+            raiseEventOnChanged(te.getEventBus(), ()-> true);
+        }
+    }
+    
+    class DefaultMultiLineTextViewPortNavigableImpl implements ViewPortNavigable {
+
+        public void up(int iLines) {
+            caretUp(iLines);
+        }
+
+        public void down(int iLines) {
+            caretDown(iLines);
+        }
+
+        public void left(int iCols) {
+            // TODO: thhis is not correct 
+            caretLeft();
+        }
+
+        public void right(int iCols) {
+            // TODO: thhis is not correct 
+            caretRight();
+        }
+
+    }
+    
 
     @Override
     public void handle(TerminalEvent<?> te) {
@@ -688,8 +785,7 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
                 public void setFocus(boolean focus, EventBus eventBus) {
                     super.setFocus(focus, eventBus);
                     if (focus) {
-                        new ShowComponentOnFocus().onFocus(MultiLineTextInput.this,
-                                                           eventBus);
+                        //new ShowComponentOnFocus().onFocus(MultiLineTextInput.this, eventBus);
                         requestShowCursor(eventBus);
                     } else {
                         requestHideCursor(eventBus);

@@ -1,5 +1,6 @@
 package dtb.terminalIO.events.mouse;
 
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
 import dtb.terminalIO.components.Component;
@@ -198,8 +199,8 @@ public class MouseEventOrchestrator {
             }
 
             @Override
-            public void handle(TerminalEvent<?> te) {
-                ApplicationMouseEvent appMouseEvent = (ApplicationMouseEvent) te;
+            public void handle(final TerminalEvent<?> te) {
+                final ApplicationMouseEvent appMouseEvent = (ApplicationMouseEvent) te;
                 if (currentDraggable != null && (appMouseEvent.getMouseAction() == MOUSE_ACTION.DOWN_LEFT_DRAG || appMouseEvent.getMouseAction() == MOUSE_ACTION.UP)) {
                     boolean handled = handleDragMode(appMouseEvent);
                     if (handled) {
@@ -216,7 +217,7 @@ public class MouseEventOrchestrator {
 
                 Position canvasPosition = appMouseEvent.getEventData();
 
-                // mainApplicationPanel is not always at 0,0 (ie when app is not full-screen) ..always need to account for that
+                // mainApplicationPanel is not always at 0,0 (ie when app is not full-screen or when mainPanel is a subset of Canvas) ..always need to account for that
                 Position panelOffsetOnCanvas = Component.UTIL.getCanvasOffsetFor(mainApplicationPanel);
                 if (panelOffsetOnCanvas == null) {
                     throw new IllegalStateException("mainApplicationPanel used to map mouse events is not attached (directly or indirectly) to the canvas!");
@@ -278,7 +279,7 @@ public class MouseEventOrchestrator {
                         if (focusableAndClickable == null) {
                             return;
                         }
-
+/* 
                         EventHandler mapMouseClickToComponentsClickHandler = (te2)->{
                             if (focusableAndClickable.hasFocus()) {
                                 // map mouse position as an offset into the clicked component
@@ -295,7 +296,7 @@ public class MouseEventOrchestrator {
                                 clickable.onClick( te2.getEventBus() );
                             }
                         };
-                        
+
                         if (focusableAndClickable.hasFocus()) {
                             // component already has focus so lets process click
                             eventBus.asynch((te2)-> mapMouseClickToComponentsClickHandler.handle(te2));
@@ -306,6 +307,52 @@ public class MouseEventOrchestrator {
                                                                                                )
                                                );
                         }
+
+*/
+                        
+/* ---------- START OF NEW --------------*/
+                        
+                        
+                        ApplicationMouseEvent newMouseEvent = null;
+                        // map mouse position as an offset into the clicked component
+                        // and pass the component a new mouse event with this offset
+                        // Please note:  Essential that mouseEvent with offset relative to clickable gets calculated now 
+                        //               before calls to set focus happen --as set focus ( on some components ) can
+                        //               cause scroll to view events which potentially moves the component
+                        Position clickableOffsetOnCanvas = Component.UTIL.getCanvasOffsetFor((Component<?>)clickable);
+                        if (clickableOffsetOnCanvas != null) {
+                            Position mouseOffsetIntoClickable = clickableOffsetOnCanvas.offsetTo(canvasPosition);
+                            newMouseEvent = new ApplicationMouseEvent(appMouseEvent.getSource(), appMouseEvent.getMouseAction(), mouseOffsetIntoClickable);
+                        }
+
+                        ApplicationMouseEvent mouseEventForClickable = newMouseEvent;
+
+                        BiConsumer<Component<?>, ApplicationMouseEvent> mapMouseClickToComponentsClickHandler = (clickedComponent, mouseEventForClickedComponent)->{
+                            if (focusableAndClickable.hasFocus()) {
+                                // map mouse position as an offset into the clicked component
+                                // and pass the component a new mouse event with this offset
+                                if (mouseEventForClickedComponent != null) {
+                                    mouseEventForClickedComponent.setEventBus(MouseEventOrchestrator.this.eventBus);
+                                    clickable.onClick(mouseEventForClickedComponent);
+                                    return;
+                                }
+                                // can't map to an offset into component so just send the eventbus
+                                clickable.onClick( MouseEventOrchestrator.this.eventBus );
+                            }
+                        };
+
+                        if (focusableAndClickable.hasFocus()) {
+                            // component already has focus so lets process click
+                            eventBus.asynch((te2)-> mapMouseClickToComponentsClickHandler.accept((Component<?>)clickable, mouseEventForClickable));
+                        } else {
+                            eventBus.raiseEvent( new RequestFocusEvent(focusableComponent).then(() -> { 
+                                                                                                      eventBus.asynch((te2)-> mapMouseClickToComponentsClickHandler.accept((Component<?>)clickable, mouseEventForClickable));
+                                                                                                      }
+                                                                                               )
+                                               );
+                        }
+
+/* ---------- END   OF NEW --------------*/
                         
                         // Handle Draggable
                     } else if (componentClicked instanceof Draggable) {
@@ -314,8 +361,14 @@ public class MouseEventOrchestrator {
                         if (focusableAndDraggable == null) {
                             return;
                         }
+                        
+                       // Logging.info("Handle Draggable  --- about to raise an event --- why?  Need to ensure this is correct ..previous mE = "+appMouseEvent);
 
                         ApplicationMouseEvent appMouseEventDrag = new ApplicationMouseEvent(appMouseEvent.getSource(), MOUSE_ACTION.DOWN_LEFT_DRAG, appMouseEvent.getEventData());
+
+                        if (appMouseEvent.isSame(appMouseEventDrag)) {
+                            return;  // prevent sending the same mouse event if its the same as what was just received ( avoid endless event looping )
+                        }
                         appMouseEvent.getEventBus().raiseEvent(appMouseEventDrag);
                     }
                 }
@@ -324,38 +377,47 @@ public class MouseEventOrchestrator {
         eventBus.appendEventHandler(appMouseToFocusableComponent);
     }
 
-    protected boolean handleDragMode(ApplicationMouseEvent appMouseEvent) {
+    protected boolean handleDragMode(final ApplicationMouseEvent appMouseEventRelativeToCanvas) {
         // appMouseEvent.getMouseAction() == MOUSE_ACTION.DOWN_LEFT_DRAG || appMouseEvent.getMouseAction() == MOUSE_ACTION.UP)
 
         if (currentDraggable == null) {
             return false;
         }
 
-        if (appMouseEvent.getMouseAction() == MOUSE_ACTION.DOWN_LEFT_DRAG) {
-            if (currentDraggable.onDrag(appMouseEvent)) {
+//        Position draggableOffsetOnCanvas = Component.UTIL.getCanvasOffsetFor((Component<?>)currentDraggable);
+//        Position mouseOffsetIntoDraggable = draggableOffsetOnCanvas.offsetTo(appMouseEvent.getEventData());
+//        ApplicationMouseEvent newMouseEvent = new ApplicationMouseEvent(appMouseEvent.getSource(), appMouseEvent.getMouseAction(), mouseOffsetIntoDraggable);
+//        newMouseEvent.setEventBus(MouseEventOrchestrator.this.eventBus);
+
+        if (appMouseEventRelativeToCanvas.getMouseAction() == MOUSE_ACTION.DOWN_LEFT_DRAG) {
+            if (currentDraggable.onDrag(appMouseEventRelativeToCanvas)) {
                 return true;
             }
+            currentDraggable.onDragStop(appMouseEventRelativeToCanvas);
             this.currentDraggable = null;
             return false;
         }
 
-        if (appMouseEvent.getMouseAction() == MOUSE_ACTION.UP) {
-            if (currentDraggable.onDragStop(appMouseEvent)) {
-                this.currentDraggable = null;
-                return true;
-            }
-            return false;
+        if (appMouseEventRelativeToCanvas.getMouseAction() == MOUSE_ACTION.UP) {
+            currentDraggable.onDragStop(appMouseEventRelativeToCanvas);
+            this.currentDraggable = null;
+            return true;
         }
 
         return false;
     }
 
-    protected boolean checkHandleDragStart(Draggable newDraggable, ApplicationMouseEvent appMouseEvent) {
+    protected boolean checkHandleDragStart(Draggable newDraggable, ApplicationMouseEvent appMouseEventRelativeToCanvas) {
         if (currentDraggable != null) {
             return false;
         }
 
-        if (newDraggable.onDragStart(appMouseEvent)) {
+//        Position draggableOffsetOnCanvas = Component.UTIL.getCanvasOffsetFor((Component<?>)newDraggable);
+//        Position mouseOffsetIntoDraggable = draggableOffsetOnCanvas.offsetTo(appMouseEvent.getEventData());
+//        ApplicationMouseEvent newMouseEvent = new ApplicationMouseEvent(appMouseEvent.getSource(), appMouseEvent.getMouseAction(), mouseOffsetIntoDraggable);
+//        newMouseEvent.setEventBus(MouseEventOrchestrator.this.eventBus);
+
+        if (newDraggable.onDragStart(appMouseEventRelativeToCanvas)) {
             this.currentDraggable = newDraggable;
             return true;
         }

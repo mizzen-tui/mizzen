@@ -3,6 +3,7 @@ package dtb.terminalIO.examples;
 import java.util.function.Consumer;
 
 import dtb.terminalIO.controlcodes.ControlCode;
+import dtb.terminalIO.controlcodes.ControlCode.BaseTextControlCode;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.TerminalScreen;
 import dtb.terminalIO.events.CPREvent;
@@ -46,28 +47,52 @@ public class KeyInputEventsProducerTest {
         TerminalScreen screen = TestsCommon.getTerminalScreenForTesting(args);
 
         Canvas master_canvas = TestsCommon.getMasterCanvasForTesting(screen);
-        master_canvas.setSize(10, 110);
+        master_canvas.setSize(10, master_canvas.getWidth());
         master_canvas.setEmptyChar(' ');
 
         Consumer<String> status1Displayer = (msg) -> {
-            String msgFormatted = String.format("[  %-60s  ]", msg);
+            String msgFormatted = String.format("[  %-"+master_canvas.getWidth()+"s  ]", msg);
             // System.err.println(msgFormatted);
-            master_canvas.t(master_canvas.getHeight()-5 , 3, msgFormatted+"                  ");
+            master_canvas.t(master_canvas.getHeight()-5 , 3, msgFormatted);
             master_canvas.refresh();
         };
         
         Consumer<String> status1Displayer2 = (msg) -> {
-            String msgFormatted = String.format("[  %-100s  ]", msg);
+            String msgFormatted = String.format("[  %-"+master_canvas.getWidth()+"s  ]", msg);
             // System.err.println(msgFormatted);
-            master_canvas.t(master_canvas.getHeight()-7 , 3, msgFormatted+"                   ");
+            master_canvas.t(master_canvas.getHeight()-7 , 3, msgFormatted);
             master_canvas.refresh();
         };
-        
 
-        screen.add( ControlCode.ENABLE_MOUSE_TRACKING );
-//        screen.add( ControlCode.SET_BTN_EVENT_MOUSE );
-        screen.add( ControlCode.SET_ANY_EVENT_MOUSE );
-        screen.add( ControlCode.SET_EXT_MODE_MOUSE );
+        Runnable textualizeMouseEnable = ()-> {
+            screen.add( new BaseTextControlCode(ControlCode.escape_CHR + "[?1000h"));
+            screen.add( new BaseTextControlCode(ControlCode.escape_CHR + "[?1003h"));
+            screen.add( new BaseTextControlCode(ControlCode.escape_CHR + "[?1015h"));
+            screen.add( new BaseTextControlCode(ControlCode.escape_CHR + "[?1006h"));
+        };
+        
+        /*
+         * write("\x1b[?1000h")  # SET_VT200_MOUSE
+        write("\x1b[?1003h")  # SET_ANY_EVENT_MOUSE
+        write("\x1b[?1015h")  # SET_VT200_HIGHLIGHT_MOUSE
+        write("\x1b[?1006h")  # SET_SGR_EXT_MODE_MOUSE
+         * 
+         * */
+        
+        Runnable normalMouseEnable = ()-> {
+            screen.add( ControlCode.SET_VT200_MOUSE );
+            screen.add( ControlCode.ENABLE_MOUSE_TRACKING );
+            //screen.add( ControlCode.SET_FOCUS_EVENT_MOUSE );
+            //screen.add( ControlCode.SET_BTN_EVENT_MOUSE );
+            screen.add( ControlCode.SET_ANY_EVENT_MOUSE );
+            screen.add( ControlCode.SET_EXT_MODE_MOUSE );
+            //screen.add( ControlCode.SET_EXT_MODE_MOUSE );
+        };
+        
+        
+        textualizeMouseEnable.run();
+        //normalMouseEnable.run();
+        
         // now flush to stdout
         screen.refresh();
         

@@ -6,8 +6,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.TreeSet;
 
+import dtb.terminalIO.components.scroll.HasViewPortWindow;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
+import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.focus.ToFocusable;
 import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
@@ -18,7 +22,9 @@ import dtb.terminalIO.textsegments.ScreenLineSegment;
 public class HilitingComponent extends AbstractComponent<HilitingComponent>   implements ParentContainer, 
                                                                                          CanResize, 
                                                                                          GetComponentAtOffset, 
-                                                                                         HasName<HilitingComponent> {
+                                                                                         HasName<HilitingComponent>,
+                                                                                         HasViewPortWindow.OnChange,
+                                                                                         ToFocusable {
 
     private Color selectedTextColor    = new Colors.FGBGColors(Colors.BBla, Colors.On_IYel);
     private Color hiliteTextColor    = new Colors.FGBGColors(Colors.BBla, Colors.On_Whi);
@@ -32,6 +38,12 @@ public class HilitingComponent extends AbstractComponent<HilitingComponent>   im
         super(color);
         this.child = child;
         child.setParentContainer(this);
+    }
+
+    public void onViewPortWindowChange(HasViewPortWindow source, TerminalEvent<?> te) {
+        if (this.child instanceof HasViewPortWindow.OnChange) {
+            ((HasViewPortWindow.OnChange)this.child).onViewPortWindowChange(source, te);
+        }
     }
 
     public Color getHiliteTextColor() {
@@ -236,6 +248,14 @@ public class HilitingComponent extends AbstractComponent<HilitingComponent>   im
             };
         }
         
+    }
+    
+    public Focusable asFocusable() {
+        if (this.child == null) {
+            return  null;
+        }
+        Focusable focusableChild = ToFocusable.UTIL.toFocusable(this.child);
+        return focusableChild;
     }
     
 

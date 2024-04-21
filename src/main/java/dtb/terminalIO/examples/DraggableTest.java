@@ -59,11 +59,17 @@ public class DraggableTest {
 
             tApp.getMainApplicationPanel().add(14, 3, new DraggableTextComponent(Colors.Blu,"BLUE"));
 
+            tApp.getMainApplicationPanel().add(14, 3, new DraggableTextComponent(Colors.BIPur,"Freeze ROW").freezeRow());
+
+            
+            tApp.getMainApplicationPanel().add(18, 3, new DraggableTextComponent(Colors.BCya,"Freeze COL").freezeColumn());
+
             String largeText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis nulla elit, placerat sed aliquam at, porta ut justo. Sed vel fringilla nisi, eu laoreet dui. Sed gravida at ipsum et viverra. Ut diam justo, imperdiet sed ante eu, elementum pellentesque sem. Curabitur eleifend turpis eros, nec semper est ultricies eget. Sed sed faucibus mauris, sed porttitor mauris. Ut quis tellus ultrices sapien porttitor tincidunt eu sed risus. Integer ac imperdiet dolor, at ultricies odio. Vestibulum sed pretium ligula. Sed dapibus sapien nunc, eget molestie mauris hendrerit id. Duis blandit tortor eget risus sagittis, at sodales felis congue. Donec vulputate massa aliquam, pretium ante eu, hendrerit ante. Suspendisse potenti. Nam gravida tempus ipsum, non convallis turpis malesuada id. Sed iaculis iaculis condimentum. Fusce pharetra euismod efficitur.";
 
             tApp.getMainApplicationPanel().add(14, 3, new BorderedComponent(new DraggableTextComponent(Colors.BGre,StringUtils.wrap(largeText, 50))));
 
             tApp.getMainApplicationPanel().add(20, 3, new BorderedComponent(new DraggableTextComponent(Colors.BGre,getFileData(args))));
+
 
             Composite innerComposite = new Composite().setName("innerComposite");
             innerComposite.setBorder(true);

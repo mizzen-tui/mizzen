@@ -41,7 +41,7 @@ import dtb.terminalIO.util.ElapsedTime;
 import dtb.terminalIO.util.ListComparator;
 import dtb.terminalIO.util.StringSpinner;
 
-public class SearchFunctionForScrollableComponent extends AbstractWrappedComponentWithFocusManager<ButtonBar>  {
+public class SearchFunctionForScrollableComponent extends AbstractWrappedComponentWithFocusManager<ButtonBar> {
 
     private List<Rectangle> searchResult;
     private TextInSegmentSearchResult currentSearchResult;

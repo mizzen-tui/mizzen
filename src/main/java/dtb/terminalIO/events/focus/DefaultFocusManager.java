@@ -139,7 +139,8 @@ public class DefaultFocusManager implements FocusManager,
         }
         
         if (current == null) {
-            throw new IllegalStateException("ERROR: Trying to set current focus. No focusable objects added to this FocusManager("+HasName.UTIL.getName(this)+").");
+            //throw new IllegalStateException("ERROR: Trying to set current focus. No focusable objects added to this FocusManager("+HasName.UTIL.getName(this)+").");
+            return null;
         }
         
         return this.current;
@@ -179,7 +180,8 @@ public class DefaultFocusManager implements FocusManager,
         if (size() < 1) {
             return null;
         }
-        int index = eventConsumers.indexOf(getCurrentOrSet(eventBus));
+        Focusable theCurrent = getCurrentOrSet(eventBus);
+        int index = (theCurrent == null) ? -1 : eventConsumers.indexOf(theCurrent);
         if (index < 1) {
             if (cycling) {
                return eventConsumers.get(size() - 1);
@@ -194,7 +196,8 @@ public class DefaultFocusManager implements FocusManager,
         if (size() < 2) {
             return null;
         }
-        int index = eventConsumers.indexOf(getCurrentOrSet(eventBus));
+        Focusable theCurrent = getCurrentOrSet(eventBus);
+        int index = (theCurrent == null) ? -1 : eventConsumers.indexOf(theCurrent);
         if (index < 0 || index == size() - 1) {
             if (cycling) {
                 return eventConsumers.get(0);
@@ -688,6 +691,15 @@ public class DefaultFocusManager implements FocusManager,
             focusablesFromComponent.forEach((f)->this.removeFocusable(f));
         }
     }
+    
+    private boolean applyOnCurrentFocus(EventBus eventBus, Consumer<Focusable> operation) {
+        Focusable theCurrent = getCurrentOrSet(eventBus);
+        if (theCurrent == null) {
+            return false;
+        }
+        operation.accept(theCurrent);
+        return true;
+    }
 
     private FocusBehaviour getAsFocusable() {
 
@@ -698,19 +710,19 @@ public class DefaultFocusManager implements FocusManager,
                 @Override
                 public void setFocus(boolean focus, EventBus eventBus) {
                     super.setFocus(focus, eventBus);
-                    getCurrentOrSet(eventBus).setFocus(focus, eventBus);
+                    applyOnCurrentFocus(eventBus,(c)->c.setFocus(focus, eventBus));
                 }
                 
                 @Override
                 public void unFocus(Focusable newFocusable, EventBus eventBus) {
                     super.unFocus(newFocusable, eventBus);
-                    getCurrentOrSet(eventBus).unFocus(newFocusable, eventBus);
+                    applyOnCurrentFocus(eventBus,(c)->c.unFocus(newFocusable, eventBus));
                 }
 
                 @Override
                 public void focus(Focusable oldFocusable, EventBus eventBus) {
                     super.focus(oldFocusable, eventBus);
-                    getCurrentOrSet(eventBus).focus(oldFocusable, eventBus);
+                    applyOnCurrentFocus(eventBus,(c)->c.focus(oldFocusable, eventBus));
                 }
                 
             };
@@ -785,11 +797,13 @@ public class DefaultFocusManager implements FocusManager,
     }
     
     public static void setDefaultNameAndActualFromParentObject(FocusManager focusManager, Object parentContainer) {
-        if (focusManager instanceof DefaultFocusManager && parentContainer instanceof FocusManager) {
-            HasName.UTIL.setDefaultNameFromParentObject(focusManager, parentContainer, "FocusManager");
-            ((DefaultFocusManager)focusManager).setActual((FocusManager)parentContainer);
-            return;
-        }
+        
+        applyIfDefaultFocusManager(focusManager, (dfaltFocusManager)->{
+            if (parentContainer instanceof FocusManager) {
+                HasName.UTIL.setDefaultNameFromParentObject(dfaltFocusManager, parentContainer, "FocusManager");
+                ((DefaultFocusManager)dfaltFocusManager).setActual((FocusManager)parentContainer);
+            }
+        });
         HasName.UTIL.setDefaultNameFromParentObject(focusManager, parentContainer, "FocusManager");
     }
     public static void setDefaultNameFromParentObject(FocusManager focusManager, Object parentContainer) {

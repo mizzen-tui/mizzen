@@ -12,6 +12,7 @@ import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
@@ -83,16 +84,35 @@ public class DialogComponent extends AbstractComponentWithContainer<CompositeWit
     }
     
     // internal class to specify buttons that will be built in call to simpleDialog(..)
+    
+    @FunctionalInterface
+    public static interface DialogKeyPressed {
+    	void handleKeyPressed(EventHandler onCloseRequest, TerminalEvent<?> te);
+    }
+    
     public static class ButtonSpec {
         public final String buttonLabel;
         public final KeyStroke onPressedKeyStroke;
-        public final EventHandler onPressed;
+        public final DialogKeyPressed onPressed;
+        public final boolean removeOnPressed;
         
-        public ButtonSpec(String buttonLabel, KeyStroke onPressedKeyStroke, EventHandler onPressed) {
+        public ButtonSpec(String buttonLabel, KeyStroke onPressedKeyStroke, DialogKeyPressed onPressed, boolean removeOnPressed) {
             super();
             this.buttonLabel = buttonLabel;
             this.onPressedKeyStroke = onPressedKeyStroke;
             this.onPressed = onPressed;
+            this.removeOnPressed = removeOnPressed;
+        }
+        
+        public ButtonSpec(String buttonLabel, KeyStroke onPressedKeyStroke, EventHandler onPressed, boolean removeOnPressed) {
+            super();
+            this.buttonLabel = buttonLabel;
+            this.onPressedKeyStroke = onPressedKeyStroke;
+            this.onPressed = (onCloseRequest, te) -> onPressed.handle(te);
+            this.removeOnPressed = removeOnPressed;
+        }
+        public ButtonSpec(String buttonLabel, KeyStroke onPressedKeyStroke, EventHandler onPressed) {
+            this(buttonLabel, onPressedKeyStroke, onPressed, true);
         }
     }
     

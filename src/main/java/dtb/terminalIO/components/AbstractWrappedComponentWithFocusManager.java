@@ -9,11 +9,12 @@ import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
+import dtb.terminalIO.events.focus.FocusManagerProvider;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.Focusables;
 
 public  abstract class AbstractWrappedComponentWithFocusManager<T extends Component<?>> 
-     extends AbstractWrappedComponentAndFocusable<T> implements FocusManager, Focusables {
+     extends AbstractWrappedComponentAndFocusable<T> implements FocusManager, Focusables, FocusManagerProvider {
 
     private FocusManager focusManager;
     private Function<EventBus, FocusManager> focusManagerBuilder;
@@ -40,7 +41,8 @@ public  abstract class AbstractWrappedComponentWithFocusManager<T extends Compon
 
     public void setFocusManager(FocusManager focusManager) {
         this.focusManager = focusManager;
-        DefaultFocusManager.setDefaultNameFromParentObject(focusManager, this);
+        DefaultFocusManager.setDefaultNameAndActualFromParentObject(focusManager, this);
+        //DefaultFocusManager.setDefaultNameFromParentObject(focusManager, this);
     }
 
     public void setCustomExtendedEventHandler(ConditionalEventHandler customExtendedEventHandler) {
@@ -57,7 +59,8 @@ public  abstract class AbstractWrappedComponentWithFocusManager<T extends Compon
         return this.focusManager;
     }
 
-    private FocusManager getFocusManager() {
+    @Override
+    public FocusManager getFocusManager() {
         if (this.focusManager == null) {
             throw new NullPointerException("getFocusManager(): focusManager is null - cannot get access to a focusManager for "+HasName.UTIL.getName(this));
         }
@@ -71,6 +74,9 @@ public  abstract class AbstractWrappedComponentWithFocusManager<T extends Compon
             return;
         }
         getFocusManager(eventBus).setFocus(focus, eventBus);
+        if (focus) {
+            Component.UTIL.bringToFront(this);
+         }
     }
 
     @Override
@@ -89,6 +95,7 @@ public  abstract class AbstractWrappedComponentWithFocusManager<T extends Compon
             return;
         }
         getFocusManager(eventBus).focus(oldFocusable, eventBus);
+        Component.UTIL.bringToFront(this);
     }
 
     @Override

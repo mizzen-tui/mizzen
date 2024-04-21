@@ -92,6 +92,19 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>
     }
 
     @Override
+    public void markAsDirty() {
+        if (isDirty()) {
+            return;
+        }
+        super.markAsDirty();
+        this.border.markAsDirty();
+        if (this.titleComponent != null) {
+            this.titleComponent.markAsDirty();
+        }
+    }
+
+
+    @Override
     public void childResized(Component<?> child) {
         this.markAsDirty();
         if (this.getParentContainer() != null) {

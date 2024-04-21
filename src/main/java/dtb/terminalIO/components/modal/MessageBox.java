@@ -8,6 +8,7 @@ import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.modal.DialogComponent.ButtonSpec;
+import dtb.terminalIO.components.modal.DialogComponent.DialogKeyPressed;
 import dtb.terminalIO.components.modal.DialogComponent.IconStyle;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
@@ -21,6 +22,7 @@ import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
+import dtb.terminalIO.util.StringUtils;
 
 public class MessageBox {
     
@@ -164,12 +166,16 @@ public class MessageBox {
         dialog.add(messageTextPosition, mainPanel);
 
         HorizontalPanel buttons = new HorizontalPanel();
+        TextComponent buttonLeftPadding = new TextComponent(dialog.getColor(), "");
         buttons.setFillOnClear(true);
         buttons.setEmptyColor(dialog.getColor());
 
         buttons.setColor(dialog.getColor());
         buttons.setHorizontalSpacer(3);
         buttons.setName("dialog.buttons");
+        
+
+        buttons.add(buttonLeftPadding);
 
         Button[] buttonsForButtonBar = new Button[buttonSpec.length];
 
@@ -182,13 +188,12 @@ public class MessageBox {
         }
 
         int buttonPositionCol = (dialog.getWidth() - buttons.getWidth()) / 2 ;
-        if (buttonPositionCol < 0) {
-            buttonPositionCol = messageTextPosition.getCol();
+        if (buttonPositionCol >3) {
+        	buttonLeftPadding.setTextAndResize(StringUtils.repeat(" ", buttonPositionCol-3));
+            //buttonPositionCol = messageTextPosition.getCol();
         }
 
-        Position positionOfButtons = messageTextPosition.offsetAdd(new Position.Simple(mainPanel.getHeight()+2,buttonPositionCol));
-
-        dialog.add( positionOfButtons, buttons );
+        mainPanel.add(buttons);
 
         Position positionOfDialog = Position.ZERO;
 
@@ -209,14 +214,19 @@ public class MessageBox {
             dialog.setFocus(false, te.getEventBus());
             te.getEventBus().removeEventHandler(modalDialogEvents);
             te.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(dialog)  );
+            if (onCloseHandler != null) {
+            	onCloseHandler.handle(te);
+            }
+
         };
 
         for (int i=0; i< buttonsForButtonBar.length; i++) {
-            EventHandler onPressedButtonEventHandler = buttonSpec[i].onPressed;
+        	DialogKeyPressed buttonKeyPressed = buttonSpec[i].onPressed;
+        	boolean removeOnPressed = buttonSpec[i].removeOnPressed;
+            EventHandler onPressedButtonEventHandler = (te)-> buttonKeyPressed.handleKeyPressed(removeDialog,te);
             buttonsForButtonBar[i].onChange((te)->{
-                removeDialog.handle(te);
-                if (onCloseHandler != null) {
-                    onCloseHandler.handle(te);
+                if (removeOnPressed) {
+                    removeDialog.handle(te);
                 }
                 if (onPressedButtonEventHandler != null) {
                     te.getEventBus().asynch(onPressedButtonEventHandler);
@@ -230,10 +240,13 @@ public class MessageBox {
 
         modalDialogEvents.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, noActionHandler ) );
 
+        dialog.rebuildFocusManager();
+
         modalDialogEvents.appendEventHandler(dialog);
 //        if (customComponent != null && customComponent instanceof ConditionalEventHandler) {
 //            modalDialogEvents.appendEventHandler((ConditionalEventHandler)customComponent);
 //        }
+        
 
         eventBus.raiseEvent( new RequestUpdateCanvasEvent(dialog));
 

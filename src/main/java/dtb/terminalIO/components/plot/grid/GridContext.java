@@ -17,7 +17,7 @@ import dtb.terminalIO.geom.position.Position;
  * <p/>
  * 
  * We do this extra layer of abstraction so that when we plot shapes using PlotShapeController objects,
- * these controllers do not have to know exactly the type of grid implementation (Braille/Blocks/Simple)is being invoked.
+ * these controllers do not have to know exactly the type of grid implementation (Braille/Blocks/Simple)that is being invoked.
  * 
  * <p/>
  * 

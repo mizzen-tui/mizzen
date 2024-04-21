@@ -366,7 +366,7 @@ public class StringUtils {
 
         int len = sentence.length();
 
-        if (curIndex <= 0) {  // already at end of sentence
+        if (curIndex <= 0) {  // already at start of sentence
             return -1;
         }
 

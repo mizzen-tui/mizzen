@@ -1,14 +1,13 @@
 package dtb.terminalIO.components.plot.image;
 
 import dtb.terminalIO.components.AbstractWrappedComponentWithFocusManager;
-import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.HasTitleAndBorder;
-import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.ImageRenderRequest;
 import dtb.terminalIO.components.plot.image.animate.ImageAnimatorComponent;
 import dtb.terminalIO.components.plot.image.animate.ImageIterator;
+import dtb.terminalIO.components.plot.image.animate.ImageIterator.CombinedImageIterator;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.EventBus;
@@ -26,28 +25,28 @@ public class MovingPicturesViewer extends AbstractWrappedComponentWithFocusManag
     Composite imageViewer;
 
     public MovingPicturesViewer(Color color, ImageIterator imageIterator, ImageRenderRequest rqst) {
-        
+
         super(color, new Composite(color));
-        
+
         imageViewer = getWrappedComponent();
-        
+
         //imageViewer = new BorderedComponent(new TextComponent("Placeholder"));
-        
+
         chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
         setCustomExtendedEventHandler( chainedEventHandler.asConditionalEventHandler()  );
-        
+
         Component<?> popupImageControlsButton = ImageManipulationControls.popupOnClick("Options", rqst, imageViewer, chainedEventHandler, null);
 
-        animatorComponent = new ImageAnimatorComponent(color, rqst, imageIterator, rqst.getDesiredImgSizeInCharacters());
+        animatorComponent = new ImageAnimatorComponent(color, rqst,  CombinedImageIterator.wrapWithCombinedImageIterator(imageIterator), rqst.getDesiredImgSizeInCharacters());
 
         //imageViewer.setComponent(animatorComponent);
 
         imageViewer.add(animatorComponent);
         Position bPos = PositionRelativeFactory.fromAlign(VAlign.TOP, Align.RIGHT, imageViewer, popupImageControlsButton);
         imageViewer.add(bPos,  popupImageControlsButton);
-        
+
         registerAllFocusables();
-        
+
     }
     
     public MovingPicturesViewer start(EventBus eventBus, int interval) {

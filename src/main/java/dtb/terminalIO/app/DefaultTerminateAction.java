@@ -33,6 +33,7 @@ public class DefaultTerminateAction implements Consumer<TUIApp> {
     public static void resetTerminalForExiting(TUIApp tApp, Renderer r) {
         tApp.getEventBus().stopConsuming();
         tApp.getScreen().add( ControlCode.DISABLE_MOUSE_TRACKING );
+        tApp.getScreen().add( ControlCode.SET_BTN_MOTION_TRACKING_DISABLE );
         tApp.getScreen().add(ControlCode.SHOW_CURSOR);
         if (r != null) {
             tApp.getScreen().add(r);

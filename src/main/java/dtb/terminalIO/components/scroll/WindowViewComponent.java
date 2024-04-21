@@ -21,7 +21,6 @@ import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegmentsView;
 import dtb.terminalIO.traverse.FindPathToTarget;
 import dtb.terminalIO.util.ElapsedTime;
-import dtb.terminalIO.util.Logging;
 
 /**
  * Used exclusively by the ScrollableComponent.  It is the View into the scrollable content.
@@ -161,11 +160,13 @@ public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
 
         Component<?> viewSourceComponent = (Component<?>) viewSource;
 
-        offset = offset.offsetAdd( this.getPositionRelativeToParent(viewSourceComponent).negate());
+        // adjust offset relative to viewSource
+        Position adjustedOffset = offset.offsetAdd( this.getPositionRelativeToParent(viewSourceComponent).negate());
 
-        if (viewSourceComponent.containsPosition(offset)) {
+        if (viewSourceComponent.containsPosition(adjustedOffset)) {
+            // adjusted offset is inside (contained by) viewSourceComponent
             if (viewSourceComponent instanceof GetComponentAtOffset) {
-                return ((GetComponentAtOffset)viewSourceComponent).getComponentAtOffset(offset);
+                return ((GetComponentAtOffset)viewSourceComponent).getComponentAtOffset(adjustedOffset);
             }
             return viewSourceComponent;
         }
@@ -176,6 +177,7 @@ public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
 
         public ScrollToViewHandler(Supplier<WindowViewComponent> viewerProvider, CanScrollToView scrollable) {
             super((te)-> {
+                            // CAN-HANDLE-PREDICATE 
                             if (viewerProvider.get() == null) {
                                return false;
                             }
@@ -186,6 +188,7 @@ public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
                             return findPathToComponent;
                          }, 
                   (te)-> {
+                            // THE-HANDLER
                             Component<?> componentToScrollTo = ((RequestScrollToView)te).getScrollToComponent();
                             Position offset = Component.UTIL.getOffsetFromComponentContainer(componentToScrollTo, viewerProvider.get());
                             Position offsetIntoSource = viewerProvider.get().getOffsetIntoSource();

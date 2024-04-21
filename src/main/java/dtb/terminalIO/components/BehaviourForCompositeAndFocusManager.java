@@ -13,15 +13,18 @@ import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.geom.position.Position;
 
 /**
- * The encapsulate behaviour when a focus manager and a composite are working together.
+ * This encapsulates the behaviour when a focus manager and a composite are working together.
  * 
  * <p/>
  * 
- * When Component is added to a Composite, this object will also add the child's focusables to the focusmanager
+ * When a child component is added to a Composite, this object will also add the child component's focusables to the focusmanager
  * 
  * <p/>
  * 
- * When a component is removed from the composite, this object will remove the child's focusables from the focusmanager.
+ * When a child component is removed from the composite, this object will also remove the child component's focusables from the focusmanager.
+ * <p/>
+ * 
+ * In this way, we keep the composite and the focusmanager in sync
  * 
  * @author dbalme
  *

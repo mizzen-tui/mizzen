@@ -133,6 +133,7 @@ public abstract class ControlCode implements Renderer, HasName<ControlCode> {
     public static final ControlCode SET_VT200_MOUSE             = new BaseTextControlCode(escape_CHR + "[?1000h").setName("SET_VT200_MOUSE");
     public static final ControlCode SET_VT200_HIGHLIGHT_MOUSE   = new BaseTextControlCode(escape_CHR + "[?1001h").setName("SET_VT200_HIGHLIGHT_MOUSE");
     public static final ControlCode SET_BTN_MOTION_TRACKING     = new BaseTextControlCode(escape_CHR + "[?1002h").setName("SET_BTN_MOTION_TRACKING");
+    public static final ControlCode SET_BTN_MOTION_TRACKING_DISABLE     = new BaseTextControlCode(escape_CHR + "[?1002l").setName("SET_BTN_MOTION_TRACKING_DISABLE");
     public static final ControlCode SET_BTN_EVENT_MOUSE         = new BaseTextControlCode(escape_CHR + "[?10021h").setName("SET_BTN_EVENT_MOUSE");
     public static final ControlCode SET_ANY_EVENT_MOUSE         = new BaseTextControlCode(escape_CHR + "[?10031h").setName("SET_ANY_EVENT_MOUSE");
 

@@ -4,6 +4,7 @@ import dtb.terminalIO.components.AbstractComponentWrappper;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory;
+import dtb.terminalIO.components.plot.image.ImageViewerFactory.IMAGE_RENDER_TYPE;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.ImageRenderRequest;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.events.EventBus;
@@ -75,7 +76,13 @@ public class ImageAnimatorComponent extends AbstractComponentWrappper<Component<
         }
 
         if (this.animation != null && this.animation instanceof CanResize) {
-            ((CanResize)this.animation).resize(d);
+            Dimension imgSize = new Dimension.Simple(d);
+            if (imageRenderRequest.getImageRenderType() == IMAGE_RENDER_TYPE.BLOCK) {
+                imgSize = new Dimension.Simple(d.getHeight()*2, d.getWidth());
+            } else if (imageRenderRequest.getImageRenderType() == IMAGE_RENDER_TYPE.BRAILLE) {
+                imgSize = new Dimension.Simple(d.getHeight()*4, d.getWidth()*2);
+            }
+            ((CanResize)this.animation).resize(imgSize);
         }
         imageRenderRequest.setDesiredImgSizeInCharacters(d);
 

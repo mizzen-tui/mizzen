@@ -1,7 +1,6 @@
 package dtb.terminalIO.components;
 
 import dtb.terminalIO.components.input.DefaultFocusableBehaviour;
-import dtb.terminalIO.components.plot.grid.BringToFrontOnDragStart;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.focus.Focusable;

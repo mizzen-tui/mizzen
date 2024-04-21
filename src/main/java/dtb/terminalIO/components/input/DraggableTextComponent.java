@@ -16,20 +16,32 @@ public class DraggableTextComponent extends TextComponent implements Focusable ,
     Focusable meAsFocusable;
     String baseText;
     String draggingText;
+    Color nonDraggingColor;
     Color draggingColor;
     Draggable draggableBehaviour;
     Boolean hasColorInText;
+    boolean dragging;
+
+    public DraggableTextComponent(Color color, String text, Color draggingColor, String draggingText, Draggable draggableBehaviour) {
+        super(color, text);
+        this.nonDraggingColor = color;
+        this.baseText = text;
+        this.draggingText = draggingText != null ? draggingText : this.baseText;
+        this.draggingColor = draggingColor != null ? draggingColor : color;
+        this.draggableBehaviour = draggableBehaviour;
+    }
 
     public DraggableTextComponent(Color color, String text, Color draggingColor, String draggingText, Component<?> componentToDrag) {
         super(color, text);
+        this.nonDraggingColor = color;
         this.baseText = text;
-        this.draggingText = draggingText;
-        this.draggingColor = draggingColor;
-        draggableBehaviour = new DragAndMoveComponentBehaviour(componentToDrag != null? componentToDrag: this);
+        this.draggingText = draggingText != null ? draggingText : this.baseText;
+        this.draggingColor = draggingColor != null ? draggingColor : color;
+        this.draggableBehaviour = new DragAndMoveComponentBehaviour(componentToDrag != null? componentToDrag: this);
     }
 
     public DraggableTextComponent(Color color, String text, Color draggingColor, String draggingText) {
-        this(color, text, null, null, null);
+        this(color, text, null, null, (Component<?>)null);
     }
 
     public DraggableTextComponent(Color color, String text) {
@@ -38,6 +50,29 @@ public class DraggableTextComponent extends TextComponent implements Focusable ,
 
     public DraggableTextComponent(Color color, String text, Component<?> componentToDrag) {
         this(color, text, null, null, componentToDrag);
+    }
+
+    public Draggable getDraggableBehaviour() {
+        return draggableBehaviour;
+    }
+
+    public void setDraggableBehaviour(Draggable draggableBehaviour) {
+        this.draggableBehaviour = draggableBehaviour;
+    }
+
+    public DraggableTextComponent freezeColumn() {
+        ((DragAndMoveComponentBehaviour)this.draggableBehaviour).freezeColumn();
+        return this;
+    }
+
+    public DraggableTextComponent freezeRow() {
+        ((DragAndMoveComponentBehaviour)this.draggableBehaviour).freezeRow();
+        return this;
+    }
+
+    public DraggableTextComponent unFreeze() {
+        ((DragAndMoveComponentBehaviour)this.draggableBehaviour).unFreeze();
+        return this;
     }
 
 
@@ -72,20 +107,37 @@ public class DraggableTextComponent extends TextComponent implements Focusable ,
     }
 
     @Override
-    public boolean onDragStart(ApplicationMouseEvent appMouseEvent) {
-        return draggableBehaviour.onDragStart(appMouseEvent);
+    public boolean onDragStart(ApplicationMouseEvent appMouseEventRelativeToCanvas) {
+        this.dragging = draggableBehaviour.onDragStart(appMouseEventRelativeToCanvas);
+        setDisplayAttributesOnDragState();
+        return this.dragging;
     }
 
     @Override
-    public boolean onDrag(ApplicationMouseEvent appMouseEvent) {
-        return draggableBehaviour.onDrag(appMouseEvent);
+    public boolean onDrag(ApplicationMouseEvent appMouseEventRelativeToCanvas) {
+        this.dragging = draggableBehaviour.onDrag(appMouseEventRelativeToCanvas);
+        setDisplayAttributesOnDragState();
+        return this.dragging;
     }
 
     @Override
-    public boolean onDragStop(ApplicationMouseEvent appMouseEvent) {
-        return draggableBehaviour.onDragStop(appMouseEvent);
+    public boolean onDragStop(ApplicationMouseEvent appMouseEventRelativeToCanvas) {
+        this.dragging = false;
+        draggableBehaviour.onDragStop(appMouseEventRelativeToCanvas);
+        setDisplayAttributesOnDragState();
+        return true;
     }
 
+    private void setDisplayAttributesOnDragState() {
+        if (dragging) {
+            this.setColor(draggingColor);
+            this.setText(draggingText);
+        } else {
+            this.setColor(nonDraggingColor);
+            this.setText(baseText);
+        }
+    }
+    
     @Override
     public boolean hasFocus() {
         return asFocusable().hasFocus();
@@ -95,7 +147,7 @@ public class DraggableTextComponent extends TextComponent implements Focusable ,
     public void setFocus(boolean focus, EventBus eventBus) {
         asFocusable().setFocus(focus, eventBus);
     }
-    
+
     @Override
     public FocusManager getParentFocusManager() {
         return asFocusable().getParentFocusManager();

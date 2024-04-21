@@ -219,7 +219,7 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
         Component<?> theChild = (viewer != null) ? viewer : this.child;
 
         if (child == theChild) {
-            return this.childPosition.offsetAdd(new Position.Simple(child));
+            return this.childPosition ; //.offsetAdd(new Position.Simple(child));
         }
 
         if (child == this.resizeAnchor) {
@@ -229,7 +229,7 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
         if (child == this.border) {
             return this.border.getPostion_TopLeft();
         }
-        
+
         if (this.hScrollBar != null && child == this.hScrollBar) {
             return this.hScrollBar.getPostion_TopLeft();
         }

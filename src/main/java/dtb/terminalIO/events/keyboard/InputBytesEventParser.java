@@ -27,7 +27,7 @@ import dtb.terminalIO.geom.position.Position;
  * <p/>
  * 
  * Its job is to process a byte[] buffer of characters (presumably read in from
- * stdin) and converts this into (usually) a KeyStroke object which then gets enqueued
+ * stdin) and converts this into (usually [but not restricted to..]) a KeyStroke object which then gets enqueued
  * into an EventBus to be later handled by the application.
  * 
  * <p/>
@@ -75,7 +75,7 @@ public class InputBytesEventParser {
             for (int i = 0; i < readIn; i++) {
                 int theCHAR = buffer[i] & 0xff;
                 if (theCHAR>32 && theCHAR<=127) {
-                    sj.add(theCHAR+"'" +   ((char)theCHAR) + "'");
+                    sj.add(/*theCHAR+*/"'" +   ((char)theCHAR) + "'");
                 } else {
                     sj.add(((int) buffer[i] & 0xff) + "");
                 }

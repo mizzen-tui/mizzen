@@ -7,13 +7,21 @@ import dtb.terminalIO.components.ComponentWithFocusManager;
 import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent.SearchableView;
 import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.events.ConditionalEventHandler;
+import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.focus.RequestFocusEvent;
+import dtb.terminalIO.events.focus.ToFocusable;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
+import dtb.terminalIO.util.Logging;
 
-public class ScrollableComponent2  extends ComponentWithFocusManager<ScrollableComponent2> implements CanScrollToView{
+public class ScrollableComponent2  extends ComponentWithFocusManager<ScrollableComponent2> implements CanScrollToView, ViewPortNavigable, HasViewPortWindow {
 
     WindowViewComponent viewer;
     BorderedComponent borderedComponent;
@@ -23,12 +31,16 @@ public class ScrollableComponent2  extends ComponentWithFocusManager<ScrollableC
     Component<?> componentBeingViewed;
     ButtonBar footerControls; 
     private CanResize onResizeService = CanResize.NOOP;
+    
+    private ViewPortNavigable navigator;
 
 
     public ScrollableComponent2(Color color, Dimension d, Component<?> componentBeingViewed)  {
         super(color);
         
     //    this.setBorder(true);
+        
+        navigator = new DefaultViewPortNavigableImpl();
         
         this.componentBeingViewed = componentBeingViewed;
 
@@ -77,8 +89,50 @@ public class ScrollableComponent2  extends ComponentWithFocusManager<ScrollableC
 
         this.addComponentAndItsFocusables(hScrollBar);
         this.addComponentAndItsFocusables(vScrollBar);
-        
+
         this.appendEventHandler(new  WindowViewComponent.ScrollToViewHandler(()->this.viewer, this));
+
+        this.appendEventHandler(new ConditionalEventHandler() {
+
+            @Override
+            public void handle(TerminalEvent<?> te) {
+                // TODO Auto-generated method stub
+                if (footerControls.hasFocus()) {
+                    Logging.info("FOOTER focus evt = " + te);
+                    Focusable focusableChild = ToFocusable.UTIL.toFocusable(ScrollableComponent2.this.componentBeingViewed);
+                    if (focusableChild == null) {
+                        return;
+                    }
+                    if (focusableChild.canHandle(te)!=null) {
+                        EventBus evtBus = te.getEventBus();
+                        focusableChild.handle(te.then(()->{
+                            evtBus.raiseEvent( new RequestFocusEvent(focusableChild) );
+                        }));
+                    } 
+                }
+            }
+
+            @Override
+            public EventHandler canHandle(TerminalEvent<?> te) {
+                if (footerControls.hasFocus() && footerControls.canHandle(te)==null ) {
+                    // footer cannot handle it
+                    if ( ToFocusable.UTIL.isFocusable(ScrollableComponent2.this.componentBeingViewed) ) {
+                        Focusable focusableChild = ToFocusable.UTIL.toFocusable(ScrollableComponent2.this.componentBeingViewed);
+                        if (focusableChild != null) {
+                            if (focusableChild.canHandle(te)!=null) {
+                                return this;
+                            } 
+                        }
+                    }
+                }
+                return null;
+            }});
+
+        if (this.componentBeingViewed instanceof HasViewPortWindow.OnChange) {
+            this.onViewPortChanged((te)-> {
+                ((HasViewPortWindow.OnChange)this.componentBeingViewed).onViewPortWindowChange(this, te);
+            });
+        }
 
     }
 
@@ -102,6 +156,13 @@ public class ScrollableComponent2  extends ComponentWithFocusManager<ScrollableC
         viewer.setViewSource(componentBeingViewed);
         vScrollBar.setViewedSize(new Rectangle.Delegate(componentBeingViewed), new Rectangle.Delegate(viewer));
         hScrollBar.setViewedSize(new Rectangle.Delegate(componentBeingViewed), new Rectangle.Delegate(viewer));
+        if (componentBeingViewed instanceof HasViewPortWindow.OnChange) {
+            this.onViewPortChanged((te)->{
+                ((HasViewPortWindow.OnChange)this.componentBeingViewed).onViewPortWindowChange(this, te);
+            });
+        } else {
+            this.onViewPortChanged(null);
+        }
     }
     
     
@@ -127,6 +188,12 @@ public class ScrollableComponent2  extends ComponentWithFocusManager<ScrollableC
         return viewer.getOffsetIntoSource();
     }
     
+    public Rectangle getViewPortAsRectangle() {
+        Position offset = this.getOffsetIntoSource();
+        return new Rectangle.Simple(offset.getRow(), offset.getCol(), viewer.getHeight(), viewer.getWidth());
+    }
+
+
     public boolean scrollToView(Rectangle targetToView) {
 
         Position offset = viewer.calculateScrollToViewOffset(targetToView);
@@ -210,17 +277,33 @@ public class ScrollableComponent2  extends ComponentWithFocusManager<ScrollableC
             return ;
         }
         footerControls = new ButtonBar(borderColor, HasName.UTIL.getName(this)+".buttonBar");
-        
-        footerControls.addButton("^",    Keys.UP_KEYSTROKE,    (te) -> ScrollableComponent2.this.up(1));
-        footerControls.addButton("v",    Keys.DOWN_KEYSTROKE,  (te) -> ScrollableComponent2.this.down(1));
-        footerControls.addButton("PgUp", Keys.PGUP_KEYSTROKE,  (te) -> ScrollableComponent2.this.pageup());
-        footerControls.addButton("PgDn", Keys.PGDN_KEYSTROKE,  (te) -> ScrollableComponent2.this.pagedown());
-        footerControls.addButton("«",    Keys.LEFT_KEYSTROKE,  (te) -> ScrollableComponent2.this.left(1));
-        footerControls.addButton("»",    Keys.RIGHT_KEYSTROKE, (te) -> ScrollableComponent2.this.right(1));
+        footerControls.addButton("^",    Keys.UP_KEYSTROKE,    (te) -> emitViewOffsetChangedOnOperation(te,()-> ScrollableComponent2.this.up(1)));
+        footerControls.addButton("v",    Keys.DOWN_KEYSTROKE,  (te) -> emitViewOffsetChangedOnOperation(te,()-> ScrollableComponent2.this.down(1)));
+        footerControls.addButton("PgUp", Keys.PGUP_KEYSTROKE,  (te) -> emitViewOffsetChangedOnOperation(te,()-> ScrollableComponent2.this.pageup()));
+        footerControls.addButton("PgDn", Keys.PGDN_KEYSTROKE,  (te) -> emitViewOffsetChangedOnOperation(te,()-> ScrollableComponent2.this.pagedown()));
+        footerControls.addButton("«",    Keys.LEFT_KEYSTROKE,  (te) -> emitViewOffsetChangedOnOperation(te,()-> ScrollableComponent2.this.left(1)));
+        footerControls.addButton("»",    Keys.RIGHT_KEYSTROKE, (te) -> emitViewOffsetChangedOnOperation(te,()-> ScrollableComponent2.this.right(1)));
 
         this.borderedComponent.setFooter(footerControls);
         this.addComponentFocusablesToFocusManager(borderedComponent);
-        
+    }
+    
+    private void emitViewOffsetChangedOnOperation(TerminalEvent<?> event, Runnable operation) {
+        Position prevOffset = this.getOffsetIntoSource();
+        operation.run();
+        Position currentOffset = this.getOffsetIntoSource();
+        if (currentOffset == prevOffset || currentOffset.isSameLocation(prevOffset)) {
+            return;
+        }
+        event.getEventBus().raiseEvent( new HasViewPortWindow.ViewPortWindowChangedEvent(this) );
+    }
+
+    OnViewPortWindowChangedEventHandler onViewPortWindowChangedEventHandler;
+    
+    public void onViewPortChanged(EventHandler consumeChange) {
+
+        onViewPortWindowChangedEventHandler = HasViewPortWindow.UTIL.bindConsumerAsOnViewPortWindowChangedEventHandler(this, onViewPortWindowChangedEventHandler, this.getEventHandlerContainer(), consumeChange);
+
     }
     
     public void addFooterComponent(Component<?> componentForButtonBar) {
@@ -228,32 +311,30 @@ public class ScrollableComponent2  extends ComponentWithFocusManager<ScrollableC
         if (footerControls == null) {
             throw new IllegalStateException("FooterControls object is null! Cannot add component control yet!");
         }
-
         footerControls.addComponent(componentForButtonBar);
-
     }
 
     public void up(int iLines) {
-        this.setViewOffset(this.getOffsetIntoSource().getRow() - iLines, this.getOffsetIntoSource().getCol());
+        this.navigator.up(iLines);
     }
 
     public void down(int iLines) {
-        this.setViewOffset(this.getOffsetIntoSource().getRow() + iLines, this.getOffsetIntoSource().getCol());
+        this.navigator.down(iLines);
     }
 
     public void left(int iCols) {
-        this.setViewOffset(this.getOffsetIntoSource().getRow(), this.getOffsetIntoSource().getCol() - iCols);
+        this.navigator.left(iCols);
     }
 
     public void right(int iCols) {
-        this.setViewOffset(this.getOffsetIntoSource().getRow(), this.getOffsetIntoSource().getCol() + iCols);
+        this.navigator.right(iCols);
     }
 
     public void pageup() {
         int pageHeight = viewer.getHeight();
         int delta = pageHeight;
-        if (this.getOffsetIntoSource().getRow() < delta) {
-            delta = this.getOffsetIntoSource().getRow();
+        if (ScrollableComponent2.this.getOffsetIntoSource().getRow() < delta) {
+            delta = ScrollableComponent2.this.getOffsetIntoSource().getRow();
         }
         up(delta);
     }
@@ -261,10 +342,30 @@ public class ScrollableComponent2  extends ComponentWithFocusManager<ScrollableC
     public void pagedown() {
         int pageHeight = viewer.getHeight();
         int delta = pageHeight;
-        if (this.getOffsetIntoSource().getRow() + delta > componentBeingViewed.getBottomMostRow() + 1) {
-            delta = (componentBeingViewed.getBottomMostRow() + 1) - this.getOffsetIntoSource().getRow();
+        if (ScrollableComponent2.this.getOffsetIntoSource().getRow() + delta > componentBeingViewed.getBottomMostRow() + 1) {
+            delta = (componentBeingViewed.getBottomMostRow() + 1) - ScrollableComponent2.this.getOffsetIntoSource().getRow();
         }
         down(delta);
+    }
+
+    class DefaultViewPortNavigableImpl implements ViewPortNavigable {
+
+        public void up(int iLines) {
+            ScrollableComponent2.this.setViewOffset(ScrollableComponent2.this.getOffsetIntoSource().getRow() - iLines, ScrollableComponent2.this.getOffsetIntoSource().getCol());
+        }
+
+        public void down(int iLines) {
+            ScrollableComponent2.this.setViewOffset(ScrollableComponent2.this.getOffsetIntoSource().getRow() + iLines, ScrollableComponent2.this.getOffsetIntoSource().getCol());
+        }
+
+        public void left(int iCols) {
+            ScrollableComponent2.this.setViewOffset(ScrollableComponent2.this.getOffsetIntoSource().getRow(), ScrollableComponent2.this.getOffsetIntoSource().getCol() - iCols);
+        }
+
+        public void right(int iCols) {
+            ScrollableComponent2.this.setViewOffset(ScrollableComponent2.this.getOffsetIntoSource().getRow(), ScrollableComponent2.this.getOffsetIntoSource().getCol() + iCols);
+        }
+
     }
     
     public SearchableView asSearchableView() {
@@ -320,7 +421,6 @@ public class ScrollableComponent2  extends ComponentWithFocusManager<ScrollableC
                 ScrollableComponent2.this.addFooterComponent(component);
                 // call resize to adjust scrollbars
                 ScrollableComponent2.this.resize((Dimension)ScrollableComponent2.this);
-                
             }
 
             @Override

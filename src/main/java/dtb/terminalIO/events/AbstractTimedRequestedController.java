@@ -2,7 +2,7 @@ package dtb.terminalIO.events;
 
 import dtb.terminalIO.events.OnIdleEventEventHandler.OneTimeAfterInterval;
 
-public abstract class AbstractTimedRequestedController {
+public class AbstractTimedRequestedController {
 
     private static final int DEFAULT_timerDelayMillis = 250;
 
@@ -22,7 +22,9 @@ public abstract class AbstractTimedRequestedController {
         this.onRequestCommand = (te)-> onChangeAction.run();
     }
 
-    abstract protected boolean isRequestDifferentFromPrevious();
+    protected boolean isRequestDifferentFromPrevious() {
+        return true;
+    }
 
     public int getTimerDelayMillis() {
         return timerDelayMillis;

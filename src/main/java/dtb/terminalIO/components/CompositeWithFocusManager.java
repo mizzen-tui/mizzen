@@ -38,6 +38,15 @@ public class CompositeWithFocusManager  extends Composite implements FocusManage
         getFocusManager();
     }
     
+    public CompositeWithFocusManager setName(String name) {
+        super.setName(name);
+        if ( this.focusManager != null ) {
+            this.focusManager.setName(name+"-focusManager");
+        }
+        return this;
+    }
+
+
     public void rebuildFocusManager() {
         if (focusManager == null) {
             getFocusManager(); // this will build it

@@ -1,5 +1,6 @@
 package dtb.terminalIO.components;
 
+import dtb.terminalIO.components.frameset.FrameSet;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.geom.Dimension;
 import junit.framework.TestCase;

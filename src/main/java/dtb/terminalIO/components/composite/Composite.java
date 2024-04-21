@@ -120,9 +120,9 @@ public class Composite extends AbstractComponent<Composite>
                 rectangleForLayout = this;
                 return rectangleForLayout;
             }
-            
+
             rectangleForLayout = new Rectangle.AbstractDelegate() {
-                
+
                 public Rectangle getRectangle() {
                     return component.getPreferredRectangleForLayout();
                 }
@@ -136,7 +136,7 @@ public class Composite extends AbstractComponent<Composite>
                     return super.getRow() + (offset!= null ? offset.getRow() : 0);
                 }
             };
-            
+
             return this;
         }
         
@@ -145,7 +145,7 @@ public class Composite extends AbstractComponent<Composite>
             this.component = component;
             calcBounds();
         }
-        
+
         protected Component<?> getComponent() {
             return this.component;
         }
@@ -507,6 +507,13 @@ public class Composite extends AbstractComponent<Composite>
         this.border.setTitle(tColor, title);
     }
 
+    public Composite markBorderAsDirty() {
+        if (this.border != null) {
+            this.border.markAsDirty();
+        }
+        return this;
+    }
+    
     public Composite setBorder(boolean hasBorder) {
 
         Rectangle prevBounds = bounds;
@@ -605,9 +612,9 @@ public class Composite extends AbstractComponent<Composite>
 
     public Rectangle childAsRectangleOffset(Component<?> component) {
         if (component == null) {
-            throw new NullPointerException("Component isChildVisible failure: Null component!");
+            throw new NullPointerException("Component childAsRectangleOffset failure: Null component!");
         }
-        ComponentWithOffset child = findChildOrFail(component,"isChildVisible");
+        ComponentWithOffset child = findChildOrFail(component,"childAsRectangleOffset");
         
         return child;
     }
@@ -861,6 +868,10 @@ public class Composite extends AbstractComponent<Composite>
         return this;
     }
 
+    public Composite moveChildTo(int row, int col, Component<?> component) {
+        return moveChildTo(new Position.Simple(row, col), component);
+    }
+
     public Composite moveChildTo(Position offset, Component<?> component) {
         ComponentWithOffset found = findChildOrFail(component, "moveChildTo");
         found.offset = offset;
@@ -885,6 +896,7 @@ public class Composite extends AbstractComponent<Composite>
         return true;
     }
     
+    @Override
     public boolean canMoveChild(Component<?> child) {
         if (findChild(child) != null) {
             return true;
@@ -1076,7 +1088,6 @@ public class Composite extends AbstractComponent<Composite>
         if ( ! this.containsPosition(offset)) {
             return null;
         }
-        
 
         if (this.hasBorder()) {
             offset = offset.offsetAdd(-1, -1);
@@ -1159,10 +1170,10 @@ public class Composite extends AbstractComponent<Composite>
 
         static List<ComponentWithOffset> dropShadowRectangles(Rectangle child) {
             List<ComponentWithOffset> shadows = new ArrayList<ComponentWithOffset>(2);
-            
+
             Rectangle bottom = new Rectangle.Simple(child.getBottomMostRow()+1, child.getCol()+1, 1, child.getWidth());
             Rectangle right  = new Rectangle.Simple(child.getRow()+1, child.getRightMostCol()+1, child.getHeight(), 1);
-            
+
             shadows.add( new ComponentWithOffset(Position.ZERO, new MultiCharComponent(shadowColor, shadowChar, bottom)));
             shadows.add( new ComponentWithOffset(Position.ZERO, new MultiCharComponent(shadowColor, shadowChar, right)));
             return shadows;
@@ -1195,7 +1206,6 @@ public class Composite extends AbstractComponent<Composite>
             if (reverseZOrderChildren.size()==0) {
                 return ;
             }
-            
 
             Component.UTIL.assertSegmentsIntegrity(parent.bounds, destination);
 
@@ -1203,7 +1213,7 @@ public class Composite extends AbstractComponent<Composite>
             Collection<RectangleAndSubRectangles> recs = Rectangle.UTIL.differences(reverseZOrderChildren);
 
             int count = recs.stream().mapToInt(r -> 1 + (r.getSubs()==null?0 : r.getSubs().size())).sum();
-            
+
       //      Logging.info(String.format("Parts %-20s : %-20s  #squares %4d  elapsed  %4d", "differences", StringUtils.truncate(HasName.UTIL.getName(parent),20), count,el.elapsed()));
 
             

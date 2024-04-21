@@ -3,7 +3,6 @@ package dtb.terminalIO.components;
 import java.util.Collection;
 
 import dtb.terminalIO.controlcodes.color.Color;
-import dtb.terminalIO.core.CursorPos;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;

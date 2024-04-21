@@ -111,8 +111,8 @@ public interface FocusManager extends Focusable {
         
         /**
          * utility method to unfocus old focusable and focus new focusable and then optionally 
-         * run a function to perform "whatever" desired action. Usually the action is to update the
-         * screen (refresh the canvas).
+         * run a function to perform "whatever" desired action. Usually the ("whatever" desired) action is 
+         * to update the screen (refresh the canvas).
          * 
          * @param focusableChild
          * @param oldFocusableChild
@@ -321,7 +321,7 @@ public interface FocusManager extends Focusable {
 
         }
 
-        public List<Focusable> getFocusablesFromComponent(Object component) {
+        public static List<Focusable> getFocusablesFromComponent(Object component) {
             List<Focusable> focusables = new ArrayList<Focusable>();
             addFocusableChildren(focusables, component);
             return focusables;
@@ -359,7 +359,7 @@ public interface FocusManager extends Focusable {
 
             // this is a hack.. because ComponentWithFocusManager and AbstractWrappedComponentWithFocusManager
             //                  do not play nicely with this method..  
-            Predicate<Component<?>> skipProxiedManagers = (c)->{
+            Predicate<Component<?>> skipProxiedManagers = (c)-> {
                 if (c.getParentContainer() == null) {
                     return true;
                 }
@@ -371,9 +371,9 @@ public interface FocusManager extends Focusable {
                 }
                 return true;
             };
-            
+
             skipProxiedManagers = (c)-> true;
-            
+
             List<Focusable> focusables = Traverser.asList(component, (c)-> ToFocusable.UTIL.isFocusable(c) )
                                                   .stream()
                                                   .filter(skipProxiedManagers)
@@ -449,7 +449,7 @@ public interface FocusManager extends Focusable {
          * 
          */
         public static ConditionalEventHandler buildRequestFocusEventHandler(FocusManager focusManager) {
-            
+
             IS_Event_TYPE IS_REQUEST_FOCUS         = new IS_Event_TYPE(TerminalEvent.TYPE.REQUEST_FOCUS);
             IS_Event_TYPE IS_REQUEST_RELEASE_FOCUS = new IS_Event_TYPE(TerminalEvent.TYPE.REQUEST_RELEASE_FOCUS);
 

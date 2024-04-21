@@ -42,7 +42,7 @@ public interface CanResize {
 
     public static class Delegate implements CanResize {
 
-        CanResize delegate;
+        protected CanResize delegate;
 
         public Delegate(CanResize delegate) {
             super();
@@ -59,11 +59,9 @@ public interface CanResize {
                getDelegate().resize(d);
             }
         }
-        
     }
-    
     public static class Chain extends Delegate {
-        
+
         CanResize next;
 
         public Chain(CanResize delegate) {
@@ -88,13 +86,83 @@ public interface CanResize {
             if (next == null) {
                 return;
             }
-            this.next = new Chain(this.next, next);
+            if (this.delegate == null || this.delegate == NOOP) {
+                this.shiftUpOnEmptyDelegate();
+                if (this.delegate == null || this.delegate == NOOP) {
+                    this.delegate = next;
+                    return;
+                }
+            }
+            if (this.next != null) {
+                this.next = new Chain(this.next, next);
+                return;
+            }
+            this.next = next;
         }
-         
+
+        static void shiftUpOnEmptyDelegate(CanResize resizer) { 
+            if (resizer == null || !(resizer instanceof Chain) ) {
+                return;
+            }
+            Chain chained = (Chain)resizer;
+            chained.shiftUpOnEmptyDelegate(); 
+        }
         
+        void shiftUpOnEmptyDelegate() { // balance the chain so no unnecessary NOOP's 
+            if (this.next == null) {
+                if (this.delegate == null || this.delegate == NOOP) {
+                    return;
+                }
+                if (this.delegate instanceof Chain) {
+                    shiftUpOnEmptyDelegate(this.delegate);
+                }
+                return;
+            }
+            if (this.delegate == null || this.delegate != NOOP) {
+                return;
+            }
+            // assertion: delegate is NOOP or null and next is not null
+            this.delegate = this.next;
+            this.next = null;
+            if (this.delegate != null && (this.delegate instanceof Chain)) {
+                Chain chained = (Chain)this.delegate;
+                this.delegate = chained.delegate;
+                this.next = chained.next;
+                this.shiftUpOnEmptyDelegate();
+            }
+        }
+
+        public void remove(CanResize resizer) {
+            if (resizer == null) {
+                return;
+            }
+
+            if (this.delegate == resizer) {
+                this.delegate = NOOP;
+                shiftUpOnEmptyDelegate();
+                return;
+            }
+
+            if (this.next == resizer) {
+                this.next = null;
+                return;
+            }
+
+            if (this.delegate != null && this.delegate != NOOP && (this.delegate instanceof Chain)) {
+                Chain chained = (Chain)this.delegate;
+                chained.remove(resizer);
+                shiftUpOnEmptyDelegate();
+            }
+
+            if (this.next != null && this.next != NOOP && (this.next instanceof Chain)) {
+                Chain chained = (Chain)this.next;
+                chained.remove(resizer);
+                shiftUpOnEmptyDelegate();
+            }
+        }
+
     }
-    
-    
+
     public static class OnResizeService implements CanResize {
 
         Consumer<Dimension> onResize = null; 
@@ -105,7 +173,7 @@ public interface CanResize {
                 onResize.accept(size);
             }
         }
-        
+
         public void setOnResize(Consumer<Dimension> onResize) {
             this.onResize = onResize;
         }
@@ -117,8 +185,7 @@ public interface CanResize {
         private Position  targetOffsetPosition;
         private Rectangle targetComponent;
         private CanResize targetToResize;
-        
-        
+
         public ExpandOnResize(Rectangle anchorComponent, Position targetOffsetPosition, Rectangle targetComponent,
                 CanResize targetToResize) {
             super();
@@ -130,21 +197,21 @@ public interface CanResize {
 
         @Override
         abstract public void resize(Dimension d);
-        
+
         protected Rectangle getTargetComponent() {
             return targetComponent;
         }
-        
+
         protected Rectangle getTargetToResize() {
             return targetComponent;
         }
-        
+
         protected Position getTargetOffsetPosition() {
             return targetOffsetPosition;
         }
-        
+
         boolean resizing = false;
-        
+
         protected void resizeTarget(Dimension d) {
             if (resizing) {
                 return;
@@ -170,7 +237,7 @@ public interface CanResize {
                 CanResize targetToResize) {
             super(anchorComponent, targetOffsetPosition, targetComponent, targetToResize);
         }
-        
+
         public ExpandDown(Component<?> container, Position targetOffsetPosition, BoundedComponent<?> targetComponent) {
             this(container, targetOffsetPosition, targetComponent, targetComponent);
         }
@@ -179,11 +246,9 @@ public interface CanResize {
         public void resize(Dimension d) {
             Dimension newSizeForTarget = new Dimension.Simple(anchorComponent.getHeight() - getTargetComponent().getRow() - getTargetOffsetPosition().getRow()  ,
                                                               getTargetComponent().getWidth());
-            
             resizeTarget(newSizeForTarget);
         }
 
-        
     }
 
     public static class ExpandDownByPercent  extends ExpandOnResize {

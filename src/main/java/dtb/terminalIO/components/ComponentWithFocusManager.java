@@ -15,6 +15,7 @@ import dtb.terminalIO.events.EventHandlerContainer;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
+import dtb.terminalIO.events.focus.FocusManagerProvider;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
@@ -35,7 +36,8 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
                                 CanResize,
                                 FocusManager,
                                 GetComponentAtOffset,
-                                EventHandlerContainer {
+                                EventHandlerContainer,
+                                FocusManagerProvider {
 
     private Composite container;
     private FocusManager focusManager;
@@ -97,13 +99,22 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
         return this.focusManager;
     }
 
-    protected FocusManager getFocusManager() {
+    @Override
+    public FocusManager getFocusManager() {
         if (this.focusManager == null) {
             throw new NullPointerException("getFocusManager(): focusManager is null - cannot get access to a focusManager for "+ HasName.UTIL.getName(this));
         }
         return this.focusManager;
     }
-
+    
+    public ComponentWithFocusManager<T> setCycling(boolean cycling) {
+        FocusManager fm = getFocusManager();
+        if (!(fm instanceof DefaultFocusManager)) {
+            throw new IllegalStateException(" Tried to set cycling on a focusManager that is not of type DefaultFocusManager ");
+        }
+        ((DefaultFocusManager)fm).setCycling(cycling);
+        return this;
+    }
     
     private ChainedEventHandler getOrBuildChainedEventHandler() {
         if (chainedEventHandler == null) {
@@ -111,6 +122,10 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
             chainedEventHandlerAsConditionalEventHandler = chainedEventHandler.asConditionalEventHandler();
         }
         return chainedEventHandler;
+    }
+    
+    protected EventHandlerContainer getEventHandlerContainer() {
+        return getOrBuildChainedEventHandler();
     }
 
     protected void addComponentAndItsFocusables(Position offset, Component<?> component) {

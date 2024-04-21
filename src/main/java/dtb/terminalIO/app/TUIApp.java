@@ -99,6 +99,8 @@ public class TUIApp {
 
     InputEventsProducer eventsProducer = null;
     
+    boolean verifyFocusables = true;
+    
     Function<EventBus, InputEventsProducer> inputEventsProducerBuilder = (eventBus)-> {
         try {
             return new InputEventsProducer(eventBus);
@@ -139,6 +141,11 @@ public class TUIApp {
 
     public Dimension getDimensions() {
         return getCanvas().asRectangle();
+    }
+    
+    public TUIApp verifyFocusables(boolean verifyFocusables) {
+        this.verifyFocusables = verifyFocusables;
+        return this;
     }
 
     public Canvas getCanvas() {
@@ -282,7 +289,7 @@ public class TUIApp {
             return;
         }
     }
-    
+
     public void setIdleEventStarvationLimit(int interval) {
         if (this.eventsProducer == null) {
             throw new IllegalStateException("ERROR in setIdleEventStarvationLimit()!  You cannot call setIdleEventStarvationLimit() until InputEventsProducer has been created.  Make the call in the onReadyStartAction callback. ");
@@ -300,18 +307,15 @@ public class TUIApp {
             }
         }
         canvas.setSize(size.getHeight(), size.getWidth());
-
         if (this.started) {
             canvas.refresh();
         }
-        
         return this;
     }
 
     public TUIApp setCanvasSize(int height, int width) {
         Dimension desiredDimension = new Dimension.Simple(height, width);
         Dimension terminalDimension = TestsCommon.terminalSize();
-        
         return setCanvasSize(terminalDimension.contains(desiredDimension)?desiredDimension:terminalDimension);
     }
 
@@ -322,7 +326,7 @@ public class TUIApp {
         canvasClearedAndNowEmpty = true;
         return this;
     }
-    
+
     public TUIApp setEmptyChar(char emptyChar) {
         this.getCanvas().setEmptyChar(emptyChar);
         return this;
@@ -336,11 +340,11 @@ public class TUIApp {
         this.getCanvas().setEmptyColors(emptyColor);
         return this;
     }
-    
+
     public Color getEmptyColor() {
         return this.getCanvas().getEmptyColor();
     }
-    
+
     private void makeRefreshCanvasIfModifiedAction() {
         refreshCanvasIfModifiedAction = () -> {
             boolean canvasRefreshRequired = (updateCanvas == null) ? true : updateCanvas.apply(this);
@@ -387,8 +391,13 @@ public class TUIApp {
     public FocusManager getApplicationFocusManager() {
         return getApplicationFocusManager(false);
     }
+    
     protected FocusManager getApplicationFocusManager(boolean forceRebuild) {
-        
+        return getApplicationFocusManager(forceRebuild, verifyFocusables); 
+    }
+
+    protected FocusManager getApplicationFocusManager(boolean forceRebuild, boolean verifyFocusables) {
+
         if (TUIApp.this.eventBus == null) {
             //throw new IllegalStateException("TUIApp.getApplicationFocusManager() ERROR!.  Cannot call getApplicationFocusManager() before the eventbus has been created!");
             getEventBus();
@@ -408,16 +417,18 @@ public class TUIApp {
                                                                             TUIApp.this.getEventBus(), 
                                                                             ()->new DefaultFocusManager().setNameFromOwner(TUIApp.this.getMainApplicationPanel()).setNavKeysFirst(false));
         TUIApp.this.getEventBus().appendEventHandler(  mainFocusManager );
-        
+
      // sanity test
-        FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>) TUIApp.this.getMainApplicationPanel());
+        if (verifyFocusables) {
+            FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>) TUIApp.this.getMainApplicationPanel());
+        }
         return mainFocusManager;
     }
 
     public void start() {
 
         this.started = true;
-        
+
         // We do an initial refresh before going into RAW mode (caused by
         // makeEventBus())
         // in order that canvas is correctly refreshed after current screen cursor

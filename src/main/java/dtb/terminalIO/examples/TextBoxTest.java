@@ -26,6 +26,7 @@ import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.OnIdleEventEventHandler.RepeatingInterval;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.keyboard.Keys;
+import dtb.terminalIO.events.mouse.ApplicationMouseEvent;
 import dtb.terminalIO.examples.BarChartTest.BarChartRandomDataDemo;
 import dtb.terminalIO.examples.GridBrailleTest.BrailleDemo;
 import dtb.terminalIO.examples.plot.Test1GamesSeparateThread;
@@ -104,6 +105,14 @@ public class TextBoxTest {
 
             //panel1.add(  new TextComponent(largeText).setColor(Colors.Cya) );
             panel1.add(  new BorderedComponent(new TextComponent(largeText)).setColor(Colors.Cya) );
+            
+            Button buttonAtTHeBottom = new Button("Press Me - I'm at the bottom", true) {
+                @Override
+                public void onClick(ApplicationMouseEvent event) {
+                    super.onClick(event);
+                }
+            };
+            panel1.add(buttonAtTHeBottom);
             
             Composite topPanel = new Composite();
             topPanel.setTitle("Form input testing");

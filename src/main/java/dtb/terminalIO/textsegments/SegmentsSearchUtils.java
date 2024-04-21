@@ -13,7 +13,6 @@ import dtb.terminalIO.util.Logging;
 
 public class SegmentsSearchUtils {
 
-    
     public static Rectangle searchTextInSegments(IScreenLineSegmentsBuffer segmentsBuffer, String searchText) {
         Collection<ScreenLineSegment> segments = segmentsBuffer.getSegments();
 
@@ -39,11 +38,10 @@ public class SegmentsSearchUtils {
         public boolean isComplete() {
             return searchComplete;
         }
-        
+
         public List<Rectangle> currentSearchResult() {
             return currentSearchResult;
         }
-        
     }
 
     public static TextInSegmentSearchResult searchTextInSegmentsWithTimeLimit(TextInSegmentSearchResult lastSearchResult, IScreenLineSegmentsBuffer segmentsBuffer, final String searchText, int timeLimit) {
@@ -73,7 +71,7 @@ public class SegmentsSearchUtils {
         ScreenLineSegment currentSegment = (searchResult.lastSegmentSearched == null) 
                                              ?  segments.first()
                                              :  segments.ceiling(searchResult.lastSegmentSearched);
-        
+
         while (currentSegment != null && elapsedTime.recalcElapsed()<timeLimit) {
             // TODO:  problem with this check is that the compare does not
             //        span across multiple ScreenLineSegment objects..  works in the simple case only
@@ -88,33 +86,31 @@ public class SegmentsSearchUtils {
                      idx = currentSegment.getText().indexOf(searchText, stringOffset);
                 }
             }
-            
             currentSegment = segments.higher(currentSegment);
         }
-        
+
         searchResult.searchComplete = currentSegment == null;
         searchResult.lastSegmentSearched = currentSegment;
-        
-        
+
         return searchResult;
     }
-    
-    
+
+
     public static List<Rectangle> searchTextInSegmentsAll(IScreenLineSegmentsBuffer segmentsBuffer, final String searchText) {
 
         ElapsedTime elapsedTime = new ElapsedTime();
-        
+
         TreeSet<ScreenLineSegment> segments = segmentsBuffer.getSegments();
 
         List<Rectangle> searchResult = new ArrayList<Rectangle>();
         Dimension sizeOfSearchText = Dimension.UTIL.stringToDimension(searchText);
-        
+
         for (ScreenLineSegment sc : segments) {
             // TODO:  problem with this check is that the compare does not
             //        span across multiple ScreenLineSegment objects..  works in the simple case only
-            
+
             int stringOffset = 0;
-            
+
             int idx = sc.getText().indexOf(searchText, stringOffset);
             while (idx > -1) {
                  Rectangle targetToView = new Rectangle.Simple(sc.getRow(), sc.getCol() + idx, sizeOfSearchText);
@@ -123,9 +119,9 @@ public class SegmentsSearchUtils {
                  idx = sc.getText().indexOf(searchText, stringOffset);
             }
         }
-        
+
         Logging.info("searchTextInSegmentsAll() " + elapsedTime);
-        
+
         return searchResult;
     }
 

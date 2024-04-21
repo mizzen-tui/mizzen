@@ -10,9 +10,7 @@ import java.util.function.Function;
 import javax.imageio.ImageIO;
 
 import dtb.terminalIO.app.TUIApp;
-import dtb.terminalIO.components.ChildComponentManager;
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.components.ComponentInspector;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.composite.HorizontalPanel;
@@ -39,6 +37,7 @@ import dtb.terminalIO.examples.GridBrailleTest.BrailleDemo;
 import dtb.terminalIO.examples.LineChartTest.LineChartDemo;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
+import dtb.terminalIO.util.Logging;
 
 public class TabPanelTest {
 
@@ -91,6 +90,8 @@ public class TabPanelTest {
     }
 
     public static void main(String args[]) throws Exception {
+
+        Logging.setEnabled(true);
 
         TUIApp tabPanelDemoApp = new TUIApp(args).setDefaultMainApplicationPanel();
 

@@ -42,6 +42,13 @@ public class TabPanel extends AbstractComponentWrappper<CompositeWithFocusManage
 
     Color textActiveTabColor = Colors.DEFAULT_COLOR.bold();
 
+    // NOTE : using TAB and SHIFT_TAB for hotkeys is a really bad idea because circumvents normal
+    //        FocusManager Navigation via tab ... so for now disabling these hot keys (see below in constructor) 
+    //        until I figure out better keys to use for this.
+    KeyStroke previousTabHotKey = Keys.SHIFT_TAB_KEYSTROKE;
+    KeyStroke nextTabHotKey = Keys.TAB_KEYSTROKE;
+
+    
     public TabPanel(Color color, Dimension bounds) {
         super(color, new CompositeWithFocusManager(color));
         getWrappedComponent().setBounds(bounds);
@@ -57,14 +64,14 @@ public class TabPanel extends AbstractComponentWrappper<CompositeWithFocusManage
         prevNextButtonBar = new HorizontalPanel( getColor() ).setHorizontalSpacer(2);
 
         previousButton = new Button(getColor(), "<-");
-        previousButton.setHotKey(previousTabHotKey);
+        //previousButton.setHotKey(previousTabHotKey);  <-- see comment above why I am disabling hot key
         previousButton.setDisplayHotKey(false);
         previousButton.onChange((te)-> this.setPreviousAsCurrentFocus(te.getEventBus()));
 
         prevNextButtonBar.add(previousButton);
 
         nextButton = new Button(getColor(),"->");
-        nextButton.setHotKey(nextTabHotKey);
+        //nextButton.setHotKey(nextTabHotKey);  <-- see comment above why I am disabling hot key
         nextButton.setDisplayHotKey(false);
         nextButton.onChange((te)-> this.setNextAsCurrentFocus(te.getEventBus()));
 
@@ -105,9 +112,6 @@ public class TabPanel extends AbstractComponentWrappper<CompositeWithFocusManage
         this.tabsButtonBar.setNextKeyStroke(nextKeyStroke);
         return this;
     }
-
-    KeyStroke previousTabHotKey = Keys.SHIFT_TAB_KEYSTROKE;
-    KeyStroke nextTabHotKey = Keys.TAB_KEYSTROKE;
 
 
     int offsetRow = 0;

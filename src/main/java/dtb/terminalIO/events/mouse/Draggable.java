@@ -1,6 +1,7 @@
 package dtb.terminalIO.events.mouse;
 
 import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.events.RequestHideCursorEvent;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.geom.CanResize;
@@ -12,25 +13,36 @@ public interface Draggable {
     boolean onDragStart(ApplicationMouseEvent appMouseEvent);
     boolean onDrag(ApplicationMouseEvent appMouseEvent);
     boolean onDragStop(ApplicationMouseEvent appMouseEvent);
-    
-    
-    public static final Draggable NOOP = new Draggable() {
 
-        @Override
-        public boolean onDragStart(ApplicationMouseEvent appMouseEvent) {
-            return false;
+    public static class NooP implements Draggable {
+
+        boolean returnValue;
+
+        public NooP(boolean returnValue) {
+            super();
+            this.returnValue = returnValue;
         }
 
         @Override
-        public boolean onDrag(ApplicationMouseEvent appMouseEvent) {
-            return false;
+        public boolean onDragStart(ApplicationMouseEvent appMouseEventRelativeToCanvas) {
+            return returnValue;
         }
 
         @Override
-        public boolean onDragStop(ApplicationMouseEvent appMouseEvent) {
-            return false;
-        }};
+        public boolean onDrag(ApplicationMouseEvent appMouseEventRelativeToCanvas) {
+            return returnValue;
+        }
 
+        @Override
+        public boolean onDragStop(ApplicationMouseEvent appMouseEventRelativeToCanvas) {
+            return returnValue;
+        }
+    }
+
+    public static final Draggable NOOP = new NooP(false);
+
+    public static final Draggable NOOP_TRUE = new NooP(true);
+    
      public static class DragAND implements Draggable {
             
             Draggable d1;
@@ -43,30 +55,30 @@ public interface Draggable {
             }
 
             @Override
-            public boolean onDragStart(ApplicationMouseEvent appMouseEvent) {
-                boolean result = d1.onDragStart(appMouseEvent);
+            public boolean onDragStart(ApplicationMouseEvent appMouseEventRelativeToCanvas) {
+                boolean result = d1.onDragStart(appMouseEventRelativeToCanvas);
                 if (!result) {
                     return result;
                 }
-                return d2.onDragStart(appMouseEvent);
+                return d2.onDragStart(appMouseEventRelativeToCanvas);
             }
 
             @Override
-            public boolean onDrag(ApplicationMouseEvent appMouseEvent) {
-                boolean result = d1.onDrag(appMouseEvent);
+            public boolean onDrag(ApplicationMouseEvent appMouseEventRelativeToCanvas) {
+                boolean result = d1.onDrag(appMouseEventRelativeToCanvas);
                 if (!result) {
                     return result;
                 }
-                return d2.onDrag(appMouseEvent);
+                return d2.onDrag(appMouseEventRelativeToCanvas);
             }
 
             @Override
-            public boolean onDragStop(ApplicationMouseEvent appMouseEvent) {
-                boolean result = d1.onDragStop(appMouseEvent);
+            public boolean onDragStop(ApplicationMouseEvent appMouseEventRelativeToCanvas) {
+                boolean result = d1.onDragStop(appMouseEventRelativeToCanvas);
                 if (!result) {
                     return result;
                 }
-                return d2.onDragStop(appMouseEvent);
+                return d2.onDragStop(appMouseEventRelativeToCanvas);
             }
             
         }
@@ -85,62 +97,124 @@ public interface Draggable {
             }
 
             @Override
-            public boolean onDragStart(ApplicationMouseEvent appMouseEvent) {
+            public boolean onDragStart(ApplicationMouseEvent appMouseEventRelativeToCanvas) {
                 d1_started = false;
-                d1_started = d1.onDragStart(appMouseEvent);
-                d2_started = d2.onDragStart(appMouseEvent);
+                d1_started = d1.onDragStart(appMouseEventRelativeToCanvas);
+                d2_started = d2.onDragStart(appMouseEventRelativeToCanvas);
                 return  d2_started || d1_started;
             }
 
             @Override
-            public boolean onDrag(ApplicationMouseEvent appMouseEvent) {
-                d1_started = d1_started && d1.onDrag(appMouseEvent);
-                d2_started = d2_started && d2.onDrag(appMouseEvent);
+            public boolean onDrag(ApplicationMouseEvent appMouseEventRelativeToCanvas) {
+                d1_started = d1_started && d1.onDrag(appMouseEventRelativeToCanvas);
+                d2_started = d2_started && d2.onDrag(appMouseEventRelativeToCanvas);
                 return  d2_started || d1_started;
             }
 
             @Override
-            public boolean onDragStop(ApplicationMouseEvent appMouseEvent) {
-                d1_started = d1.onDragStop(appMouseEvent);
-                d2_started = d2.onDragStop(appMouseEvent);
+            public boolean onDragStop(ApplicationMouseEvent appMouseEventRelativeToCanvas) {
+                d1_started = d1.onDragStop(appMouseEventRelativeToCanvas);
+                d2_started = d2.onDragStop(appMouseEventRelativeToCanvas);
                 return  d2_started || d1_started;
             }
         }
 
+    public static final int DRAGGABLE_FREEZE_NONE = 0;
+    public static final int DRAGGABLE_FREEZE_COLUMN = 1;
+    public static final int DRAGGABLE_FREEZE_ROW = 2;
+      
     public static class DragAndMoveComponentBehaviour implements Draggable {
         Component<?>  draggableComponent;
         Component<?>  componentToMove;
         Position offsetFromComponentPosition;
+        int freezePolicy = DRAGGABLE_FREEZE_NONE;
 
         public DragAndMoveComponentBehaviour(Component<?> draggedComponent) {
             super();
             this.draggableComponent = draggedComponent;
+            if (this.draggableComponent == null) {
+                throw new NullPointerException("draggableComponent not defined (null)");
+            }
+        }
+        
+        public DragAndMoveComponentBehaviour freezeColumn() {
+            this.freezePolicy = DRAGGABLE_FREEZE_COLUMN;
+            return this;
         }
 
-        @Override
-        public boolean onDragStart(ApplicationMouseEvent appMouseEvent) {
-            componentToMove = draggableComponent.getParentContainer().findChildOrAncestorThatCanBeMoved(draggableComponent);
+        /**
+         * Modify the drag behavior so that the drag action only happens in the column axis
+         * meaning that you can only move left or right, not up or down, thus freezing the row
+         */
+        public DragAndMoveComponentBehaviour freezeRow() {
+            this.freezePolicy = DRAGGABLE_FREEZE_ROW;
+            return this;
+        }
+
+        public DragAndMoveComponentBehaviour unFreeze() {
+            this.freezePolicy = DRAGGABLE_FREEZE_NONE;
+            return this;
+        }
+
+        public boolean onDragStart(ApplicationMouseEvent appMouseEventRelativeToCanvas) {
+            if ( ! canDrag(appMouseEventRelativeToCanvas)) {
+                return false;
+            }
+
+            componentToMove = draggableComponent.getParentContainerOrFail().findChildOrAncestorThatCanBeMoved(draggableComponent);
             if (componentToMove == null) {
                 return false;
             }
-            Component<?> parentOfcomponentToMove = (Component<?>)componentToMove.getParentContainer();
-            offsetFromComponentPosition = appMouseEvent.getMousePosition().sub(Component.UTIL.getCanvasOffsetFor(draggableComponent)).offsetAdd(Component.UTIL.getCanvasOffsetFor(parentOfcomponentToMove)).negate();
-            appMouseEvent.getEventBus().raiseEvent(new RequestHideCursorEvent(draggableComponent));
+            Component<?> parentOfcomponentToMove = (Component<?>)componentToMove.getParentContainerOrFail();
+            offsetFromComponentPosition = componentToMove == draggableComponent ? Position.ZERO 
+                                                                                : appMouseEventRelativeToCanvas.getMousePosition().sub(Component.UTIL.getCanvasOffsetFor(draggableComponent)).offsetAdd(Component.UTIL.getCanvasOffsetFor(parentOfcomponentToMove)).negate();
+            appMouseEventRelativeToCanvas.getEventBus().raiseEvent(new RequestHideCursorEvent(draggableComponent));
             return true;
         }
 
         @Override
-        public boolean onDrag(ApplicationMouseEvent appMouseEvent) {
-            if (canDrag(appMouseEvent)) {
-                componentToMove.getParentContainer().moveChildToPosition(appMouseEvent.getMousePosition().offsetAdd(offsetFromComponentPosition), componentToMove);
-                appMouseEvent.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(draggableComponent)  );
-            return true;
+        public boolean onDrag(ApplicationMouseEvent appMouseEventRelativeToCanvas) {
+            if (canDrag(appMouseEventRelativeToCanvas)) {
+                
+                if (componentToMove == null) {
+                    componentToMove = draggableComponent.getParentContainerOrFail().findChildOrAncestorThatCanBeMoved(draggableComponent);
+                    if (componentToMove == null) {
+                        throw new NullPointerException( HasName.UTIL.getName(this) + ".onDrag():  componentToMove set to null - should not attempt onDrag when it is null!");
+                    }
+                }
+                
+                if (offsetFromComponentPosition == null) {
+                    Component<?> parentOfcomponentToMove = (Component<?>)componentToMove.getParentContainerOrFail();
+                    offsetFromComponentPosition = componentToMove == draggableComponent ? Position.ZERO 
+                            : appMouseEventRelativeToCanvas.getMousePosition().sub(Component.UTIL.getCanvasOffsetFor(draggableComponent)).offsetAdd(Component.UTIL.getCanvasOffsetFor(parentOfcomponentToMove)).negate();
+                }
+                
+                Position moveTo = Position.ZERO;
+                switch (this.freezePolicy) {
+                    case DRAGGABLE_FREEZE_NONE:
+                        moveTo = appMouseEventRelativeToCanvas.getMousePosition().offsetAdd(offsetFromComponentPosition);
+                        break;
+    
+                    case DRAGGABLE_FREEZE_COLUMN:
+                        moveTo = new Position.Simple(appMouseEventRelativeToCanvas.getMousePosition().getRow(),componentToMove.getParentContainerOrFail().getPositionRelativeToParent(componentToMove).getCol()).offsetAdd(new Position.Simple(offsetFromComponentPosition.getRow(),0));
+                        break;
+                    
+                    case DRAGGABLE_FREEZE_ROW:
+                        moveTo = new Position.Simple(componentToMove.getParentContainerOrFail().getPositionRelativeToParent(componentToMove).getRow(), appMouseEventRelativeToCanvas.getMousePosition().getCol()).offsetAdd(new Position.Simple(0,offsetFromComponentPosition.getRow()));
+                        break;
+    
+                    default:
+                        break;
+                }
+                componentToMove.getParentContainerOrFail().moveChildToPosition(moveTo, componentToMove);
+                appMouseEventRelativeToCanvas.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(draggableComponent)  );
+                return true;
             } else {
                 return false;
             }
         }
         
-        protected boolean canDrag(ApplicationMouseEvent appMouseEvent) {
+        protected boolean canDrag(ApplicationMouseEvent appMouseEventRelativeToCanvas) {
             // TODO:  Need to add a drag constraint behaviour.. possible delegate to another class
             //        options: 
             //                    1: draggableComponent must never been hidden as this disables future drag 
@@ -152,9 +226,9 @@ public interface Draggable {
         }
 
         @Override
-        public boolean onDragStop(ApplicationMouseEvent appMouseEvent) {
-            appMouseEvent.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(draggableComponent)  );
-            offsetFromComponentPosition = null;
+        public boolean onDragStop(ApplicationMouseEvent appMouseEventRelativeToCanvas) {
+            appMouseEventRelativeToCanvas.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(draggableComponent)  );
+            offsetFromComponentPosition = null; // Position.ZERO;
             componentToMove = null;
             return true;
         }
@@ -188,23 +262,22 @@ public interface Draggable {
             super();
             this.componentToResize = componentToResize;
             this.dragAnchor = dragAnchor;
-            
         }
 
         @Override
-        public boolean onDragStart(ApplicationMouseEvent appMouseEvent) {
-            offsetFromComponentPosition = appMouseEvent.getMousePosition().sub(Component.UTIL.getCanvasOffsetFor(dragAnchor)).negate();
+        public boolean onDragStart(ApplicationMouseEvent appMouseEventRelativeToCanvas) {
+            offsetFromComponentPosition = appMouseEventRelativeToCanvas.getMousePosition().sub(Component.UTIL.getCanvasOffsetFor(dragAnchor)).negate();
             this.originalSizeDimension = new Dimension.Simple((Component<?>)componentToResize);
             return true;
         }
 
         @Override
-        public boolean onDrag(ApplicationMouseEvent appMouseEvent) {
+        public boolean onDrag(ApplicationMouseEvent appMouseEventRelativeToCanvas) {
 
             Position componentOffset = Component.UTIL.getCanvasOffsetFor((Component<?>)componentToResize);
 
-            Dimension newSize = new Dimension.Simple(appMouseEvent.getMousePosition().getRow()-componentOffset.getRow()+1, 
-                                                     appMouseEvent.getMousePosition().getCol()-componentOffset.getCol()+1);
+            Dimension newSize = new Dimension.Simple(appMouseEventRelativeToCanvas.getMousePosition().getRow()-componentOffset.getRow()+1, 
+                                                     appMouseEventRelativeToCanvas.getMousePosition().getCol()-componentOffset.getCol()+1);
 
             if (newSize.getHeight()<2 || newSize.getWidth() < 2) {
                 return false;
@@ -214,18 +287,17 @@ public interface Draggable {
 
             componentToResize.resize(newSize);
             this.dragAnchor.markAsDirty();
-            appMouseEvent.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(componentToResize)  );
+            appMouseEventRelativeToCanvas.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(componentToResize)  );
 
             return true;
         }
 
         @Override
-        public boolean onDragStop(ApplicationMouseEvent appMouseEvent) {
-            appMouseEvent.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(componentToResize)  );
+        public boolean onDragStop(ApplicationMouseEvent appMouseEventRelativeToCanvas) {
+            appMouseEventRelativeToCanvas.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(componentToResize)  );
             return true;
         }
-        
-    }
 
+    }
 
 }

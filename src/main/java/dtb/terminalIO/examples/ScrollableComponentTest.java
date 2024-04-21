@@ -10,13 +10,12 @@ import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.composite.VerticalPanel;
-import dtb.terminalIO.components.scroll.ScrollableComponent;
+import dtb.terminalIO.components.scroll.ScrollableComponent2;
 import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
-import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.examples.BarChartTest.BarChartRandomDataDemo;
@@ -48,15 +47,15 @@ public class ScrollableComponentTest {
                 return new Dimension.Simple( ((int)(tApp.getCanvas().getHeight()*.7)), tApp.getCanvas().getWidth()/2 -2);
             };
    
-            ScrollableComponent sc1 = new ScrollableComponent(Colors.Gre, calcScrollableDimension.get(), new TextViewer().getComponent(Colors.Gre));
+            ScrollableComponent2 sc1 = new ScrollableComponent2(Colors.Gre, calcScrollableDimension.get(), new TextViewer().getComponent(Colors.Gre));
 
             sc1.setName("ScrollableComponent-sc1");            
             SearchFunctionForScrollableComponent.addFinderToScrollable(sc1.asSearchableView());  
 
-            Composite brailleContainer = new Composite(Colors.Blu).setBounds(tApp.getCanvas().getHeight()-7, tApp.getCanvas().getWidth()/2 -2);
-            brailleDemoSetup(brailleContainer, tApp.getEventBus());
-            ScrollableComponent sc2 = new ScrollableComponent(Colors.Blu, calcScrollableDimension.get(), brailleContainer);
-            sc2.setName("ScrollableComponent-sc2");
+     //       Composite brailleContainer = new Composite(Colors.Blu).setBounds(tApp.getCanvas().getHeight()-7, tApp.getCanvas().getWidth()/2 -2);
+       //     brailleDemoSetup(brailleContainer, tApp.getEventBus());
+    //        ScrollableComponent2 sc2 = new ScrollableComponent2(Colors.Blu, calcScrollableDimension.get(), brailleContainer);
+    //        sc2.setName("ScrollableComponent-sc2");
 
             Composite  lineChart = new Composite(Colors.Cya);
             lineChart.setBorder(true);
@@ -66,28 +65,28 @@ public class ScrollableComponentTest {
                 return new Dimension.Simple( ((int)(tApp.getCanvas().getHeight() - calcScrollableDimension.get().getHeight())), sc1.getWidth());
             };
 
-            Supplier<Dimension> barChartDim = ()-> {
-                return new Dimension.Simple( ((int)(tApp.getCanvas().getHeight() - calcScrollableDimension.get().getHeight()  )), sc2.getWidth());
-            };
+//            Supplier<Dimension> barChartDim = ()-> {
+//                return new Dimension.Simple( ((int)(tApp.getCanvas().getHeight() - calcScrollableDimension.get().getHeight()  )), sc2.getWidth());
+//            };
 
-            BarChartRandomDataDemo  barChart = new BarChartRandomDataDemo(Colors.Cya, barChartDim.get()).setupTimer(tApp.getEventBus());
+//            BarChartRandomDataDemo  barChart = new BarChartRandomDataDemo(Colors.Cya, barChartDim.get()).setupTimer(tApp.getEventBus());
 
-            lineChart.resize(lineChartDim.get());
-            barChart.resize(barChartDim.get());
+//            lineChart.resize(lineChartDim.get());
+//            barChart.resize(barChartDim.get());
 
             VerticalPanel vp = new VerticalPanel();
             HorizontalPanel hpSCs = new HorizontalPanel();
             vp.add(hpSCs);
 
-            hpSCs.add(sc1);
-            hpSCs.add(sc2);
+             hpSCs.add(sc1);
+        //    hpSCs.add(sc2);
 
             HorizontalPanel hpCharts = new HorizontalPanel();
 
-            hpCharts.add(lineChart);
-            hpCharts.add(barChart);
+           // hpCharts.add(lineChart);
+           //  hpCharts.add(barChart);
 
-            vp.add(hpCharts);
+            //vp.add(hpCharts);
 
             tApp.getMainApplicationPanel().add(vp);
 
@@ -98,11 +97,13 @@ public class ScrollableComponentTest {
                 baseResizeAction.accept(ptApp, newSize);
 
                 sc1.resize(calcScrollableDimension.get());
-                sc2.resize(calcScrollableDimension.get());
-                lineChart.resize(lineChartDim.get());
-                barChart.resize(barChartDim.get());
+//                sc2.resize(calcScrollableDimension.get());
+//                lineChart.resize(lineChartDim.get());
+//                barChart.resize(barChartDim.get());
                 
             } );
+            
+            FocusManager.UTIL.verifyPathsToFocusables(tApp.getApplicationFocusManager(), vp);
 
         }).start();
         

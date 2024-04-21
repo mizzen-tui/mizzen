@@ -5,17 +5,14 @@ import java.util.function.BiConsumer;
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.components.FrameSet;
-import dtb.terminalIO.components.FrameSet.FrameHorizontalPanel;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.WindowFrame;
-import dtb.terminalIO.components.composite.Composite;
+import dtb.terminalIO.components.frameset.FrameSet;
+import dtb.terminalIO.components.frameset.FrameSet.FrameHorizontalPanel;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
-import dtb.terminalIO.events.focus.DefaultFocusManager;
-import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.util.Logging;
@@ -25,30 +22,29 @@ public class FrameSetTest {
     
     
     public static void main(String[] args) throws Exception {
-        
+
         Logging.setEnabled(true);
-        
+
         new TUIApp(args)
          .setCanvasSize(40, 130)
         .setEmptyChar(' ')
         .setDefaultMainApplicationPanel()
         .confirmOnExit()
         .setOnReadyStart((tApp)-> {
-            
+
             FrameSet[] fs = new FrameSet[] {test2()};
-                    
+
             WindowFrame wf = new WindowFrame(Colors.IBlu, "A test of frames", fs[0]);
-            
+
             ButtonBar bbar = new ButtonBar();
-            
+
             Button toggleFSBorder = new Button("Show FS Border", true);
             bbar.addButton(toggleFSBorder, Keys.CTRL_B_KEYSTROKE, (te)->{
                 fs[0].setBorder( toggleFSBorder.getValue() );
                 fs[0].markAsDirty();
                 te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(toggleFSBorder));
             });
-            
-            
+
             BiConsumer<FrameSet, TerminalEvent<?>> addNewFrameSetToWindowFrame = (fsNew, te) -> {
                 fs[0] = fsNew;
                 fs[0].setBorder( toggleFSBorder.getValue() );
@@ -65,47 +61,46 @@ public class FrameSetTest {
             bbar.addButton("Test2", Keys.CTRL_T_KEYSTROKE, (te)->{
                 addNewFrameSetToWindowFrame.accept(test2(), te);
             });
-            
+
             bbar.addButton("Test3", Keys.CTRL_V_KEYSTROKE, (te)->{
                 addNewFrameSetToWindowFrame.accept(test3(), te);
             });
-            
+
             bbar.addButton("Test4", Keys.CTRL_W_KEYSTROKE, (te)->{
                 addNewFrameSetToWindowFrame.accept(test4(), te);
             });
-            
+
             bbar.addButton("Test5", Keys.CTRL_Y_KEYSTROKE, (te)->{
                 addNewFrameSetToWindowFrame.accept(test5(), te);
             });
-            
+
             tApp.getMainApplicationPanel().add(1,2, bbar);
-            
+
             tApp.getMainApplicationPanel().add(4,4, wf);
-            
+
         }).start();
-        
     }
-    
+
     static FrameSet test1() {
         FrameSet fs = new FrameSet(Colors.BIWhi, new Dimension.Simple(10,20));
         fs.setBorder(true);
         fs.setEmptyColor(Colors.On_IBla);
         fs.setFillOnClear(true);
-        
+
         Component<?> first = new TextComponent("ABC-123");
         fs.add(first);
-        
+
         Component<?> second = new TextComponent("XYZ");
         fs.addBelow(second, first);
-       
+
         TextComponent third = new TextComponent("3rd one ...............");
         third.setEmptyColor(Colors.On_Yel);
         third.setFillOnClear(true);
-        
+
         fs.addBelow(third, second);
-        
+
         Component<?> forth = new TextComponent("here is\nthe fourth\nwidget");
-        fs.addRight(forth, first);
+        fs.addRight(forth, first, true);
 
         Component<?> fifth = new TextComponent("here is the fifth\nwidget");
         fs.addBelow(fifth, forth);

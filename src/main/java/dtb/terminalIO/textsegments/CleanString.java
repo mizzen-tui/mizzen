@@ -39,11 +39,11 @@ public interface CleanString {
     }
     
     
-    static class KnownCleanString implements CleanString {
+    public static class KnownCleanString implements CleanString {
         
         String cleanedStr;
         
-        private KnownCleanString(String s) {
+        public KnownCleanString(String s) {
             this.cleanedStr = s;
         }
 

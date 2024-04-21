@@ -184,7 +184,7 @@ public class StdoutViewer extends AbstractComponent<StdoutViewer>  implements Te
     public void scrollToBottomOfViewer(EventBus eventBus) {
         Rectangle scrollToRectangle = new Rectangle.Simple(StdoutViewer.this.getPostion_BottomLeft(),new Dimension.Simple(1,1));
         eventBus.raiseEvent( new RequestScrollToView( StdoutViewer.this, StdoutViewer.this , scrollToRectangle )  );
-        Logging.info("RequestScrollToView " );
+        //Logging.info("RequestScrollToView " );
    
         eventBus.raiseEvent( new RequestUpdateCanvasEvent(StdoutViewer.this));
     }

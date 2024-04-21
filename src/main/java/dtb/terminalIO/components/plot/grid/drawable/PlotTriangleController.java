@@ -33,9 +33,9 @@ public class PlotTriangleController implements PlotShapeController , Movable, Hi
         this.triangleShape = new Triangle(p1, p2, p3, color);
         this.colorHiliter = new ColorHiliter(color);
     }
-    
+
     @Override
-    public void plot(PointPlotter plotter, Rectangle gameEngine) {
+    public void plot(PointPlotter plotter, Rectangle bounds) {
         XYTranslate plotterWithOffset = new XYTranslate(plotter, this.offset);
         this.triangleShape.setColor(this.colorHiliter.getColor());
         this.triangleShape.setFilled(this.colorHiliter.isHiltited());
@@ -44,7 +44,6 @@ public class PlotTriangleController implements PlotShapeController , Movable, Hi
             RectangleShape rectShape = new RectangleShape(this.triangleShape.asRectangle(), Colors.BBla);
             rectShape.draw(plotterWithOffset);
         }
-        
         this.triangleShape.draw(plotterWithOffset);
     }
 

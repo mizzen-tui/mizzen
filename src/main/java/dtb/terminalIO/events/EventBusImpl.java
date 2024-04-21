@@ -8,6 +8,7 @@ import java.util.function.Predicate;
 
 import dtb.terminalIO.events.TerminalEvent.TYPE;
 import dtb.terminalIO.events.keyboard.InputEventsProducer;
+import dtb.terminalIO.util.Logging;
 
 /**
  * Warning: This object will spawn a new thread in its constructor.
@@ -246,8 +247,15 @@ public class EventBusImpl implements EventHandlerContainer, EventBus {
                     terminateHandlerAll.appendEventHandler( new OnTerminateEventHandler(()-> stopConsuming()) );
 
                     this.master_terminateEventHandlerBRIDGE = new ConditionalEventHandler() {
+                        
+                        boolean terminateHandled = false;
+                        
                         @Override
                         public void handle(TerminalEvent<?> te) {
+                            if (terminateHandled == true) {
+                                return;
+                            }
+                            terminateHandled = true;
                             if (EventBusImpl.this.terminateHandlerChain != null) {
                                 // execute
                                 EventBusImpl.this.terminateHandlerChain.handle(te);

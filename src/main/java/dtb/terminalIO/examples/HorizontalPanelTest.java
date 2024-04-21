@@ -4,14 +4,11 @@ import java.io.IOException;
 
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.BorderedComponent;
-import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
-import dtb.terminalIO.events.focus.DefaultFocusManager;
-import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.geom.position.PositionVerticalRelative;
@@ -94,13 +91,9 @@ public class HorizontalPanelTest {
                b_i.setBorder(true);
                hpButtons2.add(0, i*8, b_i);
            }
-           
+
            tApp.getMainApplicationPanel().add( new PositionVerticalRelative(vPanel1).offsetAdd(anchorPoint).offsetAdd(1+vPanel1.getHeight()+hpButtons.getHeight()+3, 0), 
                                                new BorderedComponent(hpButtons2).setTitle(" Lot'sa buttons Not computed"));
-           
-           DefaultFocusManager mainFocusManager = (DefaultFocusManager)FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(), tApp.getEventBus());
-           tApp.getEventBus().appendEventHandler(mainFocusManager);
-           FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, (Component<?>)tApp.getMainApplicationPanel());
 
 
         }).start();

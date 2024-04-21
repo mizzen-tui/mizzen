@@ -32,7 +32,6 @@ import dtb.terminalIO.components.plot.image.ImageViewerFactory;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.ImageRenderRequest;
 import dtb.terminalIO.components.plot.image.animate.ImageAnimatorComponent;
 import dtb.terminalIO.components.plot.image.animate.ImageIterator;
-import dtb.terminalIO.controlcodes.color.ColorBGPipe;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.ConditionalEventHandler;
@@ -51,7 +50,7 @@ public class RenderFromGraphics2D {
     public static void main(String args[]) {
 
         Logging.setEnabled(true);
-        
+
         new TUIApp(args).setDefaultMainApplicationPanel().confirmOnExit().setOnReadyStart((tApp) -> {
 
             ButtonBar controls = new ButtonBar();
@@ -127,7 +126,7 @@ public class RenderFromGraphics2D {
             colorMapDDLB.setSelected(0);
             colorMapDDLB.setColor(Colors.BIBlu);
             controls.addComponent(colorMapDDLB);
-            colorMapDDLB.onChange((te)->{
+            colorMapDDLB.onChange((te)-> {
                 currentRequest.get().setColorMap( colorMapDDLB.getValue() );
             });
 
@@ -140,7 +139,6 @@ public class RenderFromGraphics2D {
 
             tApp.getMainApplicationPanel().add(1,0, mainPanel);
 
-
             tApp.appendOnResizeAction((t,size)->{
                 imageViewerSize.setBaseSize(size);
                 mainAnimatorPanel.resize(new Dimension.Simple((imageViewerSize)));
@@ -148,7 +146,6 @@ public class RenderFromGraphics2D {
                 imageViewerOptionsSize.setBaseSize(size);
                 //animatorOptionsPanel.resize(new Dimension.Simple(imageViewerOptionsSize));
             });
-
 
             controls.addComponent(new InspectorButton(Colors.IGre, tApp));
             
@@ -248,15 +245,14 @@ public class RenderFromGraphics2D {
         private double scale = 1;
         private double delta = 0.01;
         Rectangle.Float r = new Rectangle.Float(20, 20, 200, 200);
-        
+
         protected void paint(Graphics g) {
-            
+
             int h = getHeight();
             int w = getWidth();
-            
-            
+
             Graphics2D g2d = (Graphics2D) g;
-            
+
             g.clearRect(0, 0, this.getWidth(), this.getHeight());
 
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
@@ -272,7 +268,7 @@ public class RenderFromGraphics2D {
             g2d.setColor(Color.RED);
             g2d.setStroke(new BasicStroke(2));
             g2d.draw(r);
-            
+
             nextImageFrame();
         }
 

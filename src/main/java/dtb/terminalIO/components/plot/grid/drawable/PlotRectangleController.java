@@ -33,17 +33,17 @@ public class PlotRectangleController implements PlotShapeController, Movable, Hi
             innerRectangleShape.draw(plotterWithOffset);
         }
     }
-    
+
     @Override
     public Rectangle asRectangle() {
         return new Rectangle.Simple(this.offset, this.rectangleShape.getRectangle());
     }
-    
+
     @Override
     public void moveTo(int row, int col) {
         this.offset = new Position.Simple(row, col);
     }
-    
+
     @Override
     public void moveDelta(int rowOffset, int colOffset) {
         this.offset = this.offset.addRows(rowOffset).addCols(colOffset);
@@ -59,5 +59,4 @@ public class PlotRectangleController implements PlotShapeController, Movable, Hi
         colorHiliter.unHilite();
     }
 
-    
 }

@@ -9,19 +9,19 @@ public class HiliterAdapter<T> implements HasHiliter {
     }
     
     public Hiliter getHiliter() {
-        
+
         if (source == null) {
             return Hiliter.NOOP;
         }
-        
+
         if (source instanceof Hiliter) {
             return (Hiliter) source;
         }
-        
+
         if (source instanceof HasHiliter) {
             return ((HasHiliter) source).getHiliter();
         }
-        
+
         return Hiliter.NOOP;
     }
 

@@ -3,6 +3,8 @@ package dtb.terminalIO.components;
 import java.util.TreeSet;
 
 import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.ColorParsingUtils;
+import dtb.terminalIO.controlcodes.color.ColorParsingUtils.ColorColorSegmentBuilder;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.CleanString;
@@ -31,6 +33,12 @@ public class AppendOnlyComponent extends AbstractComponent<AppendOnlyComponent> 
     public AppendOnlyComponent(Color color) {
         this(color, new Rectangle.Simple(0,0,0,0));
     }
+    
+    public void clear() {
+        super.clear();
+        sizeOfSegments = new Rectangle.Simple(0,0,0,0);
+        segments = ScreenLineSegment.UTIL.makeCollection(null);
+    }
 
     public void appendText(String text) {
         
@@ -44,7 +52,16 @@ public class AppendOnlyComponent extends AbstractComponent<AppendOnlyComponent> 
         }
         
         for (int i=0; i< lines.length; i++) {
-            appendLine( new CleanString.Simple(lines[i]));
+            appendLineRawText(lines[i]);
+//            String knownClean = CleanString.UTIL.clean(lines[i]);
+//            // here's a quirk .. if str known to be clean; lines[i] == knownClean
+//            // then do not have to handle color
+//            if (knownClean == lines[i]) {
+//                appendLine( new CleanString.KnownCleanString(lines[i]));
+//            } else {
+//                appendLineRawText(lines[i]);
+//            }
+            //appendLine( new CleanString.Simple(lines[i]));
         }
 
         this.markAsDirty();
@@ -54,6 +71,22 @@ public class AppendOnlyComponent extends AbstractComponent<AppendOnlyComponent> 
         if (this.getParentContainer()!=null) {
             this.getParentContainer().childResized(this);
         }
+    }
+    
+    private void appendLineRawText(String line) {
+        int ypos = AppendOnlyComponent.this.getHeight();
+        ColorParsingUtils.parseColorsAndBuildResult(line, new ColorColorSegmentBuilder() {
+            int currentWidth = 0;
+            @Override
+            public boolean newColorSegment(Color color, CleanString simpleText) {
+                color = color == null ? getColor() : color;
+                ScreenLineSegment segment = new SegmentImpl(color, ypos, currentWidth, -1, simpleText);
+                currentWidth += segment.getWidth();
+                segments.add(segment);
+                sizeOfSegments = sizeOfSegments.mergeAndExpandDimensionsWith(segment);
+                return true; // true means keep parsing
+            }
+        });
     }
     
     private void appendLine(CleanString line) {

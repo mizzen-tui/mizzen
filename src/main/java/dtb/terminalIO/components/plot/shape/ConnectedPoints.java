@@ -8,16 +8,12 @@ import java.util.TreeSet;
 import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.components.plot.PointPlotter.PointPlot;
 import dtb.terminalIO.components.plot.PointPlotterAsRectangle;
-import dtb.terminalIO.components.plot.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.shape.Shape.AbstractShape;
 import dtb.terminalIO.controlcodes.color.Color;
-import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.geom.AsRectangle2D;
 import dtb.terminalIO.geom.Rectangle2D;
-import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.geom.position.PositionTransform;
 import dtb.terminalIO.geom.position.Vec2;
-import dtb.terminalIO.textsegments.CleanString;
 
 /**
  * Given a set of points (defined in {@link PointPlot} objects),

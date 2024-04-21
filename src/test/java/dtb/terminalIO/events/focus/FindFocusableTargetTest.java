@@ -2,16 +2,21 @@ package dtb.terminalIO.events.focus;
 
 import java.util.List;
 
+import dtb.terminalIO.components.AbstractWrappedComponentWithFocusManager;
+import dtb.terminalIO.components.CompositeWithFocusManager;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.composite.VerticalPanel;
+import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.input.DropdownListBox;
 import dtb.terminalIO.components.input.ListBox;
 import dtb.terminalIO.components.input.TextInput;
+import dtb.terminalIO.controlcodes.color.Colors;
+import dtb.terminalIO.events.EventBus;
 import junit.framework.TestCase;
 
-public class FindFocusableTargetTests  extends TestCase {
+public class FindFocusableTargetTest  extends TestCase {
 
     
     public void testFind1() {
@@ -131,28 +136,65 @@ public class FindFocusableTargetTests  extends TestCase {
         ddlb.setSelectedValue("Test2");
 
         vp.add(ddlb);
-        
+
         FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(vp, null);
 
         assertNotNull(mainFocusManager);
-        
+
        // assertEquals(vp,mainFocusManager);
-        
+
         List<Focusable> result =  FocusManager.UTIL.findTargetAsPath(mainFocusManager, ti_1);
-        
+
         assertNotNull(result);
-        
+
         assertTrue(result.size()>0);
 
         result =  FocusManager.UTIL.findTargetAsPath(mainFocusManager, ddlb);
-        
+
         assertNotNull(result);
-        
+
         assertTrue(result.size()>0);
-        
+
         FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, vp);
-    
-    
+
     }
-    
+
+    public void testFindWithCompositeFocusManager() {
+
+        TestComponent1 tc1 = new TestComponent1();
+
+        EventBus eventBus = new EventBus.STUBBED();
+
+        FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tc1, eventBus);
+
+        List<Focusable> result = FocusManager.UTIL.findTargetAsPath(mainFocusManager, tc1.getButton());
+
+        System.out.println(result);
+
+        assertNotNull(result);
+
+        assertTrue(result.size()>0);
+
+        //FocusManager.UTIL.verifyPathsToFocusables(mainFocusManager, tc1);
+
+    }
+
+    static class TestComponent1 extends AbstractWrappedComponentWithFocusManager<CompositeWithFocusManager> {
+
+        Button button;
+
+        public TestComponent1() {
+            super(Colors.RCol, new CompositeWithFocusManager());
+
+            this.button = new Button("TEST");
+
+            this.getWrappedComponent().add(button);
+        }
+
+        Button getButton() {
+            return this.button;
+        }
+
+    }
+
 }

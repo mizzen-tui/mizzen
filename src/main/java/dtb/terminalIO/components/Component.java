@@ -46,6 +46,13 @@ public interface Component<T extends Component<?>>
     
     ParentContainer getParentContainer();
     
+    default ParentContainer getParentContainerOrFail() {
+        if (getParentContainer() == null) {
+            throw new IllegalStateException(HasName.UTIL.getName(this)+" does not have a parentContainer defined!");
+        }
+        return getParentContainer();
+    }
+    
     default boolean hide() {
         if (UTIL.isAttachedDirectlyToCanvas(this)) {
             return true;
@@ -230,71 +237,68 @@ public interface Component<T extends Component<?>>
         }
         
         public static Position getCanvasOffsetFor(Component<?> component) {
-            
+
             Position canvasOffset = component.getCanvasOffset();
-            
+
             if (canvasOffset != null) {
                 return  new Position.Simple(canvasOffset).offsetAdd(component.getPostion_TopLeft());
             }
-            
+
             // we don't have an offset, so travel up component's ancestors and calculate it
-            
+
             ParentContainer parentContainer = component.getParentContainer();
-            
+
             if (parentContainer != null && parentContainer instanceof Component<?>) {
                 Position parentCanvasOffset = getCanvasOffsetFor((Component<?>)parentContainer);
                 if ( parentCanvasOffset == null) {
                     return null;
                 }
-                
+
                 Position componentPositionRelativeToParent = parentContainer.getPositionRelativeToParent(component);
-                
+
                 if (componentPositionRelativeToParent == null) {
                     throw new NullPointerException("Unexpected null offset.  Component " + 
                                                    HasName.UTIL.getName(component) + 
                                                    " does not have a defined offset into parent " + 
                                                    HasName.UTIL.getName(parentContainer) );
                 }
-                
+
                 Position newOffset = new Position.Simple(parentCanvasOffset).offsetAdd(componentPositionRelativeToParent).offsetAdd(component.getPostion_TopLeft());   
                 return newOffset;
             }
-            
             return null;
         }
-        
 
         public static Position getOffsetFromComponentContainer(Component<?> component, ParentContainer container) {
-            
+
             if (component == null || container == null) {
                 return null;
             }
-            
+
             if ( ! new FindPathToTarget<Object>().exists(container, component)) {
                 return null;
             }
-            
+
             if (container.equals(component.getParentContainer())) {
                 return container.getPositionRelativeToParent(component);
             }
-            
+
             // parent is different from container - so let's get parentOffset first ..
-            
+
             ParentContainer parentContainer = component.getParentContainer();
-            
-            
+
             if (parentContainer != null && parentContainer instanceof Component<?>) {
                Position parentOffset = getOffsetFromComponentContainer((Component<?>)component.getParentContainer(), container);
                if (parentOffset == null) {
                    return null;
                }
-               
+
                Position newOffset = new Position.Simple(parentOffset).offsetAdd(parentContainer.getPositionRelativeToParent(component)).offsetAdd(component.getPostion_TopLeft());   
                return newOffset;
             }
-            
+
             return null;
-            
+
         }
 
         private static Component<?> __findComponentInHierarchyWithCompositeParent(Component<?> component) {

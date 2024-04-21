@@ -171,7 +171,7 @@ public class StdoutViewerTest {
                     });
                     
                     
-                    FocusManager.UTIL.verifyPathsToFocusables(fm, (Component<?>) tApp.getMainApplicationPanel());
+                    // FocusManager.UTIL.verifyPathsToFocusables(fm, (Component<?>) tApp.getMainApplicationPanel());
 
                 }).start();
     }

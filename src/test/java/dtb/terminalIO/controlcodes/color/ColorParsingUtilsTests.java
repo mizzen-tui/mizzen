@@ -104,7 +104,7 @@ public class ColorParsingUtilsTests extends TestCase {
                         assertNotNull("Color null on pass: " + counter, color);
 
                         if (counter == 0) {
-                            assertEquals("Loading image ..  Size: ", simpleText.getText());
+                            assertEquals("My Name is David", simpleText.getText());
                         }
 
                         if (counter == 1) {

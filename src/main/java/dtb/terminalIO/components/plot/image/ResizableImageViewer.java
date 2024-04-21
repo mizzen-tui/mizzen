@@ -94,9 +94,9 @@ public class ResizableImageViewer extends AbstractComponentWrappper<ImageRendere
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
         Logging.info("ResizableImage draw called!" + String.valueOf(this));
 
-        synchronized ( drawMutex ) {
+       // synchronized ( drawMutex ) {
             super.draw(color, segments);
-        }
+      //  }
     }
 
     public synchronized void resizeImageAsynch(EventBus eventBus, Dimension size) {
@@ -138,7 +138,7 @@ public class ResizableImageViewer extends AbstractComponentWrappper<ImageRendere
     private void resizeOnSeparateThread(EventBus eventBus, Dimension size) {
 
         ImageRenderer imgRenderer = getWrappedComponent();
-        
+
         ImageRenderRequest newImageRequest = new ImageRenderRequest().copyAllFrom(imageRequest);
         newImageRequest.setDesiredImgSizeInCharacters(size);
         newImageRequest.setImageToView(imageToView.get());
@@ -164,7 +164,7 @@ public class ResizableImageViewer extends AbstractComponentWrappper<ImageRendere
             } catch (Exception e) {
                 eventBus.raiseEvent(new TerminalEvent<Exception>(this, TerminalEvent.TYPE.EXCEPTION, e));
                 return;
-            } 
+            }
 
             imgRenderer.resize(size);
             imgRenderer.getSegmentsBuffer(); // forces a draw in separate thread
@@ -177,11 +177,12 @@ public class ResizableImageViewer extends AbstractComponentWrappper<ImageRendere
                 }
 
                 this.childResized(imgRenderer);
-                
+
                 resize(getWrappedComponent().getPreferredRectangleForLayout());
                 if (onImageLoaded != null) {
                     onImageLoaded.handle(te);
                 }
+                Logging.info("ResizableImageViewer  - RequestUpdateCanvasEvent!!!!!!!!!!!! " + imgRenderer.getClass());
                 ResizableImageViewer.this.markAsDirty();
                 eventBus.raiseEvent(new RequestUpdateCanvasEvent(ResizableImageViewer.this));
             });

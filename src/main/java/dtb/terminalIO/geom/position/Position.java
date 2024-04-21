@@ -99,6 +99,9 @@ public interface Position extends Vec2<Position>, Row, Column{
             this.y = row;
             this.x = col;
         }
+        public Simple(Position pos) {
+            this(pos.getRow(), pos.getCol());
+        }
 
         public Simple(int row, int col) {
             this((float)row,(float) col);

@@ -46,7 +46,7 @@ public class ClickableDraggableGridWrapper<T extends PlotShapeController>  exten
             }
             public void onClick(ApplicationMouseEvent appMouseEvent) {
                 
-                Logging.info("ClickableDraggableGameGridWrapper.onClick():  "+ appMouseEvent);
+                Logging.info("ClickableDraggableGridWrapper.onClick():  "+ appMouseEvent);
                 
                 Position gridPosition = mapToGridFunction.apply(appMouseEvent.getMousePosition());
                 Optional<T> entityOptional = shapesManager.getTopAtPosition(gridPosition, (pe) -> pe != draggingCursor);
@@ -56,7 +56,7 @@ public class ClickableDraggableGridWrapper<T extends PlotShapeController>  exten
                 }
                 PlotShapeController theClickedEntity = entityOptional.get();
 
-                Logging.info("ClickableDraggableGameGridWrapper.onClick():  2 "+ appMouseEvent+   "  entity " + HasName.UTIL.getName(theClickedEntity) +"\n");
+                Logging.info("ClickableDraggableGridWrapper.onClick():  2 "+ appMouseEvent+   "  entity " + HasName.UTIL.getName(theClickedEntity) +"\n");
 
                 if (theClickedEntity instanceof Hiliter) {
                     if (MOUSE_ACTION.DOWN_LEFT.equals(appMouseEvent.getMouseAction())) {

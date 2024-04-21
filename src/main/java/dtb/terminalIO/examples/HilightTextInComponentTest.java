@@ -35,15 +35,15 @@ public class HilightTextInComponentTest {
                                                                 40));
 
         container.add(1,1,tc);
-        
+
         String srchSTR = "Neil";
-        
+
         Collection<Rectangle> result = SegmentsSearchUtils.searchTextInSegmentsAll(container.getSegmentsBuffer(),srchSTR);
-        
+
         for (Rectangle r : result) {
             container.addHilitedRegion(r);
         }
-        
+
         master_canvas.addComponentSegments(1,1,container);
         
         master_canvas.refresh();

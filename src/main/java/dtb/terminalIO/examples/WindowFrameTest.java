@@ -1,10 +1,12 @@
 package dtb.terminalIO.examples;
 
 import java.io.IOException;
+import java.util.function.Predicate;
 
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.AbstractComponent;
 import dtb.terminalIO.components.BorderedComponent;
+import dtb.terminalIO.components.ClickableFocusableWrapper;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.ComponentInspector;
 import dtb.terminalIO.components.HasName;
@@ -13,6 +15,7 @@ import dtb.terminalIO.components.WindowFrame;
 import dtb.terminalIO.components.WindowFrameFocusable;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.composite.HorizontalPanel;
+import dtb.terminalIO.components.composite.LayoutManagerUtils;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.input.ListBox;
 import dtb.terminalIO.components.input.MultiLineTextInput;
@@ -122,7 +125,7 @@ public class WindowFrameTest {
             Composite sparkLineContainer = new Composite().setBorder(false);
             sparkLineContainer.resize(new Dimension.Simple(24,100));
             SparklineTest.buildSparklineTest(tApp.getEventBus(), sparkLineContainer, null);
-            WindowFrame wfSparkline = new WindowFrame(Colors.Blu, "SparkLine Demo", sparkLineContainer);
+            WindowFrame wfSparkline = new WindowFrame(Colors.Blu, "SparkLine Demo", ClickableFocusableWrapper.wrappedIfNeeded( sparkLineContainer));
 
             Button toggleDrawType = new Button(Composite.DRAW_VIA_PARTS ? "Drawing via Parts" : "Drawing traditional");
             toggleDrawType.setHotKey(Keys.CTRL_V_KEYSTROKE);
@@ -155,10 +158,10 @@ public class WindowFrameTest {
             windowContainer.add(4, 10, wfFruit);
             windowContainer.add(8, 14, wfVegatables);
 
-            Component<?> nestedWindows = makeWF(Colors.Whi, "Nested Windows", windowContainer);
+            Component<?> nestedWindows = makeWF(Colors.Whi, "Nested Windows", ClickableFocusableWrapper.wrappedIfNeeded(windowContainer));
 
-            AbstractComponent<?> wfSimpleText = makeWF(Colors.Whi, "Test WindowX", new TextComponent("Water is\nwet.\nExcept when its\nVery hot\nor\nvery cold!"));
-            wfSimpleText.setEmptyColor(Colors.On_Bla);
+            AbstractComponent<?> wfSimpleText = makeWF(Colors.Whi, "Test WindowX", ClickableFocusableWrapper.wrappedIfNeeded(new TextComponent("Water is\nwet.\nExcept when its\nVery hot\nor\nvery cold!")));
+            //wfSimpleText.setEmptyColor(Colors.On_Bla);
             
             
             tApp.getMainApplicationPanel().add(2, 0, wf1);
@@ -166,7 +169,7 @@ public class WindowFrameTest {
             tApp.getMainApplicationPanel().setDropShadow(true, wf2);
             tApp.getMainApplicationPanel().add(10, 30, wfSparkline);
             tApp.getMainApplicationPanel().add(20, 40, nestedWindows);
-            tApp.getMainApplicationPanel().add(22, 50, wfSimpleText);
+            tApp.getMainApplicationPanel().add(22, 45, wfSimpleText);
 
             ResizableImageViewer imageViewer = new ResizableImageViewer (Colors.Whi, new Dimension.Simple(25,50), new BufferedImageProvider.FromFilePath(imgFilePath));
 
@@ -174,7 +177,7 @@ public class WindowFrameTest {
             imageViewer.setColorMapping(colorMapping);
             imageViewer.setImageRenderType(renderType);
             
-            WindowFrame imageContainerWF = new WindowFrame(Colors.IPur, "Image", imageViewer) {
+            WindowFrame imageContainerWF = new WindowFrame(Colors.IPur, "Image", ClickableFocusableWrapper.wrappedIfNeeded(imageViewer)) {
                 @Override
                 protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
                     Logging.info("WindowFrame.img draw called!" + String.valueOf(this));
@@ -241,7 +244,15 @@ public class WindowFrameTest {
 
             Position statsPosition = PositionRelativeFactory.fromAlign(VAlign.BOTTOM, Align.LEFT,  tApp.getMainApplicationPanel(), statsPanel);
             tApp.getMainApplicationPanel().add(statsPosition, statsPanel);
+            
+            
+            Button distributeEvenlyButton = new Button("DISTIRBUTE-EVENLY");
+            tApp.getMainApplicationPanel().add(0,35, distributeEvenlyButton);
 
+            Button distributeStaggerButton = new Button("DISTIRBUTE-STAGGERED");
+            tApp.getMainApplicationPanel().add(0,60, distributeStaggerButton);
+            
+            
             // every 1/4 second we update ComponentInspector with current component hierarchy and focus data
             tApp.getEventBus().appendIdleEventHandler(new RepeatingInterval(2000, (te)->{
                                                          inspector.refreshEventHandler().handle(te);
@@ -257,6 +268,28 @@ public class WindowFrameTest {
             tApp.getMainApplicationPanel().add(0,0,new TextComponent("WindowFrame class: " + usedWindoManagerClass().getSimpleName()));
 
             tApp.getResizeAction().accept(tApp, TerminalDimensions.create());
+            
+            Predicate<Component<?>> canMoveComponentsPredicate = (c) -> {
+                if (c == distributeEvenlyButton || c == distributeStaggerButton) {
+                    return false;
+                }
+                if (c instanceof TextComponent || c instanceof Button) {
+                    return false;
+                }
+                return true;
+            };
+            
+            //LayoutManagerUtils
+            distributeEvenlyButton.onChange((te)->{
+                LayoutManagerUtils.distributeComponentsEvenly((Composite)tApp.getMainApplicationPanel(), 
+                                                              canMoveComponentsPredicate,
+                                                              new Position.Simple(1,0),
+                                                              new Dimension.Simple(tApp.getCanvas().getHeight()-1, tApp.getCanvas().getWidth()));
+            });
+
+            distributeStaggerButton.onChange((te)->{
+                LayoutManagerUtils.distributeComponentsStaggered((Composite)tApp.getMainApplicationPanel(), canMoveComponentsPredicate);
+            });
 
         }).start();
 

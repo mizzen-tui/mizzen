@@ -119,7 +119,6 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
         this.hasDrawn = false;
         // if parent exists, then mark it as dirty as well
         Component.UTIL.markParentDirtyIfChildDirty(this);
-
     }
 
     private boolean busyDrawingFLAG = false;

@@ -82,7 +82,7 @@ public class ScrollBarHorizontal  extends BoundedComponent<ScrollBarVertical>  i
             return Position.ZERO;
         }
 
-        Logging.info("percentage = " + percentage);
+        //Logging.info("percentage = " + percentage);
 
         return new Position.Simple(  0 , (int)(  ((float)scrollbarOffset.getCol()) * percentage) );
     }

@@ -43,14 +43,14 @@ public class OnRequestUpdateCanvasEventHandler implements ConditionalEventHandle
         }
 
         AbstractTimedRequestedController buildTimedUpdateCanvasController(Runnable canvasUpdater) {
-            
+
             timedCanvasUpdater = ()-> {
-                
+
                 // update canvas and time how long it takes
                 long elapsed = ElapsedTime.onRunOf(canvasUpdater).elapsed();
 
-//                Logging.info("OnRequestUpdateCanvasEventHandler.timedCanvasUpdater - elapsed: " + elapsed + "  tmrDELAY:  " + this.timedOnChangeRequestController.getTimerDelayMillis());
-//                Logging.info(" ");
+               // Logging.info("OnRequestUpdateCanvasEventHandler.timedCanvasUpdater - elapsed: " + elapsed + "  tmrDELAY:  " + this.timedOnChangeRequestController.getTimerDelayMillis());
+               // Logging.info(" ");
                 
                 if (OnRequestUpdateCanvasEventHandler.this.timedOnChangeRequestController != null &&
                     elapsed <= MAX_WAIT &&  // ignore really long times .. hopefully just an anomaly
@@ -89,6 +89,7 @@ public class OnRequestUpdateCanvasEventHandler implements ConditionalEventHandle
 
         @Override
         public void handle(TerminalEvent<?> te) {
+           // Logging.info("OnRequestUpdateCanvasEventHandler.handle (e=" + te.toString() );
             timedOnChangeRequestController.onRequest(te.getEventBus());
         }
 

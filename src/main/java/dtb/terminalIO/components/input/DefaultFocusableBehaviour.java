@@ -73,6 +73,9 @@ public class DefaultFocusableBehaviour implements FocusBehaviour  {
 
         @Override
         public void setFocus(boolean focus, EventBus eventBus) {
+            if (focus == hasFocus()) {
+                return;
+            }
             super.setFocus(focus, eventBus);  // set the focus flag
             new FocusSetterToHiliteAction().hiliteAction(this, colorHiliter); // hilite
             if (this.component instanceof Hiliter) {

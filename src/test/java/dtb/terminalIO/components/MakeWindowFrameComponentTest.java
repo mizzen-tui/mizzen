@@ -1,11 +1,29 @@
 package dtb.terminalIO.components;
 
 import dtb.terminalIO.components.composite.Composite;
+import dtb.terminalIO.components.frameset.FrameSet;
 import dtb.terminalIO.components.input.ListBox;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.geom.Dimension;
 import junit.framework.TestCase;
 
+/**
+ * Please note:  These tests create components and cause the component "draw" methods to get indirectly invoked
+ *               by calls to component.getSegmentsBuffer().getSegments();
+ *               
+ *               But where are the asserts?   
+ *
+ *              The asserts are done indirectly by setting the following
+ *              
+ *              Component.UTIL.COMPONENT_SEGMENTS_INTEGRITY_CHECK_FLAG = true;
+ *              
+ *              With this flag turned on, the library itself checks that segments do not overlap
+ *
+ *
+ * 
+ * @author dbalme
+ *
+ */
 public class MakeWindowFrameComponentTest extends TestCase {
     
     public void testMakeBasicWindowFrameComponent() {
