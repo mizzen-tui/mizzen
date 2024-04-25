@@ -21,7 +21,6 @@ import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.controlcodes.color.Colors.FGBGColors;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
-import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.examples.sampledata.ReadSampleFiles;
 import dtb.terminalIO.geom.Align;
 import dtb.terminalIO.geom.Dimension;
@@ -47,7 +46,7 @@ public class ColorsTestWithTable {
             
             Composite colorsOfTheRainbow = new HorizontalPanel().setHorizontalSpacer(1);
             colorsOfTheRainbow.setFillOnClear(false);
-            colorsOfTheRainbow.setBorder(true);
+            //colorsOfTheRainbow.setBorder(true);
             
             int maxName = -1;
             
@@ -171,18 +170,6 @@ public class ColorsTestWithTable {
             renderObjectOntoComponent(componentForRendering2, tableColumn, colorAndText, preferredWidth, maxCellHeight, align);
         }
 
-
-//        @Override
-//        public IScreenLineSegmentsBuffer render(TableColumn tableColumn, Object cellValue, int preferredWidth, int maxCellHeight, Align align) {
-//            // TODO Auto-generated method stub
-//            return null;
-//        }
-//
-//        @Override
-//        public IScreenLineSegmentsBuffer render(TableColumn tableColumn, Object cellValue, int preferredWidth, int maxCellHeight) {
-//            // TODO Auto-generated method stub
-//            return render(tableColumn, cellValue, preferredWidth, maxCellHeight, tableColumn.getAlign());
-//        }
     }
 
     private static String largeText;

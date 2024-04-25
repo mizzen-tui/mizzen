@@ -348,6 +348,10 @@ public class TextInput extends BoundedComponent<TextInput>
 
     @Override
     public void handle(TerminalEvent<?> te) {
+        if (!this.hasFocus()) {
+            // Compensating for a bug in defaultFocusManager/TUIApp 
+            requestFocus(te);
+        }
         getEventHandler().handle(te);
     }
 

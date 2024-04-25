@@ -5,17 +5,14 @@ import java.util.function.BiConsumer;
 
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.BorderedComponent;
-import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.TextComponent;
-import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.input.TextInput;
 import dtb.terminalIO.components.menu.Menu;
 import dtb.terminalIO.components.menu.MenuBar;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.TerminalEvent;
-import dtb.terminalIO.events.focus.FocusManager;
-import dtb.terminalIO.events.focus.RequestFocusEvent;
 import dtb.terminalIO.util.Logging;
+
 public class MenuBarTest {
     
     public static void main(String[] args) throws IOException {

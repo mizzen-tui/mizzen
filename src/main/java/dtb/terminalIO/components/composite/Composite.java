@@ -892,6 +892,9 @@ public class Composite extends AbstractComponent<Composite>
 
     @Override
     public boolean moveChildToPosition(Position position, Component<?> child) {
+        if (this.hasBorder()) {
+            position = position.offsetAdd(Position.DOWN_BY_1_AND_RIGHT_BY_1.negate());
+        }
         moveChildTo(position, child);
         return true;
     }

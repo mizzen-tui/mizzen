@@ -21,7 +21,7 @@ public class ColoredTextTest {
 
     public static void main(String[] args) throws IOException {
 
-        TUIApp app = new TUIApp().initFromArgs(args);
+        TUIApp app = new TUIApp().initFromArgs(args).setDefaultMainApplicationPanel();
 
 
         String fileName = "acme-white-150.txt";

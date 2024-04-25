@@ -2,7 +2,6 @@ package dtb.terminalIO.examples;
 
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.ButtonBar;
-import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.composite.HorizontalPanel;
@@ -10,8 +9,6 @@ import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.input.DropdownListBox;
 import dtb.terminalIO.components.modal.MessageBox;
 import dtb.terminalIO.controlcodes.color.Colors;
-import dtb.terminalIO.events.focus.DefaultFocusManager;
-import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.util.Logging;
 
@@ -35,7 +32,7 @@ public class DropdownListBoxInButtonBarTest {
             
             HorizontalPanel hpMain = new HorizontalPanel();
             
-            ButtonBar bbar = new ButtonBar();
+            ButtonBar bbar = new ButtonBar().setNoBorderChars();
 
             bbar.addComponent( new TextComponent("A LABEL") );
 

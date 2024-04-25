@@ -5,13 +5,21 @@ import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.ScreenCanvasBackend;
 import dtb.terminalIO.core.TerminalScreen;
 
+/**
+ * A simple test to compare Screen update strategies..
+ * 
+ * ScreenCanvasBackend.UpdateStrategy.UPDATE_CHANGED   versus  ScreenCanvasBackend.UpdateStrategy.UPDATE_FULL
+ *   
+ * @author dbalme
+ *
+ */
 public class BootStrapTests {
 
     public static void main(String[] args) {
         int countUpdateOnChangedStrategy = testUsingUpdateStrategy(args, ScreenCanvasBackend.UpdateStrategy.UPDATE_CHANGED);
         int countFullUpdateStrategy = testUsingUpdateStrategy(args, ScreenCanvasBackend.UpdateStrategy.UPDATE_FULL);
-        System.out.println("update onchanged strategy COUNT: " + countUpdateOnChangedStrategy);
-        System.out.println("update full      strategy COUNT: " + countFullUpdateStrategy);
+        System.out.println( String.format("update onchanged strategy COUNT: %10s", countUpdateOnChangedStrategy));
+        System.out.println( String.format("update full      strategy COUNT: %10d", countFullUpdateStrategy));
     }
     
     public static int testUsingUpdateStrategy(String[] args, ScreenCanvasBackend.UpdateStrategy updateStrategy) {

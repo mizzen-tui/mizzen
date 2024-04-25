@@ -5,7 +5,6 @@ import dtb.terminalIO.components.tab.TabPanel.TabContext;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.RequestFocusEvent;
-import dtb.terminalIO.events.focus.ToFocusable;
 import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
 

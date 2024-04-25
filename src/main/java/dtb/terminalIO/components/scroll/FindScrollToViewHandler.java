@@ -30,7 +30,7 @@ public class FindScrollToViewHandler extends OnRequestScrollToViewEventHandler {
 
     /**
      * loop up the component's ancestor looking for a component that can handle the scroll to view request
-     * Component asking to be scrolled to is embedded within the te
+     * Component asking to be scrolled to is embedded within the te (event)
      * @param te the scroll to view request event
      * @return ancestor component that can handle request, null otherwise
      */

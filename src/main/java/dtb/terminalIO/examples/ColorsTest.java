@@ -17,7 +17,6 @@ public class ColorsTest {
         //Logging.setEnabled(true);
         
         new TUIApp(args)
-        .setEmptyChar(' ')
         .setDefaultMainApplicationPanel()
         .confirmOnExit()
         .setOnReadyStart((tApp)->{

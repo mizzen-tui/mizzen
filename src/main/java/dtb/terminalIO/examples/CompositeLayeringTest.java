@@ -20,7 +20,8 @@ public class CompositeLayeringTest {
     public static void main(String[] args) throws IOException { 
         
         
-        new TUIApp(args).setCanvasSize(new Dimension.Simple(20,50))
+        new TUIApp(args)
+                    .setEmptyColors(Colors.On_Blu)
                     .setDefaultMainApplicationPanel()
                     .confirmOnExit()
                     .setOnReadyStart((tApp)->{
@@ -33,16 +34,16 @@ public class CompositeLayeringTest {
             
             int j=0 ;
             for (int i = 0; i < 3; i++) {
-                
+
                 j+=2;
-                
-                Component<?> c = new BorderedComponent(new TextComponent(j+" : Box\n"+j+" XXX"));
-                
-                container.add(j,j, c);
+
+                Component<?> c = new BorderedComponent(new TextComponent(j+" : Box\n"+j+"   ").setFillOnClear(true));
+
+                container.add(j+1,j, c);
                 
             }
             
-            
+
             j+=2;
             
             Component<?> the_c = new BorderedComponent(Colors.IYel,new TextComponent(Colors.IYel,new Dimension.Simple(10,20),
@@ -57,14 +58,14 @@ public class CompositeLayeringTest {
                             " CTRL-G : right\n"
                     ));
             
-            container.add(3,7, the_c);
+            container.add(4,7, the_c);
             
             
             for (int i = 0; i < 3; i++) {
                 
                 j+=2;
                 
-                Component<?> c = new BorderedComponent(new TextComponent(j+" : Box\n"+j+" XXX"));
+                Component<?> c = new BorderedComponent(new TextComponent(j+" : Box\n"+j));
                 
                 container.add(j,j, c);
                 

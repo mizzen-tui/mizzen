@@ -29,11 +29,12 @@ public class CompositeSimpleTest {
 
                     tApp.getMainApplicationPanel().add(10,10, new TextComponent("Test1"));
 
-                    tApp.getMainApplicationPanel().add(12,15, new TextComponent(Colors.IRed,"Test2\nand more1\nand more2\nand more3 and more4..\nand then some more5"));
-                    tApp.getMainApplicationPanel().add(13,15, new TextComponent("Test3"));
-                    tApp.getMainApplicationPanel().add(14,22, new BorderedComponent(new Button("Test4")));
+                    tApp.getMainApplicationPanel().add(10,25, new TextComponent("Test3"));
+                    tApp.getMainApplicationPanel().add(14,36, new BorderedComponent(new Button("Test4")));
 
-                    tApp.getMainApplicationPanel().add(18,22, new BorderedComponent(new Button("Test5")));
+                    tApp.getMainApplicationPanel().add(12,15, new TextComponent(Colors.IRed,"Test2\nand more1\nand more2\nand more3 and more4..\nand then some more5"));
+
+                    tApp.getMainApplicationPanel().add(18,36, new BorderedComponent(new Button("Test5")));
 
                     Button toggleDrawType = new Button(Composite.DRAW_VIA_PARTS ? "Drawing via Parts" : "Drawing traditional");
                     toggleDrawType.setHotKey(Keys.CTRL_V_KEYSTROKE);
@@ -43,9 +44,9 @@ public class CompositeSimpleTest {
                        te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(toggleDrawType));
                     });
 
-                    tApp.getMainApplicationPanel().add(5, 3, new BorderedComponent( toggleDrawType ));
+                    tApp.getMainApplicationPanel().add(1, 20, new BorderedComponent( toggleDrawType ));
 
-                    ButtonBar bb = new ButtonBar();
+                    ButtonBar bb = new ButtonBar().setNoBorderChars();
                     TextComponent textStatus = new TextComponent("-----------------");
                     tApp.getMainApplicationPanel().add(1, 3, new BorderedComponent( bb ));
                     tApp.getMainApplicationPanel().add(4, 3, textStatus);

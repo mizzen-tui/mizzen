@@ -176,10 +176,11 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
          }
 
          if (hasFocus) {
-             outputStr = lbracket(leftSelectedBracket) + outputStr + rbracket(rightSelectedBracket);
+             outputStr = this.renderedText.getColor().asString() + lbracket(leftSelectedBracket) + outputStr + rbracket(rightSelectedBracket);
          } else {
              // output brackets ..
-             outputStr = lbracket(StringUtils.repeat(' ', leftSelectedBracket != null ? leftSelectedBracket.length():0)) + 
+             outputStr = this.renderedText.getColor().asString() +
+                         lbracket(StringUtils.repeat(' ', leftSelectedBracket != null ? leftSelectedBracket.length():0)) + 
                          outputStr + 
                          rbracket(StringUtils.repeat(' ', rightSelectedBracket != null ? leftSelectedBracket.length():0));
          }

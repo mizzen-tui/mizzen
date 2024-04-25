@@ -416,7 +416,10 @@ public class TUIApp {
         mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(TUIApp.this.getMainApplicationPanel(), 
                                                                             TUIApp.this.getEventBus(), 
                                                                             ()->new DefaultFocusManager().setNameFromOwner(TUIApp.this.getMainApplicationPanel()).setNavKeysFirst(false));
-        TUIApp.this.getEventBus().appendEventHandler(  mainFocusManager );
+        if (mainFocusManager != null) {
+            HasName.UTIL.setDefaultNameFromParentObject(mainFocusManager, this, "mainFocusManager");
+            TUIApp.this.getEventBus().appendEventHandler(  mainFocusManager );
+        }
 
      // sanity test
         if (verifyFocusables) {

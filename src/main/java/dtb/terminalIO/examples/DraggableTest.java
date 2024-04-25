@@ -7,32 +7,21 @@ import java.nio.file.Paths;
 
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.BorderedComponent;
-import dtb.terminalIO.components.Component;
-import dtb.terminalIO.components.HasName;
-import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.Composite;
-import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.input.Button;
-import dtb.terminalIO.components.input.DefaultFocusableBehaviour;
 import dtb.terminalIO.components.input.DraggableTextComponent;
 import dtb.terminalIO.controlcodes.ControlCode;
-import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
-import dtb.terminalIO.events.ChainedEventHandler;
-import dtb.terminalIO.events.EventBus;
-import dtb.terminalIO.events.EventHandler;
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
-import dtb.terminalIO.events.TerminalEvent;
-import dtb.terminalIO.events.focus.DefaultFocusManager;
-import dtb.terminalIO.events.focus.FocusManager;
-import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.controlcodes.color.Colors.FGBGColors;
 import dtb.terminalIO.events.keyboard.Keys;
-import dtb.terminalIO.events.mouse.ApplicationMouseEvent;
-import dtb.terminalIO.events.mouse.Draggable;
+import dtb.terminalIO.geom.Align;
+import dtb.terminalIO.geom.VAlign;
+import dtb.terminalIO.geom.position.PositionRelativeFactory;
 import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.StringUtils;
 
 public class DraggableTest {
+
 
     public static void main(String args[]) {
 
@@ -41,174 +30,69 @@ public class DraggableTest {
         Logging.setEnabled(true);
 
         new TUIApp(args)
-        .setEmptyChar('.')
         .setDefaultMainApplicationPanel()
+        .setEmptyColors(Colors.On_IYel)
         .confirmOnExit()
         .setOnReadyStart((tApp)->{
 
-            Button toggleDrawType = new Button(Composite.DRAW_VIA_PARTS ? "Drawing via Parts" : "Drawing traditional");
-            toggleDrawType.onChange((te)-> {
-               Composite.DRAW_VIA_PARTS = ! Composite.DRAW_VIA_PARTS;
-               toggleDrawType.setButtonText(Composite.DRAW_VIA_PARTS ? "Drawing via Parts" : "Drawing traditional");
-               te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(toggleDrawType));
-            });
-
-            tApp.getMainApplicationPanel().add(5, 3, new BorderedComponent( toggleDrawType ));
-
             tApp.getMainApplicationPanel().add(10, 3, new BorderedComponent( new DraggableTextComponent(Colors.Red,"RED")));
 
-            tApp.getMainApplicationPanel().add(14, 3, new DraggableTextComponent(Colors.Blu,"BLUE"));
+            ((Composite)tApp.getMainApplicationPanel()).setTitle(new FGBGColors(Colors.BIBlu, Colors.On_IYel), "DraggableTextComponent Examples")
+                                                       .setBorderColor(new FGBGColors(Colors.BIBlu, Colors.On_IYel));
 
-            tApp.getMainApplicationPanel().add(14, 3, new DraggableTextComponent(Colors.BIPur,"Freeze ROW").freezeRow());
-
+            Button quitButton = new Button(new FGBGColors(Colors.BIBlu, Colors.On_Yel),  "Quit")
+                                                  .setHotKey(Keys.CTRL_C_KEYSTROKE)
+                                                  .setDisplayHotKey(true)
+                                                  .setUseCursor(false);
+            tApp.getMainApplicationPanel().add(PositionRelativeFactory.fromAlign(VAlign.TOP, Align.RIGHT, ((Composite)tApp.getMainApplicationPanel()).getInnerRectangle(), quitButton), quitButton);
+            quitButton.onChange(tApp.getTerminateAppHotKeyEventHandler());
             
-            tApp.getMainApplicationPanel().add(18, 3, new DraggableTextComponent(Colors.BCya,"Freeze COL").freezeColumn());
+            tApp.getMainApplicationPanel().add(10, 13, new BorderedComponent(Colors.IWhi, new DraggableTextComponent(Colors.BIBlu,"BLUE")));
+
+            tApp.getMainApplicationPanel().add(14, 3, new BorderedComponent(new DraggableTextComponent(Colors.BIPur,"     Freeze ROW-DRAG \n <--  Only moves left  --> \n      and right").freezeRow()));
+
+            tApp.getMainApplicationPanel().add(20, 3, new BorderedComponent(new DraggableTextComponent(Colors.BCya,"         ^\n         |\n Freeze COLUMN-DRAG \n  Only moves up\n    and down\n         |\n         v").freezeColumn()));
 
             String largeText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis nulla elit, placerat sed aliquam at, porta ut justo. Sed vel fringilla nisi, eu laoreet dui. Sed gravida at ipsum et viverra. Ut diam justo, imperdiet sed ante eu, elementum pellentesque sem. Curabitur eleifend turpis eros, nec semper est ultricies eget. Sed sed faucibus mauris, sed porttitor mauris. Ut quis tellus ultrices sapien porttitor tincidunt eu sed risus. Integer ac imperdiet dolor, at ultricies odio. Vestibulum sed pretium ligula. Sed dapibus sapien nunc, eget molestie mauris hendrerit id. Duis blandit tortor eget risus sagittis, at sodales felis congue. Donec vulputate massa aliquam, pretium ante eu, hendrerit ante. Suspendisse potenti. Nam gravida tempus ipsum, non convallis turpis malesuada id. Sed iaculis iaculis condimentum. Fusce pharetra euismod efficitur.";
 
-            tApp.getMainApplicationPanel().add(14, 3, new BorderedComponent(new DraggableTextComponent(Colors.BGre,StringUtils.wrap(largeText, 50))));
+            tApp.getMainApplicationPanel().add(14, 43, new BorderedComponent(new DraggableTextComponent(Colors.BGre,StringUtils.wrap(largeText, 50))).setTitle("Large Text"));
 
-            tApp.getMainApplicationPanel().add(20, 3, new BorderedComponent(new DraggableTextComponent(Colors.BGre,getFileData(args))));
-
-
-            Composite innerComposite = new Composite().setName("innerComposite");
-            innerComposite.setBorder(true);
-            innerComposite.setFillOnClear(true);
-            innerComposite.setEmptyChar(' ');
-            innerComposite.add(1, 4, new TextComponent("[Inner composite]"));
-            innerComposite.add(3, 2, new TextComponent("With 2 text components"));
-            tApp.getMainApplicationPanel().add(22, 3, innerComposite );
-
-            Composite horizontalComposite = new HorizontalPanel().setHorizontalSpacer(2).setName("horizontalComposite");
-            horizontalComposite.setBorder(true);
-            horizontalComposite.setFillOnClear(true);
-            horizontalComposite.add(new TextComponent("---HorizontalComposite-- "));
-            horizontalComposite.add(new TextComponent("With 2 text components\nRight here in Texas!"));
-            tApp.getMainApplicationPanel().add(33, 3, horizontalComposite );
+            LoadedFile fileDetails = LoadedFile.getFileData(args);
+            tApp.getMainApplicationPanel().add(35, 43, new BorderedComponent(new DraggableTextComponent(Colors.BGre,fileDetails.fileNameContent)).setTitle(fileDetails.fileName));
 
         })
         .start();
-        
     }
     
-    private static String getFileData(String[] args)  {
-        if (args.length == 0) {
-            return "Filename not specified";
-        }
-        
-        String fileName = args[0]; 
-
-        // TODO: validation required (file exists etc)
-
-        try {
-            byte[] fileByteData = Files.readAllBytes(Paths.get(fileName));
-
-            //String fileData  =  new String(fileByteData,StandardCharsets.UTF_8);
-            String fileData = new String(fileByteData,StandardCharsets.UTF_8).replace(ControlCode.ERASE_END_OF_LINE.asString(),"");
-            fileData = fileData.replace("\t","    ");
-            return fileData;
-        } catch (IOException e) {
-            return e.getMessage();
-        }
-    }
-    
-    static class DraggableTextComponent11 extends TextComponent implements Focusable , Draggable {
-
-        Focusable meAsFocusable;
-        ChainedEventHandler chainedHandler;
-        String baseText;
-
-        public DraggableTextComponent11(Color color, String text) {
-            super(color, hilitedText(text, false));
-            this.baseText = text;
-           
+    static class LoadedFile {
+        String fileName;
+        String fileNameContent;
+        public LoadedFile(String fileName, String fileNameContent) {
+            super();
+            this.fileName = fileName;
+            this.fileNameContent = fileNameContent;
         }
 
-        private Focusable asFocusable() {
-
-            if (meAsFocusable != null) {
-                return meAsFocusable;
+        static LoadedFile getFileData(String[] args)  {
+            if (args.length == 0) {
+                return new LoadedFile("File-not-specified","Filename not specified\nYou can specify a fileName on command line");
             }
-
-            chainedHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
             
-            meAsFocusable =  new DefaultFocusableBehaviour.HiliteOnFocus(this) {
-                @Override
-                public void setFocus(boolean focus, EventBus eventBus) {
-                    super.setFocus(focus, eventBus);
-                    DraggableTextComponent11.this.setText(hilitedText(baseText, focus));
-                }
-            };
-            return meAsFocusable;
-        }
-
-        private static String hilitedText(String baseText, boolean hilited) {
-            if (hilited) {
-                return "[" + baseText + "]";
+            String fileName = args[0]; 
+            
+            // TODO: validation required (file exists etc)
+            
+            try {
+                byte[] fileByteData = Files.readAllBytes(Paths.get(fileName));
+                
+                //String fileData  =  new String(fileByteData,StandardCharsets.UTF_8);
+                String fileData = new String(fileByteData,StandardCharsets.UTF_8).replace(ControlCode.ERASE_END_OF_LINE.asString(),"");
+                fileData = fileData.replace("\t","    ");
+                return new LoadedFile(fileName, fileData);
+            } catch (IOException e) {
+                return new LoadedFile("Error loading file", "File "+fileName +"\n\n"+ e.getMessage());
             }
-            return " " + baseText + " ";
         }
-
-        @Override
-        public EventHandler canHandle(TerminalEvent<?> te) {
-            if (asFocusable().canHandle(te) != null) {
-                return this;
-            }
-            return null;
-        }
-
-        @Override
-        public void handle(TerminalEvent<?> te) {
-            asFocusable().handle(te);
-        }
-
-        @Override
-        public boolean onDragStart(ApplicationMouseEvent appMouseEvent) {
-            Logging.info(HasName.UTIL.getName(this)+":onDragStart evt:" + String.valueOf(appMouseEvent));
-            return true;
-        }
-
-        @Override
-        public boolean onDrag(ApplicationMouseEvent appMouseEvent) {
-            Logging.info(HasName.UTIL.getName(this)+":onDrag evt:" + String.valueOf(appMouseEvent));
-            Component<?> componentToMove = this.getParentContainer().findChildOrAncestorThatCanBeMoved(this);
-            if (componentToMove == null) {
-                return false;
-            }
-
-            componentToMove.getParentContainer().moveChildToPosition(appMouseEvent.getMousePosition(), componentToMove);
-            appMouseEvent.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(this)  );
-            return true;
-        }
-
-        @Override
-        public boolean onDragStop(ApplicationMouseEvent appMouseEvent) {
-            Logging.info(HasName.UTIL.getName(this)+":onDragStop evt:" + String.valueOf(appMouseEvent));
-            appMouseEvent.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(this)  );
-            return true;
-        }
-
-        @Override
-        public boolean hasFocus() {
-            return asFocusable().hasFocus();
-        }
-
-        @Override
-        public void setFocus(boolean focus, EventBus eventBus) {
-            asFocusable().setFocus(focus, eventBus);
-        }
-        
-        @Override
-        public FocusManager getParentFocusManager() {
-            return asFocusable().getParentFocusManager();
-        }
-
-        @Override
-        public void setParentFocusManager(FocusManager focusManager) {
-            Focusable.UTIL.setParentFocusManager(this, focusManager, (fm)-> asFocusable().setParentFocusManager(fm));
-        }
-        
-        
     }
 
 

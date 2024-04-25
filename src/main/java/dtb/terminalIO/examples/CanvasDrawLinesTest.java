@@ -12,6 +12,12 @@ import dtb.terminalIO.core.TerminalScreen;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
 
+/**
+ * Tests the block line drawing functions to ensure intersection characters are drawn where lines overlap
+ * 
+ * @author dbalme
+ *
+ */
 public class CanvasDrawLinesTest {
 
     public static void  main(String args[]) throws Exception {

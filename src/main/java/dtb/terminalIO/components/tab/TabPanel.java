@@ -124,9 +124,6 @@ public class TabPanel extends AbstractComponentWrappper<CompositeWithFocusManage
         if (hotKey == null)
             throw new IllegalArgumentException("TabAction must specify a hotKey");
 
-//        if (findTabActionByHotKey(hotKey) != null)
-//            throw new IllegalArgumentException("TabAction must specify a unique hotKey");
-
         String tabTxt  = tabText;
         if (!tabTxt.contains(hotKey.getName())) {
             tabTxt = hotKey.getName() + " - " + tabTxt;

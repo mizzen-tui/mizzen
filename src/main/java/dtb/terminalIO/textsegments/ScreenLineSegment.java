@@ -495,7 +495,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString  {
             }
             
             
-            while (currentRow < bottomRow) {
+            while (currentRow <= bottomRow) {
                 emptySpots.add(blankScreenObject(fillColor, fillChar, currentRow, currentCol, -1, rightCol - currentCol + 1));
                 currentRow++;
                 currentCol = leftCol;

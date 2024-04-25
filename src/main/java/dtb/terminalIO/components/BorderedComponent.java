@@ -29,12 +29,12 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
     private Component<?>      component;
     private Position          componentPosition;
     private boolean           showBorder;
-    
+
     public BorderedComponent(Color color, Component<?> component,  ParentContainer parentContainer) {
         super(color, Rectangle.ZERO, parentContainer);
         this.component = component;
         this.component.setParentContainer(this);
-        this.componentPosition = new Position.Simple(1,1);
+        this.componentPosition = Position.DOWN_BY_1_AND_RIGHT_BY_1;
         Position.Simple p = new Position.Simple(component);
         Rectangle bounds = new Rectangle.Simple(p, new Dimension.Simple(component.getHeight() + 2, component.getWidth() + 2));
         this.border = new SimpleBorder(color, bounds);
@@ -48,7 +48,7 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
         //this.setEmptyColor(Colors.On_IYel);
         //
     }
-    
+
     @Override
     public Position getPositionRelativeToParent(Component<?> child) {
         if (child == this.border) {
@@ -70,7 +70,7 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
             }
             return this.component;
         }
-        
+
         if (this.border.containsPosition(offset)) {
             Component<?> c = this.border.getComponentAtOffset(offset);
             if (c != null) {
@@ -148,12 +148,11 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
         this.showBorder = showBorder;
         this.markAsDirty();
     }
-    
 
     public boolean visibleBorder() {
         return this.showBorder;
     }
-    
+
     public void markAsDirty() {
         super.markAsDirty();
         

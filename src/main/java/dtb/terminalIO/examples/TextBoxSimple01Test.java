@@ -29,7 +29,7 @@ public class TextBoxSimple01Test {
                testForm.add(new HorizontalPanel().addText("Street   : ").add(strnum));
                testForm.add(new HorizontalPanel().addText("City     : ").add(city));
                testForm.add(new HorizontalPanel().addText("Province : ").add(province));
-               
+
                tApp.getMainApplicationPanel().add(2,2, testForm);
                
                

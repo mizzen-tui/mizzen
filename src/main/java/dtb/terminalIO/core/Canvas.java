@@ -320,7 +320,6 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
             hideCursorRequested = false;
             backend.hideCursor(); // this takes effect on next refresh just below
         }
-        
 
         backend.refresh();
 
