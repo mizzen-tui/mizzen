@@ -15,12 +15,12 @@ public class TerminalBasicTest {
         
         SyncToScreen terminalWriterSynch = makeTerminalSynch(args);
 
-//        test_CRs(terminalWriterSynch);
-//        test_BASIC_FOREGROUND_COLOR(terminalWriterSynch);
-//        test_BASIC_BACKGROUND_COLOR_USING_RCOL_TO_RESET(terminalWriterSynch);
-//        test_BASIC_BACKGROUND_COLOR_USING_BackGroundColorRESET_TO_RESET(terminalWriterSynch);
-//        test_BASIC_BACKGROUND_COLOR_USING_BackGroundColorRESET_TO_RESET_PRESERVE_FOREGROUND(terminalWriterSynch);
-//        test_BASIC_BACKGROUND_COLOR_USING_ColorPipe(terminalWriterSynch);
+        test_CRs(terminalWriterSynch);
+        test_BASIC_FOREGROUND_COLOR(terminalWriterSynch);
+        test_BASIC_BACKGROUND_COLOR_USING_RCOL_TO_RESET(terminalWriterSynch);
+        test_BASIC_BACKGROUND_COLOR_USING_BackGroundColorRESET_TO_RESET(terminalWriterSynch);
+        test_BASIC_BACKGROUND_COLOR_USING_BackGroundColorRESET_TO_RESET_PRESERVE_FOREGROUND(terminalWriterSynch);
+        test_BASIC_BACKGROUND_COLOR_USING_ColorPipe(terminalWriterSynch);
         test_BASIC_BACKGROUND_COLOR_USING_ColorPipe_withCURSOR_MOVEMENT(terminalWriterSynch);
         
         terminalWriterSynch.refresh();

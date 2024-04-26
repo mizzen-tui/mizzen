@@ -196,11 +196,13 @@ public interface Draggable {
                         break;
     
                     case DRAGGABLE_FREEZE_COLUMN:
-                        moveTo = new Position.Simple(appMouseEventRelativeToCanvas.getMousePosition().getRow(),componentToMove.getParentContainerOrFail().getPositionRelativeToParent(componentToMove).getCol()).offsetAdd(new Position.Simple(offsetFromComponentPosition.getRow(),0));
+                        moveTo = new Position.Simple(appMouseEventRelativeToCanvas.getMousePosition().getRow(),
+                                                     componentToMove.getParentContainerOrFail().getPositionRelativeToParent(componentToMove).getCol()).offsetAdd(new Position.Simple(offsetFromComponentPosition.getRow(),0));
                         break;
                     
                     case DRAGGABLE_FREEZE_ROW:
-                        moveTo = new Position.Simple(componentToMove.getParentContainerOrFail().getPositionRelativeToParent(componentToMove).getRow(), appMouseEventRelativeToCanvas.getMousePosition().getCol()).offsetAdd(new Position.Simple(0,offsetFromComponentPosition.getRow()));
+                        moveTo = new Position.Simple(componentToMove.getParentContainerOrFail().getPositionRelativeToParent(componentToMove).getRow(), 
+                                                     appMouseEventRelativeToCanvas.getMousePosition().getCol()).offsetAdd(new Position.Simple(0,offsetFromComponentPosition.getRow()));
                         break;
     
                     default:

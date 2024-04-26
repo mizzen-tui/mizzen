@@ -22,7 +22,6 @@ public class ColorBGPipe  {
     public static boolean DISABLE = false;
     
     boolean lastColorHadBackGround = false;
-    boolean lastControlCodeWasAColor = false;
 
     public Renderer wrap(Renderer r) {
         if (DISABLE || r instanceof TextRenderer) {
@@ -45,10 +44,8 @@ public class ColorBGPipe  {
 //                    lastControlCodeWasAColor = false;
 //                    return new ResetBGColorAndThenRenderer(r);
 //                }
-            lastControlCodeWasAColor = false;
             return r;
         }
-        lastControlCodeWasAColor = true;
         Color currentColor = (Color) r;
         if (! lastColorHadBackGround) {
             this.lastColorHadBackGround = currentColor.hasBackGroundColor();

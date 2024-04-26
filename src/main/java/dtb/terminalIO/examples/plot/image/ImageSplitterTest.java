@@ -36,6 +36,11 @@ public class ImageSplitterTest {
 
         ImageRenderRequest rqst = dumbArgsParse(args);
 
+        if (imgFilePathes.size()<1) {
+            System.err.println("No image files specified");
+            System.exit(1);
+        }
+        
         new TUIApp(args)
            .setCanvasSize(termsize)
            .setDefaultMainApplicationPanel()
@@ -43,9 +48,6 @@ public class ImageSplitterTest {
            .setOnReadyStart((tApp)->{
 
                
-               if (imgFilePathes.size()<1) {
-                   imgFilePathes.add(DEFAULT_IMG_PATH);
-               }
                
                int offset = 0;
                
@@ -75,7 +77,10 @@ public class ImageSplitterTest {
                    if (imgFilePath.endsWith(".gif")) {
                         imageIterator = new AnimatedGifImageIterator(imgFilePath);
                    } else {
-                       imageIterator = new ImageSplitter(rqst.getImageToView(), offsets, image_height, image_width);
+                       imageIterator = new ImageSplitter(NotNull(imageRequest, "Image spec's not defined").getImageToView(), 
+                                                         NotNull(offsets, "Image offset's not defined"), 
+                                                         image_height, 
+                                                         image_width);
                    }
                    
                    MovingPicturesViewer movingPicturesViewer = new MovingPicturesViewer(Colors.DEFAULT_COLOR, imageIterator, imageRequest); 
@@ -107,7 +112,7 @@ public class ImageSplitterTest {
 
     static String title = "Rotating earth";
     static int interval = 250;
-    static String DEFAULT_IMG_PATH="/home/dbalme/workspace/tmpImages/car.jpeg";
+    //static String DEFAULT_IMG_PATH="/home/dbalme/workspace/tmpImages/car.jpeg";
     static List<String> imgFilePathes =  new ArrayList<String>(); // DEFAULT_IMG_PATH;
 
     static List<Vec2<?>> offsets;
@@ -187,6 +192,26 @@ public class ImageSplitterTest {
                 }
             }
         }
+
+        //BufferedImage image = ImageIO.read(new File(imgFilePath));
+
+//        int imageWidth = image.getWidth();
+//        int imageHeight = image.getHeight();
+
+        //float heightToWidthRatio = ((float)imageHeight) / ((float)imageWidth);
+//        float widthToHeightRatio = ((float)imageWidth)/ ((float)imageHeight);
+
+//        Dimension termsize = TerminalDimensions.create();
+//        Dimension imgSize = new Dimension.Simple(termsize.getHeight()-8, Math.min((int)((termsize.getHeight()-4)*widthToHeightRatio)*2, termsize.getWidth()-40));
+//
+//        ImageRenderRequest imageRequest = new ImageRenderRequest();
+//        imageRequest.setDesiredImgSizeInCharacters(imgSize);
+//
+//        imageRequest.setColorMap(colorMapping);
+//        imageRequest.setImageRenderType(renderType);
+//        imageRequest.setToPlotOrNot(plotPredicate);
+//        //imageRequest.setImageToView(image);
+//        imageRequest.setGradientStr(gradientStr);
 
         return null;
 

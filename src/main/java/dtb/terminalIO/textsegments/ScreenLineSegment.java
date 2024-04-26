@@ -952,16 +952,28 @@ public interface ScreenLineSegment extends Rectangle, CleanString  {
                     (p, txt) -> new SegmentImpl(Colors.FGBGColors.NO_COLOR_SPECIFIED, p, -1, txt));
         }
 
-        private static int clipStrWithEmbeddedColors(final Collection<ScreenLineSegment> ts, 
-                                                     String colorCodedStr,
+        private static class ClippedOneLineColorResult {
+            public Color lastColorParsed;
+            public int length;
+            public ClippedOneLineColorResult(Color lastColorParsed, int length) {
+                super();
+                this.lastColorParsed = lastColorParsed;
+                this.length = length;
+            }
+            
+        } 
+        
+        private static ClippedOneLineColorResult clipOneLineStrWithEmbeddedColors(final Collection<ScreenLineSegment> ts, 
+                                                     Color initialColor,
+                                                     String colorCodedOneLineStr,
                                                      int width, 
                                                      Position offset, 
                                                      CreateSegmentWithColor createSegment) {
             int[] curlengthCreated = new int[] { 0 };
-            Color[] lastColor = new Color[] {Colors.DEFAULT_COLOR};
+            Color[] lastColor = new Color[] { initialColor == null ?  Colors.DEFAULT_COLOR : initialColor};
             CleanString[] lastSimpleText = new CleanString[] {null};
 
-            ColorParsingUtils.parseColorsAndBuildResult(colorCodedStr, new ColorParsingUtils.ColorColorSegmentBuilder() {
+            ColorParsingUtils.parseColorsAndBuildResult(initialColor, colorCodedOneLineStr, new ColorParsingUtils.ColorColorSegmentBuilder() {
                 @Override
                 public boolean newColorSegment(Color color, CleanString simpleText) {
                     color = color == null ? lastColor[0] : color;
@@ -1021,7 +1033,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString  {
                 ts.add(segment);
             }
 
-            return curlengthCreated[0];
+            return new ClippedOneLineColorResult( lastColor[0],curlengthCreated[0]);
         }
 
         public static SegmentsFromStringResult textSegmentsFromStringWithEmbeddedColor(String multiLineString,
@@ -1042,8 +1054,9 @@ public interface ScreenLineSegment extends Rectangle, CleanString  {
             }
             String lines[] = multiLineString.split("\n", -1);
             // lines[0] = clip(lines[0], boundAndClipped.getWidth());
+            ClippedOneLineColorResult lastLineParseResult = new ClippedOneLineColorResult(Colors.DEFAULT_COLOR, 0);
             if (lines[0] != null && lines[0].length() > 0) {
-                clipStrWithEmbeddedColors(ts, lines[0], boundAndClipped.getWidth(), position, createSegment);
+                lastLineParseResult  = clipOneLineStrWithEmbeddedColors(ts, null, lines[0], boundAndClipped.getWidth(), position, createSegment);
             }
             int lineLimit = Math.min(lines.length, boundAndClipped.getHeight());
             int originalWidth = boundingRectangle.getWidth();
@@ -1055,7 +1068,7 @@ public interface ScreenLineSegment extends Rectangle, CleanString  {
                                                                                     // rectangle for subsequent
                                                                                     // clippings
                 if (lines[i] != null && lines[i].length() > 0) {
-                    clipStrWithEmbeddedColors(ts, lines[i], originalWidth, position, createSegment);
+                    lastLineParseResult = clipOneLineStrWithEmbeddedColors(ts, lastLineParseResult.lastColorParsed,  lines[i], originalWidth, position, createSegment);
                 }
             }
             if (ts.size() == 0)

@@ -65,7 +65,18 @@ public class ColorParsingUtils {
     static final int PARSE_COLOR_CODE = 3;
     static final int PARSE_COLOR_END = 4;
 
-    public static void parseColorsAndBuildResult(String colorCodedStr,
+    /***
+     * Parses a string and extracts color codes.
+     * </p>
+     * This code only works correctly for single line strings.
+     * </p>
+     * Consider the result as undefined for multi-line Strings.
+     *
+     * @param initialColor
+     * @param colorCodedStr
+     * @param colorColorSegmentBuilder
+     */
+    public static Color parseColorsAndBuildResult(Color initialColor, String colorCodedStr,
             ColorColorSegmentBuilder colorColorSegmentBuilder) {
 
         int PARSE_STATE = PARSE_TEXT;
@@ -88,12 +99,12 @@ public class ColorParsingUtils {
                         simpleText = new CleanString.Simple(sb.toString());
                         boolean continueParsing = colorColorSegmentBuilder.newColorSegment(color, simpleText);
                         if (!continueParsing) {
-                            return;
+                            return color;
                         }
                     }
                     PARSE_STATE = PARSE_COLOR_START;
                     simpleText = null;
-                    color = null;
+                   // color = null;
                     sb = new StringBuilder();
                     sb.append(ch);
                 } else {
@@ -111,7 +122,7 @@ public class ColorParsingUtils {
                         sb = new StringBuilder();
                     } else {
                         if (ch == 'm') {
-                            color = Colors.RCol;
+                            color = color == null? Colors.RCol : color;
                             sb = new StringBuilder();
                             PARSE_STATE = PARSE_TEXT;
                             break;
@@ -165,10 +176,10 @@ public class ColorParsingUtils {
                     boolean continueParsing = colorColorSegmentBuilder.newColorSegment(color,
                             CleanString.UTIL.EMPTY_CLEAN_STRING);
                     if (!continueParsing)
-                        return;
+                        return color;
                     PARSE_STATE = PARSE_COLOR_START;
                     simpleText = null;
-                    color = null;
+                    //color = null;
                     sb = new StringBuilder();
                 }
 
@@ -178,17 +189,35 @@ public class ColorParsingUtils {
             default:
                 throw new IllegalStateException("Should not get here!");
             }
+            
         }
 
         if (sb.length() > 0) {
             colorColorSegmentBuilder.newColorSegment(color, new CleanString.Simple(sb.toString()));
         }
+
+        return color;
+
+    }
+
+    /***
+     * Parses a string and extracts color codes.
+     * </p>
+     * This code only works correctly for single line strings.
+     * </p>
+     * Consider the result as undefined for multi-line Strings.
+     *
+     * @param colorCodedStr
+     * @param colorColorSegmentBuilder
+     */
+    public static Color parseColorsAndBuildResult(String colorCodedStr, ColorColorSegmentBuilder colorColorSegmentBuilder) {
+        return parseColorsAndBuildResult(null, colorCodedStr, colorColorSegmentBuilder);
     }
 
     public static List<ColorParseSegment> parseColors(String colorCodedStr) {
         final List<ColorParseSegment> result = new ArrayList<ColorParseSegment>();
 
-        parseColorsAndBuildResult(colorCodedStr, new ColorColorSegmentBuilder() {
+        parseColorsAndBuildResult(null, colorCodedStr, new ColorColorSegmentBuilder() {
             @Override
             public boolean newColorSegment(Color color, CleanString simpleText) {
                 result.add(new ColorParseSegment(color, simpleText));
