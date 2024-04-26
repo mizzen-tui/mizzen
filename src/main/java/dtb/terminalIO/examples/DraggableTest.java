@@ -60,7 +60,7 @@ public class DraggableTest {
             Color helpTextColorBOLD = new FGBGColors(Colors.IWhi, mainPanel_BG_color);
             Component<?> helpText = new BorderedComponent(new TextComponent(helpTextColor,
                                   helpTextColorBOLD.asString()+"        Drag and Drop examples    "+helpTextColor.asString()+"\n"+
-                                                               "        "+ StringUtils.repeat(BlockChars.DEFAULT.getHORIZONTAL_LINE(),22) +" \n" +
+                                      helpTextColor.asString()+"        "+ StringUtils.repeat(BlockChars.DEFAULT.getHORIZONTAL_LINE(),22) +" \n" +
                                                                " Drag the various components \n"+
                                                                " around the screen    \n"+
                                                                "\n"+
@@ -86,7 +86,7 @@ public class DraggableTest {
             String largeText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis nulla elit, placerat sed aliquam at, porta ut justo. Sed vel fringilla nisi, eu laoreet dui. Sed gravida at ipsum et viverra. Ut diam justo, imperdiet sed ante eu, elementum pellentesque sem. Curabitur eleifend turpis eros, nec semper est ultricies eget. Sed sed faucibus mauris, sed porttitor mauris. Ut quis tellus ultrices sapien porttitor tincidunt eu sed risus. Integer ac imperdiet dolor, at ultricies odio. Vestibulum sed pretium ligula. Sed dapibus sapien nunc, eget molestie mauris hendrerit id. Duis blandit tortor eget risus sagittis, at sodales felis congue. Donec vulputate massa aliquam, pretium ante eu, hendrerit ante. Suspendisse potenti. Nam gravida tempus ipsum, non convallis turpis malesuada id. Sed iaculis iaculis condimentum. Fusce pharetra euismod efficitur.";
 
             Component<?> largeLoremIpSumComponent = new BorderedComponent(new DraggableTextComponent(new FGBGColors(Colors.IGre, mainPanel_BG_color),StringUtils.wrap(largeText, 50))).setTitle("Large Text");
-            tApp.getMainApplicationPanel().add(14, 43, largeLoremIpSumComponent);
+            tApp.getMainApplicationPanel().add(12, 43, largeLoremIpSumComponent);
             tApp.getMainApplicationPanel().setDropShadow(true, largeLoremIpSumComponent);
 
             LoadedFile fileDetails = LoadedFile.getFileData(args);
