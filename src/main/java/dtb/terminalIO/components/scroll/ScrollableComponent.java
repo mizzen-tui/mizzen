@@ -11,6 +11,7 @@ import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.components.Hiliter;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.Composite;
+import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent.AsSearchableView;
 import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent.SearchableView;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.events.ChainedEventHandler;
@@ -55,7 +56,7 @@ import dtb.terminalIO.util.ElapsedTime;
  * the child component is currently being viewed from.
  * 
  */
-public class ScrollableComponent extends Composite implements CanResize, CanScrollToView, FocusManager, Hiliter, EventHandlerContainer {
+public class ScrollableComponent extends Composite implements CanResize, CanScrollToView, FocusManager, Hiliter, EventHandlerContainer, AsSearchableView {
 
     FocusManager      parentFocusManager;
     BorderedComponent borderedComponent;
@@ -134,6 +135,7 @@ public class ScrollableComponent extends Composite implements CanResize, CanScro
         buildEventHandler();
     }
     
+    @Override 
     public SearchableView asSearchableView() {
         return new SearchableView() {
 

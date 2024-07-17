@@ -20,7 +20,7 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
     private Color                     color      = Colors.DEFAULT_COLOR;
 
     BlockChars                        blockChars = BlockChars.DEFAULT;
-    
+
     ParentContainer parentContainer;
 
     FillOnClearPolicy.AbstractImpl<T>    fillPolicy = new FillOnClearPolicy.AbstractImpl<T>(this) {
@@ -89,12 +89,12 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
             ScreenLineSegment.UTIL.fillEmptySpacesInRectWithChar(getEmptyColor(), getEmptyChar(), this, segments.getSegments());
         }
     }
-    
-    
+
+
     public boolean isDirty() {
         return !this.hasDrawn;
     }
-    
+
     public void markAsDirty() {
         if (isDirty()) {
             Component.UTIL.markParentDirtyIfChildDirty(this);

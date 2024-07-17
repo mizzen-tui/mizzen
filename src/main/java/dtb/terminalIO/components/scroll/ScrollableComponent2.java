@@ -5,6 +5,7 @@ import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.ComponentWithFocusManager;
 import dtb.terminalIO.components.HasName;
+import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent.AsSearchableView;
 import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent.SearchableView;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.events.ConditionalEventHandler;
@@ -21,7 +22,7 @@ import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.util.Logging;
 
-public class ScrollableComponent2  extends ComponentWithFocusManager<ScrollableComponent2> implements CanScrollToView, ViewPortNavigable, HasViewPortWindow {
+public class ScrollableComponent2  extends ComponentWithFocusManager<ScrollableComponent2> implements CanScrollToView, ViewPortNavigable, HasViewPortWindow, AsSearchableView {
 
     WindowViewComponent viewer;
     BorderedComponent borderedComponent;
@@ -368,6 +369,7 @@ public class ScrollableComponent2  extends ComponentWithFocusManager<ScrollableC
 
     }
     
+    @Override
     public SearchableView asSearchableView() {
         return new SearchableView() {
 

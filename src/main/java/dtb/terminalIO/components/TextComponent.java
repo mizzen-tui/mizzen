@@ -129,7 +129,7 @@ public class TextComponent extends BoundedComponent<TextComponent> {
         } else {
             result = new SegmentsFromStringResult(ScreenLineSegment.UTIL.makeCollection(parsedSegments));
         }
-        
+
         if (result.ts.size()!=0) {
             if ( this.isFillOnClear()) {
                 this.clear();

@@ -223,8 +223,6 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
         }
         return false;
     }
-    
-    
 
     boolean isFocusablePartOfMenu(Focusable focusable) {
         if (this.menuBar != null && ToFocusable.UTIL.toFocusable(this.menuBar)  == focusable) {

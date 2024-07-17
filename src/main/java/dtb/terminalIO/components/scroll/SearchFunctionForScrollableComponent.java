@@ -90,6 +90,10 @@ public class SearchFunctionForScrollableComponent extends AbstractWrappedCompone
         void addFooterComponent(Component<?> component);
         
     }
+    
+    public static interface AsSearchableView {
+        SearchableView asSearchableView();
+    }
 
     public SearchFunctionForScrollableComponent(Color color, SearchableView viewComp) {
         super(color, new ButtonBar(color).setNoBorderChars());
@@ -267,6 +271,9 @@ public class SearchFunctionForScrollableComponent extends AbstractWrappedCompone
         addFinderToScrollable(viewComp, 10);
     }
 
+    public static void addFinderToScrollable(AsSearchableView viewComp) {
+        addFinderToScrollable(viewComp.asSearchableView());
+    }
 
     @Override
     public void childHasCurrentFocus(Focusable focusableChild, EventBus eventBus) {

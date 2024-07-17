@@ -5,6 +5,9 @@ public interface Hiliter {
     void hilite();
     void unHilite();
     
+    /***
+     * A Hiliter that does nothing
+     */
     public static final Hiliter NOOP = new Hiliter() {
             @Override
             public void hilite() {

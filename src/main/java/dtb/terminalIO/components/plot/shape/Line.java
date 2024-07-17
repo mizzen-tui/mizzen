@@ -3,7 +3,6 @@ package dtb.terminalIO.components.plot.shape;
 import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.components.plot.shape.Shape.AbstractShape;
 import dtb.terminalIO.controlcodes.color.Color;
-import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.geom.position.PositionTransform;
 import dtb.terminalIO.geom.position.Vec2;
 

@@ -47,12 +47,14 @@ public class MenuBarTest {
                                                 .addItem("BoatDamage", new Menu("Menu-1-1-2")
                                                                             .addItem("Salvage",     (te)->  displayText.accept("40K", te))
                                                                             .addItem("Keel Repair", (te)->  displayText.accept("53K", te))
-                                                                            .addItem("Engine",     (te)->  displayText.accept("2K", te))
+                                                                            .addItem("Engine",      (te)->  displayText.accept("2K", te))
                                                         )
                                                 )
                             .addDivider()
                             .addItem("Open File",(te)-> displayText.accept("Here I would open a file", te))
-                            .addItem("Close",(te)->  displayText.accept("OK time to close the file", te));
+                            .addItem("Close",(te)->  displayText.accept("OK time to close the file", te))
+                            .addDivider()
+                            .addItem("Exit",(te)->  tApp.getTerminateAppHotKeyEventHandler().handle(te) );
 
             Menu menu2 = new Menu("Menu-2")
                     .addItem("Find/Replace",(te)-> displayText.accept("OK let's find something.\nWhat should we look for?\nSomething interesting\nI should hope!", te))

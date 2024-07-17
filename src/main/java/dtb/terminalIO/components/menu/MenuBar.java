@@ -18,9 +18,10 @@ import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
+import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.Logging;
 
-public class MenuBar extends AbstractWrappedComponentWithFocusManager<ButtonBar> implements LeftRightSelector{
+public class MenuBar extends AbstractWrappedComponentWithFocusManager<ButtonBar> implements LeftRightSelector {
 
     Menu currentActiveMenu = null;
     MenuBarButton currentMenuButton = null;
@@ -29,14 +30,14 @@ public class MenuBar extends AbstractWrappedComponentWithFocusManager<ButtonBar>
     public MenuBar(Color color) {
         super(color, new ButtonBar(color));
         this.getWrappedComponent().setNoBorderChars();
-        
+
         // TODO's
-        
+
         // Keydown -- needs to map to first item in menu
         //getWrappedComponent().appendEventHandler(eventHandler)
-        
+
         // need to trap - left and right keys in order to select left or right
-        
+
     }
 
     public void addDropDownMenu(String menuButtonText, Menu menu) {
@@ -51,7 +52,7 @@ public class MenuBar extends AbstractWrappedComponentWithFocusManager<ButtonBar>
         this.getWrappedComponent().addComponent(menuButton);
         this.menuBarItems.add(menuButton);
     }
-    
+
     @Override
     public void unFocus(Focusable newFocusable, EventBus eventBus) {
         super.unFocus(newFocusable, eventBus);
@@ -99,19 +100,18 @@ public class MenuBar extends AbstractWrappedComponentWithFocusManager<ButtonBar>
                     }
                     currentMenuButton = null;
                 }
-
-                te.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(MenuBar.this));
+                te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(MenuBar.this));
             }
         };
     }
 
-    
     @Override
     public void selectNextLeft(TerminalEvent<?> te) {
 
         if (currentActiveMenu == null) {
             return;
         }
+
         Logging.info("menuBar selectLeft");
         int idx = this.menuBarItems.indexOf(currentMenuButton);
         if (idx == 0) {
@@ -140,7 +140,7 @@ public class MenuBar extends AbstractWrappedComponentWithFocusManager<ButtonBar>
         getWrappedComponent().setChildAsCurrentFocus(nextButton, te.getEventBus());
         nextButton.onClick(te.getEventBus());
     }
-    
+
     static class MenuBarButton extends Button {
 
         MenuBar menuBar;
@@ -157,7 +157,7 @@ public class MenuBar extends AbstractWrappedComponentWithFocusManager<ButtonBar>
                         te.getEventBus().asynch((te2)->{
                             if (this.menu.menuContainer != null) {
                                 this.menu.getMenuContainer().selectFirst(te2);
-                            } 
+                            }
                         });
                     }));
             this.appendEventHandler(new KeyInputEventHandler(Keys.UP_KEYSTROKE, 
@@ -168,7 +168,7 @@ public class MenuBar extends AbstractWrappedComponentWithFocusManager<ButtonBar>
                             if (this.menu.menuContainer != null) {
                                 this.menu.getMenuContainer().selectLast(te2);
                             } 
-                        });                        
+                        });
                     }));
             this.appendEventHandler(new KeyInputEventHandler(Keys.LEFT_KEYSTROKE, 
                     (te)-> {
@@ -181,6 +181,25 @@ public class MenuBar extends AbstractWrappedComponentWithFocusManager<ButtonBar>
                         this.menuBar.selectNextRight(te);
                     }));
         }
+        
+        @Override
+        protected void draw(Color color, IScreenLineSegmentsBuffer mySegments) {
+            // TODO Auto-generated method stub
+            super.draw(color, mySegments);
+        }
+        
+        
+        @Override
+        public void hilite() {
+            super.hilite();
+        }
+
+        @Override
+        public void unHilite() {
+            super.unHilite();
+        }
+
+        
     }
 
 

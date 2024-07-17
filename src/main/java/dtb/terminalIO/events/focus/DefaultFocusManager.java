@@ -46,6 +46,8 @@ public class DefaultFocusManager implements FocusManager,
     private FocusBehaviour meAsFocusable;
     private NAV_STYLE navKeysStyle = NAV_STYLE.NAVKEYS_LAST;
     private boolean cycling = true;   // true means cycle thru focus object
+    private boolean cyclingInferred = true;  
+
     private String name;
 
     public static enum NAV_STYLE {
@@ -126,6 +128,7 @@ public class DefaultFocusManager implements FocusManager,
 
     public DefaultFocusManager setCycling(boolean cycling) {
         this.cycling = cycling;
+        cyclingInferred = false;  // has been programmatically set
         return this;
     }
 
@@ -744,6 +747,16 @@ public class DefaultFocusManager implements FocusManager,
         }
 
         Focusable.UTIL.setParentFocusManager(this, parentFocusManager, (fm)-> this.parentFocusManager = fm);
+        if (parentFocusManager != null && cyclingInferred && cycling) {
+            this.setCycling(false);
+            cyclingInferred= true;
+        } else {
+            if (cyclingInferred) {
+                this.setCycling(true);
+                cyclingInferred= true;
+            }
+        }
+        
         //this.parentFocusManager = parentFocusManager;
     }
 

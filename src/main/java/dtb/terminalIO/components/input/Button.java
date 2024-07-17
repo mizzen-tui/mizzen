@@ -192,6 +192,7 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
         super.setColor(drawingcolor);
         if ( this.renderedText != null) {
             this.renderedText.setColor(drawingcolor);
+            this.renderedText.setTextAndResize(getTextForRendering(this.hasFocus()));
         }
         return this;
     }

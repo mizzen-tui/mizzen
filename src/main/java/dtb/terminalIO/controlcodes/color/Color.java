@@ -163,15 +163,15 @@ public abstract class Color extends ControlCode implements ColorProvider, HasBac
         if (c1 == null && c2 == null) {
             throw new NullPointerException("Cannot merge two null colors!");
         }
-        
+
         if (c1 == c2 || c2 == Colors.RCol) {
             return c1;
         }
-        
+
         if (c1 == Colors.RCol) {
             return c2;
         }
-        
+
         if (c1 instanceof FGBGColors && c2 instanceof FGBGColors) {
             Color fg = c1.getForeGroundColor() instanceof FgColor ?  c1.getForeGroundColor() : null;
             Color bg = c2.getBackGroundColor() instanceof BgColor ?  c2.getBackGroundColor() : null;
@@ -187,11 +187,11 @@ public abstract class Color extends ControlCode implements ColorProvider, HasBac
                     bg = null;
                 }
             }
-            
+
             if (!(fg instanceof FgColor)) {
                 throw new IllegalStateException("GOT HERE! fg is a " + fg.getClass().getCanonicalName());
             }
-            
+
             return new FGBGColors((FgColor)fg, (BgColor)bg);
         }
 
@@ -214,8 +214,7 @@ public abstract class Color extends ControlCode implements ColorProvider, HasBac
             
             return new FGBGColors((FgColor)fg, (BgColor)bg);
         }
-        
-        
+
         if ((c1 == null || c1 instanceof FgColor) && (c2 == null || c2 instanceof BgColor)) {
             return new FGBGColors((FgColor)c1, (BgColor)c2);
         }
