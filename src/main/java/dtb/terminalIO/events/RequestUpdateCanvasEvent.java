@@ -1,11 +1,16 @@
 package dtb.terminalIO.events;
 
-import dtb.terminalIO.util.Logging;
-
 public class RequestUpdateCanvasEvent extends TerminalEvent<Object> {
 
     private static final long serialVersionUID = 6414374218181140855L;
 
+
+    /**
+     * An event to tell the app to update the Terminal with the latest
+     * contents of its components
+     * 
+     * @param source
+     */
     public RequestUpdateCanvasEvent(Object source) {
         super(source, TYPE.REQUEST_UPDATE_CANVAS, null, Q_FULL_POLICY.OFFER);
         //Logging.forceLogInfo("RequestUpdateCanvasEvent " + String.valueOf(source));

@@ -3,6 +3,8 @@ package dtb.terminalIO.components;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.ColorProvider;
 import dtb.terminalIO.controlcodes.color.Colors;
+import dtb.terminalIO.controlcodes.color.Colors.FGBGColors;
+import dtb.terminalIO.controlcodes.color.Colors.FgColor;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 
@@ -60,6 +62,14 @@ public interface FillOnClearPolicy<T> extends EmptyAttributes<T> {
 
         @Override
         public Color getEmptyColor() {
+            Color parentColor = getParentColor();
+            if (parentColor instanceof FgColor) {
+                return emptyColor;
+            }
+            if (parentColor instanceof FGBGColors && ((FGBGColors)parentColor).getBgc()==null) {
+                return emptyColor;
+            }
+            
             return emptyColor.mergeWith(getParentColor());
         }
 

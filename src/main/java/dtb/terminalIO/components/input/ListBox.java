@@ -61,6 +61,8 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
                                            Clickable,
                                            EventHandlerContainer {
 
+    static boolean FILL_ON_CLEAR_DEFAULT = true;
+    
     List<ListItem> items = new ArrayList<ListItem>();
     VerticalPanel  itemsContainer;
     int            selected;
@@ -80,7 +82,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
                                                                   VALUE_CHANGED_ON_FOCUS |
                                                                   VALUE_CHANGED_ON_ENTER_KEY |
                                                                   VALUE_CHANGED_ON_MOUSE_CLICK;
-    
+
     public static interface ItemComponent  {
         Component<?> getComponent();
         void selectWithFocus();
@@ -91,7 +93,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         void unSelect();
     }
 
-    
+
     // Components that are rendered in the list
     public static abstract class AbstractItemComponent  implements ItemComponent {
          Component<?> component;
@@ -121,7 +123,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
 
             Dimension tcDim = new Dimension.Simple( strDim.getHeight(), maxWidthStr ); 
             tc = new TextComponent(this.getColor(), tcDim, displayableItem.getDisplayValue());
-            tc.setFillOnClear(true);
+            tc.setFillOnClear(FILL_ON_CLEAR_DEFAULT);
 
             bullet = new CharComponent( this.getColor() , '-');
 
@@ -303,8 +305,6 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         public T getValue() {
             return getHasValue().getValue();
         }
-        
-
 
     }
 
@@ -314,8 +314,8 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         itemsContainer = new VerticalPanel(color);
         itemsContainer.setColor(color);
         itemsContainer.setParentContainer(this);
-        itemsContainer.setFillOnClear(true);
-        this.setFillOnClear(true);
+        itemsContainer.setFillOnClear(FILL_ON_CLEAR_DEFAULT);
+        this.setFillOnClear(FILL_ON_CLEAR_DEFAULT);
     }
 
     public ListBox() {
@@ -341,7 +341,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         this(color);
         setItems(Arrays.asList(listItems), DEFAULT_COMPONENT_FACTORY);
     }
-    
+
     public static ListBox<String> fromStrings(String[] listItems) {
         return new ListBox<String>(StringDisplayValue.fromStringValues(listItems));
     }
@@ -533,7 +533,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
 
         // select
         selected = index;
-        
+
         curSelected = getSelectedIndex();
         if (curSelected>-1) {
             ItemComponent curSelectedComponent = getItemComponentAt(curSelected);
@@ -678,6 +678,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
             }
 
             public void focus(Focusable oldFocusable, EventBus eventBus) {
+                if (suppressCLICK) {return;}
                 super.focus(oldFocusable, eventBus);
                 int curSelected = getSelectedIndex();
                 if (curSelected>-1) {
@@ -694,6 +695,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
             @Override
             public void setFocus(boolean focus, EventBus eventBus) {
                 super.setFocus(focus, eventBus);
+                if (suppressCLICK) {return;}
                 if (focus) {
                     int curSelected = getSelectedIndex();
                     if (curSelected>-1) {
@@ -825,8 +827,13 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         }
     }
 
+    static boolean suppressCLICK = false;  // purely for debugging mouse clicks .. remove when happy with it
+    
     @Override
     public void onClick(EventBus eventBus) {
+        if (suppressCLICK) {
+            return;
+        }
         if (! asFocusable().hasFocus()) {
             // focus manager should have already put focus here - but just in case ..
             eventBus.raiseEvent(new RequestFocusEvent(asFocusable()));
@@ -835,6 +842,8 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
 
     @Override
     public void onClick(ApplicationMouseEvent appMouseEvent) {
+        if (suppressCLICK) {return;}
+        
         if (MOUSE_ACTION.DOWN_LEFT.equals(appMouseEvent.getMouseAction()) || MOUSE_ACTION.DOWN_LEFT_DRAG.equals(appMouseEvent.getMouseAction())) {
             
             // first find child component , clicked on
@@ -862,7 +871,10 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
     }
 
     protected void onMouseSelected(EventBus eventBus) {
-        // now let the rest of the app know that changes have happened to this ListBox
+        if (suppressCLICK) {
+            return;
+        }
+      // now let the rest of the app know that changes have happened to this ListBox
         if ((getEventTriggerForValueChanged() & VALUE_CHANGED_ON_MOUSE_CLICK) > 0 ) {
             eventBus.raiseEvent(  new HasValue.ValueChangedEvent<>(ListBox.this) );
         }

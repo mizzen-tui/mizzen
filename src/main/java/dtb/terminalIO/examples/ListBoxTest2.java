@@ -1,7 +1,6 @@
 package dtb.terminalIO.examples;
 
 import dtb.terminalIO.app.TUIApp;
-import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.composite.HorizontalPanel;
@@ -10,9 +9,9 @@ import dtb.terminalIO.components.input.DisplayableValue.StringDisplayValue;
 import dtb.terminalIO.components.input.DropdownListBox;
 import dtb.terminalIO.components.input.ListBox;
 import dtb.terminalIO.components.input.ListBox.TextComponentItemFactory;
-import dtb.terminalIO.components.scroll.ScrollableComponent;
+import dtb.terminalIO.components.scroll.ScrollableComponent2;
+import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Colors;
-import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.VAlign;
 import dtb.terminalIO.geom.position.Position;
@@ -22,48 +21,55 @@ import dtb.terminalIO.util.Logging;
 public class ListBoxTest2 {
 
     public static void main(String args[]) {
-        
+
         Logging.setEnabled(true);
-        
+
         int appWidth = 130;
         int appHeight = 30;
-        
-        
+
+
         new TUIApp(args)
         .setCanvasSize(appHeight, appWidth)
         //.setEmptyChar(' ')
         .setDefaultMainApplicationPanel()
         .confirmOnExit()
         .setOnReadyStart((tApp)-> {
-            
+
             Composite mainPanel = (Composite) tApp.getMainApplicationPanel();
-            
+
             TextComponent status = new TextComponent("         ");
             Position statusPosition = PositionRelativeFactory.fromVAlign(VAlign.BOTTOM, mainPanel, status, 2);
-            
+
             mainPanel.add(statusPosition, status);
-            
+
             mainPanel.setTitle(new Colors.FGBGColors(Colors.BGre,Colors.On_Blu), "ListBox Testing     ");
-            
+
             HorizontalPanel hpMain = new HorizontalPanel().setHorizontalSpacer(4);
-            
+
+            //ListBox<String> lb1 = ListBox.fromStrings(Colors.IGre,new String[]{"Test-1 "});
+            //ListBox<String> lb1 = ListBox.fromStrings(Colors.IGre,LIST_DATA.SMALL_LIST);
             ListBox<String> lb1 = ListBox.fromStrings(Colors.IGre,LIST_DATA.LARGE_LIST);
-            lb1.setBorder(false);
-            ScrollableComponent lb1_sc = new ScrollableComponent(Colors.Blu, new Dimension.Simple(Math.min(15,lb1.getHeight()-5), lb1.getWidth()+20), lb1);
-            //SearchFunctionForScrollableComponent.addFinderToScrollable(lb1_sc);  
+            ScrollableComponent2 lb1_sc = new ScrollableComponent2(Colors.Blu, new Dimension.Simple(Math.min(15,lb1.getHeight()-5), lb1.getWidth()+20), lb1);
+            SearchFunctionForScrollableComponent.addFinderToScrollable(lb1_sc);  
+            //lb1_sc.setCycling(false);
             lb1.onChange((te)-> status.setTextAndResize( lb1.getValue() ) );
-            
-            
+
+            ListBox<String> lb1_1 = new ListBox<String>(Colors.IGre,LIST_DATA.WEIRD, new TextComponentItemFactory<String>());
+            lb1_1.setBorder(false);
+
+
             ListBox<String> lb2 = new ListBox<String>(Colors.IGre, LIST_DATA.WEIRD, new TextComponentItemFactory<String>());
             lb2.setTitle("Child list");
             lb2.setName("Child list");
-            
+
+
             DropdownListBox<String> lb3 = DropdownListBox.fromStrings(new String[] {"Test1", "Test2", "No tests", "No more teacher's","dirty looks"}, new TextComponentItemFactory<String>());
             DropdownListBox<Boolean> lb4 = DropdownListBox.yesNoDropDown();
-            
+
             hpMain.add(lb1_sc);
+        //    hpMain.add(lb1);
             hpMain.add(lb2);
-            
+
             VerticalPanel droppablesPanel = new VerticalPanel();
 
             droppablesPanel.add(lb3);
@@ -100,6 +106,14 @@ public class ListBoxTest2 {
                 "docker0"
                 });
 
+        public static String[] SMALL_LIST = new String[] {
+                "Blue Suede Shoes", 
+                "Red Shoes", 
+                "Pink Shoes",
+                "Pink Flamingos"
+        };
+
+        
         public static String[] LARGE_LIST = new String[] {
                 "Blue Suede Shoes", 
                 "Red Shoes", 
