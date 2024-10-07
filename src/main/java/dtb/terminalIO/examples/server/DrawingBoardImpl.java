@@ -32,7 +32,7 @@ public class DrawingBoardImpl implements DrawingBoard {
 
     //private Canvas canvas;
     //private TerminalScreen screen;
-    private CompositeWithNamedComponents components;
+    private CompositeWithNamedComponents<?> components;
     private boolean autoRefresh = true;
     private EventBus eventBus;
     private Consumer<Component<?>> refreshAction;

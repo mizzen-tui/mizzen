@@ -210,7 +210,23 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>
         return this;
     }
 
+    public SimpleBorder removeFooterComponent() {
+        setFooter((Component<?>) null, null);
+        return this;
+    }
+
     public SimpleBorder setFooter(Component<?> footerComponent, Align footerAlign) {
+        if (this.footerComponent != null) {
+            this.footerComponent.setParentContainer(null);
+            this.footerAlign = null;
+        }
+        if (footerComponent == null) {
+            this.footerComponent = null;
+            this.footerAlign = null;
+            this.footerPosition = null;
+            this.markAsDirty();
+            return this;
+        }
         footerComponent.setColor( footerComponent.getColor().mergeWith(getColor()) );
         this.footerAlign = footerAlign;
         this.footerPosition = null;

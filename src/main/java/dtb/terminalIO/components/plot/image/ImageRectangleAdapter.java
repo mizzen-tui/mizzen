@@ -83,10 +83,10 @@ public class ImageRectangleAdapter implements Rectangle {
 
         public synchronized boolean imageUpdate(Image img, int infoFlags, int x, int y, int width, int height) {
 
-            boolean gotInfo = false;
+            boolean gotInfo = true;
 
-            if ((infoFlags & (WIDTH | HEIGHT)) != 0) {
-                gotInfo = true;
+            if ((infoFlags & (WIDTH | HEIGHT)) == (WIDTH | HEIGHT)) {
+                gotInfo = false;
                 notify();
             }
 

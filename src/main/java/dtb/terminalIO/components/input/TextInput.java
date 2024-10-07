@@ -70,6 +70,11 @@ public class TextInput extends BoundedComponent<TextInput>
         this(Colors.DEFAULT_COLOR, length);
     }
 
+    public TextInput(String text) {
+        this(Colors.DEFAULT_COLOR, text.length());
+        this.setText(text);
+    }
+
     public TextInput(Color color, Dimension d) {
         super(color, d);
         init();
@@ -507,7 +512,6 @@ public class TextInput extends BoundedComponent<TextInput>
                 return super.canHandle(te);
             }   
         };
-        
         return handleEventsWhenVisible;
 
     }

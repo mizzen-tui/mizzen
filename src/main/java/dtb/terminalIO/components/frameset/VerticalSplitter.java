@@ -25,10 +25,12 @@ public class VerticalSplitter extends AbstractComponentWrappper<FrameSet> implem
         if (this.above == null) {
             getWrappedComponent().add(component);
             this.above = component;
+            getWrappedComponent().onResizeExpandRight(component);
             return this;
         }
-        getWrappedComponent().addBelow(component, this.above, true); 
+        getWrappedComponent().addBelow(component, this.above, true); // true means draggable
         this.below = component;
+        getWrappedComponent().onResizeExpandDownAndRight(this.below);
         return this;
     }
 

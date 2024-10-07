@@ -27,7 +27,6 @@ public class ListBoxTest2 {
         int appWidth = 130;
         int appHeight = 30;
 
-
         new TUIApp(args)
         .setCanvasSize(appHeight, appWidth)
         //.setEmptyChar(' ')
@@ -48,17 +47,17 @@ public class ListBoxTest2 {
 
             //ListBox<String> lb1 = ListBox.fromStrings(Colors.IGre,new String[]{"Test-1 "});
             //ListBox<String> lb1 = ListBox.fromStrings(Colors.IGre,LIST_DATA.SMALL_LIST);
-            ListBox<String> lb1 = ListBox.fromStrings(Colors.IGre,LIST_DATA.LARGE_LIST);
+            ListBox<String> lb1 = ListBox.fromStrings(Colors.Gre,LIST_DATA.LARGE_LIST);
             ScrollableComponent2 lb1_sc = new ScrollableComponent2(Colors.Blu, new Dimension.Simple(Math.min(15,lb1.getHeight()-5), lb1.getWidth()+20), lb1);
             SearchFunctionForScrollableComponent.addFinderToScrollable(lb1_sc);  
             //lb1_sc.setCycling(false);
             lb1.onChange((te)-> status.setTextAndResize( lb1.getValue() ) );
 
-            ListBox<String> lb1_1 = new ListBox<String>(Colors.IGre,LIST_DATA.WEIRD, new TextComponentItemFactory<String>());
+            ListBox<String> lb1_1 = new ListBox<String>(Colors.Gre,LIST_DATA.WEIRD, new TextComponentItemFactory<String>());
             lb1_1.setBorder(false);
 
 
-            ListBox<String> lb2 = new ListBox<String>(Colors.IGre, LIST_DATA.WEIRD, new TextComponentItemFactory<String>());
+            ListBox<String> lb2 = new ListBox<String>(Colors.Gre, LIST_DATA.WEIRD, new TextComponentItemFactory<String>());
             lb2.setTitle("Child list");
             lb2.setName("Child list");
 

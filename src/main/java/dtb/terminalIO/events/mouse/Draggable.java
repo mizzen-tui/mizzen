@@ -2,10 +2,13 @@ package dtb.terminalIO.events.mouse;
 
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.HasName;
+import dtb.terminalIO.components.HasTitleAndBorder;
+import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.events.RequestHideCursorEvent;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
+import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
 
 public interface Draggable {
@@ -42,12 +45,12 @@ public interface Draggable {
     public static final Draggable NOOP = new NooP(false);
 
     public static final Draggable NOOP_TRUE = new NooP(true);
-    
+
      public static class DragAND implements Draggable {
-            
+
             Draggable d1;
             Draggable d2;
-            
+
             public DragAND(Draggable d1, Draggable d2) {
                 super();
                 this.d1 = d1;
@@ -80,7 +83,6 @@ public interface Draggable {
                 }
                 return d2.onDragStop(appMouseEventRelativeToCanvas);
             }
-            
         }
 
       public static class DragOR implements Draggable {
@@ -165,9 +167,13 @@ public interface Draggable {
             if (componentToMove == null) {
                 return false;
             }
-            Component<?> parentOfcomponentToMove = (Component<?>)componentToMove.getParentContainerOrFail();
-            offsetFromComponentPosition = componentToMove == draggableComponent ? Position.ZERO 
-                                                                                : appMouseEventRelativeToCanvas.getMousePosition().sub(Component.UTIL.getCanvasOffsetFor(draggableComponent)).offsetAdd(Component.UTIL.getCanvasOffsetFor(parentOfcomponentToMove)).negate();
+
+            offsetFromComponentPosition = componentToMove == draggableComponent 
+                                                       ? Position.ZERO 
+                                                       : appMouseEventRelativeToCanvas.getMousePosition()
+                                                                                      .sub(Component.UTIL.getCanvasOffsetFor(draggableComponent))
+                                                                                      .negate();
+
             appMouseEventRelativeToCanvas.getEventBus().raiseEvent(new RequestHideCursorEvent(draggableComponent));
             return true;
         }
@@ -175,47 +181,71 @@ public interface Draggable {
         @Override
         public boolean onDrag(ApplicationMouseEvent appMouseEventRelativeToCanvas) {
             if (canDrag(appMouseEventRelativeToCanvas)) {
-                
+
                 if (componentToMove == null) {
                     componentToMove = draggableComponent.getParentContainerOrFail().findChildOrAncestorThatCanBeMoved(draggableComponent);
                     if (componentToMove == null) {
                         throw new NullPointerException( HasName.UTIL.getName(this) + ".onDrag():  componentToMove set to null - should not attempt onDrag when it is null!");
                     }
                 }
-                
+
+                Component<?> parentOfcomponentToMove = (Component<?>)componentToMove.getParentContainerOrFail();
+                Position parentOfcomponentToMovePosition = Component.UTIL.getCanvasOffsetFor(parentOfcomponentToMove);
+
                 if (offsetFromComponentPosition == null) {
-                    Component<?> parentOfcomponentToMove = (Component<?>)componentToMove.getParentContainerOrFail();
-                    offsetFromComponentPosition = componentToMove == draggableComponent ? Position.ZERO 
-                            : appMouseEventRelativeToCanvas.getMousePosition().sub(Component.UTIL.getCanvasOffsetFor(draggableComponent)).offsetAdd(Component.UTIL.getCanvasOffsetFor(parentOfcomponentToMove)).negate();
+                    offsetFromComponentPosition = componentToMove == draggableComponent 
+                                                    ? Position.ZERO 
+                                                    : appMouseEventRelativeToCanvas.getMousePosition()
+                                                                                   .sub(Component.UTIL.getCanvasOffsetFor(draggableComponent))
+                                                                                   .negate();
                 }
-                
+
                 Position moveTo = Position.ZERO;
                 switch (this.freezePolicy) {
                     case DRAGGABLE_FREEZE_NONE:
-                        moveTo = appMouseEventRelativeToCanvas.getMousePosition().offsetAdd(offsetFromComponentPosition);
+                        moveTo = appMouseEventRelativeToCanvas.getMousePosition()
+                                                              .offsetAdd(offsetFromComponentPosition)
+                                                              .sub(parentOfcomponentToMovePosition);
                         break;
     
                     case DRAGGABLE_FREEZE_COLUMN:
                         moveTo = new Position.Simple(appMouseEventRelativeToCanvas.getMousePosition().getRow(),
-                                                     componentToMove.getParentContainerOrFail().getPositionRelativeToParent(componentToMove).getCol()).offsetAdd(new Position.Simple(offsetFromComponentPosition.getRow(),0));
+                                                     componentToMove.getParentContainerOrFail()
+                                                                    .getPositionRelativeToParent(componentToMove).getCol())
+                                                                    .offsetAdd(new Position.Simple(offsetFromComponentPosition.getRow()-parentOfcomponentToMovePosition.getRow(),0));
                         break;
-                    
+
                     case DRAGGABLE_FREEZE_ROW:
                         moveTo = new Position.Simple(componentToMove.getParentContainerOrFail().getPositionRelativeToParent(componentToMove).getRow(), 
-                                                     appMouseEventRelativeToCanvas.getMousePosition().getCol()).offsetAdd(new Position.Simple(0,offsetFromComponentPosition.getRow()));
+                                                     appMouseEventRelativeToCanvas.getMousePosition().getCol()).offsetAdd(new Position.Simple(0,offsetFromComponentPosition.getCol()-parentOfcomponentToMovePosition.getCol()));
                         break;
     
                     default:
                         break;
                 }
-                componentToMove.getParentContainerOrFail().moveChildToPosition(moveTo, componentToMove);
+
+                if ( ! parentOfcomponentToMove.containsPosition(moveTo) ) {
+                    return true;
+                }
+
+                if (parentOfcomponentToMove instanceof HasTitleAndBorder && ((HasTitleAndBorder<?>)parentOfcomponentToMove).hasBorder()) {
+                    Rectangle bounds = new Rectangle.Simple(parentOfcomponentToMove.getRow()+1, 
+                                                            parentOfcomponentToMove.getCol()+1, 
+                                                            parentOfcomponentToMove.getHeight()-2, 
+                                                            parentOfcomponentToMove.getWidth()-2);
+                    if (!bounds.containsPosition(moveTo)) {
+                        return true;
+                    }
+                }
+
+                ((ParentContainer)parentOfcomponentToMove).moveChildToPosition(moveTo, componentToMove);
                 appMouseEventRelativeToCanvas.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(draggableComponent)  );
                 return true;
             } else {
                 return false;
             }
         }
-        
+
         protected boolean canDrag(ApplicationMouseEvent appMouseEventRelativeToCanvas) {
             // TODO:  Need to add a drag constraint behaviour.. possible delegate to another class
             //        options: 

@@ -14,9 +14,9 @@ public class TableColumnImpl implements TableColumn {
     protected Integer             columnDroppable     = null;
     protected Boolean             wordWrap            = null;
     protected Boolean             truncationAllowed   = null;
-    private TableColumnRenderer    renderer;
-    private TableColumnRenderer    headerRenderer;
-    
+    private TableColumnRenderer   renderer;
+    private TableColumnRenderer   headerRenderer;
+
     public TableColumnImpl(String headerText, Integer preferredWidth, String columnName, Integer position,
                            Align align, Integer columnDroppable, Boolean wordWrap, Boolean truncationAllowed) {
         super();
@@ -29,7 +29,7 @@ public class TableColumnImpl implements TableColumn {
         this.wordWrap = wordWrap;
         this.truncationAllowed = truncationAllowed;
     }
-    
+
     public TableColumnImpl(TableColumn base)
     {
         this(base.getHeaderText(), 
@@ -43,8 +43,7 @@ public class TableColumnImpl implements TableColumn {
         this.setColumnRenderer( base.getRenderer() );
         this.setPreferredHeight( base.getPreferredHeight() );
     }
-    
-    
+
     public String getHeaderText() {
         return headerText;
     }
@@ -122,7 +121,7 @@ public class TableColumnImpl implements TableColumn {
         }
         return renderer;
     }
-    
+
     public void setHeaderRenderer(TableColumnRenderer renderer) {
         this.headerRenderer = renderer;
     }
@@ -141,10 +140,11 @@ public class TableColumnImpl implements TableColumn {
     public void setPreferredHeight(Integer preferredHeight) {
         this.preferredHeight = preferredHeight;
     }
-    
+
     public static TableColumn makeDefaultColumnFromTable(int colIdx, TableModel tableModel) {
         return makeDefaultColumnFromTable(colIdx, tableModel, TableColumnRenderer.DEFAULT);
     }
+
     // TableColumnRenderer    renderer = TableColumnRenderer.DEFAULT;
     public static TableColumn makeDefaultColumnFromTable(int colIdx, TableModel tableModel, TableColumnRenderer renderer) {
         if (colIdx >= tableModel.getColumnCount()) {
@@ -184,7 +184,7 @@ public class TableColumnImpl implements TableColumn {
                                    truncationAllowed);
         
         tc.setColumnRenderer(renderer);
-        
+ 
         return tc; 
     }
 

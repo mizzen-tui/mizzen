@@ -1,6 +1,7 @@
 package dtb.terminalIO.components.tab;
 
 import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.input.DropdownListBox;
 import dtb.terminalIO.components.tab.TabPanel.TabContext;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.focus.Focusable;
@@ -39,8 +40,10 @@ public abstract class TabAction<T extends Component<?>> {
         isActivated = true;
         Focusable focusable =  tabContext.toFocusable(getComponentForTab(tabContext));
         resize(tabContext);
-        
-        if (focusable != null) {
+        // following is a hack ... if the first focusable is a drop-down and then
+        // we set it to focusssed it will "drop-down" when tab activated - which is annoying
+        // this code might not be good and not last long - time will tell
+        if (focusable != null && (!(focusable instanceof DropdownListBox))) {
             eventBus.raiseEvent( new RequestFocusEvent( focusable ));
         }
     }

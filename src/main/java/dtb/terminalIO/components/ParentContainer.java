@@ -1,14 +1,16 @@
 package dtb.terminalIO.components;
 
+import java.util.function.Function;
+
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.traverse.HasChildren;
 
-public interface ParentContainer extends  HasChildren<Component<?>>, DirtyFlag {
+public interface ParentContainer extends  HasChildren<Component<?>>, DirtyFlag, ComponentFinder {
 
     Position getPositionRelativeToParent(Component<?> child);
 
     void childResized(Component<?> child);
-    
+
     default boolean canMoveChild(Component<?> child) {
         return false;
     }
@@ -38,6 +40,31 @@ public interface ParentContainer extends  HasChildren<Component<?>>, DirtyFlag {
         }
 
         return grandParent.findChildOrAncestorThatCanBeMoved((Component<?>)parent);
+    }
+
+    //
+    default Component<?> findFirstComponentForCondition(Function<Component<?>, Boolean> condition) {
+        if (this instanceof Component<?>) {
+            if (condition.apply((Component<?>)this)) {
+                return (Component<?>)this;
+            }
+        }
+
+        for (Component<?> child : this.getChildren()) {
+            if (child instanceof ParentContainer) {
+                // child is a ParentContainer
+                Component<?> found = ((ParentContainer)child).findFirstComponentForCondition(condition);
+                if (found != null) {
+                    return found;
+                }
+            } else {
+                // child is a simple component (not ParentContainer)
+                if (condition.apply(child)) {
+                    return child;
+                }
+            }
+        }
+        return null;
     }
 
     default boolean moveChildToPosition(Position position, Component<?> child) {

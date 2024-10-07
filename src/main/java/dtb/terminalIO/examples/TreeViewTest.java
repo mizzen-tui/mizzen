@@ -8,14 +8,11 @@ import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.composite.HorizontalPanel;
-import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.input.tree.TreeView;
 import dtb.terminalIO.components.input.tree.TreeViewModel;
 import dtb.terminalIO.components.input.tree.TreeViewModel.HasChildrenTreeViewModel;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Colors;
-import dtb.terminalIO.events.focus.DefaultFocusManager;
-import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.util.Logging;
 
@@ -24,8 +21,7 @@ public class TreeViewTest {
     public static void main(String[] args) throws IOException {
 
         Logging.setEnabled(true);
-        
-        
+
         String root = "the root";
         String[] rootChildren = new String[] {"child1", "child2","child3", "child4"};
         String[] child1Children = new String[] {"grandchild1.1", "grandchild1.2"};
@@ -54,7 +50,7 @@ public class TreeViewTest {
                 if (parent == child4Children[1]) return child42Children;
                 return null;
             }
-            
+
             @Override
             public String getChild(String parent, int index) {
                 String[] children = getChildren(parent);
@@ -86,7 +82,7 @@ public class TreeViewTest {
                 return -1;
             }
         };
-        
+
         new TUIApp(args)
         .setCanvasSize(40, 100)
         .setEmptyChar(' ')
@@ -111,7 +107,6 @@ public class TreeViewTest {
 
             hp.add( new ScrollableComponent(tv2.getColor(), tv2.getRectangle(), tv2));
 
-            
         }).start();
     }
 

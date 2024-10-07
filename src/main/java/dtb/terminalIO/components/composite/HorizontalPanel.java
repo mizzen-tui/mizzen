@@ -15,7 +15,7 @@ import dtb.terminalIO.geom.position.PositionHorizontalRelative;
 public class HorizontalPanel extends Composite {
 
     int horizontalSpacer = 1;
-    
+
     public HorizontalPanel() {
         super();
     }
@@ -40,7 +40,7 @@ public class HorizontalPanel extends Composite {
     }
 
     public Composite add(Component<?> component) {
-        
+
         ComponentWithOffset child = findChild(component);
         if (child != null) {
             throw new IllegalArgumentException(HasName.UTIL.getName(this)+":Child Component add failure:  Duplicate child("+HasName.UTIL.getName(component)+") !");

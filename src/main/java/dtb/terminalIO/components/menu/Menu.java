@@ -414,7 +414,7 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
                         Logging.info(HasName.UTIL.getName(MenuContainer.this)+" " + "LEFT KEY CLICK");
                         menu.selectNextLeft(te);
                     }));
-            
+
             getListBox().appendEventHandler(new KeyInputEventHandler(Keys.UP_KEYSTROKE, 
                     (te)->  getListBox().getSelectedIndex() == 0,
                     (te)->  {
@@ -440,7 +440,6 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
         public void onChange(EventHandler consumeChange) {
             Logging.info("onChange()  idx = " +  getListBox().getSelectedIndex());
             getListBox().onChange(consumeChange);
-            
         }
 
         public void setItems(List<DisplayableValue<Object>> menuItemsAsDisplayableItems, MenuTextComponentItemFactory menuTextComponentItemFactory) {
@@ -519,7 +518,7 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
         }
         te.getEventBus().raiseEvent(  new RequestUpdateCanvasEvent(this) );
     }
-    
+
     @Override
     public void selectNextRight(TerminalEvent<?> te) {
         MenuItem current = this.getSelected();

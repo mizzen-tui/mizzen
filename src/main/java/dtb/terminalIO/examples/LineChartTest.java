@@ -46,7 +46,7 @@ public class LineChartTest {
 
         LineChart lc;
         Function<Dimension, Dimension> lineChartSize;
-        
+
         ButtonBar menuButtonBar;
         Composite panel;
 

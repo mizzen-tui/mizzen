@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import javax.imageio.ImageIO;
@@ -99,7 +100,7 @@ public class TabPanelTest {
             @Override
             public int getWidth() {
                 int onethird = tabPanelDemoApp.getCanvas().getWidth() / 3;
-                return tabPanelDemoApp.getCanvas().getWidth() - onethird;
+                return tabPanelDemoApp.getCanvas().getWidth() - 4 ; //- onethird;
             }
 
             @Override
@@ -107,19 +108,6 @@ public class TabPanelTest {
                 return tabPanelDemoApp.getCanvas().getHeight() - 8;
             }
         };
-
-        Dimension sizeOfInspectorWindow = new Dimension() {
-            @Override
-            public int getWidth() {
-                return tabPanelDemoApp.getCanvas().getWidth() - (sizeOfTabPanelWindow.getWidth() + 6);
-            }
-
-            @Override
-            public int getHeight() {
-                return sizeOfTabPanelWindow.getHeight();
-            }
-        };
-
 
         Dimension sizeOfDebugWindow = new Dimension() {
             @Override
@@ -199,7 +187,6 @@ public class TabPanelTest {
                     });
                     drawingControlSettings.addText("Color Map:");
                     drawingControlSettings.add(colorMapDDLB);
-
 
                     DropdownListBox<ImageViewerFactory.RGBPlotPredicate> plotPredicatesDDLB = new DropdownListBox<ImageViewerFactory.RGBPlotPredicate>(ImageViewerFactory.plotPointPredicateOptions());
                     plotPredicatesDDLB.setSelected(0);
@@ -311,28 +298,17 @@ public class TabPanelTest {
 
         tabPanelDemoApp.setOnReadyStart((tApp) -> {
 
-            // ComponentInspector inspector = new ComponentInspector(Colors.BIGre, sizeOfInspectorWindow, vPanel, focusManager);
-            
-//            ComponentInspector inspector = new ComponentInspector(Colors.IGre, sizeOfInspectorWindow, (Component<?>)tApp.getMainApplicationPanel(), tApp.getApplicationFocusManager());
-//            
-//            tApp.getEventBus().appendEventHandler(inspector.refreshEventHandler());
-//
-//            tApp.getEventBus().appendEventHandler(inspector.toggleViewEventHandler());
+            BiConsumer<TUIApp, Dimension> defaultResizeAction = tabPanelDemoApp.getResizeAction();
+
 
             tabPanelDemoApp.setOnResizeAction((tApp2, size) -> {
-                tApp2.getCanvas().setSize(size.getHeight(), size.getWidth());
-                tApp2.getCanvas().clearCanvas();
+
+                defaultResizeAction.accept(tApp2, size);
                 tb.resize(sizeOfTabPanelWindow);
-//                inspector.resize(sizeOfInspectorWindow);
                 hp.fullrecalcDim();
                 vPanel.fullrecalcDim();
                 debugWindow.resize(sizeOfDebugWindow);
             });
-            
-            
-            // select first tab once eventBus is rdy to go
-//            tApp.getEventBus().appendEventHandler(
-//                    new OnIdleEventEventHandler.OneTime((te) ->  te.getEventBus().raiseEvent(new KeyEvent(tApp, Keys.F5_KEYSTROKE)) ));
 
             tApp.getEventBus().appendEventHandler(new OnIdleEventEventHandler.RepeatingInterval(100, (te) -> {
                         int count = counter.incrementAndGet();
@@ -344,9 +320,8 @@ public class TabPanelTest {
         
                         te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(tApp));
             }));
-            
-            tb.displayCurrentTab(tApp.getEventBus());
 
+            tb.displayCurrentTab(tApp.getEventBus());
 
         });
 

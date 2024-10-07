@@ -162,9 +162,9 @@ public class TabPanel extends AbstractComponentWrappper<CompositeWithFocusManage
                 current.setActive(true);
                 te2.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(currentComponentInTab));
             });
-            
+
             FocusManager.UTIL.verifyPathsToFocusables(getWrappedComponent(), getWrappedComponent());
-            
+
         });
 
         tabsButtonBar.addComponent(tabButton);

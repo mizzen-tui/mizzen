@@ -90,7 +90,6 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
         }
     }
 
-
     public boolean isDirty() {
         return !this.hasDrawn;
     }
@@ -152,12 +151,12 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
     public String getName() {
         return this.name;
     }
-    
+
     public T setName(String name) {
         this.name = name;
         return (T) this;
     }
-    
+
     public BlockChars getBlockChars() {
         return blockChars;
     }
@@ -170,7 +169,7 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
     public FillOnClearPolicy<T> getFillOnClearPolicy() {
         return this.fillPolicy;
     }
-    
+
     @Override
     public char getEmptyChar() {
         return this.fillPolicy.getEmptyChar();

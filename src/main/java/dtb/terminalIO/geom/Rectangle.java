@@ -101,15 +101,15 @@ public interface Rectangle extends Position, Dimension, Movable {
          return new Position.Simple( ((this.getHeight() - d.getHeight() )/2) + this.getRow(), 
                                      ((this.getWidth()  - d.getWidth()  )/2) + this.getCol());
     }
-    
+
     public default Position centered(Dimension d) {
         return centered(d, null);
    }
-   
+
    public default Position centerPosition() {
         return centered(Dimension.ZERO, null);
    }
-    
+
     /**
      * Does rectangle contain row
      */
@@ -707,7 +707,6 @@ public interface Rectangle extends Position, Dimension, Movable {
                     rs.splitAndAppendToSubsListUsing(r1);
                 }
             }
-            
             return result;
         }
 
@@ -741,7 +740,7 @@ public interface Rectangle extends Position, Dimension, Movable {
         
         public boolean isNotObscured() {
             if (subs == null) {
-                throw new IllegalStateException("Do not call isNotHidden() before calling splitAndAppendToSubsListUsing()");
+                throw new IllegalStateException("Do not call isNotObscured() before calling splitAndAppendToSubsListUsing()");
             }
             return (subs.size() == 1 && subs.get(0).isSameRectangle(this.rectangle));
         }

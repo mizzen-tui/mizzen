@@ -2,13 +2,12 @@ package dtb.terminalIO.components.plot.blocks;
 
 import dtb.terminalIO.components.plot.Plotter;
 import dtb.terminalIO.controlcodes.color.Color;
-import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.controlcodes.color.Colors.BgColor;
 import dtb.terminalIO.controlcodes.color.Colors.FGBGColors;
 import dtb.terminalIO.controlcodes.color.Colors.FgColor;
 import dtb.terminalIO.controlcodes.color.Colors.RGBColorBackground;
-import dtb.terminalIO.controlcodes.color.Colors.RGBColorForeground;
 import dtb.terminalIO.controlcodes.color.Colors.RGBColorFGBG;
+import dtb.terminalIO.controlcodes.color.Colors.RGBColorForeground;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;

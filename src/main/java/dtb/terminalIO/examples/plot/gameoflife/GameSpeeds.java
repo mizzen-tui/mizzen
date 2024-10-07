@@ -10,14 +10,12 @@ public class GameSpeeds {
     public static int SPEED_REALLY_FAST =  100;
     public static int SPEED_HYPER_DRIVE =   50;
 
-    
     public static class GameSpeedOption extends SimpleDisplayValue<Integer> {
         public GameSpeedOption(String displayValue, int value) {
             super(displayValue, value);
         }
-    }   
-    
- 
+    }
+
     public static GameSpeedOption[] speedOptions() {
         GameSpeedOption[] standardSpeeds = new GameSpeedOption[] {
                 new GameSpeedOption("slow", SPEED_SLOW),
@@ -28,6 +26,5 @@ public class GameSpeeds {
         };
         return standardSpeeds;
     }
-    
-    
+
 }

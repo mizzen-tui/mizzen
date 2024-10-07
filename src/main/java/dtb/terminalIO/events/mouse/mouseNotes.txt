@@ -1,0 +1,36 @@
+
+
+
+Mouse-Down
+    --> goto screen home..
+    --> request real cursor position  CPR
+    --> app Mouse position = RawMousePos - CPR
+    
+    map to component
+    
+       find focusable path
+          if clickable, then click
+          
+          
+drag mode
+
+   onDragEnter
+   
+   onDrag
+   
+   onDragStop          
+    
+ .... ON LEFT drag..
+ 
+      as above .. when component found, detect if draggable..
+      
+      if draggable go into drag mode
+      
+      
+      
+      
+--------------------------------------------------------
+
+
+
+         

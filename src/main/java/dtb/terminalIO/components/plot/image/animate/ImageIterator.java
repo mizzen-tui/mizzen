@@ -36,11 +36,11 @@ public interface ImageIterator extends Iterator<BufferedImage> {
             }
             return new CombinedImageIterator(originalIterator);
         }
-        
+
         public CombinedImageIterator(Iterator<BufferedImage> originalIterator) {
             this.originalIterator = originalIterator;
         }
-        
+
         @Override
         public boolean hasNext() {
             return originalIterator.hasNext();

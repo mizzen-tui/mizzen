@@ -40,13 +40,12 @@ public class ScrollBarVertical extends BoundedComponent<ScrollBarVertical> imple
 
     // ▒
     // [░░▒]  [▒░░]
-    
     public ScrollBarVertical(Color color, Position pos, int len) {
         super(color, pos, new Dimension.Simple(len, 1));
         handleKeyEvents = true;
         this.setFillOnClear(false);
     }
-    
+
     public ScrollBarVertical(Color color, int row, int col, int len) {
         super(color, new Position.Simple(row, col), new Dimension.Simple(len, 1));
         handleKeyEvents = true;
@@ -109,7 +108,7 @@ public class ScrollBarVertical extends BoundedComponent<ScrollBarVertical> imple
         setOffset(offset.offsetAdd(-1, 0));
         te.getEventBus().raiseEvent( new HasValue.ValueChangedEvent<>(this) );
     }
-    
+
     boolean canScrollDown(TerminalEvent<?> te) {
         if (sizeOfComponentBeingViewed == null || offset==null) {
             return false;
@@ -127,7 +126,33 @@ public class ScrollBarVertical extends BoundedComponent<ScrollBarVertical> imple
         setOffset(offset.offsetAdd(1, 0));
         te.getEventBus().raiseEvent( new HasValue.ValueChangedEvent<>(this) );
     }
-    
+
+    void pageUp(TerminalEvent<?> te) {
+        if (!canScrollUp(te)) {
+            return;
+        }
+        int pageHeight = sizeOfViewer.getHeight();
+        int delta = pageHeight;
+        if ((this.offset.getRow()) < delta) {
+            delta = this.offset.getRow();
+        }
+        setOffset(offset.offsetAdd( -delta, 0));
+        te.getEventBus().raiseEvent( new HasValue.ValueChangedEvent<>(this) );
+    }
+
+    void pagedown(TerminalEvent<?> te) {
+        if (!canScrollDown(te)) {
+            return;
+        }
+        int pageHeight = sizeOfViewer.getHeight();
+        int delta = pageHeight;
+        if ((this.offset.getRow() + delta) > (sizeOfComponentBeingViewed.getHeight() + 1)) {
+            delta = (sizeOfComponentBeingViewed.getHeight() + 1) - this.offset.getRow();
+        }
+        setOffset(offset.offsetAdd(delta, 0));
+        te.getEventBus().raiseEvent( new HasValue.ValueChangedEvent<>(this) );
+    }
+
     public void setOffset(Position offset) {
         this.offset = offset;
         this.markAsDirty();
@@ -233,8 +258,7 @@ public class ScrollBarVertical extends BoundedComponent<ScrollBarVertical> imple
         //Logging.setEnabled(false);
         
     }
-    
-    
+
     @Override
     public EventHandler canHandle(TerminalEvent<?> te) {
         return asFocusable().canHandle(te);
@@ -264,7 +288,7 @@ public class ScrollBarVertical extends BoundedComponent<ScrollBarVertical> imple
     public void setParentFocusManager(FocusManager focusManager) {
         Focusable.UTIL.setParentFocusManager(this, focusManager, (fm)-> asFocusable().setParentFocusManager(fm));
     }
-    
+
     Focusable meAsFocusable;
 
     ChainedEventHandler eventHandlerContainer;
@@ -290,6 +314,17 @@ public class ScrollBarVertical extends BoundedComponent<ScrollBarVertical> imple
                                                                               scrollDown(te);
                                                                           }) );
 
+        eventHandlerContainer.appendEventHandler(new KeyInputEventHandler(Keys.PGUP_KEYSTROKE, 
+                (te)->handleKeyEvents && canScrollUp(te),
+                (te)-> {
+                    pageUp(te);
+                }) );
+
+        eventHandlerContainer.appendEventHandler(new KeyInputEventHandler(Keys.PGDN_KEYSTROKE, 
+                (te)->handleKeyEvents && canScrollDown(te),
+                (te)-> {
+                    pagedown(te);
+                }) );
 
         this.conditionalHandler = this.eventHandlerContainer.asConditionalEventHandler();
         meAsFocusable = new FocusableFromParts(this, new DefaultFocusableBehaviour(),this.conditionalHandler);

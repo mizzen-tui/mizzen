@@ -28,19 +28,19 @@ import dtb.terminalIO.util.ElapsedTime;
 import dtb.terminalIO.util.Logging;
 
 public class ColorsTestWithTable {
-    
+
     public static void main(String args[]) {
-        
+
         Logging.setEnabledFromArgs(args);
-        
+
         new TUIApp(args)
         .setEmptyChar(' ')
         .setDefaultMainApplicationPanel()
         .confirmOnExit()
         .setOnReadyStart((tApp)->{
-            
+
             tApp.getMainApplicationPanel().add(0,10, new TextComponent("   Named Colors"));
-            
+
             Button markDirty = new Button("Mark Table Dirty, then Refresh");
             tApp.getMainApplicationPanel().add(0,30, markDirty);
             
@@ -77,7 +77,7 @@ public class ColorsTestWithTable {
             colorsOfTheRainbow.add(foregroundColors);
 
             DefaultTableModel tModel = new DefaultTableModel();
-            
+
             TableComponent combinedColorsTable = new TableComponent(Colors.Gre, new Dimension.Simple(40*3+1,16*8+20),tModel);
             combinedColorsTable.setFillOnClear(false);
             combinedColorsTable.setFillOnClear(true);
@@ -102,7 +102,7 @@ public class ColorsTestWithTable {
                 combinedColorsTable.markAsDirty();
                 te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(combinedColorsTable));
             });
-            
+
             int row = 0;
             Color headerColor = new FGBGColors(Colors.BIWhi, Colors.On_IRed);
             for (int c = 0; c <Colors.getBackgroundColorNames().size(); c++) {
@@ -130,7 +130,7 @@ public class ColorsTestWithTable {
 
             tApp.getMainApplicationPanel().add(1,0, sc);
 
-            tApp.setOnResizeAction((tSameApp, size)->{
+            tApp.setOnResizeAction((tSameApp, size) -> {
                 tApp.clearCanvas();
                 tApp.setCanvasSize(size);
 
@@ -163,13 +163,12 @@ public class ColorsTestWithTable {
             setCellColor(colorAndText.color);
             Logging.info(" setCellText() : " + ElapsedTime.onRunOf(()-> setCellText(colorAndText.text, preferredWidth, maxCellHeight)));
         }
-        
+
         @Override
         protected void renderHeaderOntoComponent(Component<?> componentForRendering2, TableColumn tableColumn, String cellValue, int preferredWidth, int maxCellHeight, Align align) {
             ColorAndText colorAndText = new ColorAndText(Colors.IGre, cellValue);
             renderObjectOntoComponent(componentForRendering2, tableColumn, colorAndText, preferredWidth, maxCellHeight, align);
         }
-
     }
 
     private static String largeText;

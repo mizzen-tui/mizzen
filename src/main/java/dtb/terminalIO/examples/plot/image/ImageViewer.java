@@ -25,90 +25,106 @@ import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.input.DisplayableValue;
 import dtb.terminalIO.components.input.DisplayableValue.StringDisplayValue;
 import dtb.terminalIO.components.input.DropdownListBox;
+import dtb.terminalIO.components.input.IntegerInputWithIncrDecrButtons;
 import dtb.terminalIO.components.input.ListBox;
-import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.components.plot.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory;
+import dtb.terminalIO.components.plot.image.ImageViewerFactory.ImageRenderRequest;
+import dtb.terminalIO.components.plot.image.ImageViewerFactory.ImageRenderer;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.RGBPlotPredicate;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.RGBToAnsiColorControlCode;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
+import dtb.terminalIO.components.scroll.ScrollableComponent2;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.core.ScreenCanvasBackend;
 import dtb.terminalIO.core.ScreenCanvasBackend.UpdateStrategy;
-import dtb.terminalIO.events.AbstractTimedRequestedController;
 import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.TimedRequestedController;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
+import dtb.terminalIO.util.VeryBasicArgsHelper;
 
 public class ImageViewer {
 
     public static void main(String[] args) {
         plotterTest(args);
     }
-    
-    public static Map<String,String> imageFiles(String dir) {
-        
-        if (dir == null) {
-            dir = System.getProperty("user.dir");
-        }
-        
-        File imgDIR = new File(dir);
-        if (!imgDIR.exists() || !imgDIR.isDirectory()) {
-            throw new IllegalArgumentException(dir+" not a valid dir");
-        }
-        
-        File[] files = imgDIR.listFiles((d,f)->  f.endsWith(".jpg") || f.endsWith(".png"));
-        
-        if (files == null || files.length == 0) {
-            throw new IllegalArgumentException(dir+" does not have any jpegs or png files");
-        }
-        
-        Map<String,String> images = new HashMap<String, String>();
-        
-        for (File f : files) {
-            try {
-                images.put(f.getName(), f.getCanonicalPath());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        
-        return images;
-        
-    }
-    
+
     public static void plotterTest(String[] args) {
-        
+
         new TUIApp(args)
                     .setDefaultMainApplicationPanel()
                     .confirmOnExit()
-                    .enableMouseHandling()
                     .setOnReadyStart((tApp)->{
 
                         HorizontalPanel mainPanel = new HorizontalPanel();
+                        mainPanel.setBorder(true);
                         tApp.getMainApplicationPanel().add(mainPanel);
-                        
-                        int column[] = new int[] {5};
 
-                        BrailleGrid plotter = new BrailleGrid(Colors.BBlu, 
-                                                              tApp.getDimensions().getHeight()-5, 
-                                                              tApp.getDimensions().getWidth()-40);
+                        ImageRenderRequest imageRequest = new ImageRenderRequest();
 
-                        plotter.setTitle(Colors.BCya, "Image Viewer");
+                        Dimension basePlotterSize = new Dimension.SupplierAsDimension(()-> new Dimension.Simple(tApp.getDimensions().getHeight()-7, tApp.getDimensions().getWidth() - 42 ));
+                        Dimension scrollableWithPlotterSize = new Dimension.SupplierAsDimension(()-> new Dimension.Simple(basePlotterSize.getHeight()+2,basePlotterSize.getWidth()+2));
+                        Dimension.Delegate plotterDimension = new Dimension.Delegate( basePlotterSize );
+
+                        imageRequest.setDesiredImgSizeInCharacters(plotterDimension);
+                        imageRequest.setColorMap(ImageViewerFactory.rgbColorMapRCol);
+                        imageRequest.setToPlotOrNot(ImageViewerFactory.PLOT_ALWAYS);
+                        imageRequest.setImageRenderType(ImageViewerFactory.IMAGE_RENDER_TYPE.BRAILLE);
+                        imageRequest.setImageToView(getCircle(plotterDimension.getWidth()-4, plotterDimension.getHeight()-4));
+
+                        ImageRenderer plotter;
+                        try {
+                            plotter = ImageViewerFactory.fromImage(imageRequest);
+                        } catch (Exception e1) {
+                            // TODO Auto-generated catch block
+                            throw new RuntimeException(e1);
+                        } // new BrailleGrid(Colors.BBlu, plotterDimension);
+
+                        ScrollableComponent2 scrollableWithPlotter = new ScrollableComponent2(Colors.BCya, new Dimension.Simple(scrollableWithPlotterSize),plotter);
+
+                        scrollableWithPlotter.setTitle(Colors.BCya, "Image Viewer");
+
+                        IntegerInputWithIncrDecrButtons imgScaleControls = new IntegerInputWithIncrDecrButtons(scrollableWithPlotter.getColor(),"Zoom","-","+");
+
+                        scrollableWithPlotter.addFooterComponent(imgScaleControls);
+                        imgScaleControls.setValue(100);
+
+                        Dimension plotterDimensionWithScale = new Dimension.SupplierAsDimension(()->{
+                            if (imgScaleControls.getValue() == 100) {
+                                return basePlotterSize;
+                            }
+                            float ratio = ((float)imgScaleControls.getValue()) / 100.0f;
+                            int height = Math.round(basePlotterSize.getHeight()*ratio);
+                            int width = Math.round(basePlotterSize.getWidth()*ratio);
+                            height = height > 5  ? height : 1;
+                            width  = width  > 5  ? width  : 1;
+                            
+                            return new Dimension.Simple(height, width);
+                        });
+
+                        plotterDimension.setBaseSize(plotterDimensionWithScale);
 
                         VerticalPanel formPanel = new VerticalPanel();
 
                         formPanel.setFillOnClear(true);
                         formPanel.setEmptyColor(Colors.Blu);
-                        formPanel.setEmptyChar('◍');
+                        formPanel.setEmptyChar(' ');
+                        formPanel.setBorder(true);
 
-                        mainPanel.add(plotter);
+                        mainPanel.add(scrollableWithPlotter);
                         mainPanel.add(formPanel);
 
-                        Map<String,String> images = imageFiles(null);
+                        Map<String,String> images = new HashMap<String, String>();
+                        VeryBasicArgsHelper.onNamedArg(args,"imagedir",(imageDir)-> images.putAll(imageFiles(imageDir)));
+
+                        if (images.size()<1) {
+                            throw new IllegalStateException("No image directory specified");
+                        }
 
                         ListBox<String> imagesListbox = new ListBox<String>(StringDisplayValue.fromStringValues(images));
                         imagesListbox.setTitle("Images");
@@ -126,6 +142,11 @@ public class ImageViewer {
                         rgbMapperListBox.setTitle("Color mapping algorithm");
 
                         formPanel.add(rgbMapperListBox);
+
+                        DropdownListBox<ImageViewerFactory.IMAGE_RENDER_TYPE> ddlbRenderType = new DropdownListBox<ImageViewerFactory.IMAGE_RENDER_TYPE>(ImageViewerFactory.imageRenderTypeOptions());
+                        ddlbRenderType.setSelected(0);
+                        ddlbRenderType.setTitle("Render type");
+                        formPanel.add(ddlbRenderType);
 
                         DropdownListBox<ImageViewerFactory.RGBPlotPredicate> rgbPlotConditionalListBox = new DropdownListBox<ImageViewerFactory.RGBPlotPredicate>(ImageViewerFactory.plotPointPredicateOptions());
                         rgbPlotConditionalListBox.setSelected(0);
@@ -168,88 +189,66 @@ public class ImageViewer {
 
                         formPanel.add(plotFillBackgroundsListBox);
 
-                        //PointPlotter pointPlotter = plotter.asPointPlotter();
-
-                        Consumer<Integer> renderLine = (col)-> {
-                            //plotter.clear();
-                            plotter.markAsDirty();
-                            PointPlotter pointPlotter = plotter.asPointPlotter();
-                            pointPlotter.clearPlots();
-                            pointPlotter.plot(col+0, 10);
-                            pointPlotter.plot(col+1, 10);
-                            pointPlotter.plot(col+2, 10);
-                            pointPlotter.plot(col+3, 10);
-                            tApp.getCanvas().clearCanvas();
-                            /*
-                            tApp.getCanvas().t(5,5,
-                                               " col: " + col + "   "+
-                                               " col: " + col + "   "+
-                                               " plotter: " + plotter.getSegmentsBuffer().getSegments().size()+"   " +
-                                               " canvas: "  + tApp.getCanvas().getSegmentsBuffer().getSegments().size()+"   ");
-                             */
-                            tApp.doRefreshCanvasIfModified();
-                        };
-
-                        renderLine.accept(column[0]);
-
-                        tApp.getEventBus().appendEventHandler( new KeyInputEventHandler(Keys.LEFT_KEYSTROKE, (te) -> {
-                            column[0]--;
-                            renderLine.accept(column[0]);
-                        }));
-
-                        tApp.getEventBus().appendEventHandler( new KeyInputEventHandler(Keys.RIGHT_KEYSTROKE, (te) -> {
-                            column[0]++;
-                            renderLine.accept(column[0]);
-                        }));
-
                         Map<String, Image> imageCache = new HashMap<String, Image>();
 
+                        boolean forceException = true;
+
                         Consumer<TerminalEvent<?>> task_DisplayImage = (te)-> {
+                                                        
                             plotBackgroundsListBox.getValue().setBackGround(plotter);
                             plotter.clear();
                             //pointPlotter.clearPlots();
                             BufferedImage img;
                             Image img2;
-                            int drawingWidth = plotter.getGridRectangle().getWidth();
-                            int drawingHeight = plotter.getGridRectangle().getHeight();
+                           // int drawingWidth = plotter.getWidth() getGridRectangle().getWidth();
+                           // int drawingHeight = plotter.getGridRectangle().getHeight();
                             try {
                                 img2 = imageCache.get(imagesListbox.getValue());
                                 if (img2 == null) {
                                     img = readImage(imagesListbox.getValue());
-                                    img2 = img.getScaledInstance(drawingWidth, drawingHeight, 0);
+                                    img2 = img; // img.getScaledInstance(drawingWidth, drawingHeight, 0);
                                     // TODO: need to clear the cache when window resized
                                     imageCache.put(imagesListbox.getValue(), img2);
                                 }
+                                
+                                if (forceException == true) {
+                                //    throw new IllegalStateException("Lets see where this goes");
+                                }
+                                
+                                // set render image and render options inside request
+                                imageRequest.setColorMap(rgbMapperListBox.getValue());
+                                imageRequest.setDesiredImgSizeInCharacters(plotterDimension);
+                                imageRequest.setImageRenderType(ddlbRenderType.getValue());
+                                imageRequest.setToPlotOrNot(rgbPlotConditionalListBox.getValue());
+                                imageRequest.setImageToView(img2);
+                                
+                                // now do the render!
+                                ImageViewerFactory.fromImage(plotter, imageRequest);
 
-
-                                plotImage(plotter, 
-                                          img2, 
-                                          drawingWidth, 
-                                          drawingHeight, 
-                                          rgbMapperListBox.getValue(),
-                                          rgbPlotConditionalListBox.getValue(),
-                                          plotFillBackgroundsListBox.getValue());
                             } catch (Exception e) {
+                                System.out.println("GOT HERE!!!!!!!!!!!!!!!!!!!!!!!!1");
                                 throw new RuntimeException(e);
+
                             }
-                            tApp.doRefreshCanvasIfModified();
+                            te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(plotter));
                         };
 
-                        AbstractTimedRequestedController displayImgCTRL = new AbstractTimedRequestedController(()->{
+                        TimedRequestedController displayImgCTRL = new TimedRequestedController(()->{
                             tApp.getEventBus().asynch((te)-> task_DisplayImage.accept(te) );
-                        }) {
-                            @Override
-                            protected boolean isRequestDifferentFromPrevious() {
-                                return true;
-                            }
-                        };
+                        });
 
-                        displayImgCTRL.setTimerDelayMillis(2000);
+                        displayImgCTRL.setTimerDelayMillis(250);
 
                         Consumer<TerminalEvent<?>> throttledDisplayImageRequestWrapper = (te)-> {
                             displayImgCTRL.onRequest(tApp.getEventBus());
                             //task_DisplayImage.accept(te);
                         };
+
+                        imgScaleControls.onChange((te)->{
+                            plotter.resize( new Dimension.Simple(plotterDimension)  );
+                            scrollableWithPlotter.resize(new Dimension.Simple(scrollableWithPlotterSize));
+                            throttledDisplayImageRequestWrapper.accept(te);
+                        });
 
                         tApp.getEventBus().appendEventHandler( new KeyInputEventHandler(Keys.CTRL_I_KEYSTROKE, (te) -> {
                             throttledDisplayImageRequestWrapper.accept(te);
@@ -269,6 +268,8 @@ public class ImageViewer {
                         plotBackgroundsListBox.onChange(onListBoxValueChangeHandler);
 
                         plotFillBackgroundsListBox.onChange(onListBoxValueChangeHandler);
+                        
+                        ddlbRenderType.onChange(onListBoxValueChangeHandler);
 
                         ScreenCanvasBackend backEnd = (ScreenCanvasBackend) tApp.getCanvas().getCanvasBackend();
                         backEnd.setUpdateStrategy(UpdateStrategy.UPDATE_CHANGED  );
@@ -281,23 +282,52 @@ public class ImageViewer {
                             // do default behaviour
                             defaultOnResizeAction.accept(tApp2, newSize);
                             // now resize the grid
-                            
                             imageCache.clear();
-                            
-                            plotter.resize( new Dimension.Simple(newSize.getHeight()-5, newSize.getWidth() - 40 )  );
 
+                            plotter.resize( new Dimension.Simple(plotterDimension)  );
+                            scrollableWithPlotter.resize(new Dimension.Simple(scrollableWithPlotterSize));
                             tApp2.getEventBus().asynch((te)-> throttledDisplayImageRequestWrapper.accept(te) );
                         });
 
-                    })
-                    .start();
+                    }).start();
     }
-    
+
+    public static Map<String,String> imageFiles(String dir) {
+
+        if (dir == null) {
+            dir = System.getProperty("user.dir");
+        }
+
+        File imgDIR = new File(dir);
+        if (!imgDIR.exists() || !imgDIR.isDirectory()) {
+            throw new IllegalArgumentException(dir+" not a valid dir");
+        }
+
+        File[] files = imgDIR.listFiles((d,f)->  f.endsWith(".jpg") || f.endsWith(".png"));
+
+        if (files == null || files.length == 0) {
+            throw new IllegalArgumentException(dir+" does not have any jpegs or png files");
+        }
+
+        Map<String,String> images = new HashMap<String, String>();
+
+        for (File f : files) {
+            try {
+                images.put(f.getName(), f.getCanonicalPath());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        return images;
+
+    }
+
     static BufferedImage readImage(String fileName) throws IOException {
         BufferedImage image = ImageIO.read(new File(fileName));
         return image;
     }
-    
+
     static BufferedImage getCircle(int width, int height) {
 
         BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
@@ -318,18 +348,17 @@ public class ImageViewer {
         return bufferedImage;
     }
 
-    
     static interface PictureBackground {
         void setBackGround(Component<?> c);
     }
-    
+
     static class PictureBackgroundImpl implements PictureBackground {
 
         char  emptyChar = ' ';
         Color emptyColor = Colors.DEFAULT_COLOR;
         boolean fillOnEmpty = false;
         String name;
-        
+
         public PictureBackgroundImpl(char emptyChar, dtb.terminalIO.controlcodes.color.Color emptyColor,
                 boolean fillOnEmpty, String name) {
             super();
@@ -338,8 +367,6 @@ public class ImageViewer {
             this.fillOnEmpty = fillOnEmpty;
             this.name = name;
         }
-
-
 
         @Override
         public void setBackGround(Component<?> c) {
@@ -353,7 +380,7 @@ public class ImageViewer {
                 c.markAsDirty();
             }
         }
-        
+
         public DisplayableValue<PictureBackground> asDisplayableValue() {
             return new DisplayableValue<PictureBackground>() {
                 @Override
@@ -366,8 +393,6 @@ public class ImageViewer {
                 }
             };
         }
-        
-        
     }
 
     static PictureBackgroundImpl background_NOFILL = new PictureBackgroundImpl(' ', null, false,"None");
@@ -407,7 +432,9 @@ public class ImageViewer {
 
     
 
-    private static void plotImage(BrailleGrid plotter, 
+    static Object plotImage_mutex = new Object();
+    
+    private static void plotImage111(BrailleGrid plotter, 
                                   Image image, 
                                   int width, 
                                   int height, 
@@ -416,9 +443,13 @@ public class ImageViewer {
                                   Color plotBGColor ) throws Exception {
 
         
-        ImageViewerFactory.simpleImageToBrailleView(plotter, 
-                                                    image, 
-                                                    new Dimension.Simple(height, width),toPlotOrNot, colorMap);
+        synchronized (plotImage_mutex) {
+            ImageViewerFactory.simpleImageToBrailleView(plotter, 
+                    image, 
+                    new Dimension.Simple(height, width),
+                    toPlotOrNot, 
+                    colorMap);
+        }
 
     }
 

@@ -17,6 +17,7 @@ import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.FocusManagerProvider;
 import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.focus.DefaultFocusManager.NAV_STYLE;
 import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
@@ -106,16 +107,30 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
         }
         return this.focusManager;
     }
-    
-    public ComponentWithFocusManager<T> setCycling(boolean cycling) {
+
+    private DefaultFocusManager getAssertDefaultFocusManager(String funcName) {
         FocusManager fm = getFocusManager();
         if (!(fm instanceof DefaultFocusManager)) {
-            throw new IllegalStateException(" Tried to set cycling on a focusManager that is not of type DefaultFocusManager ");
+            throw new IllegalStateException(" Tried "+funcName+" on a focusManager that is not of type DefaultFocusManager ");
         }
-        ((DefaultFocusManager)fm).setCycling(cycling);
-        return this;
+        return ((DefaultFocusManager)fm);
     }
-    
+
+    public T setCycling(boolean cycling) {
+        getAssertDefaultFocusManager("setCycling()").setCycling(cycling);
+        return (T) this;
+    }
+
+    public T setNavKeysFirst(boolean navKeysFirst) {
+        getAssertDefaultFocusManager("setNavKeysFirst()").setNavKeysFirst(navKeysFirst);
+        return (T) this;
+    }
+
+    public T setNavKeysNone() {
+        getAssertDefaultFocusManager("setNavKeysNone()").setNavKeysNone();
+        return (T) this;
+    }
+
     private ChainedEventHandler getOrBuildChainedEventHandler() {
         if (chainedEventHandler == null) {
             chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
@@ -123,7 +138,7 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
         }
         return chainedEventHandler;
     }
-    
+
     protected EventHandlerContainer getEventHandlerContainer() {
         return getOrBuildChainedEventHandler();
     }
@@ -135,10 +150,11 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
     protected void addComponentAndItsFocusables(Component<?> component) {
         this.focusBehaviourManager.addComponentAndItsFocusables(Position.ZERO, component);
     }
-      // ASSUMPTION:  component has already been added to the container
-      protected void addComponentFocusablesToFocusManager(Component<?> component) { 
-          this.focusBehaviourManager.addComponentFocusablesToFocusManager(component);
-      }
+
+    // ASSUMPTION:  component has already been added to the container
+    protected void addComponentFocusablesToFocusManager(Component<?> component) { 
+        this.focusBehaviourManager.addComponentFocusablesToFocusManager(component);
+    }
 
     protected void removeComponentFocusablesFromFocusManager(Component<?> component) {
         this.focusBehaviourManager.removeComponentFocusablesFromFocusManager(component);
@@ -403,6 +419,46 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
 //        for (Focusable focusable : new ArrayList<Focusable>(getChildFocusables())) {
 //            removeFocusable(focusable);
 //        }
+    }
+    
+    
+    //  Some methods to make it look a bit like a Composite
+    
+    public T remove(Component<?> component) {
+        this.getContainer().remove(component);
+        return (T) this;
+    }
+    
+
+    protected T addComponentToInternalContainer(Position offset, Component<?> component) {
+        this.getContainer().add(offset, component);
+        return (T) this;
+    }
+
+    public T add(Position offset, Component<?> component) {
+        return addComponentToInternalContainer(offset, component);
+    }
+ 
+    public T hide(Component<?> component) {
+        this.getContainer().hide();
+        return (T) this;
+    }
+
+    public T show(Component<?> component)  {
+        this.getContainer().show();
+        return (T) this;
+    }
+
+    public T setDropShadow(boolean dropShadow, Component<?> component)  {
+        return (T) this;
+    }
+    
+    public T add(Component<?> component) {
+        return this.add(Position.ZERO, component);
+    }
+
+    public T add(int offsetRow, int offsetCol, Component<?> component) {
+        return this.add(new Position.Simple(offsetRow, offsetCol), component);
     }
 
 }

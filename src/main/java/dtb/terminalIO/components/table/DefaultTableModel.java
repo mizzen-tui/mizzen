@@ -21,12 +21,13 @@ public class DefaultTableModel implements TableModel {
     public DefaultTableModel(List<String> columnNames, List<Object[]> data) {
         this.columnNames = columnNames;
         this.data = data;
-        for (Object[] row : this.data) {
+        for (int i=0; i < data.size(); i++) {
+            Object[] row = data.get(i);
             if (row == null) {
                 throw new NullPointerException("row was null");
             }
             if (row.length != this.columnNames.size()) {
-                throw new IllegalArgumentException("row was not the same length as columnnames");
+                throw new IllegalArgumentException("row at index "+i+" (with length of "+row.length+") was not the same length as columnnames (with length of "+row.length+")");
             }
         }
     }

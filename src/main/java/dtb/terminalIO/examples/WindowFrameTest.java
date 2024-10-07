@@ -43,8 +43,7 @@ import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.TerminalDimensions;
 
 public class WindowFrameTest {
-    
-    
+
     static boolean useFocusable = false;
     
     static String DEFAULT_IMG_PATH="/home/dbalme/workspace/tmpImages/car.jpeg";
@@ -103,10 +102,6 @@ public class WindowFrameTest {
         .confirmOnExit()
         .setOnReadyStart((tApp)-> {
 
-            ScreenCanvasBackend canvasBackend = ((ScreenCanvasBackend)tApp.getCanvas().getCanvasBackend());
-           // canvasBackend.setUpdateStrategy(UpdateStrategy.UPDATE_FULL);
-
-            
             MultiLineTextInput mTextBox = new MultiLineTextInput(); 
             mTextBox.setText("Silly Sally sold\nSeaShells at the seashore\nWhat a silly thing to do!");
 

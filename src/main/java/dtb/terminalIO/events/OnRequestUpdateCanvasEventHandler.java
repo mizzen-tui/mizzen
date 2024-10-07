@@ -4,7 +4,6 @@ import java.util.function.Predicate;
 
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.util.ElapsedTime;
-import dtb.terminalIO.util.Logging;
 
 /**
  * Handle Canvas update requests.
@@ -12,7 +11,7 @@ import dtb.terminalIO.util.Logging;
  * <p/>
  * 
  * A big part of this handler's job ( along with updating the canvas ) is to slow
- * down frequent canvas updates..  This is done by delegating to an {@link AbstractTimedRequestedController}
+ * down frequent canvas updates..  This is done by delegating to an {@link TimedRequestedController}
  * which will only invoke the canvasUpdater once the rate of requests have slowed down.
  * 
  * <p/>
@@ -31,7 +30,7 @@ public class OnRequestUpdateCanvasEventHandler implements ConditionalEventHandle
         static final int MIN_TIMER_DELAY = 50;
         static final int DEFAULT_TIMER_DELAY = MIN_TIMER_DELAY;
         
-        AbstractTimedRequestedController timedOnChangeRequestController = null;
+        TimedRequestedController timedOnChangeRequestController = null;
 
         Runnable timedCanvasUpdater = null;
 
@@ -42,7 +41,7 @@ public class OnRequestUpdateCanvasEventHandler implements ConditionalEventHandle
             timedOnChangeRequestController.setTimerDelayMillis(DEFAULT_TIMER_DELAY);
         }
 
-        AbstractTimedRequestedController buildTimedUpdateCanvasController(Runnable canvasUpdater) {
+        TimedRequestedController buildTimedUpdateCanvasController(Runnable canvasUpdater) {
 
             timedCanvasUpdater = ()-> {
 
@@ -70,7 +69,7 @@ public class OnRequestUpdateCanvasEventHandler implements ConditionalEventHandle
                 }
             };
             
-            return new AbstractTimedRequestedController(timedCanvasUpdater) {
+            return new TimedRequestedController(timedCanvasUpdater) {
                 @Override
                 protected boolean isRequestDifferentFromPrevious() {
                     return true;

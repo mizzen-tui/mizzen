@@ -46,7 +46,7 @@ public interface HasName<T> {
             }
             return getName(o);
         }
-        
+
         public static String getName(Object o) {
             if (o == null) {
                 throw new NullPointerException("getName():  Object null!");
@@ -58,7 +58,7 @@ public interface HasName<T> {
             if (objectWithName == null || parentContainerWithName == null) {
                 return objectWithName;
             }
-            
+
             if (objectWithName instanceof HasName) {
                 if (((HasName<?>)objectWithName).getName() == null) {
                     
@@ -70,7 +70,6 @@ public interface HasName<T> {
             }
             return objectWithName;
         }
-        
         public static String deriveName(Object node) {
             if (node == null) {
                 return null;
@@ -115,11 +114,6 @@ public interface HasName<T> {
             }
             return output;
         }
-        
-        
     }
-    
-
-
 
 }

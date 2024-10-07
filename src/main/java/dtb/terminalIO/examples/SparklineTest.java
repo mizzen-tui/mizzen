@@ -56,7 +56,7 @@ public class SparklineTest {
             bannerPanel.addButton(Colors.IGre,"CTRL-C",Keys.CTRL_C_KEYSTROKE, (te) -> terminateAppHotKeyEventHandler.handle(te)  );
             bannerPanel.addComponent(new TextComponent(" to quit "));
         }
-        bannerPanel.addButton(Colors.IGre,"UP", Keys.UP_KEYSTROKE, (te)->{
+        bannerPanel.addButton(Colors.IGre,"increase", Keys.UP_KEYSTROKE, (te)->{
             if (sparkLine1.getHeight()<20) {
                 sparkLine1.resize( new Dimension.Simple(sparkLine1.getHeight()+1, sparkLine1.getWidth()) );
                 sparkLine1Label.setText("Sparkline : \nheight="+hiliteSparklineHeight.apply(sparkLine1.getHeight()));
@@ -64,13 +64,13 @@ public class SparklineTest {
         } ); 
         // need to bind the events below - chicken and egg situation ( forward declaration issue with sparkline1)
         bannerPanel.addComponent(new TextComponent("/"));
-        bannerPanel.addButton(Colors.IGre,"DOWN", Keys.DOWN_KEYSTROKE, (te)->{
+        bannerPanel.addButton(Colors.IGre,"decrease", Keys.DOWN_KEYSTROKE, (te)->{
             if (sparkLine1.getHeight()>1) {
                 sparkLine1.resize( new Dimension.Simple(sparkLine1.getHeight()-1, sparkLine1.getWidth()) );
                 sparkLine1Label.setText("Sparkline : \nheight="+ hiliteSparklineHeight.apply(sparkLine1.getHeight()));
             }
         });
-        bannerPanel.addComponent(new TextComponent(" increase/decrease sparkline height"));
+        bannerPanel.addComponent(new TextComponent(" sparkline height"));
         mainPanel.add(1, 1,bannerPanel);
 
         sparkLine1.resize(new Dimension.Simple(5, 40));

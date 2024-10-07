@@ -5,9 +5,9 @@ import dtb.terminalIO.controlcodes.color.Colors;
 
 public class HiliteExceptionTextLineFormatter implements TextLineFormatter {
 
-    String state = null;
-    Color  bannerColor;
-    Color  atColor;
+    private String state = null;
+    private Color  bannerColor;
+    private Color  atColor;
 
     public HiliteExceptionTextLineFormatter(Color bannerColor, Color atColor) {
         super();

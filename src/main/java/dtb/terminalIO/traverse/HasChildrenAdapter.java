@@ -9,10 +9,9 @@ package dtb.terminalIO.traverse;
  * @param <T>
  */
 public interface HasChildrenAdapter<T> {
-    
+
     HasChildren<? extends T> asHasChildren(T parent);
-    
-    
+
     public static class Simple<T> implements HasChildrenAdapter<T> {
 
         @SuppressWarnings("unchecked")
@@ -23,8 +22,5 @@ public interface HasChildrenAdapter<T> {
             }
             return new HasChildren.Empty<T>();
         }
-        
     }
-    
-
 }

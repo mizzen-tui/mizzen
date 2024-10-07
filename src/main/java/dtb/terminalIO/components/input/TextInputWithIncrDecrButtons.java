@@ -20,10 +20,10 @@ public abstract class TextInputWithIncrDecrButtons<T> extends AbstractWrappedCom
         input = buildTextInputForType();
         input.setValue( getValue() );
 
-        Button decrementButton = new Button(downButtonText);
-        Button incrementButton = new Button(upButtonText);
+        Button decrementButton = new Button(color, downButtonText);
+        Button incrementButton = new Button(color, upButtonText);
 
-        controlsInGrid.add(new TextComponent(labelText));
+        controlsInGrid.add(new TextComponent(color, labelText));
         controlsInGrid.add(decrementButton);
         controlsInGrid.add(input);
         controlsInGrid.add(incrementButton);
@@ -49,14 +49,14 @@ public abstract class TextInputWithIncrDecrButtons<T> extends AbstractWrappedCom
         input.onChange((te) -> {
             evtHandlerBroadcastValueChanged.handle(te);
         });
-        
+
         chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
         setCustomExtendedEventHandler( chainedEventHandler.asConditionalEventHandler()  );
 
         registerAllFocusables();
 
     }
-    
+
     OnValueChangedEventHandler<T> actionOnChangeHandler;
 
     public void onChange(EventHandler handler) {
@@ -64,20 +64,20 @@ public abstract class TextInputWithIncrDecrButtons<T> extends AbstractWrappedCom
         actionOnChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, actionOnChangeHandler, chainedEventHandler, handler);
 
     }
-    
+
     public void setValue(T value) {
         this.input.setValue(value);
     }
-    
+
     @Override
     public T getValue() {
         return this.input.getValue();
     }
-    
+
     abstract protected TextInputForType<T> buildTextInputForType();
 
     abstract protected T decr();
-    
+
     abstract protected T incr();
-    
+
 }

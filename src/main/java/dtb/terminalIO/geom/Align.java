@@ -6,7 +6,7 @@ public enum Align {
     LEFT,
     CENTER,
     RIGHT;
-    
+
     public static class UTIL {
         
         /**

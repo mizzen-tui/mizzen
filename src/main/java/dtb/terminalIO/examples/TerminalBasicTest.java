@@ -12,7 +12,7 @@ import dtb.terminalIO.util.Stty;
 public class TerminalBasicTest {
 
     public static void  main(String args[]) throws Exception {
-        
+
         SyncToScreen terminalWriterSynch = makeTerminalSynch(args);
 
         test_CRs(terminalWriterSynch);
@@ -22,11 +22,10 @@ public class TerminalBasicTest {
         test_BASIC_BACKGROUND_COLOR_USING_BackGroundColorRESET_TO_RESET_PRESERVE_FOREGROUND(terminalWriterSynch);
         test_BASIC_BACKGROUND_COLOR_USING_ColorPipe(terminalWriterSynch);
         test_BASIC_BACKGROUND_COLOR_USING_ColorPipe_withCURSOR_MOVEMENT(terminalWriterSynch);
-        
+
         terminalWriterSynch.refresh();
-        
+
         Stty.setCooked();
-        
 
     }
 

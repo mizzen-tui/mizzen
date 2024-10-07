@@ -15,6 +15,8 @@ import dtb.terminalIO.util.Stty;
  * Warning - once you instantiate this object, you are creating and 
  * running a new Thread.  So use this sparingly. 
  * 
+ * <p/>
+ * 
  * Usually only one of these objects per application.
  * 
  * <p/>

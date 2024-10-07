@@ -42,7 +42,9 @@ public class TerminalEvent<T> extends EventObject {
         TERMINATE,
         DEBUG,
         STUBBED,
-        CUSTOM_APPLICATION_EVENT
+        CUSTOM_APPLICATION_EVENT,
+        TABLE_ROW_SELECTED,
+        TABLE_CELL_SELECTED,
     }
     
     public static enum Q_FULL_POLICY {

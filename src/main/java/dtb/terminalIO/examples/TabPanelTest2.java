@@ -3,6 +3,7 @@ package dtb.terminalIO.examples;
 import java.io.IOException;
 
 import dtb.terminalIO.app.TUIApp;
+import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.ComponentInspector.InspectorButton;
 import dtb.terminalIO.components.TextComponent;
@@ -11,12 +12,14 @@ import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.input.TextInput;
+import dtb.terminalIO.components.input.form.FormBinder;
 import dtb.terminalIO.components.tab.TabAction;
 import dtb.terminalIO.components.tab.TabPanel;
 import dtb.terminalIO.components.tab.TabPanel.TabContext;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.core.ScreenCanvasBackend;
 import dtb.terminalIO.core.ScreenCanvasBackend.UpdateStrategy;
+import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
 
@@ -29,6 +32,9 @@ public class TabPanelTest2 {
         new TUIApp(args)
         .setDefaultMainApplicationPanel()
         .setOnReadyStart((tApp)-> {
+
+            Address address = new Address("123 Main St", "SmallVille", "Ontario");
+            FormBinder<Address> formBinder = FormBinder.UTIL.get(address, tApp.getEventBus());
 
             ScreenCanvasBackend canvasBackend = ((ScreenCanvasBackend)tApp.getCanvas().getCanvasBackend());
             canvasBackend.setUpdateStrategy(UpdateStrategy.UPDATE_FULL);
@@ -77,16 +83,29 @@ public class TabPanelTest2 {
                 public Component<?> getComponent(TabContext tabContext) {
                     if (testFormVP == null) {
                         testFormVP = new VerticalPanel();
-                        TextInput strnum = new TextInput(Colors.IYel, 10).setName("street");
-                        TextInput city = new TextInput(Colors.IYel, 10).setName("city");
-                        TextInput province = new TextInput(Colors.IYel, 10).setName("province");
+                        TextInput strnum = new TextInput(Colors.IYel, 30).setName("street");
+                        TextInput city = new TextInput(Colors.IYel, 30).setName("city");
+                        TextInput province = new TextInput(Colors.IYel, 30).setName("province");
+                        TextInput unknown = new TextInput(Colors.IYel, 30).setName("unknown");
+
+                        TextComponent addressAsStr = new TextComponent(Colors.IYel, formBinder.getFormData().toString());
 
                         testFormVP.add(new HorizontalPanel().addText("Street   : ").add(strnum));
                         testFormVP.add(new HorizontalPanel().addText("City     : ").add(city));
                         testFormVP.add(new HorizontalPanel().addText("Province : ").add(province));
+                        testFormVP.add(new HorizontalPanel().addText("Unknown  : ").add(unknown));
+                        testFormVP.add( new BorderedComponent(addressAsStr));
+                        formBinder.bindAll(testFormVP);
+                        formBinder.onChange((te) -> {
+                            addressAsStr.setTextAndResize(formBinder.getFormData().toString());
+                        });
                     }
                     return testFormVP;
                 }
+                public void deactivateComponent(EventBus eventBus, TabContext tabContext, Component theComponent) {
+                    formBinder.save();
+                }
+
             });
 
             InspectorButton inspectorButton = new InspectorButton(Colors.ICya, tApp);
@@ -96,7 +115,26 @@ public class TabPanelTest2 {
 
 
         }).start();
-        
+
     }
+    
+    static class Address {
+        public String street;
+        public String city;
+        public String province;
+        public String country;
+        public Address(String street, String city, String province) {
+            super();
+            this.street = street;
+            this.city = city;
+            this.province = province;
+        }
+
+        @Override
+        public String toString() {
+            return "Address \n[street=" + street + ",\n city=" + city + ",\n province=" + province + "\n]";
+        }
+    }
+
 
 }

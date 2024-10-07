@@ -35,7 +35,7 @@ import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.StringUtils;
 
-public class Button extends BoundedComponent<Button> implements HasValue<Boolean>, 
+public class Button extends BoundedComponent<Button> implements SettableHasValue<Boolean>, 
                                                                 Focusable, 
                                                                 HasHotKey, 
                                                                 Clickable, 
@@ -235,7 +235,12 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
     public Boolean getValue() {
         return pressed;
     }
- 
+
+    @Override
+    public void setValue(Boolean value) {
+        this.doSetValue(value);
+    }
+
     public void onClick(EventBus eventBus) {
         if (!hasFocus()) {
             // focus manager should have already put focus here - but just in case ..
@@ -339,7 +344,6 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
                     requestHideCursor(eventBus);
                 }
             }
-
         };
         return meAsFocusable;
     }
@@ -436,21 +440,23 @@ public class Button extends BoundedComponent<Button> implements HasValue<Boolean
     public void childResized(Component<?> child) {
         this.resize((Dimension)child);
     }
-    
+
     public String toStringDetails() {
         return "["+this.getTextForRendering(false)+", value="+String.valueOf(getValue())+"]";
     }
+
     @Override
     public EventHandlerContainer prependEventHandler(ConditionalEventHandler eventHandler) {
         return getchainedHandler().prependEventHandler(eventHandler);
     }
+
     @Override
     public EventHandlerContainer appendEventHandler(ConditionalEventHandler eventHandler) {
         return getchainedHandler().appendEventHandler(eventHandler);
     }
+
     @Override
     public EventHandlerContainer removeEventHandler(ConditionalEventHandler eventHandler) {
         return getchainedHandler().removeEventHandler(eventHandler);
     }
-    
 }

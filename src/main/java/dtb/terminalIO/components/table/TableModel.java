@@ -1,7 +1,7 @@
 package dtb.terminalIO.components.table;
 
 public interface TableModel {
-    
+
     public int getRowCount();
     public int getColumnCount();
     public String getColumnName(int columnIndex);
@@ -37,7 +37,5 @@ public interface TableModel {
             return delegate.getValueAt(rowIndex,columnIndex);
         }
 
-        
     }
-    
 }

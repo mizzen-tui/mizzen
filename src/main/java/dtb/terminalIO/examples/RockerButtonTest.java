@@ -165,13 +165,11 @@ public class RockerButtonTest {
                                                          componentInspector.refreshEventHandler().handle(te);
                                                       }));
 
-            tApp.appendOnResizeAction((tApp2, newSize)->{
-                
+            tApp.appendOnResizeAction((tApp2, newSize)-> {
                 Dimension.Simple inspectorSize = new Dimension.Simple((int)(tApp2.getMainApplicationPanel().getHeight()*.55),
                                                      (int)(tApp2.getMainApplicationPanel().getWidth()*.35));
-                
+
                 componentInspector.resize(inspectorSize);
-                
             });
             
             int[] movementDirection = new int[] {1};
@@ -194,7 +192,6 @@ public class RockerButtonTest {
                 }
 
                 Position newPosition = curPos.addCols(movementDirection[0]);
-
 
                 ((Component<?>)tApp.getMainApplicationPanel()).markAsDirty();
                 app.getEventBus().raiseEvent(new RequestShowCursorEvent(tApp.getMainApplicationPanel(),newPosition));

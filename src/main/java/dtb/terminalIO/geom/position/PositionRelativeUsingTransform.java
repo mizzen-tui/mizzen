@@ -4,7 +4,7 @@ public class PositionRelativeUsingTransform implements Position {
 
     Vec2<?> originalPosition;
     PositionTransform tranform;
-    
+
     public PositionRelativeUsingTransform(Position originalPosition, PositionTransform tranform) {
         super();
         this.originalPosition = originalPosition;

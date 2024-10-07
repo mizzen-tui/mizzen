@@ -76,7 +76,7 @@ public class SegmentsViewUtils {
         Position offset;
         ScreenLineSegment sourceSegment;
         Rectangle part;
-        
+
         SegmentClippedViewWithOffset(ScreenLineSegment sourceSegment, Position offset, Rectangle part) {
             this.sourceSegment = sourceSegment;
             this.offset = offset;
@@ -162,13 +162,11 @@ public class SegmentsViewUtils {
         public ScreenLineSegment fromOffset(Position offset) {
             return new SegmentImpl(getColors(),  new Position.Simple(this).offsetAdd(offset), getId(), this.getText());
         }
-        
+
         public String toString() {
             return String.format("Clipped(row=%d,col=%d,width=%d,'%s',part=[%s],offset=[%s])", getRow(), getCol(), getWidth(), getText(),String.valueOf(part),String.valueOf(offset));
         }
 
     }
-    
-    
-    
+
 }

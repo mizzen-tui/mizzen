@@ -13,11 +13,11 @@ import dtb.terminalIO.geom.VAlign;
 public interface RowAlignRelativeTransForm {
     int getCol(Rectangle anchorComponent, Rectangle alignedComponent);
 
-    
+
     public static class Factory {
-        
+
         public static RowAlignRelativeTransForm fromAlign(VAlign valign, int verticalSpacer) {
-            
+
             if (VAlign.TOP.equals(valign)) {
                 return (anchorComponent, alignedComponent) ->  anchorComponent.getRow() + verticalSpacer;
             }
@@ -28,7 +28,7 @@ public interface RowAlignRelativeTransForm {
                     return newRow;
                 };
             }
-            
+
             if (VAlign.MIDDLE.equals(valign)) {
                 return (anchorComponent, alignedComponent) -> {
                     if (anchorComponent.getHeight() <= alignedComponent.getHeight()) {
@@ -38,9 +38,7 @@ public interface RowAlignRelativeTransForm {
                     return newRow;
                 };
             }
-            
             throw new IllegalArgumentException("VAlign parameter not valid " + String.valueOf(valign));
-            
         }
     }
  }

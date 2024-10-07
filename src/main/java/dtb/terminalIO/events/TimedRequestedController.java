@@ -2,7 +2,7 @@ package dtb.terminalIO.events;
 
 import dtb.terminalIO.events.OnIdleEventEventHandler.OneTimeAfterInterval;
 
-public class AbstractTimedRequestedController {
+public class TimedRequestedController {
 
     private static final int DEFAULT_timerDelayMillis = 250;
 
@@ -14,14 +14,18 @@ public class AbstractTimedRequestedController {
     private EventHandler onRequestCommand;
     private Object mutex = new Object();
 
-    public AbstractTimedRequestedController(EventHandler onChangeAction) {
+    public TimedRequestedController(EventHandler onChangeAction) {
         this.onRequestCommand = onChangeAction;
     }
 
-    public AbstractTimedRequestedController(Runnable onChangeAction) {
+    public TimedRequestedController(Runnable onChangeAction) {
         this.onRequestCommand = (te)-> onChangeAction.run();
     }
 
+    /**
+     * Override this method if you need something smarter
+     * @return true if Request is Different From Previous
+     */
     protected boolean isRequestDifferentFromPrevious() {
         return true;
     }
@@ -30,7 +34,7 @@ public class AbstractTimedRequestedController {
         return timerDelayMillis;
     }
 
-    public AbstractTimedRequestedController setTimerDelayMillis(int timerDelayMillis) {
+    public TimedRequestedController setTimerDelayMillis(int timerDelayMillis) {
         this.timerDelayMillis = timerDelayMillis;
         return this;
     }
@@ -39,7 +43,7 @@ public class AbstractTimedRequestedController {
         return maxStarvationTime;
     }
 
-    public AbstractTimedRequestedController setMaxStarvationTime(int maxStarvationTime) {
+    public TimedRequestedController setMaxStarvationTime(int maxStarvationTime) {
         this.maxStarvationTime = maxStarvationTime;
         return this;
     }
@@ -103,7 +107,7 @@ public class AbstractTimedRequestedController {
                     }
                 }
 
-            }, AbstractTimedRequestedController.this.timerDelayMillis);
+            }, TimedRequestedController.this.timerDelayMillis);
         }
 
         public String toString() {

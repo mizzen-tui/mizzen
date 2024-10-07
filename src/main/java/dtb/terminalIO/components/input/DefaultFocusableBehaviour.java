@@ -5,6 +5,7 @@ import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.EmptyAttributes;
 import dtb.terminalIO.components.FocusSetterToHiliteAction;
 import dtb.terminalIO.components.Hiliter;
+import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;

@@ -97,7 +97,7 @@ public class WindowFrameFocusable extends AbstractComponent<WindowFrameFocusable
 
         this.setName(HasName.UTIL.deriveName(this) + "-" + title);
     }
-    
+
     public void setChild(Component<?> child) {
         if (this.child != null) {
             this.child.setParentContainer(null);

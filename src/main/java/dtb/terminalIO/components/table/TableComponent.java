@@ -9,10 +9,28 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import dtb.terminalIO.components.BlockChars;
 import dtb.terminalIO.components.BoundedComponent;
+import dtb.terminalIO.components.input.DefaultFocusableBehaviour;
+import dtb.terminalIO.components.input.DisplayableValue.SimpleDisplayValue;
+import dtb.terminalIO.components.input.ShowComponentOnFocus;
 import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.events.ChainedEventHandler;
+import dtb.terminalIO.events.ConditionalEventHandler;
+import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
+import dtb.terminalIO.events.focus.FocusManager;
+import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.focus.RequestFocusEvent;
+import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
+import dtb.terminalIO.events.keyboard.Keys;
+import dtb.terminalIO.events.mouse.ApplicationMouseEvent;
+import dtb.terminalIO.events.mouse.Clickable;
+import dtb.terminalIO.events.mouse.MOUSE_ACTION;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
@@ -23,18 +41,44 @@ import dtb.terminalIO.textsegments.ScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.ElapsedTime;
 import dtb.terminalIO.util.Logging;
 
-public class TableComponent extends BoundedComponent<TableComponent> {
+public class TableComponent extends BoundedComponent<TableComponent> implements Focusable, Clickable {
+
 
     TableModelWidthData tableModel;
     // List<TableColumn> tableColumns;
     boolean hasBorder = true;
     Color headerColor;
     int rowsDisplayed = 0;
+    TableLinesStyle linesStyle = TableLinesStyle.ALL;
+
+    ConditionalEventHandler eventHandler;
+    ChainedEventHandler chainedEventHandler;
+    Focusable focusable;
+    TableCellAtPositions tableCellAtPositions;
 
     public TableComponent(Color color, Dimension d, TableModel tableModel) {
         super(color, d);
-        this.tableModel = new TableModelWidthData(tableModel);
         this.headerColor = color.getBoldTransform().transform(color);
+        this.tableModel = new TableModelWidthData(tableModel);
+        this.tableCellAtPositions = new TableCellAtPositions(this.tableModel);
+    }
+
+    public void setTableModel(TableModel tableModel) {
+        clearData();
+        this.tableModel = new TableModelWidthData(tableModel);
+        this.tableCellAtPositions = new TableCellAtPositions(this.tableModel);
+    }
+
+
+    public TableLinesStyle getLinesStyle() {
+        return linesStyle;
+    }
+
+    public void setLinesStyle(TableLinesStyle linesStyle) {
+        clearData();
+        this.linesStyle = linesStyle;
+        this.tableModel = new TableModelWidthData(tableModel);
+        this.tableCellAtPositions = new TableCellAtPositions(this.tableModel);
     }
 
     private TreeSet<ScreenLineSegment> copyCellSegments(IScreenLineSegmentsBuffer cellSegmentsBuffer, Position offset) {
@@ -59,9 +103,10 @@ public class TableComponent extends BoundedComponent<TableComponent> {
         // of its data's dimensions
         clearData();
     }
-    
+
     public void clearData() {
-        tableModel.clearData();
+        this.tableModel.clearData();
+        this.tableCellAtPositions.clear();
         this.markAsDirty();
     }
 
@@ -70,7 +115,7 @@ public class TableComponent extends BoundedComponent<TableComponent> {
         //Logging.setEnabled(false);
 
         new TableColumnDataBuilderDropColumnsWhenNeeded(this);
-        
+
         Logging.info("Table-draw start--------------------");
         // tableModel.clearData();
         Logging.info("Table-draw elapsed : " + ElapsedTime.onRunOf(() -> __draw(color, mySegments)));
@@ -200,6 +245,7 @@ public class TableComponent extends BoundedComponent<TableComponent> {
         }
 
         // SECOND LOOP -- RENDER THE DATA
+        this.tableCellAtPositions.clear();
         rowpos = 1;
         int colOffset = 1;
         maxCellHeight = this.getHeight() - 2; // TODO: need to adjust for header height ( later )
@@ -218,6 +264,7 @@ public class TableComponent extends BoundedComponent<TableComponent> {
                 }
                 Position cellOffset = new Position.Simple(rowpos, colOffset);
                 mySegments.merge(copyCellSegments(cellSegmentsBuffer, cellOffset));
+                this.tableCellAtPositions.addHeaderCell(cellOffset, col);
                 maxColRendered = Math.max(maxColRendered, col);
                 colOffset += colWidth + 1;
                 if (!this.containsPosition(cellOffset.addCols(colWidth + 2))) {
@@ -237,8 +284,10 @@ public class TableComponent extends BoundedComponent<TableComponent> {
                     throw new NullPointerException("NULL SEGMENTSBUFFER AT (" + row + "/" + col + ")- cannot render!");
                 }
                 Position cellOffset = new Position.Simple(rowpos, colOffset);
-                Logging.info("(" + row + "/" + col + ")mySegments.merge :  " + ElapsedTime
-                        .onRunOf(() -> mySegments.merge(copyCellSegments(cellSegmentsBuffer, cellOffset))));
+                mySegments.merge(copyCellSegments(cellSegmentsBuffer, cellOffset));
+//                Logging.info("(" + row + "/" + col + ")mySegments.merge :  " + ElapsedTime
+//                        .onRunOf(() -> mySegments.merge(copyCellSegments(cellSegmentsBuffer, cellOffset))));
+                this.tableCellAtPositions.addDataCell(cellOffset, row, col);
                 maxColRendered = Math.max(maxColRendered, col);
                 colOffset += colWidth + 1;
                 if (!this.containsPosition(cellOffset.addCols(colWidth + 2))) {
@@ -261,8 +310,238 @@ public class TableComponent extends BoundedComponent<TableComponent> {
 
     }
 
+    interface TableLineDraw {
+        void drawLines(IScreenLineSegmentsBuffer mySegments, int maxRowRendered, int maxColRendered);
+    }
+
+    class DrawLines_NONE implements TableLineDraw {
+        public void drawLines(IScreenLineSegmentsBuffer mySegments, int maxRowRendered, int maxColRendered) {
+            // do nothing
+        }
+    }
+
+    BiConsumer<Integer, char[]> makeDrawHorizontalLineFunction(IScreenLineSegmentsBuffer mySegments,
+            int maxColRendered, Color borderColor, int boxWidth, Set<Integer> rowsDrawn) {
+        BiConsumer<Integer, char[]> drawHorizontalLine = (row, blockChars) -> {
+            StringBuilder sb = new StringBuilder();
+            sb.append(blockChars[0]);
+            // int i = 1;
+            for (int c = 0; c <= maxColRendered && sb.length() < (boxWidth - 1); c++) {
+                int colWidth = TableComponent.this.tableModel.getMaxWidthForColumn(c);
+                for (int j = 0; j < colWidth && sb.length() < (boxWidth - 1); j++) {
+                    sb.append(blockChars[1]);
+                }
+                if (c != maxColRendered && sb.length() < (boxWidth - 1)) {
+                    sb.append(blockChars[2]);
+                } else {
+                    sb.append(blockChars[3]);
+                }
+            }
+            mySegments.add(new SegmentImpl(borderColor, new Position.Simple(row, 0), sb.toString()));
+            rowsDrawn.add(row);
+        };
+        return drawHorizontalLine;
+    }
+
+    class DrawLines_HEADER_ONLY_ALL implements TableLineDraw {
+        public void drawLines(IScreenLineSegmentsBuffer mySegments, int maxRowRendered, int maxColRendered) {
+            Rectangle.Simple meAsRectangle = new Rectangle.Simple(TableComponent.this);
+
+            Function<Integer, Integer> colVerticalLineOffset = (col) -> TableComponent.this.tableModel.getWidthColumnForRange(0, col) + col + 1;
+            meAsRectangle.setWidth(Math.min(meAsRectangle.getWidth(), colVerticalLineOffset.apply(maxColRendered) + 1));
+
+            Color borderColor = getColor();
+
+            int boxWidth = meAsRectangle.getWidth();
+
+            Set<Integer> rowsDrawn = new HashSet<Integer>();
+
+            // internal function to draw a line blockChars = (LEFT, HORIZONTAL, INTERSECT AND RIGHT) characters
+            BiConsumer<Integer, char[]> drawHorizontalLine = makeDrawHorizontalLineFunction(mySegments, maxColRendered,
+                    borderColor, boxWidth, rowsDrawn);
+
+            ElapsedTime timer = new ElapsedTime();
+
+            // Draw top of table
+            drawHorizontalLine.accept(0, new char[] { BlockChars.NICE.getTOP_LEFT(), 
+                                                      BlockChars.NICE.getHORIZONTAL_LINE(),
+                                                      BlockChars.NICE.getHORIZONTAL_DOWN(), 
+                                                      BlockChars.NICE.getTOP_RIGHT() });
+
+
+            // verticals
+            String verticalLineCharAsStr = BlockChars.NICE.getVERTICAL_LINE() + "";
+            for (int row = 1; row <= 1; row++) {
+                if (rowsDrawn.contains(row)) {
+                    continue;
+                }
+                mySegments.add(new SegmentImpl(borderColor, new Position.Simple(row, 0), verticalLineCharAsStr));
+
+                for (int c = 0; c < maxColRendered; c++) {
+                    int col = colVerticalLineOffset.apply(c);
+                    mySegments.add(new SegmentImpl(borderColor, new Position.Simple(row, col), verticalLineCharAsStr));
+                }
+                mySegments.add(new SegmentImpl(borderColor, new Position.Simple(row, boxWidth - 1), verticalLineCharAsStr));
+
+            }
+            
+            drawHorizontalLine.accept(TableComponent.this.tableModel.maxHeaderHeight + 1,
+                    new char[] { BlockChars.NICE.getBOTTOM_LEFT(), 
+                                 BlockChars.NICE.getHORIZONTAL_LINE(),
+                                 BlockChars.NICE.getHORIZONTAL_UP(), 
+                                 BlockChars.NICE.getBOTTOM_RIGHT() });            
+
+        }
+
+    }
+
+    class DrawLines_HEADER_ALL_AND_BORDER implements TableLineDraw {
+        public void drawLines(IScreenLineSegmentsBuffer mySegments, int maxRowRendered, int maxColRendered) {
+            Rectangle.Simple meAsRectangle = new Rectangle.Simple(TableComponent.this);
+
+            Function<Integer, Integer> colVerticalLineOffset = (col) -> TableComponent.this.tableModel.getWidthColumnForRange(0, col) + col + 1;
+            meAsRectangle.setWidth(Math.min(meAsRectangle.getWidth(), colVerticalLineOffset.apply(maxColRendered) + 1));
+
+            Color borderColor = getColor();
+
+            int boxWidth = meAsRectangle.getWidth();
+            int boxHeight = meAsRectangle.getHeight();
+            
+            Set<Integer> rowsDrawn = new HashSet<Integer>();
+
+            // internal function to draw a line blockChars = (LEFT, HORIZONTAL, INTERSECT AND RIGHT) characters
+            BiConsumer<Integer, char[]> drawHorizontalLine = makeDrawHorizontalLineFunction(mySegments, maxColRendered,
+                    borderColor, boxWidth, rowsDrawn);
+
+            // Draw top of table
+            drawHorizontalLine.accept(0, new char[] { BlockChars.NICE.getTOP_LEFT(), 
+                                                      BlockChars.NICE.getHORIZONTAL_LINE(),
+                                                      BlockChars.NICE.getHORIZONTAL_DOWN(), 
+                                                      BlockChars.NICE.getTOP_RIGHT() });
+
+            drawHorizontalLine.accept(TableComponent.this.tableModel.maxHeaderHeight + 1,
+                    new char[] { BlockChars.NICE.getVERTICAL_RIGHT(), 
+                                 BlockChars.NICE.getHORIZONTAL_LINE(),
+                                 BlockChars.NICE.getINTERSECT(), 
+                                 BlockChars.NICE.getVERTICAL_LEFT() });
+            // verticals
+            String verticalLineCharAsStr = BlockChars.NICE.getVERTICAL_LINE() + "";
+            for (int row = 1; row < boxHeight; row++) {
+                if (rowsDrawn.contains(row)) {
+                    continue;
+                }
+                mySegments.add(new SegmentImpl(borderColor, new Position.Simple(row, 0), verticalLineCharAsStr));
+
+                for (int c = 0; c < maxColRendered; c++) {
+                    int col = colVerticalLineOffset.apply(c);
+                    mySegments.add(new SegmentImpl(borderColor, new Position.Simple(row, col), verticalLineCharAsStr));
+                }
+                mySegments.add(new SegmentImpl(borderColor, new Position.Simple(row, boxWidth - 1), verticalLineCharAsStr));
+            }
+
+            drawHorizontalLine.accept(meAsRectangle.getHeight() - 1,
+                    new char[] { BlockChars.NICE.getBOTTOM_LEFT(), 
+                                 BlockChars.NICE.getHORIZONTAL_LINE(),
+                                 BlockChars.NICE.getHORIZONTAL_UP(), 
+                                 BlockChars.NICE.getBOTTOM_RIGHT() }); 
+        }
+
+    }
+
+    class DrawLines_ALL implements TableLineDraw {
+        public void drawLines(IScreenLineSegmentsBuffer mySegments, int maxRowRendered, int maxColRendered) {
+            Rectangle.Simple meAsRectangle = new Rectangle.Simple(TableComponent.this);
+
+            Function<Integer, Integer> colVerticalLineOffset = (col) -> TableComponent.this.tableModel.getWidthColumnForRange(0, col) + col + 1;
+            Function<Integer, Integer> rowHorizontalLineOffset = (row) -> TableComponent.this.tableModel.getHeightRowForRange(0, row) + row + 3;
+            meAsRectangle.setWidth(Math.min(meAsRectangle.getWidth(), colVerticalLineOffset.apply(maxColRendered) + 1));
+
+            Color borderColor = getColor();
+
+            int boxWidth = meAsRectangle.getWidth();
+            int boxHeight = meAsRectangle.getHeight();
+
+            Set<Integer> rowsDrawn = new HashSet<Integer>();
+
+            // internal function to draw a line blockChars = (LEFT, HORIZONTAL, INTERSECT AND RIGHT) characters
+            BiConsumer<Integer, char[]> drawHorizontalLine = makeDrawHorizontalLineFunction(mySegments, maxColRendered,
+                    borderColor, boxWidth, rowsDrawn);
+
+            ElapsedTime timer = new ElapsedTime();
+
+            // Draw top of table
+            drawHorizontalLine.accept(0, new char[] { BlockChars.NICE.getTOP_LEFT(), 
+                                                      BlockChars.NICE.getHORIZONTAL_LINE(),
+                                                      BlockChars.NICE.getHORIZONTAL_DOWN(), 
+                                                      BlockChars.NICE.getTOP_RIGHT() });
+
+            Logging.info("Top line  : " + timer);
+
+            timer.reset();
+
+            /*  need to draw header line */
+            drawHorizontalLine.accept(TableComponent.this.tableModel.maxHeaderHeight + 1,
+                    new char[] { BlockChars.NICE.getVERTICAL_RIGHT(), 
+                                 BlockChars.NICE.getHORIZONTAL_LINE(),
+                                 BlockChars.NICE.getINTERSECT(), 
+                                 BlockChars.NICE.getVERTICAL_LEFT() });
+
+            for (int r = 0; r < maxRowRendered; r++) {
+                drawHorizontalLine.accept(rowHorizontalLineOffset.apply(r),
+                        new char[] { BlockChars.NICE.getVERTICAL_RIGHT(), 
+                                     BlockChars.NICE.getHORIZONTAL_LINE(),
+                                     BlockChars.NICE.getINTERSECT(), 
+                                     BlockChars.NICE.getVERTICAL_LEFT() });
+            }
+            //Logging.info("Middle intersecting lines  : " + timer);
+
+            timer.reset();
+            drawHorizontalLine.accept(meAsRectangle.getHeight() - 1,
+                    new char[] { BlockChars.NICE.getBOTTOM_LEFT(), 
+                                 BlockChars.NICE.getHORIZONTAL_LINE(),
+                                 BlockChars.NICE.getHORIZONTAL_UP(), 
+                                 BlockChars.NICE.getBOTTOM_RIGHT() });
+
+            Logging.info("Bottom line  : " + timer);
+
+            timer.reset();
+            String verticalLineCharAsStr = BlockChars.NICE.getVERTICAL_LINE() + "";
+            for (int row = 1; row < boxHeight; row++) {
+                if (rowsDrawn.contains(row)) {
+                    continue;
+                }
+                mySegments.add(new SegmentImpl(borderColor, new Position.Simple(row, 0), verticalLineCharAsStr));
+
+                for (int c = 0; c < maxColRendered; c++) {
+                    int col = colVerticalLineOffset.apply(c);
+                    mySegments.add(new SegmentImpl(borderColor, new Position.Simple(row, col), verticalLineCharAsStr));
+                }
+                mySegments.add(new SegmentImpl(borderColor, new Position.Simple(row, boxWidth - 1), verticalLineCharAsStr));
+
+            }
+            Logging.info("Verticals   : " + timer); 
+       }
+
+    }
+    
+    TableLineDraw getLineDraw() {
+        if (this.getLinesStyle() == null || TableLinesStyle.NONE.equals(this.getLinesStyle()) ) {
+            return new DrawLines_NONE();
+        }
+        if ( TableLinesStyle.ALL.equals(this.getLinesStyle()) ) {
+            return new DrawLines_ALL();
+        }
+        if ( TableLinesStyle.HEADER_FULL.equals(this.getLinesStyle()) ) {
+            return new DrawLines_HEADER_ONLY_ALL();
+        }
+        if ( TableLinesStyle.HEADER_ALL_AND_BORDER.equals(this.getLinesStyle()) ) {
+            return new DrawLines_HEADER_ALL_AND_BORDER();
+        }
+        throw new IllegalStateException("Not valid TableLinesStyle" + this.getLinesStyle());
+    }
+
     /**
-     * Draw lines for table .. TODO: Need to add options for: - don't draw lnes -
+     * Draw lines for table .. TODO: Need to add options for: - don't draw lines -
      * draw only horizontal lines - draw only vertical lines - draw only lines for
      * header - draw only underlines for header
      * 
@@ -278,94 +557,8 @@ public class TableComponent extends BoundedComponent<TableComponent> {
      * @param maxColRendered
      */
     private void drawLines(IScreenLineSegmentsBuffer mySegments, int maxRowRendered, int maxColRendered) {
-        Rectangle.Simple meAsRectangle = new Rectangle.Simple(this);
+        getLineDraw().drawLines(mySegments, maxRowRendered, maxColRendered);
 
-        Function<Integer, Integer> colVerticalLineOffset = (col) -> this.tableModel.getWidthColumnForRange(0, col) + col + 1;
-        Function<Integer, Integer> rowHorizontalLineOffset = (row) -> this.tableModel.getHeightRowForRange(0, row) + row + 3;
-        meAsRectangle.setWidth(Math.min(meAsRectangle.getWidth(), colVerticalLineOffset.apply(maxColRendered) + 1));
-
-        Color borderColor = getColor();
-
-        int boxWidth = meAsRectangle.getWidth();
-        int boxHeight = meAsRectangle.getHeight();
-
-        Set<Integer> rowsDrawn = new HashSet<Integer>();
-
-        // internal function to draw a line blockChars = (LEFT, HORIZONTAL, INTERSECT AND RIGHT) characters
-        BiConsumer<Integer, char[]> drawHorizontalLine = (row, blockChars) -> {
-            StringBuilder sb = new StringBuilder();
-            sb.append(blockChars[0]);
-            // int i = 1;
-            for (int c = 0; c <= maxColRendered && sb.length() < (boxWidth - 1); c++) {
-                int colWidth = this.tableModel.getMaxWidthForColumn(c);
-                for (int j = 0; j < colWidth && sb.length() < (boxWidth - 1); j++) {
-                    sb.append(blockChars[1]);
-                }
-                if (c != maxColRendered && sb.length() < (boxWidth - 1)) {
-                    sb.append(blockChars[2]);
-                } else {
-                    sb.append(blockChars[3]);
-                }
-            }
-            mySegments.add(new SegmentImpl(borderColor, new Position.Simple(row, 0), sb.toString()));
-            rowsDrawn.add(row);
-        };
-
-        ElapsedTime timer = new ElapsedTime();
-
-        // Draw top of table
-        drawHorizontalLine.accept(0, new char[] { BlockChars.NICE.getTOP_LEFT(), 
-                                                  BlockChars.NICE.getHORIZONTAL_LINE(),
-                                                  BlockChars.NICE.getHORIZONTAL_DOWN(), 
-                                                  BlockChars.NICE.getTOP_RIGHT() });
-
-        Logging.info("Top line  : " + timer);
-
-        timer.reset();
-        
-        /*  need to draw header line */
-        drawHorizontalLine.accept(this.tableModel.maxHeaderHeight + 1,
-                new char[] { BlockChars.NICE.getVERTICAL_RIGHT(), 
-                             BlockChars.NICE.getHORIZONTAL_LINE(),
-                             BlockChars.NICE.getINTERSECT(), 
-                             BlockChars.NICE.getVERTICAL_LEFT() });
-        
-        
-        
-        for (int r = 0; r < maxRowRendered; r++) {
-            drawHorizontalLine.accept(rowHorizontalLineOffset.apply(r),
-                    new char[] { BlockChars.NICE.getVERTICAL_RIGHT(), 
-                                 BlockChars.NICE.getHORIZONTAL_LINE(),
-                                 BlockChars.NICE.getINTERSECT(), 
-                                 BlockChars.NICE.getVERTICAL_LEFT() });
-        }
-        Logging.info("Middle intersecting lines  : " + timer);
-
-        timer.reset();
-        drawHorizontalLine.accept(meAsRectangle.getHeight() - 1,
-                new char[] { BlockChars.NICE.getBOTTOM_LEFT(), 
-                             BlockChars.NICE.getHORIZONTAL_LINE(),
-                             BlockChars.NICE.getHORIZONTAL_UP(), 
-                             BlockChars.NICE.getBOTTOM_RIGHT() });
-
-        Logging.info("Bottom line  : " + timer);
-
-        timer.reset();
-        String verticalLineCharAsStr = BlockChars.NICE.getVERTICAL_LINE() + "";
-        for (int row = 1; row < boxHeight; row++) {
-            if (rowsDrawn.contains(row)) {
-                continue;
-            }
-            mySegments.add(new SegmentImpl(borderColor, new Position.Simple(row, 0), verticalLineCharAsStr));
-
-            for (int c = 0; c < maxColRendered; c++) {
-                int col = colVerticalLineOffset.apply(c);
-                mySegments.add(new SegmentImpl(borderColor, new Position.Simple(row, col), verticalLineCharAsStr));
-            }
-            mySegments.add(new SegmentImpl(borderColor, new Position.Simple(row, boxWidth - 1), verticalLineCharAsStr));
-
-        }
-        Logging.info("Verticals   : " + timer);
     }
 
     public void setColumnAt(int colIdx, TableColumn tableColumn) {
@@ -421,7 +614,7 @@ public class TableComponent extends BoundedComponent<TableComponent> {
             }
             return theRow.get(col);
         }
-        
+
         public IScreenLineSegmentsBuffer getHeaderSegmentsDataAt(int col) {
             int curColSize = headerData.size();
             if (curColSize <= col) {
@@ -429,8 +622,6 @@ public class TableComponent extends BoundedComponent<TableComponent> {
             }
             return headerData.get(col);
         }
-
-
 
         public void addColumn(TableColumn tableColumn) {
             this.tableColumns.add(TableColumnWithDataAndWidths.asTableColumnWithDataAndWidths(tableColumn, this));
@@ -572,8 +763,7 @@ public class TableComponent extends BoundedComponent<TableComponent> {
                 maxHeaderHeight = height;
             }
         }
-        
-        
+
         // ColumnsForOutput columnsForOutput
         public static int calcTableWidthFromColumns(ColumnsForOutput columnsForOutput) {
             return calcTableWidthFromColumns(columnsForOutput.visibleColumnDataList);
@@ -628,6 +818,10 @@ public class TableComponent extends BoundedComponent<TableComponent> {
 
     }
 
+    /**
+     * Internal helper class to capture which columns will be displayed
+     * in table ( based on available rendering width )
+     */
     private static class ColumnsForOutput {
 
         List<TableColumnWithDataAndWidths> visibleColumnDataList;
@@ -718,7 +912,6 @@ public class TableComponent extends BoundedComponent<TableComponent> {
         @Override
         public ColumnsForOutput getColumnData(TableModelWidthData tableModel) {
 
-
             List<TableColumnWithDataAndWidths> columnData = new ArrayList<TableColumnWithDataAndWidths>();
             for (int colIdx = 0; colIdx < tableModel.getColumnCount(); colIdx++) {
                 columnData.add( (TableColumnWithDataAndWidths) tableModel.getTableColumnAt(colIdx) );
@@ -761,7 +954,7 @@ public class TableComponent extends BoundedComponent<TableComponent> {
                     columnToSqueeze.squeezeColSizeByOneIfPossible();
                     currentTableDataWidth = calcTableWidthFromColumns(columnData);
                     if (currentTableDataWidth <= componentWidth) {
-                        // we were able to squeeze columns fit inside table!
+                        // we were able to squeeze columns to fit inside table!
                         // yippee.. yahoo.. miami beach!
                         return new ColumnsForOutput(columnData);
                     }
@@ -812,8 +1005,8 @@ public class TableComponent extends BoundedComponent<TableComponent> {
             }
 
             if (removalCandidates.size() < 1) {
-                return new ColumnsForOutput(columnData); // no candidate columns are droppable
-                                                         // return original columnData
+                return new ColumnsForOutput(columnData);  // no candidate columns are droppable
+                                                          // return original columnData
             }
 
             Collections.sort(removalCandidates, TableColumn.SORT_IN_ORDER_COLUMNS_SHOULD_BE_DROPPED);
@@ -832,7 +1025,6 @@ public class TableComponent extends BoundedComponent<TableComponent> {
                 }
             }
             return new ColumnsForOutput(trimmedcolumnData, hiddenColumns);
-            
         }
 
         public static int calcTableWidthFromColumns(List<? extends TableColumn> colData) {
@@ -845,6 +1037,355 @@ public class TableComponent extends BoundedComponent<TableComponent> {
             return tableWidth;
         }
 
+    }
+
+    private CellSelectedEventHandler cellSelectedHandler = null;
+
+    public void onCellSelected(CellSelectedCustomHandler handler) {
+        if (cellSelectedHandler != null) {
+            getChainedEventHandler().removeEventHandler(cellSelectedHandler);
+        }
+        cellSelectedHandler = new CellSelectedEventHandler(this, handler);
+        getChainedEventHandler().appendEventHandler(cellSelectedHandler);
+    }
+
+    private RowSelectedEventHandler rowSelectedHandler = null;
+
+    public void onRowSelected(RowSelectedCustomHandler handler) {
+        if (rowSelectedHandler != null) {
+            getChainedEventHandler().removeEventHandler(rowSelectedHandler);
+        }
+        rowSelectedHandler = new RowSelectedEventHandler(this, handler);
+        getChainedEventHandler().appendEventHandler(rowSelectedHandler);
+    }
+    
+    public static class CellSelected {
+
+        TableDataCellAtPosition cell;
+
+        public CellSelected(TableDataCellAtPosition cell) {
+            this.cell = cell;
+        }
+        
+        public int getTableRow() {
+            return cell.tableRow;
+        }
+
+        public int getTableCol() {
+            return cell.tableColumn;
+        }
+
+        public boolean isHeader() {
+            return cell.isHeader();
+        }
+        
+    }
+
+    public static class RowSelected {
+        
+        TableDataCellAtPosition cell;
+
+        public RowSelected(TableDataCellAtPosition cell) {
+            this.cell = cell;
+        }
+        
+        public int getTableRow() {
+            return cell.tableRow;
+        }
+
+        public boolean isHeader() {
+            return cell.isHeader();
+        }
+    }
+
+    public static final Predicate<TerminalEvent<?>>  canHandle_TABLE_ROW_SELECTED = new IS_Event_TYPE(TerminalEvent.TYPE.TABLE_ROW_SELECTED);
+    public static final Predicate<TerminalEvent<?>>  canHandle_TABLE_CELL_SELECTED = new IS_Event_TYPE(TerminalEvent.TYPE.TABLE_CELL_SELECTED);
+
+    @FunctionalInterface
+    public static interface CellSelectedCustomHandler {
+        void handle(CellSelectedEvent te);
+    }
+
+    @FunctionalInterface
+    public static interface RowSelectedCustomHandler {
+        void handle(RowSelectedEvent te);
+    }
+
+    public static class CellSelectedEvent extends TerminalEvent<CellSelected> {
+        private static final long serialVersionUID = -6811173196070099896L;
+        public CellSelectedEvent(TableComponent tableComponent, CellSelected cellSelected) {
+            super(tableComponent, TerminalEvent.TYPE.TABLE_CELL_SELECTED, cellSelected);
+        }
+        public CellSelected getCellSelected() {
+            return this.getEventData();
+        }
+    }
+
+    public static class RowSelectedEvent extends TerminalEvent<RowSelected> {
+        private static final long serialVersionUID = -7941222548975911844L;
+
+        public RowSelectedEvent(TableComponent tableComponent, RowSelected rowSelected) {
+            super(tableComponent, TerminalEvent.TYPE.TABLE_ROW_SELECTED, rowSelected);
+        }
+        public RowSelected getRowSelected() {
+            return this.getEventData();
+        }
+    }
+
+    public static class CellSelectedEventHandler extends ConditionalEventHandler.Impl {
+        public CellSelectedEventHandler(TableComponent src, CellSelectedCustomHandler cellSelectedCustomHandler) {
+            super(canHandle_TABLE_CELL_SELECTED.and((te)-> te.getSource() == src), 
+                    (te) -> {
+                        cellSelectedCustomHandler.handle((CellSelectedEvent)te);
+                    });
+        }
+    }
+
+    public static class RowSelectedEventHandler extends ConditionalEventHandler.Impl {
+        public RowSelectedEventHandler(TableComponent src, RowSelectedCustomHandler rowSelectedCustomHandler) {
+            super(canHandle_TABLE_ROW_SELECTED.and((te)-> te.getSource() == src), 
+                    (te) -> {
+                        rowSelectedCustomHandler.handle((RowSelectedEvent)te);
+                    });
+        }
+    }
+
+    private ConditionalEventHandler buildEventHandler() {
+
+        this.chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
+
+        ConditionalEventHandler complexKeyHandler = chainedEventHandler.asConditionalEventHandler();
+
+        appendEventHandler(new KeyInputEventHandler(Keys.BACKSPACE_KEYSTROKE,
+                                                    (te) -> Logging.info( TableComponent.this.getName() +  ": Backspace clicked")));
+
+
+        return complexKeyHandler;
+    }
+
+    private TableComponent appendEventHandler(ConditionalEventHandler eventHandler) {
+        this.getChainedEventHandler().appendEventHandler(eventHandler);
+        return this;
+    }
+
+    private ConditionalEventHandler getEventHandler() {
+        if (this.eventHandler == null) {
+            this.eventHandler = buildEventHandler();
+        }
+        return this.eventHandler;
+    }
+
+    private ChainedEventHandler getChainedEventHandler() {
+        if (this.chainedEventHandler == null) {
+            getEventHandler();
+        }
+        return this.chainedEventHandler;
+    }
+
+    private Focusable asFocusable() {
+        if (focusable == null) {
+            this.focusable = new DefaultFocusableBehaviour.Simple(this, true) {
+                @Override
+                public void setFocus(boolean focus, EventBus eventBus) {
+                    super.setFocus(focus, eventBus);
+                    if (focus) {
+                        new ShowComponentOnFocus().onFocus(TableComponent.this, eventBus);
+                    } else {
+                    }
+                }
+                @Override
+                public void unFocus(Focusable newFocusable, EventBus eventBus) {
+                    super.unFocus(newFocusable, eventBus);
+                }
+                @Override
+                public void focus(Focusable oldFocusable, EventBus eventBus) {
+                    super.focus(oldFocusable, eventBus);
+                    new ShowComponentOnFocus().onFocus(TableComponent.this, eventBus);
+                }
+            };
+        }
+        return focusable;
+    }
+    
+    @Override
+    public boolean hasFocus() {
+        return asFocusable().hasFocus();
+    }
+
+    @Override
+    public void setFocus(boolean focus, EventBus eventBus) {
+        asFocusable().setFocus(focus, eventBus);
+    }
+    
+    @Override
+    public void focus(Focusable oldFocusable, EventBus eventBus) {
+        asFocusable().focus(oldFocusable, eventBus);
+    }
+
+    public void requestFocus(TerminalEvent<?> te) {
+        te.getEventBus().raiseEvent(new RequestFocusEvent(this));
+    }
+
+    @Override
+    public EventHandler canHandle(TerminalEvent<?> te) {
+        if (getEventHandler().canHandle(te) == null) {
+            return null;
+        }
+        return this;
+    }
+
+    @Override
+    public void handle(TerminalEvent<?> te) {
+        if (!this.hasFocus()) {
+            // Compensating for a bug in defaultFocusManager/TUIApp 
+            requestFocus(te);
+        }
+        getEventHandler().handle(te);
+    }
+
+    @Override
+    public FocusManager getParentFocusManager() {
+        return asFocusable().getParentFocusManager();
+    }
+
+    @Override
+    public void setParentFocusManager(FocusManager focusManager) {
+        Focusable.UTIL.setParentFocusManager(this, focusManager, (fm)-> asFocusable().setParentFocusManager(fm));
+    }
+    
+    public void onClick(EventBus eventBus) {
+        // place-holder - not used see onClick(ApplicationMouseEvent appMouseEvent)
+    }
+    
+    public void onClick(ApplicationMouseEvent appMouseEvent) {
+        if (MOUSE_ACTION.DOWN_LEFT.equals(appMouseEvent.getMouseAction())) {
+
+            Position positionWithinTableComponent = appMouseEvent.getMousePosition();
+            TableDataCellAtPosition cell = this.tableCellAtPositions.findDataCellFromPosition(positionWithinTableComponent);
+            if (cell != null) {
+                appMouseEvent.getEventBus().raiseEvent(new CellSelectedEvent(this, new CellSelected(cell)));
+                appMouseEvent.getEventBus().raiseEvent(new RowSelectedEvent(this, new RowSelected(cell)));
+            }
+        }
+    }
+
+    private static class TableCellAtPositions {
+        TableModelWidthData tableModel;
+        TreeSet<TableDataCellAtPosition> cellPositions;
+
+        TableCellAtPositions(TableModelWidthData tableModel) {
+            this.tableModel = tableModel;
+            this.cellPositions = makeCellPositionsSet();
+        }
+
+        public void clear() {
+            this.cellPositions = makeCellPositionsSet();
+        }
+
+        private TreeSet<TableDataCellAtPosition> makeCellPositionsSet() {
+            return new TreeSet<TableDataCellAtPosition>(Position.UTIL.POS_COMPARE);
+        }
+
+        void addHeaderCell(Position cellOffset, int col) {
+            TableDataCellAtPosition cellPostion = new TableDataCellAtPosition(cellOffset, -1, col, this.tableModel, true);
+            this.cellPositions.add(cellPostion);
+        }
+
+        void addDataCell(Position cellOffset, int row, int col) {
+            TableDataCellAtPosition cellPostion = new TableDataCellAtPosition(cellOffset, row, col, this.tableModel, false);
+            this.cellPositions.add(cellPostion);
+        }
+
+        public TableDataCellAtPosition findDataCellFromPosition(Position positionOnTable) {
+            for (TableDataCellAtPosition cell : cellPositions) {
+                if (cell.containsPosition(positionOnTable)) {
+                    return cell;
+                }
+            }
+            return null;
+        } 
+
+    }
+
+    private static class TableDataCellAtPosition implements Rectangle {
+        Position positionOnView;
+        int tableRow;
+        int tableColumn;
+        TableModelWidthData tableModel;
+        boolean header;
+
+        public TableDataCellAtPosition(Position positionOnView, 
+                                       int tableRow, 
+                                       int tableColumn,
+                                       TableModelWidthData tableModel, 
+                                       boolean isHeader) {
+            super();
+            this.positionOnView = positionOnView;
+            this.tableRow = tableRow;
+            this.tableColumn = tableColumn;
+            this.tableModel = tableModel;
+            this.header = isHeader;
+        }
+
+        @Override
+        public int getRow() {
+            return positionOnView.getRow();
+        }
+
+        @Override
+        public int getCol() {
+            return positionOnView.getCol();
+        }
+
+        @Override
+        public int getWidth() {
+            return tableModel.getMaxWidthForColumn(tableColumn);
+        }
+
+        @Override
+        public int getHeight() {
+            return isHeader() ? tableModel.maxHeaderHeight 
+                              : tableModel.getMaxHeightForRow(tableRow);
+        }
+
+        @Override
+        public void moveTo(int row, int col) {
+            // do nothing
+        }
+
+        public boolean isHeader() {
+            return this.header;
+        }
+
+        @Override
+        public String toString() {
+            return "TableDataCellAtPosition [positionOnView=" + positionOnView + ",\n    tableRow=" + tableRow
+                    + ", tableColumn=" + tableColumn + ", \n    header=" + header + "]";
+        }
+
+    }
+
+    public static enum TableLinesStyle {
+        NONE,
+        HEADER_FULL,
+        HEADER_ALL_AND_BORDER,
+        ALL
+    }
+
+    public static class TableLinesStyleOption extends SimpleDisplayValue<TableLinesStyle> {
+            public TableLinesStyleOption(String displayValue, TableLinesStyle value) {
+                super(displayValue, value);
+            }
+    }
+
+    public static TableLinesStyleOption[] tableLinesStyleOptions() {
+        TableLinesStyleOption[] options = new TableLinesStyleOption[] {
+                new TableLinesStyleOption("Lines - None", TableLinesStyle.NONE),
+                new TableLinesStyleOption("Lines - HEADER" , TableLinesStyle.HEADER_FULL),
+                new TableLinesStyleOption("Lines - HEADER+BORDER" , TableLinesStyle.HEADER_ALL_AND_BORDER),
+                new TableLinesStyleOption("Lines - ALL" , TableLinesStyle.ALL),
+        };
+        return options;
     }
 
 }

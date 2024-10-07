@@ -1,0 +1,69 @@
+
+
+Summary of Completeness of Examples
+
+
+
+BarChartTest.java           -- works - uses TUI to bootstrap
+BootStrapTests              -- works - uses old style .. no TUIApp
+ButtonBarTest               -- works 
+CanvasComponentTest         -- works
+CanvasDrawLinesTest         -- works - uses old style .. no TUIApp
+CanvasVeryBasicTest         -- works - uses old style .. no TUIApp -- pretty boring .. maybe delete
+CharacterViewerTest         -- does not handle extended chars -- either solve or delete
+ColoredTextTest             -- works - but has ACME reference - maybe delete?
+ColorsTest                  -- works
+ColorsTestWithTable         -- work but table headers look ugly
+CompositeLayeringTest       -- works -fixed fillOnClear implementation
+CompositeSimpleTest         -- works but reveals a problem with default focus manager and the order in which focus happens .. 
+                               default should be left to right top to bottom.. currently based on order in which it is added
+CursorMovementTest          -- works fine
+Demo                        -- need to get rid of
+DonutChartTest              -- works
+DraggableTest               -- works but UI does not make it clear what to do
+DropdownListBoxInButtonBarTest -- does *not* work.  Tabbing to drop-down should cause drop down to drop-down.. works on click but not on drop
+ExecTest                    -- does **not** work (exception) needs a complete rewrite -- old style
+FrameSetTest                -- works partially -- and needs sprucing up  .. [Test1] drag splitter does not work because complex
+GridBrailleTest             -- works but needs a rewrite because uses the Demo form and very old style and refers to ACME - need to get rid of
+HideShowTest                -- works nicely
+HilightTextInComponentTest  -- does not appear to work -- hilight is not working ... also old style ... should either rewrite or delete
+HorizontalPanelTest         -- works great
+HorizontalSplitterTest      -- works great
+HorizontalSplitterTest2     -- works great
+KeyInputEventsProducerTest  -- works and essential for debugging events
+LineChartDemo               -- works but terrible old style implementation -- rewrite
+LineTrackingCLIEmmitterTest -- works but get rid of it - confusing
+ListBoxSimple01Test         -- does not work properly .. cannot tab to next component - not playing nice with app focus manager
+ListBoxTest                 -- does not work properly .. cannot tab to next component - not playing nice with app focus manager - also old style - needs rewrite
+ListBoxTest2                -- does not work properly .. cannot tab to next component - not playing nice with app focus manager 
+MenuBarTest                 -- works - but sure if initially intuitive when trying to get menu dropdown with just keyboard bbecause down-arrow does not engage dropwdown.. but maybe that is ok - not sure
+MultiLineTextInputTest      -- works great!
+ReadImageFileToScreenTest   -- works - but needs rewrite because not use Factory way of instantiating image viewer
+ReadTextFileToScreenTest    -- works (mostly) ... except try this .../runDBG.sh dtb.terminalIO.examples.ReadTextFileToScreenTest ./READIMG_ANIMATEDRAWING_VIA_CIRCLE.txt
+RockerButtonTest            -- works -- but a bit busy
+RockerButtonTest2           -- works -- but unimpressive
+ScrollableComponentTest     -- completely broken
+ScrollToViewTest            -- completely broken
+SmallCanvasTest             -- works - but old style -- look into using TUIApp .. but ensure same behaviour -- meaning that it does stop
+SparklineTest               -- works
+StdoutViewerTest            -- looks pretty but scrollable area does not receive events
+StringOutputTest            -- works - old style ( necessary in this case ) - but code needs to be cleaned up
+TabPanelTest                -- sort of works ... but resize image not good ... does not render... needs a rewrite
+TabPanelTest2               -- works ... (FIXED - ignore commnets to the right -->) but initial sizes need improving - suggest start with full screen
+TerminalBasicTest           -- works ... but not useful for public consumption 
+TestLotsOfTerminateHandlers -- does not work - and not for public consumption
+TextBoxSimple01Test         -- works now  -- modified TextBoxInput to request focus if its handling a event but it does not have focus (bug in defaultFocusManager) ... ...tabing does not work until clicking in 2nd and 3rd textfields ... something wrong with default focus manager
+TextBoxTest                 -- works but is gawd-awful to look at -- spruce it up -- get rid of the game in the back
+TreeViewTest                -- works but not interesting because treeview responds to no events making it not interesting 
+VerticalSplitterTest        -- works but can drag too far down ... need to fix that
+VerticalSplitterTest2       -- works but can drag too far down ... need to fix that
+WindowFrameTest             -- works .. sortof .. Nested Windows has bug .. problem with drag offset calculation is wrong .. also layout is messy - make tidier, code is messy
+FractalsViewer              -- works - but boring
+ImageSplitterTest           -- fixed - but loading command line options not great - also reveals background image manager (ColorBGPipe) not working ..
+ImageViewer                 -- absolutely dreadful .. needs to be rewritten from scratch ... its really terrible
+RenderFromGraphics2D        -- piece of shit because scaling for images not calculated correctly - too skinny
+
+ 
+
+
+

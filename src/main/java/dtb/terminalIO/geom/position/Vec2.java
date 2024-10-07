@@ -34,7 +34,7 @@ public interface Vec2<T extends Vec2<?>> {
     public default T add(float x, float y) {
         return newFrom(x + this.getX(), y + this.getY());
     }
-    
+
     public default T offsetAdd(Vec2<?> offsetToAdd) {
         return add(offsetToAdd.getX(), offsetToAdd.getY());
     }
@@ -64,7 +64,7 @@ public interface Vec2<T extends Vec2<?>> {
     public default float dot(Vec2<?> other) {
         return this.getX() * other.getX() + this.getY() * other.getY();
     }
-    
+
     public default float angle(Vec2<?> other) {
         float dot = dot(other);
         float det = this.getX() * other.getY() - this.getY() * other.getX();
@@ -100,12 +100,12 @@ public interface Vec2<T extends Vec2<?>> {
             return Float.compare(vec1.getX(), vec2.getX());
         }
     }
-    
+
     public static class BaseVec2 implements Vec2<BaseVec2> {
 
         public float y;
         public float x;
-    
+
         public BaseVec2(float x, float y) {
             super();
             this.x = x;
@@ -151,7 +151,7 @@ public interface Vec2<T extends Vec2<?>> {
                 return false;
             return true;
         }
-        
+
         public String toString() {
             return UTIL.asString(this);
         }
@@ -188,14 +188,13 @@ public interface Vec2<T extends Vec2<?>> {
             }
             return points;
         }
-        
+
         public static String asString(Vec2<?> p) {
             if (p == null) {
                 return  "Vec2[null, null]";
             }
             return String.format("%s[x=%4f, y=%4f]", p.getClass().getSimpleName(), p.getX(), p.getY());
         }
-        
 
     }
 

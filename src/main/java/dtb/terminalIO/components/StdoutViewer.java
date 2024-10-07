@@ -85,14 +85,12 @@ public class StdoutViewer extends AbstractComponent<StdoutViewer>  implements Te
             }
             
         };
-        
-        
-        
+
         streamConsumer = new TerminalStreamConsumerSegmentsBuffer(segmentsStreamConsumerAdapter, color);
-        
+
         lastMeasuredDimension = new Dimension.Simple(0,0);
     }
-    
+
     // the single Queue in which all events are placed
     private static final int EVENT_Q_CAPACITY = 1024;
     private DrainableBlockingQueue<Runnable> queue = null;
@@ -103,7 +101,7 @@ public class StdoutViewer extends AbstractComponent<StdoutViewer>  implements Te
         }
         queue = new DrainableBlockingQueue<Runnable>(EVENT_Q_CAPACITY);
     }
-    
+
     private void submitToQ(Runnable runnable) {
         if (queue == null) {
               runnable.run();
@@ -112,7 +110,6 @@ public class StdoutViewer extends AbstractComponent<StdoutViewer>  implements Te
         queue.submitToQ(runnable);
     }
 
-    
     private int drainQWithTimeLimit(int millisec) {
         if (queue == null) {
             return 0;
@@ -132,7 +129,7 @@ public class StdoutViewer extends AbstractComponent<StdoutViewer>  implements Te
     }
 
     ThrottledRunnable throttleForRequestScrollToView = new ThrottledRunnable(500);
-    
+
     public void flush(EventBus eventBus) {
         int countTasksExecuted = drainQWithTimeLimit(10);
 
@@ -143,21 +140,21 @@ public class StdoutViewer extends AbstractComponent<StdoutViewer>  implements Te
         if (countTasksExecuted>0) {
             this.markAsDirty();
         }
-        
+
     }
-    
+
     public void flushAsynch(EventBus eventBus) {
         eventBus.asynch((te)-> flush(te.getEventBus()));
     }
-    
+
     public void enableTimedFlush(int millisec, EventBus eventBus) {
-        
+
         disableTimedFlush(eventBus);
 
         createQ();
 
         flushTimerTask = new RepeatingInterval(millisec, (te)->{
-            
+
             int countTasksExecuted = ElapsedTime.getAndTime(()->  drainQWithTimeLimit(10),
                                                             (t)->Logging.info("drain-time "+t));
 
@@ -202,7 +199,7 @@ public class StdoutViewer extends AbstractComponent<StdoutViewer>  implements Te
         stats.size = new Dimension.Simple(this.getHeight(),this.getWidth());
         return stats;
     }
-    
+
     public String stats() {
         ViewerStats stats = getStats();
         return "Segments size            : " + stats.segmentsSize+"\n"+
@@ -216,7 +213,6 @@ public class StdoutViewer extends AbstractComponent<StdoutViewer>  implements Te
         streamConsumer.clear();
     }
 
-    
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer mySegments) {
         //mySegments.merge(stdoutSegmentsBuffer);

@@ -255,13 +255,19 @@ public interface CanResize {
 
         int percent = 50;
         
-        public ExpandDownByPercent(Rectangle anchorComponent, Position targetOffsetPosition, Rectangle targetComponent,
-                CanResize targetToResize, int percent) {
+        public ExpandDownByPercent(Rectangle anchorComponent, 
+                                   Position targetOffsetPosition, 
+                                   Rectangle targetComponent,
+                                   CanResize targetToResize, 
+                                   int percent) {
             super(anchorComponent, targetOffsetPosition, targetComponent, targetToResize);
             this.percent = percent;
         }
         
-        public ExpandDownByPercent(Component<?> container, Position targetOffsetPosition, BoundedComponent<?> targetComponent, int percent) {
+        public ExpandDownByPercent(Component<?> container, 
+                                   Position targetOffsetPosition, 
+                                   BoundedComponent<?> targetComponent, 
+                                   int percent) {
             this(container, targetOffsetPosition, targetComponent, targetComponent, percent);
         }
 
@@ -281,14 +287,20 @@ public interface CanResize {
     public static class ExpandRightByPercent  extends ExpandOnResize {
 
         int percent = 50;
-        
-        public ExpandRightByPercent(Rectangle anchorComponent, Position targetOffsetPosition, Rectangle targetComponent,
-                CanResize targetToResize, int percent) {
+
+        public ExpandRightByPercent(Rectangle anchorComponent, 
+                                    Position targetOffsetPosition, 
+                                    Rectangle targetComponent,
+                                    CanResize targetToResize, 
+                                    int percent) {
             super(anchorComponent, targetOffsetPosition, targetComponent, targetToResize);
             this.percent = percent;
         }
-        
-        public ExpandRightByPercent(Component<?> container, Position targetOffsetPosition, BoundedComponent<?> targetComponent, int percent) {
+
+        public ExpandRightByPercent(Component<?> container, 
+                                    Position targetOffsetPosition, 
+                                    BoundedComponent<?> targetComponent, 
+                                    int percent) {
             this(container, targetOffsetPosition, targetComponent, targetComponent, percent);
         }
 
@@ -304,6 +316,7 @@ public interface CanResize {
         }
 
     }
+
     public static class ExpandRight extends ExpandOnResize {
 
         public ExpandRight(Rectangle anchorComponent, Position targetOffsetPosition, Rectangle targetComponent,

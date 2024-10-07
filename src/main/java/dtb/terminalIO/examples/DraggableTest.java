@@ -37,8 +37,8 @@ public class DraggableTest {
         .setDefaultMainApplicationPanel()
         .setEmptyColors(Colors.On_IBla)
         .confirmOnExit()
-        .setOnReadyStart((tApp)->{
-            
+        .setOnReadyStart((tApp) -> {
+
             FgColor mainPanel_FG_color = Colors.BWhi;
             BgColor mainPanel_BG_color = Colors.On_IBla;
             Color borderTitleColor = new FGBGColors(mainPanel_FG_color, mainPanel_BG_color);

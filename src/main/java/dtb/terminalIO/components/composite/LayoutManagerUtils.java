@@ -38,7 +38,7 @@ public class LayoutManagerUtils {
     public static void distributeComponentsEvenly(Composite parent, List<Component<?>> components, Position offset, Dimension boundary) {
         // Sort components by size in descending order
         components.sort(Comparator.comparingInt(c -> -c.getHeight() * c.getWidth()));
-        
+
         Rectangle bounds = new Rectangle.Simple(offset, boundary);
 
         int currentRow = offset.getRow();
@@ -68,6 +68,7 @@ public class LayoutManagerUtils {
             }
         }
     }
+
     public static void distributeComponentsStaggered(Composite parent) {
         List<Component<?>> components = new ArrayList<Component<?>>(parent.getChildrenList());
         distributeComponentsStaggered(parent, components);

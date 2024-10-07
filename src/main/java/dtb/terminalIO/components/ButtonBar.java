@@ -13,6 +13,7 @@ import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
+import dtb.terminalIO.geom.position.Position;
 
 public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
 
@@ -91,16 +92,19 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
         return this;
     }
 
-    public void setLeftMostBorderChar(char leftMostBorderChar) {
+    public ButtonBar setLeftMostBorderChar(char leftMostBorderChar) {
         this.leftMostBorderChar = leftMostBorderChar;
+        return this;
     }
 
-    public void setMiddleBorderChar(char middleBorderChar) {
+    public ButtonBar setMiddleBorderChar(char middleBorderChar) {
         this.middleBorderChar = middleBorderChar;
+        return this;
     }
 
-    public void setRightMostBorderChar(char rightMostBorderChar) {
+    public ButtonBar setRightMostBorderChar(char rightMostBorderChar) {
         this.rightMostBorderChar = rightMostBorderChar;
+        return this;
     }
 
     public ButtonBar setNoBorderChars() {
@@ -125,6 +129,16 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
                 }
             }
         }
+        return this;
+    }
+
+    @Override
+    protected ButtonBar addComponentToInternalContainer(Position offset, Component<?> component) {
+        // we override ancestor to reroute to addComponent(..)
+        if (offset != null && !offset.equals(Position.ZERO)) {
+            throw new IllegalStateException("ButtonBar cannot specify position when adding components");
+        }
+        addComponent(component);
         return this;
     }
 

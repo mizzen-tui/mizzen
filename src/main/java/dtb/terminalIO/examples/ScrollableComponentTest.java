@@ -8,15 +8,15 @@ import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.Composite;
-import dtb.terminalIO.components.composite.HorizontalPanel;
-import dtb.terminalIO.components.composite.VerticalPanel;
+import dtb.terminalIO.components.frameset.HorizontalSplitter;
+import dtb.terminalIO.components.frameset.VerticalSplitter;
 import dtb.terminalIO.components.scroll.ScrollableComponent2;
 import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
-import dtb.terminalIO.events.focus.FocusManager;
+import dtb.terminalIO.events.TimedRequestedController;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.examples.BarChartTest.BarChartRandomDataDemo;
 import dtb.terminalIO.examples.GridBrailleTest.BrailleDemo;
@@ -36,60 +36,81 @@ public class ScrollableComponentTest {
     public static void main(String[] args) {
 
         //Logging.setEnabled(true);
-        
+
         new TUIApp(args)
         .setEmptyChar(' ')
         .setDefaultMainApplicationPanel()
         .confirmOnExit()
         .setOnReadyStart((tApp)->{ 
-            
-            Supplier<Dimension> calcScrollableDimension = ()-> {
-                return new Dimension.Simple( ((int)(tApp.getCanvas().getHeight()*.7)), tApp.getCanvas().getWidth()/2 -2);
-            };
-   
-            ScrollableComponent2 sc1 = new ScrollableComponent2(Colors.Gre, calcScrollableDimension.get(), new TextViewer().getComponent(Colors.Gre));
 
-            sc1.setName("ScrollableComponent-sc1");            
+            Supplier<Dimension> calcScrollableDimension = ()-> {
+                return new Dimension.Simple( ((int)(tApp.getCanvas().getHeight()*.7)), tApp.getCanvas().getWidth()/2 -3);
+            };
+            
+            TextComponent largeTextComponent = new TextViewer().getComponent(Colors.Gre, tApp.getCanvas().getWidth()-2);
+            String originalLargeText = largeTextComponent.getText();
+   
+            ScrollableComponent2 sc1 = new ScrollableComponent2(Colors.Gre, 
+                                                                calcScrollableDimension.get(), 
+                                                                largeTextComponent);
+
+            TimedRequestedController resizeWordWrapThrottler = new TimedRequestedController((te)->{
+                String largeText = originalLargeText;
+                largeText = StringUtils.wrap(largeText, sc1.getWidth()-7);
+                largeText = StringUtils.addLineNumbers(largeText);
+                largeTextComponent.setTextAndResize(largeText);
+                te.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(largeTextComponent) );
+            });
+            resizeWordWrapThrottler.setTimerDelayMillis(500); // 1/2 sec
+            
+            sc1.appendOnResizeRule((newSize)->{
+                resizeWordWrapThrottler.onRequest(tApp.getEventBus());
+            });
+
+            sc1.setName("ScrollableComponent-sc1");
             SearchFunctionForScrollableComponent.addFinderToScrollable(sc1.asSearchableView());  
 
-     //       Composite brailleContainer = new Composite(Colors.Blu).setBounds(tApp.getCanvas().getHeight()-7, tApp.getCanvas().getWidth()/2 -2);
-       //     brailleDemoSetup(brailleContainer, tApp.getEventBus());
-    //        ScrollableComponent2 sc2 = new ScrollableComponent2(Colors.Blu, calcScrollableDimension.get(), brailleContainer);
-    //        sc2.setName("ScrollableComponent-sc2");
+            Composite brailleContainer = new Composite(Colors.Blu).setBounds(tApp.getCanvas().getHeight()-7, tApp.getCanvas().getWidth()/2 -2);
+            brailleDemoSetup(brailleContainer, tApp.getEventBus());
+            ScrollableComponent2 sc2 = new ScrollableComponent2(Colors.Blu, calcScrollableDimension.get(), brailleContainer);
+            sc2.setName("ScrollableComponent-sc2");
+            sc2.appendOnResizeRule((newSize)->{
+                brailleContainer.resize(newSize);
+            });
 
             Composite  lineChart = new Composite(Colors.Cya);
-            lineChart.setBorder(true);
+            lineChart.setBorder(false);
             lineChartDemoSetup(lineChart, tApp.getEventBus());
 
             Supplier<Dimension> lineChartDim = ()-> {
                 return new Dimension.Simple( ((int)(tApp.getCanvas().getHeight() - calcScrollableDimension.get().getHeight())), sc1.getWidth());
             };
 
-//            Supplier<Dimension> barChartDim = ()-> {
-//                return new Dimension.Simple( ((int)(tApp.getCanvas().getHeight() - calcScrollableDimension.get().getHeight()  )), sc2.getWidth());
-//            };
+            Supplier<Dimension> barChartDim = ()-> {
+                return new Dimension.Simple( ((int)(tApp.getCanvas().getHeight() - calcScrollableDimension.get().getHeight()  )), sc2.getWidth());
+            };
 
-//            BarChartRandomDataDemo  barChart = new BarChartRandomDataDemo(Colors.Cya, barChartDim.get()).setupTimer(tApp.getEventBus());
+            BarChartRandomDataDemo  barChart = new BarChartRandomDataDemo(Colors.Cya, barChartDim.get()).setupTimer(tApp.getEventBus());
 
-//            lineChart.resize(lineChartDim.get());
-//            barChart.resize(barChartDim.get());
+            lineChart.resize(lineChartDim.get());
+            barChart.resize(barChartDim.get());
 
-            VerticalPanel vp = new VerticalPanel();
-            HorizontalPanel hpSCs = new HorizontalPanel();
-            vp.add(hpSCs);
+            Dimension frameSetSizeCalculator = new Dimension.SupplierAsDimension(()-> new Dimension.Simple( tApp.getDimensions()));
+            HorizontalSplitter horizontalSplitterTop = new HorizontalSplitter(Colors.Blu, new Dimension.Simple(frameSetSizeCalculator.getHeight()/2, frameSetSizeCalculator.getWidth() )).setBorder(false);
 
-             hpSCs.add(sc1);
-        //    hpSCs.add(sc2);
+            horizontalSplitterTop.addComponent(sc1);
+            horizontalSplitterTop.addComponent(sc2);
 
-            HorizontalPanel hpCharts = new HorizontalPanel();
+            HorizontalSplitter horizontalSplitterBottom = new HorizontalSplitter(Colors.Blu, new Dimension.Simple(frameSetSizeCalculator.getHeight()/2, frameSetSizeCalculator.getWidth() )).setBorder(false);
 
-           // hpCharts.add(lineChart);
-           //  hpCharts.add(barChart);
+            horizontalSplitterBottom.addComponent(lineChart);
+            horizontalSplitterBottom.addComponent(barChart);
 
-            //vp.add(hpCharts);
+            VerticalSplitter vSplitter = new VerticalSplitter(Colors.Blu, frameSetSizeCalculator);
+            vSplitter.addComponent(horizontalSplitterTop);
+            vSplitter.addComponent(horizontalSplitterBottom);
 
-            tApp.getMainApplicationPanel().add(vp);
-
+            tApp.getMainApplicationPanel().add(vSplitter);
 
             BiConsumer<TUIApp, Dimension> baseResizeAction = tApp.getResizeAction();
 
@@ -97,18 +118,17 @@ public class ScrollableComponentTest {
                 baseResizeAction.accept(ptApp, newSize);
 
                 sc1.resize(calcScrollableDimension.get());
-//                sc2.resize(calcScrollableDimension.get());
-//                lineChart.resize(lineChartDim.get());
-//                barChart.resize(barChartDim.get());
-                
+                sc2.resize(calcScrollableDimension.get());
+                lineChart.resize(lineChartDim.get());
+                barChart.resize(barChartDim.get());
             } );
-            
-            FocusManager.UTIL.verifyPathsToFocusables(tApp.getApplicationFocusManager(), vp);
+
+            //FocusManager.UTIL.verifyPathsToFocusables(tApp.getApplicationFocusManager(), vp);
 
         }).start();
-        
+
     }
-    
+
     private static void brailleDemoSetup(Composite container, EventBus eventBus) {
         BrailleDemo brailleDemo = new BrailleDemo() {
             
@@ -136,7 +156,7 @@ public class ScrollableComponentTest {
     }
 
     private static void lineChartDemoSetup(Composite container, EventBus eventBus) {
-        
+
         LineChartDemo lineChartDemo = new LineChartDemo();
         Supplier<Rectangle> clippedAreaForLinechart = ()-> new Rectangle.Simple(Position.ZERO, new Dimension.Simple(container.getHeight()-2, container.getWidth()-2));
         lineChartDemo.setUpDemo(eventBus, clippedAreaForLinechart.get());
@@ -153,8 +173,8 @@ public class ScrollableComponentTest {
     
     static class TextViewer {
 
-        public Component<?> getComponent(Color color) {
-            Component<?> viewable = new TextComponent(color, readLargeSampleFile(100));
+        public TextComponent getComponent(Color color, int width) {
+            TextComponent viewable = new TextComponent(color, readLargeSampleFile(width));
             return viewable;
         }
 //
@@ -178,9 +198,9 @@ public class ScrollableComponentTest {
         String largeText = null;
         try {
             largeText = ReadSampleFiles.readSampleFile(bigFile);  
-            largeText = StringUtils.wrap(largeText, wrapLength);
+           // largeText = StringUtils.wrap(largeText, wrapLength);
 
-            largeText = StringUtils.addLineNumbers(largeText);
+            //largeText = StringUtils.addLineNumbers(largeText);
 
         } catch (IOException e) {
             e.printStackTrace();

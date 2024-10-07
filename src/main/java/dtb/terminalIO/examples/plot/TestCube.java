@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.AbstractWrappedComponentWithFocusManager;
-import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.composite.VerticalPanel;
@@ -19,8 +18,6 @@ import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.EventHandler;
-import dtb.terminalIO.events.focus.DefaultFocusManager;
-import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Vec2;
 import dtb.terminalIO.geom.position.Vec3;
@@ -38,14 +35,13 @@ public class TestCube {
                .setDefaultMainApplicationPanel()
                .confirmOnExit()
                .setOnReadyStart((tApp)->{
-                   
                    Dimension gridSize = new Dimension.Simple(tApp.getMainApplicationPanel().getHeight()-5,
                                                              tApp.getMainApplicationPanel().getWidth()-10);
 
                    VerticalPanel vpMainPanel = new VerticalPanel().setVerticalSpacer(2);
-                   
+
                    BrailleGrid grid = new BrailleGrid(Colors.BGre, gridSize);
-                   
+
                    vpMainPanel.add(grid);
 
                    tApp.getMainApplicationPanel().add(vpMainPanel);
@@ -54,34 +50,31 @@ public class TestCube {
 
                    Plot2DConfigFormProjection plot2DInputForm = new Plot2DConfigFormProjection(grid.getColor());
                    vpMainPanel.add(plot2DInputForm);
-                   
+
                    plot2DInputForm.onChange((te)-> {
                                                     grid.clearPlots();
                                                     cube3D.as2DShape(plot2DInputForm.getValue()).draw(grid.asPointPlotter());
                                                    } );
-                   
+
                    cube3D.as2DShape(plot2DInputForm.getValue()).draw(grid.asPointPlotter());
 
 
                }).start();
     }
-        
-    
-    
-    
+
     public static class Cube {
         int size = 50; 
         Vec3<?> ulf, urf, llf, lrf; // upper left front, upper right front, usw..
         Vec3<?> ulb, urb, llb, lrb; // upper left back ,...
-        
+
         public Cube(int size, Vec3<?> position3D) {
-            
+
             // define back panel
             ulb = new BaseVec3(position3D.getX(), position3D.getY() , position3D.getZ() - size);
             urb = new BaseVec3(position3D.getX() + size, position3D.getY() , position3D.getZ() - size);
             llb = new BaseVec3(position3D.getX(), position3D.getY() + size, position3D.getZ() - size);
             lrb = new BaseVec3(position3D.getX() + size, position3D.getY() + size, position3D.getZ() - size);
-            
+
             // define front panel
             ulf = new BaseVec3(position3D.getX(), position3D.getY() , position3D.getZ());
             urf = new BaseVec3(position3D.getX() + size, position3D.getY() , position3D.getZ());
@@ -121,15 +114,11 @@ public class TestCube {
                                                   .addShape( new Line(ulf_2D, ulb_2D))    // connect front to back
                                                   .addShape( new Line(urf_2D, urb_2D))
                                                   .addShape( new Line(llf_2D, llb_2D))
-                                                  .addShape( new Line(lrf_2D, lrb_2D));  
-            
-            
+                                                  .addShape( new Line(lrf_2D, lrb_2D));
             return cube2D;
         }
-        
     }
-    
-    
+
     static class Plot2DConfigForm extends AbstractWrappedComponentWithFocusManager<HorizontalPanel> implements HasValue<Plot2D> {
 
         Plot2DSimple plot2D;
@@ -137,7 +126,7 @@ public class TestCube {
         Vector3DPanel  cameraInput;
         TextInputFloat distance;
         Vector3DPanel  anglesInput;
-        
+
         ChainedEventHandler chainedEventHandler;
 
         public Plot2DConfigForm(Color color) {
@@ -182,7 +171,7 @@ public class TestCube {
             anglesInput.onChange((te)->{
                 evtHandlerBroadcastValueChanged.handle(te);
             });
-            
+ 
             chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
             setCustomExtendedEventHandler( chainedEventHandler.asConditionalEventHandler() );
 
@@ -199,7 +188,7 @@ public class TestCube {
             actionOnChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, actionOnChangeHandler, chainedEventHandler, handler);
 
         }
-        
+ 
         @Override
         public Plot2D getValue() {
             return plot2D;
@@ -227,13 +216,13 @@ public class TestCube {
 
             controlsInGrid.add(new TextComponent("Distance"));
             controlsInGrid.add(distance);
-            
+ 
             controlsInGrid.add(anglesInput);
-            
+ 
             plot2D = new Plot2DFromProjection();
 
             float[] distanceValue = new float[]{50.0f};
-            
+ 
             EventHandler evtHandlerBroadcastValueChanged = (te) -> {
                 plot2D.setDistance(distanceValue[0]);
                 plot2D.setThetaX(anglesInput.getValue().getX());
@@ -241,7 +230,7 @@ public class TestCube {
                 plot2D.setThetaZ(anglesInput.getValue().getZ());
                 te.getEventBus().raiseEvent(new HasValue.ValueChangedEvent<Plot2D>(Plot2DConfigFormProjection.this));
             };
-            
+ 
             distance.onChange((te)->{
                 distanceValue[0] = distance.getValue(); 
                 if (distanceValue[0] < 0.01) {
@@ -253,12 +242,11 @@ public class TestCube {
             anglesInput.onChange((te)->{
                 evtHandlerBroadcastValueChanged.handle(te);
             });
-            
+ 
             chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
             setCustomExtendedEventHandler( chainedEventHandler.asConditionalEventHandler() );
 
             registerAllFocusables();
-            
 
         }
 
@@ -270,15 +258,14 @@ public class TestCube {
             actionOnChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, actionOnChangeHandler, chainedEventHandler, handler);
 
         }
-        
+ 
         @Override
         public Plot2D getValue() {
             return plot2D;
         }
 
     }
-    
-    
+ 
     static class Vector3DPanel  extends AbstractWrappedComponentWithFocusManager<HorizontalPanel> implements HasValue<Vec3<?>> {
 
         Vec3<?>             vector;
@@ -327,14 +314,13 @@ public class TestCube {
                 evtHandlerBroadcastValueChanged.handle(te);
             });
 
-            
             chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
             setCustomExtendedEventHandler( chainedEventHandler.asConditionalEventHandler() );
 
             registerAllFocusables();
 
         }
-        
+
         public Vector3DPanel(Color color, String label, boolean useUpDown) {
             this(color, label , "X", "Y", "Z", useUpDown);
         }
@@ -362,11 +348,11 @@ public class TestCube {
             this.yInput.setValue(this.vector.getY());
             this.zInput.setValue(this.vector.getZ());
         }
-        
+
         @Override
         public Vec3<?> getValue() {
             return vector;
         }
     }
-    
+
 }

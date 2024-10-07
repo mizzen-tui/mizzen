@@ -13,10 +13,10 @@ import javax.imageio.stream.ImageInputStream;
 public class AnimatedGifImageIterator implements ImageIterator {
 
     List<BufferedImage> images;
-    
+
     int currentImageIDX = 0;
     boolean looping = true;
-    
+
     public AnimatedGifImageIterator(List<BufferedImage> images) {
         this.images = images;
     }
@@ -24,12 +24,11 @@ public class AnimatedGifImageIterator implements ImageIterator {
     public AnimatedGifImageIterator(String gifPath) throws IOException {
         this(new GifReader().gifFileToImages(gifPath));
     }
-    
+
     public int currentIDX() {
         return currentImageIDX;
     }
-    
-    
+
     @Override
     public boolean hasNext() {
         return (looping || currentImageIDX < images.size()-1);
@@ -46,7 +45,6 @@ public class AnimatedGifImageIterator implements ImageIterator {
         return image;
     }
 
-    
     public static class GifReader {
         
         public List<BufferedImage> gifFileToImages(String gifPath) throws IOException {
@@ -79,16 +77,8 @@ public class AnimatedGifImageIterator implements ImageIterator {
                 // Close the input stream
                 input.close();
             }
-            
-            
-            
             return images;
-            
-            
-            
         }
-        
-    }    
-    
-    
+    }
+
 }

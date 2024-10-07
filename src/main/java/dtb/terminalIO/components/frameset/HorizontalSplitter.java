@@ -25,10 +25,12 @@ public class HorizontalSplitter extends AbstractComponentWrappper<FrameSet> impl
         if (this.left == null) {
             getWrappedComponent().add(component);
             this.left = component;
+            getWrappedComponent().onResizeExpandDown(this.left);
             return this;
         }
-        getWrappedComponent().addRight(component, this.left, true); 
+        getWrappedComponent().addRight(component, this.left, true);  // true means draggable
         this.right = component;
+        getWrappedComponent().onResizeExpandDownAndRight(this.right);
         return this;
     }
 

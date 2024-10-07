@@ -36,13 +36,12 @@ import dtb.terminalIO.controlcodes.color.Colors.FGBGColors;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.ScreenCanvasBackend;
 import dtb.terminalIO.core.StringCanvasBackEnd;
-import dtb.terminalIO.events.AbstractTimedRequestedController;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.TimedRequestedController;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
-import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
@@ -56,17 +55,13 @@ public class ReadImageFileToScreenTest {
         Logging.setEnabled(true);
 
         Image imageToView = getFileData(args);
-        
+
         new TUIApp(args)
+                .setEmptyChar(' ')
+                .setDefaultMainApplicationPanel()
+                .confirmOnExit()
+                .setOnReadyStart((tApp)-> {
 
-        .setEmptyChar(' ')
-        .setDefaultMainApplicationPanel()
-        .confirmOnExit()
-        .setOnReadyStart((tApp)-> {
-
-            AtomicBoolean stripColorCodes = new AtomicBoolean(false);
-
-            //Color viewerTextColor = new Colors.FGBGColors(Colors.BIYel, Colors.On_Blu);
             Color viewerTextColor = Colors.DEFAULT_COLOR;
 
             Dimension desiredImgSize = new Dimension.Simple(tApp.getMainApplicationPanel().getHeight()-8,tApp.getMainApplicationPanel().getWidth()-4);
@@ -77,7 +72,6 @@ public class ReadImageFileToScreenTest {
 
             bannerPanel.addComponent(new TextComponent(new FGBGColors(Colors.BCya,Colors.On_Whi),"Image to ASCII"));
 
-            
             Button saveButton = new Button("Save");
             bannerPanel.addComponent(saveButton);
 
@@ -204,7 +198,7 @@ public class ReadImageFileToScreenTest {
                 buildImageViewer.accept(newSize);
             } );
 
-            AbstractTimedRequestedController throttledOptionChangedHandler = (new AbstractTimedRequestedController(()->buildImageViewer.accept((Dimension)sc)) {
+            TimedRequestedController throttledOptionChangedHandler = (new TimedRequestedController(()->buildImageViewer.accept((Dimension)sc)) {
                 @Override
                 protected boolean isRequestDifferentFromPrevious() {
                     return true;
@@ -229,7 +223,7 @@ public class ReadImageFileToScreenTest {
                 currentGradientTextBox.setText(sb.reverse().toString());
                 onOptionChanged.handle(te);
             });
-            
+
             imageRendererTypeDDLB.onChange((te)->{
                 if (imageRendererTypeDDLB.getValue().equals(IMAGE_RENDER_TYPE.BLOCK) ||
                     imageRendererTypeDDLB.getValue().equals(IMAGE_RENDER_TYPE.BRAILLE)) {
@@ -249,11 +243,11 @@ public class ReadImageFileToScreenTest {
             });
             
             
-            Consumer<TerminalEvent> save1 = (te)->{
+            Consumer<TerminalEvent<?>> save1 = (te)->{
                 // app.getMainApplicationPanel()
-                
+
                 Component<?> imgComponent = sc.getComponentBeingViewed();
-                
+
                 StringCanvasBackEnd canvasBackEndToStr = new StringCanvasBackEnd();
                 Canvas canvasToStr = new Canvas(canvasBackEndToStr);
                 canvasToStr.setEmptyChar(' ');
@@ -261,11 +255,9 @@ public class ReadImageFileToScreenTest {
                 canvasToStr.addComponentSegments(imgComponent);
                 canvasToStr.refresh();
                 String content = canvasBackEndToStr.toString();
-                
+
                 String filename = outputFileName(args);
-                
                 try {
-                    
                     if (new File(filename).exists()) {
                         new File(filename).delete();
                     }
@@ -278,18 +270,18 @@ public class ReadImageFileToScreenTest {
             
             Consumer<TerminalEvent> save2 = (te)->{
                 // app.getMainApplicationPanel()
-                
+
                 Component<?> imgComponent = reverseGradientText;//sc; //.getComponentBeingViewed();
-                
+
                 StringCanvasBackEnd canvasBackEndToStr = new StringCanvasBackEnd();
                 Canvas canvasToStr = new Canvas(canvasBackEndToStr);
                 canvasToStr.setSize(imgComponent);
                 canvasToStr.addComponentSegments(imgComponent);
                 canvasToStr.refresh();
                 String content = canvasBackEndToStr.toString();
-                
+
                 String filename = outputFileName(args);
-                
+
                 try {
                     
                     if (new File(filename).exists()) {

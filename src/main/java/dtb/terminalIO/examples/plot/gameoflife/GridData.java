@@ -3,6 +3,7 @@ package dtb.terminalIO.examples.plot.gameoflife;
 import dtb.terminalIO.geom.Dimension;
 
 public class GridData implements Dimension {
+
     int[][] array2D;
     int generation = 0;
     Dimension size = Dimension.ZERO;

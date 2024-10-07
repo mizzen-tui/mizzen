@@ -72,19 +72,19 @@ public class ImageViewerFactory {
 
     public static ColorMapOption[] colorMap() {
         ColorMapOption[] colorMaps = new ColorMapOption[] {
-                 new ColorMapOption("rgbColorMapDIRECT",rgbColorMapDIRECT),
-                 new ColorMapOption("rgbColorPlotBlack",rgbColorPlotBlack),
-                 new ColorMapOption("rgbColorPlotBlackAndGreyAsWhite",rgbColorPlotBlackAndGreyAsWhite),
-                 new ColorMapOption("rgbColorMapSimple1",rgbColorMapSimple1),
-                 new ColorMapOption("rgbGreyScale",rgbGreyScale),
-                 new ColorMapOption("rgbGreyScale-small",rgbGreyScaleSmall),
-                 new ColorMapOption("rgbGreyScale-smaller",rgbGreyScaleSmaller),
-                 new ColorMapOption("rgbGreyScale-smallest",rgbGreyScaleSmallest),
-                 new ColorMapOption("No Color (default)", rgbColorMapRCol)
+                 new ColorMapOption("rgbColorMapDIRECT"    , rgbColorMapDIRECT),
+                 new ColorMapOption("rgbColorPlotBlack"    , rgbColorPlotBlack),
+                 new ColorMapOption("rgbColorPlotBlackAndGreyAsWhite", rgbColorPlotBlackAndGreyAsWhite),
+                 new ColorMapOption("rgbColorMapSimple1"   , rgbColorMapSimple1),
+                 new ColorMapOption("rgbGreyScale"         , rgbGreyScale),
+                 new ColorMapOption("rgbGreyScale-small"   , rgbGreyScaleSmall),
+                 new ColorMapOption("rgbGreyScale-smaller" , rgbGreyScaleSmaller),
+                 new ColorMapOption("rgbGreyScale-smallest", rgbGreyScaleSmallest),
+                 new ColorMapOption("No Color (default)"   , rgbColorMapRCol)
         }; 
         return colorMaps;
     }
-    
+
     public static RGBToAnsiColorControlCode nameToRGBToAnsiColorControlCode(String name) {
         String colorName=name;
         if (colorName.equalsIgnoreCase("NOCOLOR")) {
@@ -136,7 +136,12 @@ public class ImageViewerFactory {
  * 
  * */    
     
+    private static PlotPredicateOption[] __PointPredicateOptions = null;
+    
     public static PlotPredicateOption[] plotPointPredicateOptions() {
+        if (__PointPredicateOptions != null) {
+            return __PointPredicateOptions;
+        }
         PlotPredicateOption[] predicateOptions = new PlotPredicateOption[] {
                  new PlotPredicateOption("PLOT_ALWAYS",PLOT_ALWAYS),
                  new PlotPredicateOption("PLOT_WHITE_ONLY",PLOT_WHITE_ONLY),
@@ -144,8 +149,21 @@ public class ImageViewerFactory {
                  new PlotPredicateOption("PLOT_DARK_ONLY", PLOT_DARK_ONLY),
                  new PlotPredicateOption("PLOT_DARKISH_ONLY",PLOT_DARKISH_ONLY),
                  new PlotPredicateOption("PLOT_LIGHT_ONLY",PLOT_LIGHT_ONLY),
+                 new PlotPredicateOption("PLOT_LIGHTER_THAN_25",PLOT_LIGHTER_THAN_25),
+                 new PlotPredicateOption("PLOT_LIGHTER_THAN_30",plotLighterThan(30)),
+                 new PlotPredicateOption("PLOT_LIGHTER_THAN_35",plotLighterThan(35)),
+                 new PlotPredicateOption("PLOT_LIGHTER_THAN_40",plotLighterThan(40)),
+                 new PlotPredicateOption("PLOT_LIGHTER_THAN_45",plotLighterThan(45)),
                  new PlotPredicateOption("PLOT_LIGHTER_THAN_50",PLOT_LIGHTER_THAN_50),
+                 new PlotPredicateOption("PLOT_LIGHTER_THAN_55",plotLighterThan(55)),
+                 new PlotPredicateOption("PLOT_LIGHTER_THAN_60",plotLighterThan(60)),
+                 new PlotPredicateOption("PLOT_LIGHTER_THAN_65",plotLighterThan(65)),
+                 new PlotPredicateOption("PLOT_LIGHTER_THAN_70",plotLighterThan(70)),
                  new PlotPredicateOption("PLOT_LIGHTER_THAN_75",PLOT_LIGHTER_THAN_75),
+                 new PlotPredicateOption("PLOT_LIGHTER_THAN_80",plotLighterThan(80)),
+                 new PlotPredicateOption("PLOT_LIGHTER_THAN_85",plotLighterThan(85)),
+                 new PlotPredicateOption("PLOT_LIGHTER_THAN_90",plotLighterThan(90)),
+                 new PlotPredicateOption("PLOT_LIGHTER_THAN_95",plotLighterThan(95)),
                  new PlotPredicateOption("PLOT_LIGHTER_THAN_100",PLOT_LIGHTER_THAN_100),
                  new PlotPredicateOption("PLOT_LIGHTER_THAN_125",PLOT_LIGHTER_THAN_125),
                  new PlotPredicateOption("PLOT_LIGHTER_THAN_150",PLOT_LIGHTER_THAN_150),
@@ -161,6 +179,7 @@ public class ImageViewerFactory {
                  new PlotPredicateOption("PLOT_DARKER_THAN_255",PLOT_DARKER_THAN_255),
                  
         }; 
+        __PointPredicateOptions = predicateOptions;
         return predicateOptions;
     }
 
@@ -820,24 +839,44 @@ public class ImageViewerFactory {
     public static RGBPlotPredicate PLOT_DARKER_THAN_255  = plotDarkerThan(255);
     
     static RGBPlotPredicate plotLighterThan(int grey) {
-        return (r,g,b) -> (r + g + b)/3 >= grey;
+        return new RGBPlotPredicate() {
+
+            @Override
+            public boolean test(int r, int g, int b) {
+                return (r + g + b)/3 >= grey;
+            }
+            
+            public String toString() {
+                return "RGBPlotPredicate.plotLighterThan("+grey+")";
+            }
+            
+            
+            
+        };
     }
 
     static RGBPlotPredicate plotDarkerThan(int grey) {
-        return (r,g,b) -> {
-            
-            //  Logging.info(String.format("r %d g %d b %d = %d",r,g,b,(r + g + b)/3 ));
-              return(r + g + b)/3 < grey;
+        return new RGBPlotPredicate() {
+
+            @Override
+            public boolean test(int r, int g, int b) {
+                return(r + g + b)/3 < grey;
+            }
+            public String toString() {
+                return "RGBPlotPredicate.plotDarkerThan("+grey+")";
+            }
         };
+//        return (r,g,b) -> {
+//            //  Logging.info(String.format("r %d g %d b %d = %d",r,g,b,(r + g + b)/3 ));
+//              return(r + g + b)/3 < grey;
+//        };
     }
     
 //    public static RGBPlotPredicate PLOT_LIGHT_ONLY = (r,g,b) -> (r + g + b)/3 >= 9;
 
     @FunctionalInterface
     public static interface RGBToAnsiColorControlCode {
-        
         Color toControlCode(int r,int g, int b);
-        
     }
 
     public static RGBToAnsiColorControlCode rgbColorMapRCol = (r,g,b) ->Colors.RCol;

@@ -8,15 +8,15 @@ import dtb.terminalIO.geom.position.Position;
 public class CursorPos extends Position.Simple {
 
     public CursorPos() {
-	super(Position.ZERO);
+       super(Position.ZERO);
     }
 
     public CursorPos(int row, int col) {
-	super(row, col);
+       super(row, col);
     }
 
     public CursorPos moveRightCols(int cols) {
-	return new CursorPos(getRow(), getCol() + cols);
+       return new CursorPos(getRow(), getCol() + cols);
     }
 
 }

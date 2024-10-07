@@ -9,7 +9,6 @@ import java.util.function.BiConsumer;
 
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.ButtonBar;
-import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
@@ -17,8 +16,6 @@ import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.ColorParsingUtils;
 import dtb.terminalIO.controlcodes.color.Colors;
-import dtb.terminalIO.events.focus.DefaultFocusManager;
-import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
@@ -79,12 +76,10 @@ public class ReadTextFileToScreenTest {
                 image.setText(data);
                 tApp.doRefreshCanvasIfModified();
             }  );
-            
-            
+
             ScrollableComponent sc = new ScrollableComponent(viewerTextColor, 
                                                              (Dimension)tApp.getMainApplicationPanel(), 
-                                                             image,
-                                                             ()-> new DefaultFocusManager(Keys.SHIFT_TAB_KEYSTROKE, Keys.TAB_KEYSTROKE).setNavKeysFirst(false));
+                                                             image);
             sc.setFillOnClear(true);
             sc.setEmptyChar('░');
 

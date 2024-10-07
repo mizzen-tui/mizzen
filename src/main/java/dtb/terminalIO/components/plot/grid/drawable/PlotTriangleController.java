@@ -38,9 +38,9 @@ public class PlotTriangleController implements PlotShapeController , Movable, Hi
     public void plot(PointPlotter plotter, Rectangle bounds) {
         XYTranslate plotterWithOffset = new XYTranslate(plotter, this.offset);
         this.triangleShape.setColor(this.colorHiliter.getColor());
-        this.triangleShape.setFilled(this.colorHiliter.isHiltited());
+        this.triangleShape.setFilled(this.colorHiliter.isHilited());
         
-        if (this.colorHiliter.isHiltited()) {
+        if (this.colorHiliter.isHilited()) {
             RectangleShape rectShape = new RectangleShape(this.triangleShape.asRectangle(), Colors.BBla);
             rectShape.draw(plotterWithOffset);
         }

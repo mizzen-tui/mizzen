@@ -167,7 +167,6 @@ public interface FocusManager extends Focusable {
             return  null;
         }
 
-        
         /**
          * Traverse this object and all its child (and grand-child .. ) objects looking for
          * focusTarget.  
@@ -187,7 +186,7 @@ public interface FocusManager extends Focusable {
                 return pathToTarget;
             }
 
-            // look for path by looping up target to root
+            // look for path by looping up from target to root
             pathToTarget = finder.findPath(focusManager, focusTarget, new HasParentFocusableAdapter());
             if (pathToTarget != null && pathToTarget.size() > 0) {
                 return pathToTarget;

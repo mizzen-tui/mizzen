@@ -136,6 +136,10 @@ public class TerminalScreen implements ControlCodeContext {
         return this;
     }
 
+    /**
+     * Write text to screen
+     * @param s the text
+     */
     public TerminalScreen t(String s) {
         return add(new TextRenderer(s));
     }
@@ -159,7 +163,7 @@ public class TerminalScreen implements ControlCodeContext {
     }
     
     /**
-     * Move cursor to screen's to its top-left (0,0) position
+     * Move cursor to screen's top-left (0,0) position
      */
     public TerminalScreen home() {
         boolean erasePreviousContent = false;
@@ -169,7 +173,7 @@ public class TerminalScreen implements ControlCodeContext {
 
 
     public LineTrackingCLIEmmitter getEmitter() {
-	return this.out;
+        return this.out;
     }
 
     public void showCursorAt(Position showCursorPosition, boolean showCursor) {

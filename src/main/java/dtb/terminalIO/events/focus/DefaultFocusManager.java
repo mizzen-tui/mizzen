@@ -26,8 +26,8 @@ public class DefaultFocusManager implements FocusManager,
                                              FocusablesContainer,
                                              HasName<DefaultFocusManager>{
 
-    private static final BiConsumer<Focusable, EventBus> DEFAULT_ONFOCUS_CHANGED = (f,e)-> e.raiseEvent(new RequestUpdateCanvasEvent(f)); 
-    
+    private static final BiConsumer<Focusable, EventBus> DEFAULT_ONFOCUS_CHANGED_UPDATE_CANVAS = (f,e)-> e.raiseEvent(new RequestUpdateCanvasEvent(f)); 
+
     private FocusManager parentFocusManager;
     private FocusManager actualFocusmanager; // this is use
     private List<Focusable> eventConsumers;
@@ -38,7 +38,7 @@ public class DefaultFocusManager implements FocusManager,
 //    private KeyStroke nextKeyStroke = Keys.DOWN_KEYSTROKE;
     private KeyStroke prevKeyStroke = Keys.SHIFT_TAB_KEYSTROKE;
     private KeyStroke nextKeyStroke = Keys.TAB_KEYSTROKE;
-    private BiConsumer<Focusable, EventBus> onFocusChanged = DEFAULT_ONFOCUS_CHANGED;
+    private BiConsumer<Focusable, EventBus> onFocusChanged = DEFAULT_ONFOCUS_CHANGED_UPDATE_CANVAS;
 
     private ConditionalEventHandler meAsEventHandler;
     private ConditionalEventHandler customExtendedEventHandler;
@@ -55,8 +55,7 @@ public class DefaultFocusManager implements FocusManager,
         NAVKEYS_LAST,
         NAVKEYS_NONE
     }
-    
-    
+
     public DefaultFocusManager() {
         eventConsumers = new ArrayList<Focusable>();
         removeList= new ArrayList<Focusable>();
@@ -140,7 +139,7 @@ public class DefaultFocusManager implements FocusManager,
         if (current == null && eventConsumers.size() > 0) {
             setChildAsCurrentFocus(eventConsumers.get(0), eventBus);
         }
-        
+
         if (current == null) {
             //throw new IllegalStateException("ERROR: Trying to set current focus. No focusable objects added to this FocusManager("+HasName.UTIL.getName(this)+").");
             return null;
@@ -165,7 +164,6 @@ public class DefaultFocusManager implements FocusManager,
                             "DefaultFocusManager("+getName()+"):  Cannot set as focusable ("+
                                     focusableName+") that has not been first added to the DefaultFocusManager "+HasName.UTIL.getName(this)+". ");
                 }
-                
             }
         }
 
@@ -254,6 +252,7 @@ public class DefaultFocusManager implements FocusManager,
                 return customExtendedEventHandler;
             }
         };
+        customHandlerWrapper.setName((this.getName()!=null?this.getName():"DefaultFocusManager")+ "customHandlerWrapper");
 
        chainedEventHandler.appendEventHandler(HasName.UTIL.decorateWithParentsNamePrefix(customHandlerWrapper,chainedEventHandler));
 
@@ -272,12 +271,12 @@ public class DefaultFocusManager implements FocusManager,
     }
 
     private ConditionalEventHandler buildKeyStrokeEventHandler() {
-        
-        return new ConditionalEventHandler.AbstractDelegate() {
-            
+
+        AbstractDelegate keyStrokeEventHandler = new ConditionalEventHandler.AbstractDelegate() {
+
             ConditionalEventHandler navFirstHandler = null;
             ConditionalEventHandler navLastHandler = null;
-            
+
             @Override
             protected ConditionalEventHandler getDelegate() {
                 if (navKeysStyle.equals(NAV_STYLE.NAVKEYS_FIRST)) {
@@ -303,11 +302,13 @@ public class DefaultFocusManager implements FocusManager,
                 }
             }
         };
+        keyStrokeEventHandler.setName((this.getName()!=null?this.getName():"DefaultFocusManager")+ ":keyStrokeNavHandlerWrapper");
+        return keyStrokeEventHandler;
     }
 
     /**
      * Simultaneously detects if a hotkey has been pressed and if so,
-     * sets the component containing the hotkey as currently focussed child
+     * sets the component containing the hotkey as currently focused child
      */
     private boolean onHotKeyPressedSetAsCurrent(KeyEvent te) {
         KeyStroke pressedKey = ((KeyEvent) te).getKeyStroke();
@@ -336,7 +337,7 @@ public class DefaultFocusManager implements FocusManager,
 
         return false;
     }
-    
+
     /**
      * Builds a keyStroke eventHandler.
      */
@@ -428,8 +429,7 @@ public class DefaultFocusManager implements FocusManager,
                    }
                 }
             }
-            
-        });
+        }).setName(DefaultFocusManager.this.getName()+"-NavKeysFirstKeyStrokeEventHandler");
     }
 
     public boolean setPreviousAsCurrentFocus(EventBus eventBus) {
@@ -541,7 +541,7 @@ public class DefaultFocusManager implements FocusManager,
                 }
             }
 
-        });
+        }).setName(DefaultFocusManager.this.getName()+"-NavKeysLastKeyStrokeEventHandler");
     }
 
     /**
@@ -623,7 +623,7 @@ public class DefaultFocusManager implements FocusManager,
                 }
             }
 
-        });
+        }).setName(DefaultFocusManager.this.getName()+"-NavKeysNoneKeyStrokeEventHandler");
     }
 
     public void removeFocusable(Focusable focusable) {

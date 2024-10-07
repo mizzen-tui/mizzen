@@ -16,7 +16,4 @@ public class OnRequestScrollToViewEventHandler  extends ConditionalEventHandler.
         super(canHandleScrollToView, handler);
     }
 
-    
-    
-
 }

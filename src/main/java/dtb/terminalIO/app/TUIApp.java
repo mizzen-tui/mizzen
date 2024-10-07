@@ -7,6 +7,7 @@ import java.util.function.Function;
 
 import dtb.terminalIO.components.ChildComponentManager;
 import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.ComponentFinder;
 import dtb.terminalIO.components.CompositeWithFocusManager;
 import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.components.composite.Composite;
@@ -71,7 +72,7 @@ import dtb.terminalIO.util.ElapsedTime;
  * @author dbalme
  *
  */
-public class TUIApp {
+public class TUIApp implements ComponentFinder {
 
     EventBus eventBus;
     Canvas master_canvas;
@@ -196,15 +197,43 @@ public class TUIApp {
         }
 
         this.mainApplicationPanel = mainApplicationPanel;
-        
+
         HasName.UTIL.setDefaultNameFromParentObject(this.mainApplicationPanel, this, "mainPanel");
         
         return this;
     }
+    
+    static  IS_Event_TYPE IS_KEYPRESS = new IS_Event_TYPE(TerminalEvent.TYPE.KEYPRESS);
+
+    
+    static class TUIDefaultPanel extends CompositeWithFocusManager {
+        TUIDefaultPanel(){
+            super();
+        }
+        
+        @Override
+        public EventHandler canHandle(TerminalEvent<?> te)
+        {
+            
+            if (IS_KEYPRESS.test(te)) {
+                return super.canHandle(te);
+            }
+            
+            return super.canHandle(te);
+        }
+        
+        @Override
+        public void handle(TerminalEvent<?> te)
+        {
+            super.handle(te);
+        }
+        
+    }
 
     public TUIApp setDefaultMainApplicationPanel() {
-        return setMainApplicationPanel(  new CompositeWithFocusManager().setBounds(this.getCanvas())
-                                                        .setEmptyChar(this.getCanvas().getEmptyChar()));
+        return setMainApplicationPanel(  new TUIDefaultPanel()
+                                                 .setBounds(this.getCanvas())
+                                                 .setEmptyChar(this.getCanvas().getEmptyChar()));
     }
 
     public ChildComponentManager<?> getMainApplicationPanel() {
@@ -219,6 +248,19 @@ public class TUIApp {
                                             
         }
         return this.mainApplicationPanel;
+    }
+
+    @Override
+    public Component<?> findFirstComponentForCondition(Function<Component<?>, Boolean> condition) {
+        return getMainApplicationPanel().findFirstComponentForCondition(condition);
+    }
+
+    public Component<?> findComponentByName(String name) {
+        return getMainApplicationPanel().findComponentByName(name);
+    }
+
+    public <T> T findComponentByName(String name, Class<T> clazz) {
+        return getMainApplicationPanel().findComponentByName(name, clazz);
     }
 
     public TUIApp confirmOnExit(String confirmApplicationExitMessage) {
@@ -320,6 +362,7 @@ public class TUIApp {
     }
 
     boolean canvasClearedAndNowEmpty = true;
+    protected boolean inOnReadyStartAction = false;
 
     public TUIApp clearCanvas() {
         getCanvas().clearCanvas();
@@ -389,9 +432,13 @@ public class TUIApp {
     }
 
     public FocusManager getApplicationFocusManager() {
-        return getApplicationFocusManager(false);
+        return getApplicationFocusManager(false || this.inOnReadyStartAction);
     }
-    
+
+    public void rebuildFocusManager() {
+        getApplicationFocusManager(true, verifyFocusables); 
+    }
+
     protected FocusManager getApplicationFocusManager(boolean forceRebuild) {
         return getApplicationFocusManager(forceRebuild, verifyFocusables); 
     }
@@ -402,10 +449,24 @@ public class TUIApp {
             //throw new IllegalStateException("TUIApp.getApplicationFocusManager() ERROR!.  Cannot call getApplicationFocusManager() before the eventbus has been created!");
             getEventBus();
         }
-        FocusManager mainFocusManager = (FocusManager) TUIApp.this.eventBus.findFirstEventHandlerOfType((cH) -> cH instanceof FocusManager );
+        FocusManager mainFocusManager = null;
+        boolean addToEventBusRequired = false;
+        
+        if (this.getMainApplicationPanel() != null && this.getMainApplicationPanel() instanceof FocusManager) {
+            mainFocusManager = (FocusManager) this.getMainApplicationPanel();
+            final FocusManager focusManageToSearchFor = mainFocusManager;
+            addToEventBusRequired = null == TUIApp.this.eventBus.findFirstEventHandlerOfType((cH) -> cH == focusManageToSearchFor );
+        } else {
+            // main panel is not a focus manager so let's look for the first one on the eventbus and use it
+            mainFocusManager = (FocusManager) TUIApp.this.eventBus.findFirstEventHandlerOfType((cH) -> cH instanceof FocusManager );
+        }
+
         if (mainFocusManager != null) {
             if (forceRebuild && mainFocusManager instanceof CompositeWithFocusManager) {
                 ((CompositeWithFocusManager)mainFocusManager).rebuildFocusManager();
+            }
+            if (addToEventBusRequired) {
+                return buildAndAttachFocusManager(verifyFocusables);
             }
             return mainFocusManager;
         }
@@ -413,9 +474,15 @@ public class TUIApp {
             ((CompositeWithFocusManager)this.getMainApplicationPanel()).rebuildFocusManager();
         }
 
-        mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(TUIApp.this.getMainApplicationPanel(), 
-                                                                            TUIApp.this.getEventBus(), 
-                                                                            ()->new DefaultFocusManager().setNameFromOwner(TUIApp.this.getMainApplicationPanel()).setNavKeysFirst(false));
+        return buildAndAttachFocusManager(verifyFocusables);
+    }
+    
+    private FocusManager buildAndAttachFocusManager(boolean verifyFocusables) {
+        FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(TUIApp.this.getMainApplicationPanel(),
+                                                                                         TUIApp.this.getEventBus(),
+                                                                                         ()->new DefaultFocusManager()
+                                                                                                    .setNameFromOwner(TUIApp.this.getMainApplicationPanel())
+                                                                                                    .setNavKeysFirst(false));
         if (mainFocusManager != null) {
             HasName.UTIL.setDefaultNameFromParentObject(mainFocusManager, this, "mainFocusManager");
             TUIApp.this.getEventBus().appendEventHandler(  mainFocusManager );
@@ -585,7 +652,9 @@ public class TUIApp {
                 @Override
                 public void handle(TerminalEvent<?> te) {
                     // run start up (custom setup) code
+                    TUIApp.this.inOnReadyStartAction  = true;
                     TUIApp.this.onReadyStartAction.accept(TUIApp.this);
+                    TUIApp.this.inOnReadyStartAction  = false;
                     // do the first canvas paint (asynchronously)
                     
                     if (TUIApp.this.eventBus != null) {
@@ -599,5 +668,7 @@ public class TUIApp {
             });
         }
     }
+
+
 
 }

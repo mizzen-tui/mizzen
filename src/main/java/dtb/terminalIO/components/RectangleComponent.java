@@ -4,6 +4,7 @@ import java.util.TreeSet;
 
 import dtb.terminalIO.components.BlockChars.BlockHiliter;
 import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
@@ -36,6 +37,14 @@ public class RectangleComponent extends BoundedComponent<RectangleComponent> imp
         this.colorHiliter = makeColorHiliter();
     }
 
+    @Override
+    public RectangleComponent setColor(Color drawingcolor) {
+        super.setColor(drawingcolor);
+        this.colorHiliter = makeColorHiliter();
+        return this;
+    }
+    
+    
     private ColorHiliter makeColorHiliter() {
         return new ColorHiliter(()->RectangleComponent.super.getColor());
     }

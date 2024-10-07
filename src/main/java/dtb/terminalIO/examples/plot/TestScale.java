@@ -33,7 +33,7 @@ import dtb.terminalIO.components.plot.shape.RectangleShape;
 import dtb.terminalIO.components.plot.shape.Shape;
 import dtb.terminalIO.components.plot.shape.Triangle;
 import dtb.terminalIO.controlcodes.color.Colors;
-import dtb.terminalIO.events.AbstractTimedRequestedController;
+import dtb.terminalIO.events.TimedRequestedController;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.mouse.ApplicationMouseEvent;
 import dtb.terminalIO.geom.Align;
@@ -146,7 +146,7 @@ public class TestScale {
                        drawShape.accept(shapesChoiceComponent.getValue());
                    });
 
-                   AbstractTimedRequestedController delayedDraw = new AbstractTimedRequestedController(()->{
+                   TimedRequestedController delayedDraw = new TimedRequestedController(()->{
                        drawShape.accept(shapesChoiceComponent.getSelectedValue());
                    }) {
                        @Override

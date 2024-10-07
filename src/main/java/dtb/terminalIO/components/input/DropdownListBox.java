@@ -13,13 +13,17 @@ import dtb.terminalIO.components.input.DisplayableValue.BooleanDisplayValue;
 import dtb.terminalIO.components.input.DisplayableValue.StringDisplayValue;
 import dtb.terminalIO.components.input.ListBox.ComponentItemFactory;
 import dtb.terminalIO.components.input.ListBox.TextComponentItemFactory;
+import dtb.terminalIO.components.scroll.ScrollableComponent2;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
+import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.focus.RequestFocusEvent;
+import dtb.terminalIO.events.focus.ToFocusable;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
@@ -27,6 +31,7 @@ import dtb.terminalIO.events.mouse.Clickable;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
+import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.StringUtils;
 
 public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBox<T>>  
@@ -34,25 +39,37 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
                                            Clickable {
 
     private ListBox<T> listBox;
+    private ScrollableComponent2 listBoxScrollPane;
     private Button button;
     private Rectangle preferredRectangleForLayout;
     private T value;
 
     private int maxItemWidth = 10;  // arbitrary default.
+    boolean dontShowListBoxWhileProcessingOnMouseSelected = false;
 
     protected DropdownListBox(Color color) {
-        super(color, new VerticalPanel(color));
+        super(color, new VerticalPanel(color).setName("vertical-Panel-ddlb"));
 
         this.button = new Button(color, "");
         this.getContainer().add(this.button);
 
+        
+        EventHandler onSelectedItemHandler = (te) -> {
+            //hideListBox();
+            EventBus eventBus = te.getEventBus();
+            setSelectedFromListBox(eventBus);
+            dontShowListBoxWhileProcessingOnMouseSelected = true;
+            te.getEventBus().raiseEvent(new RequestFocusEvent(DropdownListBox.this.button)
+                    .then(()->{
+                        //hideListBox();
+                        dontShowListBoxWhileProcessingOnMouseSelected = false;
+                    }));
+            RequestUpdateCanvasEvent.invoke(eventBus, this);
+        };
+        
         this.listBox = new ListBox<T>(color) {
             protected void onMouseSelected(EventBus eventBus) {
-                eventBus.asynch((te)->{
-                                            hideListBox();
-                                            setSelectedFromListBox(eventBus);
-                                            RequestUpdateCanvasEvent.invoke(eventBus, this);
-                                        });
+                eventBus.asynch(onSelectedItemHandler);
             }
         };
 
@@ -60,12 +77,10 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
 
         DefaultFocusManager fm = new DefaultFocusManager(Keys.UP_KEYSTROKE, Keys.DOWN_KEYSTROKE).setNavKeysFirst(false)
                                                                                                 .setCycling(false);
-        
         this.setName("DropdownListBox");
         fm.setNameFromOwner(this);
         this.setFocusManager( fm );
-        fm.addFocusable(button);
-        fm.addFocusable(listBox);
+        getMyDefaultFocusManager().addFocusable(button);
 
         setSelectedOntoTextView();
 
@@ -83,17 +98,12 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
             RequestUpdateCanvasEvent.invoke(te, this);
         });
 
-        appendEventHandler( new KeyInputEventHandler(Keys.ENTER_KEYSTROKE, (te)-> { 
-                                                                                    hideListBox(); 
-                                                                                    setSelectedFromListBox(te.getEventBus());
-                                                                                    RequestUpdateCanvasEvent.invoke(te, this);
-                                                                                  }));
+        appendEventHandler( new KeyInputEventHandler(Keys.ENTER_KEYSTROKE, onSelectedItemHandler).setName("DDLB-LISTBOX:"+Keys.ENTER_KEYSTROKE));
 
-        appendEventHandler( new KeyInputEventHandler(Keys.ESC_KEYSTROKE, (te)-> { 
-                                                                                    hideListBox();
-                                                                                    setSelectedValue(this.getValue());
-                                                                                    RequestUpdateCanvasEvent.invoke(te, this);
-                                                                                }));
+        appendEventHandler( new KeyInputEventHandler(Keys.ESC_KEYSTROKE, onSelectedItemHandler).setName("DDLB-LISTBOX:"+Keys.ESC_KEYSTROKE));
+        
+        this.listBox.appendEventHandler(new KeyInputEventHandler(Keys.ENTER_KEYSTROKE, onSelectedItemHandler).setName("DDLB-LISTBOX-ENTER"));
+        this.listBox.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, onSelectedItemHandler).setName("DDLB-LISTBOX-ESC"));
 
         appendEventHandler( new KeyInputEventHandler(new KeyStroke[] {Keys.UP_KEYSTROKE, Keys.DOWN_KEYSTROKE},
                                                      (te)-> ! listBoxVisible(),
@@ -105,6 +115,12 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
         this.preferredRectangleForLayout = new Rectangle.AbstractDelegate() {
             @Override
             public Rectangle getRectangle() {
+                if (DropdownListBox.this.hasBorder()) {
+                    return new Rectangle.Simple(DropdownListBox.this.getRow(),
+                                                DropdownListBox.this.getCol(),
+                                                DropdownListBox.this.button.getHeight()+2,
+                                                DropdownListBox.this.button.getWidth()+2);
+                }
                 return DropdownListBox.this.button;
             }
         };
@@ -178,11 +194,18 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
     public static DropdownListBox<Boolean> yesNoDropDown() {
         return yesNoDropDown(Colors.FGBGColors.NO_COLOR_SPECIFIED);
     }
+
+    private DefaultFocusManager getMyDefaultFocusManager() {
+        return (DefaultFocusManager)super.getFocusManager();
+    }
     
     public DropdownListBox<T> setName(String name) {
         super.setName(name);
         if (this.listBox != null) {
             this.listBox.setName(name+"-listBox");
+        }
+        if (this.listBoxScrollPane != null) {
+            this.listBoxScrollPane.setName(name+"-listBoxScrollPane");
         }
         if (this.button != null) {
             this.button.setName(name+"-button");
@@ -250,11 +273,10 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
             setDisplayableValueOntoTextView(null);
         }
     }
-    
+
     public void setValue(T value) {
         setSelectedValue(value);
     }
-
 
     private void setSelectedFromListBox(EventBus eventBus) {
         setSelectedOntoTextView();
@@ -303,21 +325,17 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
     }
 
     private Composite getListBoxRootPanel() {
-        
         Component<?> rootPanel = Component.UTIL.getRootPanelOf(this);
         if (rootPanel != null && rootPanel instanceof Composite) {
             return (Composite) rootPanel;
         }
-
         return null;
-
     }
-    
+
     protected Composite getListBoxParent() {
-        
-        if (this.listBox != null) {
-            if (this.listBox.getParentContainer() != null) {
-                return (Composite) this.listBox.getParentContainer();
+        if (this.getListBoxOrItsScrollPane() != null) {
+            if (this.getListBoxOrItsScrollPane().getParentContainer() != null) {
+                return (Composite) this.getListBoxOrItsScrollPane().getParentContainer();
             }
         }
 
@@ -332,15 +350,22 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
 
     protected boolean listBoxVisible() {
         Composite listBoxParent = this.getListBoxParent();
-        if ( listBoxParent.containsChild(listBox)) {
+        if ( listBoxParent.containsChild(getListBoxOrItsScrollPane())) {
             return true;
         }
         return false;
     }
 
+    private Component<?> getListBoxOrItsScrollPane() {
+        if (this.listBoxScrollPane != null) {
+            return this.listBoxScrollPane;
+        }
+        return this.listBox;
+    }
+    
     protected boolean listBoxVisibleAndOnTop() {
         Composite listBoxParent = this.getListBoxParent();
-        if ( listBoxParent.containsChild(listBox) && listBoxParent.isChildOnTop(listBox)) {
+        if ( listBoxParent.containsChild(getListBoxOrItsScrollPane()) && listBoxParent.isChildOnTop(getListBoxOrItsScrollPane())) {
             return true;
         }
         return false;
@@ -350,27 +375,53 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
         if (listBoxVisibleAndOnTop()) {
             return;
         }
+        Logging.info("showListBox()");
+
         Composite listBoxParent = this.getListBoxParent();
 
         // sometimes we do have the listbox in the parent - but it is not at the top ..
-        if ( listBoxParent.containsChild(listBox) ) {
-            listBoxParent.bringToFront(this.listBox);
+        if ( listBoxParent.containsChild(getListBoxOrItsScrollPane()) ) {
+            listBoxParent.bringToFront(this.getListBoxOrItsScrollPane());
             return;
         }
-        
+
         if (listBoxParent == getContainer()) {
-            this.getListBoxParent().add(this.listBox);
+            this.getListBoxParent().add(this.getListBoxOrItsScrollPane());
         } else {
-            // if we can, we place the listBox on the root panel and bring to the front..
+            // if we can, we place the listBox on the root panel and bring to the front ..
             // this ensures that the full drop down gets displayed without distorting
             // internal container ( VerticalPanel ) size..
             Position thisPositionOnRootPanel = Component.UTIL.getCanvasOffsetFor(this);
-            Position listBoxPosition = thisPositionOnRootPanel.offsetAdd(this.getHeight(),0);
+            Position listBoxPosition = thisPositionOnRootPanel.offsetAdd(this.getHeight()+(this.hasBorder()?-1:0),(this.hasBorder()?1:0));
             if (listBoxParent.hasBorder()) {
                 listBoxPosition = listBoxPosition.offsetAdd(-1,-1);
             }
-            listBoxParent.add(listBoxPosition, this.listBox);
-            listBoxParent.bringToFront(this.listBox);
+            Rectangle listBoxRect = new Rectangle.Simple(listBoxPosition, listBox);
+            if (!listBoxParent.contains(listBoxRect)) {
+                Logging.info("ListBOx does not fit");
+                
+                Rectangle minScrollPaneRectangleSize = new Rectangle.Simple(listBoxPosition, 6, listBox.getWidth());
+                if (!listBoxParent.contains(minScrollPaneRectangleSize)) {
+                    Logging.info("ListBOx does not fit - need to reposition");
+                } else {
+                    Rectangle desiredRect = listBoxParent.intersectWith(new Rectangle.Simple(listBoxPosition, listBox));
+                    listBox.setBorder(false);
+                    this.listBoxScrollPane = new ScrollableComponent2(listBox.getColor(), new Dimension.Simple(desiredRect), listBox)
+                                                                .removeFooterComponent()
+                                                                .setCycling(false)
+                                                                .setNavKeysNone();
+                    listBoxScrollPane.setName(this.getName()+"-listBoxScrollPane");
+                }
+            }
+
+            listBoxParent.add(listBoxPosition, this.getListBoxOrItsScrollPane());
+            listBoxParent.bringToFront(this.getListBoxOrItsScrollPane());
+            Logging.info("ListBOx added to parent");
+        }
+        if (!(listBoxParent instanceof FocusManager)) {
+            if ( ! getMyDefaultFocusManager().getChildren().contains(ToFocusable.UTIL.toFocusable(getListBoxOrItsScrollPane()))) {
+                getMyDefaultFocusManager().addFocusable(ToFocusable.UTIL.toFocusable(getListBoxOrItsScrollPane()));
+            }
         }
     }
 
@@ -378,7 +429,19 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
         if (!listBoxVisible()) {
             return;
         }
-        this.getListBoxParent().remove(this.listBox);
+        Logging.info("hideListBox()");
+        this.getListBoxParent().remove(this.getListBoxOrItsScrollPane());
+        
+        if (!(this.getListBoxParent() instanceof FocusManager)) {
+            if (getMyDefaultFocusManager().getChildren().contains(ToFocusable.UTIL.toFocusable(this.getListBoxOrItsScrollPane()))) {
+                getMyDefaultFocusManager().removeFocusable(ToFocusable.UTIL.toFocusable(this.getListBoxOrItsScrollPane()));
+            }
+        }
+        if (this.listBoxScrollPane != null) {
+            this.listBox.setParentContainer(null);
+            this.listBox.setBorder(true);
+            this.listBoxScrollPane = null;
+        }
     }
 
     protected void toggleShowHide() {
@@ -393,29 +456,46 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
     public void setFocus(boolean focus, EventBus eventBus) {
         super.setFocus(focus, eventBus);
         setSelectedOntoTextView();
-        if (focus) {
+        // note:  important - must bring to front this component
+        //        and then if needed, showListBox() after - this ensures ListBox on top
+        Component.UTIL.bringToFront(DropdownListBox.this);
+        if (focus && !dontShowListBoxWhileProcessingOnMouseSelected) {
             showListBox();
-        } 
+            if (!isDirty()) {
+                this.markAsDirty();
+            }
+            eventBus.raiseEvent(new RequestFocusEvent(ToFocusable.UTIL.toFocusable(this.listBox ))
+                                      .then(()-> eventBus.raiseEvent(new RequestUpdateCanvasEvent(this))));
+        }
 
         if (!focus) {
             hideListBox();
         }
-        Component.UTIL.bringToFront(DropdownListBox.this);
     }
 
     @Override
-    public void unFocus(Focusable oldFocusable, EventBus eventBus) {
-        setFocus(false, eventBus);
+    public void unFocus(Focusable newFocusable, EventBus eventBus) {
+        super.unFocus(newFocusable, eventBus);
+        setSelectedOntoTextView();
+        // note:  important - must bring to front this component
+        //        and then if needed, showListBox() after - this ensures ListBox on top
+        boolean isListBoxOrItsScrollPane = ToFocusable.UTIL.toFocusable(this.getListBoxOrItsScrollPane() ).equals(newFocusable) ||
+                                           ToFocusable.UTIL.toFocusable(this.listBox ).equals(newFocusable)  ;
+        //Component.UTIL.bringToFront(DropdownListBox.this);
+        if (!isListBoxOrItsScrollPane) {
+            hideListBox();
+        }
     }
     @Override
-    public void focus(Focusable newFocusable, EventBus eventBus) {
+    public void focus(Focusable oldFocusable, EventBus eventBus) {
+        super.focus(oldFocusable, eventBus);
         setFocus(true, eventBus);
     }
 
     @Override
     public void onClick(EventBus eventBus) {
         this.setFocus(true, eventBus);
-        RequestUpdateCanvasEvent.invoke(eventBus, this);
+       // RequestUpdateCanvasEvent.invoke(eventBus, this);
     }
 
     HasValue.OnValueChangedEventHandler<T> onChangeHandler;

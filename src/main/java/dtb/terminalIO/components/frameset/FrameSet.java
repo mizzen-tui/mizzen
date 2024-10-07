@@ -192,6 +192,10 @@ public class FrameSet extends BoundedComponent<FrameSet> implements HasTitleAndB
         container.onResizeExpandRight(component, percent);
     }
 
+    public void onResizeExpandRight(Component<?> component) {
+        container.onResizeExpandRight(component);
+    }
+
     public void onResizeExpandDown(Component<?> component) {
         container.onResizeExpandDown(component);
     }

@@ -27,7 +27,7 @@ public class PlotRectangleController implements PlotShapeController, Movable, Hi
         XYTranslate plotterWithOffset = new XYTranslate(plotter, this.offset);
         this.rectangleShape.setColor(this.colorHiliter.getColor());
         this.rectangleShape.draw(plotterWithOffset);
-        if (this.colorHiliter.isHiltited()) {
+        if (this.colorHiliter.isHilited()) {
             Rectangle innerRectangle = new Rectangle.Simple(this.rectangleShape.offsetAdd(1, 1), new Dimension.Simple(this.rectangleShape.getHeight()-2,this.rectangleShape.getWidth()-2));
             RectangleShape innerRectangleShape = new RectangleShape(new Rectangle.Simple(innerRectangle), this.colorHiliter.getColor());
             innerRectangleShape.draw(plotterWithOffset);

@@ -32,11 +32,10 @@ import dtb.terminalIO.util.ElapsedTime;
 import dtb.terminalIO.util.TerminalDimensions;
 
 public class ImageSplitter implements ImageIterator {
-    
 
     Image fullImage;
     List<Vec2<?>> offsets;
-    
+
     // please note: This is the height/width of image segment in pixels 
     //              It is not meant to represent size in chars
     int height_subImage;
@@ -65,11 +64,11 @@ public class ImageSplitter implements ImageIterator {
             }
         }
     }
-    
+
     public int currentIDX() {
         return currentImageIDX;
     }
-    
+
     public Vec2<?> getcurrentOffset() {
         int idx = 0; 
         if (currentImageIDX == 0) {
@@ -96,8 +95,7 @@ public class ImageSplitter implements ImageIterator {
         BufferedImage subImage = ((BufferedImage) fullImage).getSubimage((int)offset.getX(), (int)offset.getY(), width_subImage, height_subImage);
         return subImage;
     }
-    
-    
+
     public static void main(String[] args) throws Exception {
         
 //        if (args.length == 0) {
@@ -107,20 +105,19 @@ public class ImageSplitter implements ImageIterator {
 //        
 //        String fileName = args[0]; 
 //        BufferedImage image = ImageIO.read(new File(fileName));
-        
+
         ElapsedTime timer = new ElapsedTime();
-        
+
         dumbArgsParse(args);
-        
+
         long parseT = timer.elapsed();
-        
+
         makeSequence(dumbArgsParse(args));
 
-        
       //  printImage(dumbArgsParse(args)) ;
-        
+
       //  System.out.println(parseT + "  " + timer.recalcElapsed());
-        
+
     }
     
     

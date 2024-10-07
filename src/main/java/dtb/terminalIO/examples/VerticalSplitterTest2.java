@@ -16,7 +16,7 @@ public class VerticalSplitterTest2 {
 
 
     public static void main(String[] args) throws Exception {
-        
+
         Logging.setEnabled(true);
 
         new TUIApp(args)
@@ -24,19 +24,18 @@ public class VerticalSplitterTest2 {
         .setDefaultMainApplicationPanel()
         .confirmOnExit()
         .setOnReadyStart((tApp)-> {
-            
+
             HorizontalSplitter hzp = new HorizontalSplitter(Colors.BCya, new Dimension.Simple(30, 100));
 
             VerticalSplitter vzp = new VerticalSplitter(Colors.BCya, new Dimension.Simple(30, 80));
 
             vzp.addComponent(new TextComponent(Colors.IGre,"TOP\n This is the top part\nSo there!"));
             vzp.addComponent(new TextComponent("BOTTOM\n"+readLargeSampleFile(30)));
-            
+
             hzp.setTitle(Colors.IBla, "Vertical Splitter Test");
-            
+
             hzp.addComponent(vzp);
             hzp.addComponent(new TextComponent(Colors.IGre,"RIGHT\n"+readLargeSampleFile(30)));
-            
 
             tApp.getMainApplicationPanel().add(1,1,hzp);
 

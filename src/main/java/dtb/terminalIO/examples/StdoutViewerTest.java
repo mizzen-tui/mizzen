@@ -8,10 +8,9 @@ import java.util.function.Consumer;
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.ButtonBar;
-import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.StdoutViewer;
 import dtb.terminalIO.components.TextComponent;
-import dtb.terminalIO.components.WindowFrame;
+import dtb.terminalIO.components.WindowFrameFocusable;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.controlcodes.color.Colors;
@@ -40,7 +39,7 @@ public class StdoutViewerTest {
         new TUIApp(args)
                 .setCanvasSize(24, 100)
                 .setEmptyChar(' ')
-                .setMainApplicationPanel(new Composite().setBounds(20, 100).setEmptyChar(' ').setBorder(true))
+                .setDefaultMainApplicationPanel()
                 .confirmOnExit()
                 .setOnReadyStart((tApp)-> {
 
@@ -56,11 +55,11 @@ public class StdoutViewerTest {
                     workArea.setFillOnClear(true);
                     workArea.setEmptyChar('░');
                     workArea.setEmptyColor(Colors.IBlu);
-                    
+
                     viewer.setEmptyChar('.');
                     viewer.setEmptyColor(Colors.IYel);
                     viewer.setFillOnClear(false);
-                    
+
                     Composite statsArea = new Composite().setBorder(false);
                     Dimension statsAreaSize  = new Dimension.SupplierAsDimension(() -> new Dimension.Simple(workArea.getHeight(), 
                                                                                                             tApp.getMainApplicationPanel().getWidth()-workArea.getWidth()-2) );
@@ -68,28 +67,24 @@ public class StdoutViewerTest {
                     statsArea.setFillOnClear(true);
                     statsArea.setEmptyChar('.');
                     statsArea.setEmptyColor(new FGBGColors(Colors.BIBla, Colors.On_Bla));
-                    
-                    TextComponent statsData = new TextComponent("Stats ..");
-                    
-                    statsArea.add(0, 1,  new BorderedComponent(statsData));
-                    
 
-                    //ScrollableComponent wf = new ScrollableComponent(Colors.Cya, new Dimension.Simple(18,52), viewer);
-                    
-                    WindowFrame wf = new WindowFrame(Colors.Cya, "Test viewer", viewer);
+                    TextComponent statsData = new TextComponent("Stats ..");
+
+                    statsArea.add(0, 1,  new BorderedComponent(statsData));
+
+                    WindowFrameFocusable wf = new WindowFrameFocusable(Colors.Cya, "Test viewer", viewer);
                     wf.resize(new Dimension.Simple(18,52));
-                    
+
                     workArea.add(wf);
-                    
+ 
                     tApp.getMainApplicationPanel().add(1,0,workArea);
                     tApp.getMainApplicationPanel().add(1,workArea.getWidth(),statsArea);
-                    
-                    
+ 
                     Consumer<String> populateTask = (fileName)-> {
                           viewer.clearContent();
                           viewer.disableTimedFlush(tApp.getEventBus());
                           TerminalStreamOutputParser streamParser = new TerminalStreamOutputParser(viewer);
-                          
+ 
                           try {
                               new TerminalStreamReader(streamParser).readAll(new FileInputStream(fileName));
                           } catch (FileNotFoundException e) {
@@ -99,7 +94,7 @@ public class StdoutViewerTest {
                     };
 
                     ButtonBar bBar = new ButtonBar();
-                    
+
                     Button clearButton = new Button("Clear");
                     clearButton.onChange((te)->{
                         viewer.clearContent();
@@ -114,90 +109,77 @@ public class StdoutViewerTest {
                     populateLarge.onChange((te)->{
                         populateTask.accept("/home/dbalme/workspace/dtbTerminalIO/dtbTerminal.log");
                     });
-                    
+
                     Button populateMvnContent = new Button("MVN Content");
                     populateMvnContent.onChange((te)->{
                         populateTask.accept("/home/dbalme/workspace/LabManager/mvnOutput.txt");
                     });
-                    
+
                     Button populateSlowRunner = new Button("Slow Runnnert");
                     populateSlowRunner.onChange((te)->{
                         startSlowRunner(viewer, te);
                     });
-                    
-                    
+
                     bBar.addComponent(clearButton);
                     bBar.addComponent(populateAgain);
                     bBar.addComponent(populateLarge);
                     bBar.addComponent(populateMvnContent);
                     bBar.addComponent(populateSlowRunner);
-                    
+
                     tApp.getMainApplicationPanel().add(0,10, bBar);
-                    
+
                     FocusManager fm = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(), 
                                                                                        tApp.getEventBus(),
                                                                                        ()-> new DefaultFocusManager().setPrevKeyStroke(Keys.SHIFT_TAB_KEYSTROKE)
                                                                                                                      .setNextKeyStroke(Keys.TAB_KEYSTROKE)
                                                                                                                      .setNavKeysFirst(false));
-                    
                     tApp.getEventBus().appendEventHandler(fm);
-                    
+
                     // populateLarge.onClick(tApp.getEventBus());
-                    
+
                     populateAgain.onClick(tApp.getEventBus());
-                    
-                    
+
                     tApp.getEventBus().appendIdleEventHandler( new OnIdleEventEventHandler.OneTime((te)->{
-                        
-                        
                         populateTask.accept("/home/dbalme/workspace/dtbTerminalIO/makeACME_lib_version.sh");
-                        
-                        
                     }) );
  
                     StringSpinner spinner = new StringSpinner(StringSpinner.SIMPLE_DOTS_SCROLLING);
-                    
+
                     tApp.getEventBus().appendIdleEventHandler( new OnIdleEventEventHandler.RepeatingInterval (500,(te)->{
                         statsData.setTextAndResize("STATS: " + Colors.BGre.asString()+spinner.spin() + statsData.getColor().asString() + "\n" + viewer.stats());
                         te.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(statsData) );
                     }) );
-                    
-                    
-                    
+
                     tApp.appendOnResizeAction((app, size) -> {
                         workArea.resize(workAreaSize);
                         statsArea.resize(statsAreaSize);
                         tApp.getMainApplicationPanel().moveChildToPosition(new Position.Simple(1,workArea.getWidth()), statsArea);
                     });
-                    
-                    
+
                     // FocusManager.UTIL.verifyPathsToFocusables(fm, (Component<?>) tApp.getMainApplicationPanel());
 
                 }).start();
     }
-    
-    
+
     static void startSlowRunner(StdoutViewer viewer, TerminalEvent<?> te) {
-        
+
         String cmd = "/home/dbalme/workspace/dtbTerminalIO/slowRunner.sh";
-        
+
         LinuxProcessWatcher processWatcher = new LinuxProcessWatcher();
-        
+
         viewer.clearContent();
         TerminalStreamOutputParser streamParser = new TerminalStreamOutputParser(viewer);
-        
+
         processWatcher.setInvokeScript(cmd);
-        
+
         OnTerminateEventHandler watcherCleanupHandler = new OnTerminateEventHandler(() -> processWatcher.stopRequest());
-        
-        
+
         dtb.terminalIO.events.EventBus evtbus = te.getEventBus();
-        
+
         evtbus.appendTerminateEventHandler(watcherCleanupHandler);
 
         viewer.enableTimedFlush(100, evtbus);
-        
-        
+
         try {
             processWatcher.invokeLongRunning(streamParser, 
                                                     (result)->{
@@ -212,11 +194,8 @@ public class StdoutViewerTest {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        
+
         evtbus.raiseEvent( new RequestUpdateCanvasEvent(viewer));
-        
-        
     }
-    
-    
+
 }

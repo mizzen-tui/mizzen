@@ -25,7 +25,6 @@ public interface Dimension {
         return this.getWidth() == other.getWidth() && this.getHeight() == other.getHeight();
     }
 
-
     public static abstract class AbstractDelegate implements Dimension {
 
         abstract protected Dimension getBaseSize();
@@ -67,7 +66,7 @@ public interface Dimension {
         }
 
     }
-    
+
     public static class ComputedDelegate extends Delegate {
         Dimension size;
 
@@ -82,11 +81,17 @@ public interface Dimension {
         
         @Override
         public int getWidth() {
+            if (computeWidth == null) {
+                return getBaseSize().getWidth();
+            }
             return computeWidth.apply(getBaseSize());
         }
 
         @Override
         public int getHeight() {
+            if (computeHeight == null) {
+                return getBaseSize().getHeight();
+            }
             return computeHeight.apply(getBaseSize());
         }
 
@@ -166,8 +171,9 @@ public interface Dimension {
 
         public static Dimension stringToDimension(String s) {
 
-            if (s == null || s.length() == 0)
+            if (s == null || s.length() == 0) {
                 return ZERO;
+            }
 
             s = ColorParsingUtils.removeColorCodes(s);
 

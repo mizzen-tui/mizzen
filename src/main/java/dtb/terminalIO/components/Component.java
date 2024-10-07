@@ -16,6 +16,7 @@ import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegment;
 import dtb.terminalIO.traverse.FindPathToTarget;
+import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.StringUtils;
 
 
@@ -322,6 +323,11 @@ public interface Component<T extends Component<?>>
                 return false;
             }
             
+//            Logging.info("bringToFront "+HasName.UTIL.getName(component));
+//            if ("vp-of-textComponents".equals(HasName.UTIL.getName(component))) {
+//                Logging.info("The culprit!");
+//            }
+            
             component = __findComponentInHierarchyWithCompositeParent(component);
             if (component == null) {
                 return false;
@@ -371,7 +377,7 @@ public interface Component<T extends Component<?>>
                 return true;
             }
             
-            return true; // has a parent, but parent cannot hide child
+            return true; // has a parent, but parent cannot show/hide child; so it must be visible
 
         }
         

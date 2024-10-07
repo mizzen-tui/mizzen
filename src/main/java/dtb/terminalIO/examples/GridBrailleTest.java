@@ -103,7 +103,7 @@ public class GridBrailleTest {
             getBrailleComponent().clearAndRemoveAllChildren();
 
             getBrailleComponent().setBounds(bounds.getHeight() - 4, bounds.getWidth() - 4);
-            getBrailleComponent().setBorder(true);
+            getBrailleComponent().setBorder(false);
             getBrailleComponent().setName("brailleComponent");
 
             Color textCOLOR = Colors.DEFAULT_COLOR;
@@ -247,13 +247,12 @@ public class GridBrailleTest {
                 }
             }).setName("rectangle2Rotator.idleHandler"));
 
-            
             // brailleComponent
             ButtonBar movementKeys = new ButtonBar(getBrailleComponent().getColor()).setName("movementKeys");
             movementKeys.setBorder(true);
             movementKeys.setLeftMostBorderChar((char) 0);
             movementKeys.setRightMostBorderChar((char) 0);
-            
+
             Button upButton = new Button("^");
             upButton.setHotKey(KEY_MOVE_UP);
             upButton.setDisplayHotKey(true);
@@ -269,7 +268,6 @@ public class GridBrailleTest {
                 pointPlotter.setyDelta(pointPlotter.getyDelta() + 1);
                 drawIt.run();
             });
-            
 
             Button leftButton = new Button("«");
             leftButton.setHotKey(KEY_MOVE_LEFT);
@@ -314,8 +312,7 @@ public class GridBrailleTest {
             this.KEY_MOVE_RIGHT = KEY_MOVE_RIGHT;
         }
     }
-    
-    
+
     public static void main(String[] args) {
 
         String _style = "MAX";
@@ -347,18 +344,18 @@ public class GridBrailleTest {
         };
 
         if (style.equals("MAX")) {
-            app.setOnResizeAction((tApp, size)->{
+            app.setOnResizeAction((tApp, size) -> {
                 tApp.clearCanvas();
                 tApp.setCanvasSize(size);
-                
+
                 ((Composite)tApp.getMainApplicationPanel()).resize(size);
-                
+
                 brailleDemo.resize(size);
             });
         }
 
-        app.setOnReadyStart((tApp)->{
-            
+        app.setOnReadyStart((tApp) -> {
+
             Rectangle bounds = null;
             if ("SMALL".equalsIgnoreCase(style)) {
                 bounds = new Rectangle.Simple(0, 0, Math.min(20, app.getCanvas().getHeight()),

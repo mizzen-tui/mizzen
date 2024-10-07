@@ -13,12 +13,11 @@ import dtb.terminalIO.components.HasName;
 public interface ConditionalEventHandler extends EventHandler {
 
     public EventHandler canHandle(TerminalEvent<?> te);
-    
+
     public static interface AsAConditionalEventHandler {
         ConditionalEventHandler asEventHandler();
     }
-    
-    
+
     public default Predicate<TerminalEvent<?>>  asPredicate() {
         return new Predicate<TerminalEvent<?>>() {
             @Override
@@ -27,7 +26,7 @@ public interface ConditionalEventHandler extends EventHandler {
             }
         };
     }
-    
+
     public static final ConditionalEventHandler NOOP = new ConditionalEventHandler() {
         @Override
         public void handle(TerminalEvent<?> te) {
@@ -38,7 +37,13 @@ public interface ConditionalEventHandler extends EventHandler {
             return null;
         }
     };
-    
+
+    /**
+     * Implementation of ConditionalEventHandler
+     * 
+     * @author dbalme
+     *
+     */
     class Impl implements ConditionalEventHandler,  HasName<Impl> {
     
         private Predicate<TerminalEvent<?>> canHandlePredicate;
@@ -56,11 +61,11 @@ public interface ConditionalEventHandler extends EventHandler {
         protected void setCanHandlePredicate(Predicate<TerminalEvent<?>> canHandlePredicate) {
             this.canHandlePredicate = canHandlePredicate;
         }
-    
+
         public void setHandler(EventHandler handler) {
             this.handler = handler;
         }
-        
+
         @Override
         public void handle(TerminalEvent<?> te) {
             handler.handle(te);
@@ -99,10 +104,11 @@ public interface ConditionalEventHandler extends EventHandler {
         
     }
     
-    public static abstract class AbstractDelegate implements ConditionalEventHandler {
-        
+    public static abstract class AbstractDelegate implements ConditionalEventHandler, HasName<AbstractDelegate> {
+
         protected abstract ConditionalEventHandler getDelegate();
-        
+        protected String name;
+
         @Override
         public void handle(TerminalEvent<?> te) {
             getDelegate().handle(te);
@@ -114,9 +120,22 @@ public interface ConditionalEventHandler extends EventHandler {
                 return null;
             }
             return this;
-        }   
+        }
+
+        public String getName() {
+            if (this.name == null) {
+                String derivedName = "ConditionalEventHandler.AbstractDelegate["+ HasName.UTIL.getName(getDelegate()) +"]";
+                this.setName(derivedName);
+            }
+            return name;
+        }
+
+        public AbstractDelegate setName(String name) {
+            return this;
+        }
+
     }
-    
+
     /**
      * Wraps an eventHandler.  Useful base class for 
      * decorating the behaviour of an eventBus.

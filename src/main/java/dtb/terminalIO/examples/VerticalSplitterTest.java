@@ -15,7 +15,7 @@ public class VerticalSplitterTest {
 
 
     public static void main(String[] args) throws Exception {
-        
+
         Logging.setEnabled(true);
 
         new TUIApp(args)

@@ -28,7 +28,7 @@ public class TableColumnWithDataAndWidths extends TableColumnImpl {
             columnData.add(null);
         }
     }
-    
+
     public void clearCalculatedData() {
         int rowCount = getRowCount();
         int currentPreferredWidth = this.getPreferredWidth();
@@ -149,7 +149,7 @@ public class TableColumnWithDataAndWidths extends TableColumnImpl {
     {
         this.column_size_to_use = size;
     }
-    
+
     @Override
     public Integer getPreferredWidth()
     {
@@ -159,7 +159,7 @@ public class TableColumnWithDataAndWidths extends TableColumnImpl {
         }
         return super.getPreferredWidth();
     }
-    
+
     public int getSizeToAlignCellData()
     {
         if (wordWrapOnDataNeeded)
@@ -177,7 +177,7 @@ public class TableColumnWithDataAndWidths extends TableColumnImpl {
         int col_size = this.getPreferredWidth();
         return maxDataWidth<col_size? maxDataWidth : col_size;
     }
-    
+
     public void squeezeColSizeByOneIfPossible()
     {
         int desiredColSize = this.getPreferredWidth()-1;
@@ -208,5 +208,4 @@ public class TableColumnWithDataAndWidths extends TableColumnImpl {
             this.truncateNeeded = true;
         }
     }
-    
 }

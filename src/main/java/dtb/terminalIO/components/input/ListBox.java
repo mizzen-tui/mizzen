@@ -375,7 +375,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         }
     }
 
-    ComponentItemFactory<T> DEFAULT_COMPONENT_FACTORY = (color, maxWidthStr, displayableItem) -> new ListItemComponent<T>(this.getColor(), maxWidthStr, displayableItem);
+    ComponentItemFactory<T> DEFAULT_COMPONENT_FACTORY = new TextComponentItemFactory<T>(); //(color, maxWidthStr, displayableItem) -> new ListItemComponent<T>(this.getColor(), maxWidthStr, displayableItem);
 
     public void setSelectedColor(Color selectedColor) {
         this.selectedColor = selectedColor;
@@ -695,7 +695,13 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
             @Override
             public void setFocus(boolean focus, EventBus eventBus) {
                 super.setFocus(focus, eventBus);
-                if (suppressCLICK) {return;}
+                if (suppressCLICK) {
+                    if (focus && !isDirty()) {
+                        ListBox.this.markAsDirty();
+                        eventBus.raiseEvent(new RequestUpdateCanvasEvent(ListBox.this));
+                    }
+                    return;
+                }
                 if (focus) {
                     int curSelected = getSelectedIndex();
                     if (curSelected>-1) {
@@ -761,7 +767,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
                                 }
                                 raiseEventRequestShowSelected(te.getEventBus());
                             }
-                        }));
+                        }).setName("ListBox-ENTER-KEY-onValueChangedHandler"));
 
         return chainedHandler;
     }
@@ -801,9 +807,14 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         return this;
     }
 
-    public void setTitle(String title) {
+    public ListBox<T> setTitle(String title) {
         itemsContainer.setTitle(title);
-        
+        return this;
+    }
+
+    public ListBox<T> setTitle(Color titleColors, String title) {
+        itemsContainer.setTitle(titleColors, title);
+        return this;
     }
 
     @Override

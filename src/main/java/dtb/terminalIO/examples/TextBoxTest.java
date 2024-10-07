@@ -38,13 +38,13 @@ import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.util.Logging;
 
 /**
- * 
+ *
  * <pre>
- * 
+ *
  * Test textboxes and Focusmanagers and basic form handling
- * 
+ *
  * </pre>
- * 
+ *
  * @author dbalme
  *
  */
@@ -73,7 +73,9 @@ public class TextBoxTest {
 
             ti.setText("Test");
 
-            TextInput ti_2 = new TextInput(15);
+            TextInput ti_2 = new TextInput(15)
+                                      .setFillOnClear(true)
+                                      .setEmptyColor(Colors.On_IBla);
 
             ti_2.setText("Test 2");
             panel1.add(ti_2);
@@ -101,19 +103,13 @@ public class TextBoxTest {
                 largeText = ReadSampleFiles.readSampleFile("LoremIpsumLarge.txt");
             } catch (IOException e) {
                 largeText = e.toString();
-            }  
+            }
 
-            //panel1.add(  new TextComponent(largeText).setColor(Colors.Cya) );
             panel1.add(  new BorderedComponent(new TextComponent(largeText)).setColor(Colors.Cya) );
-            
-            Button buttonAtTHeBottom = new Button("Press Me - I'm at the bottom", true) {
-                @Override
-                public void onClick(ApplicationMouseEvent event) {
-                    super.onClick(event);
-                }
-            };
+
+            Button buttonAtTHeBottom = new Button("Press Me - I'm at the bottom", true);
             panel1.add(buttonAtTHeBottom);
-            
+
             Composite topPanel = new Composite();
             topPanel.setTitle("Form input testing");
             HorizontalPanel horizontalPanel = new HorizontalPanel();
@@ -121,11 +117,9 @@ public class TextBoxTest {
 
             topPanel.add(2,1, horizontalPanel);
 
-            ScrollableComponent2 sc_1 = new ScrollableComponent2(Colors.Blu, new Dimension.Simple(Math.min(tApp.getCanvas().getHeight()-12, panel1.getHeight()+2), 60), panel1);
+            ScrollableComponent2 sc_1 = new ScrollableComponent2(Colors.Blu, new Dimension.Simple(Math.min(tApp.getCanvas().getHeight()-15, panel1.getHeight()+2), 50), panel1);
 
             sc_1.setTitle("Scrollable with form");
-
-            //SearchFunctionForScrollableComponent.addFinderToScrollable(sc_1);
 
             horizontalPanel.add(sc_1);
             horizontalPanel.add( new ComponentWithFocusManager<ComponentWithFocusManager<?>>(panel2));
@@ -151,7 +145,7 @@ public class TextBoxTest {
 
             DropdownListBox<String>  ddlbBackground =  DropdownListBox.fromStrings(new String[]{"A","B","C"});
             bannerMenu.addComponent(ddlbBackground);
-            
+
             Button quitButton = new Button(Colors.BIGre,"Quit");
             quitButton.setHotKey(Keys.CTRL_C_KEYSTROKE);
             quitButton.setDisplayHotKey(true);
@@ -165,11 +159,10 @@ public class TextBoxTest {
 
             deskTopPanel.add(new TextComponent("\n\n")); // cheap way to get a spacer
             deskTopPanel.add(eventDisplayer);
-            
+
             WindowFrame desktopWF = new WindowFrame(Colors.RCol, "DeskTopPanel", deskTopPanel);
 
-            tApp.getMainApplicationPanel().add(3, 5, desktopWF); 
-
+            tApp.getMainApplicationPanel().add(3, 5, desktopWF);
 
             ComponentInspector componentInspector = new ComponentInspector(Colors.BIGre, new Dimension.Simple((int)(tApp.getMainApplicationPanel().getHeight()*.55),
                                                                                                               (int)(tApp.getMainApplicationPanel().getWidth()*.35)), 
@@ -179,31 +172,16 @@ public class TextBoxTest {
             refreshTreeviewButton.onChange( componentInspector.refreshEventHandler() );
             toggleTreeviewButton.onChange(componentInspector.toggleViewEventHandler());
 
-            EventBus eventBus = tApp.getEventBus();
-
             ti.onChange((te)-> eventDisplayer.setText(ti.getValue()));
 
             cb_1.onChange((te)-> eventDisplayer.setText("checkbox: "+ String.valueOf(cb_1.getValue())));
 
-            eventBus.appendEventHandler( new HasValue.OnValueChangedEventHandler<Boolean>(b_1) {
-                @Override
-                public void valueChanged(TerminalEvent<?> te,HasValue<Boolean> source) {
-                    Boolean newValue = source.getValue();
-                    eventDisplayer.setText("(1) Pressed = "+newValue);
-                }
+            b_1.onChange((te)->{
+                eventDisplayer.setText("(1) Pressed = "+b_1.getValue());
             });
 
-            eventBus.appendEventHandler( new HasValue.OnValueChangedEventHandler<Boolean>(b_2) {
-                public void handle(TerminalEvent<?> te) {
-                    super.handle(te);
-                    ti_4.requestFocus(te);
-                }
-
-                @Override
-                public void valueChanged(TerminalEvent<?> te,HasValue<Boolean> source) {
-                    Boolean newValue = source.getValue();
-                    eventDisplayer.setText("(2) Pressed = "+newValue);
-                }
+            b_2.onChange((te)->{
+                eventDisplayer.setText("(2) Pressed = "+b_2.getValue());
             });
 
             tApp.getEventBus().appendIdleEventHandler(new RepeatingInterval(250, componentInspector.refreshEventHandler()));
@@ -223,7 +201,6 @@ public class TextBoxTest {
             } );
 
             ((Composite)tApp.getMainApplicationPanel()).bringToBack(demo);
-
 
         }).start();
     }
@@ -260,9 +237,9 @@ public class TextBoxTest {
     }
 
     static Component<?> addBackGround_GridBrailleDemo(TUIApp tApp) {
-        
+
         ChildComponentManager<?> gridBrailleDemoContainer = tApp.getMainApplicationPanel();
-        
+
         BrailleDemo brailleDemo = new BrailleDemo();
         Rectangle clippedAreaForBarchart = new Rectangle.Simple(Position.ZERO, new Dimension.Simple(gridBrailleDemoContainer.getHeight()-2, gridBrailleDemoContainer.getWidth()-2));
 
@@ -273,9 +250,9 @@ public class TextBoxTest {
                                       Keys.CTRL_G_KEYSTROKE);   // right
 
         brailleDemo.setUpDemo(tApp.getEventBus(), clippedAreaForBarchart);
-        
+
         gridBrailleDemoContainer.add(brailleDemo.getBrailleComponent());
-        
+
         BiConsumer<TUIApp, Dimension> defaultOnResizeAction = 
                 tApp.getResizeAction()!=null ? tApp.getResizeAction() : (t,s)->{};
 
@@ -287,6 +264,4 @@ public class TextBoxTest {
 
         return brailleDemo.getBrailleComponent();
     }
-    
-    
 }

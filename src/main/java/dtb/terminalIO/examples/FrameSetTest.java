@@ -18,9 +18,8 @@ import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.util.Logging;
 
 public class FrameSetTest {
-    
-    
-    
+
+
     public static void main(String[] args) throws Exception {
 
         Logging.setEnabled(true);
@@ -52,8 +51,7 @@ public class FrameSetTest {
                 wf.setChild(fs[0]);
                 te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(fs[0]));
             };
-            
-            
+
             bbar.addButton("Test1", Keys.CTRL_A_KEYSTROKE, (te)->{
                 addNewFrameSetToWindowFrame.accept(test1(), te);
             });
@@ -109,9 +107,8 @@ public class FrameSetTest {
         fs.onResizeExpandRight(second, 33);
         fs.onResizeExpandRight(third, 33);
         fs.onResizeExpandDown(third, 0);
-        
+
         return fs;
-        
     }
 
     static FrameSet test2() {
@@ -119,13 +116,13 @@ public class FrameSetTest {
         fs.setBorder(true);
         fs.setEmptyColor(Colors.On_IBla);
         fs.setFillOnClear(true);
-        
+
         Component<?> first = new TextComponent("ABC-123");
         fs.add(first);
 
         Component<?> second = new TextComponent("XYZ");
         fs.addRight(second, first);
-       
+
         TextComponent third = new TextComponent("3rd one ...............");
         third.setEmptyColor(Colors.On_Yel);
         third.setFillOnClear(true);
@@ -144,67 +141,64 @@ public class FrameSetTest {
         fs.setBorder(true);
         fs.setEmptyColor(Colors.On_IBla);
         fs.setFillOnClear(true);
-        
+
         Component<?> first = new TextComponent("Column-A");
         fs.add(first);
-        
+
         Component<?> second = new TextComponent("Column-B");
         fs.addRight(second, first);
-       
+
         TextComponent second2B = new TextComponent("Column-B-2");
         fs.addBelow(second2B, second);
         second2B.setEmptyColor(Colors.On_Yel);
         second2B.setFillOnClear(true);
-       
+
         TextComponent third = new TextComponent("Column-C");
         third.setEmptyColor(Colors.On_Gre);
         third.setFillOnClear(true);
-        
+
         fs.addRight(third, second);
 
         Component<?> below_first = new TextComponent("below_first?");
         fs.addBelow(below_first, first);
-        
-        
+
         fs.onResizeExpandRight(first, 33);
         fs.onResizeExpandRight(second, 33);
         fs.onResizeExpandDown(second, 50);
         fs.onResizeExpandRight(second2B, 33);
         fs.onResizeExpandDown(second2B, 50);
         fs.onResizeExpandDownAndRight(third);
-        
+
         return fs;
     }
-    
-    
+
     static FrameSet test4() {
         FrameSet fs = new FrameSet(Colors.BIWhi, new Dimension.Simple(20,30));
         fs.setBorder(true);
         fs.setEmptyColor(Colors.On_IBla);
         fs.setFillOnClear(true);
-        
+
         FrameHorizontalPanel rowOne = fs.addRow();
-        
-        
+
         Component<?> first = new TextComponent("Column-A");
         rowOne.add(first);
-        
+
         Component<?> second = new TextComponent("Column-B");
         rowOne.add(second);
-       
+
         TextComponent third = new TextComponent("Column-C");
         third.setEmptyColor(Colors.On_Yel);
         third.setFillOnClear(true);
-        
+
         rowOne.add(third);
 
         rowOne.onResizeExpandRight(first, 33);
         rowOne.onResizeExpandRight(second, 33);
         rowOne.onResizeExpandDown(second, 0);
         rowOne.onResizeExpandDownAndRight(third);
-        
+
         fs.onResizeExpandDown(rowOne, 0);
-        
+
         return fs;
     }
 
@@ -213,19 +207,19 @@ public class FrameSetTest {
         fs.setBorder(true);
         fs.setEmptyColor(Colors.On_IGre);
         fs.setFillOnClear(true);
-        
+
         FrameHorizontalPanel rowOne = fs.addRow();
         rowOne.setEmptyColor(Colors.On_IPur);
         rowOne.setFillOnClear(true);
 
         fs.onResizeExpandRight(rowOne, 33);
-        
+
         Component<?> first = new TextComponent("Column-A");
         rowOne.add(first);
-        
+
         Component<?> second = new TextComponent("Column-B");
         rowOne.add(second);
-       
+
         TextComponent third = new TextComponent("Column-C");
         third.setEmptyColor(Colors.On_Yel);
         third.setFillOnClear(true);
@@ -235,10 +229,10 @@ public class FrameSetTest {
         rowOne.onResizeExpandRight(second, 33);
         rowOne.onResizeExpandDown(second, 0);
         rowOne.onResizeExpandDownAndRight(third);
-        
+
         fs.onResizeExpandDown(rowOne, 50);
-        
-        FrameHorizontalPanel rowTwo = fs.addRowBelow(rowOne);
+
+        FrameHorizontalPanel rowTwo = fs.addRowBelow(rowOne, true);
         rowTwo.setName("fs-rowTwo");
         rowTwo.setEmptyColor(Colors.On_Blu);
         rowTwo.setEmptyChar('x');
@@ -249,13 +243,9 @@ public class FrameSetTest {
         dComponent.setFillOnClear(true);
         rowTwo.add(dComponent);
 
-        //rowTwo.onResizeExpandDownAndRight(dComponent);
-
         fs.onResizeExpandDownAndRight(rowTwo);
-        
-        
+
         return fs;
     }
-    
-    
+
 }

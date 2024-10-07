@@ -2,10 +2,13 @@ package dtb.terminalIO.events;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import dtb.terminalIO.components.HasName;
+import dtb.terminalIO.util.Logging;
 
 /**
  * 
@@ -273,7 +276,9 @@ public class ChainedEventHandler implements EventHandler, EventHandlerContainer,
     public EventHandler findRequestHandler(TerminalEvent<?> te) {
         EventHandler targetHandler = null;
         for (ConditionalEventHandler eH : eventHandlers) {
+            eventTracerLogger.tracePreTest(eH, te);
             EventHandler foundHandler = eH.canHandle(te);
+            eventTracerLogger.tracePostTest(eH, te, foundHandler!=null);
             if (foundHandler != null) {
                 targetHandler = foundHandler;
                 break;
@@ -298,7 +303,9 @@ public class ChainedEventHandler implements EventHandler, EventHandlerContainer,
         @Override
         public void handle(TerminalEvent<?> te) {
             for (ConditionalEventHandler eH : eventHandlers) {
+                eventTracerLogger.tracePreTest(eH, te);
                 EventHandler foundHandler = eH.canHandle(te);
+                eventTracerLogger.tracePostTest(eH, te, foundHandler != null);
                 if (foundHandler != null) {
                     foundHandler.handle(te);
                 }
@@ -391,6 +398,35 @@ public class ChainedEventHandler implements EventHandler, EventHandlerContainer,
         }
         return null;
 
+    }
+    
+    public static boolean TRACE_AND_LOG_EVENT_HANDLERS = true;
+    private EventTracerLogger eventTracerLogger = new EventTracerLogger();
+    private static Set<TerminalEvent.TYPE> tracerEventTypeBlackList = new HashSet<TerminalEvent.TYPE>();
+    static {
+        tracerEventTypeBlackList.add(TerminalEvent.TYPE.RAW_MOUSE);
+        tracerEventTypeBlackList.add(TerminalEvent.TYPE.TIMER);
+        tracerEventTypeBlackList.add(TerminalEvent.TYPE.REQUEST_UPDATE_CANVAS);
+        tracerEventTypeBlackList.add(TerminalEvent.TYPE.REQUEST_SCROLL_TO_VIEW);
+        tracerEventTypeBlackList.add(TerminalEvent.TYPE.REQUEST_SCROLL_TO_VIEW);
+    }
+    
+    private static class EventTracerLogger {
+        void tracePreTest(ConditionalEventHandler handler, TerminalEvent<?> te) {
+            if ( ! TRACE_AND_LOG_EVENT_HANDLERS || !te.getType().equals(TerminalEvent.TYPE.KEYPRESS) || (tracerEventTypeBlackList.contains(te.getType()))) {
+                return;
+            }
+         //   Logging.info("PreTest:"+HasName.UTIL.getName(handler) + " --- "+HasName.UTIL.getName(te));
+        }
+        void tracePostTest(ConditionalEventHandler handler, TerminalEvent<?> te, boolean result) {
+            if ( ! TRACE_AND_LOG_EVENT_HANDLERS || !te.getType().equals(TerminalEvent.TYPE.KEYPRESS)  || (tracerEventTypeBlackList.contains(te.getType()))) {
+                return;
+            }
+            if (result) {
+                Logging.info("!!");
+            }
+            Logging.info((result?"TRUE : ":"FALSE: ")+HasName.UTIL.getName(te)+" -- "+HasName.UTIL.getName(handler));
+        }
     }
 
 }

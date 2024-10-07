@@ -10,7 +10,7 @@ import dtb.terminalIO.geom.position.Vec2;
  * This draws a shape that is a set of connected lines.
  */
 public class Polygon extends ConnectedPoints<Polygon> {
-    
+
     public Polygon() {
         super(true); // true means last point and first point are connected, causing a closed shape
     }
@@ -19,12 +19,12 @@ public class Polygon extends ConnectedPoints<Polygon> {
         super(true);
         addPoints(dots);
     }
-    
+
     public Polygon(Collection<Vec2<?>> points) {
         super(true);
         addPoints(points);
     }
-    
+
     public void addPoints(int[][] dots) {
         for (int[] p : dots) {
             float x = p[0];
@@ -32,14 +32,11 @@ public class Polygon extends ConnectedPoints<Polygon> {
             addPoint( x,y );
         }
     }
-    
+
     public void addPoints(Collection<Vec2<?>> points) {
         for (Vec2<?> p : points) {
             addPoint(p);
         }
     }
-    
-    
-    
 
 }

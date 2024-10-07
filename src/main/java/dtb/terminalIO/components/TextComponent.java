@@ -124,7 +124,7 @@ public class TextComponent extends BoundedComponent<TextComponent> {
             	                                                       (p,s)->new SegmentImpl(color, p, -1, s));
             }
             // keeping a copy around to avoid having to reparse the text on
-            // subsequent draw requests.  parsedSegments null'd if text is changed which causes parseSegments to rebuilt.
+            // subsequent draw requests.  parsedSegments null'd if text is changed which causes parseSegments to be rebuilt.
             parsedSegments = ScreenLineSegment.UTIL.makeCollection(result.ts);
         } else {
             result = new SegmentsFromStringResult(ScreenLineSegment.UTIL.makeCollection(parsedSegments));
@@ -200,20 +200,20 @@ public class TextComponent extends BoundedComponent<TextComponent> {
             setTextAndResize(text);
             return;
         }
-        
-        // we want this next bit of code to very fast
+
+        // we want this next bit of code to be very fast
         // so we just append to existing non-null parsedSegments
-        
+
         // TODO:  this code does not handle embedded color codes - need to fix that
-        
+
         String[] lines = text.split("\n", -1);
         if (lines == null || lines.length == 0) {
             return;
         }
-        
+
         int newWidth = this.getWidth();
         int newHeight = this.getHeight();
-        
+
         Position nextPosition = parsedSegments.last().getPostion_BottomRight().addCols(1);
         ScreenLineSegment segment = new SegmentImpl(getColor(), nextPosition, -1, lines[0]) ;
         parsedSegments.add( segment );
@@ -226,7 +226,7 @@ public class TextComponent extends BoundedComponent<TextComponent> {
             parsedSegments.add( segment );
             nextPosition = nextPosition.addRows(1);
         }
-        
+
         Dimension newDim = new Dimension.Simple(newHeight, newWidth);
         if (! newDim.isSameDimension(this)) {
             TreeSet<ScreenLineSegment> savedParsedSegments = parsedSegments;
@@ -234,12 +234,11 @@ public class TextComponent extends BoundedComponent<TextComponent> {
             this.resize(newDim);
             parsedSegments = savedParsedSegments; 
         }
-        
-        
+
         this.markAsDirty();
 
     }
-    
+
     public String toStringDetails() {
         return "["+StringUtils.truncate(getText(),10)+"]";
     }

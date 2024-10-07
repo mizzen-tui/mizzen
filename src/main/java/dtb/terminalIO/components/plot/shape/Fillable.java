@@ -6,5 +6,5 @@ package dtb.terminalIO.components.plot.shape;
 public interface Fillable<T> {
 
     T setFilled(boolean filled);
-    
+
 }

@@ -43,6 +43,7 @@ public interface TableColumn {
     default Integer getPreferredHeight() {
         return -1;
     } 
+
     String getColumnName();
     Integer getPosition();
 
@@ -51,8 +52,7 @@ public interface TableColumn {
     Integer getColumnDroppable();
     Boolean isWordWrappable();
     Boolean isTruncationAllowed();
-    
-    
+
     /**
      *  This is a composite sorter that
      *  sorts by defined droppable columns first,
@@ -68,7 +68,7 @@ public interface TableColumn {
             return CompareUtil.compositeCompare(o1, o2, SORT_BY_DROPPABLE_COLUMNS, CompareUtil.descendingComparator(SORT_BY_COLUMN_POSTION));
         }
     };
-    
+
     /**
      * sort by droppable columns
      */
@@ -88,7 +88,7 @@ public interface TableColumn {
             return CompareUtil.compareNullableObjects(getColumnDroppable(o1), getColumnDroppable(o2));
         }
     };
-    
+
     /**
      * sort by column position
      */
@@ -102,7 +102,7 @@ public interface TableColumn {
             }
             return (int) c.getPosition();
         }
-        
+
         @Override
         public int compare(TableColumn o1, TableColumn o2)
         {
@@ -120,7 +120,7 @@ public interface TableColumn {
     default TableColumnRenderer getHeaderRenderer() {
         return TableColumnRenderer.DEFAULT;
     }
-    
+
     public static class Delegate implements TableColumn {
 
         private TableColumn delegate;
@@ -215,8 +215,5 @@ public interface TableColumn {
             String result = String.join("\n", sArray);
             return result;
         }
-        
     }
-    
-    
 }

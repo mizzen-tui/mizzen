@@ -8,13 +8,13 @@ package dtb.terminalIO.textsegments;
  * 
  */
 public interface CleanString {
-    
+
     String getText();
-    
+
     default char charAt(int index) {
         return getText().charAt(index);
     }
-    
+
     default CleanString append(CleanString s) {
         return new KnownCleanString(getText()+s.getText());
     }
@@ -23,7 +23,7 @@ public interface CleanString {
         String alreadyCleanedString = getText().substring(beginIndex, endIndex);
         return new KnownCleanString(alreadyCleanedString);
     }
-    
+
     default CleanString substring(int beginIndex) {
         String alreadyCleanedString = getText().substring(beginIndex);
         return new KnownCleanString(alreadyCleanedString);
@@ -32,17 +32,15 @@ public interface CleanString {
     default boolean contains(String s) {
         return getText().contains(s);
     }
-    
-    
+
     default int length() {
         return getText().length();
     }
-    
-    
+
     public static class KnownCleanString implements CleanString {
-        
+
         String cleanedStr;
-        
+
         public KnownCleanString(String s) {
             this.cleanedStr = s;
         }
@@ -59,14 +57,14 @@ public interface CleanString {
     
     
     public static class UTIL {
-        
+
         public static CleanString EMPTY_CLEAN_STRING = new Simple("");
         public static CleanString ONE_SPACE_CLEAN_STRING = new Simple(" ");
-        
+
         public static boolean isClean(char ch) {
             return (ch > 27);
         }
-        
+
         public static boolean isClean(String s) {
             if (s == null) {
                 return true;
@@ -80,7 +78,7 @@ public interface CleanString {
             }
             return true;
         }
-        
+
         public static String cleanSLOW(String s) {
             if (s == null) {
                 return null;
@@ -95,7 +93,7 @@ public interface CleanString {
             }
             return sb.toString();
         }
-        
+
         /**
          * Objective is to return original string if at all possible
          */
@@ -134,7 +132,7 @@ public interface CleanString {
         }
 
     }
-    
+
     public static class Simple implements CleanString {
         
         private String cleanedStr;

@@ -19,7 +19,7 @@ import dtb.terminalIO.components.scroll.HasViewPortWindow;
 import dtb.terminalIO.components.scroll.ViewPortNavigable;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
-import dtb.terminalIO.events.AbstractTimedRequestedController;
+import dtb.terminalIO.events.TimedRequestedController;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
@@ -494,19 +494,13 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
         //eventBus.raiseEvent(new RequestUpdateCanvasEvent(this));
     }
 
-    AbstractTimedRequestedController timedOnChangeRequestController = null;
+    TimedRequestedController timedOnChangeRequestController = null;
     
-    AbstractTimedRequestedController buildTimedOnChangeController(EventBus eventBus) {
-        return new AbstractTimedRequestedController(()->{
+    TimedRequestedController buildTimedOnChangeController(EventBus eventBus) {
+        return new TimedRequestedController(()->{
             eventBus.raiseEvent(new HasValue.ValueChangedEvent<>(MultiLineTextInput.this));
             updateCursorPositionAndRefreshCanvas(eventBus);
-        }) {
-            @Override
-            protected boolean isRequestDifferentFromPrevious() {
-                return true;
-            }
-            
-        };
+        });
     }
 
     void raiseEventOnChanged(EventBus eventBus, Supplier<Boolean> changeTextAction) {

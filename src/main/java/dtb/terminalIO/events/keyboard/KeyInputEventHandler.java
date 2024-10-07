@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
 
+import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
@@ -135,6 +136,6 @@ public class KeyInputEventHandler extends ConditionalEventHandler.Impl {
 
     @Override
     public String toString() {
-        return super.toString().replace("Impl", "KeyInputEventHandler");
+        return super.toString().replace("Impl", "KeyInputEventHandler"+HasName.UTIL.getName(this));
     }
 }

@@ -4,7 +4,7 @@ import java.util.function.Predicate;
 
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.HasName;
-import dtb.terminalIO.events.AbstractTimedRequestedController;
+import dtb.terminalIO.events.TimedRequestedController;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.EventHandlerContainer;
@@ -113,7 +113,7 @@ public interface HasValue<V> {  //TODO:  Make a SettableValue that extends this.
 
     public static abstract class TimerControlledOnValueChangedEventHandler<V> extends OnValueChangedEventHandler<V> {
 
-        private AbstractTimedRequestedController timer;
+        private TimedRequestedController timer;
         private V lastValue;
         private V currentValue;
 
@@ -123,7 +123,7 @@ public interface HasValue<V> {  //TODO:  Make a SettableValue that extends this.
         }
 
         private void makeTimer() {
-            timer = new AbstractTimedRequestedController((te) -> {
+            timer = new TimedRequestedController((te) -> {
                 // When the timed request fires, finally we fire off the 
                 // original value changed event
                 valueChanged(te, targetSource);
@@ -191,7 +191,7 @@ public interface HasValue<V> {  //TODO:  Make a SettableValue that extends this.
          */
         public static <T> HasValue.OnValueChangedEventHandler<T> wrapHandlerIntoOnValueChangedHandler(HasValue<T> hasValueContainer, 
                                                                                                       EventHandler consumeChange) {
-            
+
             if (consumeChange == null) {
                 return null;
             }
@@ -203,9 +203,9 @@ public interface HasValue<V> {  //TODO:  Make a SettableValue that extends this.
                     consumeChange.handle(te);
                 }
             };
-            
+
             HasName.UTIL.decorateWithParentsNamePrefix(newOnValueChangedHandler, hasValueContainer);
-            
+
             return newOnValueChangedHandler;
         }
 
@@ -241,19 +241,19 @@ public interface HasValue<V> {  //TODO:  Make a SettableValue that extends this.
             if (consumeChange == null) {
                 return null;
             }
-            
-            
+
             // build new handler
-            
             HasValue.OnValueChangedEventHandler<T> newOnValueChangedHandler = wrapHandlerIntoOnValueChangedHandler(hasValueContainer, consumeChange);
             
             if (newOnValueChangedHandler == null) {
                 return null;
             }
             
+            if (eventHandlerContainer == null) {
+                throw new NullPointerException("NULL eventHandlerContainer for bindConsumerAsOnValueChangedHandler('"+HasName.UTIL.getName(hasValueContainer)+"')!");
+            }
 
             // attach new
-            
             eventHandlerContainer.appendEventHandler(newOnValueChangedHandler);
             return newOnValueChangedHandler;
         }

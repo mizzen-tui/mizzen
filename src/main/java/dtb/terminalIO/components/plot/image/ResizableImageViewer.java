@@ -1,6 +1,10 @@
 package dtb.terminalIO.components.plot.image;
 
 import java.awt.image.BufferedImage;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 import dtb.terminalIO.components.AbstractComponentWrappper;
 import dtb.terminalIO.components.Component;
@@ -11,11 +15,11 @@ import dtb.terminalIO.components.plot.image.ImageViewerFactory.ImageRenderer;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.RGBPlotPredicate;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.RGBToAnsiColorControlCode;
 import dtb.terminalIO.controlcodes.color.Color;
-import dtb.terminalIO.events.AbstractTimedRequestedController;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.TimedRequestedController;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.Logging;
@@ -26,8 +30,8 @@ public class ResizableImageViewer extends AbstractComponentWrappper<ImageRendere
 
     ImageRenderRequest imageRequest;
     ImageRenderRequest lastImageRequestRendered;
-    
-    AbstractTimedRequestedController timedOnResizeHandler;
+
+    TimedRequestedController timedOnResizeHandler;
     Dimension lastRequestSize;
     EventHandler onImageLoaded;
     Object drawMutex = new Object();
@@ -50,17 +54,17 @@ public class ResizableImageViewer extends AbstractComponentWrappper<ImageRendere
 
     @Override
     public void resize(Dimension d) {
-        
+
         if (this.isSameDimension(d)) {
             return ;
         }
-        
+
         lastImageRequestRendered = null; // forces img resize
         super.resize(d);
-        
+
     }
-    
-    
+
+
     @Override
     public void childResized(Component<?> child) {
         this.markAsDirty();
@@ -94,66 +98,75 @@ public class ResizableImageViewer extends AbstractComponentWrappper<ImageRendere
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
         Logging.info("ResizableImage draw called!" + String.valueOf(this));
 
-       // synchronized ( drawMutex ) {
+        synchronized ( drawMutex ) {
             super.draw(color, segments);
-      //  }
+        }
     }
 
     public synchronized void resizeImageAsynch(EventBus eventBus, Dimension size) {
 
         this.lastRequestSize = size;
 
-        getWrappedComponent().clear();
-
-//        TextComponent resizingMessage = new TextComponent(
-//                "\n\n\n\n     Resizing to .. " + size.getHeight() + " X " + size.getWidth() + " \n\n");
-//
-//        getWrappedComponent().setWrappedComponent(resizingMessage);
+        //getWrappedComponent().clear();
 
         buildTimedOnResizeHandler(eventBus).onRequest(eventBus);
 
     }
 
-    private AbstractTimedRequestedController buildTimedOnResizeHandler(EventBus eventBus) {
+    private TimedRequestedController buildTimedOnResizeHandler(EventBus eventBus) {
         if (timedOnResizeHandler != null) {
             return timedOnResizeHandler;
         }
 
-        timedOnResizeHandler = new AbstractTimedRequestedController(() -> {
+        timedOnResizeHandler = new TimedRequestedController(() -> {
             if (lastRequestSize == null) {
                 return;
             }
-            resize(lastRequestSize);
+            //resize(lastRequestSize);
             resizeOnSeparateThread(eventBus, lastRequestSize);
-        }) {
-            @Override
-            protected boolean isRequestDifferentFromPrevious() {
-                return true; // lastRequestSize != null && !lastRequestSize.isSameDimension(imageRequest.desiredImgSizeInCharacters);
-            }
-        };
+        });
 
         return timedOnResizeHandler;
     }
 
+    private BlockingQueue<Runnable> taskQueue = null;
+    private AtomicBoolean isProcessing = null;
+    
+    
+    private <T> T buildAndGetSynchObjects(Supplier<T> theDesiredObject) {
+        if (taskQueue == null) {
+            taskQueue = new LinkedBlockingQueue<>();
+            isProcessing = new AtomicBoolean(false);
+        }
+        return theDesiredObject.get();
+    }
+    
+    private BlockingQueue<Runnable>  getTaskQueue() {
+        return buildAndGetSynchObjects(()-> taskQueue);
+    }
+    
+    private AtomicBoolean  isProcessing() {
+        return buildAndGetSynchObjects(()-> isProcessing);
+    }
     private void resizeOnSeparateThread(EventBus eventBus, Dimension size) {
 
-        ImageRenderer imgRenderer = getWrappedComponent();
-
-        ImageRenderRequest newImageRequest = new ImageRenderRequest().copyAllFrom(imageRequest);
-        newImageRequest.setDesiredImgSizeInCharacters(size);
-        newImageRequest.setImageToView(imageToView.get());
-
-        if (newImageRequest != null && newImageRequest.isSameRequest(lastImageRequestRendered)) {
-            return;
-        }
-
-        new Thread(() -> {
+        getTaskQueue().offer(() -> {
+            ImageRenderer imgRenderer = getWrappedComponent();
+            
+            ImageRenderRequest newImageRequest = new ImageRenderRequest().copyAllFrom(imageRequest);
+            newImageRequest.setDesiredImgSizeInCharacters(size);
+            newImageRequest.setImageToView(imageToView.get());
+            
+            if (newImageRequest != null && newImageRequest.isSameRequest(lastImageRequestRendered)) {
+                return;
+            }
 
             try {
                 this.imageRequest.setImageToView(imageToView.get());
                 this.imageRequest.setDesiredImgSizeInCharacters(size);
                 lastImageRequestRendered = new ImageRenderRequest().copyAllFrom(imageRequest);
                 synchronized (drawMutex) {
+                  getWrappedComponent().clear();
                   TextComponent resizingMessage = new TextComponent(
                                      "\n\n\n\n     Resizing to .. " + size.getHeight() + " X " + size.getWidth() + " \n\n");
 
@@ -161,13 +174,14 @@ public class ResizableImageViewer extends AbstractComponentWrappper<ImageRendere
                 }
                 ImageViewerFactory.fromImage(imgRenderer, this.imageRequest);
 
+                imgRenderer.resize(size);
+                imgRenderer.getSegmentsBuffer(); // forces a draw in separate thread
+                
             } catch (Exception e) {
                 eventBus.raiseEvent(new TerminalEvent<Exception>(this, TerminalEvent.TYPE.EXCEPTION, e));
                 return;
             }
 
-            imgRenderer.resize(size);
-            imgRenderer.getSegmentsBuffer(); // forces a draw in separate thread
 
             // for concurrency / safety only perform the component update during an event cycle
             eventBus.asynch((te) -> {
@@ -184,11 +198,36 @@ public class ResizableImageViewer extends AbstractComponentWrappper<ImageRendere
                 }
                 Logging.info("ResizableImageViewer  - RequestUpdateCanvasEvent!!!!!!!!!!!! " + imgRenderer.getClass());
                 ResizableImageViewer.this.markAsDirty();
+                getWrappedComponent().markAsDirty();
                 eventBus.raiseEvent(new RequestUpdateCanvasEvent(ResizableImageViewer.this));
             });
+        });
 
-        }).start();
+        eventBus.asynch((te)->{
+            processNextTask(eventBus);
+        });
+        
     }
 
+    private void processNextTask(EventBus eventBus) {
+        if (isProcessing().compareAndSet(false, true)) {
+            new Thread(() -> {
+                try {
+                    Runnable task = getTaskQueue().take();
+                    task.run();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                } finally {
+                    isProcessing().set(false);
+                    if (!getTaskQueue().isEmpty()) {
+    //  enqueue ob event bus
+                        eventBus.asynch((te)->{
+                            processNextTask(eventBus);
+                        });
+                    }
+                }
+            }).start();
+        }
+    }
 
 }

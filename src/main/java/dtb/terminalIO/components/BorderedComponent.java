@@ -286,6 +286,11 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
         return this;
     }
 
+    public BorderedComponent removeFooterComponent() {
+        this.border.removeFooterComponent();
+        return this;
+    }
+    
     public BorderedComponent setFooter(Component<?> footerComponent, Align footerAlign) {
         this.border.setFooter(footerComponent, footerAlign);
         return this;

@@ -9,6 +9,7 @@ import dtb.terminalIO.geom.Align;
 import dtb.terminalIO.textsegments.CleanString;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.StringUtils;
+
 /**
  * Defines how to render a table column
  */
@@ -17,6 +18,12 @@ public interface TableColumnRenderer {
     IScreenLineSegmentsBuffer render(TableColumn tableColumn, Object cellValue, int preferredWidth, int maxCellHeight, Align align);
     IScreenLineSegmentsBuffer renderHeader(TableColumn tableColumn, String headerValue, int preferredWidth, int maxCellHeight);
 
+    /**
+     * An abstract implementation of TableColumnRenderer that renders to an in memory Component with the notion that
+     * we use the components built in draw function to render the cell values.
+     * 
+     * @see TableColumnRendererFromTextComponent
+     */
     public static abstract class TableColumnRendererFromComponent<T extends Component<?>> implements TableColumnRenderer {
 
         T componentForRendering;
@@ -59,6 +66,10 @@ public interface TableColumnRenderer {
     public static final TableColumnRenderer DEFAULT = new TableColumnRendererFromTextComponent(); 
 
 
+    /**
+     * An implementation of TableColumnRenderer that renders to an in memory TextComponent in order
+     * to leverage TextComponent's rendering capabilities
+     */
     public static class TableColumnRendererFromTextComponent extends TableColumnRendererFromComponent<TextComponent>  {
 
         Function<Object, String> cellValueToString = DEFAULT_CELL_TO_STRING;
@@ -92,9 +103,8 @@ public interface TableColumnRenderer {
         
         protected void setCellText(String text, int preferredWidth, int preferredHeight) {
             String theText = text;
-            
+
             // wrap(String str, int wrapLength, String newLineStr, boolean wrapLongWords, int maxHeight)
-            
             if (text != null && text.length() > preferredWidth && this.wrap) {
                 theText = StringUtils.wrap(text, preferredWidth, "\n", wrapLongWords, preferredHeight);
             }
@@ -119,7 +129,6 @@ public interface TableColumnRenderer {
         protected void renderHeaderOntoComponent(Component<?> componentForRendering2, TableColumn tableColumn, String cellValue, int preferredWidth, int maxCellHeight, Align align) {
             renderObjectOntoComponent(componentForRendering2, tableColumn, cellValue, preferredWidth, maxCellHeight, align);
         }
-
     }
 
 

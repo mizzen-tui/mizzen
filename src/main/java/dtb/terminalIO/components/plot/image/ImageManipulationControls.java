@@ -16,7 +16,7 @@ import dtb.terminalIO.events.EventHandlerContainer;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 
-public class ImageManipulationControls extends AbstractComponentWithContainer<Composite> implements HasValue<ImageRenderRequest>{
+public class ImageManipulationControls extends AbstractComponentWithContainer<Composite> implements HasValue<ImageRenderRequest> {
 
     private ImageRenderRequest rqst;
 
@@ -48,14 +48,19 @@ public class ImageManipulationControls extends AbstractComponentWithContainer<Co
             te.getEventBus().raiseEvent( new HasValue.ValueChangedEvent<>(ImageManipulationControls.this) );
             te.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(ImageManipulationControls.this));
         });
+
         colorMapDDLB.setColor(color);
 
         controls.add(colorMapDDLB);
 
         DropdownListBox<ImageViewerFactory.RGBPlotPredicate> plotPredicatesDDLB = new DropdownListBox<ImageViewerFactory.RGBPlotPredicate>(ImageViewerFactory.plotPointPredicateOptions());
+
         plotPredicatesDDLB.setName("plotPredicatesDDLB");
-        plotPredicatesDDLB.setValue( ImageManipulationControls.this.rqst.getToPlotOrNot() );
-        plotPredicatesDDLB.onChange((te)->{
+
+        plotPredicatesDDLB.setValue( ImageManipulationControls.this.rqst.getToPlotOrNot()!=null
+                                     ? ImageManipulationControls.this.rqst.getToPlotOrNot() 
+                                     : ImageViewerFactory.plotPointPredicateOptions()[0].getValue() );
+        plotPredicatesDDLB.onChange((te) -> {
             rqst.setToPlotOrNot( plotPredicatesDDLB.getValue() );
             te.getEventBus().raiseEvent( new HasValue.ValueChangedEvent<>(ImageManipulationControls.this) );
             te.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(ImageManipulationControls.this));
@@ -102,9 +107,9 @@ public class ImageManipulationControls extends AbstractComponentWithContainer<Co
     public static void showAsDialog(ImageRenderRequest rqst, TerminalEvent<?> te, ChildComponentManager<?> parentPanel, EventHandlerContainer eventHandlerContainer, EventHandler actionOnChangeHandler) {
 
         ImageManipulationControls controls = new ImageManipulationControls(new Colors.FGBGColors(Colors.Bla,Colors.On_Whi), rqst);
-        
+
         EventHandler onDialogClosed = null;
-        
+
         if (actionOnChangeHandler != null) {
             OnValueChangedEventHandler<ImageRenderRequest> onChangedHandler = controls.onChange(actionOnChangeHandler,  eventHandlerContainer);
             onDialogClosed = (te2) -> eventHandlerContainer.removeEventHandler(onChangedHandler);

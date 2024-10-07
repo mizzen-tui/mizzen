@@ -2,6 +2,7 @@ package dtb.terminalIO.components;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.Supplier;
 
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.input.Button;
@@ -9,12 +10,13 @@ import dtb.terminalIO.components.input.CheckBoxInput;
 import dtb.terminalIO.components.input.HasValue;
 import dtb.terminalIO.components.input.tree.TreeView;
 import dtb.terminalIO.components.input.tree.TreeViewModel.CachingTreeviewModel;
+import dtb.terminalIO.components.input.tree.TreeViewModel.FilteredTreeViewModel;
 import dtb.terminalIO.components.input.tree.TreeViewModel.HasChildrenTreeViewModel;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
-import dtb.terminalIO.events.AbstractTimedRequestedController;
+import dtb.terminalIO.events.TimedRequestedController;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.OnIdleEventEventHandler.RepeatingInterval;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
@@ -40,7 +42,7 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
 
     ScrollableComponent scrollingArea;
     Component<?> componentToInspect;
-    FocusManager focusManagerToInspect;
+    Supplier<FocusManager> focusManagerToInspect;
 
     VIEW_TYPE currentViewType = VIEW_TYPE.COMPONENT_VIEW;
 
@@ -53,10 +55,20 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
         super(color);
 
         this.componentToInspect = componentToInspect;
-        this.focusManagerToInspect = focusManagerToInspect;
+        this.focusManagerToInspect = ()-> focusManagerToInspect;
         this.currentViewType = VIEW_TYPE.COMPONENT_VIEW;
         __setView(d);
     }
+
+
+    public void setFocusManagerToInspect(FocusManager focusManagerToInspect) {
+        this.focusManagerToInspect = ()->focusManagerToInspect;
+    }
+
+    public void setFocusManagerToInspect(Supplier<FocusManager> focusManagerToInspect) {
+        this.focusManagerToInspect = focusManagerToInspect;
+    }
+
 
     private void toggleViewType() {
         currentViewType = currentViewType == VIEW_TYPE.COMPONENT_VIEW ? VIEW_TYPE.FOCUSABLE_VIEW
@@ -68,7 +80,7 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
         if (currentViewType == VIEW_TYPE.COMPONENT_VIEW) {
             TreeView<Component<?>> tvComponents = new TreeView<Component<?>>(Colors.IBlu, new Dimension.Simple(90, 60),
                     (node) -> nodeName(node));
-            tvComponents.setModel(new CachingTreeviewModel<Component<?>>(new HasChildrenTreeViewModel<Component<?>>(componentToInspect)));
+            tvComponents.setModel(new FilteredTreeViewModel<Component<?>>((c)->c != ComponentInspector.this, new HasChildrenTreeViewModel<Component<?>>(componentToInspect)));
 
             if (scrollingArea != null) {
                 this.scrollingArea.setParentContainer(null);
@@ -90,12 +102,12 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
                             : nodeName(node)) {
 
                 public void draw(Color color, IScreenLineSegmentsBuffer segments) {
-                    currentFocus = FocusManager.UTIL.findCurrentFocus(focusManagerToInspect);
+                    currentFocus = FocusManager.UTIL.findCurrentFocus(focusManagerToInspect.get());
                     super.draw(color, segments);
                 }
             };
 
-            tvFocusable.setModel(new CachingTreeviewModel<Focusable>(new HasChildrenTreeViewModel<Focusable>(focusManagerToInspect,
+            tvFocusable.setModel(new CachingTreeviewModel<Focusable>(new HasChildrenTreeViewModel<Focusable>(focusManagerToInspect.get(),
                                                                          new FocusManagerHasChildrenAdapter())));
 
             if (scrollingArea != null) {
@@ -159,11 +171,14 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
         return output;
     }
 
-    AbstractTimedRequestedController delayedSetView = null;
+    TimedRequestedController delayedSetView = null;
 
     private void requestSetView(EventBus eventBus) {
+        requestSetView(eventBus, true);
+    }
+    private void requestSetView(EventBus eventBus, boolean updateOnViewTypeChanged) {
         if (delayedSetView == null) {
-            delayedSetView = new AbstractTimedRequestedController(()->{
+            delayedSetView = new TimedRequestedController(()->{
                                     Dimension currentSize = ComponentInspector.this.scrollingArea;
                                     __setView(currentSize);
                                     eventBus.raiseEvent(new RequestUpdateCanvasEvent(this));
@@ -176,10 +191,13 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
             delayedSetView.setTimerDelayMillis(500);
             delayedSetView.setMaxStarvationTime(delayedSetView.getTimerDelayMillis()*3);
         }
-        if (currentViewType == VIEW_TYPE.COMPONENT_VIEW) {
+        if (updateOnViewTypeChanged && currentViewType == VIEW_TYPE.COMPONENT_VIEW) {
             return;
         }
         delayedSetView.onRequest(eventBus);
+    }
+    public void refreshView(EventBus eventBus) {
+        requestSetView(eventBus, false);
     }
 
 
@@ -203,7 +221,7 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
             return __refreshEventHandler;
         }
         __refreshEventHandler = new KeyInputEventHandler(Keys.CTRL_R_KEYSTROKE, (te) -> {
-            Focusable curFocus = FocusManager.UTIL.findCurrentFocus(focusManagerToInspect);
+            Focusable curFocus = FocusManager.UTIL.findCurrentFocus(focusManagerToInspect.get());
             if (curFocus != currentFocus) {
                 currentFocus = curFocus;
                 requestSetView(te.getEventBus());

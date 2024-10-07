@@ -52,6 +52,10 @@ public class DraggableTextComponent extends TextComponent implements Focusable ,
         this(color, text, null, null, componentToDrag);
     }
 
+    public void setcomponentToDrag(Component<?> componentToDrag) {
+        this.draggableBehaviour = new DragAndMoveComponentBehaviour(componentToDrag != null? componentToDrag: this);
+    }
+    
     public Draggable getDraggableBehaviour() {
         return draggableBehaviour;
     }
@@ -137,7 +141,7 @@ public class DraggableTextComponent extends TextComponent implements Focusable ,
             this.setText(baseText);
         }
     }
-    
+
     @Override
     public boolean hasFocus() {
         return asFocusable().hasFocus();

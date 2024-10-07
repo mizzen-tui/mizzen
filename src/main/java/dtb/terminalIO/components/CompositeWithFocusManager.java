@@ -26,7 +26,7 @@ public class CompositeWithFocusManager  extends Composite implements FocusManage
         super(color);
         getFocusManager();
     }
-    
+
     public CompositeWithFocusManager(Color color, Dimension bounds)  {
         super(color, bounds);
         getFocusManager();
@@ -37,7 +37,7 @@ public class CompositeWithFocusManager  extends Composite implements FocusManage
         super();
         getFocusManager();
     }
-    
+
     public CompositeWithFocusManager setName(String name) {
         super.setName(name);
         if ( this.focusManager != null ) {
@@ -45,7 +45,6 @@ public class CompositeWithFocusManager  extends Composite implements FocusManage
         }
         return this;
     }
-
 
     public void rebuildFocusManager() {
         if (focusManager == null) {
@@ -67,7 +66,7 @@ public class CompositeWithFocusManager  extends Composite implements FocusManage
         }
         return focusManager;
     }
-    
+
     protected DefaultFocusManager buildFocusManager() {
         DefaultFocusManager focusManager = new DefaultFocusManager();
         focusManager.setNavKeysFirst(false);
@@ -75,7 +74,7 @@ public class CompositeWithFocusManager  extends Composite implements FocusManage
         //focusManager.setNameFromOwner(this);
         return focusManager;
     }
-    
+
     // only call this once
     private void populateFocusManagerWithFocusablesFromChildren() {
         for (Component<?> child : getChildren()) {
@@ -83,7 +82,7 @@ public class CompositeWithFocusManager  extends Composite implements FocusManage
         }
     }
 
-    
+
     protected void addComponentFocusablesToFocusManager(Component<?> component) { 
         this.focusBehaviourManager.addComponentFocusablesToFocusManager(component);
     }
@@ -107,7 +106,6 @@ public class CompositeWithFocusManager  extends Composite implements FocusManage
         addComponentFocusablesToFocusManager(component);
         return result;
     }
-    
 
     @Override
     public Composite remove(Component<?> component) {
@@ -163,7 +161,7 @@ public class CompositeWithFocusManager  extends Composite implements FocusManage
         }
         getFocusManager().unFocus(newFocusable, eventBus);
     }
-    
+
     @Override
     public void focus(Focusable oldFocusable, EventBus eventBus) {
         // I'm avoiding an obscure bug in FocusManager
@@ -172,7 +170,7 @@ public class CompositeWithFocusManager  extends Composite implements FocusManage
         }
         getFocusManager().focus(oldFocusable, eventBus);
     }
-    
+
     @Override
     public EventHandler canHandle(TerminalEvent<?> te)
     {

@@ -5,6 +5,7 @@ import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.ComponentWithFocusManager;
 import dtb.terminalIO.components.HasName;
+import dtb.terminalIO.components.SimpleBorder;
 import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent.AsSearchableView;
 import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent.SearchableView;
 import dtb.terminalIO.controlcodes.color.Color;
@@ -32,7 +33,7 @@ public class ScrollableComponent2  extends ComponentWithFocusManager<ScrollableC
     Component<?> componentBeingViewed;
     ButtonBar footerControls; 
     private CanResize onResizeService = CanResize.NOOP;
-    
+
     private ViewPortNavigable navigator;
 
 
@@ -40,12 +41,11 @@ public class ScrollableComponent2  extends ComponentWithFocusManager<ScrollableC
         super(color);
         
     //    this.setBorder(true);
-        
+
         navigator = new DefaultViewPortNavigableImpl();
-        
+
         this.componentBeingViewed = componentBeingViewed;
 
-        
         viewer = new WindowViewComponent(color,
                                          new Dimension.Simple(d.getHeight() - 2, d.getWidth() - 2),
                                          this.componentBeingViewed);
@@ -55,7 +55,7 @@ public class ScrollableComponent2  extends ComponentWithFocusManager<ScrollableC
         this.getContainer().onResizeExpandDownAndRight(borderedComponent);
 
         buildAndPopulateFooterPanel();
-        
+
         vScrollBar = new ScrollBarVertical(color,
                                            borderedComponent.getPostion_TopRight().offsetAdd(1, 0),
                                            borderedComponent.getHeight() - 2).enableKeyEvents(false);
@@ -122,7 +122,7 @@ public class ScrollableComponent2  extends ComponentWithFocusManager<ScrollableC
                         if (focusableChild != null) {
                             if (focusableChild.canHandle(te)!=null) {
                                 return this;
-                            } 
+                            }
                         }
                     }
                 }
@@ -165,8 +165,7 @@ public class ScrollableComponent2  extends ComponentWithFocusManager<ScrollableC
             this.onViewPortChanged(null);
         }
     }
-    
-    
+
     public boolean setViewOffset(int r, int c) {
         if (r < 0 || c < 0)
             return false; // too small
@@ -188,7 +187,7 @@ public class ScrollableComponent2  extends ComponentWithFocusManager<ScrollableC
     public Position getOffsetIntoSource() {
         return viewer.getOffsetIntoSource();
     }
-    
+
     public Rectangle getViewPortAsRectangle() {
         Position offset = this.getOffsetIntoSource();
         return new Rectangle.Simple(offset.getRow(), offset.getCol(), viewer.getHeight(), viewer.getWidth());
@@ -207,8 +206,7 @@ public class ScrollableComponent2  extends ComponentWithFocusManager<ScrollableC
         }
     }
 
-    
-    
+
     public void resize(Dimension d) {
         super.resize(d);
         borderedComponent.resize(d);
@@ -223,7 +221,6 @@ public class ScrollableComponent2  extends ComponentWithFocusManager<ScrollableC
         hScrollBar.markAsDirty();
 
 //        positionFooterText();
-        
         handleResizeDependants(d);
 
         markAsDirty();
@@ -265,13 +262,22 @@ public class ScrollableComponent2  extends ComponentWithFocusManager<ScrollableC
     }
     
     
+    boolean hasFooterControls = true;
+    
     private void refreshFooter() {
+        if (!hasFooterControls) {
+            return;
+        }
         footerControls.markAsDirty();
         int newHScrollBarWidth = (this.borderedComponent.getWidth() - 2) - footerControls.getWidth();
         this.hScrollBar.resize(new Dimension.Simple(1, newHScrollBarWidth > 0 ? newHScrollBarWidth : 0));
     }
     
-    
+    public ScrollableComponent2 removeFooterComponent() {
+        borderedComponent.removeFooterComponent();
+        return this;
+    }
+
     private void buildAndPopulateFooterPanel() {
         Color borderColor = borderedComponent.getColor();
         if (footerControls != null) {
@@ -288,7 +294,7 @@ public class ScrollableComponent2  extends ComponentWithFocusManager<ScrollableC
         this.borderedComponent.setFooter(footerControls);
         this.addComponentFocusablesToFocusManager(borderedComponent);
     }
-    
+
     private void emitViewOffsetChangedOnOperation(TerminalEvent<?> event, Runnable operation) {
         Position prevOffset = this.getOffsetIntoSource();
         operation.run();
@@ -300,13 +306,11 @@ public class ScrollableComponent2  extends ComponentWithFocusManager<ScrollableC
     }
 
     OnViewPortWindowChangedEventHandler onViewPortWindowChangedEventHandler;
-    
+
     public void onViewPortChanged(EventHandler consumeChange) {
-
         onViewPortWindowChangedEventHandler = HasViewPortWindow.UTIL.bindConsumerAsOnViewPortWindowChangedEventHandler(this, onViewPortWindowChangedEventHandler, this.getEventHandlerContainer(), consumeChange);
-
     }
-    
+
     public void addFooterComponent(Component<?> componentForButtonBar) {
 
         if (footerControls == null) {
