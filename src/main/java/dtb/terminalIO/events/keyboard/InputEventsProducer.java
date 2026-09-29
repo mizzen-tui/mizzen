@@ -41,7 +41,7 @@ public class InputEventsProducer implements Runnable {
     private EventBus      eventBus;
 //    private Reader        input;
     Thread                readThread;
-    InputBytesEventParser readerParser = new InputBytesEventParser();
+    InputBytesEventParserInterface readerParser = InputParserManager.getParser();
     
     int idleEventStarvationLimit = IDLE_STARVATION_INTERVAL_LIMIT;
     int sleepInterval = IDLE_STARVATION_INTERVAL_LIMIT - 10;

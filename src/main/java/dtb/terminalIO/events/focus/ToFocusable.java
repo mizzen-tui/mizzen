@@ -1,6 +1,8 @@
 package dtb.terminalIO.events.focus;
 
+import dtb.terminalIO.components.AbstractComponent;
 import dtb.terminalIO.components.Component;
+import dtb.terminalIO.events.EventBus;
 
 public interface ToFocusable {
     Focusable asFocusable();
@@ -79,6 +81,7 @@ public interface ToFocusable {
             }
             return new FocusableComponentPair(toFocusable(component),component);
         }
+
 
     }
 

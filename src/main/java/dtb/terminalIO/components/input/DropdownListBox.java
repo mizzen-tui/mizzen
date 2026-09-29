@@ -35,7 +35,7 @@ import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.StringUtils;
 
 public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBox<T>>  
-                                implements SettableHasValue<T> , 
+                                implements SettableHasValueComponentMixen<DropdownListBox<T>,T> , 
                                            Clickable {
 
     private ListBox<T> listBox;
@@ -473,8 +473,8 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
         }
     }
 
-    @Override
-    public void unFocus(Focusable newFocusable, EventBus eventBus) {
+    //@Override
+    public void unFocusOLD(Focusable newFocusable, EventBus eventBus) {
         super.unFocus(newFocusable, eventBus);
         setSelectedOntoTextView();
         // note:  important - must bring to front this component
@@ -486,6 +486,22 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
             hideListBox();
         }
     }
+
+    @Override
+    public void unFocus(Focusable newFocusable, EventBus eventBus) {
+        super.unFocus(newFocusable, eventBus);
+        setSelectedOntoTextView();
+    
+        if (newFocusable == null || 
+            (!ToFocusable.UTIL.toFocusable(this.getListBoxOrItsScrollPane()).equals(newFocusable) &&
+             !ToFocusable.UTIL.toFocusable(this.listBox).equals(newFocusable))) {
+            Logging.info("DropdownListBox: Focus moved OUTSIDE, hiding dropdown.");
+            hideListBox();
+        } else {
+            Logging.info("DropdownListBox: Focus moved inside ListBox, keeping open.");
+        }
+    }
+        
     @Override
     public void focus(Focusable oldFocusable, EventBus eventBus) {
         super.focus(oldFocusable, eventBus);

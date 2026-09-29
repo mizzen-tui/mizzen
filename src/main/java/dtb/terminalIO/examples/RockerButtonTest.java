@@ -257,7 +257,7 @@ public class RockerButtonTest {
             if (meAsFocusable != null) {
                 return meAsFocusable;
             }
-            meAsFocusable = new FocusableFromParts(this, new DefaultFocusableBehaviour(), null);
+            meAsFocusable = new FocusableFromParts(this, new DefaultFocusableBehaviour(this), null);
             return meAsFocusable;
         }
 

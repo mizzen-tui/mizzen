@@ -163,6 +163,18 @@ public class DrawingBoardImpl implements DrawingBoard {
             this.componentManager.replace(c1, c2);
             this.nameComponentMap.put(name, c2);
         }
+
+        @Override
+        public boolean isEnabled() {
+            // TODO Auto-generated method stub
+            return false;
+        }
+
+        @Override
+        public void setEnabled(boolean enabled, EventBus eventBus) {
+            // TODO Auto-generated method stub
+            
+        }
         
     }
     

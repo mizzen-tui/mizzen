@@ -58,6 +58,11 @@ public interface Focusable extends FocusBehaviour, ConditionalEventHandler {
         @Override
         public void setParentFocusManager(FocusManager focusManager) {
         }
+
+        @Override
+        public boolean isEnabled() {
+            return false;
+        }
         
     }
     
@@ -102,6 +107,14 @@ public interface Focusable extends FocusBehaviour, ConditionalEventHandler {
             }
         }
 
+        @Override
+        public boolean isEnabled() {
+            if (this.component != null) {
+                return this.component.isEnabled();
+            }
+            return this.behaviour.isEnabled();
+        }
+        
         @Override
         public EventHandler canHandle(TerminalEvent<?> te) {
             if (eventHandler == null) {
@@ -219,6 +232,11 @@ public interface Focusable extends FocusBehaviour, ConditionalEventHandler {
         public void setParentFocusManager(FocusManager focusManager) {
             Focusable.UTIL.setParentFocusManager(this, focusManager, (fm)-> delegate.setParentFocusManager(fm));
         }
+
+        @Override
+        public boolean isEnabled() {
+            return delegate.isEnabled();
+        }
     
         
         
@@ -245,6 +263,13 @@ public interface Focusable extends FocusBehaviour, ConditionalEventHandler {
             setParentAfterCleanUp.accept(parentFocusManager);
             
         }
+        
+        public static void releaseFocusIfNeeded(Focusable focusable, EventBus eventBus) {
+            if (focusable != null && focusable.hasFocus()) {
+                focusable.clearFocus(eventBus);
+            }
+        }
+
     }
 
 

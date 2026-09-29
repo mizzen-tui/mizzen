@@ -192,4 +192,10 @@ public class BehaviourForCompositeAndFocusManager {
             removeFocusable(f);
         }
     }
+
+    public void rebuildComponentFocusablesFromFocusManager(Component<?> component) {
+    	removeComponentFocusablesFromFocusManager(component);
+    	addComponentFocusablesToFocusManager(component);
+    	
+    }
 }

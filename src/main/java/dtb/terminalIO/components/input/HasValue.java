@@ -22,7 +22,7 @@ import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
  *
  * @param <V>
  */
-public interface HasValue<V> {  //TODO:  Make a SettableValue that extends this.. ( HasValue components can implement this, then later we can 'bindable' forms - bind based on 'getName')
+public interface HasValue<V> {  // TODO:  Make a SettableValue that extends this.. ( HasValue components can implement this, then later we can 'bindable' forms - bind based on 'getName')
 
     V getValue();
 

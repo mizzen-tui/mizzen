@@ -8,8 +8,10 @@ import java.util.function.Function;
 import dtb.terminalIO.components.ChildComponentManager;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.ComponentFinder;
+import dtb.terminalIO.components.ComponentInspector;
 import dtb.terminalIO.components.CompositeWithFocusManager;
 import dtb.terminalIO.components.HasName;
+import dtb.terminalIO.components.WindowFrame;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.modal.MessageBox;
 import dtb.terminalIO.components.scroll.FindScrollToViewHandler;
@@ -40,6 +42,7 @@ import dtb.terminalIO.events.resize.TerminalResizeDetection;
 import dtb.terminalIO.examples.TestsCommon;
 import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
+import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.util.ElapsedTime;
 
 /**
@@ -97,6 +100,8 @@ public class TUIApp implements ComponentFinder {
     
     ChildComponentManager<?> mainApplicationPanel;
     Component<?>  rootPanelForMouseEvents;   // usually rootPanelForMouseEvents and mainApplicationPanel are the same
+    
+    WindowFrame inspectorWindowFrame;
 
     InputEventsProducer eventsProducer = null;
     
@@ -214,11 +219,9 @@ public class TUIApp implements ComponentFinder {
         @Override
         public EventHandler canHandle(TerminalEvent<?> te)
         {
-            
             if (IS_KEYPRESS.test(te)) {
                 return super.canHandle(te);
             }
-            
             return super.canHandle(te);
         }
         
@@ -431,6 +434,45 @@ public class TUIApp implements ComponentFinder {
         return this;
     }
 
+    public TUIApp enableComponentInspector() {
+        return enableComponentInspector(null);
+    }
+    
+    public TUIApp enableComponentInspector(KeyStroke toggleKey) {
+        if (toggleKey == null) {
+            toggleKey = Keys.CTRL_D_KEYSTROKE;
+        }
+
+        // Add a hotkey to toggle the visibility of the inspector window
+        KeyInputEventHandler inspectorToggleHandler = new KeyInputEventHandler(toggleKey, (te) -> {
+            if (inspectorWindowFrame != null) {
+                String inspectorName = HasName.UTIL.getName(this.inspectorWindowFrame);
+                if (this.findComponentByName(inspectorName) == null) {
+                    Position startPos = ((Component<?>)getMainApplicationPanel())
+                                                       .getPreferredRectangleForLayout()
+                                                       .centered(inspectorWindowFrame);
+                    getMainApplicationPanel().add(startPos, inspectorWindowFrame);
+                } else {
+                    getMainApplicationPanel().remove(inspectorWindowFrame);
+                }
+                te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(this));
+            } else {
+                // First time request, so create a WindowFrame wrapping the ComponentInspector
+                if (this.inspectorWindowFrame == null) {
+                    this.inspectorWindowFrame = ComponentInspector.resizableInspector(this);
+                    HasName.UTIL.setDefaultNameFromParentObject(this.inspectorWindowFrame, this, "ComponentInspector");
+                    te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(this));
+                }
+            }
+        });
+
+        // Add hotkeys for toggling view mode and refreshing the inspector
+        getEventBus().appendEventHandler(inspectorToggleHandler);
+
+        return this;
+    }
+    
+    
     public FocusManager getApplicationFocusManager() {
         return getApplicationFocusManager(false || this.inOnReadyStartAction);
     }

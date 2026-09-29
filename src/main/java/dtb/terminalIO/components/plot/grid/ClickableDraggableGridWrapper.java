@@ -36,7 +36,7 @@ public class ClickableDraggableGridWrapper<T extends PlotShapeController>  exten
         this.draggingCursor = cursor;
 
         
-        this.setFocusBehaviour( new DefaultFocusableBehaviour() );
+        this.setFocusBehaviour( new DefaultFocusableBehaviour(this) );
         
         Function<Position, Position> mapToGridFunction = (appMousePosition)-> this.gridContext.mapCharPositionToGridPosition(appMousePosition);
         

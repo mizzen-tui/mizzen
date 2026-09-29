@@ -14,7 +14,7 @@ import dtb.terminalIO.events.mouse.MOUSE_ACTION;
 
 public class ClickableDraggableComponentWrapper extends AbstractWrappedComponentAndFocusable<Component<?>> implements Clickable, Draggable {
 
-    protected ClickableDraggableComponentWrapper(Color color, Component<?> container) {
+    public ClickableDraggableComponentWrapper(Color color, Component<?> container) {
         super(color, container);
         if (container instanceof Clickable) {
             this.setClickableAction((Clickable)container);
@@ -52,8 +52,9 @@ public class ClickableDraggableComponentWrapper extends AbstractWrappedComponent
     
     Draggable meAsDraggable;
     
-    public void setDraggable(Draggable draggable) {
+    public ClickableDraggableComponentWrapper setDraggable(Draggable draggable) {
         this.meAsDraggable = draggable;
+        return this;
     }
     
     Draggable asDraggable() {
@@ -80,8 +81,9 @@ public class ClickableDraggableComponentWrapper extends AbstractWrappedComponent
 
     Clickable meAsClickable;
 
-    public void setClickableAction(Clickable clickable) {
+    public ClickableDraggableComponentWrapper setClickableAction(Clickable clickable) {
         this.meAsClickable = clickable;
+        return this;
     }
 
     @Override

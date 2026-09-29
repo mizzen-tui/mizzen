@@ -141,8 +141,35 @@ public class DraggableTextComponent extends TextComponent implements Focusable ,
             this.setText(baseText);
         }
     }
+    
+    
 
-    @Override
+    public String getBaseText() {
+		return baseText;
+	}
+
+	public void setBaseText(String baseText) {
+		if (this.baseText != null && this.baseText.equals(this.draggingText)) {
+			this.setDraggingText(baseText);
+		}
+		this.baseText = baseText;
+		if ( ! this.dragging) {
+			this.setTextAndResize(baseText);
+		}
+	}
+
+	public String getDraggingText() {
+		return draggingText;
+	}
+
+	public void setDraggingText(String draggingText) {
+		this.draggingText = draggingText;
+		if (this.dragging) {
+			this.setTextAndResize(draggingText);
+		}
+	}
+
+	@Override
     public boolean hasFocus() {
         return asFocusable().hasFocus();
     }

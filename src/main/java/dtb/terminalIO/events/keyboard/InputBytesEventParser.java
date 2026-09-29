@@ -35,7 +35,7 @@ import dtb.terminalIO.geom.position.Position;
  * Main entry point method is: {@link #parseInput(byte[], int, EventBusImpl)}
  * 
  */
-public class InputBytesEventParser {
+public class InputBytesEventParser implements InputBytesEventParserInterface {
 
     private static final int STATE_START = 1;
     private static final int STATE_ESCAPE_INTERMEDIATE = 2;

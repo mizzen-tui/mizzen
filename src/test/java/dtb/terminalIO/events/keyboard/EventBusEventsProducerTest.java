@@ -51,7 +51,7 @@ public class EventBusEventsProducerTest extends TestCase {
         eventBus.appendEventHandler( new KeyInputEventHandler((te)->{
             return true;
             },
-           (te)->{
+           (te) -> {
                InputBytesHelper.captureAndStoreKeyEvent(keyboardInputBytesContainer,
                                                         (KeyEvent)te);
            })); 

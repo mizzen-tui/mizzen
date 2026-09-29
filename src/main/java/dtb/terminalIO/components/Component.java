@@ -36,6 +36,7 @@ import dtb.terminalIO.util.StringUtils;
 public interface Component<T extends Component<?>> 
                                 extends IScreenLineSegmentsBuffer.Provider , 
                                         DirtyFlag, 
+                                        Enabled,
                                         ColorProvider, 
                                         Rectangle {
 
@@ -67,6 +68,9 @@ public interface Component<T extends Component<?>>
         }
         return UTIL.show(this);
     }
+
+    boolean isEnabled();
+    void setEnabled(boolean enabled, EventBus eventBus);
 
     /**
      * Canvas will have set this offset value if component
@@ -210,6 +214,16 @@ public interface Component<T extends Component<?>>
             }
             
             return sj.toString();
+        }
+
+        public static boolean requestShowCursorAtComponentIfAttached(Component<?> component, Position offset, EventBus eventBus) {
+            Position canvasOffset = Component.UTIL.getCanvasOffsetFor(component);
+
+            if (canvasOffset == null) {
+               return false;
+            }
+            requestShowCursorAtComponent(component, offset, eventBus); 
+            return true;
         }
 
         public static void requestShowCursorAtComponent(Component<?> component, Position offset, EventBus eventBus) {

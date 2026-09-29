@@ -4,6 +4,7 @@ import java.util.List;
 
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.HasName;
+import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
@@ -36,7 +37,7 @@ public class VerticalPanel extends Composite {
         return this;
     }
 
-    public Composite add(Component<?> component) {
+    public VerticalPanel add(Component<?> component) {
 
         ComponentWithOffset child = findChild(component);
 
@@ -55,9 +56,14 @@ public class VerticalPanel extends Composite {
             anchor = getChildrenComponentsWithOffset().get(childrenSize-1);
         }
 
-        return super.add(makeOffsetForChild(anchor, verticalSpacer) , component);
+        return (VerticalPanel) super.add(makeOffsetForChild(anchor, verticalSpacer) , component);
     }
 
+    public VerticalPanel addText(String text) {
+        return add(new TextComponent(getColor(), text));
+    }
+    
+    
     private Position makeOffsetForChild(ComponentWithOffset anchor, int verticalSpacer) {
         RectangleFromAnchor rectangleFromAnchor = null; 
         if (anchor != null) {

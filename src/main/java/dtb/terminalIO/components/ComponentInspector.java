@@ -338,7 +338,7 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
         }
     }
 
-    private static final WindowFrame resizableInspector(TUIApp tApp) {
+    public static final WindowFrame resizableInspector(TUIApp tApp) {
 
         
         ComponentInspector inspector = new ComponentInspector(Colors.BIGre, 
@@ -356,7 +356,10 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
         }));
 
         //mainFocusManager.addComponentAsFocusables(wfInspector);
-        tApp.getMainApplicationPanel().add(22,44, wfInspector);
+        Position inspectorPos = ((Component<?>)tApp.getMainApplicationPanel())
+                                                    .getPreferredRectangleForLayout()
+                                                    .centered(wfInspector);
+        tApp.getMainApplicationPanel().add(inspectorPos, wfInspector);
 
         return wfInspector;
     }

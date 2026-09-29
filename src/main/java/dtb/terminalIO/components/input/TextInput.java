@@ -34,7 +34,7 @@ import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.StringUtils;
 
 public class TextInput extends BoundedComponent<TextInput>
-                       implements SettableHasValue<String>, 
+                       implements SettableHasValueComponentMixen<TextInput,String>, 
                                   ParentContainer, 
                                   Focusable  {
 
@@ -72,6 +72,10 @@ public class TextInput extends BoundedComponent<TextInput>
 
     public TextInput(String text) {
         this(Colors.DEFAULT_COLOR, text.length());
+        this.setText(text);
+    }
+    public TextInput(Color color,String text) {
+        this(color, text.length());
         this.setText(text);
     }
 
@@ -243,6 +247,11 @@ public class TextInput extends BoundedComponent<TextInput>
         this.setText(this.buffer.toString());
     }
 
+    // this is here purely for unit testing - otherwise dont use
+    protected TextComponent getRenderer() {
+        return this.textRenderer;
+    }
+    
     boolean caretHome() {
         this.caret = Position.ZERO;
         markAsDirty();
@@ -517,7 +526,7 @@ public class TextInput extends BoundedComponent<TextInput>
     }
 
     private void requestShowCursor(EventBus eventBus) {
-        Component.UTIL.requestShowCursorAtComponent(this, caret, eventBus);
+        Component.UTIL.requestShowCursorAtComponentIfAttached(this, caret, eventBus);
     }
 
     private void requestHideCursor(EventBus eventBus) {

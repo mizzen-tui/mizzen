@@ -1,10 +1,14 @@
 package dtb.terminalIO.components;
 
+import java.util.Collection;
 import java.util.TreeSet;
 import java.util.function.Supplier;
 
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
+import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.focus.ToFocusable;
 import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
@@ -12,6 +16,7 @@ import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegment;
 import dtb.terminalIO.textsegments.ScreenLineSegmentsBuffer;
+import dtb.terminalIO.traverse.HasChildrenAdapter;
 import dtb.terminalIO.util.StringUtils;
 
 
@@ -30,6 +35,9 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
     private boolean                     hasDrawn   = false;
     private Color                       color      = Colors.DEFAULT_COLOR;
     private BlockChars                  blockChars = BlockChars.DEFAULT;
+
+    private Color                     originalColor = Colors.DEFAULT_COLOR;  // used only in setEnabled() scenarios
+    private boolean enabled = true;
 
     private FillOnClearPolicy<T>    fillPolicy = new FillOnClearPolicy.AbstractImpl<T>(this) {
                                                      @Override
@@ -161,6 +169,9 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
     @Override
     public T setColor(Color drawingcolor) {
         this.color = drawingcolor == null ? Colors.FGBGColors.NO_COLOR_SPECIFIED : drawingcolor;
+        if (this.enabled) {
+            originalColor = this.color;
+        }
         this.markAsDirty();
         return (T) this;
     }
@@ -275,6 +286,49 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
         this.canvasOffset = canvasOffset;
     }
 
+    public boolean isEnabled() {
+        return this.enabled;
+    }
+   
+    @Override
+    public void setEnabled(boolean enabled, EventBus eventBus) {
+        // Traverse children first and set their enabled state
+        HasChildrenAdapter<Component<?>> hasChildrenAdapter = new HasChildrenAdapter.Simple<>();
+        Collection<? extends Component<?>> children = hasChildrenAdapter.asHasChildren(this).getChildren();
+
+        for (Component<?> child : children) {
+            child.setEnabled(enabled, eventBus);
+        }
+
+        // Handle focus release if disabling
+        if (!enabled && ToFocusable.UTIL.isFocusable(this)) {
+            Focusable.UTIL.releaseFocusIfNeeded(ToFocusable.UTIL.toFocusable(this), eventBus);
+        }
+
+        // important to set this flag before setting color
+        // because setColor looks at this flag
+        this.enabled = enabled;
+
+        // Preserve the original color when disabling
+        if (!enabled) {
+            if (originalColor == null) {
+                originalColor = getColor();
+            }
+            // Apply the disabled color using the new asDisabled() method
+            //this.setColor(getColor().asDisabled());
+            this.setColor(Colors.IBla);
+        } else {
+            // Restore the original color when re-enabling
+            if (originalColor != null) {
+                this.setColor(originalColor);
+                originalColor = null;
+            }
+        }
+
+        this.markAsDirty();
+    }
+  
+    
     public static class DONOTHING extends BoundedComponent<DONOTHING> {
 
         public DONOTHING(Rectangle r) {

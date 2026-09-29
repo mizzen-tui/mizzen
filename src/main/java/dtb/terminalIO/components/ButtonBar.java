@@ -60,6 +60,10 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
         getContainer().fullrecalcDim();
         return this;
     }
+    
+    public int getHorizontalSpacer() {
+        return ((HorizontalPanel)getContainer()).getHorizontalSpacer();
+    }
 
     private DefaultFocusManager getDefaultFocusManager() {
         return (DefaultFocusManager) super.getFocusManager();

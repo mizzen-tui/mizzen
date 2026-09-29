@@ -8,6 +8,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.Enabled;
 import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.components.input.DefaultFocusableBehaviour;
 import dtb.terminalIO.events.ChainedEventHandler;
@@ -21,9 +22,11 @@ import dtb.terminalIO.events.keyboard.HasHotKey;
 import dtb.terminalIO.events.keyboard.KeyEvent;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
+import dtb.terminalIO.util.Logging;
 
 public class DefaultFocusManager implements FocusManager, 
                                              FocusablesContainer,
+                                             Enabled,
                                              HasName<DefaultFocusManager>{
 
     private static final BiConsumer<Focusable, EventBus> DEFAULT_ONFOCUS_CHANGED_UPDATE_CANVAS = (f,e)-> e.raiseEvent(new RequestUpdateCanvasEvent(f)); 
@@ -149,6 +152,11 @@ public class DefaultFocusManager implements FocusManager,
     }
 
     public void setChildAsCurrentFocus(Focusable focusable, EventBus eventBus) {
+        
+        if (focusable != null && !focusable.isEnabled()) {
+            Logging.info("Cannot set focus.  Focusable is null or disabled");
+            return;
+        }
 
         if (!eventConsumers.contains(focusable)) {
             FocusManager parent = focusable.getParentFocusManager();
@@ -177,7 +185,7 @@ public class DefaultFocusManager implements FocusManager,
         return eventConsumers.size();
     }
 
-    private Focusable getPrev(EventBus eventBus) {
+    private Focusable getPrevOLD(EventBus eventBus) {
         if (size() < 1) {
             return null;
         }
@@ -193,7 +201,29 @@ public class DefaultFocusManager implements FocusManager,
         return eventConsumers.get(index - 1);
     }
 
-    private Focusable getNext(EventBus eventBus) {
+    private Focusable getPrev(EventBus eventBus) {
+        if (size() < 1 || !isEnabled()) {
+            return null; // Early exit if no focusables or all are disabled
+        }
+
+        Focusable theCurrent = getCurrentOrSet(eventBus);
+        int index = (theCurrent == null) ? -1 : eventConsumers.indexOf(theCurrent);
+        int startIndex = index;
+
+        do {
+            index = (index < 1) ? (cycling ? size() - 1 : -1) : index - 1;
+
+            // Exit if we've completed a full cycle
+            if (index == startIndex || index == -1) {
+                return null;
+            }
+        } while (!eventConsumers.get(index).isEnabled());
+
+        return eventConsumers.get(index);
+    }    
+    
+    
+    private Focusable getNextOLD(EventBus eventBus) {
         if (size() < 2) {
             return null;
         }
@@ -209,6 +239,30 @@ public class DefaultFocusManager implements FocusManager,
         return eventConsumers.get(index + 1);
     }
 
+
+    private Focusable getNext(EventBus eventBus) {
+        if (size() < 2 || !isEnabled()) {
+            return null; // Early exit if no focusables or all are disabled
+        }
+    
+        Focusable theCurrent = getCurrentOrSet(eventBus);
+        int index = (theCurrent == null) ? -1 : eventConsumers.indexOf(theCurrent);
+        int startIndex = index;
+    
+        do {
+            index = (index < 0 || index == size() - 1) ? (cycling ? 0 : -1) : index + 1;
+    
+            // Exit if we've completed a full cycle
+            if (index == startIndex || index == -1) {
+                return null;
+            }
+        } while (!eventConsumers.get(index).isEnabled());
+    
+        return eventConsumers.get(index);
+    }
+    
+    
+    
     @Override
     public void handle(TerminalEvent<?> te) {
         getEventHandler().handle(te);
@@ -708,7 +762,7 @@ public class DefaultFocusManager implements FocusManager,
 
         if (meAsFocusable == null) {
 
-            meAsFocusable = new DefaultFocusableBehaviour() {
+            meAsFocusable = new DefaultFocusableBehaviour(this) {
 
                 @Override
                 public void setFocus(boolean focus, EventBus eventBus) {
@@ -822,5 +876,11 @@ public class DefaultFocusManager implements FocusManager,
     public static void setDefaultNameFromParentObject(FocusManager focusManager, Object parentContainer) {
         HasName.UTIL.setDefaultNameFromParentObject(focusManager, parentContainer, "FocusManager");
     }
-    
+
+    @Override
+    public boolean isEnabled() {
+        // if any child is enabled, then we are enabled.
+        return getChildren().stream().anyMatch( f -> f.isEnabled());
+    }
+
 }

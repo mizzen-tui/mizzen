@@ -121,6 +121,13 @@ public interface FocusManager extends Focusable {
          */
         public static void setNewFocusable(Focusable focusableChild, Focusable oldFocusableChild, EventBus eventBus, BiConsumer<Focusable, EventBus> onFocusChanged) {
             
+
+            // guard against doing anything if we are dealing with a disabled focusableChild
+            if (focusableChild != null && !focusableChild.isEnabled()) {
+                Logging.info(HasName.UTIL.getName(focusableChild)+ " focus request denied because focus object is disabled");
+                return;
+            }
+
             // unfocus the previous (old)
             if (oldFocusableChild != null && oldFocusableChild != focusableChild && ! isAncestorOf(oldFocusableChild, focusableChild)) {
                 Logging.info(HasName.UTIL.getName(oldFocusableChild)+ " unfocus  will change to: " +  HasName.UTIL.getName(focusableChild, "NONE-SELECTED"));

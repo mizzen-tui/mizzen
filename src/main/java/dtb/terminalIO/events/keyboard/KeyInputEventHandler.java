@@ -27,6 +27,17 @@ public class KeyInputEventHandler extends ConditionalEventHandler.Impl {
         this.filterOnKeyEvtType = new IS_Event_TYPE(TerminalEvent.TYPE.KEYPRESS);
     }
 
+    public KeyInputEventHandler(Predicate<TerminalEvent<?>> canHandlePredicate, boolean defer, EventHandler handler) {
+        super(canHandlePredicate, (te) -> {
+            if (defer) {
+                te.getEventBus().asynch(handler);
+            } else {
+                handler.handle(te);
+            }
+        });
+        this.filterOnKeyEvtType = new IS_Event_TYPE(TerminalEvent.TYPE.KEYPRESS);
+    }
+
     static class KeyStrokePredicate implements Predicate<TerminalEvent<?>> {
 
         private KeyStroke[] onKeyStrokes;

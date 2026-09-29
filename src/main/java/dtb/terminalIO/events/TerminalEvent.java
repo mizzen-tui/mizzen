@@ -51,15 +51,13 @@ public class TerminalEvent<T> extends EventObject {
         WAIT,
         OFFER
     }
-    
-    
+
     TYPE type;
     T eventData;
     transient EventBus eventBus;
     private Q_FULL_POLICY queueFullPolicy;
     Runnable onEventProcessed;
-    
-    
+
     public static class IS_Event_TYPE implements Predicate<TerminalEvent<?>> {
 
         private TYPE type;
@@ -74,7 +72,7 @@ public class TerminalEvent<T> extends EventObject {
         }
 
     }
-    
+
     public TerminalEvent(Object source, TYPE type, T eventData, EventBus eventBus, Q_FULL_POLICY queueFullPolicy) {
         super(source);
         this.type = type;
@@ -82,11 +80,11 @@ public class TerminalEvent<T> extends EventObject {
         this.eventBus = eventBus;
         this.queueFullPolicy = queueFullPolicy;
     }
-    
+
     public TerminalEvent(Object source, TYPE type, T eventData, EventBus eventBus) {
         this(source, type, eventData, eventBus, Q_FULL_POLICY.WAIT);
     }
-    
+
     public TerminalEvent(Object source, TYPE type, T eventData, Q_FULL_POLICY queueFullPolicy) {
         this(source, type, eventData, null, queueFullPolicy);
     }
@@ -102,7 +100,7 @@ public class TerminalEvent<T> extends EventObject {
     public T getEventData() {
         return eventData;
     }
-    
+
     public Q_FULL_POLICY getQueueFullPolicy() {
         return queueFullPolicy;
     }
@@ -127,7 +125,7 @@ public class TerminalEvent<T> extends EventObject {
         }
         return eventBus;
     }
-    
+
     // When event exits the EventQ (and has been handled) we can optionally execute a final handler
     public void onEventProcessed() {
         try {
@@ -138,7 +136,7 @@ public class TerminalEvent<T> extends EventObject {
             throw new RuntimeException("Error processing Event onEventProcessed for event " + this.toString());
         }
     }
-    
+
     /**
      * When an event has been through the eventBus (and processed or discarded) you can 'then'
      * attach a Runnable that executes upon post processing.. This lets you sequence the raising of events.
@@ -152,7 +150,7 @@ public class TerminalEvent<T> extends EventObject {
         this.onEventProcessed = onEventProcessed;
         return this;
     }
-    
+
     public static TerminalEvent<?> STUBBED(TYPE type) {
         return new TerminalEvent(TerminalEvent.class, type, null, new EventBus.STUBBED());
     }

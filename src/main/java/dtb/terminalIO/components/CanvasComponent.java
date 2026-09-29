@@ -3,6 +3,7 @@ package dtb.terminalIO.components;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.CanvasBackend;
+import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
@@ -186,6 +187,18 @@ public class CanvasComponent implements Component<CanvasComponent>, CanResize {
 
         // if parent exists, then mark it as dirty as well
         Component.UTIL.markParentDirtyIfChildDirty(this);
+    }
+
+    @Override
+    public boolean isEnabled() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public void setEnabled(boolean enabled, EventBus eventBus) {
+        // TODO Auto-generated method stub
+        
     }
     
 //    @Override

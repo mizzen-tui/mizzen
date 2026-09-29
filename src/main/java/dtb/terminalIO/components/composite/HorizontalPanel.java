@@ -39,7 +39,7 @@ public class HorizontalPanel extends Composite {
         return this;
     }
 
-    public Composite add(Component<?> component) {
+    public HorizontalPanel add(Component<?> component) {
 
         ComponentWithOffset child = findChild(component);
         if (child != null) {
@@ -56,10 +56,10 @@ public class HorizontalPanel extends Composite {
             anchor = getChildrenComponentsWithOffset().get(childrenSize-1);
         }
 
-        return super.add(  new PositionHorizontalRelative(anchor, horizontalSpacer) , component);
+        return (HorizontalPanel) super.add(  new PositionHorizontalRelative(anchor, horizontalSpacer) , component);
     }
 
-    public Composite addText(String text) {
+    public HorizontalPanel addText(String text) {
         return add(new TextComponent(getColor(), text));
     }
 

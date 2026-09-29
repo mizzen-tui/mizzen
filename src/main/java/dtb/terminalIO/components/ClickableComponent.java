@@ -24,15 +24,19 @@ public class ClickableComponent<T extends Component<?>> extends AbstractWrappedC
         this(container.getColor(), container);
     }
 
-    
     public Clickable getClickableAction() {
         return this.clickable;
     }
-    
-    public void setOnClickAction(Clickable clickable) {
+
+    public ClickableComponent<T> setOnClickAction(Clickable clickable) {
         this.clickable = clickable;
+        return this;
     }
-    
+
+    public ClickableComponent<T> appendOnClickAction(Clickable newClickable) {
+        return setOnClickAction( Clickable.ChainedClickable.combineClickables(this.clickable, newClickable) );
+    }
+
     @Override
     public void onClick(EventBus eventBus) {
         this.clickable.onClick(eventBus);

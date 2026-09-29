@@ -29,7 +29,7 @@ import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
  * A ScrollBar in the Vertical orientation.
  */
 public class ScrollBarVertical extends BoundedComponent<ScrollBarVertical> implements Hiliter, Clickable, Focusable,
-                                       HasValue<Position> {
+        HasValue<Position> {
 
     private boolean hilited = false;
     Position offset;
@@ -39,7 +39,7 @@ public class ScrollBarVertical extends BoundedComponent<ScrollBarVertical> imple
     private boolean handleKeyEvents;
 
     // ▒
-    // [░░▒]  [▒░░]
+    // [░░▒] [▒░░]
     public ScrollBarVertical(Color color, Position pos, int len) {
         super(color, pos, new Dimension.Simple(len, 1));
         handleKeyEvents = true;
@@ -52,52 +52,57 @@ public class ScrollBarVertical extends BoundedComponent<ScrollBarVertical> imple
         this.setFillOnClear(false);
     }
 
-
     public ScrollBarVertical enableKeyEvents(boolean enable) {
         handleKeyEvents = enable;
         return this;
     }
 
-
     Position calcScrollbarOffset() {
         if (sizeOfComponentBeingViewed == null || offset == null) {
             return null;
         }
-        float percentage = (float)sizeOfViewer.getHeight() / (float)sizeOfComponentBeingViewed.getHeight();
+        float percentage = (float) sizeOfViewer.getHeight() / (float) sizeOfComponentBeingViewed.getHeight();
         if (percentage >= 1) {
             return null;
         }
 
-        return new Position.Simple( (int)(  ((float)offset.getRow()) * percentage) , 
-                                    (int)(  ((float)offset.getCol()) * percentage) );
+        return new Position.Simple((int) (((float) offset.getRow()) * percentage),
+                (int) (((float) offset.getCol()) * percentage));
     }
 
     Position calcOffset(Position scrollbarOffset) {
-        if (sizeOfComponentBeingViewed == null || scrollbarOffset == null) {
-            //Logging.info("nulls");
+        if (sizeOfComponentBeingViewed == null || sizeOfViewer == null || scrollbarOffset == null) {
             return Position.ZERO;
         }
 
-        float percentage = (float)sizeOfComponentBeingViewed.getHeight() / (float)sizeOfViewer.getHeight();
-        if (percentage < 1 ) {
-            //Logging.info("percentage = " + percentage);
+        int maxOffset = sizeOfComponentBeingViewed.getHeight() - sizeOfViewer.getHeight();
+        if (maxOffset <= 0) {
             return Position.ZERO;
         }
 
-        //Logging.info("percentage = " + percentage);
+        float percentage = (float) sizeOfComponentBeingViewed.getHeight() / (float) sizeOfViewer.getHeight();
 
-        return new Position.Simple( (int)(  ((float)scrollbarOffset.getRow()) * percentage) , 0 );
+        int row = (int) (((float) scrollbarOffset.getRow()) * percentage);
+
+        if (row < 0) {
+            row = 0;
+        }
+        if (row > maxOffset) {
+            row = maxOffset;
+        }
+
+        return new Position.Simple(row, 0);
     }
 
     boolean canScrollUp(TerminalEvent<?> te) {
-        if (sizeOfComponentBeingViewed == null || offset==null) {
+        if (sizeOfComponentBeingViewed == null || offset == null) {
             return false;
         }
-        
+
         if (offset.getRow() == 0) {
             return false;
         }
-        
+
         return true;
     }
 
@@ -106,17 +111,21 @@ public class ScrollBarVertical extends BoundedComponent<ScrollBarVertical> imple
             return;
         }
         setOffset(offset.offsetAdd(-1, 0));
-        te.getEventBus().raiseEvent( new HasValue.ValueChangedEvent<>(this) );
+        te.getEventBus().raiseEvent(new HasValue.ValueChangedEvent<>(this));
     }
 
     boolean canScrollDown(TerminalEvent<?> te) {
-        if (sizeOfComponentBeingViewed == null || offset==null) {
+        if (sizeOfComponentBeingViewed == null || sizeOfViewer == null || offset == null) {
             return false;
         }
-        if (offset.getRow()>=sizeOfComponentBeingViewed.getHeight()) {
+
+        int maxOffset = sizeOfComponentBeingViewed.getHeight() - sizeOfViewer.getHeight();
+
+        if (maxOffset <= 0) {
             return false;
         }
-        return true;
+
+        return offset.getRow() < maxOffset;
     }
 
     void scrollDown(TerminalEvent<?> te) {
@@ -124,7 +133,7 @@ public class ScrollBarVertical extends BoundedComponent<ScrollBarVertical> imple
             return;
         }
         setOffset(offset.offsetAdd(1, 0));
-        te.getEventBus().raiseEvent( new HasValue.ValueChangedEvent<>(this) );
+        te.getEventBus().raiseEvent(new HasValue.ValueChangedEvent<>(this));
     }
 
     void pageUp(TerminalEvent<?> te) {
@@ -136,21 +145,25 @@ public class ScrollBarVertical extends BoundedComponent<ScrollBarVertical> imple
         if ((this.offset.getRow()) < delta) {
             delta = this.offset.getRow();
         }
-        setOffset(offset.offsetAdd( -delta, 0));
-        te.getEventBus().raiseEvent( new HasValue.ValueChangedEvent<>(this) );
+        setOffset(offset.offsetAdd(-delta, 0));
+        te.getEventBus().raiseEvent(new HasValue.ValueChangedEvent<>(this));
     }
 
     void pagedown(TerminalEvent<?> te) {
         if (!canScrollDown(te)) {
             return;
         }
+
+        int maxOffset = sizeOfComponentBeingViewed.getHeight() - sizeOfViewer.getHeight();
         int pageHeight = sizeOfViewer.getHeight();
-        int delta = pageHeight;
-        if ((this.offset.getRow() + delta) > (sizeOfComponentBeingViewed.getHeight() + 1)) {
-            delta = (sizeOfComponentBeingViewed.getHeight() + 1) - this.offset.getRow();
+
+        int newRow = offset.getRow() + pageHeight;
+        if (newRow > maxOffset) {
+            newRow = maxOffset;
         }
-        setOffset(offset.offsetAdd(delta, 0));
-        te.getEventBus().raiseEvent( new HasValue.ValueChangedEvent<>(this) );
+
+        setOffset(new Position.Simple(newRow, 0));
+        te.getEventBus().raiseEvent(new HasValue.ValueChangedEvent<>(this));
     }
 
     public void setOffset(Position offset) {
@@ -169,53 +182,61 @@ public class ScrollBarVertical extends BoundedComponent<ScrollBarVertical> imple
 
         Position scrollBarOffset = calcScrollbarOffset();
 
-        if (scrollBarOffset==null) {
-            segments.merge(makeChildComponent(()->new VerticalLine(color, this.getRow(), this.getCol(), this.getHeight() )).getSegmentsBuffer());
+        if (scrollBarOffset == null) {
+            segments.merge(
+                    makeChildComponent(() -> new VerticalLine(color, this.getRow(), this.getCol(), this.getHeight()))
+                            .getSegmentsBuffer());
             return;
         }
-        //      |
-        //      |  [A]
-        //      X
-        //      X  [B]
-        //      X
-        //      |  [C]
-        //      |
+        // |
+        // | [A]
+        // X
+        // X [B]
+        // X
+        // | [C]
+        // |
 
-        float percentage = (float)sizeOfViewer.getHeight() / (float)sizeOfComponentBeingViewed.getHeight();
+        float percentage = (float) sizeOfViewer.getHeight() / (float) sizeOfComponentBeingViewed.getHeight();
 
         int a_height = scrollBarOffset.getRow();
-        int b_height = Math.max((int)(percentage * (float)this.getHeight()),1);
-        int c_height = this.getHeight() - ( a_height + b_height );
+        int b_height = Math.max((int) (percentage * (float) this.getHeight()), 1);
+        int c_height = this.getHeight() - (a_height + b_height);
 
         if (b_height >= this.getHeight()) {
-            segments.merge(makeChildComponent(()->new VerticalLine(color, this.getRow(), this.getCol(), this.getHeight() )).getSegmentsBuffer());
+            segments.merge(
+                    makeChildComponent(() -> new VerticalLine(color, this.getRow(), this.getCol(), this.getHeight()))
+                            .getSegmentsBuffer());
             return;
         }
 
-        if (a_height>0) {
-            segments.merge(makeChildComponent(()->new VerticalLine(color, this.getRow(), this.getCol(), a_height )).getSegmentsBuffer());
+        if (a_height > 0) {
+            segments.merge(makeChildComponent(() -> new VerticalLine(color, this.getRow(), this.getCol(), a_height))
+                    .getSegmentsBuffer());
         }
 
-        if (b_height>0) {
-            segments.merge(makeChildComponent(()->new VerticalLine(color, this.getRow()+a_height, this.getCol(), b_height ).setVerticalLineChar('▒')).getSegmentsBuffer());
+        if (b_height > 0) {
+            segments.merge(
+                    makeChildComponent(() -> new VerticalLine(color, this.getRow() + a_height, this.getCol(), b_height)
+                            .setVerticalLineChar('▒')).getSegmentsBuffer());
         }
-        
-        if (c_height>0) {
-            segments.merge(makeChildComponent(()->new VerticalLine(color, this.getRow()+a_height+b_height, this.getCol(), c_height )).getSegmentsBuffer());
+
+        if (c_height > 0) {
+            segments.merge(makeChildComponent(
+                    () -> new VerticalLine(color, this.getRow() + a_height + b_height, this.getCol(), c_height))
+                    .getSegmentsBuffer());
         }
     }
 
     public BlockChars getBlockChars() {
         return blockHiliter.getBlockChars();
     }
-    
-    
+
     @Override
     public void hilite() {
-        if ( ! this.hilited) {
+        if (!this.hilited) {
             markAsDirty();
         }
-        //colorHiliter.hilite();
+        // colorHiliter.hilite();
         blockHiliter.hilite();
         this.hilited = true;
     }
@@ -225,38 +246,37 @@ public class ScrollBarVertical extends BoundedComponent<ScrollBarVertical> imple
         if (this.hilited) {
             markAsDirty();
         }
-        //colorHiliter.unHilite();
+        // colorHiliter.unHilite();
         blockHiliter.unHilite();
         this.hilited = false;
     }
 
     @Override
     public void onClick(EventBus eventBus) {
-       // do nothing
+        // do nothing
     }
 
     @Override
     public void onClick(ApplicationMouseEvent appMouseEvent) {
-        
-        if (!MOUSE_ACTION.DOWN_LEFT.equals(appMouseEvent.getMouseAction()) && !MOUSE_ACTION.DOWN_LEFT_DRAG.equals(appMouseEvent.getMouseAction()) ) {
+
+        if (!MOUSE_ACTION.DOWN_LEFT.equals(appMouseEvent.getMouseAction())
+                && !MOUSE_ACTION.DOWN_LEFT_DRAG.equals(appMouseEvent.getMouseAction())) {
             return;
         }
 
-        //Logging.setEnabled(true);
+        // Logging.setEnabled(true);
 
-        //Logging.info("clicked on " + this.getClass().getSimpleName() );
-        //Logging.info("           " + appMouseEvent.getMousePosition() );
+        // Logging.info("clicked on " + this.getClass().getSimpleName() );
+        // Logging.info(" " + appMouseEvent.getMousePosition() );
 
-        
-        setOffset( calcOffset(appMouseEvent.getMousePosition()));
+        setOffset(calcOffset(appMouseEvent.getMousePosition()));
 
-        //Logging.info("  offset         " + this.offset );
-        
-        
-        appMouseEvent.getEventBus().raiseEvent( new HasValue.ValueChangedEvent<>(this) );
-        
-        //Logging.setEnabled(false);
-        
+        // Logging.info(" offset " + this.offset );
+
+        appMouseEvent.getEventBus().raiseEvent(new HasValue.ValueChangedEvent<>(this));
+
+        // Logging.setEnabled(false);
+
     }
 
     @Override
@@ -286,7 +306,7 @@ public class ScrollBarVertical extends BoundedComponent<ScrollBarVertical> imple
 
     @Override
     public void setParentFocusManager(FocusManager focusManager) {
-        Focusable.UTIL.setParentFocusManager(this, focusManager, (fm)-> asFocusable().setParentFocusManager(fm));
+        Focusable.UTIL.setParentFocusManager(this, focusManager, (fm) -> asFocusable().setParentFocusManager(fm));
     }
 
     Focusable meAsFocusable;
@@ -299,35 +319,35 @@ public class ScrollBarVertical extends BoundedComponent<ScrollBarVertical> imple
             return meAsFocusable;
         }
 
-        this.eventHandlerContainer = ChainedEventHandler.useChainOfResponsibilityStrategy(HasName.UTIL.getName(this)+"-chainOfResponsibility");
+        this.eventHandlerContainer = ChainedEventHandler
+                .useChainOfResponsibilityStrategy(HasName.UTIL.getName(this) + "-chainOfResponsibility");
 
+        eventHandlerContainer.appendEventHandler(new KeyInputEventHandler(Keys.UP_KEYSTROKE,
+                (te) -> handleKeyEvents && canScrollUp(te),
+                (te) -> {
+                    scrollUp(te);
+                }));
 
-        eventHandlerContainer.appendEventHandler(new KeyInputEventHandler(Keys.UP_KEYSTROKE, 
-                                                                          (te)->handleKeyEvents && canScrollUp(te),
-                                                                          (te)-> {
-                                                                              scrollUp(te);
-                                                                          }) );
+        eventHandlerContainer.appendEventHandler(new KeyInputEventHandler(Keys.DOWN_KEYSTROKE,
+                (te) -> handleKeyEvents && canScrollDown(te),
+                (te) -> {
+                    scrollDown(te);
+                }));
 
-        eventHandlerContainer.appendEventHandler(new KeyInputEventHandler(Keys.DOWN_KEYSTROKE, 
-                                                                          (te)->handleKeyEvents && canScrollDown(te),
-                                                                          (te)-> {
-                                                                              scrollDown(te);
-                                                                          }) );
-
-        eventHandlerContainer.appendEventHandler(new KeyInputEventHandler(Keys.PGUP_KEYSTROKE, 
-                (te)->handleKeyEvents && canScrollUp(te),
-                (te)-> {
+        eventHandlerContainer.appendEventHandler(new KeyInputEventHandler(Keys.PGUP_KEYSTROKE,
+                (te) -> handleKeyEvents && canScrollUp(te),
+                (te) -> {
                     pageUp(te);
-                }) );
+                }));
 
-        eventHandlerContainer.appendEventHandler(new KeyInputEventHandler(Keys.PGDN_KEYSTROKE, 
-                (te)->handleKeyEvents && canScrollDown(te),
-                (te)-> {
+        eventHandlerContainer.appendEventHandler(new KeyInputEventHandler(Keys.PGDN_KEYSTROKE,
+                (te) -> handleKeyEvents && canScrollDown(te),
+                (te) -> {
                     pagedown(te);
-                }) );
+                }));
 
         this.conditionalHandler = this.eventHandlerContainer.asConditionalEventHandler();
-        meAsFocusable = new FocusableFromParts(this, new DefaultFocusableBehaviour(),this.conditionalHandler);
+        meAsFocusable = new FocusableFromParts(this, new DefaultFocusableBehaviour(this), this.conditionalHandler);
 
         return meAsFocusable;
     }
@@ -345,9 +365,9 @@ public class ScrollBarVertical extends BoundedComponent<ScrollBarVertical> imple
             asFocusable(); // as a side-effect, asFocusable() will build eventHandlerContainer
         }
 
-        onChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, onChangeHandler, eventHandlerContainer, consumeChange);
+        onChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, onChangeHandler,
+                eventHandlerContainer, consumeChange);
 
     }
-
 
 }

@@ -6,6 +6,7 @@ import java.util.function.BiFunction;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.GetComponentAtOffset;
 import dtb.terminalIO.controlcodes.ControlCode;
+import dtb.terminalIO.controlcodes.ControlCode.BaseTextControlCode;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.TerminalScreen;
 import dtb.terminalIO.events.CPREvent;
@@ -19,6 +20,7 @@ import dtb.terminalIO.events.TerminalEvent.TYPE;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.RequestFocusEvent;
 import dtb.terminalIO.events.focus.ToFocusable;
+import dtb.terminalIO.events.keyboard.InputParserManager;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.util.Logging;
 
@@ -100,7 +102,6 @@ public class MouseEventOrchestrator {
                       // (2) now let's ask the terminal its current cursor position - we get the result
                       // in an event-handler ( HandleOnceCPREvent )
                       screen.add(ControlCode.CPR);
-                      screen.refresh();
                       te.getEventBus().appendEventHandler(new HandleOnceCPREvent((te2)->{
                           CPREvent cpr = (CPREvent) te2;
 
@@ -126,21 +127,68 @@ public class MouseEventOrchestrator {
                           }
                           //Logging.info("--------------------------------------\n\n");
                       }));
+                      screen.refresh();
 
                   }).setName("MouseEventOrchestrator:RAW:mouseTrackingEventHandler");
 
         eventBus.appendEventHandler( mouseTrackingEventHandler );
         // add enable mouse control code to screen
-        screen.add( ControlCode.ENABLE_MOUSE_TRACKING );
+        
+        enableMouseMode(screen); 
+
         // now flush to stdout
         screen.refresh();
     }
+    public static void enableMouseMode(TerminalScreen screen) {
+    	InputParserManager.enableMouseTracking(screen);
+ //   	enableMouseMode(screen, true);
+    }
 
+    public static void enableMouseMode(TerminalScreen screen, boolean useLegacyFallback) {
+        if (useLegacyFallback) {
+        	disableAllMouseModes(screen);
+            screen.add(ControlCode.SET_VT200_MOUSE);              
+            screen.add(ControlCode.ENABLE_MOUSE_TRACKING);   // 1002h
+            Logging.info("enableMouseMode : legacyMode on");
+        } else {
+        	disableAllMouseModes(screen);  // reset everything to ensure no mode lingers
+            screen.add( new BaseTextControlCode(ControlCode.escape_CHR + "[?1000h"));
+            screen.add(new BaseTextControlCode("\033[?1003h"));
+  //          screen.add(ControlCode.SET_BTN_MOTION_TRACKING);      // 1002h
+            screen.add(ControlCode.SET_SGR_EXT_MODE_MOUSE);       // 1006h
+//            screen.add(new BaseTextControlCode("\033[?1000h"));
+//            screen.add(new BaseTextControlCode("\033[?1003h"));
+//            screen.add(new BaseTextControlCode("\033[?1015h"));
+//            screen.add(new BaseTextControlCode("\033[?1006h"));
+            Logging.info("enableMouseMode : legacyMode off");
+        }        
+    }
+
+    public static void disableAllMouseModes(TerminalScreen screen) {
+    	InputParserManager.disableMouseTracking(screen);
+//        screen.add(ControlCode.DISABLE_MOUSE_DRAG_TRACKING);
+//        screen.add(ControlCode.DISABLE_BTN_MOTION_TRACKING);
+//        screen.add(ControlCode.DISABLE_MOUSE_TRACKING);
+//        screen.add(ControlCode.DISABLE_VT200_MOUSE);
+//        screen.add(ControlCode.DISABLE_SGR_EXT_MODE_MOUSE);
+//        screen.add(ControlCode.DISABLE_EXT_MODE_MOUSE);
+//        screen.add(ControlCode.DISABLE_URXVT_EXT_MODE_MOUSE);
+//        screen.add(ControlCode.DISABLE_PIXEL_POSITION_MOUSE);
+//        screen.add(ControlCode.DISABLE_X10_MOUSE);
+//        screen.add(ControlCode.DISABLE_VT200_HIGHLIGHT_MOUSE);
+//        screen.add(ControlCode.DISABLE_BTN_EVENT_MOUSE);
+//        screen.add(ControlCode.DISABLE_ANY_EVENT_MOUSE);
+//        screen.add(ControlCode.DISABLE_FOCUS_EVENT_MOUSE);
+//        screen.add(ControlCode.DISABLE_ALTERNATE_SCROLL);
+//        screen.refresh();
+//        Logging.info("disableAllMouseModes");
+    }
+    
+    
     public void disableMouseHandling()  {
 
         // disable event handlers
-        screen.add( ControlCode.DISABLE_MOUSE_TRACKING );
-        screen.refresh();
+    	disableAllMouseModes(screen);
 
         if (mouseTrackingEventHandler != null) {
 
@@ -178,24 +226,108 @@ public class MouseEventOrchestrator {
             throw new IllegalArgumentException("mainApplicationPanel null - cannot append ApplicationMouseEventHandler");
         }
 
-//        if (mouseAction == null) {
-//            mouseAction = MOUSE_ACTION.DOWN_LEFT;
-//        }
-
         ConditionalEventHandler appMouseToFocusableComponent = new ConditionalEventHandler() {
 
             public String toString() {
                 return "MouseEventOrchestrator:appMouseToFocusableComponent";
             }
             
+            
+            BiFunction<Component<?>,Boolean,Component<?>> findFocusableParent = (c, isClickableOrDraggableRequired) -> {
+                while ( c != null ) {
+                    if (ToFocusable.UTIL.isFocusable(c)) {
+                        if ( ! isClickableOrDraggableRequired ) {
+                            return c;
+                        }
+                        if (c instanceof Clickable || c instanceof Draggable) {
+                            return c;
+                        }
+                    }
+                    c = (Component<?>)c.getParentContainer();
+                }
+                return c;
+            };
+
             IS_Event_TYPE appMouseType = new IS_Event_TYPE(TYPE.APPLICATION_MOUSE);
+            
+            
+            private boolean canHandleMouseEvent(ApplicationMouseEvent appMouseEvent) {
+                MOUSE_ACTION action = appMouseEvent.getMouseAction();
+
+                // 1) Drag override: if a drag is in progress, orchestrator must see DRAG/UP
+                if (currentDraggable != null &&
+                    (action == MOUSE_ACTION.DOWN_LEFT_DRAG || action == MOUSE_ACTION.UP)) {
+                    return true;
+                }
+
+                // 2) Otherwise, orchestrator only cares about DOWN_LEFT / DRAG
+                if (action != MOUSE_ACTION.DOWN_LEFT &&
+                    action != MOUSE_ACTION.DOWN_LEFT_DRAG) {
+                    return false;
+                }
+
+                Position canvasPosition = appMouseEvent.getEventData();
+
+                Position panelOffsetOnCanvas =
+                        Component.UTIL.getCanvasOffsetFor(mainApplicationPanel);
+                if (panelOffsetOnCanvas == null) {
+                    // Panel not attached; better to say "I can't handle"
+                    return false;
+                }
+
+                Position mousePositionAdjustedForPanel =
+                        canvasPosition.offsetAdd(panelOffsetOnCanvas.negate());
+
+                Component<?> componentClicked =
+                        GetComponentAtOffset.UTIL.getComponentAtOffset(
+                                mainApplicationPanel, mousePositionAdjustedForPanel
+                        );
+
+                BiFunction<Component<?>, Boolean, Component<?>> findFocusableParent =
+                        (c, isClickableOrDraggableRequired) -> {
+                            while (c != null) {
+                                if (ToFocusable.UTIL.isFocusable(c)) {
+                                    if (!isClickableOrDraggableRequired) {
+                                        return c;
+                                    }
+                                    if (c instanceof Clickable || c instanceof Draggable) {
+                                        return c;
+                                    }
+                                }
+                                c = (Component<?>) c.getParentContainer();
+                            }
+                            return c;
+                        };
+
+                Component<?> focusCandidate = findFocusableParent.apply(componentClicked, false);
+
+                if (focusCandidate == null || !focusCandidate.isEnabled()) {
+                    return false;
+                }
+
+                // Here’s the important bit :
+                // If the only "focusable" thing is the mainApplicationPanel itself,
+                // and there's no clickable/draggable under the mouse, then *do not*
+                // claim the event. Let other ApplicationMouseEventHandlers see it
+                // (like your drawing tool).
+                if (focusCandidate == mainApplicationPanel) {
+                    Component<?> clickableOrDraggable =
+                            findFocusableParent.apply(componentClicked, true);
+                    if (clickableOrDraggable == null) {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
 
             @Override
             public EventHandler canHandle(TerminalEvent<?> te) {
-                if (appMouseType.test(te)) {
-                    return this;
+                if (!appMouseType.test(te)) {
+                    return null;
                 }
-                return null;
+                ApplicationMouseEvent ame = (ApplicationMouseEvent) te;
+                return canHandleMouseEvent(ame) ? this : null;
             }
 
             @Override
@@ -230,27 +362,26 @@ public class MouseEventOrchestrator {
                 // componentClicked - might not be a Focusable .. so go up its ancestors
                 // and find an ancestor that is focusable
 
-                BiFunction<Component<?>,Boolean,Component<?>> findFocusableParent = (c, isClickableOrDraggableRequired) -> {
-                    while ( c != null ) {
-                        if (ToFocusable.UTIL.isFocusable(c)) {
-                            if ( ! isClickableOrDraggableRequired ) {
-                                return c;
-                            }
-                            if (c instanceof Clickable || c instanceof Draggable) {
-                                return c;
-                            }
-                        }
-                        c = (Component<?>)c.getParentContainer();
-                    }
-                    return c;
-                };
+//                BiFunction<Component<?>,Boolean,Component<?>> findFocusableParent = (c, isClickableOrDraggableRequired) -> {
+//                    while ( c != null ) {
+//                        if (ToFocusable.UTIL.isFocusable(c)) {
+//                            if ( ! isClickableOrDraggableRequired ) {
+//                                return c;
+//                            }
+//                            if (c instanceof Clickable || c instanceof Draggable) {
+//                                return c;
+//                            }
+//                        }
+//                        c = (Component<?>)c.getParentContainer();
+//                    }
+//                    return c;
+//                };
 
                 componentClicked = findFocusableParent.apply(componentClicked, false);
 
-                if (componentClicked == null) {
+                if (componentClicked == null || !componentClicked.isEnabled()) {
                     return;
                 }
-                
 
                 Focusable focusableComponent = ToFocusable.UTIL.toFocusable(componentClicked);
 

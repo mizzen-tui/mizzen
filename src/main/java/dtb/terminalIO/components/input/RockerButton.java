@@ -17,7 +17,7 @@ import dtb.terminalIO.events.mouse.Clickable;
 public class RockerButton extends    AbstractComponentWrappper<ButtonBar> 
                           implements HasHotKey, 
                                      Clickable, 
-                                     HasValue<Boolean>{
+                                     SettableHasValue<Boolean>{
 
     private boolean toggleValue = false;
 
@@ -35,7 +35,7 @@ public class RockerButton extends    AbstractComponentWrappper<ButtonBar>
         super(color, new ButtonBar(color, "rockerButtonBar") {
             @Override
             public EventHandler canHandle(TerminalEvent<?> te) {
-                if (te instanceof HasValue.ValueChangedEvent) {
+                if (te instanceof HasValue.ValueChangedEvent) { // weirdness contruct here for debugging - will remove when done
                     return super.canHandle(te);
                 }
                 return super.canHandle(te);
@@ -148,6 +148,19 @@ public class RockerButton extends    AbstractComponentWrappper<ButtonBar>
         return toggleValue;
     }
 
+    public void setValue(Boolean state) {
+        this.toggleValue = state;
+        if (state) {
+            this.onButton. setButtonText("<" + this.onText+">");
+            this.offButton.setButtonText(" " + this.offText+" ");
+            //getFocusManager().setChildAsCurrentFocus(onButton, eventBus);
+        } else {
+            this.onButton. setButtonText(" " + this.onText+" ");
+            this.offButton.setButtonText("<" + this.offText+">");
+            //getFocusManager().setChildAsCurrentFocus(offButton, eventBus);
+        }
+        this.markAsDirty();
+    }
 
 
 }

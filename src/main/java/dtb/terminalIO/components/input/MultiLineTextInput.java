@@ -764,7 +764,10 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
                                            eventBus);
         // now move cursor to caret and then request a canvas update
         eventBus.appendEventHandler( new OnIdleEventEventHandler.OneTime(()-> {
-                                            Component.UTIL.requestShowCursorAtComponent(MultiLineTextInput.this, caret, eventBus);
+                                            boolean requestSent = Component.UTIL.requestShowCursorAtComponentIfAttached(MultiLineTextInput.this, caret, eventBus);
+                                            if (!requestSent) {
+                                            	return;
+                                            }
                                             MultiLineTextInput.this.markAsDirty();
                                             eventBus.raiseEvent(new RequestUpdateCanvasEvent(MultiLineTextInput.this));
                                           }

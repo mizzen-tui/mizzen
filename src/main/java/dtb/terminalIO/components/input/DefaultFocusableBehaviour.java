@@ -1,11 +1,13 @@
 package dtb.terminalIO.components.input;
 
+import java.util.function.Supplier;
+
 import dtb.terminalIO.components.ColorHiliter;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.EmptyAttributes;
+import dtb.terminalIO.components.Enabled;
 import dtb.terminalIO.components.FocusSetterToHiliteAction;
 import dtb.terminalIO.components.Hiliter;
-import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
@@ -18,10 +20,23 @@ import dtb.terminalIO.events.focus.FocusableComponentMixin;
 public class DefaultFocusableBehaviour implements FocusBehaviour  {
 
     boolean hasFocus = false;
+    Supplier<Enabled>  getEnabled = null;
 
+    public DefaultFocusableBehaviour(Supplier<Enabled>  getEnabled) {
+        this.getEnabled = getEnabled;
+    }
+
+    public DefaultFocusableBehaviour(Enabled objectThatCanBeEnabled) {
+        this.getEnabled = ()-> { return objectThatCanBeEnabled; };
+    }
+    
     @Override
     public boolean hasFocus() {
         return hasFocus;
+    }
+    
+    public boolean isEnabled() {
+        return getEnabled.get().isEnabled(); 
     }
 
     @Override
@@ -46,7 +61,7 @@ public class DefaultFocusableBehaviour implements FocusBehaviour  {
         ColorHiliter emptyColorHiliter;
 
         protected ComponentHiliterFocusableBehaviour(FocusableComponentMixin<?> component, boolean hiliteEmptyColor) {
-            super();
+            super(component);
             
             this.component = component;
             colorHiliter =  new ColorHiliter(this.component);
@@ -56,7 +71,7 @@ public class DefaultFocusableBehaviour implements FocusBehaviour  {
         }
         
         protected ComponentHiliterFocusableBehaviour(Component<?> component, boolean hiliteEmptyColor) {
-            super();
+            super(component);
             this.component = component;
             colorHiliter =  new ColorHiliter(this.component);
             if (hiliteEmptyColor) {
@@ -139,9 +154,9 @@ public class DefaultFocusableBehaviour implements FocusBehaviour  {
      * redirect all other events to the passed in ConditionalEventHandler
      */
     public static class Simple extends ComponentHiliterFocusableBehaviour implements Focusable {
-        
+
         private FocusManager parentFocusManager;
-        
+
         private ConditionalEventHandler eventHandler;
 
         public Simple(Component<?> component, ConditionalEventHandler eventHandler) {
@@ -171,7 +186,7 @@ public class DefaultFocusableBehaviour implements FocusBehaviour  {
         public EventHandler canHandle(TerminalEvent<?> te) {
             return eventHandler.canHandle(te);
         }
-        
+
         @Override
         public void handle(TerminalEvent<?> te) {
             eventHandler.handle(te);

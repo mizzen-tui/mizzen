@@ -4,7 +4,7 @@ public interface Hiliter {
 
     void hilite();
     void unHilite();
-    
+
     /***
      * A Hiliter that does nothing
      */
@@ -17,7 +17,7 @@ public interface Hiliter {
             public void unHilite() {
             }
     };
-    
+
     /**
      * Chain hilite actions 
      */
@@ -43,7 +43,7 @@ public interface Hiliter {
             h2.unHilite();
             h1.unHilite();
         }
-        
+
     }
 
 }
