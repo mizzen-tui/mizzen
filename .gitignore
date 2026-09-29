@@ -1,1 +1,17 @@
 /target/
+
+# code kept out of the library (third-party / swing experiments)
+/sandbox/
+
+# personal scratch area (ad-hoc test scripts, deploy leftovers)
+/scratch/
+
+# runtime output
+*.log
+hs_err_pid*
+
+# graal native-image reports if built outside target/native
+/reports/
+
+# eclipse per-workspace settings
+/.settings/

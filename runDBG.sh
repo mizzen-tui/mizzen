@@ -4,8 +4,6 @@
 cd $(dirname $0)
 
 CLASS_PKG=dtb.terminalIO.examples
-CLASS_NAME=${CLASS_PKG}.TabPanelTest
-#JAVA_OPTIONS="-cp ./target/dtbTerminalIO-0.0.1-SNAPSHOT.jar"
 JAVA_OPTIONS="-cp ./target/classes"
 
 if [[ "$1" == "NOCLEAR" ]] ; then
@@ -20,34 +18,18 @@ if [[ "$1" == "DEBUG" ]] ; then
    shift
 fi
 
-if [[ "$1" == bar* ]] ; then
-   export CLASS_NAME=${CLASS_PKG}.BarChartTest
+
+export PERFORMANCE_MONITORING_FLAGS=""
+
+if [[ "$1" == "PERF" ]] ; then
+   export PERFORMANCE_MONITORING_FLAGS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9010 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"
    shift
-else 
-	if [[ "$1" == border* ]] ; then
-	   export CLASS_NAME=${CLASS_PKG}.BorderedComponentTest
-	   shift
-    else
-        if [[ "$1" == compo* ]] ; then
-	       export CLASS_NAME=${CLASS_PKG}.CompositeTest
-	       shift
-	    else
-	    	if [[ "$1" == scroll* ]] ; then
-               export CLASS_NAME=${CLASS_PKG}.CompositeScrollTest
-	           shift
-	        else
-	        	if [[ -n "${1}" ]] ; then
-	        	    export CLASS_NAME=$1
-	        	    shift
-	            fi 
-	        fi
-        fi    
-	fi	
 fi
+
 
 # -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:8000
 
-java  $JAVA_OPTIONS $CLASS_NAME $@
+java  -XX:+UnlockDiagnosticVMOptions $JAVA_OPTIONS $PERFORMANCE_MONITORING_FLAGS $@
 
 
 #   java java -Xdebug -Xrunjdwp:transport=dt_socket,address=8000,server=y,suspend=y -cp ./bin/ dtb.terminalIO.BootStrapTests

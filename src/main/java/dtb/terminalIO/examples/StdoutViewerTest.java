@@ -102,12 +102,12 @@ public class StdoutViewerTest {
 
                     Button populateAgain = new Button("Medium content");
                     populateAgain.onChange((te)->{
-                        populateTask.accept("/home/dbalme/workspace/dtbTerminalIO/makeACME_lib_version.sh");
+                        populateTask.accept("pom.xml");
                     });
 
                     Button populateLarge = new Button("Large Content");
                     populateLarge.onChange((te)->{
-                        populateTask.accept("/home/dbalme/workspace/dtbTerminalIO/dtbTerminal.log");
+                        populateTask.accept("dtbTerminal.log");
                     });
 
                     Button populateMvnContent = new Button("MVN Content");
@@ -140,7 +140,7 @@ public class StdoutViewerTest {
                     populateAgain.onClick(tApp.getEventBus());
 
                     tApp.getEventBus().appendIdleEventHandler( new OnIdleEventEventHandler.OneTime((te)->{
-                        populateTask.accept("/home/dbalme/workspace/dtbTerminalIO/makeACME_lib_version.sh");
+                        populateTask.accept("pom.xml");
                     }) );
  
                     StringSpinner spinner = new StringSpinner(StringSpinner.SIMPLE_DOTS_SCROLLING);
