@@ -34,6 +34,11 @@ public abstract class AbstractImageAnimator implements ImageIterator, Dimension,
         }
         return buffer;
     }
+
+    @Override
+    public void close() {
+        // do nothing method impl to satisfy ImageIterator interface
+    }
     
     public void resize(Dimension newSize) {
         if (getSize().isSameDimension(newSize)) {

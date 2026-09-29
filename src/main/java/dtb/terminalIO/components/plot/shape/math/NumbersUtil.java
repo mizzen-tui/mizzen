@@ -5,7 +5,7 @@ public class NumbersUtil {
     
  // DegreesToRadians converts degrees to the equivalent in radians.
     // FIXME?  hmm... need to look into Math - it might already have this?
-    public static double degreesToRadians(int degrees)  {
+    public static double degreesToRadians(double degrees)  {
         if (degrees > 360) {
             degrees %= 360;
         }
@@ -14,8 +14,8 @@ public class NumbersUtil {
     
 
     // FIXME?  hmm... need to look into Math - it might already have this?
-    public static int radiansToDegrees(double radians)  {
-        int d = (int) Math.round( radians * 180 / Math.PI );
+    public static double radiansToDegrees(double radians)  {
+        double d = radians * 180 / Math.PI ;
         if (d<0) {
             d+=360;
         }

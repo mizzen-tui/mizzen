@@ -1,14 +1,32 @@
 package dtb.terminalIO.components.plot.shape;
 
+import java.util.Objects;
+
 import dtb.terminalIO.components.plot.PointPlotter;
+import dtb.terminalIO.components.plot.shape.CircleAlgorithm.CirclePlotCondition;
+import dtb.terminalIO.components.plot.shape.Ellipse.DrawEllipseAlgorithm;
 
 /**
  * Doesn't work yet.  sigh ..
  *
  */
-public class EllipsePlotter {
+public class EllipseAlgorithm implements DrawEllipseAlgorithm {
 
-    public void draw(int x, int y, int width, int height, PointPlotter plot) {
+    
+    @FunctionalInterface
+    static interface EllipsePlotCondition {
+        boolean test(int x, int y, double radius, double distance, int midX, int midY);
+        
+        default CirclePlotCondition and(CirclePlotCondition other) {
+            Objects.requireNonNull(other);
+            return (int x, int y, double radius, double distance, int midX, int midY) -> {
+                return test(x, y, radius, distance, midX, midY) && 
+                       other.test(x, y, radius, distance, midX, midY);
+                };
+        }        
+    }
+
+    public void draw(float x, float y, float width, float height, PointPlotter plot) {
         double a = width / 2d;
         double b = height / 2d;
         double c = Math.sqrt(Math.abs(Math.pow(a, 2) - Math.pow(b, 2)));

@@ -49,7 +49,8 @@ public class BrailleUtils {
 
     /**
      * A grid rectangle in relation to a component rectangle is 2 * (times) wider
-     * and 4 * taller.. This is because a grid char is 2x4 .
+     * and 4 * taller.. This is because a grid char is 2x4 . ie In a braille character you can
+     * plot 2 dots wide (X) by 4 dots high (Y)
      */
     public static Rectangle componentRectangleToGridRectangle(final Rectangle componentRectangle) {
         return new Rectangle.Delegate(componentRectangle) {
@@ -102,6 +103,17 @@ public class BrailleUtils {
         }
         return curBrailleChar &= ~braillePixelMap[rowOffset % 4][colOffset % 2];
     }
+    
+    public static Position componentPosToGridPos(Position componentPos) {
+        if (componentPos == null) {
+            return null;
+        }
+        // 1 terminal character = 2×4 braille dots
+        int gridRow = componentPos.getRow() * 4;
+        int gridCol = componentPos.getCol() * 2;
+
+        return new Position.Simple(gridRow, gridCol);
+    }    
 
     public static Comparator<int[]> brailleKeyComparator = new Comparator<int[]>() {
         @Override

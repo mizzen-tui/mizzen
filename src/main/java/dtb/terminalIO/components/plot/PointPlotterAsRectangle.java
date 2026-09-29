@@ -31,7 +31,7 @@ public class PointPlotterAsRectangle implements PointPlotter, AsRectangle2D.AsFl
         minMax.setX1(Float.MAX_VALUE);
         minMax.setY1(Float.MAX_VALUE);
         minMax.setX2(Float.MIN_VALUE);
-        minMax.setY1(Float.MIN_VALUE);
+        minMax.setY2(Float.MIN_VALUE);
     }
 
     public PointPlotterAsRectangle(Float2D initialSize) {
@@ -60,7 +60,7 @@ public class PointPlotterAsRectangle implements PointPlotter, AsRectangle2D.AsFl
         minMax.setX1(Float.MAX_VALUE);
         minMax.setY1(Float.MAX_VALUE);
         minMax.setX2(Float.MIN_VALUE);
-        minMax.setY1(Float.MIN_VALUE);
+        minMax.setY2(Float.MIN_VALUE);
     }
 
 

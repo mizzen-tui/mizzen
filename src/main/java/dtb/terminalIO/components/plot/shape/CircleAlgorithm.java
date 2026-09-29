@@ -1,8 +1,11 @@
 package dtb.terminalIO.components.plot.shape;
 
 import java.util.Comparator;
+import java.util.Objects;
+import java.util.function.Predicate;
 
 import dtb.terminalIO.components.plot.PointPlotter;
+import dtb.terminalIO.components.plot.PointPlotter.PointPlot;
 import dtb.terminalIO.components.plot.shape.Circle.DrawCircleAlgorithm;
 import dtb.terminalIO.components.plot.shape.math.TrigUtil;
 import dtb.terminalIO.geom.position.Position;
@@ -13,13 +16,43 @@ import dtb.terminalIO.geom.position.Position;
 public class CircleAlgorithm implements DrawCircleAlgorithm {
     
     @FunctionalInterface
-    static interface PlotCondition {
-        boolean test(int x, int y, double radius, double distance);
+    static interface CirclePlotCondition {
+        boolean test(int x, int y, double radius, double distance, int midX, int midY);
+        
+        default CirclePlotCondition and(CirclePlotCondition other) {
+            Objects.requireNonNull(other);
+            return (int x, int y, double radius, double distance, int midX, int midY) -> {
+                return test(x, y, radius, distance, midX, midY) && 
+                       other.test(x, y, radius, distance, midX, midY);
+                };
+        }        
     }
     
-    private PlotCondition plotCondition;
+    static class CirclePlotConditionDelegate implements CirclePlotCondition {
+        CirclePlotCondition delegate;
 
-    public CircleAlgorithm(PlotCondition plotCondition) {
+        public CirclePlotConditionDelegate(CirclePlotCondition delegate) {
+            super();
+            this.delegate = delegate;
+        }
+
+        public CirclePlotCondition getDelegate() {
+            return delegate;
+        }
+
+        public void setDelegate(CirclePlotCondition delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public boolean test(int x, int y, double radius, double distance, int midX, int midY) {
+            return delegate.test(x, y, radius, distance, midX, midY);
+        }
+    }
+
+    private CirclePlotCondition plotCondition;
+
+    public CircleAlgorithm(CirclePlotCondition plotCondition) {
         super();
         this.plotCondition = plotCondition;
     }
@@ -27,26 +60,27 @@ public class CircleAlgorithm implements DrawCircleAlgorithm {
     public CircleAlgorithm(boolean filled) {
         super();
         if (filled) {
-            plotCondition = (x, y, radius, distance)-> (compare(radius, distance, 0.5d) >= 0);
+            plotCondition = plotConditionFilled();
         } else {
-            plotCondition = (x, y, radius, distance)-> (compare(radius, distance, 0.5d) == 0);
+            plotCondition = plotConditionNotFilled();
         }
     }
-    
+
     public CircleAlgorithm() {
         this(false);
     }
 
-    public void draw(int x, int y, int radius, PointPlotter plot) {
+    public void draw(int midX, int midY, int radius, PointPlotter plot) {
         // yeah .. yeah .. seems so inefficient to scan all points in the square
         //                 but against all my better instincts .. it works pretty fast
-        for (int x1 = x - radius; x1 <= x + radius; x1++) {
-            int xDiffSquared = (x - x1)*(x - x1);
-            for (int y1 = y - radius; y1 <= y + radius; y1++) {
-                double distance = Math.sqrt(xDiffSquared + Math.pow(y - y1, 2));
-               // double distanceSquared = xDiffSquared + (y - y1)*(y - y1);
-                if (plotCondition.test(x1,y1, radius, distance))
+        for (int x1 = midX - radius; x1 <= midX + radius; x1++) {
+            int xDiffSquared = (midX - x1)*(midX - x1);
+            for (int y1 = midY - radius; y1 <= midY + radius; y1++) {
+                double distance = Math.sqrt(xDiffSquared + Math.pow(midY - y1, 2));
+                // double distanceSquared = xDiffSquared + (y - y1)*(y - y1);
+                if (plotCondition.test(x1,y1, radius, distance, midX, midY)) {
                     plot.plot(x1, y1);
+                }
             }
         }
     }
@@ -59,6 +93,104 @@ public class CircleAlgorithm implements DrawCircleAlgorithm {
             return -1;
         else
             return 1;
+    }
+
+    static int shift90(int angle) {
+        // shift 90 degrees
+        return (angle + 90) % 360;
+    }
+
+    public static class ConditionBetweenAngles implements CirclePlotCondition {
+        int startAngle;
+        int endAngle;
+        public ConditionBetweenAngles(int startAngle, int endAngle) {
+            super();
+            this.startAngle = startAngle;
+            this.endAngle = endAngle;
+        }
+
+        public boolean test(int x1, int y1, double radius, double distance, int midX, int midY) {
+            double curAngle = TrigUtil.circleAngleAtPoint(x1, y1, midX, midY);
+            if (startAngle <= endAngle) {
+                if (curAngle >= startAngle && curAngle<=endAngle) return true;
+            } else {
+                if (curAngle >= startAngle || curAngle<=endAngle) return true;
+            }
+            return false;
+        }
+    }
+
+    public static class ConditionOutsideOfAngles implements CirclePlotCondition {
+        ConditionBetweenAngles conditionBetweenAngles;
+        public ConditionOutsideOfAngles(int a1InDegrees, int a2InDegrees) {
+            super();
+            this.conditionBetweenAngles = new ConditionBetweenAngles(a1InDegrees, a2InDegrees);
+        }
+
+        public boolean test(int x1, int y1, double radius, double distance, int midX, int midY) {
+            return ! conditionBetweenAngles.test(x1, y1, radius, distance, midX, midY);
+        }
+    }
+
+    public static CirclePlotCondition plotConditionNotFilled() {
+        CirclePlotCondition plotCondition = (x, y, radius, distance, midX, midY)-> (compare(radius, distance, 0.5d) == 0);
+        return plotCondition;
+    }
+
+    public static CirclePlotCondition plotConditionFilled() {
+        CirclePlotCondition plotCondition = (x, y, radius, distance, midX, midY)-> (compare(radius, distance, 0.5d) >= 0);
+        return plotCondition;
+    }
+
+    public static CirclePlotCondition basicPlotConditionFilled(boolean filled) {
+        CirclePlotCondition plotCondition;
+        if (filled) {
+            plotCondition = plotConditionFilled();
+        } else {
+            plotCondition = plotConditionNotFilled();
+        }
+        return plotCondition;
+    }
+
+    public static CirclePlotCondition plotConditionBetweenAngles(int a1InDegrees, int a2InDegrees) {
+        return plotConditionBetweenAngles(a1InDegrees, a2InDegrees, false);
+    }
+
+    public static CirclePlotCondition plotConditionBetweenAngles(int a1InDegrees, int a2InDegrees, boolean filled) {
+        return basicPlotConditionFilled(filled).and( new ConditionBetweenAngles(a1InDegrees, a2InDegrees));
+    }
+
+    public static CirclePlotCondition plotConditionOutsideOfAngles(int a1InDegrees, int a2InDegrees) {
+        return plotConditionOutsideOfAngles(a1InDegrees, a2InDegrees, false);
+    }
+
+    public static CirclePlotCondition plotConditionOutsideOfAngles(int a1InDegrees, int a2InDegrees, boolean filled) {
+        return basicPlotConditionFilled(filled).and(new ConditionOutsideOfAngles(a1InDegrees, a2InDegrees));
+    }
+
+    public static CirclePlotCondition plotConditionNotIntersectingOther(Circle other, boolean filled) {
+        CirclePlotCondition baseCondition = basicPlotConditionFilled(filled);
+        CirclePlotCondition intersectCondition = basicPlotConditionFilled(true);
+        CirclePlotCondition plotCondition = (x, y, radius, distance, midX, midY)-> {
+            if ( ! baseCondition.test(x, y, radius, distance, midX, midY)) {
+                return false;
+            }
+            double otherRadius = other.getPositionTransform() != null
+                                                  ? other.getTransformedRadius(other.getRadius(), other.getPositionTransform())  
+                                                  : other.getRadius();
+            PointPlot otherMidPoint = other.getMidPoint();
+            if (other.getPositionTransform() != null) {
+                otherMidPoint = new PointPlot(other.getPositionTransform().transform(otherMidPoint));
+            }
+            int otherMidX = Math.round(otherMidPoint.getX());
+            int otherMidY = Math.round(otherMidPoint.getY());
+            double otherDistance = Math.sqrt(Math.pow(otherMidX - x, 2) + Math.pow(otherMidY - y, 2));
+            if (intersectCondition.test(x, y, otherRadius, otherDistance, otherMidX, otherMidY)) {
+                return false;
+            }
+            return true;
+        };
+        return plotCondition;
     }
 
     /**
@@ -118,12 +250,11 @@ public class CircleAlgorithm implements DrawCircleAlgorithm {
      * 
      */
     public static class DonutCircleAlgorithm implements DrawCircleAlgorithm {
-        
+
         boolean filled;
         Integer startAngle;
         Integer endAngle;
-        
-        
+
         public DonutCircleAlgorithm(boolean filled) {
             this.filled = filled;
         }
@@ -135,7 +266,7 @@ public class CircleAlgorithm implements DrawCircleAlgorithm {
         public DonutCircleAlgorithm(int endAngle) {
             setAngle(endAngle);
         }
-        
+
         public DonutCircleAlgorithm setAngle(int endAngle) {
             return setAngles(0, endAngle);
         }
@@ -156,17 +287,17 @@ public class CircleAlgorithm implements DrawCircleAlgorithm {
             this.filled = true;
             return this;
         }
-        
+
         private void checkAngle(int angle) {
             if (angle<0 || angle > 360) throw new IllegalArgumentException("angle of range! "+angle+ " not in ( 0 .. 360 )");
         }
-        
-        public void draw(int x, int y, int outerRadius, PointPlotter plot) {
+
+        public void draw(int midX, int midY, int outerRadius, PointPlotter plot) {
 
             float innerRadius = outerRadius/2;
-            PlotCondition plotCondition;
+            CirclePlotCondition plotCondition;
             if (filled) {
-                plotCondition = (x1, y1, radius, distance) -> {
+                plotCondition = (x1, y1, radius, distance, centerX, centerY) -> {
                     return  compare(radius, distance, 0.5d) >= 0 &&
                             compare(innerRadius, distance, 0.5d) <= 0;
                 };
@@ -175,11 +306,11 @@ public class CircleAlgorithm implements DrawCircleAlgorithm {
                     if (startAngle == null) {
                         startAngle = 0;
                     }
-                    plotCondition = (x1, y1, radius, distance) -> {
+                    plotCondition = (x1, y1, radius, distance, centerX, centerY) -> {
                         boolean inDonut =   (compare(radius, distance, 0.5d) >= 0 &&
                                              compare(innerRadius, distance, 0.5d) <= 0);
                         if (!inDonut) return false;
-                        int curAngle = TrigUtil.circleAngleAtPoint(x1, y1, x, y);
+                        double curAngle = TrigUtil.circleAngleAtPoint(x1, y1, centerX, centerY);
                         if (startAngle <= endAngle) {
                             if (curAngle >= startAngle && curAngle<=endAngle) return true;
                         } else {
@@ -190,18 +321,18 @@ public class CircleAlgorithm implements DrawCircleAlgorithm {
                 }
                 
             } else {
-                plotCondition = (x1, y1, radius, distance) -> {
+                plotCondition = (x1, y1, radius, distance, centerX, centerY) -> {
                      return compare(radius, distance, 0.5d) == 0 ||
                             compare(innerRadius, distance, 0.5d) == 0;
                 };
             }
             CircleAlgorithm plotter = new CircleAlgorithm(plotCondition);
-            plotter.draw(x, y, outerRadius, plot);
+            plotter.draw(midX, midY, outerRadius, plot);
         }
 
     }
-    
-    
+
+
     public static class CircleClockwise_SORT implements Comparator<Position> {
 
         int center_x;

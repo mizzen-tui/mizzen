@@ -96,6 +96,12 @@ public class ImageSplitter implements ImageIterator {
         return subImage;
     }
 
+    @Override
+    public void close() {
+       // NOOP
+    }
+
+
     public static void main(String[] args) throws Exception {
         
 //        if (args.length == 0) {

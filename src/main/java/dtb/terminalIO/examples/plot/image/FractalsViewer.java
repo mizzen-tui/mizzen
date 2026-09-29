@@ -71,6 +71,9 @@ public class FractalsViewer {
                                                                     @Override
                                                                     public BufferedImage next() {
                                                                         return FractalGenerator.makeFractalImage();
+                                                                    }
+                                                                    @Override
+                                                                    public void close() {
                                                                     }}, 
                                                                  imgSize, 
                                                                  tApp.getEventBus(),

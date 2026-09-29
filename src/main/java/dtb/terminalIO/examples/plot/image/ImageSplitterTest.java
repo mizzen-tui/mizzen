@@ -47,19 +47,22 @@ public class ImageSplitterTest {
            .confirmOnExit()
            .setOnReadyStart((tApp)->{
 
-               
-               
                int offset = 0;
-               
+
                for (String imgFilePath : imgFilePathes) {
                    ImageIterator imageIterator;
-                   
+
                    try {
+                   File imgFILE = new File(imgFilePath);
+                   if (! imgFILE.exists()) {
+                        throw new IOException(imgFilePath + " not found");
+                   }
+  
                    BufferedImage image = ImageIO.read(new File(imgFilePath));
 
                    int imageWidth = image.getWidth();
                    int imageHeight = image.getHeight();
-                   
+
                    float widthToHeightRatio = ((float)imageWidth)/ ((float)imageHeight);
 
                    Dimension imgSize = new Dimension.Simple(termsize.getHeight()-8, Math.min((int)((termsize.getHeight()-4)*widthToHeightRatio)*2, termsize.getWidth()-40));
@@ -80,7 +83,7 @@ public class ImageSplitterTest {
                        imageIterator = new ImageSplitter(NotNull(imageRequest, "Image spec's not defined").getImageToView(), 
                                                          NotNull(offsets, "Image offset's not defined"), 
                                                          image_height, 
-                                                         image_width);
+                                                    +     image_width);
                    }
                    
                    MovingPicturesViewer movingPicturesViewer = new MovingPicturesViewer(Colors.DEFAULT_COLOR, imageIterator, imageRequest); 

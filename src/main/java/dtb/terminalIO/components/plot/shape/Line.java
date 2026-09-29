@@ -3,6 +3,9 @@ package dtb.terminalIO.components.plot.shape;
 import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.components.plot.shape.Shape.AbstractShape;
 import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.geom.Dimension;
+import dtb.terminalIO.geom.Rectangle;
+import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.geom.position.PositionTransform;
 import dtb.terminalIO.geom.position.Vec2;
 
@@ -109,4 +112,10 @@ public class Line extends AbstractShape<Line> {
 
     }
 
+    public Rectangle asRectangle() {
+        Position p1 = new Position.Simple(y1,x1);
+        Position p2 = new Position.Simple(y2,x2);
+        return new Rectangle.Simple(p1, Dimension.ZERO)
+                   .mergeAndExpandDimensionsWith(p2);
+    }
 }

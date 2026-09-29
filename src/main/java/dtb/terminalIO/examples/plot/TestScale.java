@@ -91,10 +91,10 @@ public class TestScale {
                    Position controlsInGridPosition = PositionRelativeFactory.fromAlign(VAlign.BOTTOM, 3, Align.LEFT, 0,  grid, controlsInGrid);
 
                    grid.add(controlsInGridPosition, controlsInGrid);
-                   grid.onClickHandler = (te) -> {
-                       ApplicationMouseEvent appMouseEvent = (ApplicationMouseEvent) te;
-                       MessageBox.showInfoDialog(te.getEventBus(), tApp.getMainApplicationPanel()  , "click at");
-                   };
+//                   grid.onClickHandler = (te) -> {
+//                       ApplicationMouseEvent appMouseEvent = (ApplicationMouseEvent) te;
+//                       MessageBox.showInfoDialog(te.getEventBus(), tApp.getMainApplicationPanel()  , "click at");
+//                   };
 
                    grid.setTitle(Colors.BPur, " Shape : ");
 

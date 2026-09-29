@@ -11,11 +11,11 @@ import dtb.terminalIO.geom.position.Vec2;
 
 /**
  * Draws a circle {@link Shape}
- * 
+ *
  * <pre>
  * 
  *  ASCII ( non braille ) rendering of a circle
- * 
+ *
  *             ._/-----__ 
  *         ./r+`         -*c_
  *       *r`                 \\.
@@ -74,7 +74,7 @@ public class Circle extends AbstractShape<Circle> implements Fillable<Circle>, A
     public static interface DrawCircleAlgorithm {
         void draw(int x, int y, int radius, PointPlotter plot);
     }
-    
+
     public static class CompositeAlgo implements DrawCircleAlgorithm {
 
         DrawCircleAlgorithm algo1;
@@ -106,19 +106,28 @@ public class Circle extends AbstractShape<Circle> implements Fillable<Circle>, A
         this.radius = radius;
         this.algorithm = new CircleAlgorithm();
     }
-    
+
     public Circle(int x, int y, int radius) { 
         this((float)x, (float) y, (float) radius);
     }
-    
-    public Circle(PointPlot middle, int radius) {
+
+    public Circle(PointPlot middle, float radius) {
         this(middle.x, middle.y, radius);
     }
 
-    public Circle(PointPlot middle, int radius, Color color) {
+    public Circle(PointPlot middle, float radius, Color color) {
         this(middle.x, middle.y, radius);
         this.color = color;
     }
+
+    public Circle(float x, float y, float radius, Color color) {
+        this.x = x;
+        this.y = y;
+        this.radius = radius;
+        this.color = color;
+        this.algorithm = new CircleAlgorithm();
+    }
+
 
     public Circle(int x, int y, int radius, Color color) {
         this.x = x;
@@ -132,7 +141,7 @@ public class Circle extends AbstractShape<Circle> implements Fillable<Circle>, A
         this.algorithm = algorithm;
         return this;
     }
-    
+
     public Circle setFilled(boolean filled) {
         // assume simple circle .. might need to fix this to be smarter
         return setAlgorithm(new CircleAlgorithm(filled));
@@ -179,14 +188,14 @@ public class Circle extends AbstractShape<Circle> implements Fillable<Circle>, A
 
         Vec2<?> center00 = new Vec2.BaseVec2(0,0);
         Vec2<?> radiusVec = new Vec2.BaseVec2(0,currentRadius);
-        
+
         float prevRadiusSquared = currentRadius * currentRadius;
-        
+
         Vec2<?> transFormedCenter00 = positionTransform.transform(center00);
         Vec2<?> transFormedRadiusVec = positionTransform.transform(radiusVec);
-        
+
         float newRadiusSquared =  transFormedRadiusVec.sub(transFormedCenter00) .lengthSquared();
-        
+
         if (prevRadiusSquared != newRadiusSquared) {
             scaledRadius = (float)Math.sqrt( newRadiusSquared );
         } else {
@@ -195,7 +204,7 @@ public class Circle extends AbstractShape<Circle> implements Fillable<Circle>, A
 
         return scaledRadius;
     }
-    
+
     protected void drawWithTransform(PointPlotter pointPlotter, PositionTransform positionTransform) {
         Color lastColor = null;
         if (color != null) {
@@ -206,7 +215,10 @@ public class Circle extends AbstractShape<Circle> implements Fillable<Circle>, A
 
         float scaledRadius = getTransformedRadius(radius, positionTransform);
 
-        this.algorithm.draw(Math.round(centerPoint.getX()), Math.round(centerPoint.getY()), Math.round(scaledRadius), pointPlotter);
+        this.algorithm.draw(Math.round(centerPoint.getX()), 
+                            Math.round(centerPoint.getY()), 
+                            Math.round(scaledRadius), 
+                            pointPlotter);
 
         if (color != null) {
             pointPlotter.setNextPlotColor(lastColor);

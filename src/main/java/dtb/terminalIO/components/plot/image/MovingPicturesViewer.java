@@ -7,7 +7,6 @@ import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.ImageRenderRequest;
 import dtb.terminalIO.components.plot.image.animate.ImageAnimatorComponent;
 import dtb.terminalIO.components.plot.image.animate.ImageIterator;
-import dtb.terminalIO.components.plot.image.animate.ImageIterator.CombinedImageIterator;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.EventBus;
@@ -18,7 +17,7 @@ import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.geom.position.PositionRelativeFactory;
 
 public class MovingPicturesViewer extends AbstractWrappedComponentWithFocusManager<Composite> 
-      implements HasTitleAndBorder<MovingPicturesViewer> {
+      implements HasTitleAndBorder<MovingPicturesViewer>, AutoCloseable  {
 
     ChainedEventHandler chainedEventHandler;
     ImageAnimatorComponent animatorComponent;
@@ -37,7 +36,8 @@ public class MovingPicturesViewer extends AbstractWrappedComponentWithFocusManag
 
         Component<?> popupImageControlsButton = ImageManipulationControls.popupOnClick("Options", rqst, imageViewer, chainedEventHandler, null);
 
-        animatorComponent = new ImageAnimatorComponent(color, rqst,  CombinedImageIterator.wrapWithCombinedImageIterator(imageIterator), rqst.getDesiredImgSizeInCharacters());
+        //animatorComponent = new ImageAnimatorComponent(color, rqst,  CombinedImageIterator.wrapWithCombinedImageIterator(imageIterator), rqst.getDesiredImgSizeInCharacters());
+        animatorComponent = new ImageAnimatorComponent(color, rqst,  imageIterator, rqst.getDesiredImgSizeInCharacters());
 
         //imageViewer.setComponent(animatorComponent);
 
@@ -102,6 +102,9 @@ public class MovingPicturesViewer extends AbstractWrappedComponentWithFocusManag
         return imageViewer.getTitle();
     }
     
-    
+    @Override
+    public void close() {
+        animatorComponent.close();
+    }    
 
 }

@@ -3,12 +3,6 @@ package dtb.terminalIO.components.plot.shape;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import dtb.terminalIO.components.plot.PointPlotter;
-import dtb.terminalIO.geom.AsRectangle2D;
-import dtb.terminalIO.geom.Rectangle2D;
-import dtb.terminalIO.geom.position.PositionTransform;
-import dtb.terminalIO.traverse.HasChildren;
-
 /**
  * A {@link Shape} that contains multiple shapes
  * 

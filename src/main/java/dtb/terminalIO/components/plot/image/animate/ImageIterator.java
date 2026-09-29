@@ -6,38 +6,46 @@ import java.util.Iterator;
 
 import dtb.terminalIO.components.plot.image.ImageRectangleAdapter;
 
-public interface ImageIterator extends Iterator<BufferedImage> {
+public interface ImageIterator
+        extends Iterator<BufferedImage>, AutoCloseable {
 
-    /***
-     * An image iterator that merges the previously rendered image with the current image.
-     * 
-     * <p/>
-     * 
-     * Why do this?
-     * 
-     * <p/>
-     * 
-     * Useful when iterating over the images embedded in a GIF.  Quite often the images in a GIF do not
-     * have the full image on the 2nd 3rd and nth image - but rather only store the pixels that have changed
-     * This feature, though nice for memory preservation does not help with rendering.  Hence the need to merge images
-     * to get the full pixels on every image iteration
-     * 
-     * @author dbalme
+    /*
+     * Narrow AutoCloseable.close().
      *
+     * Implementations deal with any checked cleanup exceptions internally,
+     * so users of ImageIterator do not have to catch Exception merely to
+     * close an image sequence.
      */
-    static public class  CombinedImageIterator implements ImageIterator {
-        private final Iterator<BufferedImage> originalIterator;
+    @Override
+    void close();
+
+
+    /**
+     * An image iterator that merges the previously rendered image with
+     * the current image.
+     *
+     * NOTE:
+     *
+     * AnimatedGifImageIterator no longer needs this wrapper. GIF frame
+     * composition is handled internally by AnimatedGifImageIterator,
+     * where frame offsets and disposal methods are available.
+     */
+    public static class CombinedImageIterator implements ImageIterator {
+
+        private final ImageIterator originalIterator;
         private BufferedImage previousImage;
 
+        public static CombinedImageIterator wrapWithCombinedImageIterator(
+                ImageIterator originalIterator) {
 
-        public static CombinedImageIterator wrapWithCombinedImageIterator(ImageIterator originalIterator) {
             if (originalIterator instanceof CombinedImageIterator) {
                 return (CombinedImageIterator) originalIterator;
             }
+
             return new CombinedImageIterator(originalIterator);
         }
 
-        public CombinedImageIterator(Iterator<BufferedImage> originalIterator) {
+        public CombinedImageIterator(ImageIterator originalIterator) {
             this.originalIterator = originalIterator;
         }
 
@@ -48,33 +56,45 @@ public interface ImageIterator extends Iterator<BufferedImage> {
 
         @Override
         public BufferedImage next() {
+
             BufferedImage currentImage = originalIterator.next();
 
             if (previousImage != null) {
-                // Create a new BufferedImage that combines the previous and current images
-                
-                ImageRectangleAdapter previouseIMGSize = new ImageRectangleAdapter(previousImage);
-                
-                BufferedImage combinedImage = new BufferedImage(previouseIMGSize.getWidth(), previouseIMGSize.getHeight(), BufferedImage.TYPE_INT_ARGB);
+
+                ImageRectangleAdapter previousIMGSize =
+                    new ImageRectangleAdapter(previousImage);
+
+                BufferedImage combinedImage =
+                    new BufferedImage(
+                        previousIMGSize.getWidth(),
+                        previousIMGSize.getHeight(),
+                        BufferedImage.TYPE_INT_ARGB);
+
                 Graphics g = combinedImage.getGraphics();
 
-                // Draw the previous image
-                g.drawImage(previousImage, 0, 0, null);
+                try {
+                    g.drawImage(previousImage, 0, 0, null);
+                    g.drawImage(currentImage, 0, 0, null);
+                } finally {
+                    g.dispose();
+                }
 
-                // Draw the current image on top of it
-                g.drawImage(currentImage, 0, 0, null);
-                // The combined image becomes the "previous" image for the next iteration
                 previousImage = combinedImage;
+
                 return combinedImage;
+
             } else {
-                // The first image becomes the "previous" image for the next iteration
+
                 previousImage = currentImage;
 
                 return currentImage;
             }
         }
-        
+
+        @Override
+        public void close() {
+            previousImage = null;
+            originalIterator.close();
+        }
     }
-
-
 }

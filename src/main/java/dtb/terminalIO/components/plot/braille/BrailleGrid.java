@@ -18,7 +18,7 @@ import dtb.terminalIO.textsegments.CleanString;
 
 
 // TODO:   Dont extend composite (too slow)..  change and then optimize draw() method
-public class BrailleGrid extends Composite implements Clickable, PointPlotter {
+public class BrailleGrid extends Composite implements PointPlotter {
 
     Plotter plotter;
     Rectangle gridRectangle;
@@ -202,24 +202,24 @@ public class BrailleGrid extends Composite implements Clickable, PointPlotter {
     public void clearPlots() {
         this.plotter.clearPlots();
     }
-
-    @Override
-    public void onClick(EventBus eventBus) {
-        // TODO Auto-generated method stub
-        
-    }
-    
-    public EventHandler onClickHandler = null;
-    
-    public void onClick(ApplicationMouseEvent appMouseEvent) {
-        if (MOUSE_ACTION.DOWN_LEFT.equals(appMouseEvent.getMouseAction())) {
-            if (onClickHandler != null) {
-                onClickHandler.handle(appMouseEvent);
-            } else {
-                onClick( appMouseEvent.getEventBus());
-            }
-        }
-    }
+//
+//    @Override
+//    public void onClick(EventBus eventBus) {
+//        // TODO Auto-generated method stub
+//        
+//    }
+//    
+//    public EventHandler onClickHandler = null;
+//    
+//    public void onClick(ApplicationMouseEvent appMouseEvent) {
+//        if (MOUSE_ACTION.DOWN_LEFT.equals(appMouseEvent.getMouseAction())) {
+//            if (onClickHandler != null) {
+//                onClickHandler.handle(appMouseEvent);
+//            } else {
+//                onClick( appMouseEvent.getEventBus());
+//            }
+//        }
+//    }
 
     @Override
     public void plot(float x, float y) {

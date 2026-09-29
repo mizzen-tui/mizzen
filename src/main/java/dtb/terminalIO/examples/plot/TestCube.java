@@ -4,128 +4,257 @@ import java.io.IOException;
 
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.AbstractWrappedComponentWithFocusManager;
+import dtb.terminalIO.components.ClickableDraggableComponentWrapper;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.composite.VerticalPanel;
+import dtb.terminalIO.components.input.DropdownListBox;
 import dtb.terminalIO.components.input.FloatInputWithIncrDecrButtons;
 import dtb.terminalIO.components.input.HasValue;
+import dtb.terminalIO.components.input.RockerButton;
 import dtb.terminalIO.components.input.TextInputFloat;
+import dtb.terminalIO.components.plot.PathPlotter;
+import dtb.terminalIO.components.plot.PathPlotter.CirclePathPlotter;
 import dtb.terminalIO.components.plot.braille.BrailleGrid;
-import dtb.terminalIO.components.plot.shape.CompositeShape;
-import dtb.terminalIO.components.plot.shape.Line;
-import dtb.terminalIO.components.plot.shape.Shape;
+import dtb.terminalIO.components.plot.braille.BrailleUtils;
+import dtb.terminalIO.components.plot.grid.DragRotate3DOnGrid;
+import dtb.terminalIO.components.plot.grid.DraggableOnGrid;
+import dtb.terminalIO.components.plot.shape.threeD.AbstractShape3D;
+import dtb.terminalIO.components.plot.shape.threeD.Cube3D;
+import dtb.terminalIO.components.plot.shape.threeD.Sphere3D;
+import dtb.terminalIO.components.plot.shape.threeD.projection.Plot2D;
+import dtb.terminalIO.components.plot.shape.threeD.projection.Plot2DFromProjection;
+import dtb.terminalIO.components.plot.shape.threeD.projection.Plot2DSimple;
+import dtb.terminalIO.components.scroll.ScrollBarHorizontal;
+import dtb.terminalIO.components.scroll.ScrollBarVertical;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.OnIdleEventEventHandler.RepeatingInterval;
+import dtb.terminalIO.events.RequestUpdateCanvasEvent;
+import dtb.terminalIO.events.mouse.Draggable;
 import dtb.terminalIO.geom.Dimension;
-import dtb.terminalIO.geom.position.Vec2;
+import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.geom.position.Vec3;
 import dtb.terminalIO.geom.position.Vec3.BaseVec3;
-import dtb.terminalIO.geom.position.Vec3.Plot2D;
-import dtb.terminalIO.geom.position.Vec3.Plot2DFromProjection;
-import dtb.terminalIO.geom.position.Vec3.Plot2DSimple;
+import dtb.terminalIO.util.Logging;
 
 public class TestCube {
 
     public static void main(String[] args) throws IOException {
-        
+
+        Logging.setEnabled(true);
+
         new TUIApp(args)
-               .setEmptyChar(' ')
-               .setDefaultMainApplicationPanel()
-               .confirmOnExit()
-               .setOnReadyStart((tApp)->{
-                   Dimension gridSize = new Dimension.Simple(tApp.getMainApplicationPanel().getHeight()-5,
-                                                             tApp.getMainApplicationPanel().getWidth()-10);
+                .setEmptyChar(' ')
+                .setDefaultMainApplicationPanel()
+                .confirmOnExit()
+                .setOnReadyStart((tApp) -> {
 
-                   VerticalPanel vpMainPanel = new VerticalPanel().setVerticalSpacer(2);
+                    float initialCubeDistanceFromCamera = 50f;
 
-                   BrailleGrid grid = new BrailleGrid(Colors.BGre, gridSize);
+                    Dimension gridSize = new Dimension.Simple(
+                            tApp.getMainApplicationPanel().getHeight() - 7,
+                            tApp.getMainApplicationPanel().getWidth() - 12);
 
-                   vpMainPanel.add(grid);
+                    VerticalPanel vpMainPanel = new VerticalPanel().setVerticalSpacer(1);
 
-                   tApp.getMainApplicationPanel().add(vpMainPanel);
+                    BrailleGrid grid = new BrailleGrid(Colors.BGre, gridSize);
+                    // Cube3D cube3D = new Cube3D(50, Vec3.ZERO, Colors.BYel, Colors.BBlu);
+                    // Sphere3D sphere3D = new Sphere3D(30, Vec3.ZERO, 15, Colors.IYel);
+                    Cube3D cube3D = new Cube3D(50, new Vec3.BaseVec3(-60, 0, 0), Colors.BYel, Colors.BBlu);
+                    Sphere3D sphere3D = new Sphere3D(30, new Vec3.BaseVec3(60, 0, 0), 15, Colors.IYel);
 
-                   Cube cube3D = new Cube();
+                    AbstractShape3D<?> activeShape[] = new AbstractShape3D<?>[]{cube3D};
 
-                   Plot2DConfigFormProjection plot2DInputForm = new Plot2DConfigFormProjection(grid.getColor());
-                   vpMainPanel.add(plot2DInputForm);
+                    Plot2DConfigFormProjection plot2DInputForm = new Plot2DConfigFormProjection(grid.getColor());
 
-                   plot2DInputForm.onChange((te)-> {
-                                                    grid.clearPlots();
-                                                    cube3D.as2DShape(plot2DInputForm.getValue()).draw(grid.asPointPlotter());
-                                                   } );
+                    Plot2DFromProjection projection = (Plot2DFromProjection) plot2DInputForm.getValue();
 
-                   cube3D.as2DShape(plot2DInputForm.getValue()).draw(grid.asPointPlotter());
+                    projection.setDistance(initialCubeDistanceFromCamera);
 
+                    projection.setWindowSize(
+                            grid.getGridRectangle().getWidth(),
+                            grid.getGridRectangle().getHeight());
+                    projection.setPanX(0);
+                    projection.setPanY(0);
+                    plot2DInputForm.refreshFromProjection();
 
-               }).start();
+                    DropdownListBox<String> shapeChoice = DropdownListBox.fromStrings(new String[]{"Cube", "Sphere", "Both"});
+                    final boolean[] showBoth = { false }; 
+
+                    Runnable redrawShape = () -> {
+                        grid.clearPlots();
+                        activeShape[0].  as2DShape(projection).draw(grid.asPointPlotter());
+                        tApp.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(vpMainPanel));
+
+                        grid.clearPlots();
+                        if (showBoth[0]) {
+                            cube3D.as2DShape(projection).draw(grid.asPointPlotter());
+                            sphere3D.as2DShape(projection).draw(grid.asPointPlotter());
+                        } else {
+                            AbstractShape3D<?> s = shapeChoice.getValue().equals("Cube") ? cube3D : sphere3D;
+                            s.as2DShape(projection).draw(grid.asPointPlotter());
+                        }
+                        tApp.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(vpMainPanel));
+
+                    };
+
+                    DraggableOnGrid rotateOnGrid = new DragRotate3DOnGrid(
+                            projection,
+                            (p, position) -> {
+                                // update controls with update project values
+                                plot2DInputForm.refreshFromProjection();
+                                // tell screen to redraw
+                                redrawShape.run();
+                            });
+
+                    Draggable mouseXYToGridXYDraggableBehaviour = new DraggableOnGrid.AsOnMouseMoveDraggableAdapter(
+                            rotateOnGrid,
+                            grid::getGridRectangle,
+                            mousePos -> BrailleUtils.componentPosToGridPos(mousePos));
+
+                    ClickableDraggableComponentWrapper draggableGrid = new ClickableDraggableComponentWrapper(
+                            grid.getColor(), grid);
+
+                    draggableGrid.setDraggable(mouseXYToGridXYDraggableBehaviour);
+
+                    int maxPanX = grid.getGridRectangle().getWidth() / 2;
+                    int maxPanY = grid.getGridRectangle().getHeight() / 2;
+
+                    Dimension viewerSize = new Dimension.Simple(
+                            grid.getGridRectangle().getHeight(),
+                            grid.getGridRectangle().getWidth());
+
+                    Dimension virtualPanSize = new Dimension.Simple(
+                            viewerSize.getHeight() + (2 * maxPanY),
+                            viewerSize.getWidth() + (2 * maxPanX));
+
+                    Position centerPanOffset = new Position.Simple(maxPanY, maxPanX);
+
+                    ScrollBarHorizontal panXScroll = new ScrollBarHorizontal(grid.getColor(), 0, 0,
+                            gridSize.getWidth() - 2);
+
+                    ScrollBarVertical panYScroll = new ScrollBarVertical(grid.getColor(), 0, 0,
+                            gridSize.getHeight() - 2);
+
+                    panXScroll.setViewedSize(virtualPanSize, viewerSize);
+                    panYScroll.setViewedSize(virtualPanSize, viewerSize);
+
+                    panXScroll.setOffset(centerPanOffset);
+                    panYScroll.setOffset(centerPanOffset);
+
+                    panXScroll.onChange((te) -> {
+                        Position offset = panXScroll.getValue();
+
+                        float panX = maxPanX - offset.getCol();
+
+                        projection.setPanX(panX);
+                        redrawShape.run();
+                    });
+
+                    panYScroll.onChange((te) -> {
+                        Position offset = panYScroll.getValue();
+
+                        float panY = maxPanY - offset.getRow();
+
+                        projection.setPanY(panY);
+                        redrawShape.run();
+                    });
+
+                    HorizontalPanel gridAndVerticalPan = new HorizontalPanel().setHorizontalSpacer(1);
+
+                    gridAndVerticalPan.add(draggableGrid);
+
+                    VerticalPanel vpForPanY = new VerticalPanel().addText("^");
+                    vpForPanY.add(panYScroll);
+                    vpForPanY.addText("v");
+                    gridAndVerticalPan.add(vpForPanY);
+
+                    vpMainPanel.add(gridAndVerticalPan);
+
+                    HorizontalPanel hpPanX = new HorizontalPanel().addText("<");
+                    hpPanX.add(panXScroll);
+                    hpPanX.addText(">");
+                    vpMainPanel.add(hpPanX);
+
+                    boolean[] simulationActive = new boolean[] { true };
+                    PathPlotter pp = new CirclePathPlotter(maxPanX, maxPanX, 300);
+
+                    // tApp.getEventBus().appendIdleEventHandler(new RepeatingInterval(100, (te) -> {
+                    //     if (!simulationActive[0]) {
+                    //         return;
+                    //     }
+                    //     Position position = pp.nextPosition(15);
+                    //     // simulate mouse drag (sort-of)
+                    //     rotateOnGrid.onDrag(position, grid.getGridRectangle());
+                    //     // update screen
+                    //     redrawShape.run();
+                    // }));
+
+                    tApp.getEventBus().appendIdleEventHandler(new RepeatingInterval(100, (te) -> {
+                        if (!simulationActive[0]) return;
+                        
+                        // Rotate the objects locally
+                        cube3D.setRotX(cube3D.getRotX() + 0.1f);
+                        sphere3D.setRotY(sphere3D.getRotY() + 0.1f);
+                        
+                        redrawShape.run();
+                    }));                    
+
+                    RockerButton simulationToggle = new RockerButton(grid.getColor(), "Simulation", "START", "STOP",
+                            true);
+
+                    Runnable startStopSimulation = () -> {
+                        if (simulationToggle.getValue()) {
+                            simulationActive[0] = true;
+                        } else {
+                            simulationActive[0] = false;
+
+                        }
+                    };
+
+                    simulationToggle.onChange((te) -> {
+                        startStopSimulation.run();
+                    });
+
+                    shapeChoice.setValue("Cube");
+
+                    // 3. Update Dropdown logic
+                    shapeChoice.onChange((te) -> {
+                        String choice = shapeChoice.getValue();
+                        showBoth[0] = choice.equals("Both");
+                        redrawShape.run();
+                    });
+
+                    plot2DInputForm.onChange((te) -> {
+                        simulationToggle.setValue(false);
+                        redrawShape.run();
+                    });
+
+                    HorizontalPanel controlsPanel = new HorizontalPanel().setHorizontalSpacer(2);
+                    controlsPanel.add(plot2DInputForm);
+                    controlsPanel.add(simulationToggle);
+                    controlsPanel.add(shapeChoice);
+
+                    vpMainPanel.add(controlsPanel);
+
+                    tApp.getMainApplicationPanel().add(vpMainPanel);
+
+                    redrawShape.run();
+
+                }).start();
     }
 
-    public static class Cube {
-        int size = 50; 
-        Vec3<?> ulf, urf, llf, lrf; // upper left front, upper right front, usw..
-        Vec3<?> ulb, urb, llb, lrb; // upper left back ,...
-
-        public Cube(int size, Vec3<?> position3D) {
-
-            // define back panel
-            ulb = new BaseVec3(position3D.getX(), position3D.getY() , position3D.getZ() - size);
-            urb = new BaseVec3(position3D.getX() + size, position3D.getY() , position3D.getZ() - size);
-            llb = new BaseVec3(position3D.getX(), position3D.getY() + size, position3D.getZ() - size);
-            lrb = new BaseVec3(position3D.getX() + size, position3D.getY() + size, position3D.getZ() - size);
-
-            // define front panel
-            ulf = new BaseVec3(position3D.getX(), position3D.getY() , position3D.getZ());
-            urf = new BaseVec3(position3D.getX() + size, position3D.getY() , position3D.getZ());
-            llf = new BaseVec3(position3D.getX(), position3D.getY() + size, position3D.getZ());
-            lrf = new BaseVec3(position3D.getX() + size, position3D.getY() + size, position3D.getZ());
-
-        }
-
-        public Cube() {
-            this(40, Vec3.ZERO);
-        }
-        
-        
-        public Shape<?> as2DShape(Plot2D as2D) {
-
-            // get the 2D equivalent points
-            Vec2<?> ulb_2D = ulb.plot2D(as2D);
-            Vec2<?> urb_2D = urb.plot2D(as2D);
-            Vec2<?> llb_2D = llb.plot2D(as2D);
-            Vec2<?> lrb_2D = lrb.plot2D(as2D);
-            
-            Vec2<?> ulf_2D = ulf.plot2D(as2D);
-            Vec2<?> urf_2D = urf.plot2D(as2D);
-            Vec2<?> llf_2D = llf.plot2D(as2D);
-            Vec2<?> lrf_2D = lrf.plot2D(as2D);
-            
-            // now make the lines add add to shape
-            
-            Shape<?> cube2D = new CompositeShape().addShape( new Line(ulb_2D, urb_2D) )   // back
-                                                  .addShape( new Line(ulb_2D, llb_2D))
-                                                  .addShape( new Line(urb_2D, lrb_2D))
-                                                  .addShape( new Line(llb_2D, lrb_2D))
-                                                  .addShape( new Line(ulf_2D, urf_2D) )   // front
-                                                  .addShape( new Line(ulf_2D, llf_2D))
-                                                  .addShape( new Line(urf_2D, lrf_2D))
-                                                  .addShape( new Line(llf_2D, lrf_2D))
-                                                  .addShape( new Line(ulf_2D, ulb_2D))    // connect front to back
-                                                  .addShape( new Line(urf_2D, urb_2D))
-                                                  .addShape( new Line(llf_2D, llb_2D))
-                                                  .addShape( new Line(lrf_2D, lrb_2D));
-            return cube2D;
-        }
-    }
-
-    static class Plot2DConfigForm extends AbstractWrappedComponentWithFocusManager<HorizontalPanel> implements HasValue<Plot2D> {
+    static class Plot2DConfigForm extends AbstractWrappedComponentWithFocusManager<HorizontalPanel>
+            implements HasValue<Plot2D> {
 
         Plot2DSimple plot2D;
 
-        Vector3DPanel  cameraInput;
+        Vector3DPanel cameraInput;
         TextInputFloat distance;
-        Vector3DPanel  anglesInput;
+        Vector3DPanel anglesInput;
 
         ChainedEventHandler chainedEventHandler;
 
@@ -143,9 +272,9 @@ public class TestCube {
 
             controlsInGrid.add(new TextComponent("Distance"));
             controlsInGrid.add(distance);
-            
+
             controlsInGrid.add(anglesInput);
-            
+
             plot2D = new Plot2DSimple();
 
             EventHandler evtHandlerBroadcastValueChanged = (te) -> {
@@ -156,39 +285,38 @@ public class TestCube {
                 plot2D.setThetaZ(anglesInput.getValue().getZ());
                 te.getEventBus().raiseEvent(new HasValue.ValueChangedEvent<Plot2D>(Plot2DConfigForm.this));
             };
-            
-            cameraInput.onChange((te)->{
+
+            cameraInput.onChange((te) -> {
                 evtHandlerBroadcastValueChanged.handle(te);
             });
-            
-            distance.onChange((te)->{
+
+            distance.onChange((te) -> {
                 if (distance.getValue() < 0.01) {
-                    distance.setText( String.valueOf( "0.01" ) );
+                    distance.setText(String.valueOf("0.01"));
                 }
                 evtHandlerBroadcastValueChanged.handle(te);
             });
 
-            anglesInput.onChange((te)->{
+            anglesInput.onChange((te) -> {
                 evtHandlerBroadcastValueChanged.handle(te);
             });
- 
+
             chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
-            setCustomExtendedEventHandler( chainedEventHandler.asConditionalEventHandler() );
+            setCustomExtendedEventHandler(chainedEventHandler.asConditionalEventHandler());
 
             registerAllFocusables();
-            
 
         }
-
 
         OnValueChangedEventHandler<Plot2D> actionOnChangeHandler;
 
         public void onChange(EventHandler handler) {
 
-            actionOnChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, actionOnChangeHandler, chainedEventHandler, handler);
+            actionOnChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, actionOnChangeHandler,
+                    chainedEventHandler, handler);
 
         }
- 
+
         @Override
         public Plot2D getValue() {
             return plot2D;
@@ -196,13 +324,14 @@ public class TestCube {
 
     }
 
-    static class Plot2DConfigFormProjection extends AbstractWrappedComponentWithFocusManager<HorizontalPanel> implements HasValue<Plot2D> {
+    static class Plot2DConfigFormProjection extends AbstractWrappedComponentWithFocusManager<HorizontalPanel>
+            implements HasValue<Plot2D> {
 
         Plot2DFromProjection plot2D;
 
         TextInputFloat distance;
-        Vector3DPanel  anglesInput;
-        
+        Vector3DPanel anglesInput;
+
         ChainedEventHandler chainedEventHandler;
 
         public Plot2DConfigFormProjection(Color color) {
@@ -211,43 +340,56 @@ public class TestCube {
             HorizontalPanel controlsInGrid = getWrappedComponent();
 
             distance = new TextInputFloat(5);
-            distance.setText(String.valueOf(50f));
+            distance.setText(String.valueOf(Plot2DFromProjection.DEFAULT_DISTANCE));
+
             anglesInput = new Vector3DPanel(color, "Angles (degrees)", true);
 
-            controlsInGrid.add(new TextComponent("Distance"));
+            controlsInGrid.add(new TextComponent("Zoom/Distance"));
             controlsInGrid.add(distance);
- 
+
             controlsInGrid.add(anglesInput);
- 
+
             plot2D = new Plot2DFromProjection();
 
-            float[] distanceValue = new float[]{50.0f};
- 
             EventHandler evtHandlerBroadcastValueChanged = (te) -> {
-                plot2D.setDistance(distanceValue[0]);
+                float zoomDistance = distance.getValue();
+
+                if (zoomDistance < 10f) {
+                    zoomDistance = 10f;
+                    distance.setText(String.valueOf(zoomDistance));
+                }
+
+                plot2D.setDistance(zoomDistance);
                 plot2D.setThetaX(anglesInput.getValue().getX());
                 plot2D.setThetaY(anglesInput.getValue().getY());
                 plot2D.setThetaZ(anglesInput.getValue().getZ());
-                te.getEventBus().raiseEvent(new HasValue.ValueChangedEvent<Plot2D>(Plot2DConfigFormProjection.this));
+
+                te.getEventBus().raiseEvent(
+                        new HasValue.ValueChangedEvent<Plot2D>(Plot2DConfigFormProjection.this));
             };
- 
-            distance.onChange((te)->{
-                distanceValue[0] = distance.getValue(); 
-                if (distanceValue[0] < 0.01) {
-                    distanceValue[0] = 0.01f;
-                }
+
+            distance.onChange((te) -> {
                 evtHandlerBroadcastValueChanged.handle(te);
             });
 
-            anglesInput.onChange((te)->{
+            anglesInput.onChange((te) -> {
                 evtHandlerBroadcastValueChanged.handle(te);
             });
- 
+
             chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
-            setCustomExtendedEventHandler( chainedEventHandler.asConditionalEventHandler() );
+            setCustomExtendedEventHandler(chainedEventHandler.asConditionalEventHandler());
 
             registerAllFocusables();
+        }
 
+        public void refreshFromProjection() {
+            distance.setText(String.valueOf(plot2D.getDistance()));
+
+            anglesInput.setValue(
+                    new BaseVec3(
+                            plot2D.getThetaX(),
+                            plot2D.getThetaY(),
+                            plot2D.getThetaZ()));
         }
 
 
@@ -255,39 +397,42 @@ public class TestCube {
 
         public void onChange(EventHandler handler) {
 
-            actionOnChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, actionOnChangeHandler, chainedEventHandler, handler);
+            actionOnChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, actionOnChangeHandler,
+                    chainedEventHandler, handler);
 
         }
- 
+
         @Override
         public Plot2D getValue() {
             return plot2D;
         }
 
     }
- 
-    static class Vector3DPanel  extends AbstractWrappedComponentWithFocusManager<HorizontalPanel> implements HasValue<Vec3<?>> {
 
-        Vec3<?>             vector;
-        FloatInputWithIncrDecrButtons      xInput;
-        FloatInputWithIncrDecrButtons      yInput;
-        FloatInputWithIncrDecrButtons      zInput;
+    static class Vector3DPanel extends AbstractWrappedComponentWithFocusManager<HorizontalPanel>
+            implements HasValue<Vec3<?>> {
+
+        Vec3<?> vector;
+        FloatInputWithIncrDecrButtons xInput;
+        FloatInputWithIncrDecrButtons yInput;
+        FloatInputWithIncrDecrButtons zInput;
 
         ChainedEventHandler chainedEventHandler;
 
-        public Vector3DPanel(Color color, String label, String x_label, String y_label, String z_label, boolean useUpDown) {
+        public Vector3DPanel(Color color, String label, String x_label, String y_label, String z_label,
+                boolean useUpDown) {
             super(color, new HorizontalPanel());
 
             HorizontalPanel controlsInGrid = getWrappedComponent().setHorizontalSpacer(2);
-            
+
             vector = new BaseVec3(0f, 0f, 0f);
-            xInput = new FloatInputWithIncrDecrButtons(color, x_label,"-","+");
-            yInput = new FloatInputWithIncrDecrButtons(color, y_label,"-","+");
-            zInput = new FloatInputWithIncrDecrButtons(color, z_label,"-","+");
+            xInput = new FloatInputWithIncrDecrButtons(color, x_label, "-", "+");
+            yInput = new FloatInputWithIncrDecrButtons(color, y_label, "-", "+");
+            zInput = new FloatInputWithIncrDecrButtons(color, z_label, "-", "+");
 
             setValue(vector);
 
-            controlsInGrid.add(new TextComponent(label+" : "));
+            controlsInGrid.add(new TextComponent(label + " : "));
 
             controlsInGrid.add(xInput);
 
@@ -302,43 +447,43 @@ public class TestCube {
             };
 
             // handle incr/decr requests
-            xInput.onChange((te)->{
+            xInput.onChange((te) -> {
                 evtHandlerBroadcastValueChanged.handle(te);
             });
 
-            yInput.onChange((te)->{
+            yInput.onChange((te) -> {
                 evtHandlerBroadcastValueChanged.handle(te);
             });
 
-            zInput.onChange((te)->{
+            zInput.onChange((te) -> {
                 evtHandlerBroadcastValueChanged.handle(te);
             });
 
             chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
-            setCustomExtendedEventHandler( chainedEventHandler.asConditionalEventHandler() );
+            setCustomExtendedEventHandler(chainedEventHandler.asConditionalEventHandler());
 
             registerAllFocusables();
 
         }
 
         public Vector3DPanel(Color color, String label, boolean useUpDown) {
-            this(color, label , "X", "Y", "Z", useUpDown);
+            this(color, label, "X", "Y", "Z", useUpDown);
         }
 
         public Vector3DPanel(Color color, String label) {
-            this(color, label , false);
+            this(color, label, false);
         }
 
         public Vector3DPanel(Color color) {
             this(color, "Point3D");
         }
 
-
         OnValueChangedEventHandler<Vec3<?>> actionOnChangeHandler;
 
         public void onChange(EventHandler handler) {
 
-            actionOnChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, actionOnChangeHandler, chainedEventHandler, handler);
+            actionOnChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, actionOnChangeHandler,
+                    chainedEventHandler, handler);
 
         }
 
