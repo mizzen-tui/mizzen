@@ -20,7 +20,7 @@ public interface Position extends Vec2<Position>, Row, Column{
         return this.getY() == other.getY() && 
                this.getX() == other.getX();
     }
-    
+
     @SuppressWarnings("unchecked")
     public default <T extends Position> LeftRight<T> leftRight(T right) {
         return Position.UTIL.leftRight((T) this, (T) right);
@@ -47,7 +47,6 @@ public interface Position extends Vec2<Position>, Row, Column{
         return offsetAdd(offset.getRow(), offset.getCol());
     }
 
-
     public default Position addCols(int cols) {
         return new Position.Simple(this.getY(), this.getX()+cols);
     }
@@ -59,7 +58,7 @@ public interface Position extends Vec2<Position>, Row, Column{
     public default float getX() {
         return getCol();
     }
-    
+
     public default float getY() {
         return getRow();
     }
@@ -85,14 +84,14 @@ public interface Position extends Vec2<Position>, Row, Column{
 
     /** Position offset down by one and right by one position (1, 1) */
     public static final Position DOWN_BY_1_AND_RIGHT_BY_1 = new Simple(1, 1);
-    
+
     /**
      * Simple implementation of {@link Position}
      */
     public static class Simple implements Position, Movable {
         public float y;
         public float x;
-    
+
         // for historical API reasons row, col (y,x) is reversed from the more traditional (x,y)
         public Simple(float row, float col) {
             super();
@@ -150,11 +149,11 @@ public interface Position extends Vec2<Position>, Row, Column{
             Simple other = (Simple) obj;
             if (x != other.x)
             return false;
-            if (x != other.x)
+            if (y != other.y)
             return false;
             return true;
         }
-    
+
         @Override
         public void moveTo(int row, int col) {
             this.y = row;
@@ -204,7 +203,14 @@ public interface Position extends Vec2<Position>, Row, Column{
             }
             return String.format("Position[%4d, %4d]", position.getRow(), position.getCol());
         }
-    
+
+        public static String asCoordinateString(Vec2<?> position) {
+            if (position == null) {
+                return "Position[null, null]";
+            }
+            return String.format("Position[%4.2f, %4.2f]", position.getX(), position.getY());
+        }
+
         public static <T extends Position> LeftRight<T> leftRight(T p1, T p2) {
             return new LeftRight<T>(p1, p2, (left, right) -> left.getCol() <= right.getCol());
         }
@@ -222,5 +228,12 @@ public interface Position extends Vec2<Position>, Row, Column{
         }
     } /* UTIL */
 
+    public static Position fromXY(float x, float y) {
+        return new Position.Simple(y, x);
+    }
+
+    public static Position fromRowCol(int row, int col) {
+        return new Position.Simple(row, col);
+    }
 
 }

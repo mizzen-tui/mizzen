@@ -16,7 +16,6 @@ public interface PositionTransform {
         return transform(new Position.Simple(y1,x1));
     }
 
-
     public static final PositionTransform NOOP = new PositionTransform() {
         @Override
         public Vec2<?> transform(Vec2<?> position) {
@@ -58,7 +57,6 @@ public interface PositionTransform {
     public static class Translate implements PositionTransform {
         float rowDelta;
         float colDelta;
-        
 
         public Translate(float rowDelta, float colDelta) {
             super();
@@ -94,7 +92,6 @@ public interface PositionTransform {
         public Vec2<?>  transform(Vec2<?>  position) {
             return position.add(colDelta, getRowDelta());
         }
-
     }
 
     /**
@@ -103,8 +100,9 @@ public interface PositionTransform {
     public static class Rotate implements PositionTransform {
 
         double theta; // in radians
+        boolean yCoordinateInverted = false;
 
-        public Rotate(int thetaInDegrees) {
+        public Rotate(double thetaInDegrees) {
             super();
             this.theta = Math.toRadians(thetaInDegrees);
         }
@@ -115,7 +113,6 @@ public interface PositionTransform {
 
         public void setTheta(int thetaInDegrees) {
             this.theta = Math.toRadians(thetaInDegrees);
-            ;
         }
 
         @Override
@@ -123,10 +120,27 @@ public interface PositionTransform {
             if (theta == 0f) {
                 return position;
             }
-            int rotatedX = (int) (position.getX() * Math.cos(theta) - position.getY() * Math.sin(theta));
-            int rotatedY = (int) (position.getY() * Math.cos(theta) + position.getX() * Math.sin(theta));
+            if (yCoordinateInverted) {
+                return transformForInvertedYCoordinate(position);
+            }
+            float rotatedX = (float)(position.getX() * Math.cos(theta) - position.getY() * Math.sin(theta));
+            float rotatedY = (float)(position.getY() * Math.cos(theta) + position.getX() * Math.sin(theta));
             return new Position.Simple(rotatedY, rotatedX);
         }
+
+        public Vec2<?> transformForInvertedYCoordinate(Vec2<?> position) {
+         //   System.out.println("USING CHATGPT NEW transform() METHOD");
+            // Get the original X and Y positions
+            float x = position.getX();
+            float y = position.getY();
+
+            // Apply standard rotation formula with the correct theta
+            float rotatedX = (float) (x * Math.cos(theta) - y * Math.sin(theta));
+            float rotatedY = (float) (x * Math.sin(theta) + y * Math.cos(theta));
+
+            // Return the rotated point
+            return new Position.Simple(rotatedY, rotatedX);
+        }     
     }
 
     /**
@@ -134,12 +148,12 @@ public interface PositionTransform {
      */
     public static class RotateAroundFixedPoint implements PositionTransform {
 
-        int theta;
+        double theta;
         Vec2<?> fixedPoint;
 
         PositionTransform positionTransform;
 
-        public RotateAroundFixedPoint(int theta, Vec2<?> fixedPoint) {
+        public RotateAroundFixedPoint(double theta, Vec2<?> fixedPoint) {
             super();
             this.theta = theta;
             this.fixedPoint = fixedPoint;
@@ -159,11 +173,11 @@ public interface PositionTransform {
                                          new FofG(new Rotate(theta), new Translate(fixedPoint.negate())));
         }
 
-        public int getTheta() {
+        public double getTheta() {
             return theta;
         }
 
-        public void setTheta(int theta) {
+        public void setTheta(double theta) {
             this.theta = theta;
             makeTransform();
         }
@@ -181,9 +195,8 @@ public interface PositionTransform {
         public Vec2<?> transform(Vec2<?> position) {
             return positionTransform.transform(position);
         }
-
     }
-    
+
     public static class Scale implements PositionTransform {
 
         Double scaleFactorRow;
@@ -206,6 +219,4 @@ public interface PositionTransform {
         }
 
     }
-
-
 }

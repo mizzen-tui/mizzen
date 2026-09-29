@@ -65,7 +65,7 @@ public abstract class RotatingShape<T extends RotatingShape<?>> extends Abstract
         return gridRotatingPlotter;
     }
 
-    public int getTheta() {
+    public double getTheta() {
         return getPointRotator().getTheta();
     }
 

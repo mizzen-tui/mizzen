@@ -216,7 +216,7 @@ public class GridBrailleTest {
                     RotateAroundFixedPoint rotator = (RotateAroundFixedPoint) trianglePositionTransform
                             .getF_transform();
 
-                    int newTheta = (rectangle2Rotator.getTheta() + 1) % 360;
+                    double newTheta = (rectangle2Rotator.getTheta() + 1) % 360;
                     rotator.setTheta(newTheta);
 
                     translate.setColDelta(x);
@@ -242,7 +242,7 @@ public class GridBrailleTest {
             addAndRememberEventHandler(eventBus, new OnIdleEventEventHandler.RepeatingInterval(100, new EventHandler() {
                 @Override
                 public void handle(TerminalEvent<?> te) {
-                    int newTheta = (rectangle2Rotator.getTheta() + 1) % 360;
+                    double newTheta = (rectangle2Rotator.getTheta() + 1) % 360;
                     rectangle2Rotator.setTheta(newTheta);
                 }
             }).setName("rectangle2Rotator.idleHandler"));
