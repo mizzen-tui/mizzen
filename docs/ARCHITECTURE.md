@@ -316,7 +316,7 @@ classes in §3.1.
 
 ### 4.5 Prototype result (Sep 2026)
 
-A standalone prototype of §4.3 and §4.4 (kept outside the repo; one focus root, children discovered
+A standalone prototype of §4.3 and §4.4 ([docs/prototype/ProtoFocus.java](prototype/ProtoFocus.java), outside `src` so it is not built; one focus root, children discovered
 on demand, `enter(dir)`/`advance(dir)`, four container kinds: transparent panel, group,
 widget, trap) passes all 20 scenarios:
 
