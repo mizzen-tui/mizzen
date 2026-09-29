@@ -4,11 +4,13 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
-import java.util.function.Function;
+//import java.util.function.BiConsumer;
+//import java.util.function.BiFunction;
+//import java.util.function.BiPredicate;
+//import java.util.function.Consumer;
+//import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -24,20 +26,19 @@ import dtb.terminalIO.util.ReflectionUtils;
 public interface FormBinder<T> extends HasValue<T>{
 
     T getFormData();
-    
+
     void onChange(EventHandler consumeChange);
 
     default T getValue() {
         return getFormData();
     }
-    
 
     public void bindAll(ComponentFinder componentFinder);
 
     public <FT> FormBinderField<FT, T> bindField(String name, GetterSetter<FT> getterSetterComponent, GetterSetter<FT> getterSetterFormField);
-    
+
     public <FT> FormBinderField<FT, T> bindField(String propertyName, GetterSetter<FT> getterSetterComponent);
-    
+
     default public <FT> FormBinderField<FT, T> bindField(String propertyName, SettableHasValue<FT> settableValue) {
         GetterSetter<FT> getterSetterComponent = new GetterSetter<FT>(settableValue);
         FormBinderField<FT, T> formBinderField = bindField(propertyName, getterSetterComponent);
@@ -56,39 +57,45 @@ public interface FormBinder<T> extends HasValue<T>{
 
     public <FT> FormBinderField<FT, T> getFormBinderField(String name);
 
-    BiConsumer<FormValidatorException, T> getErrorHandler();
-    
+    FormErrorHandler<T> getErrorHandler();
+
     public boolean isInError();
 
     public void save();
-    
-    public <FT> FormBinder<T> withValidatorHandler(BiConsumer<FormValidatorException, T> errorHandler);
 
-    EventHandlerContainer getEventHandlerContainer();
-    
+    public <FT> FormBinder<T> withValidatorHandler(FormErrorHandler<T> errorHandler);
+
+    EventBus getEventBus();
+
+    EventHandlerContainer getEventHandlerContainerForForm();
+
+//    @FunctionalInterface
+//    public static interface FieldValidatorFunction<FT, T> {
+//        FormValidatorException validate(FT formBinder, T formData);
+//    }
+
     public static interface FormBinderField<FT, T> extends HasName<FormBinderField<FT, T>>, HasValue<FT> {
 
         public FormBinder<T> getFormBinder();
 
-        BiConsumer<FormValidatorException, T> getErrorHandler();
+        FormErrorHandler<T> getErrorHandler();
 
-        public FormBinderField<FT, T> withValidator( BiFunction<FT, T, FormValidatorException> formFieldValidatorFunction);
-        public FormBinderField<FT, T> withValidator( Function<FT, FormValidatorException> formFieldValidatorFunction);
+        public FormBinderField<FT, T> withValidator( FieldValidatorFunction<FT, T> formFieldValidatorFunction);
 
-        default public FormBinderField<FT, T> withValidator(BiPredicate<FT, T> formFieldValidatorPredicate, String errorMsg) {
-            return withValidator((fieldValue, formData) -> formFieldValidatorPredicate.test((FT) fieldValue, (T) formData) ? null: new FormValidatorException(errorMsg, fieldValue));
+        default public FormBinderField<FT, T> withValidator(BiPredicate<EventBus, FT> formFieldValidatorPredicate, String errorMsg) {
+            return withValidator((evtBus, fieldValue, formData) -> formFieldValidatorPredicate.test(evtBus, (FT) fieldValue) ? null: new FormValidatorException(errorMsg, fieldValue));
         }
 
         default public FormBinderField<FT, T> withValidator(Predicate<FT> formFieldValidatorPredicate, String errorMsg) {
-            return withValidator((fieldValue, formData) -> formFieldValidatorPredicate.test((FT) fieldValue) ? null: new FormValidatorException(errorMsg, fieldValue));
+            return withValidator((eventBus,fieldValue, formData) -> formFieldValidatorPredicate.test((FT) fieldValue) ? null: new FormValidatorException(errorMsg, fieldValue));
         }
 
-        public FormBinderField<FT, T> withValidatorHandler(BiConsumer<FormValidatorException, T> errorHandler);
+        public FormBinderField<FT, T> withValidatorHandler(FormErrorHandler<T> errorHandler);
 
-        public FormBinderField<FT, T> withValidatorHandler(Consumer<FormValidatorException> errorHandler);
+//        public FormBinderField<FT, T> withValidatorHandler(Consumer<FormValidatorException> errorHandler);
 
         public FT getFormValue();
-        
+
         default public FT getValue() {
             return getFormValue();
         }
@@ -96,7 +103,7 @@ public interface FormBinder<T> extends HasValue<T>{
         public void setComponentValue(FT value);
 
         public void assertValid();
-        
+
         public boolean isInError();
 
         public void setFormValue(FT value);
@@ -104,8 +111,6 @@ public interface FormBinder<T> extends HasValue<T>{
         public void copyComponentValueToFormField();
 
         public FormBinderField<FT, T> onChange(EventHandler consumeChange);
-        
-        
 
     }
 
@@ -114,14 +119,16 @@ public interface FormBinder<T> extends HasValue<T>{
 
         T formData;
         List<FormBinderField<?,T>> formFields;
-        BiConsumer<FormValidatorException, T> errorHandler = null; // TODO: default to catastrophic fail in order to force developer to set this value to something more reasonable.
+        FormErrorHandler<T> errorHandler = null; // TODO: default to catastrophic fail in order to force developer to set this value to something more reasonable.
 
-        EventHandlerContainer eventHandlerContainer;
-        
-        public DefaultFormBinder(T formData, EventHandlerContainer eventHandlerContainer) {
+        EventBus eventBus;
+        EventHandlerContainer formPanelComponent;
+
+        public DefaultFormBinder(T formData, EventHandlerContainer formPanelComponent, EventBus eventBus) {
             this.formData = formData;
             this.formFields = new ArrayList<FormBinderField<?,T>>();
-            this.eventHandlerContainer = eventHandlerContainer;
+            this.eventBus = eventBus;
+            this.formPanelComponent = formPanelComponent;
         }
 
         @Override
@@ -150,7 +157,7 @@ public interface FormBinder<T> extends HasValue<T>{
         }
 
         @Override
-        public <FT> FormBinder<T> withValidatorHandler(BiConsumer<FormValidatorException, T> errorHandler) {
+        public <FT> FormBinder<T> withValidatorHandler(FormErrorHandler<T> errorHandler) {
             this.errorHandler = errorHandler;
             return this;
         }
@@ -241,7 +248,7 @@ public interface FormBinder<T> extends HasValue<T>{
                 setValuesOntoFormData();
             } catch (FormValidatorException formError) {
                 if (this.errorHandler != null) {
-                    this.errorHandler.accept(formError, this.getFormData());
+                    this.errorHandler.handleError(this.eventBus, formError, this.getFormData());
                 } else {
                     throw formError;
                 }
@@ -249,12 +256,12 @@ public interface FormBinder<T> extends HasValue<T>{
             }
             // no errors so clear errors
             if (this.errorHandler != null) {
-                this.errorHandler.accept(null, this.getFormData());
+                this.errorHandler.handleError(this.eventBus,  null, this.getFormData());
             }
         }
 
         @Override
-        public BiConsumer<FormValidatorException, T> getErrorHandler() {
+        public FormErrorHandler<T> getErrorHandler() {
             return this.errorHandler;
         }
 
@@ -269,8 +276,13 @@ public interface FormBinder<T> extends HasValue<T>{
         }
 
         @Override
-        public EventHandlerContainer getEventHandlerContainer() {
-            return eventHandlerContainer;
+        public EventBus getEventBus() {
+            return eventBus;
+        }
+
+        @Override
+        public EventHandlerContainer getEventHandlerContainerForForm() {
+            return formPanelComponent;
         }
 
         HasValue.OnValueChangedEventHandler<T> onChangeHandler;
@@ -278,20 +290,21 @@ public interface FormBinder<T> extends HasValue<T>{
         @Override
         public void onChange(EventHandler consumeChange) {
 
-            onChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, onChangeHandler, getEventHandlerContainer(), consumeChange);
+            onChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, onChangeHandler, this.formPanelComponent, consumeChange);
 
         }
-        
+
     }
-    
+
+
     public static class DefaultFormBinderField<FT, T> implements FormBinderField<FT, T> {
 
         private FormBinder<T> formBinder;
         private String name;
         private GetterSetter<FT> getterSetterComponent;
         private GetterSetter<FT> getterSetterFormField;
-        private BiFunction<FT, T, FormValidatorException> formFieldValidatorFunction;
-        private BiConsumer<FormValidatorException, T> errorHandler;
+        private FieldValidatorFunction<FT, T> formFieldValidatorFunction;
+        private FormErrorHandler<T> errorHandler;
 
         public DefaultFormBinderField(String name,
                                       GetterSetter<FT> getterSetterComponent,
@@ -309,7 +322,7 @@ public interface FormBinder<T> extends HasValue<T>{
         }
 
         @Override
-        public FormBinderField<FT, T> withValidator(BiFunction<FT, T, FormValidatorException> formFieldValidatorFunction) {
+        public FormBinderField<FT, T> withValidator(FieldValidatorFunction<FT, T> formFieldValidatorFunction) {
             if (formFieldValidatorFunction == null) {
                 this.formFieldValidatorFunction = null;
                 return this;
@@ -318,41 +331,41 @@ public interface FormBinder<T> extends HasValue<T>{
                 this.formFieldValidatorFunction = formFieldValidatorFunction;
                 return this;
             }
-            BiFunction<FT, T, FormValidatorException> headFieldValidatorFunction = this.formFieldValidatorFunction;
-            this.formFieldValidatorFunction = (field, formData) -> {
-                FormValidatorException firstValidateResult = headFieldValidatorFunction.apply(field, formData);
+            FieldValidatorFunction<FT, T> headFieldValidatorFunction = this.formFieldValidatorFunction;
+            this.formFieldValidatorFunction = (evtBus, field, formData)-> {
+                FormValidatorException firstValidateResult = headFieldValidatorFunction.validate(evtBus, field, formData);
                 if (firstValidateResult != null) {
                     return firstValidateResult;
                 }
-                return formFieldValidatorFunction.apply(field, formData);
+                return formFieldValidatorFunction.validate(evtBus, field, formData);
             };
             return this;
         }
 
-        @Override
-        public FormBinderField<FT, T> withValidator(Function<FT, FormValidatorException> formFieldValidatorFunction) {
-            BiFunction<FT, T, FormValidatorException>  formFieldValidator = (field, formData) -> {
-                return formFieldValidatorFunction.apply(field);
-            };
-            return withValidator(formFieldValidator);
-        }
+//        @Override
+//        public FormBinderField<FT, T> withValidator(Function<FT, FormValidatorException> formFieldValidatorFunction) {
+//            FieldValidatorFunction<FT, T>  formFieldValidator = (field, formData) -> {
+//                return formFieldValidatorFunction.apply(field);
+//            };
+//            return withValidator(formFieldValidator);
+//        }
 
         @Override
-        public FormBinderField<FT, T> withValidatorHandler(BiConsumer<FormValidatorException, T> errorHandler) {
+        public FormBinderField<FT, T> withValidatorHandler(FormErrorHandler<T> errorHandler) {
             this.errorHandler = errorHandler;
             return this;
         }
 
-        @Override
-        public FormBinderField<FT, T> withValidatorHandler(Consumer<FormValidatorException> errorHandler) {
-            this.errorHandler = (fieldException, form) -> {
-                errorHandler.accept(fieldException);
-            };
-            return this;
-        }
+//        @Override
+//        public FormBinderField<FT, T> withValidatorHandler(Consumer<FormValidatorException> errorHandler) {
+//            this.errorHandler = (fieldException, form) -> {
+//                errorHandler.accept(fieldException);
+//            };
+//            return this;
+//        }
 
         @Override
-        public BiConsumer<FormValidatorException, T> getErrorHandler() {
+        public FormErrorHandler<T> getErrorHandler() {
             return this.errorHandler;
         }
 
@@ -394,7 +407,7 @@ public interface FormBinder<T> extends HasValue<T>{
                 return;
             }
             FT value = this.getterSetterComponent.get();
-            FormValidatorException exception = formFieldValidatorFunction.apply(value, this.formBinder.getFormData());
+            FormValidatorException exception = formFieldValidatorFunction.validate(this.getFormBinder().getEventBus(), value, this.formBinder.getFormData());
             if (exception != null) {
                 inError = true;
                 throw exception;
@@ -403,7 +416,7 @@ public interface FormBinder<T> extends HasValue<T>{
         }
 
         boolean inError = false;
-        
+
         @Override
         public boolean isInError() {
             return inError;
@@ -414,7 +427,7 @@ public interface FormBinder<T> extends HasValue<T>{
         @Override
         public FormBinderField<FT, T> onChange(EventHandler consumeChange) {
 
-            onChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, onChangeHandler, getFormBinder().getEventHandlerContainer(), consumeChange);
+            onChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, onChangeHandler, getFormBinder().getEventHandlerContainerForForm(), consumeChange);
 
             return this;
         }
@@ -423,17 +436,21 @@ public interface FormBinder<T> extends HasValue<T>{
 
     public static class UTIL {
 
-        public static <T> FormBinder<T> get(T formData, EventHandlerContainer eveHandlerContainer) {
-            return new DefaultFormBinder<T>(formData, eveHandlerContainer);
+        public static <T> FormBinder<T> get(T formData, EventHandlerContainer eveHandlerContainer, EventBus eventBus) {
+            return new DefaultFormBinder<T>(formData, eveHandlerContainer, eventBus);
+        }
+
+        public static <T> FormBinder<T> get(T formData, EventBus eventBus) {
+            return new DefaultFormBinder<T>(formData, eventBus, eventBus);
         }
         
         static <FT, T> void handleError(FormBinder<T> formBinder, FormBinderField<FT, T> formBinderField, FormValidatorException formError) {
             if (formBinderField != null && formBinderField.getErrorHandler() != null) {
-                formBinderField.getErrorHandler().accept(formError, formBinder.getFormData());
+                formBinderField.getErrorHandler().handleError(formBinder.getEventBus(), formError, formBinder.getFormData());
                 return;
             }
             if (formBinder.getErrorHandler() != null) {
-                formBinder.getErrorHandler().accept(formError, formBinder.getFormData());
+                formBinder.getErrorHandler().handleError(formBinder.getEventBus(), formError, formBinder.getFormData());
             } else {
                 throw formError;
             }
@@ -444,7 +461,7 @@ public interface FormBinder<T> extends HasValue<T>{
             // Check if the widget has an onChange method
             try {
                 Method onChangeMethod = settableValue.getClass().getMethod("onChange", EventHandler.class);
-                
+
                 EventHandler widget_onChangeHandler = (te) -> {
                     try {
                         boolean prevFormInError = formBinderField.isInError();
@@ -468,7 +485,7 @@ public interface FormBinder<T> extends HasValue<T>{
                                         }));
                             }
                         }
-                        
+
                     } catch (FormValidatorException formError) {
                         handleError(formBinderField.getFormBinder(), formBinderField, formError);
                     }
@@ -492,9 +509,5 @@ public interface FormBinder<T> extends HasValue<T>{
             return;
         }
     }
-
-
-
-
 
 }

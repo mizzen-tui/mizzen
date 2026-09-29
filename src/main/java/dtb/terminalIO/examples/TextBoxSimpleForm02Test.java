@@ -14,26 +14,27 @@ import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.input.DropdownListBox;
+import dtb.terminalIO.components.input.LabeledInputComponent;
 import dtb.terminalIO.components.input.TextInput;
 import dtb.terminalIO.components.input.form.FormBinder;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.RequestFocusEvent;
+import dtb.terminalIO.events.focus.ToFocusable;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.StringUtils;
 
 public class TextBoxSimpleForm02Test {
 
-    @SuppressWarnings("unchecked")
     public static void main(String[] args) throws IOException {
 
         Logging.setEnabled(true);
-        
-        
+
         new TUIApp(args)
         .setDefaultMainApplicationPanel()
+        .enableComponentInspector()
         .setOnReadyStart((tApp) -> {
 
             Address address = new Address("123 Main St", "SmallVille", "Ontario");
@@ -83,21 +84,16 @@ public class TextBoxSimpleForm02Test {
             TextComponent errorText = new TextComponent(Colors.IRed,"");
             BorderedComponent errorContainer = new BorderedComponent(Colors.IRed, errorText);
 
-            testForm.add(new HorizontalPanel().addText("Street   : ")
-                                              .add(new TextInput(Colors.IYel, 15)
-                                                      .setName("street")));
+            testForm.add(new LabeledInputComponent<String>("Street   :",new TextInput(Colors.IYel, 15).setName("street")).setRequired(true));
 
-            testForm.add(new HorizontalPanel().addText("City     : ")
-                                              .add(new TextInput(Colors.IYel, 15).setName("city")));
+            testForm.add(new LabeledInputComponent<String>("City     :", new TextInput(Colors.IYel, 15).setName("city")).setRequired(true).showErrorIndicator(true).setName("cityField"));
 
-            testForm.add(new HorizontalPanel().addText("Province :")
-                                              .add(DropdownListBox.fromStrings(new String[]{"Ontario", 
-                                                                                            "Quebec",
-                                                                                            "Sask",
-                                                                                            "Alberta",
-                                                                                            "British Columbia"})
-                                                                   .setName("province")
-                                                                   .setColor(Colors.IYel)));
+            testForm.add(new LabeledInputComponent<String>("Province :", DropdownListBox.fromStrings(new String[]{"Ontario", 
+                                                                                                                  "Quebec",
+                                                                                                                  "Sask",
+                                                                                                                  "Alberta",
+                                                                                                                  "British Columbia"})
+                                                                   .setColor(Colors.IYel).setName("province")).setRequired(true).showErrorIndicator(true).setName("provinceField"));
 
             Button saveButton = new Button("Save");
             saveButton.onChange((te) -> {
@@ -107,37 +103,47 @@ public class TextBoxSimpleForm02Test {
             formBinder.bindAll(testForm);
 
             formBinder.getFormBinderField("street")
-                    .withValidator((street) -> ((String) street).length() >= 3, "street must contain at least three characters")
-                    .onChange((te)->{
-                        Logging.info("street changed");
-                    });
+                      .withValidator((street) -> ((String) street).length() >= 3, "street must contain at least three characters")
+                      .onChange((te)->{
+                          Logging.info("street changed");
+                       });
 
             formBinder.getFormBinderField("city")
-            .withValidator((field) -> {
-                String city = (String) field;
-                if (validCity.test(city)) {
-                    return true;
-                }
-                return false;
-            }, "city must be one of "+ validCities.keySet())
-            .onChange((te)->{
-                Logging.info("city changed");
-            });
+                      .withValidator((evtBus, field) -> {
+                            String city = (String) field;
+                            if (validCity.test(city)) {
+                                testForm.findComponentByName("cityField",LabeledInputComponent.class).setErrorMessage("");
+                                return true;
+                            }
+                            evtBus.raiseEvent(RequestFocusEvent.fromSource(testForm.findComponentByName("city",Focusable.class))); 
+                            testForm.findComponentByName("cityField",LabeledInputComponent.class).setErrorMessage("Bad city");
+                            return false;
+                        }, "city must be one of "+ validCities.keySet())
+                      .onChange((te)->{
+                            Logging.info("city changed");
+                      });
 
             formBinder.getFormBinderField("province")
-            .withValidator((field) -> {
-                String province = (String) field;
-                String city = formBinder.getFormData().city;
-                if (validProvince.test(city, province)) {
-                    return true;
-                }
-                return false;
-            }, "province be related to city ");
+                    .withValidator((evtBus, field) -> {
+                        String province = (String) field;
+                        String city = formBinder.getFormData().city;
+                        if (validProvince.test(city, province)) {
+                            testForm.findComponentByName("street").setEnabled(true, evtBus);
+                            testForm.findComponentByName("provinceField",LabeledInputComponent.class).setErrorMessage("");
+                            return true;
+                        }
+                        evtBus.raiseEvent(RequestFocusEvent.fromSource(testForm.findComponentByName("province",Focusable.class)));
+                        testForm.findComponentByName("provinceField",LabeledInputComponent.class).setErrorMessage("province  not compatible with city");
+                        testForm.findComponentByName("street").setEnabled(false, evtBus);
+                        return false;
+                    }, "");
 
-            formBinder.withValidatorHandler((formError, formData) -> {
+            formBinder.withValidatorHandler((evtBus, formError, formData) -> {
                 if (formError != null) {
-                    errorText.setTextAndResize(formError.getMessage());
-                    testForm.show(errorContainer);
+                    if (!StringUtils.isEmptyStr(formError.getMessage())) {
+                        errorText.setTextAndResize(formError.getMessage());
+                        testForm.show(errorContainer);
+                    }
                     saveButton.hide();
                 } else {
                     testForm.hide(errorContainer);
@@ -159,7 +165,7 @@ public class TextBoxSimpleForm02Test {
             tApp.getMainApplicationPanel().add(2,2, hpMain);
 
             tApp.getEventBus().asynch((te)->{
-                te.getEventBus().raiseEvent( new RequestFocusEvent( testForm.findComponentByName("street", Focusable.class)  ) );
+                te.getEventBus().raiseEvent( new RequestFocusEvent(testForm.findComponentByNameOrFail("street", Focusable.class)) );
             });
 
             formBinder.onChange((te)->{

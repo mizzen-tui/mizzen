@@ -4,10 +4,10 @@ import java.io.IOException;
 
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.composite.Composite;
-import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.input.DropdownListBox;
+import dtb.terminalIO.components.input.LabeledInputComponent;
 import dtb.terminalIO.components.input.TextInput;
 import dtb.terminalIO.components.input.form.NamedComponentsFormBinder;
 import dtb.terminalIO.controlcodes.color.Colors;
@@ -27,15 +27,11 @@ public class TextBoxSimpleForm01Test {
 
                Composite testForm = new VerticalPanel().setName("Address");
 
-               testForm.add(new HorizontalPanel().addText("Street   : ")
-                                                 .add(new TextInput(Colors.IYel, 15)
-                                                         .setName("street")));
+               testForm.add(new LabeledInputComponent<String>("Street   : ",new TextInput(Colors.IYel, 15).setName("street")));
 
-               testForm.add(new HorizontalPanel().addText("City     : ")
-                                                 .add(new TextInput(Colors.IYel, 15).setName("city")));
+               testForm.add(new LabeledInputComponent<String>("City     : ", new TextInput(Colors.IYel, 15).setName("city")));
 
-               testForm.add(new HorizontalPanel().addText("Province :")
-                                                 .add(DropdownListBox.fromStrings(new String[]{"Ontario", 
+               testForm.add(new LabeledInputComponent<String>("Province :", DropdownListBox.fromStrings(new String[]{"Ontario", 
                                                                                                "Quebec",
                                                                                                "Sask",
                                                                                                "Alberta",
