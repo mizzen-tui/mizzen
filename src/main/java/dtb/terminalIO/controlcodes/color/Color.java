@@ -259,6 +259,11 @@ public abstract class Color extends ControlCode implements ColorProvider, HasBac
         return backgroundColor(color) != null; 
     }
     
+ // In Color.java
+    public Color asDisabled() {
+        return Colors.DEFAULT_DISABLED_COLOR;
+    }
+    
     
 
 }

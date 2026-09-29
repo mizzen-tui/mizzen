@@ -34,7 +34,12 @@ public class SparkLine {
     }
 
     public static String render(final Collection<Integer> values, int height) {
-        final int max = Collections.max(values), min = Collections.min(values);
+        return render(values, height, Integer.MIN_VALUE, Integer.MAX_VALUE);
+
+    }
+
+    public static String render(final Collection<Integer> values, int height, int currentMax, int currentMin) {
+        final int max = Math.max(Collections.max(values),currentMax), min = Math.min(Collections.min(values), currentMin);
         final float scaleForIndex = (max - min) / (((float)ticks_maxIndex+1) * height);
         final float scaleForRow = (float)(max - min) /  (float)height;
         StringBuilder accumulator = new StringBuilder();

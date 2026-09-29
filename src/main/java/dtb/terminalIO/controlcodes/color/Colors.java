@@ -244,6 +244,9 @@ public class Colors {
     public static final Colors.BgColor On_ICya= addNamedBGColor(  "On_ICya",Colors.BgColor.instance(106).setInvertTransform( (c) -> Colors.getNamedFGColor("ICya") ));
     public static final Colors.BgColor On_IWhi= addNamedBGColor(  "On_IWhi",Colors.BgColor.instance(107).setInvertTransform( (c) -> Colors.getNamedFGColor("IWhi") ));
 
+    
+    public static final Color DEFAULT_DISABLED_COLOR = IBla;
+    
     static abstract class AbstractRGBColor extends Color {
 
         private AbstractRGBColor(int prefixCode, int r, int g, int b) {
@@ -474,9 +477,6 @@ public class Colors {
             return this;
         }
         
-        
-    
-    
         public FgColor asBold() {
             return FgColor.instance(colorCode, true, italic, underline);
         }
@@ -532,6 +532,39 @@ public class Colors {
         public boolean hasBackGroundColor() {
             return false;
         }
+        
+        @Override
+        public Color asDisabled() {
+            if (this == Colors.IBla) return Colors.Bla;
+            if (this == Colors.IRed) return Colors.Red;
+            if (this == Colors.IGre) return Colors.Gre;
+            if (this == Colors.IYel) return Colors.Yel;
+            if (this == Colors.IBlu) return Colors.Blu;
+            if (this == Colors.IPur) return Colors.Pur;
+            if (this == Colors.ICya) return Colors.Cya;
+            if (this == Colors.IWhi) return Colors.Whi;
+
+            // Regular colors map to the default disabled color
+            if (this == Colors.Bla || this == Colors.Red || this == Colors.Gre ||
+                this == Colors.Yel || this == Colors.Blu || this == Colors.Pur ||
+                this == Colors.Cya || this == Colors.Whi) {
+                return Colors.DEFAULT_DISABLED_COLOR;
+            }
+
+            // Bold versions map back to regular colors
+            if (this == Colors.BBla) return Colors.Bla;
+            if (this == Colors.BRed) return Colors.Red;
+            if (this == Colors.BGre) return Colors.Gre;
+            if (this == Colors.BYel) return Colors.Yel;
+            if (this == Colors.BBlu) return Colors.Blu;
+            if (this == Colors.BPur) return Colors.Pur;
+            if (this == Colors.BCya) return Colors.Cya;
+            if (this == Colors.BWhi) return Colors.Whi;
+
+            // Default case for any undefined color
+            return Colors.DEFAULT_DISABLED_COLOR;
+        }
+        
     
     }
 
@@ -577,7 +610,28 @@ public class Colors {
             return true;
         }
         
-        
+        @Override
+        public Color asDisabled() {
+            if (this == Colors.On_IBla) return Colors.On_Bla;
+            if (this == Colors.On_IRed) return Colors.On_Red;
+            if (this == Colors.On_IGre) return Colors.On_Gre;
+            if (this == Colors.On_IYel) return Colors.On_Yel;
+            if (this == Colors.On_IBlu) return Colors.On_Blu;
+            if (this == Colors.On_IPur) return Colors.On_Pur;
+            if (this == Colors.On_ICya) return Colors.On_Cya;
+            if (this == Colors.On_IWhi) return Colors.On_Whi;
+
+            // Regular background colors map to the default disabled color
+            if (this == Colors.On_Bla || this == Colors.On_Red || this == Colors.On_Gre ||
+                this == Colors.On_Yel || this == Colors.On_Blu || this == Colors.On_Pur ||
+                this == Colors.On_Cya || this == Colors.On_Whi) {
+                return Colors.DEFAULT_DISABLED_COLOR;
+            }
+
+            // Default case
+            return Colors.DEFAULT_DISABLED_COLOR;
+        }
+
     }
 
 
@@ -763,6 +817,55 @@ public class Colors {
                 return (bgColor != null/* && bgColor.hasBackGroundColor()*/);
             }
     
+            @Override
+            public Color asDisabled() {
+                Color fg = this.getFgc();
+                Color bg = this.getBgc();
+
+                // Determine the disabled foreground color
+                Color disabledFg;
+                if (fg instanceof FgColor) {
+                    disabledFg = ((FgColor) fg).asDisabled();
+                } else if (fg instanceof RGBColorForeground) {
+                    // Convert RGB to grey scale
+                    disabledFg = Colors.fromRGBToGreyScaleFG(((RGBColorForeground) fg).get_r(),
+                                                             ((RGBColorForeground) fg).get_g(),
+                                                             ((RGBColorForeground) fg).get_b());
+                } else if (fg != null && fg.getForeGroundColor() != null) {
+                    // Attempt to get the foreground color if available
+                    disabledFg = fg.getForeGroundColor().asDisabled();
+                } else {
+                    // Fallback to the default disabled color
+                    disabledFg = Colors.DEFAULT_DISABLED_COLOR;
+                }
+
+                // Determine the disabled background color
+                Color disabledBg;
+                if (bg instanceof BgColor) {
+                    disabledBg = ((BgColor) bg).asDisabled();
+                } else if (bg instanceof RGBColorBackground) {
+                    // Convert RGB to grey scale
+                    disabledBg = Colors.fromRGBToGreyScaleBG(((RGBColorBackground) bg).get_r(),
+                                                             ((RGBColorBackground) bg).get_g(),
+                                                             ((RGBColorBackground) bg).get_b());
+                } else if (bg != null && bg.getBackGroundColor() != null) {
+                    // Attempt to get the background color if available
+                    disabledBg = bg.getBackGroundColor().asDisabled();
+                } else {
+                    // Fallback to the default disabled background color
+                    disabledBg = Colors.DEFAULT_DISABLED_COLOR.getBackGroundColor();
+                }
+
+                // Construct the disabled FGBGColors
+                if (disabledFg instanceof FgColor && disabledBg instanceof BgColor) {
+                    return new FGBGColors((FgColor) disabledFg, (BgColor) disabledBg);
+                }
+
+                // Fallback to the default disabled color if we cannot construct a valid FGBGColors
+                return Colors.DEFAULT_DISABLED_COLOR;
+            }
+            
+            
         }
 
 

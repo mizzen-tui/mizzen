@@ -16,6 +16,7 @@ import dtb.terminalIO.geom.position.Position;
  * showCursorAtFromBottomUP(showCursorPosition) method when canvas is full
  * screen..
  * 
+ * NOTE:  not sure aboev comment is relevant - need to re-look at
  * <p/>
  * 
  * Also can have issues when outputting to last line of canvas when canvas is
