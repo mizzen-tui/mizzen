@@ -118,7 +118,9 @@ public class DonutChart extends AbstractComponent<DonutChart> implements ParentC
 
     int shift90(int angle) {
       // shift 90 degrees
-      return (angle + 90) % 360;
+      return (360+(angle - 90)) % 360;
+      //return angle;
+      //return (360 + (270 - angle))  % 360;
     }
     
     
@@ -128,7 +130,7 @@ public class DonutChart extends AbstractComponent<DonutChart> implements ParentC
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
         
         // rotate clockwise
-        int startAngle =  360 - (int)Math.round(((double)this.dataPoint / (double) this.maxValue  * 360.0 ));
+        int startAngle =  (int)Math.round(((double)this.dataPoint / (double) this.maxValue  * 360.0 ));
         int endAngle = 0;
 //        if (lastDataPoint >= 0 && lastDataPoint < this.dataPoint) {  // we are increasing
 //            endAngle = 360 - (int)Math.round(((double)this.lastDataPoint / (double) this.maxValue  * 360.0 ));
@@ -141,7 +143,8 @@ public class DonutChart extends AbstractComponent<DonutChart> implements ParentC
 //        startAngle = shift90(startAngle);  // now 0 is at 12 oclock ( 90 degrees )
 //        endAngle = shift90(endAngle);
 
-        DonutCircleAlgorithm donutPlotter = new DonutCircleAlgorithm(startAngle, endAngle);
+      //  DonutCircleAlgorithm donutPlotter = new DonutCircleAlgorithm(startAngle, endAngle);
+        DonutCircleAlgorithm donutPlotter = new DonutCircleAlgorithm(endAngle, startAngle);
         
         Rectangle gridRectangle = this.grid.getGridRectangle();
 

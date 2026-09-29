@@ -20,6 +20,8 @@ import dtb.terminalIO.controlcodes.color.Colors.BgColor;
 import dtb.terminalIO.controlcodes.color.Colors.FGBGColors;
 import dtb.terminalIO.controlcodes.color.Colors.FgColor;
 import dtb.terminalIO.events.keyboard.Keys;
+import dtb.terminalIO.events.mouse.ApplicationMouseEvent;
+import dtb.terminalIO.events.mouse.Draggable;
 import dtb.terminalIO.geom.Align;
 import dtb.terminalIO.geom.VAlign;
 import dtb.terminalIO.geom.position.PositionRelativeFactory;
@@ -31,7 +33,7 @@ public class DraggableTest {
 
     public static void main(String args[]) {
 
-        Logging.setEnabled(false);
+        Logging.setEnabled(true);
 
         new TUIApp(args)
         .setDefaultMainApplicationPanel()
@@ -77,7 +79,31 @@ public class DraggableTest {
             tApp.getMainApplicationPanel().add(PositionRelativeFactory.fromAlign(VAlign.MIDDLE, 0, Align.RIGHT, 5,((Composite)tApp.getMainApplicationPanel()).getInnerRectangle(), helpText), helpText);
             
             
-            tApp.getMainApplicationPanel().add(10, 13, new BorderedComponent(Colors.IWhi, new DraggableTextComponent(Colors.BIBlu,"BLUE")));
+            DraggableTextComponent blueComponent = new DraggableTextComponent(Colors.BIBlu,"BLUE");
+            Draggable blueDragBehvaiour = blueComponent.getDraggableBehaviour();
+            Draggable blueDragBehvaiourSetText = new Draggable() {
+
+				@Override
+				public boolean onDragStart(ApplicationMouseEvent appMouseEvent) {
+					blueComponent.setBaseText(" - BLUE("+appMouseEvent.getMousePosition().getRow()+","+appMouseEvent.getMousePosition().getCol()+")");
+					return true;
+				}
+
+				@Override
+				public boolean onDrag(ApplicationMouseEvent appMouseEvent) {
+					blueComponent.setBaseText("- BLUE("+appMouseEvent.getMousePosition().getRow()+","+appMouseEvent.getMousePosition().getCol()+")");
+					return true;
+				}
+
+				@Override
+				public boolean onDragStop(ApplicationMouseEvent appMouseEvent) {
+					blueComponent.setBaseText("- BLUE("+appMouseEvent.getMousePosition().getRow()+","+appMouseEvent.getMousePosition().getCol()+")");
+					return true;
+				}}; 
+				blueComponent.setDraggableBehaviour( new Draggable.DragAND(blueDragBehvaiourSetText, blueDragBehvaiour));
+            
+            
+            tApp.getMainApplicationPanel().add(10, 13, new BorderedComponent(Colors.IWhi, blueComponent));
 
             tApp.getMainApplicationPanel().add(14, 3, new BorderedComponent(new DraggableTextComponent(Colors.BIPur,"     Freeze ROW-DRAG \n <--  Only moves left  --> \n      and right").freezeRow()));
 

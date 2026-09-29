@@ -30,7 +30,7 @@ public class ReadTextFileToScreenTest {
         Logging.setEnabled(true);
 
         String fileData = getFileData(args);
-        
+
         new TUIApp(args)
 
         .setEmptyChar(' ')
@@ -105,7 +105,7 @@ public class ReadTextFileToScreenTest {
             System.err.println("Filename not specified");
             System.exit(1);
         }
-        
+
         String fileName = args[0]; 
 
         if (fileName.equalsIgnoreCase("GENERATE")) {
@@ -121,9 +121,9 @@ public class ReadTextFileToScreenTest {
         fileData = fileData.replace("\t","    ");
         return fileData;
     }
-    
+
     private static String genTextData() {
-        
+
         Color colors[] = new Color[] {
                 new  Colors.FGBGColors(Colors.BBlu, Colors.On_Gre),
                 new  Colors.FGBGColors(Colors.BBlu, Colors.On_IWhi),
@@ -134,13 +134,12 @@ public class ReadTextFileToScreenTest {
                 new  Colors.FGBGColors(Colors.BYel, Colors.On_IBlu),
                 new  Colors.FGBGColors(Colors.BBla, Colors.On_Whi)
         };
-        
+
         StringBuilder sb = new StringBuilder();
         String digits = "0123456789";
         String alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         String chars = digits + alpha + alpha.toLowerCase();
         for (int i=0 ; i<chars.length(); i++) {
-            
             sb.append(colors[i % colors.length].asString())
               .append(StringUtils.repeat(chars.charAt(i),100))
               .append(Colors.RCol.asString())

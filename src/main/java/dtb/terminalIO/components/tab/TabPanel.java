@@ -119,14 +119,16 @@ public class TabPanel extends AbstractComponentWrappper<CompositeWithFocusManage
 
     boolean helpFooterBuilt = true;
 
-    public void addTab(final String tabText, KeyStroke hotKey, final TabAction<?> tabAction) {
+    public TabPanel addTab(final String tabText, KeyStroke hotKey, final TabAction<?> tabAction) {
 
-        if (hotKey == null)
-            throw new IllegalArgumentException("TabAction must specify a hotKey");
+        // if (hotKey == null)
+        //     throw new IllegalArgumentException("TabAction must specify a hotKey");
 
         String tabTxt  = tabText;
-        if (!tabTxt.contains(hotKey.getName())) {
-            tabTxt = hotKey.getName() + " - " + tabTxt;
+        if (hotKey != null) {
+            if (!tabTxt.contains(hotKey.getName())) {
+                tabTxt = hotKey.getName() + " - " + tabTxt;
+            }
         }
 
         // todo:  hotkey not handled ( I think )
@@ -138,7 +140,7 @@ public class TabPanel extends AbstractComponentWrappper<CompositeWithFocusManage
         tabButton.onChange((te)->{
 
             if ( current ==  tabButton ) {
-                return ;
+                return;
             }
 
             if (current != null) {
@@ -169,7 +171,22 @@ public class TabPanel extends AbstractComponentWrappper<CompositeWithFocusManage
 
         tabsButtonBar.addComponent(tabButton);
 
+        return this;
+
     }
+
+    public TabPanel addTab(final String tabText, KeyStroke hotKey, final Component<?> component) {
+        return addTab(tabText, hotKey, new TabAction<Component<?>>() {
+                @Override
+                protected Component<?> getComponent(TabContext tabContext) {
+                    return component;
+                }            
+            });
+    }
+    public TabPanel addTab(final String tabText, final Component<?> component) {
+        return addTab(tabText,null, component);
+    }
+
 
     TabContext getTabContext() {
         return new TabContext() {

@@ -7,6 +7,7 @@ import dtb.terminalIO.components.AbstractWrappedComponentAndFocusable;
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.ChildComponentManager;
+import dtb.terminalIO.components.CollapsiblePanel;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.HorizontalPanel;
@@ -31,7 +32,10 @@ public class HideShowTest {
 
     public static void main(String[] args) throws IOException {
 
-        new TUIApp(args).setDefaultMainApplicationPanel().confirmOnExit().setOnReadyStart((tApp) -> {
+        new TUIApp(args).setDefaultMainApplicationPanel()
+                        .confirmOnExit()
+                        .enableComponentInspector()
+                        .setOnReadyStart((tApp) -> {
 
             tApp.getMainApplicationPanel().add(1, 4, new TextComponent("Test hide/show functionality of components"));
 
@@ -84,6 +88,9 @@ public class HideShowTest {
             Component<?> hTest3 = new ClickableRectangle(Colors.On_Gre, "hTest3");
             testHoriz.add(hTest3);
             horizMainMenu.addComponent(hideShowButton(vTest3.getColor(), "(3)", hTest3));
+            
+            
+            mainLayout.add(new CollapsiblePanel(Colors.IYel, "Collapsible Panel Test", new TextComponent("Here is the text that will get hidden\nor shown!")));
 
         }).start();
 

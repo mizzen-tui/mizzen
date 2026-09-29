@@ -27,6 +27,8 @@ public class CompositeSimpleTest {
                 .confirmOnExit()
                 .setOnReadyStart((tApp) -> {
 
+            
+
                     tApp.getMainApplicationPanel().add(10,10, new TextComponent("Test1"));
 
                     tApp.getMainApplicationPanel().add(10,25, new TextComponent("Test3"));

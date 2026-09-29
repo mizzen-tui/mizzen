@@ -116,9 +116,10 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
 
         new TableColumnDataBuilderDropColumnsWhenNeeded(this);
 
-        Logging.info("Table-draw start--------------------");
+        //Logging.info("Table-draw start--------------------");
         // tableModel.clearData();
-        Logging.info("Table-draw elapsed : " + ElapsedTime.onRunOf(() -> __draw(color, mySegments)));
+       // Logging.info("Table-draw elapsed : " + ElapsedTime.onRunOf(() -> __draw(color, mySegments)));
+        ElapsedTime.onRunOf(() -> __draw(color, mySegments));
     }
 
     public int getRowsDisplayed() {
@@ -252,6 +253,10 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
         int maxColRendered = -1;
         int maxRowRendered = -1;
         this.rowsDisplayed = 0;
+
+        
+        maxCol = Math.min(maxCol, tableModel.maxWidths.size()-1); // feels like I am compensating for a bug here..
+                                                                  // but maxCol sometimes has to be adjusted on table-resizes  
 
         {  // Calc header data
             int maxRowHeight = -1;
@@ -475,7 +480,7 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
                                                       BlockChars.NICE.getHORIZONTAL_DOWN(), 
                                                       BlockChars.NICE.getTOP_RIGHT() });
 
-            Logging.info("Top line  : " + timer);
+            // Logging.info("Top line  : " + timer);
 
             timer.reset();
 
@@ -502,7 +507,7 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
                                  BlockChars.NICE.getHORIZONTAL_UP(), 
                                  BlockChars.NICE.getBOTTOM_RIGHT() });
 
-            Logging.info("Bottom line  : " + timer);
+            // Logging.info("Bottom line  : " + timer);
 
             timer.reset();
             String verticalLineCharAsStr = BlockChars.NICE.getVERTICAL_LINE() + "";
@@ -519,7 +524,7 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
                 mySegments.add(new SegmentImpl(borderColor, new Position.Simple(row, boxWidth - 1), verticalLineCharAsStr));
 
             }
-            Logging.info("Verticals   : " + timer); 
+            // Logging.info("Verticals   : " + timer); 
        }
 
     }
@@ -568,6 +573,30 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
     public void addColumn(TableColumn tableColumn) {
         this.tableModel.addColumn(tableColumn);
     }
+    
+    
+	/**
+	 * Convenience (and optional) hook for callers to force a recomputation
+	 * of column widths based on the *current* underlying TableModel data.
+	 */
+	public void recomputeColumnWidthsFromData() {
+	    if (!(this.tableModel instanceof TableModelWidthData)) {
+	        // In your current design this should always be true, but be defensive.
+	        return;
+	    }
+	
+	    TableModelWidthData tm = (TableModelWidthData) this.tableModel;
+	
+	    // Recompute preferredWidth for each column using current data.
+	    tm.recomputePreferredWidthsFromData();
+	
+	    // Clear positional mapping & mark dirty so the next draw uses the new widths.
+	    if (this.tableCellAtPositions != null) {
+	        this.tableCellAtPositions.clear();
+	    }
+	    this.markAsDirty();
+	}
+
 
     static class TableModelWidthData extends TableModel.Delegate {
 
@@ -602,6 +631,14 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
                 tc.clearCalculatedData();
             }
         }
+        
+        @Override
+        public int getColumnCount() {
+            int count = super.getColumnCount();
+            return Math.min(Math.max(maxWidths.size(),maxWidths.size()==0?count:1), 
+            		        count);
+        }
+        
 
         public IScreenLineSegmentsBuffer getSegmentsDataAt(int row, int col) {
             if (row >= data.size()) {
@@ -656,7 +693,21 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
         }
 
         public int getMaxWidthForColumn(int col) {
-            return maxWidths.get(col);
+        	try {
+        		if (maxWidths.size() == 0) {
+        			return 0;
+        		}
+        		return maxWidths.get(col);
+        	} catch (IndexOutOfBoundsException e) {
+        		if (col > this.getColumnCount()) {
+        			throw new IndexOutOfBoundsException(e.getLocalizedMessage()+".  Details TableModelWidthData.maxWidths = "+ maxWidths + 
+        					                                                    "  columnCount =" + this.getColumnCount()+
+        					                                                    "  tried to access width for column "+ this.getColumnName(col));
+        		} else {        			
+        			throw new IndexOutOfBoundsException(e.getLocalizedMessage()+".  Details TableModelWidthData.maxWidths = "+ maxWidths+"  columnCount =" + this.getColumnCount());
+        		}
+        	}
+            
         }
 
         public int getMaxHeightForRow(int row) {
@@ -815,6 +866,41 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
         Dimension asDimension() {
             return new Dimension.Simple(getHeight(), getWidth());
         }
+        
+        /**
+         * Recompute each column's preferred width using the current TableModel data
+         * (header + all rows).
+         *
+         * This is opt-in: nothing calls it by default, so existing behavior is unchanged
+         * unless a caller explicitly invokes it.
+         */
+        public void recomputePreferredWidthsFromData() {
+            // Reset caches that depend on widths / rendered segments
+            this.headerData      = new ArrayList<IScreenLineSegmentsBuffer>();
+            this.data            = new ArrayList<List<IScreenLineSegmentsBuffer>>();
+            this.maxWidths       = new ArrayList<Integer>();
+            this.maxHeights      = new ArrayList<Integer>();
+            this.maxHeaderHeight = Integer.MIN_VALUE;
+
+            if (this.tableColumns == null || this.tableColumns.isEmpty()) {
+                return;
+            }
+
+            // For each column, clear its calculated data and derive a fresh preferredWidth
+            // from the current model (header + cell contents).
+            for (TableColumnWithDataAndWidths tc : this.tableColumns) {
+                if (tc == null) {
+                    continue;
+                }
+                // Clear per-column caches (columnData, headerWidth, maxDataLen, etc.)
+                tc.clearCalculatedData();
+
+                // Use current data + header to choose a new preferred width
+                int newPreferred = tc.getMaxMinWidthBetweenCellDataAndHeader();
+                tc.setPreferredWidth(newPreferred);
+            }
+        }
+
 
     }
 
@@ -1156,8 +1242,8 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
 
         ConditionalEventHandler complexKeyHandler = chainedEventHandler.asConditionalEventHandler();
 
-        appendEventHandler(new KeyInputEventHandler(Keys.BACKSPACE_KEYSTROKE,
-                                                    (te) -> Logging.info( TableComponent.this.getName() +  ": Backspace clicked")));
+//        appendEventHandler(new KeyInputEventHandler(Keys.BACKSPACE_KEYSTROKE,
+//                                                    (te) -> Logging.info( TableComponent.this.getName() +  ": Backspace clicked")));
 
 
         return complexKeyHandler;

@@ -1,6 +1,7 @@
 package dtb.terminalIO.examples;
 
 import dtb.terminalIO.app.TUIApp;
+import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.Composite;
@@ -11,7 +12,6 @@ import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.RequestHideCursorEvent;
 import dtb.terminalIO.events.RequestScrollToView;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
-import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
@@ -90,6 +90,8 @@ public class ScrollToViewTest {
         .confirmOnExit()
         .setOnReadyStart((tApp)->{
 
+            VerticalPanel mainPanel = new VerticalPanel().setVerticalSpacer(1);
+            
             VerticalPanel vp = new VerticalPanel().setVerticalSpacer(1);
             
             KeyStroke showCursorHotKeys[] = new KeyStroke[] {
@@ -105,26 +107,34 @@ public class ScrollToViewTest {
                     Keys.F9_KEYSTROKE
                     };
             
+            mainPanel.add(
+                    new BorderedComponent(
+                        new TextComponent(
+                            "\n"+
+                            "Test Scroll-to-view and Show/Hide Cursor\n" +
+                            "\n" +
+                            "Use  0 -   9 to scroll component to view\n" +
+                            "Use F1 - F10 to toggle show/hide cursor at component\n\n"
+                           )
+                    ).setTitle("ScrollToView and Show/Hide Cursor:  CTRL-C: exit"));
+            
             for (int i = 0; i<10; i++) {
                 KeyStroke hotKey = new KeyStroke('0'+i);
                 IKnowWhereIAm c = new IKnowWhereIAm(hotKey, showCursorHotKeys[i]);
                 vp.add(c);
-                
+
                 tApp.getEventBus().appendEventHandler( c.getScrollToViewKeyInputEventHandler());
 
                 tApp.getEventBus().appendEventHandler( c.getToggleShowCursorKeyInputEventHandler());
-                
-                //tApp.getCanvas().refresh();
-                
-                //tApp.doRefreshCanvasIfModified();
+
                 
             }
 
             ScrollableComponent sc = new ScrollableComponent(Colors.BIBlu, new Dimension.Simple(10,50), vp);
             
-            tApp.getEventBus().appendEventHandler( sc );
+            mainPanel.add(sc);
             
-            tApp.getMainApplicationPanel().add(sc);
+            tApp.getMainApplicationPanel().add(mainPanel);
             
             tApp.getEventBus().appendEventHandler(  new  KeyInputEventHandler( Keys.CTRL_R_KEYSTROKE , (te)-> {
                   tApp.doRefreshCanvasIfModified();
@@ -138,9 +148,6 @@ public class ScrollToViewTest {
                 
                 sc.resize(size);
             });
-            
-            FocusManager.UTIL.verifyPathsToFocusables(sc, (Component<?>)tApp.getMainApplicationPanel());
-            
             
         }).start();
     }

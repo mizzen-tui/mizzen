@@ -3,6 +3,7 @@ package dtb.terminalIO.components.chart;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 import dtb.terminalIO.components.AbstractComponent;
 import dtb.terminalIO.components.Component;
@@ -22,6 +23,10 @@ public class SparkLineComponent extends AbstractComponent<SparkLineComponent> im
     
     private Composite container;
     private TextComponent chart;
+
+    int currentMax = Integer.MIN_VALUE;
+    int currentMin = Integer.MAX_VALUE;
+    boolean trackingMinMax = false;
     
     public SparkLineComponent(Color color) {
         super(color);
@@ -102,8 +107,44 @@ public class SparkLineComponent extends AbstractComponent<SparkLineComponent> im
         markAsDirty();
     }
 
+    public boolean isTrackingMinMax() {
+        return trackingMinMax;
+    }
+
+    public void setTrackingMinMax(boolean trackingMinMax) {
+        this.trackingMinMax = trackingMinMax;
+    }
+
     public void renderPoints(Integer[] data) {
+        List<Integer> dataList = Arrays.asList(data);
+        if (trackingMinMax) {
+            final int max = Math.max(Collections.max(dataList),currentMax), min = Math.min(Collections.min(dataList), currentMin);
+            currentMax = max;
+            currentMin = min;
+            renderPoints(dataList, currentMax, currentMin );
+            return;
+        }
         chart.setText( SparkLine.render( Arrays.asList(data), chart.getHeight())  );
+    }
+
+    public void renderPoints(List<Integer> dataList) {
+        if (trackingMinMax) {
+            final int max = Math.max(Collections.max(dataList),currentMax), min = Math.min(Collections.min(dataList), currentMin);
+            currentMax = max;
+            currentMin = min;
+            renderPoints(dataList, currentMax, currentMin );
+            return;
+        }
+        chart.setText( SparkLine.render( dataList, chart.getHeight())  );
+    }
+
+
+    public void renderPoints(Integer[] data, int currentMax, int currentMin) {
+        chart.setText( SparkLine.render( Arrays.asList(data), chart.getHeight(), currentMax, currentMin)  );
+    }
+
+    public void renderPoints(List<Integer> dataList, int currentMax, int currentMin) {
+        chart.setText( SparkLine.render( dataList, chart.getHeight(), currentMax, currentMin)  );
     }
 
 }

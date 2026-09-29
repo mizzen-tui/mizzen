@@ -20,6 +20,7 @@ import dtb.terminalIO.events.keyboard.KeyEvent;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
+import dtb.terminalIO.events.mouse.MouseEventOrchestrator;
 import dtb.terminalIO.events.mouse.RawParsedFromConsoleMouseEvent;
 import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.Stty;
@@ -70,6 +71,12 @@ public class KeyInputEventsProducerTest {
             screen.add( new BaseTextControlCode(ControlCode.escape_CHR + "[?1015h"));
             screen.add( new BaseTextControlCode(ControlCode.escape_CHR + "[?1006h"));
         };
+
+        Runnable mouseEnableViaOrchestrator = ()-> {
+        	MouseEventOrchestrator.disableAllMouseModes(screen);
+        	MouseEventOrchestrator.enableMouseMode(screen);
+        	//MouseEventOrchestrator.disableAllMouseModes(screen);
+        };
         
         /*
          * write("\x1b[?1000h")  # SET_VT200_MOUSE
@@ -90,8 +97,9 @@ public class KeyInputEventsProducerTest {
         };
         
         
-        textualizeMouseEnable.run();
+        //textualizeMouseEnable.run();
         //normalMouseEnable.run();
+        mouseEnableViaOrchestrator.run();
         
         // now flush to stdout
         screen.refresh();
@@ -134,6 +142,7 @@ public class KeyInputEventsProducerTest {
                     @Override
                     public void handle(TerminalEvent<?> te) {
                         eventBus.stopConsuming();
+                        MouseEventOrchestrator.disableAllMouseModes(screen);
                         screen.add(ControlCode.SHOW_CURSOR);
                         screen.refresh();
 
@@ -216,11 +225,15 @@ public class KeyInputEventsProducerTest {
                         
                         if (ke.isKeyStroke(Keys.ESC_KEYSTROKE)) {
                             status1Displayer.accept(ke.getKeyName() + " hit. Quitting..");
+                            MouseEventOrchestrator.disableAllMouseModes(screen);
+                            Logging.info("mouse disabled");
                             terminate.handle(ke);
+                            System.out.println("Exited!!!");
                             return;
                         }
                         if (1+1==3 && ke.isKeyStroke(Keys.CTRL_C_KEYSTROKE)) {
                             status1Displayer.accept(ke.getKeyName() + " hit. Quitting.." + Keys.CTRL_C_KEYSTROKE.getName());
+                            MouseEventOrchestrator.disableAllMouseModes(screen);
                             terminate.handle(ke);
                             return;
                         }

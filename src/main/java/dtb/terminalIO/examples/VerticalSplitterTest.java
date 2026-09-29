@@ -22,13 +22,14 @@ public class VerticalSplitterTest {
         .setEmptyChar(' ')
         .setDefaultMainApplicationPanel()
         .confirmOnExit()
+        .enableComponentInspector()
         .setOnReadyStart((tApp)-> {
 
             VerticalSplitter vzp = new VerticalSplitter(Colors.BCya, new Dimension.Simple(30, 80));
 
             vzp.addComponent(new TextComponent(Colors.IGre,"TOP\n This is the top part\nSo there!"));
             vzp.addComponent(new TextComponent("BOTTOM\n"+readLargeSampleFile(30)));
-            
+
             vzp.setTitle(Colors.IBla, "Vertical Splitter Test");
 
             tApp.getMainApplicationPanel().add(1,1,vzp);
@@ -50,7 +51,5 @@ public class VerticalSplitterTest {
         }
         return largeText;
     }
-    
-    
-    
+
 }
