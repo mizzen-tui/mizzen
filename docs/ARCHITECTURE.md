@@ -209,10 +209,19 @@ Two further findings from the real app:
   TAB leaves the group there is nowhere to go and focus is stuck.
 
 Causes:
-1. **Re-entry resumes the remembered child.** Entering a group calls
-   `group.focus()`, which re-focuses the group's old `current`. It should start at
-   the group's first focusable going forward, or its last going backward. The
-   manager is never told the direction.
+1. **Two kinds of container, one mechanism.** Nested focus containers come in two kinds
+   that need opposite rules:
+   - *Grouping container* (form section, panel of fields): children are separate tab
+     stops. TAB entering forwards should start at the first child, entering backwards at the last.
+   - *Composite widget* (ListBox, DropdownListBox, menu, tab strip): the widget is **one**
+     tab stop, arrow keys move inside it, and re-entry **should** resume the remembered child.
+
+   A `DefaultFocusManager` can't tell which kind it is. Re-entry always resumes the
+   remembered `current` (widget behaviour), but if the manager's nav keys are TAB it also
+   makes each child a tab stop (grouping behaviour). The result follows neither rule:
+   first lap `A B C D`, then B is unreachable. Managers that navigate with other keys
+   (`DropdownListBox` uses UP/DOWN) already behave correctly as widgets. The manager is
+   also never told the direction focus arrived from, which a grouping container needs.
 2. **Nav-style mismatch across levels.** An outer `NAVKEYS_FIRST` manager takes
    TAB before the inner group sees it, so the inner group can't be traversed. Nav
    style is chosen per class, so how TAB behaves depends on which components you
@@ -256,14 +265,74 @@ and click-to-focus, with no failures*. That points to:
   nothing can drift.
 - **Focus state in one place:** a single "focused component" reference. Ancestors
   can ask "is focus within me?" instead of holding their own flags.
-- **Nested "groups"** (a menu, a dropdown, a button bar) become *policies* on a
-  component, such as local arrow-key navigation, trapping focus, or remembering the
-  last child. They stop being separate managers competing for TAB.
+- **Each container declares its kind** instead of it being implied by nav keys
+  and class defaults:
+  - *grouping* (default for plain panels): children join the surrounding tab order;
+    entry is direction-aware (first child forwards, last child backwards).
+  - *widget* (ListBox, DropdownListBox, menu, tab strip, and a ButtonBar if wanted): one
+    tab stop, **remembers its last child**, internal navigation with its own keys (arrows).
+  - optionally *trap* (modal dialog): TAB cycles inside and never leaves.
+
+  Not "flatten everything": remembering the last child is correct for widgets and must be kept.
 - **`canHandle` becomes a pure query.**
 
 This is the approach browsers take (tab order derived from the DOM) and most
 modern TUI toolkits too. Migrating needs a compatibility plan for the ~15
 classes in §3.1.
+
+### 4.4 Constraints any redesign must keep
+
+- **Navigation keys are configurable.** Never hardcode TAB/SHIFT-TAB; use each
+  container's configured nav keys (`DropdownListBox` uses UP/DOWN, for example).
+- **The child decides.** A parent offers the nav key to its current child first. The
+  child answers "moved internally" or "done", and the parent moves on only when the
+  child is done. Entry carries a direction, so a grouping child can pick its first or last
+  child and a widget can resume its remembered one. A child with nothing focusable
+  (empty, disabled, and possibly hidden) answers "skip me".
+- **Keep the cooperative hand-off.** `unFocus(newFocusable)` is load-bearing:
+  `DropdownListBox` stays open when focus moves into its own list, and `Menu`/`MenuBar`
+  stay popped up when focus moves within the menu (`isFocusablePartOfMenu`). Keep the order:
+  unfocus the old component with the new target known, *then* focus the new one. Keep the meaning:
+  `newFocusable` is the new sibling at that level, which may be a nested manager, not
+  necessarily the leaf. `focus(oldFocusable)` is currently unused (it's only forwarded or logged).
+- **Discover the tree only when needed.** Ordinary keypresses go straight to the
+  focused component, held as a direct reference. The component tree is walked only for navigation keys,
+  clicks, drag **start** and drag **end**, never on each drag-move event.
+  - Today an active drag already bypasses focus work (`MouseEventOrchestrator`,
+    `currentDraggable != null`). But a drag that didn't capture a draggable
+    runs a hit-test, a walk up and a `RequestFocusEvent` on **every** `DOWN_LEFT_DRAG`.
+    Fix that; don't inherit it.
+- **Remembered state belongs to the widget** (for example, a ListBox's selected index), not to a
+  stored list in a manager. If the remembered child is gone, disabled or hidden, fall back
+  to the first child.
+- **Visibility:** the focus code currently has no notion of hidden components.
+  Untested whether hidden components (for example, inside a collapsed `CollapsiblePanel`) stay tab stops.
+- **Wrap-around may re-enter the starting child.** When a wrapping container (root or
+  trap) comes back round to the child that just reported "done", it must re-enter that child
+  from its first/last leaf instead of giving up. Otherwise a root whose only child is a group dead-ends,
+  which is today's bug, and the first prototype had it too.
+- **Open question:** when the *focused* component becomes hidden or disabled, who moves focus
+  off it, and when? Currently nothing does; the next nav key just restarts from the top.
+
+### 4.5 Prototype result (Sep 2026)
+
+A standalone prototype of §4.3 and §4.4 (kept outside the repo; one focus root, children discovered
+on demand, `enter(dir)`/`advance(dir)`, four container kinds: transparent panel, group,
+widget, trap) passes all 20 scenarios:
+
+- grouping: `A,[B,C],D` gives `A B C D A B C D…`, and SHIFT-TAB gives `D C B A…`
+- widget: one tab stop, arrows move inside, re-entry resumes the remembered child (also after a click)
+- a single nested group as the root's only child gives no dead end
+- plain panels are transparent (flattened); disabled, hidden and empty containers are skipped;
+  a disabled remembered child falls back to the first
+- trap cycles inside; custom nav keys (RIGHT/LEFT) coexist with TAB
+- a child added at runtime is reachable with no rebuild call
+- hand-off: `ddText.unFocus(new=ddList)` keeps the dropdown open, and `ddList.unFocus(new=D)` closes it
+- 1,000 ordinary keypresses cause 0 tree walks
+
+Not covered by the prototype: real mouse and drag plumbing, the `REQUEST_FOCUS` event path,
+hotkeys, non-key events routed to non-focused children, canvas refresh, and fitting it
+into the existing `FocusManager` API and wrapper classes.
 
 ---
 
