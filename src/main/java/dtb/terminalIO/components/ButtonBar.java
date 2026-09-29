@@ -75,7 +75,7 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
     }
 
     public ButtonBar setNextKeyStroke(KeyStroke nextKeyStroke) {
-        getDefaultFocusManager().setPrevKeyStroke(nextKeyStroke);
+        getDefaultFocusManager().setNextKeyStroke(nextKeyStroke);
         return this;
     }
 

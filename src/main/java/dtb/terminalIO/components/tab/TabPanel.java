@@ -56,7 +56,11 @@ public class TabPanel extends AbstractComponentWrappper<CompositeWithFocusManage
         border = new SimpleBorder(getColor(), new Dimension.Simple(bounds.getHeight()-2, bounds.getWidth()));
         getWrappedComponent().add(workAreaPosition.addRows(-1).addCols(-1), border);
 
-        tabsButtonBar = new ButtonBar().setCycling(true).setNoBorderChars();
+        // tab strip follows the WAI-ARIA tabs pattern: arrows move between tabs (wrapping),
+        // TAB leaves the strip. Using TAB here made the strip a focus trap.
+        tabsButtonBar = new ButtonBar().setCycling(true).setNoBorderChars()
+                                       .setPrevKeyStroke(Keys.LEFT_KEYSTROKE)
+                                       .setNextKeyStroke(Keys.RIGHT_KEYSTROKE);
 
         getWrappedComponent().add(Position.ZERO.addCols(1), tabsButtonBar);
 
