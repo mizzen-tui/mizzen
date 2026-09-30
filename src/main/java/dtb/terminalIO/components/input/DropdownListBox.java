@@ -46,7 +46,14 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
     private T value;
 
     private int maxItemWidth = 10;  // arbitrary default.
-    boolean dontShowListBoxWhileProcessingOnMouseSelected = false;
+    // true while focus is being handed back from the open list to this dropdown
+    // (item selected, ENTER/ESC, TAB/SHIFT-TAB) - receiving that focus must not reopen the list
+    boolean returningFocusFromListBox = false;
+
+    // keys the surrounding container uses to move focus; pressed while the list is open they
+    // close the list and move on from this dropdown (see setContainerNavKeyStrokes)
+    private KeyStroke containerPrevNavKeyStroke = Keys.SHIFT_TAB_KEYSTROKE;
+    private KeyStroke containerNextNavKeyStroke = Keys.TAB_KEYSTROKE;
 
     protected DropdownListBox(Color color) {
         super(color, new VerticalPanel(color).setName("vertical-Panel-ddlb"));
@@ -59,11 +66,11 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
             //hideListBox();
             EventBus eventBus = te.getEventBus();
             setSelectedFromListBox(eventBus);
-            dontShowListBoxWhileProcessingOnMouseSelected = true;
+            returningFocusFromListBox = true;
             te.getEventBus().raiseEvent(new RequestFocusEvent(DropdownListBox.this.button)
                     .then(()->{
                         //hideListBox();
-                        dontShowListBoxWhileProcessingOnMouseSelected = false;
+                        returningFocusFromListBox = false;
                     }));
             RequestUpdateCanvasEvent.invoke(eventBus, this);
         };
@@ -115,16 +122,22 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
             KeyStroke navKey = ((KeyEvent) te).getKeyStroke();
             EventBus eventBus = te.getEventBus();
             setSelectedFromListBox(eventBus);
-            dontShowListBoxWhileProcessingOnMouseSelected = true;
+            returningFocusFromListBox = true;
             eventBus.raiseEvent(new RequestFocusEvent(DropdownListBox.this.button)
                     .then(()->{
-                        dontShowListBoxWhileProcessingOnMouseSelected = false;
+                        returningFocusFromListBox = false;
+                        // HACK: re-raise the nav key so it is processed again, now relative to this
+                        //       dropdown. The re-raised key goes to the back of the event queue, so
+                        //       any keys already queued are processed before it. Works in practice;
+                        //       revisit if a cleaner way appears (focus redesign: popups belong to
+                        //       their owner for navigation).
                         eventBus.raiseEvent(new KeyEvent(DropdownListBox.this, navKey));
                     }));
             RequestUpdateCanvasEvent.invoke(eventBus, this);
         };
-        this.listBox.appendEventHandler(new KeyInputEventHandler(leaveListAndNavigate, Keys.TAB_KEYSTROKE, Keys.SHIFT_TAB_KEYSTROKE)
-                                                .setName("DDLB-LISTBOX-TAB"));
+        this.listBox.appendEventHandler(new KeyInputEventHandler(
+                (te) -> isContainerNavKey((KeyEvent) te),
+                leaveListAndNavigate).setName("DDLB-LISTBOX-NAVKEY"));
 
         appendEventHandler( new KeyInputEventHandler(new KeyStroke[] {Keys.UP_KEYSTROKE, Keys.DOWN_KEYSTROKE},
                                                      (te)-> ! listBoxVisible(),
@@ -150,6 +163,22 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
 
     public DropdownListBox() {
         this(Colors.FGBGColors.NO_COLOR_SPECIFIED);
+    }
+
+    /**
+     * Keys the surrounding container uses to move focus (default SHIFT-TAB / TAB). Pressed while
+     * the list is open, they keep the selection, close the list and move focus on from this
+     * dropdown. Only needs changing if the container navigates with other keys. null = none.
+     */
+    public DropdownListBox<T> setContainerNavKeyStrokes(KeyStroke prevKeyStroke, KeyStroke nextKeyStroke) {
+        this.containerPrevNavKeyStroke = prevKeyStroke;
+        this.containerNextNavKeyStroke = nextKeyStroke;
+        return this;
+    }
+
+    private boolean isContainerNavKey(KeyEvent ke) {
+        return (containerPrevNavKeyStroke != null && ke.isKeyStroke(containerPrevNavKeyStroke))
+            || (containerNextNavKeyStroke != null && ke.isKeyStroke(containerNextNavKeyStroke));
     }
 
     private void calcAndSetMaxItemWidth(List<DisplayableValue<T>> displayableItems) {
@@ -480,7 +509,7 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
         // note:  important - must bring to front this component
         //        and then if needed, showListBox() after - this ensures ListBox on top
         Component.UTIL.bringToFront(DropdownListBox.this);
-        if (focus && !dontShowListBoxWhileProcessingOnMouseSelected) {
+        if (focus && !returningFocusFromListBox) {
             showListBox();
             if (!isDirty()) {
                 this.markAsDirty();
