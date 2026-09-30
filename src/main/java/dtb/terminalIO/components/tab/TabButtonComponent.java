@@ -202,7 +202,9 @@ public class TabButtonComponent extends BoundedComponent<TabButtonComponent> imp
                     if (!isActive()) {
                         setActive(true);
                         hilite();
-                        onClick(eventBus);
+                        // focus arrived here (tab strip navigation): show this tab,
+                        // but leave focus on the strip - see onClick()
+                        activate(eventBus);
                     }
                     
                 }
@@ -262,15 +264,35 @@ public class TabButtonComponent extends BoundedComponent<TabButtonComponent> imp
     }
 
     
+    // true when the tab was explicitly chosen (mouse click, hot key, prev/next shortcut):
+    // the TabPanel then moves focus into the tab's content. Not set when focus merely
+    // arrives on the tab button while navigating the tab strip.
+    private boolean focusContentRequested = false;
+
+    boolean consumeFocusContentRequest() {
+        boolean requested = focusContentRequested;
+        focusContentRequested = false;
+        return requested;
+    }
+
+    /**
+     * Explicitly choose this tab (mouse click, hot key): shows the tab and moves focus into its content.
+     */
     public void onClick(EventBus eventBus) {
+        focusContentRequested = true;
         if (!hasFocus()) {
             // focus manager should have already put focus here - but just in case ..
             eventBus.raiseEvent(new RequestFocusEvent(this));
         }
+        activate(eventBus);
+      //  Logging.info( HasName.UTIL.getName(this)+ " clicked!!!!!!!!  "  + Component.UTIL.pathToCanvasAsString(this) );
+    }
+
+    // shows this tab (the TabPanel reacts to the value changed event)
+    private void activate(EventBus eventBus) {
         TabButtonComponent.this.setValue( (true) ); 
         eventBus.raiseEvent( new HasValue.ValueChangedEvent<>(TabButtonComponent.this) );
         eventBus.raiseEvent( new RequestUpdateCanvasEvent(this));
-      //  Logging.info( HasName.UTIL.getName(this)+ " clicked!!!!!!!!  "  + Component.UTIL.pathToCanvasAsString(this) );
     }
 
 
