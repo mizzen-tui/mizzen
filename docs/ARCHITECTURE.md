@@ -131,6 +131,58 @@ If no path is found the event is not claimed and **nothing happens** (silently).
 
 Note steps 3 and 4 use two different trees (see §4).
 
+### 2.5 The focus tree also delivers non-key events
+
+`DefaultFocusManager` does more than keyboard focus. For any event that reaches it, it
+offers the event to the current child, then (for non-key events) to the **other
+children** too. With `NAVKEYS_FIRST` it stops at the first claimer; with `NAVKEYS_LAST`/`NONE`
+it delivers to **all** claimers.
+
+Components register many handlers on their **own internal chain**, not on the bus:
+`TextInput.onChange`, `Button.onChange` (via `HasValue.UTIL.bindConsumerAsOnValueChangedHandler`),
+`customExtendedEventHandler` (`TextInputWithIncrDecrButtons`, `MovingPicturesViewer`,
+`AbstractWrappedComponentWithFocusManager`). Example: `Button.onClick` raises a
+`ValueChangedEvent` on the bus; it reaches the button's `onChange` action **only through the
+focus tree**. The same route carries `VALUE_CHANGED`, `TABLE_ROW_SELECTED`/`TABLE_CELL_SELECTED`,
+`VIEW_OFFSET_CHANGED` and custom events.
+
+Consequences: a component missing from a stale focus tree doesn't just lose TAB, its
+`onChange` handlers **never fire**; and any focus redesign must keep this delivery working.
+
+Mouse is mostly separate: app-level `ApplicationMouseEventHandler`s sit on the bus, and
+`MouseEventOrchestrator` calls `clickable.onClick()` directly. Only unclaimed mouse events fall
+into the focus tree's "offer to children" loop.
+
+### 2.6 TAB-consuming components
+
+`TextInput` / `MultiLineTextInput` consume TAB and SHIFT-TAB when `multiLine` is true. `TabPanel`
+once used TAB as a hotkey (now disabled: "a really bad idea because circumvents normal
+FocusManager navigation"). Inside a `NAVKEYS_FIRST` container the container takes TAB first,
+so a multi-line editor there never receives TAB. Behaviour depends on nesting.
+
+### 2.7 Inventory: what travels through the focus tree (Sep 2026)
+
+Handlers attached to a **component's own chain** (not the bus). Their events reach them only by
+travelling down the focus tree. A redesign must keep delivering every row.
+
+| Event type | Registered by / where | What it does |
+|---|---|---|
+| KEYPRESS | ~50 `KeyInputEventHandler`s on component chains (TextInput, ListBox, Menu, ScrollBars, Table, MessageBox, ...) | per-component key bindings; they reach the component only while it (or an ancestor path) has focus |
+| VALUE_CHANGED | `onChange` on TextInput, MultiLineTextInput, TextInputForType, Button, RockerButton, TabButtonComponent, ListBox, DropdownListBox, TextInputWithIncrDecrButtons, ScrollBars, ImageManipulationControls (`HasValue.UTIL.bindConsumerAsOnValueChangedHandler`) | component actions (a Button's action is a VALUE_CHANGED handler) |
+| VALUE_CHANGED (from children) | `FormBinder.onChange` on the **form panel** (ancestor) | form-level change handling: needs delivery through ancestors |
+| VIEW_OFFSET_CHANGED | `HasViewPortWindow` (`newOnChangedHandler`) | viewport scroll sync |
+| TABLE_ROW_SELECTED / TABLE_CELL_SELECTED | `TableComponent` (`rowSelectedHandler`, `cellSelectedHandler`) | table selection callbacks |
+| REQUEST_SCROLL_TO_VIEW | `WindowViewComponent.ScrollToViewHandler` in `ScrollableComponent`, `ScrollableComponent2`, `WindowFrame`, `WindowFrameFocusable` chains (plus a bus-level `FindScrollToViewHandler` in `TUIApp`) | scroll a focused/requested component into view. **Focus side effect:** focusing inside a scrollable can scroll it (see comment in `MouseEventOrchestrator`) |
+| REQUEST_FOCUS | `ScrollableComponent` adds its **own** request-focus handler ("not a standard FocusManager") | focus requests resolved inside the scrollable |
+| any (forwarded) | `ScrollableComponent2`: if the footer (e.g. search box) has focus and cannot handle an event but the viewed component can, it forwards the event **and then raises `RequestFocusEvent` for that component** | *event-driven focus*: typing moves focus to the component that consumes it |
+| any | `ScrollableComponent` prepends each child focusable directly into its own chain | a fourth focus-manager flavour, besides the three base classes in §3.1 |
+| any | `customExtendedEventHandler` on `DefaultFocusManager` (`TextInputWithIncrDecrButtons`, `MovingPicturesViewer`, `AbstractWrappedComponentWithFocusManager`) | extra per-manager handling |
+| KEYPRESS (modal) | `ModalEventHandler` prepends itself to its parent container (bus or component), inner chain + keyboard sinkhole | modal dialogs swallow all keys |
+
+On the bus (not via focus tree): idle/terminate handlers, canvas refresh, cursor show/hide,
+resize, `FindScrollToViewHandler`, mouse orchestrator, component inspector,
+`SearchFunctionForScrollableComponent`'s title updater (added to the bus at runtime).
+
 ---
 
 ## 3. How components get focus managers
@@ -254,31 +306,56 @@ Causes:
   inner manager has 0 children. This works around empty-manager behaviour instead of
   fixing it.
 
-### 4.3 Direction (to decide)
+### 4.3 Proposal (consolidated)
 
-The requirement: *any composition of components must give consistent TAB order
-and click-to-focus, with no failures*. That points to:
+Two jobs are tangled in today's focus tree; the proposal separates them.
 
-- **One focus authority per app** (or per window/modal layer). It computes
-  traversal order on demand by walking the **component tree** in document order,
-  filtering to focusable + enabled + visible. There is no stored focus tree, so
-  nothing can drift.
-- **Focus state in one place:** a single "focused component" reference. Ancestors
-  can ask "is focus within me?" instead of holding their own flags.
-- **Each container declares its kind** instead of it being implied by nav keys
-  and class defaults:
-  - *grouping* (default for plain panels): children join the surrounding tab order;
-    entry is direction-aware (first child forwards, last child backwards).
-  - *widget* (ListBox, DropdownListBox, menu, tab strip, and a ButtonBar if wanted): one
-    tab stop, **remembers its last child**, internal navigation with its own keys (arrows).
-  - optionally *trap* (modal dialog): TAB cycles inside and never leaves.
+**A. Focus & navigation: a single focus root**
+1. One owner of focus: a direct reference to the focused component. No per-manager copies.
+2. KEYPRESS routing order:
+   1. a TAB-consuming editor (opt-in) releases TAB on **Esc**;
+   2. the focused component's `canHandle`/`handle`, so an editor gets its TAB;
+   3. bubble up through ancestors: each checks its **own configurable** nav keys and calls `advance(dir)`.
+3. The child decides: `enter(dir)` / `advance(dir)`, where null means "skip me" / "I'm done". Each
+   container states a policy: **GROUP** (children are separate stops), **WIDGET** (one stop,
+   remembers its last child, arrow keys inside), **TRAP** (modal). Plain panels are transparent.
+4. `moveFocus` is the only thing that changes focus; it keeps today's `unFocus(new)` →
+   `focus(old)` notifications and their meaning (§4.4).
+5. Clicks and `REQUEST_FOCUS` go straight to `moveFocus`, with no intermediate focus (§4.6).
+6. Initial focus is given on start.
+7. `canHandle` only answers and never changes state.
 
-  Not "flatten everything": remembering the last child is correct for widgets and must be kept.
-- **`canHandle` becomes a pure query.**
+**B. Event delivery for non-key events (§2.5): same semantics as today**
+1. `canHandle`/`handle` remain the generic contract for **every** event type.
+2. Keep today's path and order: from the root down through the containers, focused path
+   first, then other children using each container's current first-claimer or all-claimers rule
+   (pinned by characterisation tests). The only change: containers are discovered on demand.
+3. **No "targeted" delivery straight to the event's source.** Ancestors listen to their
+   children's events: `FormBinder.onChange` registers on the *form panel*, an ancestor of the
+   inputs, so skipping ancestors would break form-level change handling.
 
-This is the approach browsers take (tab order derived from the DOM) and most
-modern TUI toolkits too. Migrating needs a compatibility plan for the ~15
-classes in §3.1.
+**C. Shared: on-demand discovery.** Neither job keeps a stored list; both walk the
+component tree when needed (nav keys, clicks, drag start/end, broadcasts). Nothing goes
+stale, and `rebuildFocusManager()` calls become unnecessary.
+
+**D. Migration.** The engine (A and B) switches in one commit; components migrate
+gradually, because leaves inherit defaults and most managers extend three base classes. Order:
+inventory the event types routed through the focus tree → safety-net tests (incl. "button
+`onChange` still fires", dropdown/menu hand-off) → add interfaces with defaults → switch
+the engine → migrate classes one by one. Work on branch `focus-redesign`.
+
+**Decisions (Sep 2026):**
+
+| Question | Decision |
+|---|---|
+| `ButtonBar` | current behaviour: GROUP (TAB through buttons, leave at the ends); `TabPanel`'s strip keeps `setCycling(true)` |
+| `MultiLineTextInput` TAB | moves focus by default; opt-in to insert `\t`, then **Esc** leaves (Textual `TextArea` `tab_behavior` model). Alt-TAB is grabbed by window managers; Ctrl-TAB is indistinguishable from TAB in most terminals |
+| Event delivery | today's path and order, discovered on demand; no targeted delivery |
+| Broadcast rule | exactly today's per-container behaviour |
+| Focused component hidden/disabled | move focus to the next focusable (else previous, else none); triggered via `setEnabled(boolean, EventBus)` / hide |
+
+This follows the same approach as browsers (tab order derived from the DOM, roving
+tabindex for composite widgets) and most modern TUI toolkits.
 
 ### 4.4 Constraints any redesign must keep
 
@@ -302,6 +379,21 @@ classes in §3.1.
     `currentDraggable != null`). But a drag that didn't capture a draggable
     runs a hit-test, a walk up and a `RequestFocusEvent` on **every** `DOWN_LEFT_DRAG`.
     Fix that; don't inherit it.
+- **Focus notifications drive visible side effects: keep them all.** `moveFocus` must call
+  `unFocus(new)` on every node of the old path below the split, and `focus(old)` on every node of the
+  new path, **top-down, containers included**. That is how `WindowFrameFocusable` hilites/unhilites
+  its border, `AbstractWrappedComponentWithFocusManager` does `bringToFront`, and
+  `DefaultFocusableBehaviour` recolours components. Keep the within-node order too (e.g.
+  `WindowFrameFocusable.focus` passes focus down first, then hilites itself).
+- **The child decides; the parent never inspects the policy.** `advance` answers MOVED(target),
+  DONE (bubble up) or STAY (handled, no move, e.g. DOWN at the end of a list). `moveFocus` *tells*
+  containers "focus is now inside you at child X" (cf. `childHasCurrentFocus`), and each
+  container decides whether to remember it.
+- **A popup belongs to its owner for navigation.** A dropdown's list or a menu's popup may be
+  attached elsewhere in the component tree (root panel overlay); leaving it with a nav key must
+  behave as leaving the owner in that direction.
+- **Existing modal trap:** `ModalEventHandler` is prepended to the bus and swallows all keys
+  (keyboard sinkhole). It is separate from focus managers and must keep working.
 - **Remembered state belongs to the widget** (for example, a ListBox's selected index), not to a
   stored list in a manager. If the remembered child is gone, disabled or hidden, fall back
   to the first child.
@@ -330,9 +422,58 @@ widget, trap) passes all 20 scenarios:
 - hand-off: `ddText.unFocus(new=ddList)` keeps the dropdown open, and `ddList.unFocus(new=D)` closes it
 - 1,000 ordinary keypresses cause 0 tree walks
 
-Not covered by the prototype: real mouse and drag plumbing, the `REQUEST_FOCUS` event path,
+Not covered by the prototype: **non-key event delivery (§2.5), since it routes keys only**; reserved escape keys; real mouse and drag plumbing, the `REQUEST_FOCUS` event path,
 hotkeys, non-key events routed to non-focused children, canvas refresh, and fitting it
 into the existing `FocusManager` API and wrapper classes.
+
+### 4.6 Click focus flicker (today)
+
+Clicking B in `A,[B,C],D` while D has focus: the root calls `setChildAsCurrentFocus(group)` →
+`group.focus(D)`, which re-focuses the group's **old** current child (say C), and only then
+`group.setChildAsCurrentFocus(B)` → `C.unFocus(B)`, `B.focus(C)`. C gets a spurious
+focus/unfocus pair. For dropdowns and menus that react to focus, this is a likely source of
+intermittent open/close glitches. Not yet reproduced in a test.
+
+### 4.7 Secondary objective: simplify the component base classes
+
+Once focusables are discovered on demand (§4.3 C), components no longer have to keep a focus
+list in step with their children. That removes the main reason several mid-level base classes
+exist, so the redesign should **reduce them where it can be done carefully**.
+
+Current hierarchy (focus-related; subclass counts exclude examples):
+
+```
+AbstractComponent                                   (15 direct subclasses)
+ ├─ Composite                                       (10)   layout only, no focus
+ │   ├─ CompositeWithFocusManager                   (2)    is a Composite + owns a focus manager
+ │   └─ ScrollableComponent                         (0)    own non-standard focus handling
+ ├─ ComponentWithFocusManager                       (4)    wraps a Composite + owns a focus manager
+ │   └─ ButtonBar, DropdownListBox, ScrollableComponent2, ...
+ ├─ AbstractComponentWrappper                       (13)   wraps one component
+ │   └─ AbstractWrappedComponentAndFocusable        (7)    wrapper that is focusable
+ │       └─ AbstractWrappedComponentWithFocusManager (7)   wrapper that owns a focus manager
+ ├─ WindowFrame / WindowFrameFocusable              (0)    two near-parallel classes
+ └─ ...
+```
+
+Problems:
+- **"Which one do I extend?"** Three different bases mean "container with focus"
+  (`CompositeWithFocusManager`, `ComponentWithFocusManager`, `AbstractWrappedComponentWithFocusManager`),
+  plus `ScrollableComponent` doing it a fourth way. They differ in nav-style defaults (§2.2).
+- **Inconsistent child/focus bookkeeping.** `CompositeWithFocusManager.add` registers focusables;
+  `ComponentWithFocusManager.add` does **not** (only `addComponentAndItsFocusables` does);
+  the wrappers need an explicit `registerAllFocusables()`. Same operation, different results.
+- Inheritance is deeper than it needs to be.
+
+What must be kept (the owner's stated goals):
+- **Convenience that steers developers to the right thing.** Base classes (or delegation helpers,
+  "services" in the PowerBuilder PFC sense) exist to remove boilerplate so that the easy way is the
+  correct way. Removing a base class must not push that boilerplate onto every component.
+- Abstract classes are fine where they earn their place; the aim is fewer and clearer ones, not none.
+
+Approach: after the engine switch, list each base class with its subclasses and what it still does;
+then merge or remove only where the remaining behaviour is a focus *policy* (GROUP / WIDGET / TRAP)
+that a plain container can declare. Do this class by class, not in the engine commit.
 
 ---
 
@@ -351,3 +492,7 @@ into the existing `FocusManager` API and wrapper classes.
 | `events/focus/DefaultFocusManager.java:188,226` | dead `getPrevOLD` / `getNextOLD` |
 | `components/BehaviourForCompositeAndFocusManager.java:169-174` | insert index uses a *map* index as a *children-list* index → wrong tab order when inserting before existing children |
 | `controlcodes/ControlCode.java` | several `DISABLE_*` mouse codes have an extra digit (`[?10021l` should be `[?1002l`, etc.) |
+| `components/ButtonBar.java:77-80` | **fixed (Sep 2026):** `setNextKeyStroke` called `setPrevKeyStroke`, so "next" stayed TAB and the prev key was overwritten (e.g. `TabPanelTest`'s Ctrl-Left/Ctrl-Right never worked) |
+| `components/tab/TabPanel.java` | **fixed (Sep 2026):** tab strip navigated with TAB + `setCycling(true)` (a focus trap), and activating a tab always moved focus into its content, so strip navigation stopped after one step. Now: on the strip, Left/Right (wrapping) show tabs and focus **stays on the strip**; TAB goes strip → content → `<-` `->`; click, tab hot key and the prev/next shortcuts (`setPrevKeyStroke`/`setNextKeyStroke`) show the tab **and** focus its content. The shortcuts work from anywhere inside the panel but sit last in its chain (`customExtendedEventHandler`), so the content gets the key first |
+| `components/input/DropdownListBox.java` | **fixed, interim (Sep 2026):** the open list is attached to the root panel, i.e. at the *end* of the root's focus order, not inside the dropdown. TAB from the list wrapped to the first focusable, and re-entry then resumed the dropdown: a loop (dropdown ↔ first focusable), so nothing after a dropdown was reachable by TAB (e.g. a form's Save button). SHIFT-TAB went to the root's last focusable. Now TAB/SHIFT-TAB in the list hand focus back to the dropdown and re-raise the key. Proper rule for the redesign: **a popup belongs to its owner for navigation** |
+| `components/input/DropdownListBox.java` | Enter/Esc in the list commit the selection and return keys to the dropdown, but the list stays **open** until focus moves elsewhere (`hideListBox()` commented out in `onSelectedItemHandler`). Esc commits instead of cancelling |
