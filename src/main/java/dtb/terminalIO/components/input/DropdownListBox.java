@@ -24,6 +24,7 @@ import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.RequestFocusEvent;
 import dtb.terminalIO.events.focus.ToFocusable;
+import dtb.terminalIO.events.keyboard.KeyEvent;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
@@ -104,6 +105,26 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
         
         this.listBox.appendEventHandler(new KeyInputEventHandler(Keys.ENTER_KEYSTROKE, onSelectedItemHandler).setName("DDLB-LISTBOX-ENTER"));
         this.listBox.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, onSelectedItemHandler).setName("DDLB-LISTBOX-ESC"));
+
+        // TAB / SHIFT-TAB while the list is open: keep the selection, hand focus back to this
+        // dropdown and let the key carry on navigating from here. The open list is attached
+        // elsewhere (usually the root panel), so without this the key would move focus relative
+        // to wherever the list sits in the focus order instead of relative to this dropdown.
+        // (interim: a focus redesign should treat a popup as part of its owner for navigation)
+        EventHandler leaveListAndNavigate = (te) -> {
+            KeyStroke navKey = ((KeyEvent) te).getKeyStroke();
+            EventBus eventBus = te.getEventBus();
+            setSelectedFromListBox(eventBus);
+            dontShowListBoxWhileProcessingOnMouseSelected = true;
+            eventBus.raiseEvent(new RequestFocusEvent(DropdownListBox.this.button)
+                    .then(()->{
+                        dontShowListBoxWhileProcessingOnMouseSelected = false;
+                        eventBus.raiseEvent(new KeyEvent(DropdownListBox.this, navKey));
+                    }));
+            RequestUpdateCanvasEvent.invoke(eventBus, this);
+        };
+        this.listBox.appendEventHandler(new KeyInputEventHandler(leaveListAndNavigate, Keys.TAB_KEYSTROKE, Keys.SHIFT_TAB_KEYSTROKE)
+                                                .setName("DDLB-LISTBOX-TAB"));
 
         appendEventHandler( new KeyInputEventHandler(new KeyStroke[] {Keys.UP_KEYSTROKE, Keys.DOWN_KEYSTROKE},
                                                      (te)-> ! listBoxVisible(),
