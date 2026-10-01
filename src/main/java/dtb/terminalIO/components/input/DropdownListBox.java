@@ -191,8 +191,16 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
     }
 
     private boolean dropdownOrListHasFocus() {
-        return ToFocusable.UTIL.toFocusable(this.listBox).hasFocus()
-            || ToFocusable.UTIL.toFocusable(this.button).hasFocus();
+        Focusable listFocusable = ToFocusable.UTIL.toFocusable(this.listBox);
+        Focusable buttonFocusable = ToFocusable.UTIL.toFocusable(this.button);
+        // ask the root focus manager what is focused: individual hasFocus() flags can be stale
+        // (e.g. a dropdown inside a dialog: its button kept hasFocus()==true after focus moved away)
+        FocusManager root = FocusManager.UTIL.getRootFocusManager(listFocusable);
+        if (root != null) {
+            Focusable focused = FocusManager.UTIL.findCurrentFocus(root);
+            return focused == listFocusable || focused == buttonFocusable;
+        }
+        return listFocusable.hasFocus() || buttonFocusable.hasFocus();
     }
 
     private boolean isContainerNavKey(KeyEvent ke) {
