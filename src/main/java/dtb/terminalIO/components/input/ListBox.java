@@ -659,6 +659,14 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         return focusable;
     }
 
+    /**
+     * Called after this ListBox has lost focus. Override to react (e.g. DropdownListBox closes its
+     * popup list). Note newFocusable is the new focusable at the level where focus moved, which may
+     * be a container of the final target rather than the target itself.
+     */
+    protected void onUnFocus(Focusable newFocusable, EventBus eventBus) {
+    }
+
     private Focusable makeFocusable() {
 
         ChainedEventHandler chainedHandler = getChainedEventHandler();
@@ -675,6 +683,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
                        curSelectedComponent.selectWithNoFocus(newFocusable);
                    }
                 }
+                onUnFocus(newFocusable, eventBus);
             }
 
             public void focus(Focusable oldFocusable, EventBus eventBus) {

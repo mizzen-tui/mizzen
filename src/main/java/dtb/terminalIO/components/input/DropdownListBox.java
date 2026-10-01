@@ -79,6 +79,20 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
             protected void onMouseSelected(EventBus eventBus) {
                 eventBus.asynch(onSelectedItemHandler);
             }
+
+            @Override
+            protected void onUnFocus(Focusable newFocusable, EventBus eventBus) {
+                // The open list lost focus. If focus went somewhere other than this dropdown
+                // (e.g. a click elsewhere) close the list. Checked once the focus move has
+                // finished: newFocusable is only the sibling where focus moved (often a container),
+                // so it can't tell "back to this dropdown" from "elsewhere".
+                eventBus.asynch((te) -> {
+                    if (!dropdownOrListHasFocus()) {
+                        hideListBox();
+                        RequestUpdateCanvasEvent.invoke(te, DropdownListBox.this);
+                    }
+                });
+            }
         };
 
         this.listBox.setBorder(true);
@@ -174,6 +188,11 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
         this.containerPrevNavKeyStroke = prevKeyStroke;
         this.containerNextNavKeyStroke = nextKeyStroke;
         return this;
+    }
+
+    private boolean dropdownOrListHasFocus() {
+        return ToFocusable.UTIL.toFocusable(this.listBox).hasFocus()
+            || ToFocusable.UTIL.toFocusable(this.button).hasFocus();
     }
 
     private boolean isContainerNavKey(KeyEvent ke) {

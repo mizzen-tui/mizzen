@@ -87,6 +87,19 @@ public class DropdownListBoxCharacterisationTest extends TestCase {
         assertTrue(dropdown.listBoxVisible());
     }
 
+    /** clicking another component while the list is open moves focus there and closes the list */
+    public void testClickElsewhereWhileListOpenClosesList() {
+        click(before);
+        press(Keys.TAB_KEYSTROKE);
+        boolean openBefore = dropdown.listBoxVisible();
+
+        click(after);
+
+        assertTrue(openBefore);
+        assertEquals("after", focusedName());
+        assertFalse("list should close when focus goes elsewhere", dropdown.listBoxVisible());
+    }
+
     /** TAB in the open list: keeps the selection, closes the list, focus moves on from the dropdown */
     public void testTabInOpenListMovesToNextAndKeepsSelection() {
         click(before);
