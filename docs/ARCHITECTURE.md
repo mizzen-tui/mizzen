@@ -287,7 +287,7 @@ Causes:
   clicks) and the focus tree (keyboard) are separate structures. The focus tree
   is a snapshot taken when children are added (§3.2). Any drift produces
   unreachable focusables (verify throws) or clicks that silently do nothing (§2.3).
-- **Wrapper vs inner manager (fragile; no failure reproduced).** Component → focusable
+- **Wrapper vs inner manager (reproduced Oct 2026, see below).** Component → focusable
   identity is stable, because every `asFocusable()` checked (~18) caches its instance lazily.
   The fragile part is the wrappers (§3.1): the tree is only consistent because each wrapper
   calls `setActual(wrapper)`, so children point at the wrapper and not at the inner
@@ -295,6 +295,11 @@ Causes:
   directly, gives the same node two identities, and path finding then depends on which
   direction it searches. The disabled `skipProxiedManagers` workaround in
   `verifyPathsToFocusables` suggests this has failed before.
+  **Reproduced:** `ComponentWithFocusManager`'s constructor builds its inner DFM and adds the
+  container's focusables *before* `setActual(this)`, so those children's parent is the inner DFM
+  while the parent's child list holds the wrapper; walking up from a child never meets the wrapper.
+  Today's path search survives via a fallback; the new `advance` uses
+  `FocusManager.UTIL.containsFocusable`, which treats a wrapper and its provided manager as one node.
 - **Distributed state.** Each level stores its own `current` and `hasFocus`. Nothing
   guarantees there is exactly one focused leaf, or that each ancestor's `current`
   points toward it.

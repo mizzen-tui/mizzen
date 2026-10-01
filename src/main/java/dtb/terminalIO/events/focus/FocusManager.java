@@ -18,6 +18,7 @@ import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
+import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.traverse.FindPathToTarget;
 import dtb.terminalIO.traverse.HasChildren;
 import dtb.terminalIO.traverse.HasChildrenAdapter;
@@ -54,7 +55,38 @@ public interface FocusManager extends Focusable {
     public Focusable getCurrentChildFocus();
     
     public Collection<Focusable> getChildFocusables();
-    
+
+    /**
+     * What kind of container this is - decides how it answers enter / advance:
+     * GROUP (fields TAB through), WIDGET (one stop, e.g. list box), TRAP (modal, focus can't leave).
+     * Wrapper components ask their inner manager; anything else is a GROUP.
+     * Not yet used by the focus routing (focus redesign).
+     */
+    default FocusPolicy getFocusPolicy() {
+        FocusManager delegate = UTIL.providedFocusManager(this);
+        return delegate != null ? delegate.getFocusPolicy() : FocusPolicy.GROUP;
+    }
+
+    /**
+     * Is key one of this container's navigation keys? Returns FORWARD for its "next" key
+     * (usually TAB), BACKWARD for its "previous" key (usually SHIFT-TAB), null for any other key.
+     * Wrapper components ask their inner manager. Not yet used by the focus routing (focus redesign).
+     */
+    default FocusDirection navDirectionFor(KeyStroke key) {
+        FocusManager delegate = UTIL.providedFocusManager(this);
+        return delegate != null ? delegate.navDirectionFor(key) : null;
+    }
+
+    @Override
+    default Focusable enter(FocusDirection dir) {
+        return UTIL.enter(this, dir);
+    }
+
+    @Override
+    default Navigation advance(Focusable focusedLeaf, FocusDirection dir) {
+        return UTIL.advance(this, focusedLeaf, dir);
+    }
+
     /**
      * Adapts a FocusManager to look like a HasChildren object.
      * - useful when we want to use our generic traverse methods to
@@ -96,8 +128,124 @@ public interface FocusManager extends Focusable {
      *
      */
     public static class UTIL {
-        
-        
+
+        /**
+         * Wrapper components (ComponentWithFocusManager, CompositeWithFocusManager, ...) are focus
+         * managers that hand the real work to an inner DefaultFocusManager. Returns that inner
+         * manager, or null if fm is not such a wrapper.
+         */
+        static FocusManager providedFocusManager(FocusManager fm) {
+            if (fm instanceof FocusManagerProvider) {
+                FocusManager provided = ((FocusManagerProvider) fm).getFocusManager();
+                if (provided != null && provided != fm) {
+                    return provided;
+                }
+            }
+            return null;
+        }
+
+        /**
+         * Is focusable this node, or somewhere inside it? E.g. "is field C inside group [B,C]?".
+         * Answered by walking up from focusable through its parent focus managers.
+         *
+         * Note: a wrapper and its inner manager count as the same node, because a child can
+         * point at either one as its parent (ComponentWithFocusManager adds its children to the
+         * inner manager before it registers itself as the "actual" parent).
+         */
+        public static boolean containsFocusable(Focusable node, Focusable focusable) {
+            for (Focusable x = focusable; x != null; x = x.getParentFocusManager()) {
+                if (isSameNode(node, x)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private static boolean isSameNode(Focusable a, Focusable b) {
+            if (a == b) {
+                return true;
+            }
+            if (a instanceof FocusManager && providedFocusManager((FocusManager) a) == b) {
+                return true;
+            }
+            return b instanceof FocusManager && providedFocusManager((FocusManager) b) == a;
+        }
+
+        /**
+         * Focus is moving INTO this container (e.g. TAB from the field before it).
+         * Returns the child field focus should land on, without changing anything:
+         *   GROUP  - first field when moving forward, last field when moving backward
+         *   WIDGET - the child it had last time (else the first)
+         *   TRAP   - like GROUP
+         * Returns null if nothing in here can take focus (empty / all disabled) - skip this container.
+         */
+        public static Focusable enter(FocusManager container, FocusDirection dir) {
+            if (!container.isEnabled()) {
+                return null;
+            }
+            List<Focusable> children = new ArrayList<Focusable>(container.getChildFocusables());
+            FocusDirection order = dir;
+            if (container.getFocusPolicy() == FocusPolicy.WIDGET) {
+                // resume the remembered child; fall back to the first
+                Focusable remembered = container.getCurrentChildFocus();
+                if (remembered != null && children.contains(remembered)) {
+                    Focusable target = remembered.enter(dir);
+                    if (target != null) {
+                        return target;
+                    }
+                }
+                order = FocusDirection.FORWARD;
+            }
+            for (int i = 0; i < children.size(); i++) {
+                Focusable child = children.get(order == FocusDirection.FORWARD ? i : children.size() - 1 - i);
+                Focusable target = child.enter(dir);
+                if (target != null) {
+                    return target;
+                }
+            }
+            return null;    // nothing focusable here: skip me
+        }
+
+        /**
+         * A nav key (e.g. TAB) was pressed while focusedLeaf, somewhere inside this container, has
+         * focus. Decides where focus goes next, without changing anything:
+         *   MOVED(target) - next / previous child in here (entered via its own enter())
+         *   DONE          - no more children that way; let the parent container decide
+         *   STAY          - WIDGET at its first / last child: keep focus where it is
+         * A TRAP, or the root container (no parent), wraps around instead of being DONE.
+         */
+        public static Navigation advance(FocusManager container, Focusable focusedLeaf, FocusDirection dir) {
+            List<Focusable> children = new ArrayList<Focusable>(container.getChildFocusables());
+            int from = -1;
+            for (int i = 0; i < children.size(); i++) {
+                if (containsFocusable(children.get(i), focusedLeaf)) {
+                    from = i;
+                    break;
+                }
+            }
+            FocusPolicy policy = container.getFocusPolicy();
+            // a root container (no parent) wraps around, like a trap
+            boolean wraps = policy == FocusPolicy.TRAP || container.getParentFocusManager() == null;
+            int step = dir == FocusDirection.FORWARD ? 1 : -1;
+            int j = from;
+            for (int n = 0; n < children.size(); n++) {
+                j += step;
+                if (j < 0 || j >= children.size()) {
+                    if (!wraps) {
+                        return policy == FocusPolicy.WIDGET ? Navigation.STAY : Navigation.DONE;
+                    }
+                    j = (j + children.size()) % children.size();
+                }
+                // when wrapping, the last step may come back to the child we started in:
+                // re-entering it from its first/last focusable is legitimate (no dead end)
+                Focusable target = children.get(j).enter(dir);
+                if (target != null && target != focusedLeaf) {
+                    return Navigation.movedTo(target);
+                }
+            }
+            return policy == FocusPolicy.WIDGET ? Navigation.STAY : Navigation.DONE;
+        }
+
         public static boolean isAncestorOf(Focusable maybeAncestor, Focusable maybeDescendant) {
             if (maybeAncestor == null || maybeDescendant == null || (!(maybeAncestor instanceof FocusManager))) {
                 return false;

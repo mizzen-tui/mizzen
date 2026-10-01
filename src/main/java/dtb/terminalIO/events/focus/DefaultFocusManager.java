@@ -48,6 +48,7 @@ public class DefaultFocusManager implements FocusManager,
     
     private FocusBehaviour meAsFocusable;
     private NAV_STYLE navKeysStyle = NAV_STYLE.NAVKEYS_LAST;
+    private FocusPolicy focusPolicy = FocusPolicy.GROUP;  // what kind of container (see FocusPolicy); not yet used by the focus routing
     private boolean cycling = true;   // true means cycle thru focus object
     private boolean cyclingInferred = true;  
 
@@ -126,6 +127,31 @@ public class DefaultFocusManager implements FocusManager,
     public DefaultFocusManager setOnFocusChanged(BiConsumer<Focusable, EventBus> onFocusChanged) {
         this.onFocusChanged = onFocusChanged;
         return this;
+    }
+
+    /** What kind of container this is: GROUP (default), WIDGET or TRAP - see FocusPolicy. Not yet used by the focus routing. */
+    public DefaultFocusManager setFocusPolicy(FocusPolicy focusPolicy) {
+        this.focusPolicy = focusPolicy;
+        return this;
+    }
+
+    @Override
+    public FocusPolicy getFocusPolicy() {
+        return focusPolicy;
+    }
+
+    @Override
+    public FocusDirection navDirectionFor(KeyStroke key) {
+        if (navKeysStyle == NAV_STYLE.NAVKEYS_NONE || key == null) {
+            return null;
+        }
+        if (key.equals(nextKeyStroke)) {
+            return FocusDirection.FORWARD;
+        }
+        if (key.equals(prevKeyStroke)) {
+            return FocusDirection.BACKWARD;
+        }
+        return null;
     }
 
     public DefaultFocusManager setCycling(boolean cycling) {

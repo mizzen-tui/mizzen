@@ -29,7 +29,27 @@ public interface Focusable extends FocusBehaviour, ConditionalEventHandler {
     FocusManager getParentFocusManager();
 
     void setParentFocusManager(FocusManager focusManager);
-    
+
+    /**
+     * Focus is moving onto this (e.g. TAB from the previous field): which focusable should it
+     * land on? A plain field lands on itself, or returns null ("skip me") if disabled.
+     * Containers pick one of their children instead (see FocusManager.UTIL.enter).
+     * Only answers - changes nothing. Not yet used by the focus routing (focus redesign).
+     */
+    default Focusable enter(FocusDirection dir) {
+        return isEnabled() ? this : null;
+    }
+
+    /**
+     * A nav key (e.g. TAB) was pressed while focusedLeaf, somewhere inside this, has focus:
+     * where should focus go next? A plain field has nothing inside it, so it answers DONE
+     * ("not me - ask my parent"). Containers decide among their children (see FocusManager.UTIL.advance).
+     * Only answers - changes nothing. Not yet used by the focus routing (focus redesign).
+     */
+    default Navigation advance(Focusable focusedLeaf, FocusDirection dir) {
+        return Navigation.DONE;
+    }
+
     public static class NOOPFocusable implements Focusable {
 
         @Override
