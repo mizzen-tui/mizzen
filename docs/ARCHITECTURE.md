@@ -351,7 +351,7 @@ the engine → migrate classes one by one. Work on branch `focus-redesign`.
 | `ButtonBar` | current behaviour: GROUP (TAB through buttons, leave at the ends); `TabPanel`'s strip keeps `setCycling(true)` |
 | `MultiLineTextInput` TAB | moves focus by default; opt-in to insert `\t`, then **Esc** leaves (Textual `TextArea` `tab_behavior` model). Alt-TAB is grabbed by window managers; Ctrl-TAB is indistinguishable from TAB in most terminals |
 | Event delivery | today's path and order, discovered on demand; no targeted delivery |
-| Broadcast rule | exactly today's per-container behaviour |
+| Broadcast rule | **first claimer everywhere** (as `NAVKEYS_FIRST` does today; also how the bus's main chain works). Behaviour change at the root, which today (`NAVKEYS_LAST`) delivers to all claimers. Pinned by `FocusProtocolCharacterisationTest`, to be flipped deliberately |
 | Focused component hidden/disabled | move focus to the next focusable (else previous, else none); triggered via `setEnabled(boolean, EventBus)` / hide |
 
 This follows the same approach as browsers (tab order derived from the DOM, roving
@@ -379,6 +379,15 @@ tabindex for composite widgets) and most modern TUI toolkits.
     `currentDraggable != null`). But a drag that didn't capture a draggable
     runs a hit-test, a walk up and a `RequestFocusEvent` on **every** `DOWN_LEFT_DRAG`.
     Fix that; don't inherit it.
+- **Re-assert focused state on the whole new path, on every focus move.** Today the request-focus
+  handler calls `setFocus(true)` on the root before walking the path, which re-sends
+  `setFocus(true)` down the currently focused chain: frames re-hilite, `AbstractWrapped...`
+  components re-`bringToFront`. That is the only thing that restores z-order / hilite of ancestors
+  that *stay* focused (e.g. clicking another field in the same window after a popup or another
+  window was brought in front). Keep that effect deliberately: on each move, ancestors on the new
+  path re-assert hilite / front, not just the nodes that changed. (Side effect today: the leaf about
+  to lose focus first gets a redundant `setFocus(true)`; harmless except for components that do work
+  in it, e.g. `DropdownListBox` opens its list.)
 - **Focus notifications drive visible side effects: keep them all.** `moveFocus` must call
   `unFocus(new)` on every node of the old path below the split, and `focus(old)` on every node of the
   new path, **top-down, containers included**. That is how `WindowFrameFocusable` hilites/unhilites
@@ -471,6 +480,11 @@ What must be kept (the owner's stated goals):
   correct way. Removing a base class must not push that boilerplate onto every component.
 - Abstract classes are fine where they earn their place; the aim is fewer and clearer ones, not none.
 
+Related goal (owner, Oct 2026): **"attach scrollbars to anything and scrolling just works"**.
+`ScrollableComponent` and `ScrollableComponent2` overlap (the second was added for a long-forgotten
+problem and extends a newer base); expect one to be removed, or both replaced, as part of this
+cleanup. Neither is worth investing in until then.
+
 Approach: after the engine switch, list each base class with its subclasses and what it still does;
 then merge or remove only where the remaining behaviour is a focus *policy* (GROUP / WIDGET / TRAP)
 that a plain container can declare. Do this class by class, not in the engine commit.
@@ -495,4 +509,33 @@ that a plain container can declare. Do this class by class, not in the engine co
 | `components/ButtonBar.java:77-80` | **fixed (Sep 2026):** `setNextKeyStroke` called `setPrevKeyStroke`, so "next" stayed TAB and the prev key was overwritten (e.g. `TabPanelTest`'s Ctrl-Left/Ctrl-Right never worked) |
 | `components/tab/TabPanel.java` | **fixed (Sep 2026):** tab strip navigated with TAB + `setCycling(true)` (a focus trap), and activating a tab always moved focus into its content, so strip navigation stopped after one step. Now: on the strip, Left/Right (wrapping) show tabs and focus **stays on the strip**; TAB goes strip → content → `<-` `->`; click, tab hot key and the prev/next shortcuts (`setPrevKeyStroke`/`setNextKeyStroke`) show the tab **and** focus its content. The shortcuts work from anywhere inside the panel but sit last in its chain (`customExtendedEventHandler`), so the content gets the key first |
 | `components/input/DropdownListBox.java` | **fixed, interim (Sep 2026):** the open list is attached to the root panel, i.e. at the *end* of the root's focus order, not inside the dropdown. TAB from the list wrapped to the first focusable, and re-entry then resumed the dropdown: a loop (dropdown ↔ first focusable), so nothing after a dropdown was reachable by TAB (e.g. a form's Save button). SHIFT-TAB went to the root's last focusable. Now TAB/SHIFT-TAB in the list hand focus back to the dropdown and re-raise the key. Proper rule for the redesign: **a popup belongs to its owner for navigation** |
+| `components/input/DropdownListBox.java` | **fixed (Oct 2026):** clicking elsewhere while the list was open left it open. The dropdown already got its `unFocus` when focus moved into the list, so a later focus move only unfocused the list. In windowed apps the list then hid *behind* the window (bring-to-front re-send) but stayed open and in the tab order. Now `ListBox.onUnFocus` (new protected hook) lets the dropdown close the list once the move has finished, if neither the list nor the dropdown has focus |
 | `components/input/DropdownListBox.java` | Enter/Esc in the list commit the selection and return keys to the dropdown, but the list stays **open** until focus moves elsewhere (`hideListBox()` commented out in `onSelectedItemHandler`). Esc commits instead of cancelling |
+| `events/focus/FocusManager.java` (`buildRequestFocusEventHandler`) | **keep (Oct 2026):** each click re-sends `setFocus(true)` down the currently focused chain before moving focus. Looks redundant but re-asserts hilite / bring-to-front of ancestors that stay focused; see §4.4 |
+| `events/focus/DefaultFocusManager.java` (`getCurrentOrSet`) | first click into a manager with no current child picks child 0 and briefly focuses it before the clicked target |
+
+---
+
+## 6. Characterisation tests (focus safety net)
+
+Tests that record what the event/focus system does **today**, so the focus redesign cannot change
+behaviour silently. A failure means "behaviour changed": decide whether the new behaviour is wanted,
+then update the expectation deliberately. Tests named `..._today_...` pin known bugs; they are
+expected to fail when the redesign fixes them.
+
+| Test class | Covers |
+|---|---|
+| `events/focus/FocusCharacterisationTest` | nested TAB / SHIFT-TAB order (real components), button `onChange` via the focus tree |
+| `events/focus/FocusProtocolCharacterisationTest` | exact `focus` / `unFocus` / `setFocus` calls and order, click flicker, no initial focus, disabled skip, root dead end, non-key delivery rules |
+| `components/FocusSideEffectsCharacterisationTest` | frame hilite on click and TAB (frame TAB order: title, content, resize anchor), TextInput recolour, scroll-to-view request |
+| `components/input/form/FormChangeCharacterisationTest` | typing -> data -> field `onChange` -> form `onChange` through the form panel |
+| `components/input/DropdownListBoxCharacterisationTest` | open on focus, hand-off into the list, TAB / SHIFT-TAB / ENTER in the list, click elsewhere closes |
+| `components/tab/TabPanelCharacterisationTest` | click / arrows / TAB / shortcuts |
+| `components/modal/ModalEventHandlerCharacterisationTest` | modal key sinkhole |
+
+`supportfortesting/SyncEventLoop` is a synchronous stand-in for the event bus: events go to one root
+handler (bus-level handlers are not involved), `then(..)` callbacks run after each event, `asynch`
+tasks run when the queue is empty, repeating timers are ignored.
+
+Not covered yet: menus (popups on a live canvas), `ScrollableComponent2` footer focus forwarding,
+actual scrolling, hotkeys, table selection events, bring-to-front.

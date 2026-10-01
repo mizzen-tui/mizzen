@@ -525,6 +525,8 @@ public interface FocusManager extends Focusable {
                 if (hasGoodPath) {
                     if (IS_REQUEST_FOCUS.test(te)) {
                         // set focus on focusTarget and all of its focusable parent's
+                        // NOTE: deliberately called even if already focused - re-fires hilite /
+                        //       bringToFront on ancestors that stay focused (z-order may have changed)
                         focusManager.setFocus(true, te.getEventBus());
                         lastFocusManager = focusManager;
                         for (Focusable focusableChild : pathToTarget.subList(1, pathToTarget.size())) {
