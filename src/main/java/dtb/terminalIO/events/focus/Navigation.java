@@ -2,7 +2,7 @@ package dtb.terminalIO.events.focus;
 
 /**
  * Answer to {@link Focusable#advance(Focusable, FocusDirection)}: a nav key was pressed while
- * focus is inside a container - where does focus go?
+ * focus is inside a focus manager - where does focus go?
  */
 public final class Navigation {
 

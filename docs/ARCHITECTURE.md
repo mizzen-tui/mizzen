@@ -157,7 +157,7 @@ into the focus tree's "offer to children" loop.
 
 `TextInput` / `MultiLineTextInput` consume TAB and SHIFT-TAB when `multiLine` is true. `TabPanel`
 once used TAB as a hotkey (now disabled: "a really bad idea because circumvents normal
-FocusManager navigation"). Inside a `NAVKEYS_FIRST` container the container takes TAB first,
+FocusManager navigation"). Inside a `NAVKEYS_FIRST` focus manager, that focus manager takes TAB first,
 so a multi-line editor there never receives TAB. Behaviour depends on nesting.
 
 ### 2.7 Inventory: what travels through the focus tree (Sep 2026)
@@ -261,9 +261,9 @@ Two further findings from the real app:
   TAB leaves the group there is nowhere to go and focus is stuck.
 
 Causes:
-1. **Two kinds of container, one mechanism.** Nested focus containers come in two kinds
+1. **Two kinds of focus manager, one mechanism.** Nested focus managers come in two kinds
    that need opposite rules:
-   - *Grouping container* (form section, panel of fields): children are separate tab
+   - *Grouping focus manager* (form section, panel of fields): children are separate tab
      stops. TAB entering forwards should start at the first child, entering backwards at the last.
    - *Composite widget* (ListBox, DropdownListBox, menu, tab strip): the widget is **one**
      tab stop, arrow keys move inside it, and re-entry **should** resume the remembered child.
@@ -273,7 +273,7 @@ Causes:
    makes each child a tab stop (grouping behaviour). The result follows neither rule:
    first lap `A B C D`, then B is unreachable. Managers that navigate with other keys
    (`DropdownListBox` uses UP/DOWN) already behave correctly as widgets. The manager is
-   also never told the direction focus arrived from, which a grouping container needs.
+   also never told the direction focus arrived from, which a grouping focus manager needs.
 2. **Nav-style mismatch across levels.** An outer `NAVKEYS_FIRST` manager takes
    TAB before the inner group sees it, so the inner group can't be traversed. Nav
    style is chosen per class, so how TAB behaves depends on which components you
@@ -296,7 +296,7 @@ Causes:
   direction it searches. The disabled `skipProxiedManagers` workaround in
   `verifyPathsToFocusables` suggests this has failed before.
   **Reproduced:** `ComponentWithFocusManager`'s constructor builds its inner DFM and adds the
-  container's focusables *before* `setActual(this)`, so those children's parent is the inner DFM
+  wrapped component's focusables *before* `setActual(this)`, so those children's parent is the inner DFM
   while the parent's child list holds the wrapper; walking up from a child never meets the wrapper.
   Today's path search survives via a fallback; the new `advance` uses
   `FocusManager.UTIL.containsFocusable`, which treats a wrapper and its provided manager as one node.
@@ -319,13 +319,13 @@ Two jobs are tangled in today's focus tree; the proposal separates them.
 
 Terms used below:
 - *focus*: the component that receives keystrokes (e.g. the text field the user is typing in).
-- *container*: a component that holds other focusable components and manages focus among them
-  (a form panel, a button bar, a dropdown, a window). In code: a `FocusManager`.
-- *nav keys*: keys that move focus rather than being typed, e.g. TAB / SHIFT-TAB; each container
+- *focus manager*: a `FocusManager` - a node in the focus tree that holds focusable components and
+  manages focus among them (a form panel's, a button bar's, a dropdown's, a window's). Not the same as a component container (`Composite`): the two trees are separate (§4.2).
+- *nav keys*: keys that move focus rather than being typed, e.g. TAB / SHIFT-TAB; each focus manager
   can have its own (a dropdown uses UP / DOWN).
 
 1. **One owner of focus.** *(done - step 4, in this form:)*
-   "Who has focus?" used to be answered by combining many separate pieces of state: every container
+   "Who has focus?" used to be answered by combining many separate pieces of state: every focus manager
    remembers its own "current child", and every component keeps its own `hasFocus()` flag. These
    could disagree - e.g. after a click, a dropdown's button still reported `hasFocus()==true` while
    an image viewer actually had focus (§5).
@@ -335,35 +335,35 @@ Terms used below:
    moves, `moveFocus` also checks the previous owner really let go: if it still claims focus (missed
    its `unFocus`), it is switched off - so exactly one component claims focus.
    Still there, but no longer the source of truth: components' `hasFocus()` flags (display state:
-   hilite) and containers' "current child" (a widget's memory of its last child). Removing them
+   hilite) and focus managers' "current child" (a widget's memory of its last child). Removing them
    entirely - `hasFocus()` meaning "am I the owner?" - would touch every focusable component; only
    worth doing if they cause trouble again.
 
 2. **Who gets a key first.** *(done - step 2, `FocusNavigator`)*
    When a key arrives:
-   1. If it is not a nav key of any container around the focused component, it is ordinary input
+   1. If it is not a nav key of any focus manager around the focused component, it is ordinary input
       and goes where it always did.
    2. If the focused component wants it anyway, it gets it - e.g. a multi-line editor that inserts
       TAB characters. *(Planned: such an editor releases TAB again after Esc.)*
-   3. Otherwise the containers around the focused component are asked, innermost first, where
+   3. Otherwise the focus managers around the focused component are asked, innermost first, where
       focus should go (point 3).
 
-3. **Containers answer two questions; they decide, their parent doesn't.** *(done - steps 1 and 2)*
+3. **Focus managers answer two questions; they decide, their parent doesn't.** *(done - steps 1 and 2)*
    - `enter(direction)`: "focus is arriving in you, moving forward (TAB) or backward (SHIFT-TAB) -
      which of your components should get it?" Returns that component, or null for "nothing in here
      can take focus, skip me" (empty, disabled, or not a TAB stop).
    - `advance(focused, direction)`: "a nav key was pressed while focus is inside you - where next?"
      Answers MOVED(component), DONE ("no more in that direction - ask my parent") or STAY ("handled,
      focus stays").
-   How a container answers depends on its *policy*:
+   How a focus manager answers depends on its *policy*:
    - **GROUP** - each child is its own stop (a form section: TAB visits every field). Entered
-     forward it starts at its first child, backward at its last. The outermost container wraps
+     forward it starts at its first child, backward at its last. The outermost focus manager wraps
      around instead of answering DONE.
-   - **WIDGET** - the whole container is one stop (dropdown, list box, tab strip). Entering it
+   - **WIDGET** - the whole focus manager is one stop (dropdown, list box, tab strip). Entering it
      returns to the child it had last time. Its own arrow keys move inside it. *(Step 2: widgets
      still handle their own keys the old way; only entering / leaving them uses these answers.)*
    - **TRAP** - focus cannot leave (modal dialog): navigation wraps around inside.
-   A container - or a single component - can also be marked *not a TAB stop* (`setTabStop(false)`):
+   A focus manager - or a single component - can also be marked *not a TAB stop* (`setTabStop(false)`):
    TAB skips it, clicks and hot keys still work - e.g. the scroll buttons under a scrollable panel,
    and a window's title bar and resize corner (so TAB goes straight to the window's content).
    Example, form `A, [B, C], D` where `[B, C]` is a GROUP: TAB goes A B C D A B C D...; if `[B, C]`
@@ -372,10 +372,10 @@ Terms used below:
 4. **One way to move focus.** *(done for clicks and TAB - step 3, `FocusManager.UTIL.moveFocus`)*
    `moveFocus` changes focus and sends the existing notifications: `unFocus(new)` to what loses focus,
    then `focus(old)` to what gains it, along the path (hilite, bring-to-front and the dropdown / menu
-   hand-off depend on these, §4.4). It goes through each container's `setChildAsCurrentFocus`, so
-   components that customise that method keep working. It works in two passes: containers that don't
+   hand-off depend on these, §4.4). It goes through each focus manager's `setChildAsCurrentFocus`, so
+   components that customise that method keep working. It works in two passes: focus managers that don't
    have focus yet first just record which child to use (deepest first, no notifications); then focus
-   is passed down top-down and arrives straight at the target. Without the first pass a container
+   is passed down top-down and arrives straight at the target. Without the first pass a focus manager
    receiving focus handed it to its remembered child (or its first child) first - a flicker, and in
    `ImageSplitterTest` a window wrongly brought to front.
    *(Still moved the old way: widgets' own arrow keys, hot keys, and code calling
@@ -393,9 +393,9 @@ Terms used below:
 
 **B. Event delivery for non-key events (§2.5): same semantics as today**
 1. `canHandle`/`handle` remain the generic contract for **every** event type.
-2. Keep today's path and order: from the root down through the containers, focused path
-   first, then other children using each container's current first-claimer or all-claimers rule
-   (pinned by characterisation tests). The only change: containers are discovered on demand.
+2. Keep today's path and order: from the root down through the focus managers, focused path
+   first, then other children using each focus manager's current first-claimer or all-claimers rule
+   (pinned by characterisation tests). The only change: focus managers are discovered on demand.
 3. **No "targeted" delivery straight to the event's source.** Ancestors listen to their
    children's events: `FormBinder.onChange` registers on the *form panel*, an ancestor of the
    inputs, so skipping ancestors would break form-level change handling.
@@ -426,7 +426,7 @@ tabindex for composite widgets) and most modern TUI toolkits.
 ### 4.4 Constraints any redesign must keep
 
 - **Navigation keys are configurable.** Never hardcode TAB/SHIFT-TAB; use each
-  container's configured nav keys (`DropdownListBox` uses UP/DOWN, for example).
+  focus manager's configured nav keys (`DropdownListBox` uses UP/DOWN, for example).
 - **The child decides.** A parent offers the nav key to its current child first. The
   child answers "moved internally" or "done", and the parent moves on only when the
   child is done. Entry carries a direction, so a grouping child can pick its first or last
@@ -456,14 +456,14 @@ tabindex for composite widgets) and most modern TUI toolkits.
   in it, e.g. `DropdownListBox` opens its list.)
 - **Focus notifications drive visible side effects: keep them all.** `moveFocus` must call
   `unFocus(new)` on every node of the old path below the split, and `focus(old)` on every node of the
-  new path, **top-down, containers included**. That is how `WindowFrameFocusable` hilites/unhilites
+  new path, **top-down, focus managers included**. That is how `WindowFrameFocusable` hilites/unhilites
   its border, `AbstractWrappedComponentWithFocusManager` does `bringToFront`, and
   `DefaultFocusableBehaviour` recolours components. Keep the within-node order too (e.g.
   `WindowFrameFocusable.focus` passes focus down first, then hilites itself).
 - **The child decides; the parent never inspects the policy.** `advance` answers MOVED(target),
   DONE (bubble up) or STAY (handled, no move, e.g. DOWN at the end of a list). `moveFocus` *tells*
-  containers "focus is now inside you at child X" (cf. `childHasCurrentFocus`), and each
-  container decides whether to remember it.
+  focus managers "focus is now inside you at child X" (cf. `childHasCurrentFocus`), and each
+  focus manager decides whether to remember it.
 - **A popup belongs to its owner for navigation.** A dropdown's list or a menu's popup may be
   attached elsewhere in the component tree (root panel overlay); leaving it with a nav key must
   behave as leaving the owner in that direction.
@@ -474,7 +474,7 @@ tabindex for composite widgets) and most modern TUI toolkits.
   to the first child.
 - **Visibility:** the focus code currently has no notion of hidden components.
   Untested whether hidden components (for example, inside a collapsed `CollapsiblePanel`) stay tab stops.
-- **Wrap-around may re-enter the starting child.** When a wrapping container (root or
+- **Wrap-around may re-enter the starting child.** When a wrapping focus manager (root or
   trap) comes back round to the child that just reported "done", it must re-enter that child
   from its first/last leaf instead of giving up. Otherwise a root whose only child is a group dead-ends,
   which is today's bug, and the first prototype had it too.
@@ -484,13 +484,13 @@ tabindex for composite widgets) and most modern TUI toolkits.
 ### 4.5 Prototype result (Sep 2026)
 
 A standalone prototype of §4.3 and §4.4 ([docs/prototype/ProtoFocus.java](prototype/ProtoFocus.java), outside `src` so it is not built; one focus root, children discovered
-on demand, `enter(dir)`/`advance(dir)`, four container kinds: transparent panel, group,
+on demand, `enter(dir)`/`advance(dir)`, four kinds of focus manager: transparent panel, group,
 widget, trap) passes all 20 scenarios:
 
 - grouping: `A,[B,C],D` gives `A B C D A B C D…`, and SHIFT-TAB gives `D C B A…`
 - widget: one tab stop, arrows move inside, re-entry resumes the remembered child (also after a click)
 - a single nested group as the root's only child gives no dead end
-- plain panels are transparent (flattened); disabled, hidden and empty containers are skipped;
+- plain panels are transparent (flattened); disabled, hidden and empty focus managers are skipped;
   a disabled remembered child falls back to the first
 - trap cycles inside; custom nav keys (RIGHT/LEFT) coexist with TAB
 - a child added at runtime is reachable with no rebuild call

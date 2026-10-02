@@ -15,7 +15,7 @@ import junit.framework.TestCase;
 /**
  * Tests for the NEW navigation protocol (enter / advance / FocusPolicy, docs/ARCHITECTURE.md §4.3)
  * on real components. The protocol is not yet used by the focus routing: here a small helper plays
- * the future router - it asks the containers where focus should go (navDirectionFor / advance) and
+ * the future router - it asks the focus managers where focus should go (navDirectionFor / advance) and
  * moves focus with today's mechanism (a REQUEST_FOCUS event), so remembered children stay as today.
  *
  * Expected sequences are the CORRECT ones (compare FocusCharacterisationTest, which records
@@ -61,7 +61,7 @@ public class FocusNavigationProtocolTest extends TestCase {
         bus.deliver(new RequestFocusEvent(focusable(component)));
     }
 
-    /** the future router: offer the nav key to each container from the focused leaf upwards */
+    /** the future router: offer the nav key to each focus manager from the focused leaf upwards */
     private void navigate(CompositeWithFocusManager root, KeyStroke key) {
         Focusable leaf = FocusManager.UTIL.findCurrentFocus(root);
         for (FocusManager fm = leaf.getParentFocusManager(); fm != null; fm = fm.getParentFocusManager()) {

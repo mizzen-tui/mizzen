@@ -56,8 +56,8 @@ public class DefaultFocusManager implements FocusManager,
     // initial focus (see setInitialFocus / setAutoFocus / giveInitialFocus)
     private boolean autoFocus = true;
     private Object initialFocus = null;
-    private boolean tabStop = true;    // false: TAB / SHIFT-TAB skip this container (see FocusManager.isTabStop)
-    private FocusPolicy focusPolicy = FocusPolicy.GROUP;  // what kind of container (see FocusPolicy); not yet used by the focus routing
+    private boolean tabStop = true;    // false: TAB / SHIFT-TAB skip this focus manager (see FocusManager.isTabStop)
+    private FocusPolicy focusPolicy = FocusPolicy.GROUP;  // what kind of focus manager (see FocusPolicy)
     private boolean cycling = true;   // true means cycle thru focus object
     private boolean cyclingInferred = true;  
 
@@ -138,7 +138,7 @@ public class DefaultFocusManager implements FocusManager,
         return this;
     }
 
-    /** What kind of container this is: GROUP (default), WIDGET or TRAP - see FocusPolicy. Not yet used by the focus routing. */
+    /** What kind of focus manager this is: GROUP (default), WIDGET or TRAP - see FocusPolicy. */
     public DefaultFocusManager setFocusPolicy(FocusPolicy focusPolicy) {
         this.focusPolicy = focusPolicy;
         return this;
@@ -188,7 +188,7 @@ public class DefaultFocusManager implements FocusManager,
         }
     }
 
-    /** false: TAB / SHIFT-TAB skip this container and everything in it; clicks and hot keys still work */
+    /** false: TAB / SHIFT-TAB skip this focus manager and everything in it; clicks and hot keys still work */
     public DefaultFocusManager setTabStop(boolean tabStop) {
         this.tabStop = tabStop;
         return this;
@@ -300,7 +300,7 @@ public class DefaultFocusManager implements FocusManager,
         }
         this.current = focusable;
         if (this.hasFocus()) {
-            // focus moved inside a focused container: keep the root's record of THE focused component current
+            // focus moved inside a focus manager that has focus: keep the root's record of THE focused component current
             FocusManager.UTIL.recordFocusFromCurrentChildren(this);
         }
     }
@@ -359,42 +359,52 @@ public class DefaultFocusManager implements FocusManager,
     
     @Override
     public void handle(TerminalEvent<?> te) {
-        FocusNavigator.Decision navigation = rootNavigation(te);
-        if (navigation != null) {
-            FocusNavigator.act(this, navigation, (KeyEvent) te);
-            return;
+        // 1. the ROOT focus manager handles keyboard navigation (TAB / SHIFT-TAB ...) for everything below it
+        if (isRootFocusManager()) {
+            FocusNavigator.Decision navigation = navigationDecisionFor(te);
+            if (navigation != null) {
+                FocusNavigator.act(this, navigation, (KeyEvent) te);
+                return;
+            }
         }
+        // 2. everything else: this manager's routing chain - focus requests (clicks), then the current
+        //    child / its own nav keys / hot keys / other children, then the custom extra handler
         getEventHandler().handle(te);
-    }
-
-    /**
-     * Keyboard navigation (TAB / SHIFT-TAB ...) is decided by the ROOT focus manager (no parent)
-     * using the containers' enter / advance answers - see FocusNavigator. Returns null when this
-     * is not the root, the event is not a key, or the key is not navigation: then the event goes
-     * through the routing below as before.
-     */
-    private FocusNavigator.Decision rootNavigation(TerminalEvent<?> te) {
-        if (parentFocusManager != null || !(te instanceof KeyEvent)) {
-            return null;
-        }
-        return FocusNavigator.decide(this, (KeyEvent) te);
     }
 
     @Override
     public EventHandler canHandle(TerminalEvent<?> te) {
-        if (rootNavigation(te) != null) {
+        // only answers "is this event ours?" - changes nothing (same two steps as handle)
+
+        // 1. the ROOT focus manager handles keyboard navigation (TAB / SHIFT-TAB ...) for everything below it
+        if (isRootFocusManager() && navigationDecisionFor(te) != null) {
             return this;
         }
-        ConditionalEventHandler evtHandler = getEventHandler();
-        if (te.getType() == TerminalEvent.TYPE.KEYPRESS) {
-            if (evtHandler.canHandle(te) == null) {
-                return null;
-            }
-        }
-        if (evtHandler.canHandle(te) == null) {
+        // 2. everything else: does this manager's routing chain take it?
+        if (getEventHandler().canHandle(te) == null) {
             return null;
         }
         return this;
+    }
+
+    /**
+     * The root focus manager is the top one - no parent. There is one for the application (and one
+     * for each modal dialog); it decides keyboard navigation (TAB / SHIFT-TAB ...) for everything below it.
+     */
+    private boolean isRootFocusManager() {
+        return parentFocusManager == null;
+    }
+
+    /**
+     * What the navigator would do with this event: move focus, or give the key to the focused component if it
+     * wants it. null = not a navigation key (or not a key at all, or nothing focused yet) - normal routing.
+     * Only answers - changes nothing.
+     */
+    private FocusNavigator.Decision navigationDecisionFor(TerminalEvent<?> te) {
+        if (!(te instanceof KeyEvent)) {
+            return null;
+        }
+        return FocusNavigator.decide(this, (KeyEvent) te);
     }
 
     private ConditionalEventHandler getEventHandler() {

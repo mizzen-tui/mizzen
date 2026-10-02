@@ -1,8 +1,8 @@
 package dtb.terminalIO.events.focus;
 
 /**
- * How a focus container answers {@link Focusable#enter(FocusDirection)} and
- * {@link Focusable#advance(Focusable, FocusDirection)}. The container decides; its parent never
+ * How a focus manager answers {@link Focusable#enter(FocusDirection)} and
+ * {@link Focusable#advance(Focusable, FocusDirection)}. The focus manager decides; its parent focus manager never
  * looks at the policy (docs/ARCHITECTURE.md §4.3, §4.4).
  */
 public enum FocusPolicy {
@@ -10,7 +10,7 @@ public enum FocusPolicy {
     /**
      * Children are separate stops in the surrounding navigation order (form section, panel of
      * fields). Entered forward: first child; backward: last child. At either end: done, the parent
-     * moves on (a root container wraps around instead).
+     * moves on (the root focus manager wraps around instead).
      */
     GROUP,
 
