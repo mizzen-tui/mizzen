@@ -515,6 +515,52 @@ public interface FocusManager extends Focusable {
         }
 
 
+        /**
+         * A focus manager's children worked out from its component, instead of from the list kept by
+         * addFocusable: the nearest focusable components below the component (a nested focus manager
+         * counts as one - its own children are below it), in component order, hidden ones left out.
+         * Example: a panel holding [label, field A, sub-panel[field B], button] -> A, B, button.
+         * null if the focus manager has no component to work it out from (e.g. one built by hand).
+         * (Focus redesign step 7: today only compared with the kept list - see FocusShadowCheck.)
+         */
+        static List<Focusable> derivedChildFocusables(FocusManager focusManager) {
+            // a wrapper that borrows another focus manager (e.g. MenuBar uses its ButtonBar's) is the
+            // same node as that one: its children are that one's children
+            FocusManager provided = providedFocusManager(focusManager);
+            if (provided != null && !(provided instanceof DefaultFocusManager)) {
+                return derivedChildFocusables(provided);
+            }
+            Object owner = focusManager instanceof DefaultFocusManager ? ((DefaultFocusManager) focusManager).meOrActual() : focusManager;
+            if (owner == focusManager && focusManager instanceof DefaultFocusManager) {
+                return null;     // a bare DefaultFocusManager: no component behind it
+            }
+            List<Focusable> found = new ArrayList<Focusable>();
+            addShownChildFocusables(found, owner);
+            return found;
+        }
+
+        // the nearest focusables below component, skipping children hidden with Composite.hide()
+        private static void addShownChildFocusables(List<Focusable> found, Object component) {
+            if (!(component instanceof HasChildren)) {
+                return;
+            }
+            for (Object child : ((HasChildren<?>) component).getChildren()) {
+                if (component instanceof dtb.terminalIO.components.composite.Composite
+                        && child instanceof Component
+                        && !((dtb.terminalIO.components.composite.Composite) component).isShown((Component<?>) child)) {
+                    continue;
+                }
+                if (ToFocusable.UTIL.isFocusable(child)) {
+                    Focusable focusable = ToFocusable.UTIL.toFocusable(child);
+                    if (focusable != null) {
+                        found.add(focusable);
+                    }
+                } else {
+                    addShownChildFocusables(found, child);
+                }
+            }
+        }
+
         private static void addFocusableChildren(List<Focusable> focusableContainer, Object component) {
 
             if (ToFocusable.UTIL.isFocusable(component)) {
