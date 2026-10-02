@@ -165,6 +165,47 @@ public class FocusNavigationProtocolTest extends TestCase {
         assertEquals("CANCEL OK CANCEL OK", keys(root, new TextInput[] { a, ok, cancel, d }, times(Keys.TAB_KEYSTROKE, 4)));
     }
 
+    // ---------------------------------------------------------------- initial focus
+
+    private DefaultFocusManager rootManager(CompositeWithFocusManager root) {
+        return root.getFocusManager();
+    }
+
+    public void testInitialFocus_defaultsToFirstField() {
+        TextInput a = field("A"), b = field("B"), c = field("C");
+        CompositeWithFocusManager root = root(a, group(b, c));
+
+        rootManager(root).giveInitialFocus(bus);
+        bus.drain();
+
+        assertEquals("A", focused(a, b, c));
+    }
+
+    public void testInitialFocus_chosenComponent() {
+        TextInput a = field("A"), b = field("B"), c = field("C");
+        CompositeWithFocusManager root = root(a, group(b, c));
+
+        rootManager(root).setInitialFocus(c).giveInitialFocus(bus);
+        bus.drain();
+
+        assertEquals("C", focused(a, b, c));
+        assertEquals("then TAB continues from there", "A", keys(root, new TextInput[] { a, b, c }, Keys.TAB_KEYSTROKE));
+    }
+
+    public void testInitialFocus_offOrAlreadyFocused_changesNothing() {
+        TextInput a = field("A"), b = field("B");
+        CompositeWithFocusManager root = root(a, b);
+
+        rootManager(root).setAutoFocus(false).giveInitialFocus(bus);
+        String whenOff = focused(a, b);
+        rootManager(root).setAutoFocus(true);
+        click(b);
+        rootManager(root).giveInitialFocus(bus);
+
+        assertEquals("-", whenOff);
+        assertEquals("B", focused(a, b));
+    }
+
     // ---------------------------------------------------------------- answers only
 
     /** enter / advance only answer: asking changes no focus state */

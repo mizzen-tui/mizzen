@@ -85,9 +85,9 @@ public class FocusSideEffectsCharacterisationTest extends TestCase {
     }
 
     /**
-     * TAB into and out of a frame drives the same hilite / unhilite. The frame's own parts are
-     * focusables too: title bar (DraggableTextComponent) first, resize anchor last, so TAB goes
-     * outside -> title -> inside -> resize anchor -> outside.
+     * TAB into and out of a frame drives the same hilite / unhilite. TAB goes straight to the
+     * frame's content: its title bar and resize corner are not TAB stops (mouse only).
+     * (Before, they were: outside -> title -> inside -> resize anchor -> outside.)
      */
     public void testWindowFrameHiliteFollowsTab() {
         TextInput outside = field("outside"), inside = field("inside");
@@ -107,9 +107,9 @@ public class FocusSideEffectsCharacterisationTest extends TestCase {
             log.clear();
         }
 
-        assertEquals("DraggableTextComponent inside ResizeAnchor outside", seq.toString());
+        assertEquals("inside outside inside outside", seq.toString());
         assertTrue("TAB into frame should hilite it: " + hiliteAtStep, hiliteAtStep.get(0).contains("frame.hilite"));
-        assertTrue("TAB out of frame should unhilite it: " + hiliteAtStep, hiliteAtStep.get(3).contains("frame.unHilite"));
+        assertTrue("TAB out of frame should unhilite it: " + hiliteAtStep, hiliteAtStep.get(1).contains("frame.unHilite"));
     }
 
     /** name of the focused leaf: a component name, else the class part of its HasName */

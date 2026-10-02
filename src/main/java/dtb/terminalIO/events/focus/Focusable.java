@@ -37,7 +37,16 @@ public interface Focusable extends FocusBehaviour, ConditionalEventHandler {
      * Only answers - changes nothing. Not yet used by the focus routing (focus redesign).
      */
     default Focusable enter(FocusDirection dir) {
-        return isEnabled() ? this : null;
+        return isEnabled() && isTabStop() ? this : null;
+    }
+
+    /**
+     * Can TAB / SHIFT-TAB land here? false = skip it (like HTML tabindex=-1); it can still be clicked
+     * or reached with a hot key. Example: a window's title bar and resize corner - they are for the
+     * mouse, so TAB goes straight to the window's content. Default: true.
+     */
+    default boolean isTabStop() {
+        return true;
     }
 
     /**

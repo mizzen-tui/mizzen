@@ -48,6 +48,14 @@ public class DefaultFocusManager implements FocusManager,
     
     private FocusBehaviour meAsFocusable;
     private NAV_STYLE navKeysStyle = NAV_STYLE.NAVKEYS_LAST;
+    // Only used on a ROOT focus manager (one with no parent): THE component that has keyboard focus.
+    // The single answer to "who has focus?" - updated by every focus move (FocusManager.UTIL.moveFocus,
+    // setChildAsCurrentFocus). Components' own hasFocus() flags are display state (hilite) kept in step.
+    private Focusable focusedComponent;
+
+    // initial focus (see setInitialFocus / setAutoFocus / giveInitialFocus)
+    private boolean autoFocus = true;
+    private Object initialFocus = null;
     private boolean tabStop = true;    // false: TAB / SHIFT-TAB skip this container (see FocusManager.isTabStop)
     private FocusPolicy focusPolicy = FocusPolicy.GROUP;  // what kind of container (see FocusPolicy); not yet used by the focus routing
     private boolean cycling = true;   // true means cycle thru focus object
@@ -136,6 +144,50 @@ public class DefaultFocusManager implements FocusManager,
         return this;
     }
 
+    /**
+     * The component that has keyboard focus, as recorded by this ROOT focus manager (null if none
+     * yet). Prefer FocusManager.UTIL.findCurrentFocus(root), which also checks it is still attached.
+     */
+    public Focusable getFocusedComponent() {
+        return focusedComponent;
+    }
+
+    // called by FocusManager.UTIL after focus moved
+    void recordFocusedComponent(Focusable focusable) {
+        this.focusedComponent = focusable;
+    }
+
+    /**
+     * Which component giveInitialFocus() focuses. Default (null): the first focusable component.
+     * Example: a form that should start on its "name" field, or a dialog on its OK button.
+     */
+    public DefaultFocusManager setInitialFocus(Object component) {
+        this.initialFocus = component;
+        return this;
+    }
+
+    /** false: giveInitialFocus() does nothing - nothing has focus until the user clicks something. */
+    public DefaultFocusManager setAutoFocus(boolean autoFocus) {
+        this.autoFocus = autoFocus;
+        return this;
+    }
+
+    /**
+     * Gives keyboard focus to the initial component (setInitialFocus, else the first focusable one)
+     * - if nothing in here has focus yet, and autoFocus is on. Called by TUIApp when the app has
+     * started (so TAB and typing work without clicking first); a dialog can call it when shown.
+     */
+    public void giveInitialFocus(EventBus eventBus) {
+        if (!autoFocus || FocusManager.UTIL.findCurrentFocus(this) != null) {
+            return;
+        }
+        Focusable target = initialFocus != null ? ToFocusable.UTIL.toFocusable(initialFocus)
+                                                : enter(FocusDirection.FORWARD);
+        if (target != null) {
+            FocusManager.UTIL.moveFocus(this, target, eventBus, false);
+        }
+    }
+
     /** false: TAB / SHIFT-TAB skip this container and everything in it; clicks and hot keys still work */
     public DefaultFocusManager setTabStop(boolean tabStop) {
         this.tabStop = tabStop;
@@ -190,6 +242,22 @@ public class DefaultFocusManager implements FocusManager,
         return current;
     }
 
+    /**
+     * The current child, or the first child if there is none yet - WITHOUT setting it.
+     * Used where we only answer a question (canHandle, "is there a next one?").
+     */
+    private Focusable peekCurrent() {
+        if (current != null) {
+            return current;
+        }
+        return eventConsumers.isEmpty() ? null : eventConsumers.get(0);
+    }
+
+    /** like currentChildFor(te), but never changes anything (for canHandle) */
+    private Focusable peekCurrentChildFor(TerminalEvent<?> te) {
+        return te.getType() == TerminalEvent.TYPE.KEYPRESS ? peekCurrent() : current;
+    }
+
     private Focusable getCurrentOrSet(EventBus eventBus) {
         if (current == null && eventConsumers.size() > 0) {
             setChildAsCurrentFocus(eventConsumers.get(0), eventBus);
@@ -231,34 +299,23 @@ public class DefaultFocusManager implements FocusManager,
            FocusManager.UTIL.setNewFocusable(focusable, this.current, eventBus, onFocusChanged);
         }
         this.current = focusable;
+        if (this.hasFocus()) {
+            // focus moved inside a focused container: keep the root's record of THE focused component current
+            FocusManager.UTIL.recordFocusFromCurrentChildren(this);
+        }
     }
 
     public int size() {
         return eventConsumers.size();
     }
 
-    private Focusable getPrevOLD(EventBus eventBus) {
-        if (size() < 1) {
-            return null;
-        }
-        Focusable theCurrent = getCurrentOrSet(eventBus);
-        int index = (theCurrent == null) ? -1 : eventConsumers.indexOf(theCurrent);
-        if (index < 1) {
-            if (cycling) {
-               return eventConsumers.get(size() - 1);
-            } else {
-                return null;
-            }
-        }
-        return eventConsumers.get(index - 1);
-    }
 
     private Focusable getPrev(EventBus eventBus) {
         if (size() < 1 || !isEnabled()) {
             return null; // Early exit if no focusables or all are disabled
         }
 
-        Focusable theCurrent = getCurrentOrSet(eventBus);
+        Focusable theCurrent = peekCurrent();
         int index = (theCurrent == null) ? -1 : eventConsumers.indexOf(theCurrent);
         int startIndex = index;
 
@@ -275,21 +332,6 @@ public class DefaultFocusManager implements FocusManager,
     }    
     
     
-    private Focusable getNextOLD(EventBus eventBus) {
-        if (size() < 2) {
-            return null;
-        }
-        Focusable theCurrent = getCurrentOrSet(eventBus);
-        int index = (theCurrent == null) ? -1 : eventConsumers.indexOf(theCurrent);
-        if (index < 0 || index == size() - 1) {
-            if (cycling) {
-                return eventConsumers.get(0);
-            } else {
-                return null;
-            }
-        }
-        return eventConsumers.get(index + 1);
-    }
 
 
     private Focusable getNext(EventBus eventBus) {
@@ -297,7 +339,7 @@ public class DefaultFocusManager implements FocusManager,
             return null; // Early exit if no focusables or all are disabled
         }
     
-        Focusable theCurrent = getCurrentOrSet(eventBus);
+        Focusable theCurrent = peekCurrent();
         int index = (theCurrent == null) ? -1 : eventConsumers.indexOf(theCurrent);
         int startIndex = index;
     
@@ -434,35 +476,45 @@ public class DefaultFocusManager implements FocusManager,
     }
 
     /**
-     * Simultaneously detects if a hotkey has been pressed and if so,
-     * sets the component containing the hotkey as currently focused child
+     * Which child (other than the current one) has a hot key matching this key, and can handle it?
+     * Only answers - changes nothing (used by canHandle). null if none.
      */
-    private boolean onHotKeyPressedSetAsCurrent(KeyEvent te) {
-        KeyStroke pressedKey = ((KeyEvent) te).getKeyStroke();
-
-        Focusable focusable = getCurrentOrSet(te.getEventBus());
-
+    private Focusable hotKeyChildFor(KeyEvent te) {
+        KeyStroke pressedKey = te.getKeyStroke();
+        Focusable focusable = peekCurrent();
         for (Focusable focusableOther : eventConsumers) {
             if (focusableOther == focusable) {
                 continue;
             }
-
             Collection<KeyStroke> hotKeys = HasHotKey.UTIL.getAllHotKeys(focusableOther);
             if (hotKeys.contains(pressedKey)) {
                 Focusable foundFocusable = HasHotKey.UTIL.getFocusableFromHotKey(focusableOther, pressedKey);
                 if (foundFocusable == null) {
-                    return false;
+                    return null;
                 }
-
-                setChildAsCurrentFocus(focusableOther, te.getEventBus());
-                //foundFocusable.setFocus(true, te.getEventBus());
                 if (foundFocusable.canHandle(te) != null) {
-                    return true;
+                    return focusableOther;
                 }
             }
         }
+        return null;
+    }
 
-        return false;
+    /**
+     * If a child's hot key matches: make that child current and give it the key. Returns true if so.
+     * (Used by handle; canHandle only asks hotKeyChildFor.)
+     */
+    private boolean handleHotKey(KeyEvent te) {
+        Focusable hotKeyChild = hotKeyChildFor(te);
+        if (hotKeyChild == null) {
+            return false;
+        }
+        setChildAsCurrentFocus(hotKeyChild, te.getEventBus());
+        Focusable focusable = currentChildFor(te);
+        if (focusable != null && focusable.canHandle(te) != null) {
+            focusable.handle(te);
+        }
+        return true;
     }
 
     /**
@@ -487,7 +539,7 @@ public class DefaultFocusManager implements FocusManager,
                 }
 
                 // FocusManager cannot handle directly - what about its focus child?
-                Focusable focusable = currentChildFor(te);
+                Focusable focusable = peekCurrentChildFor(te);
                 if (focusable != null) {
                     if (focusable.canHandle(te) != null) {
                         return true;
@@ -511,9 +563,7 @@ public class DefaultFocusManager implements FocusManager,
                     return false; // not a keyboard event, so not a hotkey and not handled by any child focusable
                 }
 
-                boolean handled = onHotKeyPressedSetAsCurrent((KeyEvent) te);
-
-                return handled;
+                return hotKeyChildFor((KeyEvent) te) != null;
 
             }
         };
@@ -540,6 +590,10 @@ public class DefaultFocusManager implements FocusManager,
                      focusable.handle(te);
                      return;
                 }
+            }
+
+            if (IS_KEYPRESS.test(te) && handleHotKey((KeyEvent) te)) {
+                return;
             }
 
             if (!IS_KEYPRESS.test(te)) {
@@ -591,7 +645,7 @@ public class DefaultFocusManager implements FocusManager,
             public boolean test(TerminalEvent<?> te) {
                 
                 Focusable focusable = null;
-                focusable = currentChildFor(te);
+                focusable = peekCurrentChildFor(te);
                 if (focusable != null) {
                     if  (focusable.canHandle(te) != null) {
                         return true;
@@ -605,7 +659,7 @@ public class DefaultFocusManager implements FocusManager,
                     
                     // at this point let's look at hot keys..
                     // onHotKeyPressedSetAsCurrent()
-                    if ( onHotKeyPressedSetAsCurrent((KeyEvent) te)) {
+                    if (hotKeyChildFor((KeyEvent) te) != null) {
                         return true;
                     }
 
@@ -641,6 +695,10 @@ public class DefaultFocusManager implements FocusManager,
                     focusable.handle(te);
                     return;
                 }
+            }
+
+            if (IS_KEYPRESS.test(te) && handleHotKey((KeyEvent) te)) {
+                return;
             }
 
             if (IS_KEYPRESS.test(te)) {
@@ -683,7 +741,7 @@ public class DefaultFocusManager implements FocusManager,
             @Override
             public boolean test(TerminalEvent<?> te) {
                 
-                Focusable focusable = currentChildFor(te);
+                Focusable focusable = peekCurrentChildFor(te);
                 if (focusable != null) {
                     if  (focusable.canHandle(te) != null) {
                         return true;
@@ -694,7 +752,7 @@ public class DefaultFocusManager implements FocusManager,
 
                 if (IS_KEYPRESS.test(te)) {
                     // at this point let's look at hot keys..
-                    if ( onHotKeyPressedSetAsCurrent((KeyEvent) te)) {
+                    if (hotKeyChildFor((KeyEvent) te) != null) {
                         return true;
                     }
                 } else {  // not a key press so hunt for another focusable that might be able to handle this event
@@ -724,6 +782,10 @@ public class DefaultFocusManager implements FocusManager,
                     focusable.handle(te);
                     return;
                 }
+            }
+
+            if (IS_KEYPRESS.test(te) && handleHotKey((KeyEvent) te)) {
+                return;
             }
 
             if (IS_KEYPRESS.test(te)) {
@@ -823,7 +885,7 @@ public class DefaultFocusManager implements FocusManager,
     }
     
     private boolean applyOnCurrentFocus(EventBus eventBus, Consumer<Focusable> operation) {
-        Focusable theCurrent = getCurrentOrSet(eventBus);
+        Focusable theCurrent = peekCurrent();
         if (theCurrent == null) {
             return false;
         }

@@ -60,7 +60,7 @@ public class TestDropDownListBox extends TestCase {
 
         System.out.println(ddlb.getValue());
 
-        System.out.println( HasName.UTIL.getName(ddlb.getCurrentChildFocus()));
+        System.out.println( HasName.UTIL.getName(ddlb.getCurrentChildFocus(), "<no current child>"));
 
     }
 

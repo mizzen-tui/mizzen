@@ -324,13 +324,20 @@ Terms used below:
 - *nav keys*: keys that move focus rather than being typed, e.g. TAB / SHIFT-TAB; each container
   can have its own (a dropdown uses UP / DOWN).
 
-1. **One owner of focus.** *(planned - next step)*
-   Today "who has focus?" is answered by combining many separate pieces of state: every container
+1. **One owner of focus.** *(done - step 4, in this form:)*
+   "Who has focus?" used to be answered by combining many separate pieces of state: every container
    remembers its own "current child", and every component keeps its own `hasFocus()` flag. These
-   can disagree - e.g. after a click, a dropdown's button still reported `hasFocus()==true` while
-   an image viewer actually had focus (§5). The design: the root keeps **one** field, "the focused
-   component". `hasFocus()` on a component means "am I that component?", and a container asks
-   "is the focused component inside me?". Nothing else stores focus, so nothing can disagree.
+   could disagree - e.g. after a click, a dropdown's button still reported `hasFocus()==true` while
+   an image viewer actually had focus (§5).
+   Now the ROOT focus manager keeps **one** field, "the focused component"
+   (`DefaultFocusManager.getFocusedComponent()`), updated by every focus move - `moveFocus` and the
+   old routing alike - and `FocusManager.UTIL.findCurrentFocus(root)` answers from it. When focus
+   moves, `moveFocus` also checks the previous owner really let go: if it still claims focus (missed
+   its `unFocus`), it is switched off - so exactly one component claims focus.
+   Still there, but no longer the source of truth: components' `hasFocus()` flags (display state:
+   hilite) and containers' "current child" (a widget's memory of its last child). Removing them
+   entirely - `hasFocus()` meaning "am I the owner?" - would touch every focusable component; only
+   worth doing if they cause trouble again.
 
 2. **Who gets a key first.** *(done - step 2, `FocusNavigator`)*
    When a key arrives:
@@ -356,8 +363,9 @@ Terms used below:
      returns to the child it had last time. Its own arrow keys move inside it. *(Step 2: widgets
      still handle their own keys the old way; only entering / leaving them uses these answers.)*
    - **TRAP** - focus cannot leave (modal dialog): navigation wraps around inside.
-   A container can also be marked *not a TAB stop* (`setTabStop(false)`): TAB skips it entirely,
-   clicks and hot keys still work - e.g. the scroll buttons under a scrollable panel.
+   A container - or a single component - can also be marked *not a TAB stop* (`setTabStop(false)`):
+   TAB skips it, clicks and hot keys still work - e.g. the scroll buttons under a scrollable panel,
+   and a window's title bar and resize corner (so TAB goes straight to the window's content).
    Example, form `A, [B, C], D` where `[B, C]` is a GROUP: TAB goes A B C D A B C D...; if `[B, C]`
    were a WIDGET, TAB would go A B D A B D... and arrow keys move between B and C.
 
@@ -375,10 +383,13 @@ Terms used below:
 5. **Clicks use the same `moveFocus`**, with no intermediate focus on other components (§4.6).
    *(done - step 3; clicks still first re-send `setFocus(true)` to re-assert hilite / front, §4.4)*
 6. **Initial focus**: when the app starts, focus goes to the first focusable component, with a way to
-   choose another (the common convention: desktop toolkits, Textual). *(planned - separate step)*
+   choose another (the common convention: desktop toolkits, Textual). *(done - step 4)* The focus
+   manager owns it: `DefaultFocusManager.setInitialFocus` / `setAutoFocus` / `giveInitialFocus`.
+   `TUIApp` only forwards settings to its root manager and calls `giveInitialFocus` once startup is
+   done; a dialog can call it when shown.
 7. **Asking never changes anything**: `canHandle`, `enter` and `advance` only answer.
-   *(enter / advance: done. canHandle: partly - step 3 stopped non-key events from making a container
-   pick a "current child"; for key events the old routing still may)*
+   *(done - steps 3 and 4: `DefaultFocusManager.canHandle` no longer picks a current child or switches
+   to a hot key's component; those changes now happen in `handle`)*
 
 **B. Event delivery for non-key events (§2.5): same semantics as today**
 1. `canHandle`/`handle` remain the generic contract for **every** event type.
@@ -558,7 +569,7 @@ that a plain container can declare. Do this class by class, not in the engine co
 | `events/ConditionalEventHandler.java:133` | `AbstractDelegate.setName` ignores its argument |
 | `events/focus/DefaultFocusManager.java:161-163` | `setChildAsCurrentFocus(null)` → NPE (`focusable.getParentFocusManager()` before null check) |
 | `events/focus/DefaultFocusManager.java:50,65` | field default says `NAVKEYS_LAST`, constructor overrides to `NAVKEYS_FIRST` |
-| `events/focus/DefaultFocusManager.java:188,226` | dead `getPrevOLD` / `getNextOLD` |
+| `events/focus/DefaultFocusManager.java` | **removed (step 4):** dead `getPrevOLD` / `getNextOLD` |
 | `components/BehaviourForCompositeAndFocusManager.java:169-174` | insert index uses a *map* index as a *children-list* index → wrong tab order when inserting before existing children |
 | `controlcodes/ControlCode.java` | several `DISABLE_*` mouse codes have an extra digit (`[?10021l` should be `[?1002l`, etc.) |
 | `components/ButtonBar.java:77-80` | **fixed (Sep 2026):** `setNextKeyStroke` called `setPrevKeyStroke`, so "next" stayed TAB and the prev key was overwritten (e.g. `TabPanelTest`'s Ctrl-Left/Ctrl-Right never worked) |

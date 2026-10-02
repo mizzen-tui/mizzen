@@ -70,7 +70,8 @@ public class WindowFrameFocusable extends AbstractComponent<WindowFrameFocusable
         super(color);
         this.child = child;
         this.banner = new Composite(color);
-        this.banner.add(new DraggableTextComponent(color, title, this));
+        // title bar and resize corner are for the mouse: TAB goes straight to the window's content
+        this.banner.add(new DraggableTextComponent(color, title, this).setTabStop(false));
         this.banner.setBounds(new Dimension.Simple(1, this.child.getWidth()));
 
         this.childOffsetPosition = new Position.Simple(1, 1);
@@ -82,7 +83,7 @@ public class WindowFrameFocusable extends AbstractComponent<WindowFrameFocusable
         this.border = new SimpleBorder(color, bounds);
         this.border.setParentContainer(this);
 
-        this.resizeAnchor = new ResizeAnchor(this);
+        this.resizeAnchor = new ResizeAnchor(this).setTabStop(false);
 
         this.row = pChildPosition.getRow();
         this.col = pChildPosition.getCol();

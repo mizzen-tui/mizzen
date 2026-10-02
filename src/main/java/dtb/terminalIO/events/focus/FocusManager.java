@@ -210,6 +210,8 @@ public interface FocusManager extends Focusable {
             if (path == null || path.size() < 2 || path.get(0) != root) {
                 return false;
             }
+            DefaultFocusManager rootManager = rootDefaultFocusManager(root);
+            Focusable previous = rootManager != null && root.hasFocus() ? findCurrentFocus(root) : null;
             if (reassertFocus && root.hasFocus() && root.getCurrentChildFocus() != null) {
                 root.setFocus(true, eventBus);
             }
@@ -227,6 +229,15 @@ public interface FocusManager extends Focusable {
             // pass 2: top-down; containers that already have focus pass it on
             for (int i = 0; i < path.size() - 1; i++) {
                 ((FocusManager) path.get(i)).setChildAsCurrentFocus(path.get(i + 1), eventBus);
+            }
+            // single owner: record the newly focused component, and make sure the previous one really
+            // let go - if it still claims focus (missed its unFocus), switch it off
+            if (rootManager != null) {
+                rootManager.recordFocusedComponent(followCurrentChildren(root));
+                Focusable now = rootManager.getFocusedComponent();
+                if (previous != null && previous != now && previous.hasFocus() && !containsFocusable(previous, now)) {
+                    previous.setFocus(false, eventBus);
+                }
             }
             return true;
         }
@@ -355,7 +366,27 @@ public interface FocusManager extends Focusable {
             }
         }
 
+        /**
+         * Which component has keyboard focus inside focusManager? null if focusManager doesn't have focus.
+         * For the ROOT focus manager this is its record of THE focused component (single owner) - as long
+         * as that component is still attached. Otherwise: follow each container's current child downwards.
+         */
         public static Focusable findCurrentFocus(FocusManager focusManager) {
+            if ( ! focusManager.hasFocus()) {
+                return null;
+            }
+            if (focusManager.getParentFocusManager() == null) {
+                DefaultFocusManager root = rootDefaultFocusManager(focusManager);
+                Focusable owner = root != null ? root.getFocusedComponent() : null;
+                if (owner != null && containsFocusable(focusManager, owner)) {
+                    return owner;
+                }
+            }
+            return followCurrentChildren(focusManager);
+        }
+
+        // focus as given by each container's current child, from focusManager downwards
+        private static Focusable followCurrentChildren(FocusManager focusManager) {
             if ( ! focusManager.hasFocus()) {
                 return null;
             }
@@ -370,7 +401,26 @@ public interface FocusManager extends Focusable {
                 return focusableChild;
             }
             
-            return findCurrentFocus((FocusManager)focusableChild);
+            return followCurrentChildren((FocusManager)focusableChild);
+        }
+
+        /** the ROOT (no parent) focus manager above anyManager, as its DefaultFocusManager; null if none */
+        public static DefaultFocusManager rootDefaultFocusManager(FocusManager anyManager) {
+            FocusManager top = anyManager;
+            while (top.getParentFocusManager() != null) {
+                top = top.getParentFocusManager();
+            }
+            DefaultFocusManager[] found = { null };
+            DefaultFocusManager.applyIfDefaultFocusManager(top, root -> found[0] = root);
+            return found[0];
+        }
+
+        /** after focus moved inside anyManager: the root records the focused component again */
+        static void recordFocusFromCurrentChildren(FocusManager anyManager) {
+            DefaultFocusManager root = rootDefaultFocusManager(anyManager);
+            if (root != null && root.hasFocus()) {
+                root.recordFocusedComponent(followCurrentChildren(root));
+            }
         }
         
         public static Focusable focusableFromComponent(Component<?> component) {

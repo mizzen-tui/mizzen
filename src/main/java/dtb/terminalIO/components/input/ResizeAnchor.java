@@ -59,6 +59,19 @@ public class ResizeAnchor  extends TextComponent implements Focusable , Draggabl
     }
 
 
+    private boolean tabStop = true;
+
+    /** false: TAB / SHIFT-TAB skip this (it can still be clicked / dragged). Used for window decorations. */
+    public ResizeAnchor setTabStop(boolean tabStop) {
+        this.tabStop = tabStop;
+        return this;
+    }
+
+    @Override
+    public boolean isTabStop() {
+        return tabStop;
+    }
+
     private Focusable asFocusable() {
 
         if (meAsFocusable != null) {

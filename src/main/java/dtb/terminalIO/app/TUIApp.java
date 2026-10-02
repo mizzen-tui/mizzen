@@ -106,6 +106,10 @@ public class TUIApp implements ComponentFinder {
     InputEventsProducer eventsProducer = null;
     
     boolean verifyFocusables = true;
+
+    // root focus manager TUIApp builds itself when the main panel is not a focus manager. Created once
+    // (also before start, so settings such as setInitialFocus can be given to it) and filled at start.
+    private DefaultFocusManager builtRootFocusManager;
     
     Function<EventBus, InputEventsProducer> inputEventsProducerBuilder = (eventBus)-> {
         try {
@@ -149,6 +153,43 @@ public class TUIApp implements ComponentFinder {
         return getCanvas().asRectangle();
     }
     
+    /**
+     * Which component gets keyboard focus when the app starts (default: the first focusable one).
+     * Stored by the application's root focus manager, not by TUIApp.
+     */
+    public TUIApp setInitialFocus(Component<?> component) {
+        configureRootFocusManager(fm -> fm.setInitialFocus(component));
+        return this;
+    }
+
+    /**
+     * true (default): focus goes to the initial component when the app starts, so TAB and typing work
+     * without clicking first. false: nothing has focus until the user clicks something.
+     * Stored by the application's root focus manager, not by TUIApp.
+     */
+    public TUIApp setAutoFocus(boolean autoFocus) {
+        configureRootFocusManager(fm -> fm.setAutoFocus(autoFocus));
+        return this;
+    }
+
+    // the application's root focus manager: the main panel itself if it manages focus (e.g. the
+    // default panel), otherwise the one TUIApp builds
+    private void configureRootFocusManager(java.util.function.Consumer<DefaultFocusManager> configure) {
+        Object root = getMainApplicationPanel() instanceof FocusManager ? getMainApplicationPanel()
+                                                                        : getBuiltRootFocusManager();
+        if (!DefaultFocusManager.applyIfDefaultFocusManager(root, configure)) {
+            throw new IllegalStateException("The main application panel's focus manager is not a DefaultFocusManager - cannot configure it");
+        }
+    }
+
+    private DefaultFocusManager getBuiltRootFocusManager() {
+        if (builtRootFocusManager == null) {
+            builtRootFocusManager = new DefaultFocusManager().setNameFromOwner(getMainApplicationPanel())
+                                                             .setNavKeysFirst(false);
+        }
+        return builtRootFocusManager;
+    }
+
     public TUIApp verifyFocusables(boolean verifyFocusables) {
         this.verifyFocusables = verifyFocusables;
         return this;
@@ -522,9 +563,7 @@ public class TUIApp implements ComponentFinder {
     private FocusManager buildAndAttachFocusManager(boolean verifyFocusables) {
         FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(TUIApp.this.getMainApplicationPanel(),
                                                                                          TUIApp.this.getEventBus(),
-                                                                                         ()->new DefaultFocusManager()
-                                                                                                    .setNameFromOwner(TUIApp.this.getMainApplicationPanel())
-                                                                                                    .setNavKeysFirst(false));
+                                                                                         ()->getBuiltRootFocusManager());
         if (mainFocusManager != null) {
             HasName.UTIL.setDefaultNameFromParentObject(mainFocusManager, this, "mainFocusManager");
             TUIApp.this.getEventBus().appendEventHandler(  mainFocusManager );
@@ -701,7 +740,10 @@ public class TUIApp implements ComponentFinder {
                     
                     if (TUIApp.this.eventBus != null) {
                         // eventbus is non-null - then ensure that we have a focusManager
-                        getApplicationFocusManager(true);
+                        FocusManager root = getApplicationFocusManager(true);
+                        if (root != null) {
+                            DefaultFocusManager.applyIfDefaultFocusManager(root, fm -> fm.giveInitialFocus(te.getEventBus()));
+                        }
                     }
                     
                     
