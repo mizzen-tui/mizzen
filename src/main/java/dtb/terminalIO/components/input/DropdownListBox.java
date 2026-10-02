@@ -188,7 +188,7 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
 
 
     private void calcAndSetMaxItemWidth(List<DisplayableValue<T>> displayableItems) {
-        setMaxItemWidth( 2 + displayableItems.stream().map( (li) -> Dimension.UTIL.stringToDimension( li.toString() ).getWidth()).max( Integer::compareTo).get());
+        setMaxItemWidth( 2 + displayableItems.stream().map( (li) -> Dimension.UTIL.stringToDimension( li.toString() ).getWidth()).max( Integer::compareTo).orElse(0));   // an empty list is allowed
     }
 
     public DropdownListBox(DisplayableValue<T>[] listItems) {

@@ -117,4 +117,11 @@ public class DropdownPopupCharacterisationTest extends TestCase {
         assertEquals("A", valueBefore);
         assertEquals("B", String.valueOf(dropdown.getValue()));
     }
+
+    /** a dropdown with no items can be built (it used to crash working out its width) */
+    public void testEmptyDropdownCanBeBuilt() {
+        DropdownListBox<String> empty = DropdownListBox.fromStrings(new String[0]);
+
+        assertNotNull(empty);
+    }
 }
