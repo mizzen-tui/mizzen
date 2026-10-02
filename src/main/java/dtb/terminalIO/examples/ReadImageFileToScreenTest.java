@@ -29,7 +29,7 @@ import dtb.terminalIO.components.plot.image.ImageViewerFactory;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.IMAGE_RENDER_TYPE;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.RGBPlotPredicate;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.RGBToAnsiColorControlCode;
-import dtb.terminalIO.components.scroll.ScrollableComponent;
+import dtb.terminalIO.components.scroll.ScrollableComponent2;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.controlcodes.color.Colors.FGBGColors;
@@ -126,10 +126,9 @@ public class ReadImageFileToScreenTest {
 
             TextComponent loadingImage = new TextComponent(Colors.BGre, "  ..   ");
 
-            ScrollableComponent sc = new ScrollableComponent(viewerTextColor, 
+            ScrollableComponent2 sc = new ScrollableComponent2(viewerTextColor, 
                                                              (Dimension)tApp.getMainApplicationPanel(), 
-                                                             loadingImage,
-                                                             ()-> new DefaultFocusManager(Keys.SHIFT_TAB_KEYSTROKE, Keys.TAB_KEYSTROKE));
+                                                             loadingImage);
             sc.setFillOnClear(false);
             //sc.setEmptyChar('░');
 

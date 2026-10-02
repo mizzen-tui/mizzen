@@ -11,7 +11,7 @@ import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.input.tree.TreeView;
 import dtb.terminalIO.components.input.tree.TreeViewModel;
 import dtb.terminalIO.components.input.tree.TreeViewModel.HasChildrenTreeViewModel;
-import dtb.terminalIO.components.scroll.ScrollableComponent;
+import dtb.terminalIO.components.scroll.ScrollableComponent2;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.util.Logging;
@@ -105,7 +105,7 @@ public class TreeViewTest {
             TreeView<Component<?>>  tv2 = new TreeView<Component<?>>(Colors.IBlu, new Dimension.Simple(20,35), (node)->node.getClass().getSimpleName()  );
             tv2.setModel( new HasChildrenTreeViewModel<Component<?>>(mainpanel));
 
-            hp.add( new ScrollableComponent(tv2.getColor(), tv2.getRectangle(), tv2));
+            hp.add( new ScrollableComponent2(tv2.getColor(), tv2.getRectangle(), tv2));
 
         }).start();
     }

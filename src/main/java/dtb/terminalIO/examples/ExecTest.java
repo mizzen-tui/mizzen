@@ -216,7 +216,8 @@ public class ExecTest {
             lprocViewer2.setLinuxProcessWatcher( new LinuxProcessWatcher().setInvokeScript("./slowRunner.sh testme")  );
             lprocViewer2.invoke(tApp.getEventBus());
 
-            FocusManager.UTIL.verifyPathsToFocusables(focusManager, (Component<?>)tApp.getMainApplicationPanel());
+            // check against the panel this example draws itself (it does not use tApp's main panel)
+            FocusManager.UTIL.verifyPathsToFocusables(focusManager, mainPanel);
 
             // following is test code when I want to see structure of focusables hierarchy
             // throw new IllegalStateException(FocusManager.UTIL.traverseAllFocusablesToString(focusManager));

@@ -12,7 +12,7 @@ import dtb.terminalIO.components.input.tree.TreeView;
 import dtb.terminalIO.components.input.tree.TreeViewModel.CachingTreeviewModel;
 import dtb.terminalIO.components.input.tree.TreeViewModel.FilteredTreeViewModel;
 import dtb.terminalIO.components.input.tree.TreeViewModel.HasChildrenTreeViewModel;
-import dtb.terminalIO.components.scroll.ScrollableComponent;
+import dtb.terminalIO.components.scroll.ScrollableComponent2;
 import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
@@ -40,7 +40,7 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
         COMPONENT_VIEW, FOCUSABLE_VIEW
     }
 
-    ScrollableComponent scrollingArea;
+    ScrollableComponent2 scrollingArea;
     Component<?> componentToInspect;
     Supplier<FocusManager> focusManagerToInspect;
 
@@ -87,7 +87,7 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
                 this.scrollingArea.setParentFocusManager(null);
             }
 
-            scrollingArea = new ScrollableComponent(Colors.BIGre, d, tvComponents);
+            scrollingArea = new ScrollableComponent2(Colors.BIGre, d, tvComponents);
             SearchFunctionForScrollableComponent.addFinderToScrollable(scrollingArea.asSearchableView());
             scrollingArea.setParentContainer(this);
             scrollingArea.setTitle("Components : " + currentViewType);
@@ -114,7 +114,7 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
                 this.scrollingArea.setParentContainer(null);
                 this.scrollingArea.setParentFocusManager(null);
             }
-            scrollingArea = new ScrollableComponent(Colors.BIGre, d, tvFocusable);
+            scrollingArea = new ScrollableComponent2(Colors.BIGre, d, tvFocusable);
             SearchFunctionForScrollableComponent.addFinderToScrollable(scrollingArea.asSearchableView());
             scrollingArea.setParentContainer(this);
             scrollingArea.setTitle("Components : " + currentViewType);

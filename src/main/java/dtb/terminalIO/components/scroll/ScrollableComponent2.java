@@ -8,6 +8,7 @@ import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.components.SimpleBorder;
 import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent.AsSearchableView;
 import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent.SearchableView;
+import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
@@ -58,7 +59,8 @@ public class ScrollableComponent2  extends ComponentWithFocusManager<ScrollableC
 
         vScrollBar = new ScrollBarVertical(color,
                                            borderedComponent.getPostion_TopRight().offsetAdd(1, 0),
-                                           borderedComponent.getHeight() - 2).enableKeyEvents(false);
+                                           borderedComponent.getHeight() - 2).enableKeyEvents(false)
+                                           .setTabStop(false);   // mouse controls, like the footer: not a TAB stop
 
         HasName.UTIL.decorateWithParentsNamePrefix(vScrollBar, this);
 
@@ -74,7 +76,8 @@ public class ScrollableComponent2  extends ComponentWithFocusManager<ScrollableC
 
         hScrollBar = new ScrollBarHorizontal(color,
                                              borderedComponent.getPostion_BottomLeft().offsetAdd(0, 1),
-                                             borderedComponent.getWidth() - 3 - footerControls.getWidth()).enableKeyEvents(false);
+                                             borderedComponent.getWidth() - 3 - footerControls.getWidth()).enableKeyEvents(false)
+                                           .setTabStop(false);   // mouse controls, like the footer: not a TAB stop
 
         HasName.UTIL.decorateWithParentsNamePrefix(hScrollBar, this);
 
@@ -311,6 +314,50 @@ public class ScrollableComponent2  extends ComponentWithFocusManager<ScrollableC
 
     public void onViewPortChanged(EventHandler consumeChange) {
         onViewPortWindowChangedEventHandler = HasViewPortWindow.UTIL.bindConsumerAsOnViewPortWindowChangedEventHandler(this, onViewPortWindowChangedEventHandler, this.getEventHandlerContainer(), consumeChange);
+    }
+
+    /** the visible border's colour (the bordered view's, also used for the scrollbars and footer) */
+    @Override
+    public ScrollableComponent2 setBorderColor(Color borderColor) {
+        this.borderedComponent.setBorderColor(borderColor);
+        if (footerControls != null) {
+            footerControls.setColor(borderColor);
+        }
+        vScrollBar.setColor(borderColor);
+        hScrollBar.setColor(borderColor);
+        return this;
+    }
+
+    public Color getBorderColor() {
+        return this.borderedComponent.getBorderColor();
+    }
+
+    /** colour of the content: the viewed component and the view around it */
+    public void setContentColor(Color contentColor) {
+        super.setColor(contentColor);
+        this.borderedComponent.setColor(contentColor);
+        this.componentBeingViewed.setColor(contentColor);
+        this.viewer.setColor(contentColor);
+    }
+
+    private TextComponent footerText;
+
+    /**
+     * A short text in the footer, before the scroll buttons, e.g. "count: 42". Calling it again
+     * replaces the text. Does nothing if the footer was removed (removeFooterComponent).
+     */
+    public ScrollableComponent2 setFooterText(String text) {
+        if (footerControls == null) {
+            return this;
+        }
+        if (footerText == null) {
+            footerText = new TextComponent(getBorderColor(), text);
+            footerControls.insertComponent(0, footerText);
+        } else {
+            footerText.setTextAndResize(text);
+        }
+        resize((Dimension) this);     // footer width changed: re-fit the horizontal scrollbar
+        return this;
     }
 
     public void addFooterComponent(Component<?> componentForButtonBar) {

@@ -3,8 +3,8 @@ package dtb.terminalIO.components;
 import java.util.Collection;
 import java.util.Collections;
 
-import dtb.terminalIO.components.scroll.ScrollableComponent;
-import dtb.terminalIO.components.scroll.ScrollableSearch;
+import dtb.terminalIO.components.scroll.ScrollableComponent2;
+import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.ChainedEventHandler;
@@ -28,7 +28,7 @@ import dtb.terminalIO.util.linuxproc.LinuxProcessWatcher;
 public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxProcessViewer>>
         implements ParentContainer, FocusManager, GetComponentAtOffset {
 
-    ScrollableComponent scrollableView;
+    ScrollableComponent2 scrollableView;
     public TextComponent textContentView;
 
     Focusable focusable;
@@ -77,11 +77,10 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
         super(color, d);
         this.textContentView = new TextComponent(color, "Initializing..");
         this.textContentView.setFillOnClear(false);
-        this.scrollableView = new ScrollableComponent(color, d, textContentView);
+        this.scrollableView = new ScrollableComponent2(color, d, textContentView);
         this.scrollableView.setFillOnClear(true);
         this.scrollableView.setParentContainer(this);
         this.setFillOnClear(false);
-        this.scrollableView.asEventHandler();
         this.scrollableView.setBorderColor(color);
         this.textLineFormatter = new DefaultTextFormatter();
     }
@@ -119,8 +118,7 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
             return;
         }
         finderAdded = true;
-        //SearchFunctionForScrollableComponent.addFinderToScrollable(this.scrollView);
-        ScrollableSearch.UTIL.addSearch(this.scrollableView);
+        SearchFunctionForScrollableComponent.addFinderToScrollable(this.scrollableView);
     }
 
     public void resize(Dimension d) {

@@ -10,7 +10,7 @@ import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.input.Button;
-import dtb.terminalIO.components.scroll.ScrollableComponent;
+import dtb.terminalIO.components.scroll.ScrollableComponent2;
 import dtb.terminalIO.components.table.DefaultTableModel;
 import dtb.terminalIO.components.table.TableColumn;
 import dtb.terminalIO.components.table.TableColumnImpl;
@@ -123,7 +123,7 @@ public class ColorsTestWithTable {
             }
             colorsOfTheRainbow.add(combinedColorsTable);
 
-            ScrollableComponent sc = new ScrollableComponent(Colors.Whi, tApp.getMainApplicationPanel(), colorsOfTheRainbow);
+            ScrollableComponent2 sc = new ScrollableComponent2(Colors.Whi, tApp.getMainApplicationPanel(), colorsOfTheRainbow);
             sc.setFillOnClear(false);
 
             sc.resize(  new Dimension.Simple(sc.getHeight()-1, sc.getWidth()));

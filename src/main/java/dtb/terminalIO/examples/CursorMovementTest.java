@@ -9,7 +9,7 @@ import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.input.ShowComponentOnFocus;
-import dtb.terminalIO.components.scroll.ScrollableComponent;
+import dtb.terminalIO.components.scroll.ScrollableComponent2;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.core.ScreenCanvasBackend;
 import dtb.terminalIO.core.ScreenCanvasBackend.UpdateStrategy;
@@ -84,10 +84,9 @@ public class CursorMovementTest {
                                                     tApp.getMainApplicationPanel().getWidth() - 10);
                     });
 
-                    ScrollableComponent sc = new ScrollableComponent(Colors.Whi,
+                    ScrollableComponent2 sc = new ScrollableComponent2(Colors.Whi,
                                                                      scDimension, 
-                                                                     mTextBox,
-                                                                     () -> new DefaultFocusManager(Keys.SHIFT_TAB_KEYSTROKE, Keys.TAB_KEYSTROKE));
+                                                                     mTextBox);
                     sc.setFillOnClear(false);
                     
                     BiFunction<KeyStroke, String, String> hotKeyHelpText = (key, helpText) -> {

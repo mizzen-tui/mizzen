@@ -311,6 +311,19 @@ public class ScrollBarVertical extends BoundedComponent<ScrollBarVertical> imple
 
     Focusable meAsFocusable;
 
+    private boolean tabStop = true;
+
+    /** false: TAB / SHIFT-TAB skip this scrollbar (it can still be clicked / dragged), e.g. inside a scrollable pane */
+    public ScrollBarVertical setTabStop(boolean tabStop) {
+        this.tabStop = tabStop;
+        return this;
+    }
+
+    @Override
+    public boolean isTabStop() {
+        return tabStop;
+    }
+
     ChainedEventHandler eventHandlerContainer;
     ConditionalEventHandler conditionalHandler;
 

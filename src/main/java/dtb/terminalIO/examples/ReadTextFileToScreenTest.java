@@ -11,7 +11,7 @@ import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.input.Button;
-import dtb.terminalIO.components.scroll.ScrollableComponent;
+import dtb.terminalIO.components.scroll.ScrollableComponent2;
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.ColorParsingUtils;
@@ -77,7 +77,7 @@ public class ReadTextFileToScreenTest {
                 tApp.doRefreshCanvasIfModified();
             }  );
 
-            ScrollableComponent sc = new ScrollableComponent(viewerTextColor, 
+            ScrollableComponent2 sc = new ScrollableComponent2(viewerTextColor, 
                                                              (Dimension)tApp.getMainApplicationPanel(), 
                                                              image);
             sc.setFillOnClear(true);

@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.TextComponent;
-import dtb.terminalIO.components.scroll.ScrollableComponent;
+import dtb.terminalIO.components.scroll.ScrollableComponent2;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.geom.Dimension;
@@ -48,7 +48,7 @@ public class CharacterViewerTest {
 
         };
 
-        ScrollableComponent scrollPanel = new ScrollableComponent(Colors.Blu, scrollPanelDim, dataToView);
+        ScrollableComponent2 scrollPanel = new ScrollableComponent2(Colors.Blu, scrollPanelDim, dataToView);
 
         scrollPanel.setTitle(Colors.IGre, " ASCII VIEWER ");
 
@@ -65,7 +65,6 @@ public class CharacterViewerTest {
 
         StringSpinner spinner = new StringSpinner(StringSpinner.ARC);
 
-        scrollPanel.asEventHandler(); // TODO: fixme!!!!!!  .. time passes ... why? .. oh .. I get it ..
         app.getEventBus().appendEventHandler(scrollPanel);
 
         BlockingQueue<String> stringQueue = new ArrayBlockingQueue<String>(1000);
