@@ -345,8 +345,12 @@ Terms used below:
       and goes where it always did.
    2. If the focused component wants it anyway, it gets it - e.g. a multi-line editor that inserts
       TAB characters. *(Planned: such an editor releases TAB again after Esc.)*
-   3. Otherwise the focus managers around the focused component are asked, innermost first, where
-      focus should go (point 3).
+   3. Otherwise the focus managers around the focused component are asked, innermost first. A
+      WIDGET first offers the key to its own handlers (e.g. a dropdown's "DOWN opens my list");
+      then each is asked where focus should go (point 3). *(done - step 5: widgets' own keys)*
+   So the most specific wish wins: the focused component, then a widget's own handlers, then moving
+   focus. The order lives in `FocusNavigator` only; a widget just declares its policy, its nav keys
+   and its own handlers (`FocusManager.getOwnEventHandler`).
 
 3. **Focus managers answer two questions; they decide, their parent doesn't.** *(done - steps 1 and 2)*
    - `enter(direction)`: "focus is arriving in you, moving forward (TAB) or backward (SHIFT-TAB) -
@@ -360,8 +364,10 @@ Terms used below:
      forward it starts at its first child, backward at its last. The outermost focus manager wraps
      around instead of answering DONE.
    - **WIDGET** - the whole focus manager is one stop (dropdown, list box, tab strip). Entering it
-     returns to the child it had last time. Its own arrow keys move inside it. *(Step 2: widgets
-     still handle their own keys the old way; only entering / leaving them uses these answers.)*
+     returns to the child it had last time. Its own arrow keys move inside it; at either end focus
+     stays (STAY: the key is used up, it does not go further out), unless the widget is set to wrap
+     around (`setCycling(true)`, e.g. the tab strip). *(Step 5: widgets' own keys go through these
+     answers too.)*
    - **TRAP** - focus cannot leave (modal dialog): navigation wraps around inside.
    A focus manager - or a single component - can also be marked *not a TAB stop* (`setTabStop(false)`):
    TAB skips it, clicks and hot keys still work - e.g. the scroll buttons under a scrollable panel,
@@ -378,8 +384,7 @@ Terms used below:
    is passed down top-down and arrives straight at the target. Without the first pass a focus manager
    receiving focus handed it to its remembered child (or its first child) first - a flicker, and in
    `ImageSplitterTest` a window wrongly brought to front.
-   *(Still moved the old way: widgets' own arrow keys, hot keys, and code calling
-   `setChildAsCurrentFocus` directly.)*
+   *(Still moved the old way: hot keys, and code calling `setChildAsCurrentFocus` directly.)*
 5. **Clicks use the same `moveFocus`**, with no intermediate focus on other components (§4.6).
    *(done - step 3; clicks still first re-send `setFocus(true)` to re-assert hilite / front, §4.4)*
 6. **Initial focus**: when the app starts, focus goes to the first focusable component, with a way to
@@ -598,7 +603,8 @@ expected to fail when the redesign fixes them.
 | `events/focus/FocusProtocolCharacterisationTest` | exact `focus` / `unFocus` / `setFocus` calls and order, click flicker, no initial focus, disabled skip, root dead end, non-key delivery rules |
 | `components/FocusSideEffectsCharacterisationTest` | frame hilite on click and TAB (frame TAB order: title, content, resize anchor), TextInput recolour, scroll-to-view request |
 | `components/input/form/FormChangeCharacterisationTest` | typing -> data -> field `onChange` -> form `onChange` through the form panel |
-| `components/input/DropdownListBoxCharacterisationTest` | open on focus, hand-off into the list, TAB / SHIFT-TAB / ENTER in the list, click elsewhere closes |
+| `components/input/DropdownListBoxCharacterisationTest` | open on focus, hand-off into the list, TAB / SHIFT-TAB / ENTER in the list, click elsewhere closes, DOWN opens a closed list, arrows at the ends |
+| `events/focus/WidgetNavigationTest` | a widget's own keys: own handler before moving focus, STAY at the end, wrap when set to cycle, TAB leaves |
 | `components/tab/TabPanelCharacterisationTest` | click / arrows / TAB / shortcuts |
 | `components/modal/ModalEventHandlerCharacterisationTest` | modal key sinkhole |
 

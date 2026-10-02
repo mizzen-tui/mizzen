@@ -60,7 +60,6 @@ public interface FocusManager extends Focusable {
      * What kind of focus manager this is - decides how it answers enter / advance:
      * GROUP (fields TAB through), WIDGET (one stop, e.g. list box), TRAP (modal, focus can't leave).
      * Wrapper components ask their inner manager; anything else is a GROUP.
-     * Not yet used by the focus routing (focus redesign).
      */
     default FocusPolicy getFocusPolicy() {
         FocusManager delegate = UTIL.providedFocusManager(this);
@@ -81,11 +80,33 @@ public interface FocusManager extends Focusable {
     /**
      * Is key one of this focus manager's navigation keys? Returns FORWARD for its "next" key
      * (usually TAB), BACKWARD for its "previous" key (usually SHIFT-TAB), null for any other key.
-     * Wrapper components ask their inner manager. Not yet used by the focus routing (focus redesign).
+     * Wrapper components ask their inner manager.
      */
     default FocusDirection navDirectionFor(KeyStroke key) {
         FocusManager delegate = UTIL.providedFocusManager(this);
         return delegate != null ? delegate.navDirectionFor(key) : null;
+    }
+
+    /**
+     * The extra key handlers this focus manager's component registered for itself, on top of focus
+     * navigation - e.g. a dropdown's "DOWN opens my list". For a WIDGET, keyboard navigation offers
+     * its nav keys to these first, and only moves focus if they don't want the key.
+     * null = none. Wrapper components ask their inner manager (and add their own, see
+     * ComponentWithFocusManager).
+     */
+    default ConditionalEventHandler getOwnEventHandler() {
+        FocusManager delegate = UTIL.providedFocusManager(this);
+        return delegate != null ? delegate.getOwnEventHandler() : null;
+    }
+
+    /**
+     * For a WIDGET: does moving past its last child go back to its first (and before the first to
+     * the last)? E.g. a tab strip: RIGHT on the last tab shows the first. false (default): focus
+     * stays at the end. Wrapper components ask their inner manager.
+     */
+    default boolean wrapsAround() {
+        FocusManager delegate = UTIL.providedFocusManager(this);
+        return delegate != null && delegate.wrapsAround();
     }
 
     @Override
@@ -285,7 +306,8 @@ public interface FocusManager extends Focusable {
          *   MOVED(target) - next / previous child in here (entered via its own enter())
          *   DONE          - no more children that way; let the parent focus manager decide
          *   STAY          - WIDGET at its first / last child: keep focus where it is
-         * A TRAP, or the root focus manager (no parent), wraps around instead of being DONE.
+         * A TRAP, the root focus manager (no parent), or a WIDGET that wrapsAround(), wraps around
+         * instead.
          */
         public static Navigation advance(FocusManager focusManager, Focusable focusedLeaf, FocusDirection dir) {
             List<Focusable> children = new ArrayList<Focusable>(focusManager.getChildFocusables());
@@ -298,7 +320,8 @@ public interface FocusManager extends Focusable {
             }
             FocusPolicy policy = focusManager.getFocusPolicy();
             // a root focus manager (no parent) wraps around, like a trap
-            boolean wraps = policy == FocusPolicy.TRAP || focusManager.getParentFocusManager() == null;
+            boolean wraps = policy == FocusPolicy.TRAP || focusManager.getParentFocusManager() == null
+                         || (policy == FocusPolicy.WIDGET && focusManager.wrapsAround());
             int step = dir == FocusDirection.FORWARD ? 1 : -1;
             int j = from;
             for (int n = 0; n < children.size(); n++) {

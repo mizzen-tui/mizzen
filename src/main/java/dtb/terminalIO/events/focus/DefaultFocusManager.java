@@ -90,6 +90,18 @@ public class DefaultFocusManager implements FocusManager,
         return customExtendedEventHandler;
     }
 
+    /** this manager's own extra handler (the custom extended one) - see FocusManager.getOwnEventHandler */
+    @Override
+    public ConditionalEventHandler getOwnEventHandler() {
+        return customExtendedEventHandler;
+    }
+
+    /** only an explicit setCycling(true) counts (cycling inferred from the position in the tree does not) */
+    @Override
+    public boolean wrapsAround() {
+        return cycling && !cyclingInferred;
+    }
+
     public void setCustomExtendedEventHandler(ConditionalEventHandler customExtendedEventHandler) {
         this.customExtendedEventHandler = customExtendedEventHandler;
     }
@@ -841,7 +853,8 @@ public class DefaultFocusManager implements FocusManager,
         removeList.remove(focusable);
     }
 
-    private FocusManager meOrActual() {
+    /** the wrapper component this manager works for (see setActual), else this manager itself */
+    FocusManager meOrActual() {
         return this.actualFocusmanager != null ? this.actualFocusmanager : this;
     }
 

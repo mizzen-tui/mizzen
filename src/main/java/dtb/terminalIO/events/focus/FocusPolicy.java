@@ -16,7 +16,15 @@ public enum FocusPolicy {
 
     /**
      * One stop (ListBox, DropdownListBox, menu, tab strip). Entering resumes the remembered child
-     * (falls back to the first). Its own nav keys move between children; at either end focus stays.
+     * (falls back to the first). Its own nav keys move between children; at either end focus stays
+     * (or wraps around, if set to cycle - e.g. the tab strip).
+     *
+     * To make a widget, declare three things - keyboard navigation does the rest, in the same order
+     * for every widget (the focused part first, then the widget's own handlers, then moving focus):
+     *   1. setFocusPolicy(FocusPolicy.WIDGET)
+     *   2. its nav keys, e.g. new DefaultFocusManager(Keys.UP_KEYSTROKE, Keys.DOWN_KEYSTROKE)
+     *   3. any handlers of its own for those keys, with appendEventHandler - e.g. "DOWN opens my list"
+     * Example: DropdownListBox.
      */
     WIDGET,
 

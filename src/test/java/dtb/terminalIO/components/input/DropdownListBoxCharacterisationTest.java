@@ -135,4 +135,50 @@ public class DropdownListBoxCharacterisationTest extends TestCase {
         assertEquals("B", dropdown.getValue());
         assertTrue("today the list stays open after ENTER", dropdown.listBoxVisible());
     }
+
+
+    /** focus on the dropdown's button with the list closed */
+    private void focusButtonWithListClosed() {
+        click(before);
+        press(Keys.TAB_KEYSTROKE);              // open, focus in list
+        press(Keys.ESC_KEYSTROKE);              // focus back to the button (list stays open)
+        dropdown.hideListBox();
+    }
+
+    /** DOWN on the button with the list closed opens the list (the dropdown's own handler); focus stays on the button */
+    public void testDownWithListClosedOpensList() {
+        focusButtonWithListClosed();
+        boolean openBefore = dropdown.listBoxVisible();
+
+        press(Keys.DOWN_KEYSTROKE);
+
+        assertFalse(openBefore);
+        assertTrue("DOWN should open the list", dropdown.listBoxVisible());
+        assertEquals("dropdown-button", focusedName());
+    }
+
+    /** UP / DOWN on the button with the list already open: nothing happens (the list is not inside the dropdown's focus manager) */
+    public void testArrowsOnButtonWithListOpenDoNothing() {
+        focusButtonWithListClosed();
+        press(Keys.DOWN_KEYSTROKE);             // opens the list
+
+        press(Keys.DOWN_KEYSTROKE);
+        press(Keys.UP_KEYSTROKE);
+
+        assertEquals("dropdown-button", focusedName());
+        assertTrue(dropdown.listBoxVisible());
+        assertEquals("A", dropdown.getValue());
+    }
+
+    /** UP on the first item of the open list: the list keeps it - focus and selection stay */
+    public void testUpAtTopOfListStaysInList() {
+        click(before);
+        press(Keys.TAB_KEYSTROKE);
+
+        press(Keys.UP_KEYSTROKE);
+
+        assertEquals("list", focusedName());
+        assertTrue(dropdown.listBoxVisible());
+        assertEquals("A", dropdown.getValue());
+    }
 }

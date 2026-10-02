@@ -45,6 +45,7 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
     private FocusManager focusManager;
     private ChainedEventHandler chainedEventHandler;
     private ConditionalEventHandler chainedEventHandlerAsConditionalEventHandler;
+    private ConditionalEventHandler ownEventHandler;     // see getOwnEventHandler
     private BehaviourForCompositeAndFocusManager focusBehaviourManager;
 
     private Function<EventBus, FocusManager> focusManagerBuilder;
@@ -284,6 +285,39 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
             return null;
         }
         return this;
+    }
+
+    /**
+     * This component's own extra handlers (added with appendEventHandler / prependEventHandler),
+     * then its focus manager's - see FocusManager.getOwnEventHandler.
+     * Example: DropdownListBox's "UP / DOWN open my list".
+     * Always the same instance (safe to add to / remove from a chain); it looks up both sets of
+     * handlers each time it is asked, so handlers appended later, or a new focus manager, count too.
+     */
+    @Override
+    public ConditionalEventHandler getOwnEventHandler() {
+        if (ownEventHandler == null) {
+            ownEventHandler = new ConditionalEventHandler() {
+                @Override
+                public EventHandler canHandle(TerminalEvent<?> te) {
+                    ConditionalEventHandler mine = chainedEventHandlerAsConditionalEventHandler;
+                    EventHandler handler = mine != null ? mine.canHandle(te) : null;
+                    if (handler != null) {
+                        return handler;
+                    }
+                    ConditionalEventHandler managers = focusManager != null ? focusManager.getOwnEventHandler() : null;
+                    return managers != null ? managers.canHandle(te) : null;
+                }
+                @Override
+                public void handle(TerminalEvent<?> te) {
+                    EventHandler handler = canHandle(te);
+                    if (handler != null) {
+                        handler.handle(te);
+                    }
+                }
+            };
+        }
+        return ownEventHandler;
     }
 
     @Override
