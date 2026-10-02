@@ -522,11 +522,14 @@ public class DefaultFocusManager implements FocusManager,
             if (focusableOther == focusable) {
                 continue;
             }
+            if (hotKeyOfWrapperAbove(focusableOther, pressedKey) && focusableOther.canHandle(te) != null) {
+                return focusableOther;
+            }
             Collection<KeyStroke> hotKeys = HasHotKey.UTIL.getAllHotKeys(focusableOther);
             if (hotKeys.contains(pressedKey)) {
                 Focusable foundFocusable = HasHotKey.UTIL.getFocusableFromHotKey(focusableOther, pressedKey);
                 if (foundFocusable == null) {
-                    return null;
+                    continue;   // not usable here - another child may still have it
                 }
                 if (foundFocusable.canHandle(te) != null) {
                     return focusableOther;
@@ -537,7 +540,28 @@ public class DefaultFocusManager implements FocusManager,
     }
 
     /**
-     * If a child's hot key matches: make that child current and give it the key. Returns true if so.
+     * Is key the hot key of a component wrapped around child - one directly above it in the component
+     * tree, up to the next focusable one? Example: a RockerButton (hot key '3') is not focusable itself;
+     * its inner button bar is the child here, so the hot key sits on the wrapper above it.
+     */
+    private static boolean hotKeyOfWrapperAbove(Focusable child, KeyStroke key) {
+        if (!(child instanceof Component)) {
+            return false;
+        }
+        Object above = ((Component<?>) child).getParentContainer();
+        while (above instanceof Component && !ToFocusable.UTIL.isFocusable(above)) {
+            if (above instanceof HasHotKey && key.equals(((HasHotKey) above).getHotKey())) {
+                return true;
+            }
+            above = ((Component<?>) above).getParentContainer();
+        }
+        return false;
+    }
+
+    /**
+     * If a child's hot key matches: move focus to that child and give it the key. Returns true if so.
+     * Focus moves like a click or TAB (FocusManager.UTIL.moveFocus), so every focus manager on the
+     * way is told and the previously focused component lets go.
      * (Used by handle; canHandle only asks hotKeyChildFor.)
      */
     private boolean handleHotKey(KeyEvent te) {
@@ -545,7 +569,13 @@ public class DefaultFocusManager implements FocusManager,
         if (hotKeyChild == null) {
             return false;
         }
-        setChildAsCurrentFocus(hotKeyChild, te.getEventBus());
+        FocusManager top = this;
+        while (top.getParentFocusManager() != null) {
+            top = top.getParentFocusManager();
+        }
+        if (!FocusManager.UTIL.moveFocus(top, hotKeyChild, te.getEventBus(), false)) {
+            setChildAsCurrentFocus(hotKeyChild, te.getEventBus());     // not reachable from the top: as before
+        }
         Focusable focusable = currentChildFor(te);
         if (focusable != null && focusable.canHandle(te) != null) {
             focusable.handle(te);
