@@ -494,6 +494,8 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
                 }
             }
 
+            // drawn on the root panel, but part of this dropdown for keyboard focus
+            Component.UTIL.setPopupOwner(this.getListBoxOrItsScrollPane(), this);
             listBoxParent.add(listBoxPosition, this.getListBoxOrItsScrollPane());
             listBoxParent.bringToFront(this.getListBoxOrItsScrollPane());
             Logging.info("ListBOx added to parent");

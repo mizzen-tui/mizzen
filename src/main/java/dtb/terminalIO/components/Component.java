@@ -47,6 +47,16 @@ public interface Component<T extends Component<?>>
     void setParentContainer(ParentContainer composite);
     
     ParentContainer getParentContainer();
+
+    /**
+     * For a popup - a dropdown's open list, a menu - the component it belongs to for keyboard focus;
+     * null for anything that is not a popup. A popup is drawn on the root panel, so its container never
+     * clips it and never grows to fit it - but for focus it is part of its owner (e.g. TAB from the
+     * open list carries on after the dropdown). Set with Component.UTIL.setPopupOwner.
+     */
+    default Component<?> getPopupOwner() {
+        return null;
+    }
     
     default ParentContainer getParentContainerOrFail() {
         if (getParentContainer() == null) {
@@ -90,6 +100,29 @@ public interface Component<T extends Component<?>>
     }
 
     public static class UTIL {
+
+        /** mark popup as belonging to owner for keyboard focus (see getPopupOwner); owner null = not a popup */
+        public static void setPopupOwner(Component<?> popup, Component<?> owner) {
+            if (!(popup instanceof AbstractComponent)) {
+                throw new IllegalArgumentException("setPopupOwner(): " + HasName.UTIL.getName(popup)
+                        + " is not an AbstractComponent - it cannot be a popup");
+            }
+            ((AbstractComponent<?>) popup).popupOwner = owner;
+        }
+
+        /**
+         * A popup that had focus is closing: give focus back to its owner (e.g. a menu's button
+         * after an item was chosen), like a click on the owner. Does nothing if popup has no owner,
+         * or the owner cannot take focus.
+         */
+        public static void returnFocusToPopupOwner(Component<?> popup, EventBus eventBus) {
+            Component<?> owner = popup == null ? null : popup.getPopupOwner();
+            dtb.terminalIO.events.focus.Focusable ownerFocusable = dtb.terminalIO.events.focus.ToFocusable.UTIL.toFocusable(owner);
+            if (ownerFocusable != null && eventBus != null) {
+                eventBus.raiseEvent(new dtb.terminalIO.events.focus.RequestFocusEvent(ownerFocusable));
+            }
+        }
+
         
                 
         public static boolean isDirty(Component<?> ... c) {

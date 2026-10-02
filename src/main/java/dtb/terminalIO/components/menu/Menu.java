@@ -145,6 +145,8 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
         }
 
         this.menuContainer.setItems(menuItemsAsDisplayableItems(), new MenuTextComponentItemFactory(this));
+        // drawn on the root panel, but part of parent (its menu button / parent menu) for keyboard focus
+        Component.UTIL.setPopupOwner(this.menuContainer, parent);
         getMenuRootPanel(parent).add(position, this.menuContainer);
         getMenuRootPanel(this.menuContainer).bringToFront(this.menuContainer);
 
@@ -169,6 +171,8 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
                 // Logging.info("this.menuContainer.onChange()-------- " + menuItem.toString());
                 menuItem.onSelected(te);
                 if (menuItem instanceof MenuItem.Simple) {
+                     // the menus close: focus goes back to the root menu's owner (its menu button)
+                     Component.UTIL.returnFocusToPopupOwner(this.getRootMenu().menuContainer, te.getEventBus());
                      this.getRootMenu().popDownMenu();
                      if (this.getRootMenu().menuBar != null) {
                          this.getRootMenu().menuBar.unFocus(null, te.getEventBus());
@@ -368,7 +372,7 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
 
         @Override
         public void selectWithNoFocus(Focusable newFocusable) {
-//            Logging.info("selectWithNoFocus" + HasName.UTIL.getName(newFocusable));
+//            Logging.info("selectWithNoFocus" + HasName.UTIL.getName(newFocusable, "<none>"));
             Menu menu = getMenu();
             Color color = menu.color;
             color = color.bold();
@@ -455,7 +459,7 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
         }
 
         public void unFocus(Focusable newFocusable, EventBus eventBus) {
-            Logging.info(HasName.UTIL.getName(this)+ " unFocus   to next: " + HasName.UTIL.getName(newFocusable));
+            Logging.info(HasName.UTIL.getName(this)+ " unFocus   to next: " + HasName.UTIL.getName(newFocusable, "<none>"));
 
             super.unFocus(newFocusable, eventBus);
             if (!this.menu.isFocusablePartOfMenu(newFocusable)) {
@@ -467,7 +471,7 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
         }
 
         public void focus(Focusable oldFocusable, EventBus eventBus) {
-            Logging.info(HasName.UTIL.getName(this)+ " focus  from prev: " + HasName.UTIL.getName(oldFocusable));
+            Logging.info(HasName.UTIL.getName(this)+ " focus  from prev: " + HasName.UTIL.getName(oldFocusable, "<none>"));
             super.focus(oldFocusable, eventBus);
         }
 

@@ -3,6 +3,7 @@ package dtb.terminalIO.components.menu;
 import java.util.ArrayList;
 import java.util.List;
 
+import dtb.terminalIO.events.focus.RequestFocusEvent;
 import dtb.terminalIO.components.AbstractWrappedComponentWithFocusManager;
 import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.Component;
@@ -120,7 +121,8 @@ public class MenuBar extends AbstractWrappedComponentWithFocusManager<ButtonBar>
             idx--;
         }
         Button nextButton = menuBarItems.get(idx);
-        getWrappedComponent().setChildAsCurrentFocus(nextButton, te.getEventBus());
+        // move focus like a click (focus may be in the open menu, outside the menu bar)
+        te.getEventBus().raiseEvent(new RequestFocusEvent(nextButton));
         nextButton.onClick(te.getEventBus());
     }
 
@@ -137,7 +139,8 @@ public class MenuBar extends AbstractWrappedComponentWithFocusManager<ButtonBar>
             idx++;
         }
         Button nextButton = menuBarItems.get(idx);
-        getWrappedComponent().setChildAsCurrentFocus(nextButton, te.getEventBus());
+        // move focus like a click (focus may be in the open menu, outside the menu bar)
+        te.getEventBus().raiseEvent(new RequestFocusEvent(nextButton));
         nextButton.onClick(te.getEventBus());
     }
 
