@@ -361,17 +361,24 @@ Terms used below:
    Example, form `A, [B, C], D` where `[B, C]` is a GROUP: TAB goes A B C D A B C D...; if `[B, C]`
    were a WIDGET, TAB would go A B D A B D... and arrow keys move between B and C.
 
-4. **One way to move focus.** *(planned - next step)* A single `moveFocus` changes focus and sends
-   the existing notifications: `unFocus(new)` to what loses focus, then `focus(old)` to what gains it,
-   along the path (hilite, bring-to-front and the dropdown / menu hand-off depend on these, §4.4).
-   *(Step 2 still moves focus the old way - setting each container's "current child" along the path
-   - which is why a window can briefly come to the front by mistake, §5 `getCurrentOrSet`.)*
+4. **One way to move focus.** *(done for clicks and TAB - step 3, `FocusManager.UTIL.moveFocus`)*
+   `moveFocus` changes focus and sends the existing notifications: `unFocus(new)` to what loses focus,
+   then `focus(old)` to what gains it, along the path (hilite, bring-to-front and the dropdown / menu
+   hand-off depend on these, §4.4). It goes through each container's `setChildAsCurrentFocus`, so
+   components that customise that method keep working. It works in two passes: containers that don't
+   have focus yet first just record which child to use (deepest first, no notifications); then focus
+   is passed down top-down and arrives straight at the target. Without the first pass a container
+   receiving focus handed it to its remembered child (or its first child) first - a flicker, and in
+   `ImageSplitterTest` a window wrongly brought to front.
+   *(Still moved the old way: widgets' own arrow keys, hot keys, and code calling
+   `setChildAsCurrentFocus` directly.)*
 5. **Clicks use the same `moveFocus`**, with no intermediate focus on other components (§4.6).
-   *(planned)*
+   *(done - step 3; clicks still first re-send `setFocus(true)` to re-assert hilite / front, §4.4)*
 6. **Initial focus**: when the app starts, focus goes to the first focusable component, with a way to
    choose another (the common convention: desktop toolkits, Textual). *(planned - separate step)*
 7. **Asking never changes anything**: `canHandle`, `enter` and `advance` only answer.
-   *(enter / advance: done; canHandle: planned - today some containers change focus inside it)*
+   *(enter / advance: done. canHandle: partly - step 3 stopped non-key events from making a container
+   pick a "current child"; for key events the old routing still may)*
 
 **B. Event delivery for non-key events (§2.5): same semantics as today**
 1. `canHandle`/`handle` remain the generic contract for **every** event type.
@@ -562,7 +569,8 @@ that a plain container can declare. Do this class by class, not in the engine co
 | `components/modal/ModalEventHandler.java` | modal dialogs only trap **keys**; mouse clicks behind the dialog still go through and move focus out of it (seen in `ImageSplitterTest`'s Options dialog). Owner note: modals are also hard to create. Both for later |
 | focus flags (distributed state) | **observed (Oct 2026):** two components reporting `hasFocus()==true` at once. In `ImageSplitterTest`, after clicking from a dropdown's open list (inside the Options dialog) onto the image, the dropdown's button still had `hasFocus()==true` while the viewer had focus. Concrete evidence for a single focus owner (§4.3 A). `DropdownListBox` now asks the root focus manager instead of trusting flags |
 | `events/focus/FocusManager.java` (`buildRequestFocusEventHandler`) | **keep (Oct 2026):** each click re-sends `setFocus(true)` down the currently focused chain before moving focus. Looks redundant but re-asserts hilite / bring-to-front of ancestors that stay focused; see §4.4 |
-| `events/focus/DefaultFocusManager.java` (`getCurrentOrSet`) | first click into a manager with no current child picks child 0 and briefly focuses it before the clicked target |
+| `events/focus/DefaultFocusManager.java` (`getCurrentOrSet`) | **fixed (step 3):** a container with no current child picked child 0 and focused it - on the first click, and whenever its current child had been removed (e.g. a dropdown's list closing), for **any** event reaching it. In `ImageSplitterTest` that brought the wrong window to front. Now clicks / TAB go through `moveFocus` (records the path first), and non-key events never pick a child. Key events in the old routing still may |
+| `components/scroll/ScrollableComponent.java` (old, used by `TextBoxTest`'s tree view) | handles focus its own non-standard way; e.g. SHIFT-TAB out of it into a GROUP lands on that group's first field instead of its last. Candidate for the ScrollableComponent consolidation (§4.7), not worth fixing on its own |
 
 ---
 

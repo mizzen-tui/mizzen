@@ -176,6 +176,20 @@ public class DefaultFocusManager implements FocusManager,
         return this.current;
     }
 
+    /**
+     * The current child to offer event te to first. For key events: the current child, picking the
+     * first one if there is none (keyboard behaviour as before). For any other event (canvas refresh,
+     * value changed ...): only an existing current child - never pick one. Picking one there gave
+     * focus to an arbitrary first child (e.g. a window title, bringing that window to front) whenever
+     * the current child had just been removed, e.g. a dropdown's open list being closed.
+     */
+    private Focusable currentChildFor(TerminalEvent<?> te) {
+        if (te.getType() == TerminalEvent.TYPE.KEYPRESS) {
+            return getCurrentOrSet(te.getEventBus());
+        }
+        return current;
+    }
+
     private Focusable getCurrentOrSet(EventBus eventBus) {
         if (current == null && eventConsumers.size() > 0) {
             setChildAsCurrentFocus(eventConsumers.get(0), eventBus);
@@ -473,7 +487,7 @@ public class DefaultFocusManager implements FocusManager,
                 }
 
                 // FocusManager cannot handle directly - what about its focus child?
-                Focusable focusable = getCurrentOrSet(te.getEventBus());
+                Focusable focusable = currentChildFor(te);
                 if (focusable != null) {
                     if (focusable.canHandle(te) != null) {
                         return true;
@@ -520,7 +534,7 @@ public class DefaultFocusManager implements FocusManager,
             }
 
             // not a navigation key so forward event to current focusable
-            Focusable focusable = getCurrentOrSet(te.getEventBus());
+            Focusable focusable = currentChildFor(te);
             if (focusable != null) {
                 if (focusable.canHandle(te) != null) { 
                      focusable.handle(te);
@@ -577,7 +591,7 @@ public class DefaultFocusManager implements FocusManager,
             public boolean test(TerminalEvent<?> te) {
                 
                 Focusable focusable = null;
-                focusable = getCurrentOrSet(te.getEventBus());
+                focusable = currentChildFor(te);
                 if (focusable != null) {
                     if  (focusable.canHandle(te) != null) {
                         return true;
@@ -618,7 +632,7 @@ public class DefaultFocusManager implements FocusManager,
 
         return new ConditionalEventHandler.Impl(canHandlePredicate, (te) -> {
             
-            Focusable focusable = getCurrentOrSet(te.getEventBus());
+            Focusable focusable = currentChildFor(te);
             if (focusable != null) {
                 // ARG have to test again (is this 3 tests now !?!?)
                 //                         very inefficient)
@@ -669,7 +683,7 @@ public class DefaultFocusManager implements FocusManager,
             @Override
             public boolean test(TerminalEvent<?> te) {
                 
-                Focusable focusable = getCurrentOrSet(te.getEventBus());
+                Focusable focusable = currentChildFor(te);
                 if (focusable != null) {
                     if  (focusable.canHandle(te) != null) {
                         return true;
@@ -701,7 +715,7 @@ public class DefaultFocusManager implements FocusManager,
 
         return new ConditionalEventHandler.Impl(canHandlePredicate, (te) -> {
 
-            Focusable focusable = getCurrentOrSet(te.getEventBus());
+            Focusable focusable = currentChildFor(te);
             if (focusable != null) {
                 // ARG have to test again (is this 3 tests now !?!?)
                 //                         very inefficient)

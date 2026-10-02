@@ -183,6 +183,55 @@ public interface FocusManager extends Focusable {
         }
 
         /**
+         * Move focus from wherever it is to target (a component somewhere below root). Used by mouse
+         * clicks / RequestFocusEvent and by keyboard navigation.
+         *
+         * Every container on the way is told through setChildAsCurrentFocus, so the usual
+         * notifications fire: unFocus(new) to what loses focus, focus(old) to what gains it (hilite,
+         * bring-to-front, dropdown hand-off ... depend on these). It works in two passes so that only
+         * the right components are notified:
+         *   1. Containers on the path that don't have focus yet, deepest first, just record which child
+         *      to use (no notifications - they don't have focus).
+         *   2. Then top-down: the containers that already have focus pass it on, and focus() travels
+         *      straight down the recorded path to target.
+         * Without pass 1, a container receiving focus would first hand it to the child it remembered
+         * (or its first child) - that child would briefly get focus (flicker; a window wrongly brought
+         * to front).
+         *
+         * reassertFocus: first re-send setFocus(true) down the path that already has focus, so windows
+         * that stay focused re-hilite / come back to front (what mouse clicks have always done).
+         * Skipped when the root has no current child - there is nothing to re-assert, and doing it
+         * would make the root pick its first child.
+         *
+         * Returns false if target is not inside root.
+         */
+        public static boolean moveFocus(FocusManager root, Focusable target, EventBus eventBus, boolean reassertFocus) {
+            List<Focusable> path = findTargetAsPath(root, target);     // root, ..., target
+            if (path == null || path.size() < 2 || path.get(0) != root) {
+                return false;
+            }
+            if (reassertFocus && root.hasFocus() && root.getCurrentChildFocus() != null) {
+                root.setFocus(true, eventBus);
+            }
+            // pass 1: containers without focus record their child, deepest first
+            for (int i = path.size() - 2; i >= 0; i--) {
+                FocusManager container = (FocusManager) path.get(i);
+                if (container.hasFocus()) {
+                    break;
+                }
+                container.setChildAsCurrentFocus(path.get(i + 1), eventBus);
+            }
+            if (!root.hasFocus()) {
+                root.setFocus(true, eventBus);       // nothing had focus: give it, down the recorded path
+            }
+            // pass 2: top-down; containers that already have focus pass it on
+            for (int i = 0; i < path.size() - 1; i++) {
+                ((FocusManager) path.get(i)).setChildAsCurrentFocus(path.get(i + 1), eventBus);
+            }
+            return true;
+        }
+
+        /**
          * Focus is moving INTO this container (e.g. TAB from the field before it).
          * Returns the child field focus should land on, without changing anything:
          *   GROUP  - first field when moving forward, last field when moving backward
@@ -679,22 +728,13 @@ public interface FocusManager extends Focusable {
                     throw new IllegalStateException(": pathToTarget does not start with root focusManager("+HasName.UTIL.getName(focusManager)+")");
                 }
 
-                FocusManager lastFocusManager = focusManager; 
                 boolean hasGoodPath = pathToTarget.size()>1;
                 
                 if (hasGoodPath) {
                     if (IS_REQUEST_FOCUS.test(te)) {
-                        // set focus on focusTarget and all of its focusable parent's
-                        // NOTE: deliberately called even if already focused - re-fires hilite /
-                        //       bringToFront on ancestors that stay focused (z-order may have changed)
-                        focusManager.setFocus(true, te.getEventBus());
-                        lastFocusManager = focusManager;
-                        for (Focusable focusableChild : pathToTarget.subList(1, pathToTarget.size())) {
-                            lastFocusManager.setChildAsCurrentFocus(focusableChild, te.getEventBus());
-                            if (focusableChild instanceof FocusManager) {
-                                lastFocusManager = (FocusManager) focusableChild;
-                            }
-                        }
+                        // reassertFocus=true: re-sends setFocus(true) down the focused path first, so
+                        // ancestors that stay focused re-hilite / bringToFront (z-order may have changed)
+                        moveFocus(focusManager, focusTarget, te.getEventBus(), true);
                     } else {
                         // un focus (release focus)
                         int lastIndex = pathToTarget.size()-1; 

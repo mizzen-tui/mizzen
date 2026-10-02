@@ -1,8 +1,5 @@
 package dtb.terminalIO.events.focus;
 
-import java.util.List;
-
-import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.keyboard.KeyEvent;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 
@@ -21,9 +18,8 @@ import dtb.terminalIO.events.keyboard.KeyStroke;
  * WIDGET containers (dropdown, tab strip) keep handling their OWN keys (arrows) the old way for
  * now - only entering / leaving them goes through here.
  *
- * Focus is moved by setting each container's current child along the path, the same as a mouse
- * click does (so hilite, unFocus/focus hand-off etc. behave as today) - minus the click's extra
- * setFocus(true) re-send.
+ * Focus is moved with FocusManager.UTIL.moveFocus, the same as a mouse click (so hilite,
+ * unFocus/focus hand-off etc. behave the same) - minus the click's setFocus(true) re-send.
  */
 final class FocusNavigator {
 
@@ -84,7 +80,7 @@ final class FocusNavigator {
         if (decision.giveKeyTo != null) {
             decision.giveKeyTo.handle(ke);
         } else if (decision.moveFocusTo != null) {
-            moveFocus(root, decision.moveFocusTo, ke.getEventBus());
+            FocusManager.UTIL.moveFocus(root, decision.moveFocusTo, ke.getEventBus(), false);
         }
     }
 
@@ -96,23 +92,5 @@ final class FocusNavigator {
             }
         }
         return false;
-    }
-
-    /**
-     * Move focus to target: walk the path from root down to target, making each step the
-     * current child of the container above it (that fires the usual unFocus / focus calls).
-     */
-    private static void moveFocus(FocusManager root, Focusable target, EventBus eventBus) {
-        List<Focusable> path = FocusManager.UTIL.findTargetAsPath(root, target);
-        if (path == null || path.size() < 2) {
-            return;
-        }
-        FocusManager container = root;
-        for (Focusable step : path.subList(1, path.size())) {
-            container.setChildAsCurrentFocus(step, eventBus);
-            if (step instanceof FocusManager) {
-                container = (FocusManager) step;
-            }
-        }
     }
 }

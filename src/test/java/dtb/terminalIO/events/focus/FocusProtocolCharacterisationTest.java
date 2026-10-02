@@ -126,12 +126,12 @@ public class FocusProtocolCharacterisationTest extends TestCase {
     }
 
     /**
-     * TODAY (click focus flicker, docs/ARCHITECTURE.md §4.6): clicking B while the group
-     * remembers C briefly focuses C (C.focus then C.unFocus) before B gets focus.
-     * Also: the request-focus handler first calls setFocus(true) on the root, which re-sends
-     * setFocus(true) to the currently focused leaf (D) just before it is unfocused.
+     * Clicking B while the group remembers C: focus goes straight to B. (Before moveFocus's two
+     * passes, C briefly got focus first - C.focus then C.unFocus - a visible flicker.)
+     * The click still first re-sends setFocus(true) down the focused path (D here) so windows that
+     * stay focused re-hilite / come to front.
      */
-    public void testClickIntoGroup_today_flickersRememberedChild() {
+    public void testClickIntoGroup_noFlickerOfRememberedChild() {
         Leaf a = new Leaf("A"), b = new Leaf("B"), c = new Leaf("C"), d = new Leaf("D");
         DefaultFocusManager g = group("group", b, c);
         root(a, g, d);
@@ -141,8 +141,42 @@ public class FocusProtocolCharacterisationTest extends TestCase {
 
         click(b);
 
-        assertEquals("[D.setFocus(true), D.unFocus(new=group), C.focus(old=D), C.unFocus(new=B), B.focus(old=C)]",
-                     log.toString());
+        assertEquals("[D.setFocus(true), D.unFocus(new=group), B.focus(old=D)]", log.toString());
+    }
+
+    /**
+     * If the root has lost its current child (e.g. the focused dropdown list was removed from it),
+     * a click must not first hand focus to the root's first child. (It used to: that is how the
+     * wrong window came to the front in ImageSplitterTest.)
+     */
+    public void testClickWhenRootLostItsCurrentChild_doesNotFocusFirstChild() {
+        Leaf a = new Leaf("A"), b = new Leaf("B"), c = new Leaf("C");
+        DefaultFocusManager root = root(a, b, c);
+        click(b);
+        root.removeFocusable(b);             // like hideListBox() removing the open list
+        log.clear();
+
+        click(c);
+
+        assertFalse("A must not be touched: " + log, log.toString().contains("A."));
+        assertEquals("C", focused(a, c));
+    }
+
+    /**
+     * Same situation, but the next thing to arrive is an ordinary (non-key) event - e.g. a canvas
+     * refresh right after a dropdown list closed. It must not make the root pick and focus its first
+     * child either. (It used to: the root's routing picked a "current child" for every event.)
+     */
+    public void testNonKeyEventWhenRootLostItsCurrentChild_doesNotFocusFirstChild() {
+        Leaf a = new Leaf("A"), b = new Leaf("B"), c = new Leaf("C");
+        DefaultFocusManager root = root(a, b, c);
+        click(b);
+        root.removeFocusable(b);
+        log.clear();
+
+        bus.deliver(customEvent());
+
+        assertEquals("[]", log.toString());
     }
 
     // ------------------------------------------------------------------ traversal edge cases
