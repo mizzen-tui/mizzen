@@ -13,7 +13,7 @@ public class HasParentFocusableAdapter extends HasParentAdapter<Focusable, Focus
 
     @Override
     public FocusManager getParent(Focusable focusable) {
-        return focusable.getParentFocusManager();
+        return FocusManager.UTIL.parentOf(focusable);
     }
     
 

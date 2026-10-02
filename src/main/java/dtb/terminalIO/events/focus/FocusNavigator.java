@@ -102,7 +102,7 @@ final class FocusNavigator {
             return new Decision(from, null);
         }
 
-        for (FocusManager focusManager = from.getParentFocusManager(); focusManager != null;
+        for (FocusManager focusManager = FocusManager.UTIL.parentOf(from); focusManager != null;
                           focusManager = nextOut(focusManager, root)) {
             FocusDirection dir = focusManager.navDirectionFor(key);
             if (dir == null) {
@@ -147,7 +147,7 @@ final class FocusNavigator {
      * ordinary input. "Around from" includes from itself if it is a focus manager.
      */
     private static FocusDirection navDirectionAround(Focusable from, FocusManager root, KeyStroke key) {
-        FocusManager focusManager = from instanceof FocusManager ? (FocusManager) from : from.getParentFocusManager();
+        FocusManager focusManager = from instanceof FocusManager ? (FocusManager) from : FocusManager.UTIL.parentOf(from);
         for (; focusManager != null; focusManager = nextOut(focusManager, root)) {
             FocusDirection dir = focusManager.navDirectionFor(key);
             if (dir != null) {
@@ -159,7 +159,7 @@ final class FocusNavigator {
 
     /** the focus manager around focusManager - null once root is reached (a dialog: never look outside it) */
     private static FocusManager nextOut(FocusManager focusManager, FocusManager root) {
-        return FocusManager.UTIL.isSameNode(focusManager, root) ? null : focusManager.getParentFocusManager();
+        return FocusManager.UTIL.isSameNode(focusManager, root) ? null : FocusManager.UTIL.parentOf(focusManager);
     }
 
     /** a real focused component - not nothing, and not a whole focus manager (that is: focus got lost) */

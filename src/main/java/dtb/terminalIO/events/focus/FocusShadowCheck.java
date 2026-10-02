@@ -73,30 +73,9 @@ final class FocusShadowCheck {
         }
     }
 
-    /** the component behind a focusable: itself, a wrapper's inner manager's wrapper, or a focus behaviour's component */
+    /** the component behind a focusable (Focusable.getFocusComponent) */
     static Object componentOf(Focusable focusable) {
-        if (focusable instanceof dtb.terminalIO.components.Component) {
-            return focusable;
-        }
-        if (focusable instanceof DefaultFocusManager) {
-            Object actual = ((DefaultFocusManager) focusable).meOrActual();
-            return actual instanceof dtb.terminalIO.components.Component ? actual : null;
-        }
-        for (Class<?> c = focusable.getClass(); c != null; c = c.getSuperclass()) {   // TEMPORARY: reflection
-            try {
-                java.lang.reflect.Field f = c.getDeclaredField("component");
-                f.setAccessible(true);
-                Object o = f.get(focusable);
-                if (o instanceof dtb.terminalIO.components.Component) {
-                    return o;
-                }
-            } catch (NoSuchFieldException e) {
-                // try the superclass
-            } catch (IllegalAccessException e) {
-                return null;
-            }
-        }
-        return null;
+        return focusable.getFocusComponent();
     }
 
     /** climb component's parents; the first that is (or provides) a focus manager; null at the top */

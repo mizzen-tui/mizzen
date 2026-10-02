@@ -246,8 +246,9 @@ public class DefaultFocusManager implements FocusManager,
         return this;
     }
 
+    /** the remembered current child - null if it is no longer one of the children (e.g. removed) */
     public Focusable getCurrentChildFocus() {
-        return this.current;
+        return this.current != null && children().contains(this.current) ? this.current : null;
     }
 
     /**
@@ -269,10 +270,11 @@ public class DefaultFocusManager implements FocusManager,
      * Used where we only answer a question (canHandle, "is there a next one?").
      */
     private Focusable peekCurrent() {
-        if (current != null) {
+        if (getCurrentChildFocus() != null) {
             return current;
         }
-        return eventConsumers.isEmpty() ? null : eventConsumers.get(0);
+        List<Focusable> children = children();
+        return children.isEmpty() ? null : children.get(0);
     }
 
     /** like currentChildFor(te), but never changes anything (for canHandle) */
@@ -281,8 +283,9 @@ public class DefaultFocusManager implements FocusManager,
     }
 
     private Focusable getCurrentOrSet(EventBus eventBus) {
-        if (current == null && eventConsumers.size() > 0) {
-            setChildAsCurrentFocus(eventConsumers.get(0), eventBus);
+        List<Focusable> children = children();
+        if (getCurrentChildFocus() == null && children.size() > 0) {
+            setChildAsCurrentFocus(children.get(0), eventBus);
         }
 
         if (current == null) {
@@ -300,13 +303,13 @@ public class DefaultFocusManager implements FocusManager,
             return;
         }
 
-        if (!eventConsumers.contains(focusable)) {
-            FocusManager parent = focusable.getParentFocusManager();
-            if (focusable != null && eventConsumers.contains(parent)) {
-                //focusable = focusable.getParentFocusManager();
-                setChildAsCurrentFocus(focusable.getParentFocusManager(), eventBus);
+        List<Focusable> children = children();
+        if (!children.contains(focusable)) {
+            FocusManager parent = FocusManager.UTIL.parentOf(focusable);
+            if (focusable != null && children.contains(parent)) {
+                setChildAsCurrentFocus(parent, eventBus);
             } else {
-                if (focusable != null && (focusable instanceof Component) && eventConsumers.contains(((Component)focusable).getParentContainer()) ) {
+                if (focusable != null && (focusable instanceof Component) && children.contains(((Component)focusable).getParentContainer()) ) {
                     setChildAsCurrentFocus((Focusable)((Component)focusable).getParentContainer(), eventBus);
                 } else {
                     String focusableName = focusable != null ? HasName.UTIL.getName(focusable) : "<NULL_FOCUSABLE>";
@@ -327,8 +330,18 @@ public class DefaultFocusManager implements FocusManager,
         }
     }
 
+    /**
+     * This manager's children: worked out from its component when it has one (so they are never out
+     * of date - see FocusManager.UTIL.derivedChildFocusables); a manager built by hand uses the
+     * focusables added to it.
+     */
+    private List<Focusable> children() {
+        List<Focusable> derived = FocusManager.UTIL.derivedChildFocusables(this);
+        return derived != null ? derived : eventConsumers;
+    }
+
     public int size() {
-        return eventConsumers.size();
+        return children().size();
     }
 
 
@@ -342,7 +355,8 @@ public class DefaultFocusManager implements FocusManager,
             return null;
         }
         int step = dir == FocusDirection.FORWARD ? 1 : -1;
-        int from = eventConsumers.indexOf(peekCurrent());
+        List<Focusable> children = children();
+        int from = children.indexOf(peekCurrent());
         int index = from;
         for (int n = 0; n < size(); n++) {
             index += step;
@@ -355,8 +369,8 @@ public class DefaultFocusManager implements FocusManager,
             if (index == from) {
                 return null;
             }
-            if (eventConsumers.get(index).isEnabled()) {
-                return eventConsumers.get(index);
+            if (children.get(index).isEnabled()) {
+                return children.get(index);
             }
         }
         return null;
@@ -405,7 +419,7 @@ public class DefaultFocusManager implements FocusManager,
      * dialog, which gets keys before the application's root does.
      */
     private boolean isNavigationRoot() {
-        return parentFocusManager == null || focusPolicy == FocusPolicy.TRAP;
+        return FocusManager.UTIL.parentOf(this) == null || focusPolicy == FocusPolicy.TRAP;
     }
 
     /**
@@ -518,7 +532,7 @@ public class DefaultFocusManager implements FocusManager,
     private Focusable hotKeyChildFor(KeyEvent te) {
         KeyStroke pressedKey = te.getKeyStroke();
         Focusable focusable = peekCurrent();
-        for (Focusable focusableOther : eventConsumers) {
+        for (Focusable focusableOther : children()) {
             if (focusableOther == focusable) {
                 continue;
             }
@@ -570,8 +584,8 @@ public class DefaultFocusManager implements FocusManager,
             return false;
         }
         FocusManager top = this;
-        while (top.getParentFocusManager() != null) {
-            top = top.getParentFocusManager();
+        while (FocusManager.UTIL.parentOf(top) != null) {
+            top = FocusManager.UTIL.parentOf(top);
         }
         if (!FocusManager.UTIL.moveFocus(top, hotKeyChild, te.getEventBus(), false)) {
             setChildAsCurrentFocus(hotKeyChild, te.getEventBus());     // not reachable from the top: as before
@@ -618,6 +632,13 @@ public class DefaultFocusManager implements FocusManager,
         eventConsumers.remove(focusable);
         focusable.setParentFocusManager(null);
         removeList.remove(focusable);
+    }
+
+    /** the wrapper component this manager works for (see setActual); null for a manager built by hand */
+    @Override
+    public Component<?> getFocusComponent() {
+        FocusManager actual = meOrActual();
+        return actual != this && actual instanceof Component ? (Component<?>) actual : null;
     }
 
     /** the wrapper component this manager works for (see setActual), else this manager itself */
@@ -730,7 +751,7 @@ public class DefaultFocusManager implements FocusManager,
 
     @Override
     public Collection<? extends Focusable> getChildren() {
-        return eventConsumers;
+        return children();
     }
 
     @Override
@@ -759,7 +780,7 @@ public class DefaultFocusManager implements FocusManager,
 
     @Override
     public Collection<Focusable> getChildFocusables() {
-        return eventConsumers;
+        return children();
     }
 
     public static boolean applyIfDefaultFocusManager(Object o, Consumer<DefaultFocusManager> apply) {

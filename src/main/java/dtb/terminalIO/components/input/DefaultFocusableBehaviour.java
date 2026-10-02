@@ -164,6 +164,11 @@ public class DefaultFocusableBehaviour implements FocusBehaviour  {
             this.eventHandler = eventHandler;
         }
 
+        @Override
+        public Component<?> getFocusComponent() {
+            return component;
+        }
+
         public Simple(Component<? extends ConditionalEventHandler> component) {
             super(component);
             this.eventHandler = (ConditionalEventHandler) component;

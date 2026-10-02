@@ -170,14 +170,18 @@ public class DropdownListBoxCharacterisationTest extends TestCase {
         assertEquals("A", dropdown.getValue());
     }
 
-    /** UP on the first item of the open list: the list keeps it - focus and selection stay */
-    public void testUpAtTopOfListStaysInList() {
+    /**
+     * UP on the first item of the open list goes back to the dropdown's button; the list stays open,
+     * the selection unchanged (step 7c: the list is part of the dropdown, UP / DOWN move between its
+     * parts). (Before: a list on a focus-manager root panel kept the key.)
+     */
+    public void testUpAtTopOfListGoesBackToButton() {
         click(before);
         press(Keys.TAB_KEYSTROKE);
 
         press(Keys.UP_KEYSTROKE);
 
-        assertEquals("list", focusedName());
+        assertEquals("dropdown-button", focusedName());
         assertTrue(dropdown.listBoxVisible());
         assertEquals("A", dropdown.getValue());
     }

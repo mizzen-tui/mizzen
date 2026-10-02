@@ -144,22 +144,22 @@ public class MenuFocusCharacterisationTest extends TestCase {
     }
 
     /**
-     * TODAY: TAB inside an open menu goes to the File button (the menu's list sits last on the root
-     * panel, so TAB wraps around to the menu bar); the menu stays open.
+     * TAB inside an open menu closes it and moves on to the next menu button: the menu is part of its
+     * button for focus (step 7c). (Before: focus wrapped round to the File button, menu left open.)
      */
-    public void testTabInsideMenu_today_wrapsToMenuButton() {
+    public void testTabInsideMenuClosesItAndMovesToNextButton() {
         openFile();
         press(Keys.DOWN_KEYSTROKE);
         press(Keys.DOWN_KEYSTROKE);
 
         press(Keys.TAB_KEYSTROKE);
 
-        assertEquals("File ", open());
-        assertEquals("MenuBarButton[File]", focusedName());
+        assertEquals("", open());
+        assertEquals("MenuBarButton[Edit]", focusedName());
     }
 
-    /** TODAY: TAB inside a menu whose submenu is open goes into the submenu (it sits next on the root panel) */
-    public void testTabInsideMenuWithSubmenuOpen_today_goesIntoSubmenu() {
+    /** TAB inside a menu whose submenu is open goes into the submenu (the submenu is part of the menu, right after it) */
+    public void testTabInsideMenuWithSubmenuOpenGoesIntoSubmenu() {
         openFile();
         press(Keys.DOWN_KEYSTROKE);              // New selected, its submenu open
 
@@ -169,8 +169,11 @@ public class MenuFocusCharacterisationTest extends TestCase {
         assertTrue(focusedName(), focusedName().contains("New-ListBox"));
     }
 
-    /** SHIFT-TAB inside an open menu closes it and goes back to the field before it in the root's order */
-    public void testShiftTabInsideMenuClosesItAndMovesBack() {
+    /**
+     * SHIFT-TAB inside an open menu closes it and goes back to its own button (step 7c).
+     * (Before: focus went to the field before the menu bar in the root's order.)
+     */
+    public void testShiftTabInsideMenuClosesItAndGoesBackToItsButton() {
         openFile();
         press(Keys.DOWN_KEYSTROKE);
         press(Keys.DOWN_KEYSTROKE);
@@ -178,7 +181,7 @@ public class MenuFocusCharacterisationTest extends TestCase {
         press(Keys.SHIFT_TAB_KEYSTROKE);
 
         assertEquals("", open());
-        assertEquals("field", focusedName().replaceAll("^TextInput\\[|\\]$", ""));
+        assertEquals("MenuBarButton[File]", focusedName());
     }
 
     public void testClickElsewhereClosesMenus() {

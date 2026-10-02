@@ -93,11 +93,10 @@ public class DropdownPopupCharacterisationTest extends TestCase {
     }
 
     /**
-     * A dropdown inside a modal dialog: the open list should get the keys (DOWN picks the next
-     * item). TODAY the list sits on the main panel, outside the dialog - so the dialog's key trap
-     * swallows the key and the selection does not change.
+     * A dropdown inside a modal dialog: the open list gets the keys (DOWN picks the next item).
+     * (Before step 7c the list was outside the dialog for focus, so the dialog's key trap swallowed them.)
      */
-    public void testDropdownInDialog_today_listDoesNotGetKeys() throws UnsupportedEncodingException {
+    public void testDropdownInDialogListGetsKeys() throws UnsupportedEncodingException {
         root = new CompositeWithFocusManager();
         CanvasForTesting.buildCanvasForTestingNoControlCodesInOutput().addComponentSegments(root);
         root.add(1, 1, field("outside"));
@@ -115,6 +114,7 @@ public class DropdownPopupCharacterisationTest extends TestCase {
         press(Keys.ENTER_KEYSTROKE);
 
         assertTrue("list should be open", open);
-        assertEquals("selection unchanged today", valueBefore, String.valueOf(dropdown.getValue()));
+        assertEquals("A", valueBefore);
+        assertEquals("B", String.valueOf(dropdown.getValue()));
     }
 }

@@ -77,7 +77,13 @@ public class SyncEventLoop extends EventBus.STUBBED {
         int guard = 0;
         while (!queue.isEmpty() || !oneTimeTasks.isEmpty()) {
             if (++guard > 10_000) {
-                throw new IllegalStateException("SyncEventLoop: events keep generating events (loop?)");
+                StringBuilder last = new StringBuilder();
+                for (int k = Math.max(0, history.size() - 8); k < history.size(); k++) {
+                    TerminalEvent<?> e = history.get(k);
+                    last.append("\n  ").append(e.getType()).append(" ").append(e.getClass().getSimpleName())
+                        .append(" data=").append(String.valueOf(e.getEventData())).append(" source=").append(String.valueOf(e.getSource()));
+                }
+                throw new IllegalStateException("SyncEventLoop: events keep generating events (loop?) - last events:" + last);
             }
             if (!queue.isEmpty()) {
                 TerminalEvent<?> te = queue.poll();

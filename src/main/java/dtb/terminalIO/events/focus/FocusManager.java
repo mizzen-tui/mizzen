@@ -186,7 +186,7 @@ public interface FocusManager extends Focusable {
          */
         public static boolean containsFocusable(Focusable node, Focusable focusable) {
             for (Focusable ancestorOrSelf = focusable; ancestorOrSelf != null;
-                           ancestorOrSelf = ancestorOrSelf.getParentFocusManager()) {
+                           ancestorOrSelf = parentOf(ancestorOrSelf)) {
                 if (isSameNode(node, ancestorOrSelf)) {
                     return true;
                 }
@@ -251,7 +251,15 @@ public interface FocusManager extends Focusable {
             }
             // pass 2: top-down; focus managers that already have focus pass it on
             for (int i = 0; i < path.size() - 1; i++) {
-                ((FocusManager) path.get(i)).setChildAsCurrentFocus(path.get(i + 1), eventBus);
+                FocusManager parent = (FocusManager) path.get(i);
+                Focusable child = path.get(i + 1);
+                if (parent.hasFocus() && !child.hasFocus() && isSameNode(parent.getCurrentChildFocus(), child)) {
+                    // already the current child, but it lost focus (e.g. a component switched itself
+                    // off with unFocus): making it current again would change nothing - switch it back on
+                    child.setFocus(true, eventBus);
+                } else {
+                    parent.setChildAsCurrentFocus(child, eventBus);
+                }
             }
             // single owner: record the newly focused component, and make sure the previous one really
             // let go - if it still claims focus (missed its unFocus), switch it off
@@ -322,7 +330,7 @@ public interface FocusManager extends Focusable {
             }
             FocusPolicy policy = focusManager.getFocusPolicy();
             // a root focus manager (no parent) wraps around, like a trap
-            boolean wraps = policy == FocusPolicy.TRAP || focusManager.getParentFocusManager() == null
+            boolean wraps = policy == FocusPolicy.TRAP || parentOf(focusManager) == null
                          || (policy == FocusPolicy.WIDGET && focusManager.wrapsAround());
             int step = dir == FocusDirection.FORWARD ? 1 : -1;
             int j = from;
@@ -349,10 +357,10 @@ public interface FocusManager extends Focusable {
             if (maybeAncestor == null || maybeDescendant == null || (!(maybeAncestor instanceof FocusManager))) {
                 return false;
             }
-            if (maybeAncestor == maybeDescendant.getParentFocusManager()) {
+            if (maybeAncestor == parentOf(maybeDescendant)) {
                 return true;
             }
-            return isAncestorOf(maybeAncestor, maybeDescendant.getParentFocusManager());
+            return isAncestorOf(maybeAncestor, parentOf(maybeDescendant));
         }
         
         
@@ -402,7 +410,7 @@ public interface FocusManager extends Focusable {
             if ( ! focusManager.hasFocus()) {
                 return null;
             }
-            if (focusManager.getParentFocusManager() == null) {
+            if (parentOf(focusManager) == null) {
                 DefaultFocusManager root = rootDefaultFocusManager(focusManager);
                 Focusable owner = root != null ? root.getFocusedComponent() : null;
                 if (owner != null && containsFocusable(focusManager, owner)) {
@@ -434,8 +442,8 @@ public interface FocusManager extends Focusable {
         /** the ROOT (no parent) focus manager above anyManager, as its DefaultFocusManager; null if none */
         public static DefaultFocusManager rootDefaultFocusManager(FocusManager anyManager) {
             FocusManager top = anyManager;
-            while (top.getParentFocusManager() != null) {
-                top = top.getParentFocusManager();
+            while (parentOf(top) != null) {
+                top = parentOf(top);
             }
             DefaultFocusManager[] found = { null };
             DefaultFocusManager.applyIfDefaultFocusManager(top, root -> found[0] = root);
@@ -500,15 +508,15 @@ public interface FocusManager extends Focusable {
             if (focusable == null) {
                 throw new NullPointerException("pathToRootFocusManager() ERROR: focusable parameter null!");
             }
-            if (focusable.getParentFocusManager() == null) {
+            if (parentOf(focusable) == null) {
                 return Collections.emptyList();
             }
             List<FocusManager> path = new ArrayList<FocusManager>();
-            FocusManager  focusManager =  focusable.getParentFocusManager();
+            FocusManager  focusManager =  parentOf(focusable);
             path.add(focusManager);
             
-            while (focusManager.getParentFocusManager() != null) {
-                focusManager = focusManager.getParentFocusManager();
+            while (parentOf(focusManager) != null) {
+                focusManager = parentOf(focusManager);
                 path.add(focusManager);
             }
             return path;
@@ -519,9 +527,11 @@ public interface FocusManager extends Focusable {
          * A focus manager's children worked out from its component, instead of from the list kept by
          * addFocusable: the nearest focusable components below the component (a nested focus manager
          * counts as one - its own children are below it), in component order, hidden ones left out.
+         * Popups (Component.getPopupOwner) are left out where they are drawn (the root panel) and
+         * counted under their owner instead: right after the owner if it is one of the children, at
+         * the end if this focus manager is the owner (e.g. a dropdown's open list).
          * Example: a panel holding [label, field A, sub-panel[field B], button] -> A, B, button.
          * null if the focus manager has no component to work it out from (e.g. one built by hand).
-         * (Focus redesign step 7: today only compared with the kept list - see FocusShadowCheck.)
          */
         static List<Focusable> derivedChildFocusables(FocusManager focusManager) {
             // a wrapper that borrows another focus manager (e.g. MenuBar uses its ButtonBar's) is the
@@ -530,35 +540,142 @@ public interface FocusManager extends Focusable {
             if (provided != null && !(provided instanceof DefaultFocusManager)) {
                 return derivedChildFocusables(provided);
             }
-            Object owner = focusManager instanceof DefaultFocusManager ? ((DefaultFocusManager) focusManager).meOrActual() : focusManager;
-            if (owner == focusManager && focusManager instanceof DefaultFocusManager) {
-                return null;     // a bare DefaultFocusManager: no component behind it
+            Component<?> owner = focusManager.getFocusComponent();
+            if (owner == null) {
+                return null;     // no component behind it (built by hand)
             }
             List<Focusable> found = new ArrayList<Focusable>();
-            addShownChildFocusables(found, owner);
+            addShownChildFocusables(found, owner, focusManager);
+            addOwnedPopups(found, focusManager, owner);
             return found;
         }
 
-        // the nearest focusables below component, skipping children hidden with Composite.hide()
-        private static void addShownChildFocusables(List<Focusable> found, Object component) {
+        /**
+         * the nearest focusables below component, skipping children hidden with Composite.hide() and
+         * popups. Meeting self (the focus manager being worked out) goes into it: a wrapper and the
+         * component whose focus manager it borrows are one node (e.g. MenuBar and its ButtonBar).
+         */
+        private static void addShownChildFocusables(List<Focusable> found, Object component, FocusManager self) {
             if (!(component instanceof HasChildren)) {
                 return;
             }
             for (Object child : ((HasChildren<?>) component).getChildren()) {
+                if (child instanceof Component && ((Component<?>) child).getPopupOwner() != null) {
+                    continue;    // a popup: it belongs to its owner (see addOwnedPopups)
+                }
                 if (component instanceof dtb.terminalIO.components.composite.Composite
                         && child instanceof Component
                         && !((dtb.terminalIO.components.composite.Composite) component).isShown((Component<?>) child)) {
                     continue;
                 }
-                if (ToFocusable.UTIL.isFocusable(child)) {
-                    Focusable focusable = ToFocusable.UTIL.toFocusable(child);
-                    if (focusable != null) {
-                        found.add(focusable);
-                    }
+                Focusable focusable = ToFocusable.UTIL.isFocusable(child) ? ToFocusable.UTIL.toFocusable(child) : null;
+                if (focusable != null && !isSameNode(focusable, self)) {
+                    found.add(focusable);
                 } else {
-                    addShownChildFocusables(found, child);
+                    addShownChildFocusables(found, child, self);
                 }
             }
+        }
+
+        /** add the open popups that belong to focusManager (see derivedChildFocusables) */
+        private static void addOwnedPopups(List<Focusable> found, FocusManager focusManager, Component<?> component) {
+            Object top = topComponentOf(component);
+            if (!(top instanceof HasChildren)) {
+                return;
+            }
+            for (Object child : ((HasChildren<?>) top).getChildren()) {
+                if (!(child instanceof Component) || ((Component<?>) child).getPopupOwner() == null) {
+                    continue;
+                }
+                Component<?> popup = (Component<?>) child;
+                if (top instanceof dtb.terminalIO.components.composite.Composite
+                        && !((dtb.terminalIO.components.composite.Composite) top).isShown(popup)) {
+                    continue;
+                }
+                Focusable popupNode = ToFocusable.UTIL.isFocusable(popup) ? ToFocusable.UTIL.toFocusable(popup) : null;
+                FocusManager belongsTo = focusManagerOfOwner(popup.getPopupOwner());
+                if (popupNode == null || belongsTo == null || !isSameNode(belongsTo, focusManager)) {
+                    continue;
+                }
+                Focusable ownerNode = ToFocusable.UTIL.isFocusable(popup.getPopupOwner()) ? ToFocusable.UTIL.toFocusable(popup.getPopupOwner()) : null;
+                int at = ownerNode == null ? -1 : indexOfSameNode(found, ownerNode);
+                found.add(at < 0 ? found.size() : at + 1, popupNode);
+            }
+        }
+
+        private static int indexOfSameNode(List<Focusable> list, Focusable focusable) {
+            for (int i = 0; i < list.size(); i++) {
+                if (isSameNode(list.get(i), focusable)) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        /** the topmost component above component (or component itself) */
+        private static Object topComponentOf(Component<?> component) {
+            Object top = component;
+            while (top instanceof Component && ((Component<?>) top).getParentContainer() != null) {
+                top = ((Component<?>) top).getParentContainer();
+            }
+            return top;
+        }
+
+        /**
+         * The focus manager focusable belongs to, worked out from the components: climb from its
+         * component to the nearest component that is a focus manager. A popup belongs to its owner
+         * instead of the panel it is drawn on. null at the top (the root focus manager), and for a
+         * component that was removed (its climb ends nowhere).
+         * A focusable without a component (built by hand), or one placed in a focus manager built by
+         * hand, keeps the parent it was added to.
+         */
+        public static FocusManager parentOf(Focusable focusable) {
+            if (focusable == null) {
+                return null;
+            }
+            Component<?> component = focusable.getFocusComponent();
+            if (component == null) {
+                return focusable.getParentFocusManager();
+            }
+            FocusManager climbed = climbToFocusManager(component, focusable);
+            if (climbed != null) {
+                return climbed;
+            }
+            FocusManager stored = focusable.getParentFocusManager();
+            return stored != null && stored.getFocusComponent() == null ? stored : null;
+        }
+
+        private static FocusManager climbToFocusManager(Component<?> component, Focusable self) {
+            Component<?> current = component;
+            while (current != null) {
+                if (current.getPopupOwner() != null) {
+                    return focusManagerOfOwner(current.getPopupOwner());
+                }
+                Object up = current.getParentContainer();
+                if (!(up instanceof Component)) {
+                    return null;
+                }
+                if (ToFocusable.UTIL.isFocusable(up)) {
+                    Focusable upNode = ToFocusable.UTIL.toFocusable(up);
+                    if (upNode instanceof FocusManager && (self == null || !isSameNode(upNode, self))) {
+                        return (FocusManager) upNode;
+                    }
+                }
+                current = (Component<?>) up;
+            }
+            return null;
+        }
+
+        /** the focus manager a popup belongs to: its owner if that is a focus manager, else the owner's */
+        private static FocusManager focusManagerOfOwner(Component<?> owner) {
+            Focusable ownerNode = ToFocusable.UTIL.isFocusable(owner) ? ToFocusable.UTIL.toFocusable(owner) : null;
+            if (ownerNode instanceof FocusManager) {
+                return (FocusManager) ownerNode;
+            }
+            if (ownerNode != null) {
+                return parentOf(ownerNode);
+            }
+            return climbToFocusManager(owner, null);
         }
 
         private static void addFocusableChildren(List<Focusable> focusableContainer, Object component) {

@@ -26,6 +26,17 @@ import dtb.terminalIO.events.TerminalEvent;
  */
 public interface Focusable extends FocusBehaviour, ConditionalEventHandler {
 
+    /**
+     * The component this focusable belongs to: itself if it is a component; for a helper object (a
+     * focus behaviour, a wrapper's inner focus manager) the component that handed it out. null if
+     * unknown (e.g. one built by hand without a component). Used to work out the focus tree from the
+     * component tree - e.g. a ListBox hands out a focus behaviour, whose component is the ListBox.
+     */
+    default Component<?> getFocusComponent() {
+        return this instanceof Component ? (Component<?>) this : null;
+    }
+
+
     FocusManager getParentFocusManager();
 
     void setParentFocusManager(FocusManager focusManager);
@@ -106,6 +117,11 @@ public interface Focusable extends FocusBehaviour, ConditionalEventHandler {
             this.component = component;
             this.behaviour = behaviour;
             this.eventHandler = eventHandler;
+        }
+
+        @Override
+        public Component<?> getFocusComponent() {
+            return component;
         }
 
         public FocusBehaviour getBehaviour() {

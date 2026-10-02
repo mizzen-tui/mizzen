@@ -22,8 +22,6 @@ import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
-import dtb.terminalIO.events.focus.Focusables;
-import dtb.terminalIO.events.focus.FocusablesContainer;
 import dtb.terminalIO.events.focus.RequestFocusEvent;
 import dtb.terminalIO.events.focus.ToFocusable;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
@@ -150,20 +148,6 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
         getMenuRootPanel(parent).add(position, this.menuContainer);
         getMenuRootPanel(this.menuContainer).bringToFront(this.menuContainer);
 
-        if (this.menuContainer.getParentFocusManager() == null) {
-            Focusable parentAsFocusable = ToFocusable.UTIL.toFocusable(parent);
-            if (parentAsFocusable == null) {
-                throw new IllegalArgumentException("Error in popUpMenu().  Parent Parameter is not a focusable and a focusable cannot be derived from it");
-            }
-
-            Focusables fm;
-            if (parent instanceof Focusables) {
-                fm = (Focusables) parent;
-            } else {
-                fm = ((FocusablesContainer)FocusManager.UTIL.getRootFocusManager( parentAsFocusable ));
-            }
-            fm.addFocusable(this.menuContainer);
-        }
 
         this.menuContainer.onChange((te)-> {
             try {
@@ -189,12 +173,6 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
         if (this.menuContainer != null) {
             this.traverseAllSubMenus((m)-> m.popDownMenu());
             getMenuRootPanel(this.menuContainer).remove(this.menuContainer);
-            Focusable listBoxAsFocusable = ToFocusable.UTIL.toFocusable(this.menuContainer);
-            if (listBoxAsFocusable.getParentFocusManager() != null && listBoxAsFocusable.getParentFocusManager() instanceof FocusablesContainer) {
-                // At this point Root panel is not a FocusManager (its just a component) so we need to manually remove the focusable from its parent
-                //Logging.info("Removed menuItem " + HasName.UTIL.getName(this.menuContainer) + " from " + HasName.UTIL.getName((FocusablesContainer)listBoxAsFocusable.getParentFocusManager()));
-                ((Focusables)listBoxAsFocusable.getParentFocusManager()).removeFocusable(listBoxAsFocusable);
-            }
             this.menuContainer = null;
             return;
         }
@@ -464,7 +442,10 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
             super.unFocus(newFocusable, eventBus);
             if (!this.menu.isFocusablePartOfMenu(newFocusable)) {
                 this.menu.popDownMenu();
-                if (this.menu.menuBar != null) {
+                // the menu bar lets go only if focus leaves it - not when it moves to one of its own
+                // buttons (the open menu is part of the menu bar for focus)
+                Focusable menuBarNode = this.menu.menuBar == null ? null : ToFocusable.UTIL.toFocusable(this.menu.menuBar);
+                if (menuBarNode != null && (newFocusable == null || !FocusManager.UTIL.containsFocusable(menuBarNode, newFocusable))) {
                     this.menu.menuBar.unFocus(newFocusable, eventBus);
                 }
             }

@@ -16,8 +16,9 @@ import junit.framework.TestCase;
  * nested inside plain panels, the way apps grow. Layout: root[A, panel[B, C], D], root as TUIApp
  * builds it. No rebuildFocusManager() calls anywhere: a developer should not need to know about it.
  *
- * Tests named ..._today_... record what happens TODAY where it is wrong (focus redesign step 7
- * fixes these: each focus manager's children are worked out from the components when needed).
+ * Since focus redesign step 7c each focus manager's children are worked out from the components
+ * whenever needed, so none of this needs registering. (Before, fields added / removed / hidden
+ * later were missed: TAB skipped new ones, clicks on them did nothing, TAB landed on removed ones.)
  */
 public class DynamicStructureCharacterisationTest extends TestCase {
 
@@ -74,36 +75,36 @@ public class DynamicStructureCharacterisationTest extends TestCase {
         assertEquals("B C D A", tabs(4));
     }
 
-    /** a field added later inside the nested panel: TAB should reach it (B C E D A) */
-    public void testFieldAddedLaterInsidePanel_today_tabSkipsIt() {
+    /** a field added later inside the nested panel: TAB reaches it */
+    public void testFieldAddedLaterInsidePanelIsReachedByTab() {
         TextInput e = field("E");
         panel.add(e);
 
-        assertEquals("B C D A", tabs(4));
+        assertEquals("B C E D A", tabs(5));
     }
 
-    /** a field added later inside the nested panel: clicking it should focus it */
-    public void testFieldAddedLaterInsidePanel_today_clickDoesNothing() {
+    /** a field added later inside the nested panel: clicking it focuses it */
+    public void testFieldAddedLaterInsidePanelCanBeClicked() {
         TextInput e = field("E");
         panel.add(e);
 
         click(e);
 
-        assertEquals("A", focused());
+        assertEquals("E", focused());
     }
 
-    /** a field removed later from the nested panel: TAB should not land on it (B D A) */
-    public void testFieldRemovedLaterFromPanel_today_tabStillLandsOnIt() {
+    /** a field removed later from the nested panel: TAB no longer lands on it */
+    public void testFieldRemovedLaterFromPanelIsSkipped() {
         panel.remove(c);
 
-        assertEquals("B C D A", tabs(4));
+        assertEquals("B D A", tabs(3));
     }
 
-    /** a field hidden later: TAB should skip it (B D A) */
-    public void testFieldHiddenLater_today_tabStillLandsOnIt() {
+    /** a field hidden later: TAB skips it */
+    public void testFieldHiddenLaterIsSkipped() {
         panel.hide(c);
 
-        assertEquals("B C D A", tabs(4));
+        assertEquals("B D A", tabs(3));
     }
 
     /** a whole panel added later at the root: works today, because the root registers it on add */
