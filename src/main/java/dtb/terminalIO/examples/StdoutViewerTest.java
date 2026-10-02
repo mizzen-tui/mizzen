@@ -19,9 +19,7 @@ import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.OnTerminateEventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
-import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
-import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.util.Logging;
@@ -127,12 +125,6 @@ public class StdoutViewerTest {
                     bBar.addComponent(populateSlowRunner);
 
                     tApp.getMainApplicationPanel().add(0,10, bBar);
-
-                    FocusManager fm = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(), 
-                                                                                       tApp.getEventBus(),
-                                                                                       ()-> new DefaultFocusManager().setPrevKeyStroke(Keys.SHIFT_TAB_KEYSTROKE)
-                                                                                                                     .setNextKeyStroke(Keys.TAB_KEYSTROKE));
-                    tApp.getEventBus().appendEventHandler(fm);
 
                     // populateLarge.onClick(tApp.getEventBus());
 

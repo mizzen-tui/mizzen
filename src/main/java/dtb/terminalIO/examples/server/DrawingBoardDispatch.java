@@ -22,7 +22,6 @@ import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
-import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.InputEventsProducer;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
@@ -446,23 +445,11 @@ public class DrawingBoardDispatch {
             
             app.setOnReadyStart((tApp)->{
 
-                FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),tApp.getEventBus());
-                
-                if (mainFocusManager != null) {
-                   tApp.getEventBus().appendEventHandler(  mainFocusManager );
-                }
-
                 final boolean[] drawingBoardAddedToAppPanel = new boolean[]{false};
                 DrawingBoardDispatch drawingBooardDispatcher = new DrawingBoardDispatch(tApp.getEventBus(), (drawingBoardComponent)-> {
                     if ( ! drawingBoardAddedToAppPanel[0]) {
                         drawingBoardAddedToAppPanel[0] = true;
                         tApp.getMainApplicationPanel().add(drawingBoardComponent);
-                        if (mainFocusManager == null) {
-                            FocusManager mainFocusManager2 = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(),tApp.getEventBus());
-                            if (mainFocusManager2 != null) {
-                               tApp.getEventBus().appendEventHandler(  mainFocusManager2 );
-                            }
-                         }
                     }
                     tApp.doRefreshCanvasIfModified();
                 });

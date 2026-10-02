@@ -10,9 +10,6 @@ import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.controlcodes.color.Colors;
-import dtb.terminalIO.events.focus.DefaultFocusManager;
-import dtb.terminalIO.events.focus.FocusManager;
-import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
@@ -138,9 +135,12 @@ public class ExecTest {
         mainPanel.add(new TextComponent("CTRL-C to quit:     Demo's running a child-process and viewing output in Scrollable windows"));
 
         mainPanel.add(hPanel);
-        
-        app.enableMouseHandling(mainPanel);
-        
+
+        // on the app's main panel, so the app's focus manager covers it (TAB / SHIFT-TAB, clicks)
+        app.getMainApplicationPanel().add(view1OffsetOnCanvas, mainPanel);
+        Component<?> appPanel = (Component<?>) app.getMainApplicationPanel();
+
+        // the app's usual drawing, timed: this demo shows how long drawing the viewers takes
         app.setUpdateCanvas((tApp)->{
             if (!hPanel.isDirty()) {
                 return false; // false means no gui update
@@ -148,7 +148,7 @@ public class ExecTest {
 
             tApp.clearCanvas();
 
-            TimeAndCount elapsed = TimeAndCount.onRun(()->tApp.getCanvas().addComponentSegments(view1OffsetOnCanvas, mainPanel), lprocViewer.textContentView);
+            TimeAndCount elapsed = TimeAndCount.onRun(()->tApp.getCanvas().addComponentSegments(appPanel), lprocViewer.textContentView);
 
             tApp.getCanvas().t(lprocViewer.getBottomMostRow()+5, 0, "elapsed = "+elapsed);
 
@@ -177,12 +177,6 @@ public class ExecTest {
         resizeAction.accept(app, TestsCommon.terminalSize());
         
         app.setOnReadyStart((tApp)->{
-            DefaultFocusManager focusManager = new DefaultFocusManager(Keys.TAB_KEYSTROKE);
-            focusManager.addFocusable(lprocViewer, tApp.getEventBus() );
-
-            focusManager.addFocusable(lprocViewer2, tApp.getEventBus() );
-            focusManager.setName("mainFocusManager");
-            tApp.getEventBus().appendEventHandler(focusManager);
             String fileToTail = fileNameToTail(args);
 
             LinuxProcessWatcher linuxProc = null;
@@ -215,12 +209,6 @@ public class ExecTest {
             }
             lprocViewer2.setLinuxProcessWatcher( new LinuxProcessWatcher().setInvokeScript("./slowRunner.sh testme")  );
             lprocViewer2.invoke(tApp.getEventBus());
-
-            // check against the panel this example draws itself (it does not use tApp's main panel)
-            FocusManager.UTIL.verifyPathsToFocusables(focusManager, mainPanel);
-
-            // following is test code when I want to see structure of focusables hierarchy
-            // throw new IllegalStateException(FocusManager.UTIL.traverseAllFocusablesToString(focusManager));
 
         });
         

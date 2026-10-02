@@ -1,5 +1,7 @@
 package dtb.terminalIO.examples;
 
+import dtb.terminalIO.events.RequestUpdateCanvasEvent;
+import dtb.terminalIO.app.TUIApp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -11,34 +13,18 @@ import dtb.terminalIO.components.chart.LineChart;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.input.RockerButton;
-import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
-import dtb.terminalIO.core.Canvas;
-import dtb.terminalIO.core.TerminalScreen;
-import dtb.terminalIO.events.ConditionalEventHandler;
-import dtb.terminalIO.events.EventBus;
-import dtb.terminalIO.events.EventBusImpl;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.EventHandlerContainer;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
-import dtb.terminalIO.events.OnResizeEventHandler;
 import dtb.terminalIO.events.TerminalEvent;
-import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
-import dtb.terminalIO.events.TerminalEvent.TYPE;
-import dtb.terminalIO.events.focus.FocusManager;
-import dtb.terminalIO.events.keyboard.InputEventsProducer;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
-import dtb.terminalIO.events.mouse.MouseEventOrchestrator;
-import dtb.terminalIO.events.resize.TerminalResizeDetection;
-import dtb.terminalIO.events.resize.TerminalResizeEventGenerator;
 import dtb.terminalIO.examples.Demo.SimpleDemo;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
-import dtb.terminalIO.geom.position.Position;
-import dtb.terminalIO.util.Stty;
 
 public class LineChartTest {
 
@@ -254,234 +240,62 @@ public class LineChartTest {
     }
 
 
-    private static void bootDemo(String[] args) throws Exception {
+    /** chart sizes: the size argument at start, and the keys t / s / m / l while running */
+    private static final String[][] SIZE_KEYS = { {"t", "TINY"}, {"s", "SMALL"}, {"m", "MEDIUM"}, {"l", "LARGE"} };
 
-        String _style = "MAX";
+    /**
+     * Line chart demo: five series plotted with Braille characters, redrawn 10 times a second.
+     * Keys 1..5 (or clicking the buttons below the chart) switch a series on / off;
+     * t / s / m / l make the chart tiny / small / medium / large (full window). Ctrl-C quits.
+     *
+     * usage: LineChartTest [tiny | small | medium]   (default: large)
+     *
+     * (Rewritten Oct 2026 to use TUIApp - it used to build the screen, event bus, focus manager,
+     * mouse handling and resize handling by hand.)
+     */
+    public static void main(String[] args) {
+        String startSize = args.length > 0 ? args[0].toUpperCase() : "LARGE";
 
-        if (args != null && args.length > 0 && args[0].equalsIgnoreCase("small")) {
-            _style = "SMALL";
-        }
-        if (args != null && args.length > 0 && args[0].equalsIgnoreCase("medium")) {
-            _style = "MEDIUM";
-        }
-        if (args != null && args.length > 0 && args[0].equalsIgnoreCase("tiny")) {
-            _style = "TINY";
-        }
-        String style = _style;
+        new TUIApp(args)
+        .setDefaultMainApplicationPanel()
+        .confirmOnExit()
+        .setOnReadyStart((tApp) -> {
 
-        TerminalScreen screen = TestsCommon.getTerminalScreenForTesting(args);
+            Composite appPanel = (Composite) tApp.getMainApplicationPanel();
+            String[] size = { startSize };
 
-        Canvas master_canvas = TestsCommon.getMasterCanvasForTesting(screen);
-        master_canvas.setEmptyChar(' ');
+            LineChartDemo lineChartDemo = new LineChartDemo();
+            lineChartDemo.setUpDemo(tApp.getEventBus(), chartBounds(size[0], appPanel));
+            lineChartDemo.setFlushDemoOutput(() -> tApp.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(lineChartDemo)));
+            appPanel.add(lineChartDemo.getLineChartPanelComponent());
 
-        Composite mainPanel = new Composite().setBounds(master_canvas);
+            appPanel.setOnResize((newSize) -> lineChartDemo.resize(chartBounds(size[0], appPanel)));
 
-        LineChartDemo lineChartDemo = new LineChartDemo() {
-            public void flushOutput() {
-                master_canvas.addComponentSegments(mainPanel);
-                master_canvas.refresh();
+            for (String[] sizeKey : SIZE_KEYS) {
+                tApp.getEventBus().appendEventHandler(new KeyInputEventHandler(
+                        (te) -> {
+                            size[0] = sizeKey[1];
+                            tApp.clearCanvas();
+                            lineChartDemo.resize(chartBounds(size[0], appPanel));
+                            appPanel.markAsDirty();
+                        },
+                        new KeyStroke(sizeKey[0].charAt(0)), new KeyStroke(sizeKey[0].toUpperCase().charAt(0))));
             }
-        };
-
-        Rectangle bounds = makeBoundsFromStyle(style, master_canvas);
-
-        master_canvas.setSize(bounds.getHeight(), bounds.getWidth());
-
-        screen.add(ControlCode.HIDE_CURSOR);
-        // screen.refresh();
-        // master_canvas.t(" Braille Characters used for plotting");
-        master_canvas.t(" ");
-
-        // by performing a refresh now ( before screen is set to RAW) we get the screen
-        // to
-        // scroll up
-        master_canvas.refresh();
-
-        EventBus eventBus = new EventBusImpl();
-        InputEventsProducer keyInputEventsProducer = null;
-        try {
-            keyInputEventsProducer = new InputEventsProducer(eventBus);
-        } catch (Exception e) {
-            eventBus.stopConsuming();
-            return;
-        }
-
-        mainPanel.add(new TextComponent("Braille Characters used for plotting"));
-
-        lineChartDemo.setUpDemo(eventBus, mainPanel);
-        mainPanel.add(0,1, lineChartDemo.getLineChartPanelComponent());
-
-
-        // note:  need to build focusmanager after linechart demo added to panel - otherwise null focusmanager
-        FocusManager mainFocusManager = FocusManager.UTIL.buildFocusManagerFromComponent(mainPanel, eventBus);
-        eventBus.appendEventHandler(  mainFocusManager );
-        
-        MouseEventOrchestrator mOrch = new MouseEventOrchestrator(screen, master_canvas, eventBus);
-        
-        mOrch.enableMouseHandling(mainPanel);
-        
-        EventHandler terminate = new EventHandler() {
-            @Override
-            public void handle(TerminalEvent<?> te) {
-                eventBus.stopConsuming();
-                screen.add(ControlCode.SHOW_CURSOR);
-                screen.refresh();
-
-                try {
-                    Stty.setCooked();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                if (te.getType().equals(TYPE.EXCEPTION)) {
-                    System.out.println("\n");
-                    ((Exception) te.getEventData()).printStackTrace();
-                } else {
-                    // next refresh() is necessary to get cursor to be below
-                    // rendered canvas
-                    master_canvas.refresh();
-                }
-                return;
-            }
-        };
-
-        TestsCommon.addNoGraphicsToggleEvent(eventBus, screen);
-
-        eventBus.appendEventHandler(new KeyInputEventHandler(Keys.CTRL_C_KEYSTROKE, terminate));
-        eventBus.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, terminate));
-        eventBus.appendEventHandler(new ConditionalEventHandler.Impl(new IS_Event_TYPE(TYPE.EXCEPTION), terminate));
-
-        eventBus.appendEventHandler(new KeyInputEventHandler(Keys.CTRL_R_KEYSTROKE, new EventHandler() {
-            @Override
-            public void handle(TerminalEvent<?> te) {
-                master_canvas.clearCanvas();
-                master_canvas.addComponentSegments(mainPanel);
-                master_canvas.refresh();
-                new TerminalResizeEventGenerator(screen, eventBus).run();
-            }
-        }));
-
-        if (style.equals("MAX")) {
-            TerminalResizeDetection.initiate(screen, eventBus);
-
-            eventBus.appendEventHandler(new OnResizeEventHandler() {
-                @Override
-                public void handleResize(Dimension size) {
-                    master_canvas.clearCanvas();
-                    master_canvas.refresh();
-
-                    master_canvas.setSize(size.getHeight(), size.getWidth());
-                    master_canvas.clearCanvas();
-
-                    lineChartDemo.resize(size);
-                    mainPanel.resize(size);
-                    master_canvas.addComponentSegments(mainPanel);
-                    master_canvas.refresh();
-
-                }
-            });
-
-            // Set styles
-            Consumer<String> resizeChartOnStyle = (styleOnHotKey) -> {
-                Rectangle newBounds = makeBoundsFromStyle(styleOnHotKey, master_canvas);
-
-                //lineChartDemo.resize(newBounds);
-                //panel.resize(size);
-
-                Position lc_Pos = bounds.centered(lineChartDemo.getLineChartPanelComponent(), Position.ZERO);
-                Rectangle rectToRemove = new Rectangle.Simple(lineChartDemo.lc);
-                rectToRemove.moveDelta(lc_Pos.getRow(), lc_Pos.getCol());
-
-                master_canvas.getSegmentsBuffer().removeRect(rectToRemove);
-
-                master_canvas.clearCanvas();
-                lineChartDemo.resize(newBounds);
-            };
-
-            eventBus.appendEventHandler(new KeyInputEventHandler(new KeyStroke('s'), new EventHandler() {
-                @Override
-                public void handle(TerminalEvent<?> te) {
-                    resizeChartOnStyle.accept("SMALL");
-                }
-            }));
-
-            eventBus.appendEventHandler(new KeyInputEventHandler(new KeyStroke('S'), new EventHandler() {
-                @Override
-                public void handle(TerminalEvent<?> te) {
-                    resizeChartOnStyle.accept("SMALL");
-                }
-            }));
-
-            eventBus.appendEventHandler(new KeyInputEventHandler(new KeyStroke('m'), new EventHandler() {
-                @Override
-                public void handle(TerminalEvent<?> te) {
-                    resizeChartOnStyle.accept("MEDIUM");
-                }
-            }));
-
-            eventBus.appendEventHandler(new KeyInputEventHandler(new KeyStroke('m'), new EventHandler() {
-                @Override
-                public void handle(TerminalEvent<?> te) {
-                    resizeChartOnStyle.accept("MEDIUM");
-                }
-            }));
-
-            eventBus.appendEventHandler(new KeyInputEventHandler(new KeyStroke('t'), new EventHandler() {
-                @Override
-                public void handle(TerminalEvent<?> te) {
-                    resizeChartOnStyle.accept("TINY");
-                }
-            }));
-
-            eventBus.appendEventHandler(new KeyInputEventHandler(new KeyStroke('T'), new EventHandler() {
-                @Override
-                public void handle(TerminalEvent<?> te) {
-                    resizeChartOnStyle.accept("TINY");
-                }
-            }));
-
-            eventBus.appendEventHandler(new KeyInputEventHandler(new KeyStroke('l'), new EventHandler() {
-                @Override
-                public void handle(TerminalEvent<?> te) {
-                    resizeChartOnStyle.accept("LARGE");
-                }
-            }));
-
-            eventBus.appendEventHandler(new KeyInputEventHandler(new KeyStroke('L'), new EventHandler() {
-                @Override
-                public void handle(TerminalEvent<?> te) {
-                    resizeChartOnStyle.accept("LARGE");
-                }
-            }));
-
-        }
-
+        }).start();
     }
 
-    private static Rectangle makeBoundsFromStyle(String style, Canvas master_canvas) {
-        Rectangle bounds = null;
-        if ("SMALL".equalsIgnoreCase(style)) {
-            bounds = new Rectangle.Simple(0, 0, Math.min(20, master_canvas.getHeight()),
-                    Math.min(100, master_canvas.getWidth()));
-        } else if ("MEDIUM".equalsIgnoreCase(style)) {
-            bounds = new Rectangle.Simple(0, 0, Math.min(25, master_canvas.getHeight()),
-                    Math.min(100, master_canvas.getWidth()));
-        } else if ("TINY".equalsIgnoreCase(style)) {
-            bounds = new Rectangle.Simple(0, 0, Math.min(15, master_canvas.getHeight()),
-                    Math.min(60, master_canvas.getWidth()));
-        } else {
-            bounds = new Rectangle.Simple(master_canvas);
+    /** the chart's area for a size name, never bigger than the app's panel */
+    private static Rectangle chartBounds(String size, Dimension panel) {
+        if ("TINY".equals(size)) {
+            return new Rectangle.Simple(0, 0, Math.min(15, panel.getHeight()), Math.min(60, panel.getWidth()));
         }
-        return bounds;
-    }
-
-    public static void main(String[] args) throws Exception {
-        try {
-            bootDemo(args);
-        } catch (Exception e) {
-            Stty.setCooked();
-            e.printStackTrace();
-            System.exit(1);
+        if ("SMALL".equals(size)) {
+            return new Rectangle.Simple(0, 0, Math.min(20, panel.getHeight()), Math.min(100, panel.getWidth()));
         }
+        if ("MEDIUM".equals(size)) {
+            return new Rectangle.Simple(0, 0, Math.min(25, panel.getHeight()), Math.min(100, panel.getWidth()));
+        }
+        return new Rectangle.Simple(0, 0, panel.getHeight(), panel.getWidth());
     }
 
 }

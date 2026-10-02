@@ -463,8 +463,18 @@ public class TUIApp implements ComponentFinder {
         }
     }
 
+    /** mouse handling is on by default - this is only needed after disableMouseHandling() */
     public TUIApp enableMouseHandling() {
         this.useMouse = true;
+        return this;
+    }
+
+    /**
+     * Turn mouse handling off (it is on by default): the terminal then keeps the mouse for itself,
+     * e.g. so the user can select and copy text. Call before start().
+     */
+    public TUIApp disableMouseHandling() {
+        this.useMouse = false;
         return this;
     }
 
