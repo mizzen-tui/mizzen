@@ -311,24 +311,67 @@ Causes:
   inner manager has 0 children. This works around empty-manager behaviour instead of
   fixing it.
 
-### 4.3 Proposal (consolidated)
+### 4.3 Design (being implemented step by step - each point says its status)
 
 Two jobs are tangled in today's focus tree; the proposal separates them.
 
-**A. Focus & navigation: a single focus root**
-1. One owner of focus: a direct reference to the focused component. No per-manager copies.
-2. KEYPRESS routing order:
-   1. a TAB-consuming editor (opt-in) releases TAB on **Esc**;
-   2. the focused component's `canHandle`/`handle`, so an editor gets its TAB;
-   3. bubble up through ancestors: each checks its **own configurable** nav keys and calls `advance(dir)`.
-3. The child decides: `enter(dir)` / `advance(dir)`, where null means "skip me" / "I'm done". Each
-   container states a policy: **GROUP** (children are separate stops), **WIDGET** (one stop,
-   remembers its last child, arrow keys inside), **TRAP** (modal). Plain panels are transparent.
-4. `moveFocus` is the only thing that changes focus; it keeps today's `unFocus(new)` →
-   `focus(old)` notifications and their meaning (§4.4).
-5. Clicks and `REQUEST_FOCUS` go straight to `moveFocus`, with no intermediate focus (§4.6).
-6. Initial focus is given on start.
-7. `canHandle` only answers and never changes state.
+**A. Focus & navigation**
+
+Terms used below:
+- *focus*: the component that receives keystrokes (e.g. the text field the user is typing in).
+- *container*: a component that holds other focusable components and manages focus among them
+  (a form panel, a button bar, a dropdown, a window). In code: a `FocusManager`.
+- *nav keys*: keys that move focus rather than being typed, e.g. TAB / SHIFT-TAB; each container
+  can have its own (a dropdown uses UP / DOWN).
+
+1. **One owner of focus.** *(planned - next step)*
+   Today "who has focus?" is answered by combining many separate pieces of state: every container
+   remembers its own "current child", and every component keeps its own `hasFocus()` flag. These
+   can disagree - e.g. after a click, a dropdown's button still reported `hasFocus()==true` while
+   an image viewer actually had focus (§5). The design: the root keeps **one** field, "the focused
+   component". `hasFocus()` on a component means "am I that component?", and a container asks
+   "is the focused component inside me?". Nothing else stores focus, so nothing can disagree.
+
+2. **Who gets a key first.** *(done - step 2, `FocusNavigator`)*
+   When a key arrives:
+   1. If it is not a nav key of any container around the focused component, it is ordinary input
+      and goes where it always did.
+   2. If the focused component wants it anyway, it gets it - e.g. a multi-line editor that inserts
+      TAB characters. *(Planned: such an editor releases TAB again after Esc.)*
+   3. Otherwise the containers around the focused component are asked, innermost first, where
+      focus should go (point 3).
+
+3. **Containers answer two questions; they decide, their parent doesn't.** *(done - steps 1 and 2)*
+   - `enter(direction)`: "focus is arriving in you, moving forward (TAB) or backward (SHIFT-TAB) -
+     which of your components should get it?" Returns that component, or null for "nothing in here
+     can take focus, skip me" (empty, disabled, or not a TAB stop).
+   - `advance(focused, direction)`: "a nav key was pressed while focus is inside you - where next?"
+     Answers MOVED(component), DONE ("no more in that direction - ask my parent") or STAY ("handled,
+     focus stays").
+   How a container answers depends on its *policy*:
+   - **GROUP** - each child is its own stop (a form section: TAB visits every field). Entered
+     forward it starts at its first child, backward at its last. The outermost container wraps
+     around instead of answering DONE.
+   - **WIDGET** - the whole container is one stop (dropdown, list box, tab strip). Entering it
+     returns to the child it had last time. Its own arrow keys move inside it. *(Step 2: widgets
+     still handle their own keys the old way; only entering / leaving them uses these answers.)*
+   - **TRAP** - focus cannot leave (modal dialog): navigation wraps around inside.
+   A container can also be marked *not a TAB stop* (`setTabStop(false)`): TAB skips it entirely,
+   clicks and hot keys still work - e.g. the scroll buttons under a scrollable panel.
+   Example, form `A, [B, C], D` where `[B, C]` is a GROUP: TAB goes A B C D A B C D...; if `[B, C]`
+   were a WIDGET, TAB would go A B D A B D... and arrow keys move between B and C.
+
+4. **One way to move focus.** *(planned - next step)* A single `moveFocus` changes focus and sends
+   the existing notifications: `unFocus(new)` to what loses focus, then `focus(old)` to what gains it,
+   along the path (hilite, bring-to-front and the dropdown / menu hand-off depend on these, §4.4).
+   *(Step 2 still moves focus the old way - setting each container's "current child" along the path
+   - which is why a window can briefly come to the front by mistake, §5 `getCurrentOrSet`.)*
+5. **Clicks use the same `moveFocus`**, with no intermediate focus on other components (§4.6).
+   *(planned)*
+6. **Initial focus**: when the app starts, focus goes to the first focusable component, with a way to
+   choose another (the common convention: desktop toolkits, Textual). *(planned - separate step)*
+7. **Asking never changes anything**: `canHandle`, `enter` and `advance` only answer.
+   *(enter / advance: done; canHandle: planned - today some containers change focus inside it)*
 
 **B. Event delivery for non-key events (§2.5): same semantics as today**
 1. `canHandle`/`handle` remain the generic contract for **every** event type.
