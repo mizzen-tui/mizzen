@@ -184,8 +184,7 @@ public class TUIApp implements ComponentFinder {
 
     private DefaultFocusManager getBuiltRootFocusManager() {
         if (builtRootFocusManager == null) {
-            builtRootFocusManager = new DefaultFocusManager().setNameFromOwner(getMainApplicationPanel())
-                                                             .setNavKeysFirst(false);
+            builtRootFocusManager = new DefaultFocusManager().setNameFromOwner(getMainApplicationPanel());
         }
         return builtRootFocusManager;
     }

@@ -129,7 +129,7 @@ public class ReadImageFileToScreenTest {
             ScrollableComponent sc = new ScrollableComponent(viewerTextColor, 
                                                              (Dimension)tApp.getMainApplicationPanel(), 
                                                              loadingImage,
-                                                             ()-> new DefaultFocusManager(Keys.SHIFT_TAB_KEYSTROKE, Keys.TAB_KEYSTROKE).setNavKeysFirst(false));
+                                                             ()-> new DefaultFocusManager(Keys.SHIFT_TAB_KEYSTROKE, Keys.TAB_KEYSTROKE));
             sc.setFillOnClear(false);
             //sc.setEmptyChar('░');
 

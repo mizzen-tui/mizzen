@@ -467,7 +467,6 @@ public class WindowFrameFocusable extends AbstractComponent<WindowFrameFocusable
                                                                                                  eventBus,
                                                                                                  () -> new DefaultFocusManager().setPrevKeyStroke(Keys.SHIFT_TAB_KEYSTROKE)
                                                                                                                                 .setNextKeyStroke(Keys.TAB_KEYSTROKE)
-                                                                                                                                .setNavKeysFirst(false)
                                                                                                                                 .setNameFromOwner(this)
                                                                                                                                 .setCycling(false));
             if (focusManager == null) {

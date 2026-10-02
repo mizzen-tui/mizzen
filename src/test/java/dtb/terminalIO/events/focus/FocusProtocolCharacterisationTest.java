@@ -20,8 +20,7 @@ import junit.framework.TestCase;
  * (docs/ARCHITECTURE.md §4) cannot change it silently. A failure means "behaviour changed":
  * decide whether that is wanted, then update the expectation deliberately.
  *
- * Uses real DefaultFocusManagers; the root is configured like TUIApp's (NAVKEYS_LAST), nested
- * groups use the DefaultFocusManager default (NAVKEYS_FIRST, cycling inferred off).
+ * Uses real DefaultFocusManagers: a root (no parent, like TUIApp's) and nested GROUPs.
  */
 public class FocusProtocolCharacterisationTest extends TestCase {
 
@@ -58,7 +57,7 @@ public class FocusProtocolCharacterisationTest extends TestCase {
     }
 
     private DefaultFocusManager root(Focusable... children) {
-        DefaultFocusManager root = new DefaultFocusManager().setNavKeysFirst(false).setName("root");
+        DefaultFocusManager root = new DefaultFocusManager().setName("root");
         for (Focusable c : children) root.addFocusable(c);
         bus.setRoot(root);
         return root;
@@ -181,15 +180,28 @@ public class FocusProtocolCharacterisationTest extends TestCase {
 
     // ------------------------------------------------------------------ traversal edge cases
 
-    /** TODAY: nothing has focus until something is clicked; TAB alone focuses nothing */
-    public void testNoInitialFocus_today_tabDoesNothing() {
+    /**
+     * Nothing has focus yet: TAB focuses the first component, SHIFT-TAB the last (as browsers do).
+     * (Before: TAB did nothing until something was clicked.)
+     */
+    public void testNothingFocused_tabFocusesFirst() {
         Leaf a = new Leaf("A"), b = new Leaf("B");
         root(a, b);
 
         press(Keys.TAB_KEYSTROKE);
+        String afterOne = focused(a, b);
         press(Keys.TAB_KEYSTROKE);
 
-        assertEquals("-", focused(a, b));
+        assertEquals("A B", afterOne + " " + focused(a, b));
+    }
+
+    public void testNothingFocused_shiftTabFocusesLast() {
+        Leaf a = new Leaf("A"), b = new Leaf("B");
+        root(a, b);
+
+        press(Keys.SHIFT_TAB_KEYSTROKE);
+
+        assertEquals("B", focused(a, b));
     }
 
     /** disabled focusables are skipped by TAB */
@@ -228,10 +240,11 @@ public class FocusProtocolCharacterisationTest extends TestCase {
     }
 
     /**
-     * Non-key event the focused child does not claim: a NAVKEYS_LAST manager (root, as TUIApp
-     * builds it) delivers it to EVERY other child that claims it.
+     * Non-key event the focused child does not claim: only the FIRST other child that claims it
+     * gets it - at the root too. (Before: the root, NAVKEYS_LAST, delivered it to EVERY claimer;
+     * none of the examples ever had more than one claimer.)
      */
-    public void testNonKeyEvent_navKeysLast_deliversToAllClaimers() {
+    public void testNonKeyEvent_root_deliversToFirstClaimerOnly() {
         Leaf current = new Leaf("current"), x = new Leaf("X"), y = new Leaf("Y");
         x.claims = y.claims = TerminalEvent.TYPE.CUSTOM_APPLICATION_EVENT;
         root(current, x, y);
@@ -239,14 +252,11 @@ public class FocusProtocolCharacterisationTest extends TestCase {
 
         bus.deliver(customEvent());
 
-        assertEquals("X=1 Y=1", "X=" + x.handled + " Y=" + y.handled);
+        assertEquals("X=1 Y=0", "X=" + x.handled + " Y=" + y.handled);
     }
 
-    /**
-     * Same, but under a NAVKEYS_FIRST manager (the DefaultFocusManager / ComponentWithFocusManager
-     * default): only the FIRST other child that claims it gets it.
-     */
-    public void testNonKeyEvent_navKeysFirst_deliversToFirstClaimerOnly() {
+    /** same inside a nested group: only the FIRST other child that claims it gets it */
+    public void testNonKeyEvent_group_deliversToFirstClaimerOnly() {
         Leaf current = new Leaf("current"), x = new Leaf("X"), y = new Leaf("Y");
         x.claims = y.claims = TerminalEvent.TYPE.CUSTOM_APPLICATION_EVENT;
         DefaultFocusManager g = group("group", current, x, y);

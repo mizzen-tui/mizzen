@@ -69,7 +69,6 @@ public class CompositeWithFocusManager  extends Composite implements FocusManage
 
     protected DefaultFocusManager buildFocusManager() {
         DefaultFocusManager focusManager = new DefaultFocusManager();
-        focusManager.setNavKeysFirst(false);
         DefaultFocusManager.setDefaultNameAndActualFromParentObject(focusManager, this);
         //focusManager.setNameFromOwner(this);
         return focusManager;

@@ -38,7 +38,6 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
         this.setFocusManager( new DefaultFocusManager()
                                           .setNameFromOwner(this)
                                           .setCycling(false)
-                                          .setNavKeysFirst(false)
                                           .setPrevKeyStroke(Keys.SHIFT_TAB_KEYSTROKE)
                                           .setNextKeyStroke(Keys.TAB_KEYSTROKE));
         nonDividerComponents = new ArrayList<>();

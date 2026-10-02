@@ -47,32 +47,29 @@ public class DefaultFocusManager implements FocusManager,
     private ConditionalEventHandler customExtendedEventHandler;
     
     private FocusBehaviour meAsFocusable;
-    private NAV_STYLE navKeysStyle = NAV_STYLE.NAVKEYS_LAST;
     // Only used on a ROOT focus manager (one with no parent): THE component that has keyboard focus.
     // The single answer to "who has focus?" - updated by every focus move (FocusManager.UTIL.moveFocus,
     // setChildAsCurrentFocus). Components' own hasFocus() flags are display state (hilite) kept in step.
     private Focusable focusedComponent;
+    // ROOT only: the last few components that had focus, most recent first - so keyboard navigation
+    // can carry on from where focus was when the focused component goes away (e.g. a dropdown's list
+    // closing: focus was in the list, TAB carries on from the dropdown)
+    private static final int RECENTLY_FOCUSED_MAX = 8;
+    private final List<Focusable> recentlyFocused = new ArrayList<Focusable>();
 
     // initial focus (see setInitialFocus / setAutoFocus / giveInitialFocus)
     private boolean autoFocus = true;
     private Object initialFocus = null;
     private boolean tabStop = true;    // false: TAB / SHIFT-TAB skip this focus manager (see FocusManager.isTabStop)
     private FocusPolicy focusPolicy = FocusPolicy.GROUP;  // what kind of focus manager (see FocusPolicy)
-    private boolean cycling = true;   // true means cycle thru focus object
-    private boolean cyclingInferred = true;  
+    private boolean cycling = false;  // WIDGET only: wraps around from its last child to its first (see wrapsAround)
 
     private String name;
 
-    public static enum NAV_STYLE {
-        NAVKEYS_FIRST,
-        NAVKEYS_LAST,
-        NAVKEYS_NONE
-    }
 
     public DefaultFocusManager() {
         eventConsumers = new ArrayList<Focusable>();
         removeList= new ArrayList<Focusable>();
-        this.navKeysStyle = NAV_STYLE.NAVKEYS_FIRST;
     }
 
     public DefaultFocusManager(KeyStroke prevKeyStroke, KeyStroke nextKeyStroke, ConditionalEventHandler customExtendedEventHandler) {
@@ -96,10 +93,10 @@ public class DefaultFocusManager implements FocusManager,
         return customExtendedEventHandler;
     }
 
-    /** only an explicit setCycling(true) counts (cycling inferred from the position in the tree does not) */
+    /** see setCycling */
     @Override
     public boolean wrapsAround() {
-        return cycling && !cyclingInferred;
+        return cycling;
     }
 
     public void setCustomExtendedEventHandler(ConditionalEventHandler customExtendedEventHandler) {
@@ -135,13 +132,10 @@ public class DefaultFocusManager implements FocusManager,
         this(null, nextKeyStroke);
     }
 
-    public DefaultFocusManager setNavKeysFirst(boolean navKeysFirst) {
-        this.navKeysStyle = navKeysFirst ? NAV_STYLE.NAVKEYS_FIRST : NAV_STYLE.NAVKEYS_LAST;
-        return this;
-    }
-
+    /** no nav keys: keys never move focus between this manager's children (they can still be clicked) */
     public DefaultFocusManager setNavKeysNone() {
-        this.navKeysStyle = NAV_STYLE.NAVKEYS_NONE;
+        this.prevKeyStroke = null;
+        this.nextKeyStroke = null;
         return this;
     }
 
@@ -167,6 +161,18 @@ public class DefaultFocusManager implements FocusManager,
     // called by FocusManager.UTIL after focus moved
     void recordFocusedComponent(Focusable focusable) {
         this.focusedComponent = focusable;
+        if (focusable != null && focusable != this) {
+            recentlyFocused.remove(focusable);
+            recentlyFocused.add(0, focusable);
+            if (recentlyFocused.size() > RECENTLY_FOCUSED_MAX) {
+                recentlyFocused.remove(RECENTLY_FOCUSED_MAX);
+            }
+        }
+    }
+
+    /** the components that had focus recently, most recent first (ROOT only; some may be gone by now) */
+    List<Focusable> getRecentlyFocused() {
+        return new ArrayList<Focusable>(recentlyFocused);
     }
 
     /**
@@ -218,7 +224,7 @@ public class DefaultFocusManager implements FocusManager,
 
     @Override
     public FocusDirection navDirectionFor(KeyStroke key) {
-        if (navKeysStyle == NAV_STYLE.NAVKEYS_NONE || key == null) {
+        if (key == null) {
             return null;
         }
         if (key.equals(nextKeyStroke)) {
@@ -230,9 +236,13 @@ public class DefaultFocusManager implements FocusManager,
         return null;
     }
 
+    /**
+     * For a WIDGET: true = its nav keys wrap around, from the last child to the first and back
+     * (e.g. a tab strip). Default false: focus stays at the ends. Ignored for GROUP / TRAP (a GROUP
+     * hands on to its parent at the ends; a TRAP and the root always wrap).
+     */
     public DefaultFocusManager setCycling(boolean cycling) {
         this.cycling = cycling;
-        cyclingInferred = false;  // has been programmatically set
         return this;
     }
 
@@ -322,57 +332,41 @@ public class DefaultFocusManager implements FocusManager,
     }
 
 
-    private Focusable getPrev(EventBus eventBus) {
+    /**
+     * The next (FORWARD) or previous (BACKWARD) enabled child after the current one, wrapping around
+     * if set to cycle; null if there is none. For moving between children by code, e.g. a tab strip's
+     * "<-" / "->" buttons (see setNextAsCurrentFocus).
+     */
+    private Focusable neighbourChild(FocusDirection dir) {
         if (size() < 1 || !isEnabled()) {
-            return null; // Early exit if no focusables or all are disabled
+            return null;
         }
-
-        Focusable theCurrent = peekCurrent();
-        int index = (theCurrent == null) ? -1 : eventConsumers.indexOf(theCurrent);
-        int startIndex = index;
-
-        do {
-            index = (index < 1) ? (cycling ? size() - 1 : -1) : index - 1;
-
-            // Exit if we've completed a full cycle
-            if (index == startIndex || index == -1) {
+        int step = dir == FocusDirection.FORWARD ? 1 : -1;
+        int from = eventConsumers.indexOf(peekCurrent());
+        int index = from;
+        for (int n = 0; n < size(); n++) {
+            index += step;
+            if (index < 0 || index >= size()) {
+                if (!cycling) {
+                    return null;
+                }
+                index = (index + size()) % size();
+            }
+            if (index == from) {
                 return null;
             }
-        } while (!eventConsumers.get(index).isEnabled());
-
-        return eventConsumers.get(index);
-    }    
-    
-    
-
-
-    private Focusable getNext(EventBus eventBus) {
-        if (size() < 2 || !isEnabled()) {
-            return null; // Early exit if no focusables or all are disabled
-        }
-    
-        Focusable theCurrent = peekCurrent();
-        int index = (theCurrent == null) ? -1 : eventConsumers.indexOf(theCurrent);
-        int startIndex = index;
-    
-        do {
-            index = (index < 0 || index == size() - 1) ? (cycling ? 0 : -1) : index + 1;
-    
-            // Exit if we've completed a full cycle
-            if (index == startIndex || index == -1) {
-                return null;
+            if (eventConsumers.get(index).isEnabled()) {
+                return eventConsumers.get(index);
             }
-        } while (!eventConsumers.get(index).isEnabled());
-    
-        return eventConsumers.get(index);
+        }
+        return null;
     }
-    
-    
-    
+
     @Override
     public void handle(TerminalEvent<?> te) {
-        // 1. the ROOT focus manager handles keyboard navigation (TAB / SHIFT-TAB ...) for everything below it
-        if (isRootFocusManager()) {
+        // 1. a navigation root (the application's root, or a modal dialog) handles keyboard
+        //    navigation (TAB / SHIFT-TAB, a widget's arrows ...) for everything below it
+        if (isNavigationRoot()) {
             FocusNavigator.Decision navigation = navigationDecisionFor(te);
             if (navigation != null) {
                 FocusNavigator.act(this, navigation, (KeyEvent) te);
@@ -380,7 +374,7 @@ public class DefaultFocusManager implements FocusManager,
             }
         }
         // 2. everything else: this manager's routing chain - focus requests (clicks), then the current
-        //    child / its own nav keys / hot keys / other children, then the custom extra handler
+        //    child / hot keys / other children, then the custom extra handler
         getEventHandler().handle(te);
     }
 
@@ -388,8 +382,8 @@ public class DefaultFocusManager implements FocusManager,
     public EventHandler canHandle(TerminalEvent<?> te) {
         // only answers "is this event ours?" - changes nothing (same two steps as handle)
 
-        // 1. the ROOT focus manager handles keyboard navigation (TAB / SHIFT-TAB ...) for everything below it
-        if (isRootFocusManager() && navigationDecisionFor(te) != null) {
+        // 1. a navigation root handles keyboard navigation for everything below it
+        if (isNavigationRoot() && navigationDecisionFor(te) != null) {
             return this;
         }
         // 2. everything else: does this manager's routing chain take it?
@@ -400,16 +394,17 @@ public class DefaultFocusManager implements FocusManager,
     }
 
     /**
-     * The root focus manager is the top one - no parent. There is one for the application (and one
-     * for each modal dialog); it decides keyboard navigation (TAB / SHIFT-TAB ...) for everything below it.
+     * Does this manager decide keyboard navigation (TAB / SHIFT-TAB, a widget's arrows ...) for
+     * everything below it? Yes for the application's root (no parent), and for a TRAP - a modal
+     * dialog, which gets keys before the application's root does.
      */
-    private boolean isRootFocusManager() {
-        return parentFocusManager == null;
+    private boolean isNavigationRoot() {
+        return parentFocusManager == null || focusPolicy == FocusPolicy.TRAP;
     }
 
     /**
      * What the navigator would do with this event: move focus, or give the key to the focused component if it
-     * wants it. null = not a navigation key (or not a key at all, or nothing focused yet) - normal routing.
+     * wants it. null = not a navigation key (or not a key at all) - normal routing.
      * Only answers - changes nothing.
      */
     private FocusNavigator.Decision navigationDecisionFor(TerminalEvent<?> te) {
@@ -431,7 +426,7 @@ public class DefaultFocusManager implements FocusManager,
         ChainedEventHandler chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
 
         chainedEventHandler.appendEventHandler(HasName.UTIL.decorateWithParentsNamePrefix(buildRequestFocusEventHandler(),chainedEventHandler));
-        chainedEventHandler.appendEventHandler(HasName.UTIL.decorateWithParentsNamePrefix(buildKeyStrokeEventHandler(),chainedEventHandler));
+        chainedEventHandler.appendEventHandler(HasName.UTIL.decorateWithParentsNamePrefix(buildChildrenEventHandler(),chainedEventHandler));
 
         ConditionalEventHandler.AbstractDelegate customHandlerWrapper = new ConditionalEventHandler.AbstractDelegate() {
 
@@ -461,40 +456,53 @@ public class DefaultFocusManager implements FocusManager,
         return requestFocusEventHandler;
     }
 
-    private ConditionalEventHandler buildKeyStrokeEventHandler() {
+    /**
+     * Offers an event to this manager's children (keyboard navigation is not done here - see
+     * FocusNavigator):
+     *   1. the current child (the one on the focus path), e.g. a key typed into the focused field
+     *   2. a key: a child whose hot key it is (e.g. F2 on a button) - it becomes current and gets the key
+     *   3. any other event (value changed, canvas refresh ...): the first other child that claims it
+     */
+    private ConditionalEventHandler buildChildrenEventHandler() {
 
-        AbstractDelegate keyStrokeEventHandler = new ConditionalEventHandler.AbstractDelegate() {
+        IS_Event_TYPE IS_KEYPRESS = new IS_Event_TYPE(TerminalEvent.TYPE.KEYPRESS);
 
-            ConditionalEventHandler navFirstHandler = null;
-            ConditionalEventHandler navLastHandler = null;
-
-            @Override
-            protected ConditionalEventHandler getDelegate() {
-                if (navKeysStyle.equals(NAV_STYLE.NAVKEYS_FIRST)) {
-                    if (navFirstHandler == null) { // todo: synchro this part
-                        navFirstHandler = buildNavKeysFirstKeyStrokeEventHandler();
-                    }
-                    HasName.UTIL.setDefaultNameFromParentObject(navFirstHandler, this, "evtHandler-NAVKEYS_FIRST");
-                    return navFirstHandler;
-                } else if (navKeysStyle.equals(NAV_STYLE.NAVKEYS_LAST))  {
-                    if (navLastHandler == null) { // todo: synchro this part
-                        navLastHandler = buildNavKeysLastKeyStrokeEventHandler();
-                    }
-                    HasName.UTIL.setDefaultNameFromParentObject(navLastHandler, this, "evtHandler-NAVKEYS_LAST");
-                    return navLastHandler;
-                } else if (navKeysStyle.equals(NAV_STYLE.NAVKEYS_NONE))  {
-                    if (navLastHandler == null) { // todo: synchro this part
-                        navLastHandler = buildNavKeysNoneKeyStrokeEventHandler();
-                    }
-                    HasName.UTIL.setDefaultNameFromParentObject(navLastHandler, this, "evtHandler-NAVKEYS-NONE");
-                    return navLastHandler;
-                } else {
-                    throw new IllegalStateException("Nav style not defined! for "+HasName.UTIL.getName(this));
-                }
+        Predicate<TerminalEvent<?>> canHandlePredicate = (te) -> {
+            Focusable focusable = peekCurrentChildFor(te);
+            if (focusable != null && focusable.canHandle(te) != null) {
+                return true;
             }
+            if (IS_KEYPRESS.test(te)) {
+                return hotKeyChildFor((KeyEvent) te) != null;
+            }
+            return otherChildClaiming(te, focusable) != null;
         };
-        keyStrokeEventHandler.setName((this.getName()!=null?this.getName():"DefaultFocusManager")+ ":keyStrokeNavHandlerWrapper");
-        return keyStrokeEventHandler;
+
+        return new ConditionalEventHandler.Impl(canHandlePredicate, (te) -> {
+            Focusable focusable = currentChildFor(te);
+            if (focusable != null && focusable.canHandle(te) != null) {
+                focusable.handle(te);
+                return;
+            }
+            if (IS_KEYPRESS.test(te)) {
+                handleHotKey((KeyEvent) te);
+                return;
+            }
+            Focusable other = otherChildClaiming(te, focusable);
+            if (other != null) {
+                other.handle(te);
+            }
+        }).setName(DefaultFocusManager.this.getName()+"-ChildrenEventHandler");
+    }
+
+    /** the first child other than current that claims (non-key) event te; null if none */
+    private Focusable otherChildClaiming(TerminalEvent<?> te, Focusable current) {
+        for (Focusable other : new ArrayList<Focusable>(getChildFocusables())) {
+            if (other != current && other.canHandle(te) != null) {
+                return other;
+            }
+        }
+        return null;
     }
 
     /**
@@ -539,104 +547,9 @@ public class DefaultFocusManager implements FocusManager,
         return true;
     }
 
-    /**
-     * Builds a keyStroke eventHandler.
-     */
-    private ConditionalEventHandler buildNavKeysFirstKeyStrokeEventHandler() {
-
-        IS_Event_TYPE IS_KEYPRESS = new IS_Event_TYPE(TerminalEvent.TYPE.KEYPRESS);
-
-        Predicate<TerminalEvent<?>> canHandlePredicate = new Predicate<TerminalEvent<?>>() {
-
-            @Override
-            public boolean test(TerminalEvent<?> te) {
-                // is it a FocusManager navigation key?
-                if (IS_KEYPRESS.test(te)) {
-                    KeyEvent ke = (KeyEvent) te;
-                    if (prevKeyStroke != null && ke.isKeyStroke(prevKeyStroke) && getPrev(te.getEventBus()) != null) {
-                        return true;
-                    } else if (nextKeyStroke != null && ke.isKeyStroke(nextKeyStroke) && getNext(te.getEventBus()) != null) {
-                        return true;
-                    }
-                }
-
-                // FocusManager cannot handle directly - what about its focus child?
-                Focusable focusable = peekCurrentChildFor(te);
-                if (focusable != null) {
-                    if (focusable.canHandle(te) != null) {
-                        return true;
-                    }
-                }
-
-                // at this point let's look at hot keys..
-
-                if (!IS_KEYPRESS.test(te)) {
-                    // not a key press so hunt for another focusable that might be able to handle this event
-                    if (size()>0) {
-                       for (Focusable otherFocusable : getChildFocusables()) {
-                           if (otherFocusable != focusable) {
-                               if (otherFocusable.canHandle(te) != null) {
-                                   return true;
-                               }
-                           }
-                       }
-                    }
-
-                    return false; // not a keyboard event, so not a hotkey and not handled by any child focusable
-                }
-
-                return hotKeyChildFor((KeyEvent) te) != null;
-
-            }
-        };
-
-        return new ConditionalEventHandler.Impl(canHandlePredicate, (te) -> {
-            if (IS_KEYPRESS.test(te)) {
-                KeyEvent ke = (KeyEvent) te;
-
-                if (prevKeyStroke != null && ke.isKeyStroke(prevKeyStroke)) {
-                    if (setPreviousAsCurrentFocus(te.getEventBus())) {
-                        return;
-                    }
-                } else if (nextKeyStroke != null && ke.isKeyStroke(nextKeyStroke)) {
-                    if (setNextAsCurrentFocus(te.getEventBus())) {
-                        return;
-                    }
-                }
-            }
-
-            // not a navigation key so forward event to current focusable
-            Focusable focusable = currentChildFor(te);
-            if (focusable != null) {
-                if (focusable.canHandle(te) != null) { 
-                     focusable.handle(te);
-                     return;
-                }
-            }
-
-            if (IS_KEYPRESS.test(te) && handleHotKey((KeyEvent) te)) {
-                return;
-            }
-
-            if (!IS_KEYPRESS.test(te)) {
-
-                // not a key press so hunt for another focusable that might be able to handle this event
-                if (size()>0) {
-                   for (Focusable otherFocusable : getChildFocusables()) {
-                       if (otherFocusable != focusable) {
-                           if (otherFocusable.canHandle(te) != null) {
-                               otherFocusable.handle(te);
-                               return;
-                           }
-                       }
-                   }
-                }
-            }
-        }).setName(DefaultFocusManager.this.getName()+"-NavKeysFirstKeyStrokeEventHandler");
-    }
-
+    /** make the previous child current (see neighbourChild); false if there is none */
     public boolean setPreviousAsCurrentFocus(EventBus eventBus) {
-        Focusable prev = getPrev(eventBus);
+        Focusable prev = neighbourChild(FocusDirection.BACKWARD);
         if (prev != null) {
             setChildAsCurrentFocus(prev, eventBus);
             return true;
@@ -644,8 +557,9 @@ public class DefaultFocusManager implements FocusManager,
         return false;
     }
 
+    /** make the next child current (see neighbourChild); false if there is none */
     public boolean setNextAsCurrentFocus(EventBus eventBus) {
-        Focusable next = getNext(eventBus);
+        Focusable next = neighbourChild(FocusDirection.FORWARD);
         if (next != null) {
             setChildAsCurrentFocus(next, eventBus);
             return true;
@@ -653,189 +567,6 @@ public class DefaultFocusManager implements FocusManager,
         return false;
     }
 
-
-    /**
-     * Builds a keyStroke eventHandler.
-     */
-    private ConditionalEventHandler buildNavKeysLastKeyStrokeEventHandler() {
-
-        IS_Event_TYPE IS_KEYPRESS = new IS_Event_TYPE(TerminalEvent.TYPE.KEYPRESS);
-
-        Predicate<TerminalEvent<?>> canHandlePredicate = new Predicate<TerminalEvent<?>>() {
-
-            @Override
-            public boolean test(TerminalEvent<?> te) {
-                
-                Focusable focusable = null;
-                focusable = peekCurrentChildFor(te);
-                if (focusable != null) {
-                    if  (focusable.canHandle(te) != null) {
-                        return true;
-                    }
-                }
-
-                // not handled by current component - so check if a nav key
-
-                if (IS_KEYPRESS.test(te)) {
-                    KeyEvent ke = (KeyEvent) te;
-                    
-                    // at this point let's look at hot keys..
-                    // onHotKeyPressedSetAsCurrent()
-                    if (hotKeyChildFor((KeyEvent) te) != null) {
-                        return true;
-                    }
-
-                    if (prevKeyStroke != null && ke.isKeyStroke(prevKeyStroke) && getPrev(te.getEventBus()) != null) {
-                        return true;
-                    } else if (nextKeyStroke != null && ke.isKeyStroke(nextKeyStroke) && getNext(te.getEventBus()) != null) {
-                        return true;
-                    }
-                } else {  // not a key press so hunt for another focusable that might be able to handle this event
-                    if (size()>0) {
-                       for (Focusable otherFocusable : getChildFocusables()) {
-                           if (otherFocusable != focusable) {
-                               if (otherFocusable.canHandle(te) != null) {
-                                   return true;
-                               }
-                           }
-                       }
-                    }
-                }
-
-                return false; // not handled
-            }
-        };
-
-        return new ConditionalEventHandler.Impl(canHandlePredicate, (te) -> {
-            
-            Focusable focusable = currentChildFor(te);
-            if (focusable != null) {
-                // ARG have to test again (is this 3 tests now !?!?)
-                //                         very inefficient)
-                //                      - might have to fix this
-                if (focusable.canHandle(te)!=null) {
-                    focusable.handle(te);
-                    return;
-                }
-            }
-
-            if (IS_KEYPRESS.test(te) && handleHotKey((KeyEvent) te)) {
-                return;
-            }
-
-            if (IS_KEYPRESS.test(te)) {
-                KeyEvent ke = (KeyEvent) te;
-
-                if (prevKeyStroke != null && ke.isKeyStroke(prevKeyStroke)) {
-                    if (setPreviousAsCurrentFocus(te.getEventBus())) {
-                        return;
-                    }
-                } else if (nextKeyStroke != null && ke.isKeyStroke(nextKeyStroke)) {
-                    if (setNextAsCurrentFocus(te.getEventBus())) {
-                        return;
-                    }
-                }
-            } else {  // not a key press
-                if (size()>0) {
-                    List<Focusable> childFocusables = new ArrayList<Focusable>(getChildFocusables());
-                    for (Focusable otherFocusable : childFocusables) {
-                        if (otherFocusable != focusable) {
-                            if (otherFocusable.canHandle(te) != null) {
-                                otherFocusable.handle(te);
-                            }
-                        }
-                    }
-                }
-            }
-
-        }).setName(DefaultFocusManager.this.getName()+"-NavKeysLastKeyStrokeEventHandler");
-    }
-
-    /**
-     * Builds a keyStroke eventHandler.
-     */
-    private ConditionalEventHandler buildNavKeysNoneKeyStrokeEventHandler() {
-
-        IS_Event_TYPE IS_KEYPRESS = new IS_Event_TYPE(TerminalEvent.TYPE.KEYPRESS);
-
-        Predicate<TerminalEvent<?>> canHandlePredicate = new Predicate<TerminalEvent<?>>() {
-
-            @Override
-            public boolean test(TerminalEvent<?> te) {
-                
-                Focusable focusable = peekCurrentChildFor(te);
-                if (focusable != null) {
-                    if  (focusable.canHandle(te) != null) {
-                        return true;
-                    }
-                }
-
-                // not handled by current component - so check if hot keys hit
-
-                if (IS_KEYPRESS.test(te)) {
-                    // at this point let's look at hot keys..
-                    if (hotKeyChildFor((KeyEvent) te) != null) {
-                        return true;
-                    }
-                } else {  // not a key press so hunt for another focusable that might be able to handle this event
-                    if (size()>0) {
-                        for (Focusable otherFocusable : getChildFocusables()) {
-                            if (otherFocusable != focusable) {
-                                if (otherFocusable.canHandle(te) != null) {
-                                    return true;
-                                }
-                            }
-                        }
-                     }
-                 }
-
-                return false; // not handled
-            }
-        };
-
-        return new ConditionalEventHandler.Impl(canHandlePredicate, (te) -> {
-
-            Focusable focusable = currentChildFor(te);
-            if (focusable != null) {
-                // ARG have to test again (is this 3 tests now !?!?)
-                //                         very inefficient)
-                //                      - might have to fix this
-                if (focusable.canHandle(te)!=null) {
-                    focusable.handle(te);
-                    return;
-                }
-            }
-
-            if (IS_KEYPRESS.test(te) && handleHotKey((KeyEvent) te)) {
-                return;
-            }
-
-            if (IS_KEYPRESS.test(te)) {
-                KeyEvent ke = (KeyEvent) te;
-
-                if (prevKeyStroke != null && ke.isKeyStroke(prevKeyStroke)) {
-                    if (setPreviousAsCurrentFocus(te.getEventBus())) {
-                        return;
-                    }
-                } else if (nextKeyStroke != null && ke.isKeyStroke(nextKeyStroke)) {
-                    if (setNextAsCurrentFocus(te.getEventBus())) {
-                        return;
-                    }
-                }
-            } else {  // not a key press
-                if (size()>0) {
-                    for (Focusable otherFocusable : getChildFocusables()) {
-                        if (otherFocusable != focusable) {
-                            if (otherFocusable.canHandle(te) != null) {
-                                otherFocusable.handle(te);
-                            }
-                        }
-                    }
-                }
-            }
-
-        }).setName(DefaultFocusManager.this.getName()+"-NavKeysNoneKeyStrokeEventHandler");
-    }
 
     public void removeFocusable(Focusable focusable) {
         if (removeList.contains(focusable)) {
@@ -959,17 +690,6 @@ public class DefaultFocusManager implements FocusManager,
         }
 
         Focusable.UTIL.setParentFocusManager(this, parentFocusManager, (fm)-> this.parentFocusManager = fm);
-        if (parentFocusManager != null && cyclingInferred && cycling) {
-            this.setCycling(false);
-            cyclingInferred= true;
-        } else {
-            if (cyclingInferred) {
-                this.setCycling(true);
-                cyclingInferred= true;
-            }
-        }
-        
-        //this.parentFocusManager = parentFocusManager;
     }
 
     @Override

@@ -131,8 +131,7 @@ public class StdoutViewerTest {
                     FocusManager fm = FocusManager.UTIL.buildFocusManagerFromComponent(tApp.getMainApplicationPanel(), 
                                                                                        tApp.getEventBus(),
                                                                                        ()-> new DefaultFocusManager().setPrevKeyStroke(Keys.SHIFT_TAB_KEYSTROKE)
-                                                                                                                     .setNextKeyStroke(Keys.TAB_KEYSTROKE)
-                                                                                                                     .setNavKeysFirst(false));
+                                                                                                                     .setNextKeyStroke(Keys.TAB_KEYSTROKE));
                     tApp.getEventBus().appendEventHandler(fm);
 
                     // populateLarge.onClick(tApp.getEventBus());

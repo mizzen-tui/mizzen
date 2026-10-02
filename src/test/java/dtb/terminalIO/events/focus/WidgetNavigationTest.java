@@ -27,11 +27,10 @@ public class WidgetNavigationTest extends TestCase {
 
     @Override
     protected void setUp() {
-        widget = new DefaultFocusManager(Keys.UP_KEYSTROKE, Keys.DOWN_KEYSTROKE)
-                         .setNavKeysFirst(false).setCycling(false).setFocusPolicy(FocusPolicy.WIDGET).setName("widget");
+        widget = new DefaultFocusManager(Keys.UP_KEYSTROKE, Keys.DOWN_KEYSTROKE).setCycling(false).setFocusPolicy(FocusPolicy.WIDGET).setName("widget");
         widget.addFocusable(b);
         widget.addFocusable(c);
-        root = new DefaultFocusManager().setNavKeysFirst(false).setName("root");
+        root = new DefaultFocusManager().setName("root");
         root.addFocusable(a);
         root.addFocusable(widget);
         bus.setRoot(root);

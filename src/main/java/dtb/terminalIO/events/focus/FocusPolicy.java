@@ -29,7 +29,9 @@ public enum FocusPolicy {
     WIDGET,
 
     /**
-     * Focus never leaves (modal dialog): navigation wraps around inside.
+     * Focus never leaves (modal dialog): navigation wraps around inside. A TRAP decides keyboard
+     * navigation for everything inside it itself, because a modal dialog gets keys before the
+     * application's root does.
      */
     TRAP
 }

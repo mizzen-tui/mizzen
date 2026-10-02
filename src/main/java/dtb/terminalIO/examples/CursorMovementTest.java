@@ -87,8 +87,7 @@ public class CursorMovementTest {
                     ScrollableComponent sc = new ScrollableComponent(Colors.Whi,
                                                                      scDimension, 
                                                                      mTextBox,
-                                                                     () -> new DefaultFocusManager(Keys.SHIFT_TAB_KEYSTROKE, Keys.TAB_KEYSTROKE)
-                                                                               .setNavKeysFirst(false));
+                                                                     () -> new DefaultFocusManager(Keys.SHIFT_TAB_KEYSTROKE, Keys.TAB_KEYSTROKE));
                     sc.setFillOnClear(false);
                     
                     BiFunction<KeyStroke, String, String> hotKeyHelpText = (key, helpText) -> {

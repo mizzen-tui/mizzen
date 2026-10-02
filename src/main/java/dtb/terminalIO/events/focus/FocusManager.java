@@ -194,7 +194,8 @@ public interface FocusManager extends Focusable {
             return false;
         }
 
-        private static boolean isSameNode(Focusable a, Focusable b) {
+        /** a and b are the same node in the focus tree - also a wrapper component and its inner manager */
+        static boolean isSameNode(Focusable a, Focusable b) {
             if (a == b) {
                 return true;
             }
@@ -305,7 +306,8 @@ public interface FocusManager extends Focusable {
          * focus. Decides where focus goes next, without changing anything:
          *   MOVED(target) - next / previous child in here (entered via its own enter())
          *   DONE          - no more children that way; let the parent focus manager decide
-         *   STAY          - WIDGET at its first / last child: keep focus where it is
+         *   STAY          - WIDGET at its first / last child, or a TRAP with nowhere else to go:
+         *                   keep focus where it is
          * A TRAP, the root focus manager (no parent), or a WIDGET that wrapsAround(), wraps around
          * instead.
          */
@@ -328,7 +330,7 @@ public interface FocusManager extends Focusable {
                 j += step;
                 if (j < 0 || j >= children.size()) {
                     if (!wraps) {
-                        return policy == FocusPolicy.WIDGET ? Navigation.STAY : Navigation.DONE;
+                        return policy == FocusPolicy.GROUP ? Navigation.DONE : Navigation.STAY;
                     }
                     j = (j + children.size()) % children.size();
                 }
@@ -339,7 +341,8 @@ public interface FocusManager extends Focusable {
                     return Navigation.movedTo(target);
                 }
             }
-            return policy == FocusPolicy.WIDGET ? Navigation.STAY : Navigation.DONE;
+            // focus never leaves a WIDGET through its own keys, nor a TRAP at all
+            return policy == FocusPolicy.GROUP ? Navigation.DONE : Navigation.STAY;
         }
 
         public static boolean isAncestorOf(Focusable maybeAncestor, Focusable maybeDescendant) {

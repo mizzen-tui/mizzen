@@ -92,8 +92,8 @@ public class FocusCharacterisationTest extends TestCase {
     }
 
     /**
-     * root[A, group[B, C], D] -- root as TUIApp builds it (CompositeWithFocusManager,
-     * NAVKEYS_LAST), group a ComponentWithFocusManager (NAVKEYS_FIRST by default).
+     * root[A, group[B, C], D] -- root as TUIApp builds it (CompositeWithFocusManager),
+     * group a ComponentWithFocusManager.
      */
     private CompositeWithFocusManager nestedLayout(TextInput a, TextInput b, TextInput c, TextInput d) {
         VerticalPanel groupPanel = new VerticalPanel();

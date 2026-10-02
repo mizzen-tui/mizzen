@@ -45,7 +45,7 @@ public class FocusOwnerTest extends TestCase {
     }
 
     private DefaultFocusManager root(Focusable... children) {
-        DefaultFocusManager root = new DefaultFocusManager().setNavKeysFirst(false).setName("root");
+        DefaultFocusManager root = new DefaultFocusManager().setName("root");
         for (Focusable c : children) root.addFocusable(c);
         bus.setRoot(root);
         return root;
@@ -77,8 +77,7 @@ public class FocusOwnerTest extends TestCase {
     /** a widget's own arrow keys still move focus the old way - the owner follows those moves too */
     public void testOwnerFollowsMovesMadeByTheOldRouting() {
         Leaf a = new Leaf("A"), b = new Leaf("B"), c = new Leaf("C");
-        DefaultFocusManager list = new DefaultFocusManager(Keys.UP_KEYSTROKE, Keys.DOWN_KEYSTROKE)
-                                         .setNavKeysFirst(false).setFocusPolicy(FocusPolicy.WIDGET).setName("list");
+        DefaultFocusManager list = new DefaultFocusManager(Keys.UP_KEYSTROKE, Keys.DOWN_KEYSTROKE).setFocusPolicy(FocusPolicy.WIDGET).setName("list");
         list.addFocusable(b);
         list.addFocusable(c);
         DefaultFocusManager root = root(a, list);
@@ -111,5 +110,21 @@ public class FocusOwnerTest extends TestCase {
         root.removeFocusable(b);
 
         assertNotSame(b, FocusManager.UTIL.findCurrentFocus(root));
+    }
+
+    /**
+     * The focused component goes away (e.g. a dropdown's open list closing): TAB carries on from the
+     * component focused before it, not from the top.
+     */
+    public void testFocusedComponentRemoved_tabCarriesOnFromWhereFocusWas() {
+        Leaf a = new Leaf("A"), b = new Leaf("B"), c = new Leaf("C"), popup = new Leaf("POPUP");
+        DefaultFocusManager root = root(a, b, c, popup);
+        click(b);
+        click(popup);
+        root.removeFocusable(popup);
+
+        press(Keys.TAB_KEYSTROKE);
+
+        assertSame(c, root.getFocusedComponent());
     }
 }

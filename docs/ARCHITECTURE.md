@@ -79,32 +79,29 @@ Focus state is **distributed**: each manager holds its own `current` child and
 its own `hasFocus` flag. The focused leaf is found by walking `current` pointers
 from the root (`FocusManager.UTIL.findCurrentFocus`).
 
-### 2.2 `DefaultFocusManager` keyboard routing
+### 2.2 Keyboard navigation and routing (since redesign step 6)
 
-For each KEYPRESS the manager decides between *navigation* (TAB / SHIFT-TAB by
-default) and *forwarding* to its current child. The order is set per manager:
+**Navigation** (TAB / SHIFT-TAB, a widget's arrows) is decided in one place, `FocusNavigator`,
+run by a *navigation root*: the application's root `DefaultFocusManager` (no parent), or a modal
+dialog's (policy TRAP - it gets keys before the application's root). Order: the focused component
+first, then each focus manager around it, innermost first - a WIDGET's own handlers, then
+`advance` (§4.3 A2-A3). Nothing focused: TAB carries on from where focus last was, or focuses the
+first component (SHIFT-TAB: the last).
 
-- `NAVKEYS_FIRST` — check nav keys first; forward only if not a nav key.
-- `NAVKEYS_LAST` — forward first; treat as nav only if the current child declined.
-- `NAVKEYS_NONE` — never navigate (hotkeys and forwarding only).
+**Everything else** goes through each `DefaultFocusManager`'s routing chain:
+1. focus requests (clicks, `RequestFocusEvent`)
+2. the current child (the focus path)
+3. a key: a child whose **hotkey** it is - it becomes current and gets the key
+4. any other event: the **first** other child that claims it (§2.5)
+5. the custom extra handler (`setCustomExtendedEventHandler`)
 
-Other behaviour:
-- **Cycling:** wraps from last to first. *Inferred*: a manager with a parent
-  switches cycling **off**, so that TAB can "fall out" of a nested group to its parent.
-- **Hotkeys:** if a non-current child declares a hotkey matching the key, it
-  becomes current (this happens inside `canHandle`).
-- **Non-key events** (e.g. mouse) go to the current child, or else to any child that claims them.
-- Disabled children are skipped by `getNext/getPrev`; a manager is enabled if any child is.
+Per manager: its nav keys (`setPrev/NextKeyStroke`, `setNavKeysNone()` for none), its policy
+(GROUP / WIDGET / TRAP), `setTabStop`, and for a WIDGET `setCycling(true)` to wrap around.
+Disabled children are skipped; a manager is enabled if any child is.
 
-Defaults vary by where the manager is built:
-
-| Built by | Nav style | Cycling |
-|---|---|---|
-| `new DefaultFocusManager()` / `ComponentWithFocusManager` | `NAVKEYS_FIRST` | inferred |
-| `CompositeWithFocusManager` (incl. `TUIApp.TUIDefaultPanel`) | `NAVKEYS_LAST` | inferred |
-| `TUIApp.buildAndAttachFocusManager` (root) | `NAVKEYS_LAST` | inferred (on for root) |
-| `ButtonBar` | `NAVKEYS_LAST` | off |
-| `DropdownListBox` | UP/DOWN keys instead of TAB | inferred |
+(Before step 6 each manager navigated itself, ordered by a per-class "nav style"
+`NAVKEYS_FIRST` / `LAST` / `NONE` with cycling inferred from its position - see §4.1 for what
+that broke.)
 
 ### 2.3 Explicit focus requests — `REQUEST_FOCUS`
 
@@ -135,8 +132,8 @@ Note steps 3 and 4 use two different trees (see §4).
 
 `DefaultFocusManager` does more than keyboard focus. For any event that reaches it, it
 offers the event to the current child, then (for non-key events) to the **other
-children** too. With `NAVKEYS_FIRST` it stops at the first claimer; with `NAVKEYS_LAST`/`NONE`
-it delivers to **all** claimers.
+children** too, stopping at the first claimer. (Before step 6 some managers - the root among
+them - delivered to **all** claimers; no example ever had more than one.)
 
 Components register many handlers on their **own internal chain**, not on the bus:
 `TextInput.onChange`, `Button.onChange` (via `HasValue.UTIL.bindConsumerAsOnValueChangedHandler`),
@@ -157,8 +154,8 @@ into the focus tree's "offer to children" loop.
 
 `TextInput` / `MultiLineTextInput` consume TAB and SHIFT-TAB when `multiLine` is true. `TabPanel`
 once used TAB as a hotkey (now disabled: "a really bad idea because circumvents normal
-FocusManager navigation"). Inside a `NAVKEYS_FIRST` focus manager, that focus manager takes TAB first,
-so a multi-line editor there never receives TAB. Behaviour depends on nesting.
+FocusManager navigation"). Before the redesign, a `NAVKEYS_FIRST` focus manager took TAB first, so a
+multi-line editor inside one never received TAB; now the focused component always gets the first say.
 
 ### 2.7 Inventory: what travels through the focus tree (Sep 2026)
 
@@ -189,11 +186,11 @@ resize, `FindScrollToViewHandler`, mouse orchestrator, component inspector,
 
 ### 3.1 Three base classes own a `DefaultFocusManager`
 
-| Class | Shape | Nav default |
-|---|---|---|
-| `CompositeWithFocusManager` | *is* a `Composite`, delegates focus to an inner DFM | `NAVKEYS_LAST` |
-| `ComponentWithFocusManager` | *wraps* a `Composite`, delegates focus to an inner DFM | `NAVKEYS_FIRST` |
-| `AbstractWrappedComponentWithFocusManager` | wraps any component; `asFocusable()` returns the inner DFM | `NAVKEYS_FIRST` |
+| Class | Shape |
+|---|---|
+| `CompositeWithFocusManager` | *is* a `Composite`, delegates focus to an inner DFM |
+| `ComponentWithFocusManager` | *wraps* a `Composite`, delegates focus to an inner DFM |
+| `AbstractWrappedComponentWithFocusManager` | wraps any component; `asFocusable()` returns the inner DFM |
 
 Subclasses with their own manager include `ButtonBar`, `DropdownListBox`,
 `TextInputWithIncrDecrButtons`, `Menu`, `MenuBar`, `MovingPicturesViewer`,
@@ -384,7 +381,7 @@ Terms used below:
    is passed down top-down and arrives straight at the target. Without the first pass a focus manager
    receiving focus handed it to its remembered child (or its first child) first - a flicker, and in
    `ImageSplitterTest` a window wrongly brought to front.
-   *(Still moved the old way: hot keys, and code calling `setChildAsCurrentFocus` directly.)*
+   *(Not through `moveFocus`: hot keys, and code calling `setChildAsCurrentFocus` directly.)*
 5. **Clicks use the same `moveFocus`**, with no intermediate focus on other components (§4.6).
    *(done - step 3; clicks still first re-send `setFocus(true)` to re-assert hilite / front, §4.4)*
 6. **Initial focus**: when the app starts, focus goes to the first focusable component, with a way to
@@ -399,8 +396,8 @@ Terms used below:
 **B. Event delivery for non-key events (§2.5): same semantics as today**
 1. `canHandle`/`handle` remain the generic contract for **every** event type.
 2. Keep today's path and order: from the root down through the focus managers, focused path
-   first, then other children using each focus manager's current first-claimer or all-claimers rule
-   (pinned by characterisation tests). The only change: focus managers are discovered on demand.
+   first, then the first other child that claims it *(step 6: first claimer everywhere)*.
+   Still to do: focus managers discovered on demand.
 3. **No "targeted" delivery straight to the event's source.** Ancestors listen to their
    children's events: `FormBinder.onChange` registers on the *form panel*, an ancestor of the
    inputs, so skipping ancestors would break form-level change handling.
@@ -422,7 +419,7 @@ the engine → migrate classes one by one. Work on branch `focus-redesign`.
 | `ButtonBar` | current behaviour: GROUP (TAB through buttons, leave at the ends); `TabPanel`'s strip keeps `setCycling(true)` |
 | `MultiLineTextInput` TAB | moves focus by default; opt-in to insert `\t`, then **Esc** leaves (Textual `TextArea` `tab_behavior` model). Alt-TAB is grabbed by window managers; Ctrl-TAB is indistinguishable from TAB in most terminals |
 | Event delivery | today's path and order, discovered on demand; no targeted delivery |
-| Broadcast rule | **first claimer everywhere** (as `NAVKEYS_FIRST` does today; also how the bus's main chain works). Behaviour change at the root, which today (`NAVKEYS_LAST`) delivers to all claimers. Pinned by `FocusProtocolCharacterisationTest`, to be flipped deliberately |
+| Broadcast rule | **first claimer everywhere** (how the bus's main chain works too). Changed the root, which delivered to all claimers - none of 14 examples ever had more than one. *(done - step 6)* |
 | Focused component hidden/disabled | move focus to the next focusable (else previous, else none); triggered via `setEnabled(boolean, EventBus)` / hide |
 
 This follows the same approach as browsers (tab order derived from the DOM, roving
@@ -573,7 +570,7 @@ that a plain container can declare. Do this class by class, not in the engine co
 | `events/EventBusImpl.java:186-195` | full queue: `offer` result ignored, event silently dropped |
 | `events/ConditionalEventHandler.java:133` | `AbstractDelegate.setName` ignores its argument |
 | `events/focus/DefaultFocusManager.java:161-163` | `setChildAsCurrentFocus(null)` → NPE (`focusable.getParentFocusManager()` before null check) |
-| `events/focus/DefaultFocusManager.java:50,65` | field default says `NAVKEYS_LAST`, constructor overrides to `NAVKEYS_FIRST` |
+| `events/focus/DefaultFocusManager.java` | **removed (step 6):** nav styles (field default `NAVKEYS_LAST`, constructor `NAVKEYS_FIRST`), cycling inference, the per-manager navigation |
 | `events/focus/DefaultFocusManager.java` | **removed (step 4):** dead `getPrevOLD` / `getNextOLD` |
 | `components/BehaviourForCompositeAndFocusManager.java:169-174` | insert index uses a *map* index as a *children-list* index → wrong tab order when inserting before existing children |
 | `controlcodes/ControlCode.java` | several `DISABLE_*` mouse codes have an extra digit (`[?10021l` should be `[?1002l`, etc.) |
@@ -600,10 +597,11 @@ expected to fail when the redesign fixes them.
 | Test class | Covers |
 |---|---|
 | `events/focus/FocusCharacterisationTest` | nested TAB / SHIFT-TAB order (real components), button `onChange` via the focus tree |
-| `events/focus/FocusProtocolCharacterisationTest` | exact `focus` / `unFocus` / `setFocus` calls and order, click flicker, no initial focus, disabled skip, root dead end, non-key delivery rules |
+| `events/focus/FocusProtocolCharacterisationTest` | exact `focus` / `unFocus` / `setFocus` calls and order, click flicker, TAB with nothing focused, disabled skip, root dead end, non-key delivery (first claimer) |
 | `components/FocusSideEffectsCharacterisationTest` | frame hilite on click and TAB (frame TAB order: title, content, resize anchor), TextInput recolour, scroll-to-view request |
 | `components/input/form/FormChangeCharacterisationTest` | typing -> data -> field `onChange` -> form `onChange` through the form panel |
 | `components/input/DropdownListBoxCharacterisationTest` | open on focus, hand-off into the list, TAB / SHIFT-TAB / ENTER in the list, click elsewhere closes, DOWN opens a closed list, arrows at the ends |
+| `components/modal/MessageBoxFocusCharacterisationTest` | TAB / SHIFT-TAB inside a real modal dialog (TRAP: wraps, never leaves); the field focused before keeps its flag (TODAY) |
 | `events/focus/WidgetNavigationTest` | a widget's own keys: own handler before moving focus, STAY at the end, wrap when set to cycle, TAB leaves |
 | `components/tab/TabPanelCharacterisationTest` | click / arrows / TAB / shortcuts |
 | `components/modal/ModalEventHandlerCharacterisationTest` | modal key sinkhole |

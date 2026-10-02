@@ -506,7 +506,6 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
 //                                                                                                 eventBus,
 //                                                                                                 () -> new DefaultFocusManager().setPrevKeyStroke(Keys.SHIFT_TAB_KEYSTROKE)
 //                                                                                                                                .setNextKeyStroke(Keys.TAB_KEYSTROKE)
-//                                                                                                                                .setNavKeysFirst(false)
 //                                                                                                                                .setCycling(false));
 //            if (focusManager == null) {
 //                focusManager = new DefaultFocusManager(); // FocusManager.UTIL.buildFocusManagerFromComponent() is weird

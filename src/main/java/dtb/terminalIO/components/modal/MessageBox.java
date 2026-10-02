@@ -1,5 +1,6 @@
 package dtb.terminalIO.components.modal;
 
+import dtb.terminalIO.events.focus.FocusPolicy;
 import dtb.terminalIO.components.ChildComponentManager;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.CompositeWithFocusManager;
@@ -134,6 +135,8 @@ public class MessageBox {
         dialog.setFillOnClear(true);
         dialog.setEmptyColor(dialogColor);
         dialog.setName("dialog");
+        // modal: TAB / SHIFT-TAB wrap around inside the dialog, focus never leaves it (FocusPolicy.TRAP)
+        dialog.getFocusManager().setFocusPolicy(FocusPolicy.TRAP);
 
         if (icon != null && Dimension.UTIL.stringToDimension(message).getHeight()==1) {
             message = "\n" + message;

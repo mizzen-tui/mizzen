@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.EventHandlerContainer;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 
@@ -18,7 +19,8 @@ import dtb.terminalIO.events.TerminalEvent;
  *
  * Raised events are queued and, on {@link #deliver} / {@link #drain}, handed to a single root
  * handler (usually the application's root FocusManager) in order - the way the real bus does once
- * nothing earlier on the bus claims them. After each event its {@code then(..)} callback runs; when
+ * nothing earlier on the bus claims them. Handlers prepended to the bus (e.g. a modal dialog's) get
+ * each event before the root. After each event its {@code then(..)} callback runs; when
  * the queue is empty, one-shot idle tasks queued via {@code asynch(..)} run. Every raised event is
  * kept in {@link #history} so tests can assert on side-effect events (scroll-to-view, canvas refresh..).
  */
@@ -28,9 +30,23 @@ public class SyncEventLoop extends EventBus.STUBBED {
     private final List<OnIdleEventEventHandler.OneTime> oneTimeTasks = new ArrayList<>();
     public final List<TerminalEvent<?>> history = new ArrayList<>();
     private ConditionalEventHandler root;
+    // handlers put in front of the root (e.g. a modal dialog's ModalEventHandler), first one first
+    private final List<ConditionalEventHandler> inFront = new ArrayList<>();
 
     public SyncEventLoop setRoot(ConditionalEventHandler root) {
         this.root = root;
+        return this;
+    }
+
+    @Override
+    public EventHandlerContainer prependEventHandler(ConditionalEventHandler eventHandler) {
+        inFront.add(0, eventHandler);
+        return this;
+    }
+
+    @Override
+    public EventHandlerContainer removeEventHandler(ConditionalEventHandler eventHandler) {
+        inFront.remove(eventHandler);
         return this;
     }
 
@@ -66,7 +82,16 @@ public class SyncEventLoop extends EventBus.STUBBED {
             if (!queue.isEmpty()) {
                 TerminalEvent<?> te = queue.poll();
                 te.setEventBus(this);
-                if (root != null && root.canHandle(te) != null) {
+                ConditionalEventHandler first = null;
+                for (ConditionalEventHandler h : new ArrayList<>(inFront)) {
+                    if (h.canHandle(te) != null) {
+                        first = h;
+                        break;
+                    }
+                }
+                if (first != null) {
+                    first.handle(te);
+                } else if (root != null && root.canHandle(te) != null) {
                     root.handle(te);
                 }
                 te.onEventProcessed();

@@ -18,7 +18,6 @@ import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.FocusManagerProvider;
 import dtb.terminalIO.events.focus.FocusPolicy;
 import dtb.terminalIO.events.focus.Focusable;
-import dtb.terminalIO.events.focus.DefaultFocusManager.NAV_STYLE;
 import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
@@ -135,10 +134,6 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
         return (T) this;
     }
 
-    public T setNavKeysFirst(boolean navKeysFirst) {
-        getAssertDefaultFocusManager("setNavKeysFirst()").setNavKeysFirst(navKeysFirst);
-        return (T) this;
-    }
 
     public T setNavKeysNone() {
         getAssertDefaultFocusManager("setNavKeysNone()").setNavKeysNone();
