@@ -7,6 +7,7 @@ import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.stream.Stream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,7 +34,6 @@ import dtb.terminalIO.components.plot.image.ImageViewerFactory.ImageRenderReques
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.ImageRenderer;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.RGBPlotPredicate;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.RGBToAnsiColorControlCode;
-import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.components.scroll.ScrollableComponent2;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
@@ -51,7 +51,31 @@ import dtb.terminalIO.util.VeryBasicArgsHelper;
 public class ImageViewer {
 
     public static void main(String[] args) {
+        if (Stream.of(args).anyMatch(a -> VeryBasicArgsHelper.isArgName(a, "HELP") || "-h".equals(a) || "-?".equals(a))) {
+            printHelp();
+            System.exit(0);
+        }
+        String[] imageDir = { null };
+        VeryBasicArgsHelper.onNamedArg(args, "imagedir", (dir) -> imageDir[0] = dir);
+        if (imageDir[0] == null || !new File(imageDir[0]).isDirectory()) {
+            System.out.println(imageDir[0] == null ? "no image directory given\n" : "not a directory: " + imageDir[0] + "\n");
+            printHelp();
+            System.exit(1);
+        }
         plotterTest(args);
+    }
+
+    static void printHelp() {
+        String cls = ImageViewer.class.getName();
+        System.out.println(String.join("\n",
+            "ImageViewer - pick an image (.jpg / .png) from a directory and view it with different render settings",
+            "",
+            "usage: ./runDBG.sh " + cls + " imagedir <directory>",
+            "",
+            "  imagedir <directory>   directory holding the .jpg / .png images to list",
+            "  HELP | -h | -?         this help",
+            "",
+            "example: ./runDBG.sh " + cls + " imagedir ~/eclipse-workspace/tmpImages"));
     }
 
     public static void plotterTest(String[] args) {
@@ -131,7 +155,7 @@ public class ImageViewer {
                         imagesListbox.setSelected(0);
                         Dimension maxImagesSize = new Dimension.Simple(20,35);
                         if ( ! maxImagesSize.contains(imagesListbox)) {
-                            ScrollableComponent imagesSC = new ScrollableComponent(imagesListbox.getColor(), maxImagesSize, imagesListbox);
+                            ScrollableComponent2 imagesSC = new ScrollableComponent2(imagesListbox.getColor(), maxImagesSize, imagesListbox);
                             formPanel.add(imagesSC);
                         } else {
                            formPanel.add(imagesListbox);
