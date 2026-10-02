@@ -57,15 +57,18 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
         this.getContainer().add(this.button);
 
         
+        // ENTER / ESC / mouse pick in the open list: keep the selection, give focus back to the button,
+        // then close the list. (Left open, the list sat behind this dropdown's panel - brought to front
+        // when focus came back - with only its bottom border row showing below the panel.)
         EventHandler onSelectedItemHandler = (te) -> {
-            //hideListBox();
             EventBus eventBus = te.getEventBus();
             setSelectedFromListBox(eventBus);
             returningFocusFromListBox = true;
             te.getEventBus().raiseEvent(new RequestFocusEvent(DropdownListBox.this.button)
                     .then(()->{
-                        //hideListBox();
                         returningFocusFromListBox = false;
+                        hideListBox();
+                        RequestUpdateCanvasEvent.invoke(eventBus, this);
                     }));
             RequestUpdateCanvasEvent.invoke(eventBus, this);
         };

@@ -124,8 +124,12 @@ public class DropdownListBoxCharacterisationTest extends TestCase {
         assertFalse(dropdown.listBoxVisible());
     }
 
-    /** TODAY: ENTER in the list commits the selection but leaves the list open */
-    public void testEnterInList_today_commitsButLeavesListOpen() {
+    /**
+     * ENTER in the list commits the selection, gives focus back to the dropdown's button and closes
+     * the list. (Before: the list stayed open - hidden behind the dropdown's panel, which focus had
+     * brought to the front, so only its bottom border row showed: the "leftover border".)
+     */
+    public void testEnterInListCommitsAndClosesList() {
         click(before);
         press(Keys.TAB_KEYSTROKE);
         press(Keys.DOWN_KEYSTROKE);             // highlight next item (A -> B)
@@ -133,7 +137,19 @@ public class DropdownListBoxCharacterisationTest extends TestCase {
         press(Keys.ENTER_KEYSTROKE);
 
         assertEquals("B", dropdown.getValue());
-        assertTrue("today the list stays open after ENTER", dropdown.listBoxVisible());
+        assertFalse("ENTER closes the list", dropdown.listBoxVisible());
+        assertEquals("dropdown-button", focusedName());
+    }
+
+    /** ESC in the list closes it the same way, focus back on the dropdown's button */
+    public void testEscInListClosesList() {
+        click(before);
+        press(Keys.TAB_KEYSTROKE);
+
+        press(Keys.ESC_KEYSTROKE);
+
+        assertFalse("ESC closes the list", dropdown.listBoxVisible());
+        assertEquals("dropdown-button", focusedName());
     }
 
 
