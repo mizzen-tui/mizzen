@@ -16,6 +16,7 @@ import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.FocusManagerProvider;
+import dtb.terminalIO.events.focus.FocusPolicy;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.DefaultFocusManager.NAV_STYLE;
 import dtb.terminalIO.geom.CanResize;
@@ -118,6 +119,18 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
 
     public T setCycling(boolean cycling) {
         getAssertDefaultFocusManager("setCycling()").setCycling(cycling);
+        return (T) this;
+    }
+
+    /** false: TAB / SHIFT-TAB skip this component and everything in it; clicks and hot keys still work */
+    public T setTabStop(boolean tabStop) {
+        getAssertDefaultFocusManager("setTabStop()").setTabStop(tabStop);
+        return (T) this;
+    }
+
+    /** What kind of focus container this is: GROUP (default), WIDGET or TRAP - see FocusPolicy. */
+    public T setFocusPolicy(FocusPolicy focusPolicy) {
+        getAssertDefaultFocusManager("setFocusPolicy()").setFocusPolicy(focusPolicy);
         return (T) this;
     }
 

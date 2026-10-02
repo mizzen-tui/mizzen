@@ -68,6 +68,17 @@ public interface FocusManager extends Focusable {
     }
 
     /**
+     * Can TAB / SHIFT-TAB land in this container? false = skip it and everything in it (like HTML
+     * tabindex=-1); its parts can still be clicked or reached with their hot keys. Example: the
+     * scroll buttons (^ v PgUp PgDn) at the bottom of a scrollable panel.
+     * Wrapper components ask their inner manager; anything else is a TAB stop.
+     */
+    default boolean isTabStop() {
+        FocusManager delegate = UTIL.providedFocusManager(this);
+        return delegate != null ? delegate.isTabStop() : true;
+    }
+
+    /**
      * Is key one of this container's navigation keys? Returns FORWARD for its "next" key
      * (usually TAB), BACKWARD for its "previous" key (usually SHIFT-TAB), null for any other key.
      * Wrapper components ask their inner manager. Not yet used by the focus routing (focus redesign).
@@ -177,10 +188,11 @@ public interface FocusManager extends Focusable {
          *   GROUP  - first field when moving forward, last field when moving backward
          *   WIDGET - the child it had last time (else the first)
          *   TRAP   - like GROUP
-         * Returns null if nothing in here can take focus (empty / all disabled) - skip this container.
+         * Returns null if nothing in here can take focus (empty / all disabled / not a TAB stop) -
+         * skip this container.
          */
         public static Focusable enter(FocusManager container, FocusDirection dir) {
-            if (!container.isEnabled()) {
+            if (!container.isEnabled() || !container.isTabStop()) {
                 return null;
             }
             List<Focusable> children = new ArrayList<Focusable>(container.getChildFocusables());

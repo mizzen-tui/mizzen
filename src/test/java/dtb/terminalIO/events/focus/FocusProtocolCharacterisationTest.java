@@ -173,10 +173,10 @@ public class FocusProtocolCharacterisationTest extends TestCase {
     }
 
     /**
-     * TODAY (known bug): a nested group as the root's only child dead-ends - the group has
-     * cycling off, the root needs >= 2 children to move, so focus sticks on the last leaf.
+     * A nested group as the root's only child wraps around. (Before the navigator it dead-ended:
+     * the group had cycling off and the root needed >= 2 children to move: A B B B.)
      */
-    public void testSingleNestedGroupUnderRoot_today_getsStuck() {
+    public void testSingleNestedGroupUnderRoot_wrapsAround() {
         Leaf a = new Leaf("A"), b = new Leaf("B");
         root(group("group", a, b));
         click(a);
@@ -184,7 +184,7 @@ public class FocusProtocolCharacterisationTest extends TestCase {
         StringBuilder seq = new StringBuilder(focused(a, b));
         for (int i = 0; i < 3; i++) { press(Keys.TAB_KEYSTROKE); seq.append(' ').append(focused(a, b)); }
 
-        assertEquals("A B B B", seq.toString());
+        assertEquals("A B A B", seq.toString());
     }
 
     // ------------------------------------------------------------------ non-key event delivery

@@ -21,6 +21,7 @@ import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
+import dtb.terminalIO.events.focus.FocusPolicy;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.RequestFocusEvent;
 import dtb.terminalIO.events.focus.ToFocusable;
@@ -97,8 +98,10 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
 
         this.listBox.setBorder(true);
 
+        // WIDGET: one TAB stop; UP / DOWN are its own keys (they also open the list)
         DefaultFocusManager fm = new DefaultFocusManager(Keys.UP_KEYSTROKE, Keys.DOWN_KEYSTROKE).setNavKeysFirst(false)
-                                                                                                .setCycling(false);
+                                                                                                .setCycling(false)
+                                                                                                .setFocusPolicy(FocusPolicy.WIDGET);
         this.setName("DropdownListBox");
         fm.setNameFromOwner(this);
         this.setFocusManager( fm );

@@ -284,6 +284,8 @@ public class ScrollableComponent2  extends ComponentWithFocusManager<ScrollableC
             return ;
         }
         footerControls = new ButtonBar(borderColor, HasName.UTIL.getName(this)+".buttonBar");
+        // scroll buttons are for the mouse (their keys work as hot keys) - not TAB stops
+        footerControls.setTabStop(false);
         footerControls.addButton("^",    Keys.UP_KEYSTROKE,    (te) -> emitViewOffsetChangedOnOperation(te,()-> ScrollableComponent2.this.up(1)));
         footerControls.addButton("v",    Keys.DOWN_KEYSTROKE,  (te) -> emitViewOffsetChangedOnOperation(te,()-> ScrollableComponent2.this.down(1)));
         footerControls.addButton("PgUp", Keys.PGUP_KEYSTROKE,  (te) -> emitViewOffsetChangedOnOperation(te,()-> ScrollableComponent2.this.pageup()));

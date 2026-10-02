@@ -48,6 +48,7 @@ public class DefaultFocusManager implements FocusManager,
     
     private FocusBehaviour meAsFocusable;
     private NAV_STYLE navKeysStyle = NAV_STYLE.NAVKEYS_LAST;
+    private boolean tabStop = true;    // false: TAB / SHIFT-TAB skip this container (see FocusManager.isTabStop)
     private FocusPolicy focusPolicy = FocusPolicy.GROUP;  // what kind of container (see FocusPolicy); not yet used by the focus routing
     private boolean cycling = true;   // true means cycle thru focus object
     private boolean cyclingInferred = true;  
@@ -133,6 +134,17 @@ public class DefaultFocusManager implements FocusManager,
     public DefaultFocusManager setFocusPolicy(FocusPolicy focusPolicy) {
         this.focusPolicy = focusPolicy;
         return this;
+    }
+
+    /** false: TAB / SHIFT-TAB skip this container and everything in it; clicks and hot keys still work */
+    public DefaultFocusManager setTabStop(boolean tabStop) {
+        this.tabStop = tabStop;
+        return this;
+    }
+
+    @Override
+    public boolean isTabStop() {
+        return tabStop;
     }
 
     @Override
@@ -291,11 +303,32 @@ public class DefaultFocusManager implements FocusManager,
     
     @Override
     public void handle(TerminalEvent<?> te) {
+        FocusNavigator.Decision navigation = rootNavigation(te);
+        if (navigation != null) {
+            FocusNavigator.act(this, navigation, (KeyEvent) te);
+            return;
+        }
         getEventHandler().handle(te);
+    }
+
+    /**
+     * Keyboard navigation (TAB / SHIFT-TAB ...) is decided by the ROOT focus manager (no parent)
+     * using the containers' enter / advance answers - see FocusNavigator. Returns null when this
+     * is not the root, the event is not a key, or the key is not navigation: then the event goes
+     * through the routing below as before.
+     */
+    private FocusNavigator.Decision rootNavigation(TerminalEvent<?> te) {
+        if (parentFocusManager != null || !(te instanceof KeyEvent)) {
+            return null;
+        }
+        return FocusNavigator.decide(this, (KeyEvent) te);
     }
 
     @Override
     public EventHandler canHandle(TerminalEvent<?> te) {
+        if (rootNavigation(te) != null) {
+            return this;
+        }
         ConditionalEventHandler evtHandler = getEventHandler();
         if (te.getType() == TerminalEvent.TYPE.KEYPRESS) {
             if (evtHandler.canHandle(te) == null) {

@@ -109,28 +109,28 @@ public class FocusCharacterisationTest extends TestCase {
     }
 
     /**
-     * TODAY (known bug, docs/ARCHITECTURE.md §4.1): re-entering the nested group resumes its
-     * remembered child, so after the first lap B is skipped. Correct order would be A B C D A B C D.
+     * TAB visits every field on every lap. (Before the focus redesign's navigator, re-entering the
+     * nested group resumed its remembered child, so B was skipped after the first lap: A B C D A C D.)
      */
-    public void testNestedGroupTabOrder_today_skipsBAfterFirstLap() {
+    public void testNestedGroupTabOrder_visitsEveryFieldEveryLap() {
         TextInput a = field("A"), b = field("B"), c = field("C"), d = field("D");
         CompositeWithFocusManager root = nestedLayout(a, b, c, d);
 
         click(root, a);
-        assertEquals("A B C D A C D A C D",
+        assertEquals("A B C D A B C D A B",
                      traverse(root, Keys.TAB_KEYSTROKE, 9, a, b, c, d));
     }
 
     /**
-     * TODAY (known bug): SHIFT-TAB into the group also resumes the remembered child,
-     * so C is never reached. Correct order would be A D C B A D C B.
+     * SHIFT-TAB enters the group at its last field. (Before the navigator it resumed the
+     * remembered child, so C was never reached: A D B A D B.)
      */
-    public void testNestedGroupShiftTabOrder_today_skipsC() {
+    public void testNestedGroupShiftTabOrder_entersGroupAtLastField() {
         TextInput a = field("A"), b = field("B"), c = field("C"), d = field("D");
         CompositeWithFocusManager root = nestedLayout(a, b, c, d);
 
         click(root, a);
-        assertEquals("A D B A D B A",
+        assertEquals("A D C B A D C",
                      traverse(root, Keys.SHIFT_TAB_KEYSTROKE, 6, a, b, c, d));
     }
 

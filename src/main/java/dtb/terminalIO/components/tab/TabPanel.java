@@ -18,6 +18,7 @@ import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyEvent;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.focus.FocusManager;
+import dtb.terminalIO.events.focus.FocusPolicy;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.ToFocusable;
 import dtb.terminalIO.events.keyboard.KeyStroke;
@@ -62,7 +63,8 @@ public class TabPanel extends AbstractComponentWrappper<CompositeWithFocusManage
 
         // tab strip: arrows move between tabs (wrapping) and show them, focus stays on the strip;
         // TAB leaves the strip into the tab's content. Using TAB here made the strip a focus trap.
-        tabsButtonBar = new ButtonBar().setCycling(true).setNoBorderChars()
+        // WIDGET: the strip is one TAB stop that remembers the active tab
+        tabsButtonBar = new ButtonBar().setCycling(true).setNoBorderChars().setFocusPolicy(FocusPolicy.WIDGET)
                                        .setPrevKeyStroke(Keys.LEFT_KEYSTROKE)
                                        .setNextKeyStroke(Keys.RIGHT_KEYSTROKE);
 
