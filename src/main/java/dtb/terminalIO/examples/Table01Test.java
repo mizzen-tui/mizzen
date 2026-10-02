@@ -77,7 +77,6 @@ public class Table01Test {
                                                                            "Untenable Option-3"}));
                 mainViewPanel.add(vs);
 
-                tApp.rebuildFocusManager();
                 
                 tApp.setOnResizeAction((ta, newSize)->{
                     defaultResizeAction.accept(ta, newSize);
@@ -115,7 +114,6 @@ public class Table01Test {
                     hs.resize(hsDim);
                 });
 
-                tApp.rebuildFocusManager();
             };
 
             rockerButton.onChange((te)->{

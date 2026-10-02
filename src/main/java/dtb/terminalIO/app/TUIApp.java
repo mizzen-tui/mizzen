@@ -527,6 +527,11 @@ public class TUIApp implements ComponentFinder {
         return getApplicationFocusManager(false || this.inOnReadyStartAction);
     }
 
+    /**
+     * @deprecated not needed any more: focus managers work out their children from the components
+     * whenever they need them (focus redesign step 7c).
+     */
+    @Deprecated
     public void rebuildFocusManager() {
         getApplicationFocusManager(true, verifyFocusables); 
     }

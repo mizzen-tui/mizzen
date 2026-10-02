@@ -384,18 +384,12 @@ public class DefaultFocusManager implements FocusManager,
             FocusNavigator.Decision navigation = navigationDecisionFor(te);
             if (navigation != null) {
                 FocusNavigator.act(this, navigation, (KeyEvent) te);
-                if (FocusShadowCheck.ENABLED && parentFocusManager == null) {
-                    FocusShadowCheck.check(this);   // TEMPORARY - focus redesign step 7a
-                }
                 return;
             }
         }
         // 2. everything else: this manager's routing chain - focus requests (clicks), then the current
         //    child / hot keys / other children, then the custom extra handler
         getEventHandler().handle(te);
-        if (FocusShadowCheck.ENABLED && parentFocusManager == null) {
-            FocusShadowCheck.check(this);   // TEMPORARY - focus redesign step 7a
-        }
     }
 
     @Override

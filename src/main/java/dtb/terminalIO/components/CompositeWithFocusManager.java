@@ -46,6 +46,12 @@ public class CompositeWithFocusManager  extends Composite implements FocusManage
         return this;
     }
 
+    /**
+     * @deprecated not needed any more: a focus manager works out its children from the components
+     * whenever it needs them (focus redesign step 7c), so adding / removing / hiding components
+     * anywhere is picked up without a rebuild.
+     */
+    @Deprecated
     public void rebuildFocusManager() {
         if (focusManager == null) {
             getFocusManager(); // this will build it

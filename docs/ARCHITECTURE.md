@@ -280,7 +280,8 @@ Causes:
 
 ### 4.2 Structural causes
 
-- **Two trees kept in sync by hand.** The component tree (layout, hit-testing,
+- **Two trees kept in sync by hand** *(fixed - step 7c: the focus tree is now worked out from the
+  component tree whenever it is needed, see §4.3 C)*. The component tree (layout, hit-testing,
   clicks) and the focus tree (keyboard) are separate structures. The focus tree
   is a snapshot taken when children are added (§3.2). Any drift produces
   unreachable focusables (verify throws) or clicks that silently do nothing (§2.3).
@@ -397,14 +398,25 @@ Terms used below:
 1. `canHandle`/`handle` remain the generic contract for **every** event type.
 2. Keep today's path and order: from the root down through the focus managers, focused path
    first, then the first other child that claims it *(step 6: first claimer everywhere)*.
-   Still to do: focus managers discovered on demand.
+   Focus managers are discovered on demand *(done - step 7c)*.
 3. **No "targeted" delivery straight to the event's source.** Ancestors listen to their
    children's events: `FormBinder.onChange` registers on the *form panel*, an ancestor of the
    inputs, so skipping ancestors would break form-level change handling.
 
-**C. Shared: on-demand discovery.** Neither job keeps a stored list; both walk the
-component tree when needed (nav keys, clicks, drag start/end, broadcasts). Nothing goes
-stale, and `rebuildFocusManager()` calls become unnecessary.
+**C. Shared: on-demand discovery.** *(done - steps 7a-7d)* Neither job keeps a stored list; both
+walk the component tree when needed (nav keys, clicks, drag start/end, broadcasts). Nothing goes
+stale, and `rebuildFocusManager()` / `registerAllFocusables()` are deprecated (no longer needed).
+- A focus manager's **children** are the nearest visible focusables under its component
+  (`FocusManager.UTIL.derivedChildFocusables`); a focusable's **parent** is found by climbing the
+  component tree to the nearest focus manager (`FocusManager.UTIL.parentOf`, using
+  `Focusable.getFocusComponent` to get from a helper object to its component). Hidden components
+  are skipped; a removed one climbs to nowhere.
+- **Popups** (a dropdown's open list, menus) are drawn on the root panel - never clipped by their
+  container, never growing it - but `Component.getPopupOwner` makes them part of their owner for
+  focus: they are left out where they are drawn and listed right after their owner.
+- A **focus manager built by hand** (no component behind it) keeps the list it was given with
+  `addFocusable`; nothing is enforced.
+- No caching: a full walk of a 1,000-input screen measured ~42 microseconds.
 
 **D. Migration.** The engine (A and B) switches in one commit; components migrate
 gradually, because leaves inherit defaults and most managers extend three base classes. Order:
@@ -576,15 +588,22 @@ that a plain container can declare. Do this class by class, not in the engine co
 | `controlcodes/ControlCode.java` | several `DISABLE_*` mouse codes have an extra digit (`[?10021l` should be `[?1002l`, etc.) |
 | `components/ButtonBar.java:77-80` | **fixed (Sep 2026):** `setNextKeyStroke` called `setPrevKeyStroke`, so "next" stayed TAB and the prev key was overwritten (e.g. `TabPanelTest`'s Ctrl-Left/Ctrl-Right never worked) |
 | `components/tab/TabPanel.java` | **fixed (Sep 2026):** tab strip navigated with TAB + `setCycling(true)` (a focus trap), and activating a tab always moved focus into its content, so strip navigation stopped after one step. Now: on the strip, Left/Right (wrapping) show tabs and focus **stays on the strip**; TAB goes strip → content → `<-` `->`; click, tab hot key and the prev/next shortcuts (`setPrevKeyStroke`/`setNextKeyStroke`) show the tab **and** focus its content. The shortcuts work from anywhere inside the panel but sit last in its chain (`customExtendedEventHandler`), so the content gets the key first |
-| `components/input/DropdownListBox.java` | **fixed, interim (Sep 2026):** the open list is attached to the root panel, i.e. at the *end* of the root's focus order, not inside the dropdown. TAB from the list wrapped to the first focusable, and re-entry then resumed the dropdown: a loop (dropdown ↔ first focusable), so nothing after a dropdown was reachable by TAB (e.g. a form's Save button). SHIFT-TAB went to the root's last focusable. Now TAB/SHIFT-TAB in the list hand focus back to the dropdown and re-raise the key. Proper rule for the redesign: **a popup belongs to its owner for navigation** |
+| `components/input/DropdownListBox.java` | **fixed (step 7c):** the open list is drawn on the root panel (never clipped, never grows its container) but counts as part of the dropdown for focus (`Component.getPopupOwner`). The interim TAB re-raise hack is gone. |
 | `components/input/DropdownListBox.java` | **fixed (Oct 2026):** clicking elsewhere while the list was open left it open. The dropdown already got its `unFocus` when focus moved into the list, so a later focus move only unfocused the list. In windowed apps the list then hid *behind* the window (bring-to-front re-send) but stayed open and in the tab order. Now `ListBox.onUnFocus` (new protected hook) lets the dropdown close the list once the move has finished, if neither the list nor the dropdown has focus |
-| `components/input/DropdownListBox.java` | Enter/Esc in the list commit the selection and return keys to the dropdown, but the list stays **open** until focus moves elsewhere (`hideListBox()` commented out in `onSelectedItemHandler`). Esc commits instead of cancelling |
+| `components/input/DropdownListBox.java` | **changed (step 7c):** ENTER / Esc in the list commit the selection and close it, focus back on the dropdown. |
 | `components/modal/ModalEventHandler.java` | modal dialogs only trap **keys**; mouse clicks behind the dialog still go through and move focus out of it (seen in `ImageSplitterTest`'s Options dialog). Owner note: modals are also hard to create. Both for later |
 | focus flags (distributed state) | **observed (Oct 2026):** two components reporting `hasFocus()==true` at once. In `ImageSplitterTest`, after clicking from a dropdown's open list (inside the Options dialog) onto the image, the dropdown's button still had `hasFocus()==true` while the viewer had focus. Concrete evidence for a single focus owner (§4.3 A). `DropdownListBox` now asks the root focus manager instead of trusting flags |
 | `events/focus/FocusManager.java` (`buildRequestFocusEventHandler`) | **keep (Oct 2026):** each click re-sends `setFocus(true)` down the currently focused chain before moving focus. Looks redundant but re-asserts hilite / bring-to-front of ancestors that stay focused; see §4.4 |
 | `events/focus/DefaultFocusManager.java` (`getCurrentOrSet`) | **fixed (step 3):** a container with no current child picked child 0 and focused it - on the first click, and whenever its current child had been removed (e.g. a dropdown's list closing), for **any** event reaching it. In `ImageSplitterTest` that brought the wrong window to front. Now clicks / TAB go through `moveFocus` (records the path first), and non-key events never pick a child. Key events in the old routing still may |
-| `components/scroll/ScrollableComponent.java` (old, used by `TextBoxTest`'s tree view) | handles focus its own non-standard way; e.g. SHIFT-TAB out of it into a GROUP lands on that group's first field instead of its last. Candidate for the ScrollableComponent consolidation (§4.7), not worth fixing on its own |
+| `components/scroll/ScrollableComponent.java` (old) | its users moved to `ScrollableComponent2` (Oct 2026); the class is kept but unused, apart from its own unit test. Its focus wiring is incomplete (no parent links), so do not use it. |
 
+| drawing: leftover after a popup closes | **open (Oct 2026), old - seen on master too.** Closing a dropdown's list (Esc; since step 7c also ENTER) leaves its **bottom border row** on screen when that row lies outside the panel the dropdown sits in (e.g. `DropdownListBoxInButtonBarTest`: `└───┘` stays on row 9). Ruled out: the dirty flag (the root panel is marked dirty by `Composite.remove`), panel size (`boundsFixed`), the panel's new picture (no border pieces in it), the canvas picture (`clearAndMerge` takes the panel's picture), `Canvas.refresh` / `outputRow` (blanks empty rows and gaps), partial redraws (TUIApp redraws the whole main panel), and the changed-only screen update comparing segments loosely (`SegmentComparator` includes the text). **Next step:** dump the screen backend's `current` vs `previous` segment sets for that row in the frame after the close. **Proposed fix:** when a child is removed from a `Composite`, remember the area it covered and paint that area with the panel's empty char on the next render (repaint where things *were*, not only where things *are*); stop-gap: force one full (not changed-only) screen update after a popup closes. |
+| `components/input/RockerButton.java` | **open (Oct 2026), old:** toggling leaves both its ON and OFF parts claiming focus (two bracketed parts on screen). The toggle requests focus for the new part like a click, but the old part keeps its flag. |
+| `components/scroll/ScrollableComponent2.java` | **open, old:** the footer buttons' hot keys (DOWN = `v`, RIGHT = `»` ...) fire whenever focus is inside the pane and nothing takes the key first, moving focus to the (non-TAB-stop) footer button. |
+| `components/input/DropdownListBox.java` (`calcAndSetMaxItemWidth`) | **open, old:** an empty item list crashes (`Optional.get()` on the max width). One-line fix: `.orElse(0)`. |
+| `util/PackageScanner` | **open, old:** does not look inside jars, so `DropdownListBoxSimpleTest` only works from `target/classes`. |
+| `examples/StdoutViewerTest.java` | **open, old:** "MVN Content" reads a hard-coded `/home/dbalme/workspace/LabManager/mvnOutput.txt` (wrong folder) and prints the stack trace onto the screen. |
+| `components/scroll/ScrollableComponent2.java` | `setBorder(boolean)` (and other inherited `ComponentWithFocusManager` border methods except the overridden title / border colour) still act on the invisible outer box. Goes away with the base-class simplification (§4.7). |
 ---
 
 ## 6. Characterisation tests (focus safety net)
@@ -602,6 +621,10 @@ expected to fail when the redesign fixes them.
 | `components/input/form/FormChangeCharacterisationTest` | typing -> data -> field `onChange` -> form `onChange` through the form panel |
 | `components/input/DropdownListBoxCharacterisationTest` | open on focus, hand-off into the list, TAB / SHIFT-TAB / ENTER in the list, click elsewhere closes, DOWN opens a closed list, arrows at the ends |
 | `components/modal/MessageBoxFocusCharacterisationTest` | TAB / SHIFT-TAB inside a real modal dialog (TRAP: wraps, never leaves); the field focused before keeps its flag (TODAY) |
+| `components/DynamicStructureCharacterisationTest` | fields added / removed / hidden after the screen is built, inside nested panels - no rebuild calls |
+| `components/input/DropdownPopupCharacterisationTest` | the dropdown's list as a popup: drawn on the root panel, container keeps its size, TAB carries on after the dropdown, keys reach it inside a dialog |
+| `components/menu/MenuFocusCharacterisationTest` | menus: open, DOWN / RIGHT / ENTER / ESC / TAB / SHIFT-TAB inside, focus back on the button, click elsewhere |
+| `components/HotKeyCharacterisationTest` | hot keys reach other components (typed as new KeyStrokes), incl. a wrapper's hot key (RockerButton) |
 | `events/focus/WidgetNavigationTest` | a widget's own keys: own handler before moving focus, STAY at the end, wrap when set to cycle, TAB leaves |
 | `components/tab/TabPanelCharacterisationTest` | click / arrows / TAB / shortcuts |
 | `components/modal/ModalEventHandlerCharacterisationTest` | modal key sinkhole |

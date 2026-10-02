@@ -304,7 +304,6 @@ public class TestCube {
             chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
             setCustomExtendedEventHandler(chainedEventHandler.asConditionalEventHandler());
 
-            registerAllFocusables();
 
         }
 
@@ -379,7 +378,6 @@ public class TestCube {
             chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
             setCustomExtendedEventHandler(chainedEventHandler.asConditionalEventHandler());
 
-            registerAllFocusables();
         }
 
         public void refreshFromProjection() {
@@ -462,7 +460,6 @@ public class TestCube {
             chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
             setCustomExtendedEventHandler(chainedEventHandler.asConditionalEventHandler());
 
-            registerAllFocusables();
 
         }
 

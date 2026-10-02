@@ -243,7 +243,6 @@ public class MessageBox {
 
         modalDialogEvents.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, noActionHandler ) );
 
-        dialog.rebuildFocusManager();
 
         modalDialogEvents.appendEventHandler(dialog);
 //        if (customComponent != null && customComponent instanceof ConditionalEventHandler) {
