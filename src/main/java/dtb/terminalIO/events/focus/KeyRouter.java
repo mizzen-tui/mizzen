@@ -1,11 +1,7 @@
 package dtb.terminalIO.events.focus;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.events.ConditionalEventHandler;
-import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.keyboard.AsKeyboardHandler;
 import dtb.terminalIO.events.keyboard.KeyboardHandler;
 import dtb.terminalIO.events.keyboard.KeyEvent;
@@ -16,21 +12,15 @@ import dtb.terminalIO.events.keyboard.KeyStroke;
  * dialog's (TRAP), which gets keys first. The root hands it every key (DefaultFocusManager).
  *
  * A key goes to the focused component first, then up through the components around it, until
- * someone uses it ("bubbling"). Two exceptions come first:
- *   - a navigation key (one a focus manager around the focused component uses to move focus: TAB,
- *     a widget's arrows) is offered by bubbling alone first; only if nobody uses it on the way up
- *     does it go the ordinary way below
- *   - an ordinary key is first offered to the focus managers' "before children" handlers, outermost
- *     first ("capture" - see FocusManager.getEventHandlerBeforeChildren). Example: a dropdown's
- *     ENTER ("close my list") beats the open list's own ENTER.
- * At each focus manager on the way up (a panel of fields, a widget such as a dropdown, the root)
- * the order is:
- *   1. the focus manager's component, if it handles keys itself (KeyboardHandler)
+ * someone uses it ("bubbling"). At each focus manager on the way up (a panel of fields, a widget
+ * such as a dropdown, the root) the order is:
+ *   1. the focus manager's component, if it handles keys (KeyboardHandler, or one it hands out -
+ *      AsKeyboardHandler; e.g. a dropdown's "DOWN opens my list", or a wrapper's appended handlers)
  *   2. a hot key of one of its other children (e.g. F2 on a button next to the focused field)
- *   3. its own handlers (e.g. a dropdown's "DOWN opens my list")
+ *   3. the focus manager's custom handler (DefaultFocusManager.setCustomExtendedEventHandler)
  *   4. its navigation keys: move focus (advance) - MOVED: focus moves; STAY: focus stays (key used);
  *      DONE: no further child in it, so go on to the next focus manager out
- * Components between two focus managers that handle keys themselves are asked on the way up too.
+ * Components between two focus managers that handle keys are asked on the way up too.
  * The walk ends at the root; if nobody used the key, the root doesn't take it.
  *
  * Example: form [name, dropdown(button, list)], focus on the dropdown's button, DOWN pressed:
@@ -67,13 +57,7 @@ final class KeyRouter {
     static Outcome route(FocusManager root, KeyEvent ke, boolean deliver) {
         Focusable focused = FocusManager.UTIL.findCurrentFocus(root);
         if (isFocusedComponent(focused, root)) {
-            if (isNavigationKeyAround(focused, root, ke.getKeyStroke()) && walk(root, focused, true, ke, deliver)) {
-                return Outcome.HANDLED;
-            }
-            if (offerBeforeChildren(root, focused, ke, deliver) || walk(root, focused, true, ke, deliver)) {
-                return Outcome.HANDLED;
-            }
-            return Outcome.NOT_WANTED;
+            return walk(root, focused, true, ke, deliver) ? Outcome.HANDLED : Outcome.NOT_WANTED;
         }
         // nothing has focus: navigation keys carry on from the most recently focused component that is still there ...
         Focusable lastPlace = recentlyFocusedStillInside(root);
@@ -128,29 +112,6 @@ final class KeyRouter {
         return false;
     }
 
-    /**
-     * The "before children" handlers of the focus managers around focused (up to root), outermost
-     * first - see the class comment. Returns true if one used the key.
-     */
-    private static boolean offerBeforeChildren(FocusManager root, Focusable focused, KeyEvent ke, boolean deliver) {
-        List<FocusManager> outermostFirst = new ArrayList<FocusManager>();
-        for (FocusManager focusManager = FocusManager.UTIL.parentOf(focused); focusManager != null;
-                          focusManager = nextOut(focusManager, root)) {
-            outermostFirst.add(0, focusManager);
-        }
-        for (FocusManager focusManager : outermostFirst) {
-            ConditionalEventHandler before = ownerOf(focusManager).getEventHandlerBeforeChildren();
-            EventHandler wantsKey = before != null ? before.canHandle(ke) : null;
-            if (wantsKey != null) {
-                if (deliver) {
-                    wantsKey.handle(ke);
-                }
-                return true;
-            }
-        }
-        return false;
-    }
-
     /** the focused component: its onKey (if it handles keys itself), then its focusable's handler */
     private static boolean offerToFocused(Focusable focused, Component<?> component, KeyEvent ke, boolean deliver) {
         if (offerToKeyHandler(component, ke, deliver)) {
@@ -168,29 +129,25 @@ final class KeyRouter {
     /** steps 1 - 4 of the class comment for one focus manager on the way up */
     private static boolean offerToFocusManager(FocusManager root, FocusManager focusManager, Focusable from,
                                                KeyEvent ke, boolean deliver) {
-        // 1. its component handles keys itself
+        // 1. its component handles keys
         if (offerToKeyHandler(focusManager.getFocusComponent(), ke, deliver)) {
             return true;
         }
 
-        // 2. a hot key of one of its other children
         DefaultFocusManager[] manager = { null };
         DefaultFocusManager.applyIfDefaultFocusManager(focusManager, m -> manager[0] = m);
         if (manager[0] != null) {
+            // 2. a hot key of one of its other children
             boolean hotKey = deliver ? manager[0].handleHotKey(ke) : manager[0].hotKeyChildFor(ke) != null;
             if (hotKey) {
                 return true;
             }
-        }
-
-        // 3. its own handlers
-        ConditionalEventHandler own = ownEventHandlerOf(focusManager);
-        EventHandler wantsKey = own != null ? own.canHandle(ke) : null;
-        if (wantsKey != null) {
-            if (deliver) {
-                wantsKey.handle(ke);
+            // 3. its custom handler
+            ConditionalEventHandler customHandler = manager[0].getCustomExtendedEventHandler();
+            KeyboardHandler custom = customHandler != null ? AsKeyboardHandler.UTIL.toKeyboardHandler(customHandler) : null;
+            if (custom != null && (deliver ? custom.onKey(ke) : custom.wantsKey(ke))) {
+                return true;
             }
-            return true;
         }
 
         // 4. its navigation keys
@@ -269,19 +226,5 @@ final class KeyRouter {
             }
         }
         return null;
-    }
-
-    /**
-     * A focus manager's own handlers. A wrapper component's inner manager is asked through the
-     * wrapper, which knows both its own handlers and the manager's (see ComponentWithFocusManager).
-     */
-    private static ConditionalEventHandler ownEventHandlerOf(FocusManager focusManager) {
-        return ownerOf(focusManager).getOwnEventHandler();
-    }
-
-    /** the wrapper component a DefaultFocusManager works for (if any), else focusManager itself */
-    private static FocusManager ownerOf(FocusManager focusManager) {
-        return focusManager instanceof DefaultFocusManager
-             ? ((DefaultFocusManager) focusManager).meOrActual() : focusManager;
     }
 }

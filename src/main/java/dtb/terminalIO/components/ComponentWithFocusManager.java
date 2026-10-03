@@ -18,6 +18,8 @@ import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.FocusManagerProvider;
 import dtb.terminalIO.events.focus.FocusPolicy;
 import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.keyboard.AsKeyboardHandler;
+import dtb.terminalIO.events.keyboard.KeyboardHandler;
 import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
@@ -38,13 +40,13 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
                                 FocusManager,
                                 GetComponentAtOffset,
                                 EventHandlerContainer,
-                                FocusManagerProvider {
+                                FocusManagerProvider,
+                                AsKeyboardHandler {
 
     private Composite container;
     private FocusManager focusManager;
     private ChainedEventHandler chainedEventHandler;
     private ConditionalEventHandler chainedEventHandlerAsConditionalEventHandler;
-    private ConditionalEventHandler ownEventHandler;     // see getOwnEventHandler
 
     private Function<EventBus, FocusManager> focusManagerBuilder;
 
@@ -264,45 +266,15 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
     }
 
     /**
-     * This component's own extra handlers (added with appendEventHandler / prependEventHandler),
-     * then its focus manager's - see FocusManager.getOwnEventHandler.
-     * Example: DropdownListBox's "UP / DOWN open my list".
-     * Always the same instance (safe to add to / remove from a chain); it looks up both sets of
-     * handlers each time it is asked, so handlers appended later, or a new focus manager, count too.
+     * Keys for this component: its own handlers (added with appendEventHandler / prependEventHandler),
+     * offered a key on its way up from the focused component inside it (see KeyRouter).
+     * null if it has none. Example: ScrollableComponent's "key typed on a footer button goes to the
+     * content". A subclass that implements KeyboardHandler (onKey) is asked that instead.
      */
     @Override
-    public ConditionalEventHandler getOwnEventHandler() {
-        if (ownEventHandler == null) {
-            ownEventHandler = new ConditionalEventHandler() {
-                @Override
-                public EventHandler canHandle(TerminalEvent<?> te) {
-                    ConditionalEventHandler mine = chainedEventHandlerAsConditionalEventHandler;
-                    EventHandler handler = mine != null ? mine.canHandle(te) : null;
-                    if (handler != null) {
-                        return handler;
-                    }
-                    ConditionalEventHandler managers = focusManager != null ? focusManager.getOwnEventHandler() : null;
-                    return managers != null ? managers.canHandle(te) : null;
-                }
-                @Override
-                public void handle(TerminalEvent<?> te) {
-                    EventHandler handler = canHandle(te);
-                    if (handler != null) {
-                        handler.handle(te);
-                    }
-                }
-            };
-        }
-        return ownEventHandler;
-    }
-
-    /**
-     * This component's own handlers (added with appendEventHandler / prependEventHandler) see a key
-     * before the focused component inside it - see handle (and KeyRouter, which delivers keys).
-     */
-    @Override
-    public ConditionalEventHandler getEventHandlerBeforeChildren() {
-        return chainedEventHandlerAsConditionalEventHandler;
+    public KeyboardHandler asKeyboardHandler() {
+        ConditionalEventHandler mine = chainedEventHandlerAsConditionalEventHandler;
+        return mine != null ? AsKeyboardHandler.UTIL.toKeyboardHandler(mine) : null;
     }
 
     @Override

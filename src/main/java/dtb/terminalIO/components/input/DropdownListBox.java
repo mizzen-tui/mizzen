@@ -25,8 +25,9 @@ import dtb.terminalIO.events.focus.FocusPolicy;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.RequestFocusEvent;
 import dtb.terminalIO.events.focus.ToFocusable;
+import dtb.terminalIO.events.keyboard.KeyEvent;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
-import dtb.terminalIO.events.keyboard.KeyStroke;
+import dtb.terminalIO.events.keyboard.KeyboardHandler;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.events.mouse.Clickable;
 import dtb.terminalIO.geom.Dimension;
@@ -37,7 +38,8 @@ import dtb.terminalIO.util.StringUtils;
 
 public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBox<T>>  
                                 implements SettableHasValueComponentMixen<DropdownListBox<T>,T> , 
-                                           Clickable {
+                                           Clickable,
+                                           KeyboardHandler {
 
     private ListBox<T> listBox;
     private ScrollableComponent listBoxScrollPane;
@@ -49,6 +51,8 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
     // true while focus is being handed back from the open list to this dropdown
     // (item selected, ENTER/ESC, TAB/SHIFT-TAB) - receiving that focus must not reopen the list
     boolean returningFocusFromListBox = false;
+    // ENTER / ESC / mouse pick: keep the selection, focus back to the button, close the list (see constructor)
+    private final EventHandler onSelectedItemHandler;
 
     protected DropdownListBox(Color color) {
         super(color, new VerticalPanel(color).setName("vertical-Panel-ddlb"));
@@ -60,7 +64,7 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
         // ENTER / ESC / mouse pick in the open list: keep the selection, give focus back to the button,
         // then close the list. (Left open, the list sat behind this dropdown's panel - brought to front
         // when focus came back - with only its bottom border row showing below the panel.)
-        EventHandler onSelectedItemHandler = (te) -> {
+        onSelectedItemHandler = (te) -> {
             EventBus eventBus = te.getEventBus();
             setSelectedFromListBox(eventBus);
             returningFocusFromListBox = true;
@@ -120,23 +124,13 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
             RequestUpdateCanvasEvent.invoke(te, this);
         });
 
-        appendEventHandler( new KeyInputEventHandler(Keys.ENTER_KEYSTROKE, onSelectedItemHandler).setName("DDLB-LISTBOX:"+Keys.ENTER_KEYSTROKE));
-
-        appendEventHandler( new KeyInputEventHandler(Keys.ESC_KEYSTROKE, onSelectedItemHandler).setName("DDLB-LISTBOX:"+Keys.ESC_KEYSTROKE));
-        
-        this.listBox.appendEventHandler(new KeyInputEventHandler(Keys.ENTER_KEYSTROKE, onSelectedItemHandler).setName("DDLB-LISTBOX-ENTER"));
-        this.listBox.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, onSelectedItemHandler).setName("DDLB-LISTBOX-ESC"));
-        // TAB / SHIFT-TAB in the open list need nothing here: the list is part of this dropdown for
-        // focus (Component.getPopupOwner), so they move on from the dropdown, and the list closes
-        // when focus leaves it (onUnFocus)
-
-
-        appendEventHandler( new KeyInputEventHandler(new KeyStroke[] {Keys.UP_KEYSTROKE, Keys.DOWN_KEYSTROKE},
-                                                     (te)-> ! listBoxVisible(),
-                                                     (te)-> { 
-                                                        showListBox(); 
-                                                        RequestUpdateCanvasEvent.invoke(te, this);
-                                                     }));
+        // ENTER on the button or in the list keeps the selection and closes the list - before their
+        // own ENTER (the button's would open the list, the list's only raises "value changed").
+        // ESC and the arrows: see onKey. TAB / SHIFT-TAB in the open list need nothing here: the list
+        // is part of this dropdown for focus (Component.getPopupOwner), so they move on from the
+        // dropdown, and the list closes when focus leaves it (onUnFocus)
+        this.button.prependEventHandler(new KeyInputEventHandler(Keys.ENTER_KEYSTROKE, onSelectedItemHandler).setName("DDLB-BUTTON-ENTER"));
+        this.listBox.prependEventHandler(new KeyInputEventHandler(Keys.ENTER_KEYSTROKE, onSelectedItemHandler).setName("DDLB-LISTBOX-ENTER"));
 
         this.preferredRectangleForLayout = new Rectangle.AbstractDelegate() {
             @Override
@@ -155,6 +149,33 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
 
     public DropdownListBox() {
         this(Colors.FGBGColors.NO_COLOR_SPECIFIED);
+    }
+
+    /**
+     * Keys the button or the open list didn't use: ESC keeps the selection and closes the list
+     * (focus back on the button); UP / DOWN while the list is closed open it.
+     */
+    @Override
+    public boolean onKey(KeyEvent ke) {
+        if (ke.isKeyStroke(Keys.ESC_KEYSTROKE)) {
+            onSelectedItemHandler.handle(ke);
+            return true;
+        }
+        if (opensList(ke)) {
+            showListBox();
+            RequestUpdateCanvasEvent.invoke(ke, this);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean wantsKey(KeyEvent ke) {
+        return ke.isKeyStroke(Keys.ESC_KEYSTROKE) || opensList(ke);
+    }
+
+    private boolean opensList(KeyEvent ke) {
+        return !listBoxVisible() && (ke.isKeyStroke(Keys.UP_KEYSTROKE) || ke.isKeyStroke(Keys.DOWN_KEYSTROKE));
     }
 
 

@@ -23,7 +23,7 @@ public enum FocusPolicy {
      * for every widget (the focused part first, then the widget's own handlers, then moving focus):
      *   1. setFocusPolicy(FocusPolicy.WIDGET)
      *   2. its nav keys, e.g. new DefaultFocusManager(Keys.UP_KEYSTROKE, Keys.DOWN_KEYSTROKE)
-     *   3. any handlers of its own for those keys, with appendEventHandler - e.g. "DOWN opens my list"
+     *   3. any keys of its own (KeyboardHandler.onKey, or appended handlers) - e.g. "DOWN opens my list"
      * Example: DropdownListBox.
      */
     WIDGET,

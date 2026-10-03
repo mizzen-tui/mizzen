@@ -22,7 +22,9 @@ import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.keyboard.AsKeyboardHandler;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
+import dtb.terminalIO.events.keyboard.KeyboardHandler;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
@@ -39,6 +41,7 @@ public class WindowFrameFocusable extends AbstractComponent<WindowFrameFocusable
                                                                            GetComponentAtOffset, 
                                                                            HasName<WindowFrameFocusable>, 
                                                                            FocusManager, 
+                                                                           AsKeyboardHandler,
                                                                            HasTitleAndBorder<WindowFrameFocusable> {
 
     private SimpleBorder border;
@@ -498,8 +501,8 @@ public class WindowFrameFocusable extends AbstractComponent<WindowFrameFocusable
     
     /** keys its children didn't use: scrolling, with the scrollbars' keys (see the constructor) */
     @Override
-    public ConditionalEventHandler getOwnEventHandler() {
-        return this.eventHandler;
+    public KeyboardHandler asKeyboardHandler() {
+        return AsKeyboardHandler.UTIL.toKeyboardHandler(this.eventHandler);
     }
 
     @Override

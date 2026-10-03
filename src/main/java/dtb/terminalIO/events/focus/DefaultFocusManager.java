@@ -87,12 +87,6 @@ public class DefaultFocusManager implements FocusManager,
         return customExtendedEventHandler;
     }
 
-    /** this manager's own extra handler (the custom extended one) - see FocusManager.getOwnEventHandler */
-    @Override
-    public ConditionalEventHandler getOwnEventHandler() {
-        return customExtendedEventHandler;
-    }
-
     /** see setCycling */
     @Override
     public boolean wrapsAround() {

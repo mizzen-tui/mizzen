@@ -88,27 +88,6 @@ public interface FocusManager extends Focusable {
     }
 
     /**
-     * The extra key handlers this focus manager's component registered for itself, on top of focus
-     * navigation - e.g. a dropdown's "DOWN opens my list". For a WIDGET, keyboard navigation offers
-     * its nav keys to these first, and only moves focus if they don't want the key.
-     * null = none. Wrapper components ask their inner manager (and add their own, see
-     * ComponentWithFocusManager).
-     */
-    default ConditionalEventHandler getOwnEventHandler() {
-        FocusManager delegate = UTIL.providedFocusManager(this);
-        return delegate != null ? delegate.getOwnEventHandler() : null;
-    }
-
-    /**
-     * Key handlers this focus manager's component wants to see a key with BEFORE the focused
-     * component inside it does. Example: a dropdown's ENTER / ESC ("close my list") must beat the
-     * open list's own ENTER. null = none (the default). See ComponentWithFocusManager and KeyRouter.
-     */
-    default ConditionalEventHandler getEventHandlerBeforeChildren() {
-        return null;
-    }
-
-    /**
      * For a WIDGET: does moving past its last child go back to its first (and before the first to
      * the last)? E.g. a tab strip: RIGHT on the last tab shows the first. false (default): focus
      * stays at the end. Wrapper components ask their inner manager.
