@@ -67,7 +67,7 @@ import dtb.terminalIO.util.ElapsedTime;
  * <li>  SparklineTest
  * <li>  BarChartTest
  * <li>  CharacterViewerTest
- * <li>  RockerButtonTest
+ * <li>  OnOffTogglesTest
  * <li>  TabPanelTest
  * 
  * etc

@@ -12,7 +12,7 @@ import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.chart.LineChart;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.composite.VerticalPanel;
-import dtb.terminalIO.components.input.RockerButton;
+import dtb.terminalIO.components.input.RadioGroup;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventHandler;
@@ -162,15 +162,14 @@ public class LineChartTest {
             }));
 
             seriesDemos.forEach((seriesDemo)->{
-                RockerButton seriesRockerButton = new RockerButton(seriesDemo.seriesColor, seriesDemo.name, seriesDemo.enabled);
+                RadioGroup<Boolean> seriesToggle = RadioGroup.onOff(seriesDemo.name, seriesDemo.enabled).setColor(seriesDemo.seriesColor);
                 if (seriesDemo.onKeyStroke != null) {
-                    seriesRockerButton.setHotKey(seriesDemo.onKeyStroke);
+                    seriesToggle.setHotKey(seriesDemo.onKeyStroke);
                 }
-                seriesRockerButton.onChange((te) -> {
-                    RockerButton currentRockerButton = (RockerButton) te.getSource();
-                    seriesDemo.enabled = currentRockerButton.getValue();
+                seriesToggle.onChange((te) -> {
+                    seriesDemo.enabled = seriesToggle.getValue();
                 });
-                menuButtonBar.addComponent(seriesRockerButton);
+                menuButtonBar.addComponent(seriesToggle);
                 menuButtonBar.addComponent(new TextComponent("   "));
             });
 

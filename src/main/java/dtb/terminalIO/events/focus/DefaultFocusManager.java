@@ -525,8 +525,8 @@ public class DefaultFocusManager implements FocusManager,
 
     /**
      * Is key the hot key of a component wrapped around child - one directly above it in the component
-     * tree, up to the next focusable one? Example: a RockerButton (hot key '3') is not focusable itself;
-     * its inner button bar is the child here, so the hot key sits on the wrapper above it.
+     * tree, up to the next focusable one? Example: a wrapper (AbstractComponentWrappper) with hot key '3'
+     * around a focusable button bar - the bar is the child here, the hot key sits on the wrapper above it.
      */
     private static boolean hotKeyOfWrapperAbove(Focusable child, KeyStroke key) {
         if (!(child instanceof Component)) {

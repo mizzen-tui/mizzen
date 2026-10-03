@@ -13,7 +13,7 @@ import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.frameset.HorizontalSplitter;
 import dtb.terminalIO.components.frameset.VerticalSplitter;
 import dtb.terminalIO.components.input.DropdownListBox;
-import dtb.terminalIO.components.input.RockerButton;
+import dtb.terminalIO.components.input.RadioGroup;
 import dtb.terminalIO.components.input.TextInput;
 import dtb.terminalIO.components.table.DefaultTableModel;
 import dtb.terminalIO.components.table.TableComponent;
@@ -31,12 +31,11 @@ public class Table01Test {
 
         new TUIApp(args).setDefaultMainApplicationPanel().setOnReadyStart((tApp) -> {
 
-            //  Color color, String label, String onText, String offText, boolean value
-            RockerButton rockerButton = new RockerButton(Colors.BIPur, "Splitter View", "Vertical", "Horizontal", true);
+            RadioGroup<Boolean> splitterView = RadioGroup.onOff("Splitter View", "Vertical", "Horizontal", true).setColor(Colors.BIPur);
             HorizontalPanel topBanner = new HorizontalPanel().setHorizontalSpacer(3);
 
             topBanner.t("Table Tester 01");
-            topBanner.add(rockerButton);
+            topBanner.add(splitterView);
 
             VerticalPanel mainViewPanel =  new VerticalPanel();
 
@@ -116,8 +115,8 @@ public class Table01Test {
 
             };
 
-            rockerButton.onChange((te)->{
-                if (rockerButton.getValue()) {
+            splitterView.onChange((te)->{
+                if (splitterView.getValue()) {
                     vsView.run();
                 } else {
                     hsView.run();

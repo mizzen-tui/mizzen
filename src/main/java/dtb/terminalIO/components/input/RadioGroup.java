@@ -39,7 +39,8 @@ import dtb.terminalIO.events.mouse.Clickable;
  * </pre>
  * One TAB stop: TAB lands on the chosen option; the arrow keys (UP / DOWN, or LEFT / RIGHT when
  * horizontal) move between the options and choose as they go, wrapping around; a click chooses.
- * A hot key (setHotKey) chooses the next option from anywhere - with two options, a toggle.
+ * A hot key (setHotKey) chooses the next option from anywhere - with two options, a toggle; it is
+ * shown in front of the label ("F2: Wifi").
  * <p/>
  * Options are given like ListBox / DropdownListBox items: each a DisplayableValue (its value and
  * the text shown), or plain strings. The group's value is the chosen option's value - settable
@@ -56,6 +57,7 @@ public class RadioGroup<V> extends AbstractComponentWrappper<Composite>
     private final List<Option> options = new ArrayList<Option>();
     private final ParentFocusBehaviour focus;
     private TextComponent label;                        // null: no label
+    private String labelText;
     private V value;
     private String chosenMarker;
     private String notChosenMarker;
@@ -163,15 +165,21 @@ public class RadioGroup<V> extends AbstractComponentWrappper<Composite>
         return setMarkers("(*)", "( )");
     }
 
-    /** text before the options, e.g. "Size" */
+    /** text before the options, e.g. "Size" - with the hot key in front if there is one ("F2: Size") */
     public RadioGroup<V> setLabel(String text) {
+        this.labelText = text;
         if (label == null) {
-            label = new TextComponent(getColor(), text);
+            label = new TextComponent(getColor(), "");
             getWrappedComponent().insert(0, label);
-        } else {
-            label.setTextAndResize(text);
         }
+        showLabel();
         return this;
+    }
+
+    private void showLabel() {
+        if (label != null) {
+            label.setTextAndResize(hotKey != null ? hotKey.getName() + ": " + labelText : labelText);
+        }
     }
 
     /** true: "Small (•)" instead of "(•) Small" */
@@ -198,6 +206,7 @@ public class RadioGroup<V> extends AbstractComponentWrappper<Composite>
     /** chooses the next option from anywhere (with two options: a toggle) */
     public RadioGroup<V> setHotKey(KeyStroke hotKey) {
         this.hotKey = hotKey;
+        showLabel();
         return this;
     }
 

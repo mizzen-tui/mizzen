@@ -16,9 +16,8 @@ import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.input.DisplayableValue;
 import dtb.terminalIO.components.input.ListBox;
-import dtb.terminalIO.components.input.RockerButton;
+import dtb.terminalIO.components.input.RadioGroup;
 import dtb.terminalIO.components.input.TextInputInteger;
-import dtb.terminalIO.components.modal.MessageBox;
 import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.components.plot.RotationButtonBar;
 import dtb.terminalIO.components.plot.ScaleButtonBar;
@@ -35,7 +34,6 @@ import dtb.terminalIO.components.plot.shape.Triangle;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.TimedRequestedController;
 import dtb.terminalIO.events.EventHandler;
-import dtb.terminalIO.events.mouse.ApplicationMouseEvent;
 import dtb.terminalIO.geom.Align;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
@@ -77,7 +75,7 @@ public class TestScale {
 
                    HorizontalPanel controlsInGrid = new HorizontalPanel();
                    controlsInGrid.setBorder(true);
-                   RockerButton fillOption = new RockerButton(grid.getColor(), "Fill", false);
+                   RadioGroup<Boolean> fillOption = RadioGroup.onOff("Fill", false).setColor(grid.getColor());
                    controlsInGrid.add(fillOption);
 
                    controlsInGrid.add(new TextComponent("|  "));

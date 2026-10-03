@@ -153,6 +153,9 @@ public class RadioGroupTest extends TestCase {
 
         look.textBeforeMarker(true);
         assertEquals("[Pick, A (*), B ( )]", texts(look));
+
+        look.setHotKey(Keys.F2_KEYSTROKE);
+        assertEquals("[F2: Pick, A (*), B ( )]", texts(look));
     }
 
     /** options are DisplayableValues, like ListBox items: the value and the text shown can differ */

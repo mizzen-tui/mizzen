@@ -12,7 +12,7 @@ import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.input.DefaultFocusableBehaviour;
 import dtb.terminalIO.components.input.HasValue;
-import dtb.terminalIO.components.input.RockerButton;
+import dtb.terminalIO.components.input.RadioGroup;
 import dtb.terminalIO.components.input.TextInput;
 import dtb.terminalIO.components.modal.MessageBox;
 import dtb.terminalIO.controlcodes.color.Color;
@@ -39,7 +39,7 @@ import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.Logging;
 
 // TODO:  this has a problem.. internal scrollable component is not clipping!
-public class RockerButtonTest {
+public class OnOffTogglesTest {
 
     public static void main(String args[]) {
 
@@ -51,7 +51,7 @@ public class RockerButtonTest {
 
         app.getMainApplicationPanel().add(new ClickableBackground(app.getCanvas()));
 
-        ButtonBar buttons = new ButtonBar("RockerButtonTest-buttonBar") {
+        ButtonBar buttons = new ButtonBar("OnOffTogglesTest-buttonBar") {
             @Override
             public EventHandler canHandle(TerminalEvent<?> te) {
                 if (te instanceof HasValue.ValueChangedEvent) {
@@ -76,10 +76,10 @@ public class RockerButtonTest {
         TextInput tc = new TextInput(new Colors.FGBGColors(Colors.BIBlu, Colors.On_IYel), 15);
         tc.setText("Test input");
 
-        RockerButton rockerButtonEdit = new RockerButton(Colors.BIGre, "Edit");
-        rockerButtonEdit.setHotKey( new KeyStroke('1') );
-        rockerButtonEdit.onChange((te)->{
-            if (rockerButtonEdit.getValue()) {
+        RadioGroup<Boolean> editToggle = RadioGroup.onOff("Edit", false).setColor(Colors.BIGre);
+        editToggle.setHotKey( new KeyStroke('1') );
+        editToggle.onChange((te)->{
+            if (editToggle.getValue()) {
                 if (!buttons.containsChild(tc)) {
                     buttons.insertComponent(1, tc);
                     tc.requestFocus(te.getEventBus());
@@ -91,19 +91,19 @@ public class RockerButtonTest {
             }
         });
         
-        buttons.addComponent(rockerButtonEdit);
+        buttons.addComponent(editToggle);
 
-        RockerButton rockerButtonShowCursor = new RockerButton(Colors.BIBlu, "Cursor");
-        rockerButtonShowCursor.setHotKey( new KeyStroke('2') );
-        rockerButtonShowCursor.onChange((te)->{
-            if (rockerButtonShowCursor.getValue()) {
-                app.getEventBus().raiseEvent(new RequestShowCursorEvent(rockerButtonShowCursor, new Position.Simple(0,5)));
+        RadioGroup<Boolean> cursorToggle = RadioGroup.onOff("Cursor", false).setColor(Colors.BIBlu);
+        cursorToggle.setHotKey( new KeyStroke('2') );
+        cursorToggle.onChange((te)->{
+            if (cursorToggle.getValue()) {
+                app.getEventBus().raiseEvent(new RequestShowCursorEvent(cursorToggle, new Position.Simple(0,5)));
             } else {
-                app.getEventBus().raiseEvent(new RequestHideCursorEvent(rockerButtonShowCursor));
+                app.getEventBus().raiseEvent(new RequestHideCursorEvent(cursorToggle));
             }
         });
 
-        buttons.addComponent(rockerButtonShowCursor);
+        buttons.addComponent(cursorToggle);
 
         Button partialUpdates = new Button(Colors.BPur,"Partial Updates", true);
         partialUpdates.setHotKey(new KeyStroke('3') );
@@ -176,7 +176,7 @@ public class RockerButtonTest {
 
             tApp.getEventBus().appendIdleEventHandler(new RepeatingInterval(250, (te)->{
 
-                if (!rockerButtonShowCursor.getValue() || tApp.getCanvas().getLastRequestCursorPosition() == null) {
+                if (!cursorToggle.getValue() || tApp.getCanvas().getLastRequestCursorPosition() == null) {
                     return;
                 }
 
