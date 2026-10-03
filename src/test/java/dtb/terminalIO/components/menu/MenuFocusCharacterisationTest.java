@@ -22,7 +22,8 @@ import junit.framework.TestCase;
  * Characterisation tests for menus: a MenuBar's menus pop up as lists on the ROOT panel (so they
  * are never clipped by a container), yet belong to their menu button for focus. Records TODAY's
  * behaviour so focus redesign step 7 (popups owned by their component) cannot change it silently.
- * Layout: root[menu bar [File, Edit], field]; File = [New > [Car, Boat], Open], Edit = [Find].
+ * Layout: root[menu bar [File, Edit], field]; File = [New > [Car, Boat, More > [Plane, Train]], Open],
+ * Edit = [Find].
  */
 public class MenuFocusCharacterisationTest extends TestCase {
 
@@ -30,7 +31,7 @@ public class MenuFocusCharacterisationTest extends TestCase {
     private final List<String> picked = new ArrayList<>();
     private CompositeWithFocusManager root;
     private MenuBar menuBar;
-    private Menu file, newMenu, edit;
+    private Menu file, newMenu, more, edit;
     private TextInput field;
 
     @Override
@@ -38,7 +39,9 @@ public class MenuFocusCharacterisationTest extends TestCase {
         root = new CompositeWithFocusManager();
         CanvasForTesting.buildCanvasForTestingNoControlCodesInOutput().addComponentSegments(root);
 
-        newMenu = new Menu("New").addItem("Car", (te) -> picked.add("Car")).addItem("Boat", (te) -> picked.add("Boat"));
+        more = new Menu("More").addItem("Plane", (te) -> picked.add("Plane")).addItem("Train", (te) -> picked.add("Train"));
+        newMenu = new Menu("New").addItem("Car", (te) -> picked.add("Car")).addItem("Boat", (te) -> picked.add("Boat"))
+                                 .addItem("More", more);
         file = new Menu("File").addItem("New", newMenu).addItem("Open", (te) -> picked.add("Open"));
         edit = new Menu("Edit").addItem("Find", (te) -> picked.add("Find"));
         menuBar = new MenuBar(Colors.IBlu);
@@ -71,7 +74,8 @@ public class MenuFocusCharacterisationTest extends TestCase {
     }
 
     private String open() {
-        return (file.isVisible() ? "File " : "") + (newMenu.isVisible() ? "New " : "") + (edit.isVisible() ? "Edit " : "");
+        return (file.isVisible() ? "File " : "") + (newMenu.isVisible() ? "New " : "") + (more.isVisible() ? "More " : "")
+                + (edit.isVisible() ? "Edit " : "");
     }
 
     /** open the File menu the keyboard way: focus its button, ENTER */
@@ -203,5 +207,35 @@ public class MenuFocusCharacterisationTest extends TestCase {
         file.getMenuContainer().focus(null, bus);
 
         assertTrue(file.isVisible());
+    }
+
+    /** focus can go two submenus deep (File > New > More) and every menu on the way stays open */
+    public void testFocusIntoSecondLevelSubmenuKeepsAllMenusOpen() {
+        openFile();
+        press(Keys.DOWN_KEYSTROKE);              // File list: New selected, New's submenu opens
+        press(Keys.TAB_KEYSTROKE);               // into New's list (Car)
+        press(Keys.DOWN_KEYSTROKE);              // Boat
+        press(Keys.DOWN_KEYSTROKE);              // More selected, More's submenu opens
+
+        press(Keys.TAB_KEYSTROKE);               // into More's list
+
+        assertEquals("File New More ", open());
+        assertTrue(focusedName(), focusedName().contains("More-ListBox"));
+    }
+
+    /** choosing an item two submenus deep runs it, closes all menus, focus back on the File button */
+    public void testItemInSecondLevelSubmenuClosesAllMenus() {
+        openFile();
+        press(Keys.DOWN_KEYSTROKE);
+        press(Keys.TAB_KEYSTROKE);
+        press(Keys.DOWN_KEYSTROKE);
+        press(Keys.DOWN_KEYSTROKE);
+        press(Keys.TAB_KEYSTROKE);               // in More's list (Plane)
+
+        press(Keys.ENTER_KEYSTROKE);
+
+        assertEquals("[Plane]", picked.toString());
+        assertEquals("", open());
+        assertEquals("MenuBarButton[File]", focusedName());
     }
 }

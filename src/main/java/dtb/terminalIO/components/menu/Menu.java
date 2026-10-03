@@ -206,23 +206,20 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
         return false;
     }
 
+    /**
+     * Is focusable part of this menu: the menu bar itself, this menu's list, or anything inside it -
+     * its submenus at any depth, since a submenu counts as part of the menu it opened from (see
+     * Component.getPopupOwner). Used to decide whether a menu stays open when its focus moves.
+     */
     boolean isFocusablePartOfMenu(Focusable focusable) {
-        if (this.menuBar != null && ToFocusable.UTIL.toFocusable(this.menuBar)  == focusable) {
+        if (focusable == null) {
+            return false;
+        }
+        if (this.menuBar != null && ToFocusable.UTIL.toFocusable(this.menuBar) == focusable) {
             return true;
         }
-        if (this.menuContainer != null) {
-            if (ToFocusable.UTIL.toFocusable(this.menuContainer)  == focusable) {
-                return true;
-            }
-            if (focusable instanceof MenuContainer) {
-                
-                MenuContainer focusableAsMenuContainer = (MenuContainer)focusable;
-                if (focusableAsMenuContainer.menu.parentMenu != null && focusableAsMenuContainer.menu.parentMenu == this) {
-                    return true;   
-                }
-            }
-        }
-        return false;
+        Focusable menuNode = this.menuContainer == null ? null : ToFocusable.UTIL.toFocusable(this.menuContainer);
+        return menuNode != null && FocusManager.UTIL.containsFocusable(menuNode, focusable);
     }
 
     public void setMenuRootPanel(Composite rootPanel) {
