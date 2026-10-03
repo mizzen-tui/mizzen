@@ -79,16 +79,26 @@ Focus state is **distributed**: each manager holds its own `current` child and
 its own `hasFocus` flag. The focused leaf is found by walking `current` pointers
 from the root (`FocusManager.UTIL.findCurrentFocus`).
 
-### 2.2 Keyboard navigation and routing (since redesign step 6)
+### 2.2 Keyboard navigation and routing
 
-**Navigation** (TAB / SHIFT-TAB, a widget's arrows) is decided in one place, `FocusNavigator`,
-run by a *navigation root*: the application's root `DefaultFocusManager` (no parent), or a modal
-dialog's (policy TRAP - it gets keys before the application's root). Order: the focused component
-first, then each focus manager around it, innermost first - a WIDGET's own handlers, then
-`advance` (§4.3 A2-A3). Nothing focused: TAB carries on from where focus last was, or focuses the
-first component (SHIFT-TAB: the last).
+**Keys** are delivered by `KeyRouter`, run by a *navigation root*: the application's root
+`DefaultFocusManager` (no parent), or a modal dialog's (policy TRAP - it gets keys before the
+application's root). A key goes to the focused component first, then up through the components
+around it until one uses it ("bubbling", as in a web browser). At each focus manager on the way up:
+its component's `onKey` (if it implements `KeyboardHandler`), a hot key of one of its other children,
+its own handlers (`FocusManager.getOwnEventHandler`), then its nav keys (`advance`, §4.3 A2-A3).
+Components between two focus managers that implement `KeyboardHandler` are asked on the way up too.
+Two things come before that walk:
+- a nav key (TAB, a widget's arrows) is first offered by bubbling alone - so the focused component
+  and a widget's own handlers come before moving focus;
+- an ordinary key is first offered to the "before children" handlers of the focus managers around
+  the focused component, outermost first ("capture": `FocusManager.getEventHandlerBeforeChildren` -
+  a `ComponentWithFocusManager`'s appended handlers, e.g. a dropdown's ENTER beating its open list's).
+Nothing focused: TAB carries on from where focus last was, or focuses the first component
+(SHIFT-TAB: the last). New widgets implement `KeyboardHandler.onKey` (return true = used it).
 
-**Everything else** goes through each `DefaultFocusManager`'s routing chain:
+**Everything else** (and keys while nothing has focus) goes through each `DefaultFocusManager`'s
+routing chain:
 1. focus requests (clicks, `RequestFocusEvent`)
 2. the current child (the focus path)
 3. a key: a child whose **hotkey** it is - it becomes current and gets the key
@@ -337,7 +347,7 @@ Terms used below:
    entirely - `hasFocus()` meaning "am I the owner?" - would touch every focusable component; only
    worth doing if they cause trouble again.
 
-2. **Who gets a key first.** *(done - step 2, `FocusNavigator`)*
+2. **Who gets a key first.** *(done - step 2; now `KeyRouter`, see §2.2)*
    When a key arrives:
    1. If it is not a nav key of any focus manager around the focused component, it is ordinary input
       and goes where it always did.
@@ -347,8 +357,8 @@ Terms used below:
       WIDGET first offers the key to its own handlers (e.g. a dropdown's "DOWN opens my list");
       then each is asked where focus should go (point 3). *(done - step 5: widgets' own keys)*
    So the most specific wish wins: the focused component, then a widget's own handlers, then moving
-   focus. The order lives in `FocusNavigator` only; a widget just declares its policy, its nav keys
-   and its own handlers (`FocusManager.getOwnEventHandler`).
+   focus. The order lives in `KeyRouter` only; a widget just declares its policy, its nav keys
+   and its own handlers (`KeyboardHandler.onKey`, or the older `FocusManager.getOwnEventHandler`).
 
 3. **Focus managers answer two questions; they decide, their parent doesn't.** *(done - steps 1 and 2)*
    - `enter(direction)`: "focus is arriving in you, moving forward (TAB) or backward (SHIFT-TAB) -

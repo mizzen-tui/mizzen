@@ -373,14 +373,11 @@ public class DefaultFocusManager implements FocusManager,
 
     @Override
     public void handle(TerminalEvent<?> te) {
-        // 1. a navigation root (the application's root, or a modal dialog) handles keyboard
-        //    navigation (TAB / SHIFT-TAB, a widget's arrows ...) for everything below it
-        if (isNavigationRoot()) {
-            FocusNavigator.Decision navigation = navigationDecisionFor(te);
-            if (navigation != null) {
-                FocusNavigator.act(this, navigation, (KeyEvent) te);
-                return;
-            }
+        // 1. a navigation root (the application's root, or a modal dialog) delivers every key for
+        //    everything below it: from the focused component upwards (see KeyRouter)
+        if (isNavigationRoot() && te instanceof KeyEvent
+                && KeyRouter.route(this, (KeyEvent) te, true) != KeyRouter.Outcome.NOT_ROUTED) {
+            return;
         }
         // 2. everything else: this manager's routing chain - focus requests (clicks), then the current
         //    child / hot keys / other children, then the custom extra handler
@@ -391,9 +388,12 @@ public class DefaultFocusManager implements FocusManager,
     public EventHandler canHandle(TerminalEvent<?> te) {
         // only answers "is this event ours?" - changes nothing (same two steps as handle)
 
-        // 1. a navigation root handles keyboard navigation for everything below it
-        if (isNavigationRoot() && navigationDecisionFor(te) != null) {
-            return this;
+        // 1. a navigation root delivers every key for everything below it
+        if (isNavigationRoot() && te instanceof KeyEvent) {
+            KeyRouter.Outcome outcome = KeyRouter.route(this, (KeyEvent) te, false);
+            if (outcome != KeyRouter.Outcome.NOT_ROUTED) {
+                return outcome == KeyRouter.Outcome.HANDLED ? this : null;
+            }
         }
         // 2. everything else: does this manager's routing chain take it?
         if (getEventHandler().canHandle(te) == null) {
@@ -403,24 +403,11 @@ public class DefaultFocusManager implements FocusManager,
     }
 
     /**
-     * Does this manager decide keyboard navigation (TAB / SHIFT-TAB, a widget's arrows ...) for
-     * everything below it? Yes for the application's root (no parent), and for a TRAP - a modal
+     * Does this manager deliver keys (and so decide keyboard navigation) for everything below it? Yes for the application's root (no parent), and for a TRAP - a modal
      * dialog, which gets keys before the application's root does.
      */
     private boolean isNavigationRoot() {
         return FocusManager.UTIL.parentOf(this) == null || focusPolicy == FocusPolicy.TRAP;
-    }
-
-    /**
-     * What the navigator would do with this event: move focus, or give the key to the focused component if it
-     * wants it. null = not a navigation key (or not a key at all) - normal routing.
-     * Only answers - changes nothing.
-     */
-    private FocusNavigator.Decision navigationDecisionFor(TerminalEvent<?> te) {
-        if (!(te instanceof KeyEvent)) {
-            return null;
-        }
-        return FocusNavigator.decide(this, (KeyEvent) te);
     }
 
     private ConditionalEventHandler getEventHandler() {
@@ -466,8 +453,8 @@ public class DefaultFocusManager implements FocusManager,
     }
 
     /**
-     * Offers an event to this manager's children (keyboard navigation is not done here - see
-     * FocusNavigator):
+     * Offers an event to this manager's children (keys normally don't come here: a navigation root
+     * delivers them from the focused component upwards - see KeyRouter; only when nothing has focus):
      *   1. the current child (the one on the focus path), e.g. a key typed into the focused field
      *   2. a key: a child whose hot key it is (e.g. F2 on a button) - it becomes current and gets the key
      *   3. any other event (value changed, canvas refresh ...): the first other child that claims it
@@ -516,9 +503,9 @@ public class DefaultFocusManager implements FocusManager,
 
     /**
      * Which child (other than the current one) has a hot key matching this key, and can handle it?
-     * Only answers - changes nothing (used by canHandle). null if none.
+     * Only answers - changes nothing (used by canHandle and KeyRouter). null if none.
      */
-    private Focusable hotKeyChildFor(KeyEvent te) {
+    Focusable hotKeyChildFor(KeyEvent te) {
         KeyStroke pressedKey = te.getKeyStroke();
         Focusable focusable = peekCurrent();
         for (Focusable focusableOther : children()) {
@@ -565,9 +552,9 @@ public class DefaultFocusManager implements FocusManager,
      * If a child's hot key matches: move focus to that child and give it the key. Returns true if so.
      * Focus moves like a click or TAB (FocusManager.UTIL.moveFocus), so every focus manager on the
      * way is told and the previously focused component lets go.
-     * (Used by handle; canHandle only asks hotKeyChildFor.)
+     * (Used by handle and KeyRouter; asking without acting: hotKeyChildFor.)
      */
-    private boolean handleHotKey(KeyEvent te) {
+    boolean handleHotKey(KeyEvent te) {
         Focusable hotKeyChild = hotKeyChildFor(te);
         if (hotKeyChild == null) {
             return false;

@@ -21,7 +21,9 @@ import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.Focusable.FocusableFromParts;
 import dtb.terminalIO.events.focus.RequestFocusEvent;
 import dtb.terminalIO.events.focus.ToFocusable;
-import dtb.terminalIO.events.keyboard.KeyEvent;
+import dtb.terminalIO.events.keyboard.AsKeyboardHandler;
+import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
+import dtb.terminalIO.events.keyboard.KeyboardHandler;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.events.mouse.Clickable;
 import dtb.terminalIO.geom.Dimension;
@@ -30,7 +32,7 @@ import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.StringUtils;
 
 public class CheckBoxInput extends BoundedComponent<CheckBoxInput> 
-             implements HasValue<Boolean>, ParentContainer, ToFocusable, Clickable   {
+             implements HasValue<Boolean>, ParentContainer, ToFocusable, Clickable, AsKeyboardHandler   {
 
     private TextComponent textRenderer;
 
@@ -156,6 +158,15 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
         checkBoxPressed(eventBus);
     }
 
+    /** ENTER or SPACE toggles the box */
+    private final KeyboardHandler keys = AsKeyboardHandler.UTIL.toKeyboardHandler(
+            new KeyInputEventHandler((te) -> checkBoxPressed(te.getEventBus()), Keys.ENTER_KEYSTROKE, Keys.SPACE_KEYSTROKE));
+
+    @Override
+    public KeyboardHandler asKeyboardHandler() {
+        return keys;
+    }
+
     OnValueChangedEventHandler<Boolean> actionOnChangeHandler;
 
     public void onChange(EventHandler handler) {
@@ -182,43 +193,18 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
             return false;
         };
 
+        // keys: see asKeyboardHandler. Here only this box's own "value changed" event, for onChange
         ConditionalEventHandler evtHandler = new ConditionalEventHandler() {
 
             @Override
             public EventHandler canHandle(TerminalEvent<?> te) {
-
-                if (canHandleOnChangeEvent.test(te)) {
-                    return this;
-                }
-
-                if (!(te instanceof KeyEvent)) {
-                    return null;
-                }
-
-                KeyEvent ke = (KeyEvent) te; 
-
-                if (ke.isKeyStroke( Keys.ENTER_KEYSTROKE )  || ke.isKeyStroke(Keys.SPACE_KEYSTROKE)) {
-                    return this;
-                }
-                return null;
+                return canHandleOnChangeEvent.test(te) ? this : null;
             }
 
             @Override
             public void handle(TerminalEvent<?> te) {
-
                 if (canHandleOnChangeEvent.test(te)) {
                     actionOnChangeHandler.handle(te);
-                    return;
-                }
-
-                if (!(te instanceof KeyEvent)) {
-                    return;
-                }
-
-                KeyEvent ke = (KeyEvent) te; 
-
-                if (ke.isKeyStroke( Keys.ENTER_KEYSTROKE )  || ke.isKeyStroke(Keys.SPACE_KEYSTROKE)) {
-                    checkBoxPressed(te.getEventBus());
                 }
             }
 

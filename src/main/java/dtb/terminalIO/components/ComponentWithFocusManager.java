@@ -296,6 +296,15 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
         return ownEventHandler;
     }
 
+    /**
+     * This component's own handlers (added with appendEventHandler / prependEventHandler) see a key
+     * before the focused component inside it - see handle (and KeyRouter, which delivers keys).
+     */
+    @Override
+    public ConditionalEventHandler getEventHandlerBeforeChildren() {
+        return chainedEventHandlerAsConditionalEventHandler;
+    }
+
     @Override
     public void handle(TerminalEvent<?> te) {
 

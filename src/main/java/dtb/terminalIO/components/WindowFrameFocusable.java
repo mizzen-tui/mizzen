@@ -496,6 +496,12 @@ public class WindowFrameFocusable extends AbstractComponent<WindowFrameFocusable
     }
     
     
+    /** keys its children didn't use: scrolling, with the scrollbars' keys (see the constructor) */
+    @Override
+    public ConditionalEventHandler getOwnEventHandler() {
+        return this.eventHandler;
+    }
+
     @Override
     public EventHandler canHandle(TerminalEvent<?> te) {
         if (getFocusManager(te.getEventBus()).canHandle(te) != null) {

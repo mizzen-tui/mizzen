@@ -100,6 +100,15 @@ public interface FocusManager extends Focusable {
     }
 
     /**
+     * Key handlers this focus manager's component wants to see a key with BEFORE the focused
+     * component inside it does. Example: a dropdown's ENTER / ESC ("close my list") must beat the
+     * open list's own ENTER. null = none (the default). See ComponentWithFocusManager and KeyRouter.
+     */
+    default ConditionalEventHandler getEventHandlerBeforeChildren() {
+        return null;
+    }
+
+    /**
      * For a WIDGET: does moving past its last child go back to its first (and before the first to
      * the last)? E.g. a tab strip: RIGHT on the last tab shows the first. false (default): focus
      * stays at the end. Wrapper components ask their inner manager.
