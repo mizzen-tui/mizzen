@@ -159,31 +159,42 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
 
 
     /**
-     * is keyboard focus in the open list? Asks the root focus manager (see dropdownOrListHasFocus);
-     * when it does not know (e.g. inside a modal dialog, which moves focus on its own) the list's own
-     * focus flag answers.
+     * Is keyboard focus in the open list - the list itself, or its scroll pane and scrollbars (e.g.
+     * while dragging the scrollbar)? See focusInside.
      */
     private boolean listHasFocus() {
         if (!listBoxVisible()) {
             return false;
         }
-        Focusable listFocusable = ToFocusable.UTIL.toFocusable(this.listBox);
-        FocusManager root = FocusManager.UTIL.getRootFocusManager(listFocusable);
-        Focusable focused = root != null ? FocusManager.UTIL.findCurrentFocus(root) : null;
-        return focused != null ? focused == listFocusable : listFocusable.hasFocus();
+        return focusInside(ToFocusable.UTIL.toFocusable(getListBoxOrItsScrollPane()),
+                           ToFocusable.UTIL.toFocusable(this.listBox));
     }
 
+    /** Is keyboard focus anywhere in this dropdown: its button, or its open list (and scroll pane)? */
     private boolean dropdownOrListHasFocus() {
-        Focusable listFocusable = ToFocusable.UTIL.toFocusable(this.listBox);
-        Focusable buttonFocusable = ToFocusable.UTIL.toFocusable(this.button);
-        // ask the root focus manager what is focused: individual hasFocus() flags can be stale
-        // (e.g. a dropdown inside a dialog: its button kept hasFocus()==true after focus moved away)
-        FocusManager root = FocusManager.UTIL.getRootFocusManager(listFocusable);
-        if (root != null) {
-            Focusable focused = FocusManager.UTIL.findCurrentFocus(root);
-            return focused == listFocusable || focused == buttonFocusable;
+        return focusInside(ToFocusable.UTIL.toFocusable(this),
+                           ToFocusable.UTIL.toFocusable(this.button), ToFocusable.UTIL.toFocusable(this.listBox));
+    }
+
+    /**
+     * Is the focused component inside node? Asks the root focus manager what is focused (individual
+     * hasFocus() flags can be stale); the open list counts as part of this dropdown for focus
+     * (Component.getPopupOwner), so "inside the dropdown" includes the list's scroll pane and
+     * scrollbars. When the root does not know (e.g. inside a modal dialog, which moves focus on its
+     * own) the flags of fallbacks answer instead.
+     */
+    private boolean focusInside(Focusable node, Focusable... fallbacks) {
+        FocusManager root = FocusManager.UTIL.getRootFocusManager(node);
+        Focusable focused = root != null ? FocusManager.UTIL.findCurrentFocus(root) : null;
+        if (focused != null) {
+            return FocusManager.UTIL.containsFocusable(node, focused);
         }
-        return listFocusable.hasFocus() || buttonFocusable.hasFocus();
+        for (Focusable fallback : fallbacks) {
+            if (fallback != null && fallback.hasFocus()) {
+                return true;
+            }
+        }
+        return false;
     }
 
 
