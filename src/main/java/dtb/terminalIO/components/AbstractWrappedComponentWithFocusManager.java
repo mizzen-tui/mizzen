@@ -144,20 +144,5 @@ public  abstract class AbstractWrappedComponentWithFocusManager<T extends Compon
         focusableOp( fm -> fm.removeFocusable(focusable), "removeFocusable()" );
     }
     
-    public void addAllFocusables(Collection<Focusable> focusables) {
-        for (Focusable focusable : focusables) {
-            addFocusable(focusable);
-        }
-    }
-
-    /**
-     * @deprecated not needed any more: the wrapper's focus manager works out its children from the
-     * wrapped component whenever it needs them (focus redesign step 7c).
-     */
-    @Deprecated
-    public void registerAllFocusables() {
-        Collection<Focusable> focusables = FocusManager.UTIL.focusablesFromComponent(this.getWrappedComponent());
-        addAllFocusables(focusables);
-    }
 
 }

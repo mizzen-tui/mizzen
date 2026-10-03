@@ -164,7 +164,6 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
 
         getContainer().add(component);
         nonDividerComponents.add(component);
-        addComponentFocusablesToFocusManager(component);
 
         if (this.rightMostBorderChar > 0) {
             lastDivider = new CharComponent(this.getColor(), this.rightMostBorderChar);
@@ -206,7 +205,6 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
         }
 
         getContainer().insert(indexInContainer, component);
-        addComponentFocusablesToFocusManager(component);
         nonDividerComponents.add(index, component);
 
         count++;
@@ -249,7 +247,6 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
             getContainer().remove(nextChild);
         }
 
-        removeComponentFocusablesFromFocusManager(component);
         getContainer().remove(component);
 
         nonDividerComponents.remove(component);

@@ -64,7 +64,7 @@ public class FocusNavigationProtocolTest extends TestCase {
     /** the future router: offer the nav key to each focus manager from the focused leaf upwards */
     private void navigate(CompositeWithFocusManager root, KeyStroke key) {
         Focusable leaf = FocusManager.UTIL.findCurrentFocus(root);
-        for (FocusManager fm = leaf.getParentFocusManager(); fm != null; fm = fm.getParentFocusManager()) {
+        for (FocusManager fm = FocusManager.UTIL.parentOf(leaf); fm != null; fm = FocusManager.UTIL.parentOf(fm)) {
             FocusDirection dir = fm.navDirectionFor(key);
             if (dir == null) {
                 continue;

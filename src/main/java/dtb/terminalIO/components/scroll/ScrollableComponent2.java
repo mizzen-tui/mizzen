@@ -52,7 +52,7 @@ public class ScrollableComponent2  extends ComponentWithFocusManager<ScrollableC
                                          this.componentBeingViewed);
 
         borderedComponent = new BorderedComponent(color, viewer);
-        this.addComponentAndItsFocusables(borderedComponent);
+        this.getContainer().add(borderedComponent);
         this.getContainer().onResizeExpandDownAndRight(borderedComponent);
 
         buildAndPopulateFooterPanel();
@@ -91,8 +91,8 @@ public class ScrollableComponent2  extends ComponentWithFocusManager<ScrollableC
             this.setViewOffset(curPos.getRow(), hScrolPos.getCol());
         } );
 
-        this.addComponentAndItsFocusables(hScrollBar);
-        this.addComponentAndItsFocusables(vScrollBar);
+        this.getContainer().add(hScrollBar);
+        this.getContainer().add(vScrollBar);
 
         this.appendEventHandler(new  WindowViewComponent.ScrollToViewHandler(()->this.viewer, this));
 
@@ -297,7 +297,6 @@ public class ScrollableComponent2  extends ComponentWithFocusManager<ScrollableC
         footerControls.addButton("»",    Keys.RIGHT_KEYSTROKE, (te) -> emitViewOffsetChangedOnOperation(te,()-> ScrollableComponent2.this.right(1)));
 
         this.borderedComponent.setFooter(footerControls);
-        this.addComponentFocusablesToFocusManager(borderedComponent);
     }
 
     private void emitViewOffsetChangedOnOperation(TerminalEvent<?> event, Runnable operation) {

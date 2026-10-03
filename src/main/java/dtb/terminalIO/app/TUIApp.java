@@ -405,7 +405,6 @@ public class TUIApp implements ComponentFinder {
     }
 
     boolean canvasClearedAndNowEmpty = true;
-    protected boolean inOnReadyStartAction = false;
 
     public TUIApp clearCanvas() {
         getCanvas().clearCanvas();
@@ -524,23 +523,10 @@ public class TUIApp implements ComponentFinder {
     
     
     public FocusManager getApplicationFocusManager() {
-        return getApplicationFocusManager(false || this.inOnReadyStartAction);
+        return getApplicationFocusManager(verifyFocusables);
     }
 
-    /**
-     * @deprecated not needed any more: focus managers work out their children from the components
-     * whenever they need them (focus redesign step 7c).
-     */
-    @Deprecated
-    public void rebuildFocusManager() {
-        getApplicationFocusManager(true, verifyFocusables); 
-    }
-
-    protected FocusManager getApplicationFocusManager(boolean forceRebuild) {
-        return getApplicationFocusManager(forceRebuild, verifyFocusables); 
-    }
-
-    protected FocusManager getApplicationFocusManager(boolean forceRebuild, boolean verifyFocusables) {
+    protected FocusManager getApplicationFocusManager(boolean verifyFocusables) {
 
         if (TUIApp.this.eventBus == null) {
             //throw new IllegalStateException("TUIApp.getApplicationFocusManager() ERROR!.  Cannot call getApplicationFocusManager() before the eventbus has been created!");
@@ -559,18 +545,11 @@ public class TUIApp implements ComponentFinder {
         }
 
         if (mainFocusManager != null) {
-            if (forceRebuild && mainFocusManager instanceof CompositeWithFocusManager) {
-                ((CompositeWithFocusManager)mainFocusManager).rebuildFocusManager();
-            }
             if (addToEventBusRequired) {
                 return buildAndAttachFocusManager(verifyFocusables);
             }
             return mainFocusManager;
         }
-        if (forceRebuild && this.getMainApplicationPanel() instanceof CompositeWithFocusManager) {
-            ((CompositeWithFocusManager)this.getMainApplicationPanel()).rebuildFocusManager();
-        }
-
         return buildAndAttachFocusManager(verifyFocusables);
     }
     
@@ -747,14 +726,12 @@ public class TUIApp implements ComponentFinder {
                 @Override
                 public void handle(TerminalEvent<?> te) {
                     // run start up (custom setup) code
-                    TUIApp.this.inOnReadyStartAction  = true;
                     TUIApp.this.onReadyStartAction.accept(TUIApp.this);
-                    TUIApp.this.inOnReadyStartAction  = false;
                     // do the first canvas paint (asynchronously)
                     
                     if (TUIApp.this.eventBus != null) {
                         // eventbus is non-null - then ensure that we have a focusManager
-                        FocusManager root = getApplicationFocusManager(true);
+                        FocusManager root = getApplicationFocusManager();
                         if (root != null) {
                             DefaultFocusManager.applyIfDefaultFocusManager(root, fm -> fm.giveInitialFocus(te.getEventBus()));
                         }

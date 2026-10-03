@@ -45,7 +45,6 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
     private ChainedEventHandler chainedEventHandler;
     private ConditionalEventHandler chainedEventHandlerAsConditionalEventHandler;
     private ConditionalEventHandler ownEventHandler;     // see getOwnEventHandler
-    private BehaviourForCompositeAndFocusManager focusBehaviourManager;
 
     private Function<EventBus, FocusManager> focusManagerBuilder;
 
@@ -58,7 +57,6 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
             focusManager = new DefaultFocusManager().setNameFromOwner(this);
         }
         this.setFocusManager(focusManager);
-        this.focusBehaviourManager = new BehaviourForCompositeAndFocusManager(this.container, this.focusManager);
     }
 
     public ComponentWithFocusManager(Composite container) {
@@ -81,7 +79,6 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
         // which tells DefaultFocusManager it is purely acting as a proxy only needed for its "behaviour"
         // And yes .. this feels all very "hacky" - A weakness in my model I suspect
         DefaultFocusManager.setDefaultNameAndActualFromParentObject(focusManager, this);
-        this.focusBehaviourManager = new BehaviourForCompositeAndFocusManager(this.container, this.focusManager);
     }
 
     public void setFocusManagerBuilder(Function<EventBus, FocusManager> focusManagerBuilder) {
@@ -152,22 +149,6 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
         return getOrBuildChainedEventHandler();
     }
 
-    protected void addComponentAndItsFocusables(Position offset, Component<?> component) {
-        this.focusBehaviourManager.addComponentAndItsFocusables(offset, component);
-    }
-
-    protected void addComponentAndItsFocusables(Component<?> component) {
-        this.focusBehaviourManager.addComponentAndItsFocusables(Position.ZERO, component);
-    }
-
-    // ASSUMPTION:  component has already been added to the container
-    protected void addComponentFocusablesToFocusManager(Component<?> component) { 
-        this.focusBehaviourManager.addComponentFocusablesToFocusManager(component);
-    }
-
-    protected void removeComponentFocusablesFromFocusManager(Component<?> component) {
-        this.focusBehaviourManager.removeComponentFocusablesFromFocusManager(component);
-    }
 
     public T setEmptyChar(char emptyChar) {
         super.setEmptyChar(emptyChar);
@@ -453,8 +434,7 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
 
     public void removeChildren() {
 
-        for (Component<?> child : getContainer().getChildren()) {
-            removeComponentFocusablesFromFocusManager(child);
+        for (Component<?> child : new java.util.ArrayList<Component<?>>(getContainer().getChildren())) {
             getContainer().remove(child);
         }
 //        getContainer().removeChildren();
