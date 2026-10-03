@@ -116,4 +116,41 @@ public class DynamicStructureCharacterisationTest extends TestCase {
 
         assertEquals("B C D E A", tabs(5));
     }
+
+    /** a field that counts the custom (non-key) events it gets */
+    static class CountingField extends TextInput {
+        int got;
+        CountingField(String name) {
+            super(Colors.IYel, 10);
+            setName(name);
+        }
+        @Override
+        public dtb.terminalIO.events.EventHandler canHandle(dtb.terminalIO.events.TerminalEvent<?> te) {
+            return te.getType() == dtb.terminalIO.events.TerminalEvent.TYPE.CUSTOM_APPLICATION_EVENT ? this : super.canHandle(te);
+        }
+        @Override
+        public void handle(dtb.terminalIO.events.TerminalEvent<?> te) {
+            if (te.getType() == dtb.terminalIO.events.TerminalEvent.TYPE.CUSTOM_APPLICATION_EVENT) {
+                got++;
+                return;
+            }
+            super.handle(te);
+        }
+    }
+
+    /**
+     * A removed component is not offered events any more, even if it had focus when it was removed
+     * (it was still the "current child"). E.g. a dropdown's old scroll pane got scroll-to-view
+     * requests for the list it no longer held: "Bad state: offset null".
+     */
+    public void testRemovedFocusedComponentGetsNoMoreEvents() {
+        CountingField gone = new CountingField("gone");
+        panel.add(gone);
+        click(gone);
+        panel.remove(gone);
+
+        bus.deliver(new dtb.terminalIO.events.TerminalEvent<Object>("test", dtb.terminalIO.events.TerminalEvent.TYPE.CUSTOM_APPLICATION_EVENT, null));
+
+        assertEquals(0, gone.got);
+    }
 }

@@ -262,7 +262,7 @@ public class DefaultFocusManager implements FocusManager,
         if (te.getType() == TerminalEvent.TYPE.KEYPRESS) {
             return getCurrentOrSet(te.getEventBus());
         }
-        return current;
+        return getCurrentChildFocus();     // only while it is still a child (not removed since)
     }
 
     /**
@@ -279,7 +279,7 @@ public class DefaultFocusManager implements FocusManager,
 
     /** like currentChildFor(te), but never changes anything (for canHandle) */
     private Focusable peekCurrentChildFor(TerminalEvent<?> te) {
-        return te.getType() == TerminalEvent.TYPE.KEYPRESS ? peekCurrent() : current;
+        return te.getType() == TerminalEvent.TYPE.KEYPRESS ? peekCurrent() : getCurrentChildFocus();
     }
 
     private Focusable getCurrentOrSet(EventBus eventBus) {
@@ -288,12 +288,7 @@ public class DefaultFocusManager implements FocusManager,
             setChildAsCurrentFocus(children.get(0), eventBus);
         }
 
-        if (current == null) {
-            //throw new IllegalStateException("ERROR: Trying to set current focus. No focusable objects added to this FocusManager("+HasName.UTIL.getName(this)+").");
-            return null;
-        }
-        
-        return this.current;
+        return getCurrentChildFocus();     // null if there are no children (or the remembered one was removed)
     }
 
     public void setChildAsCurrentFocus(Focusable focusable, EventBus eventBus) {

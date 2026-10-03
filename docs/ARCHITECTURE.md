@@ -598,6 +598,8 @@ that a plain container can declare. Do this class by class, not in the engine co
 | `components/scroll/ScrollableComponent.java` (old) | its users moved to `ScrollableComponent2` (Oct 2026); the class is kept but unused, apart from its own unit test. Its focus wiring is incomplete (no parent links), so do not use it. |
 
 | `components/input/DropdownListBox.java` - "leftover border" | **fixed (Oct 2026), old - seen on master too:** after ENTER / ESC in the open list a bottom border row stayed on screen. Not a drawing bug: the list was never closed. ENTER / ESC gave focus back to the dropdown's button (the `hideListBox()` calls were commented out); focus coming back brings the dropdown's panel to the front, *over* the still-open list, so only the list's bottom row - below that panel - stayed visible. The handler now closes the list once focus is back on the button. (Checked on the way and fine: the dirty flag, panel sizes, the canvas and the changed-only screen update.) |
+| `events/focus/DefaultFocusManager.java` - "Bad state: offset null" | **fixed (Oct 2026), from step 7c:** `NullPointerException: Bad state: offset null for TextComponent[PLOT_...]` (TabPanelTest, ImageSplitterTest dialogs). Non-key events were offered to the remembered *current* child read raw - which could be a removed component, e.g. a dropdown's old scroll pane from a previous opening of its list. That pane still named the list as its view source, so it claimed the scroll-to-view request, then could not find the item climbing up (it is in the new pane). Non-key routing now uses `getCurrentChildFocus()`, which only returns the remembered child while it is still a child. Pinned by `DynamicStructureCharacterisationTest.testRemovedFocusedComponentGetsNoMoreEvents`. |
+| `components/menu/Menu.java` (`isFocusablePartOfMenu`) | hand-written "is this part of my menu?" check (works, 11 tests). Next to replace with the generic `FocusManager.UTIL.containsFocusable` now that menus count as part of their owner - the dropdown's equivalent checks caused two bugs (scrollbar drag, focus pulled back). |
 | `components/input/RockerButton.java` | **open (Oct 2026), old:** toggling leaves both its ON and OFF parts claiming focus (two bracketed parts on screen). The toggle requests focus for the new part like a click, but the old part keeps its flag. |
 | `components/menu/Menu.java` | **open (Oct 2026), probably old:** an open menu stays open when the user clicks an empty, non-focusable area (e.g. a text display): the click moves focus nowhere, so nothing tells the menu to close. ESC inside a menu does nothing either (pinned as `_today_`). |
 | `components/scroll/ScrollableComponent2.java` | **open, old:** the footer buttons' hot keys (DOWN = `v`, RIGHT = `»` ...) fire whenever focus is inside the pane and nothing takes the key first, moving focus to the (non-TAB-stop) footer button. |
@@ -636,3 +638,13 @@ tasks run when the queue is empty, repeating timers are ignored.
 
 Not covered yet: menus (popups on a live canvas), `ScrollableComponent2` footer focus forwarding,
 actual scrolling, hotkeys, table selection events, bring-to-front.
+
+## 7. TODO (parked)
+
+- **Scripted regression run for the examples ("Selenium for the TUI").** Scenario files (keys,
+  clicks on *text*, drags, dialogs) played in a real pseudo-terminal; fails on any exception and on
+  differences from recorded "golden" screens and focus order; `--record` to accept an intended
+  change. Parked (Oct 2026) until the examples settle down - they are about to change a lot, and
+  goldens would need constant re-recording. A working prototype of the driver exists from the focus
+  redesign sessions (Python + `pyte`, dev-only); a pure-Java variant inside `mvn test` is the
+  alternative (it would not see screen-backend bugs).
