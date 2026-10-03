@@ -10,7 +10,7 @@ import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.input.MultiLineTextInput;
 import dtb.terminalIO.components.modal.MessageBox;
-import dtb.terminalIO.components.scroll.ScrollableComponent2;
+import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventBus;
@@ -70,7 +70,7 @@ public class MultiLineTextInputTest {
 
             mTextBox.setColor(  new Colors.FGBGColors( Colors.BBlu, Colors.On_Bla  )  );
 
-            ScrollableComponent2 sc = new ScrollableComponent2(Colors.Yel, 
+            ScrollableComponent sc = new ScrollableComponent(Colors.Yel, 
                                                                (Dimension)tApp.getMainApplicationPanel(), 
                                                                 mTextBox);
             sc.setFillOnClear(true);
@@ -91,12 +91,12 @@ public class MultiLineTextInputTest {
                                                   "\n"+
                                                   "This mini application is used to test\n"+
                                                   "MultiLineTextInput component in conjunction\n"+
-                                                  "with the ScrollableComponent2 and also \n"+
+                                                  "with the ScrollableComponent and also \n"+
                                                   "with the external findText button.\n"+
                                                   "---------------------------------------------------- \n"+
                                                   "Cursor management (positioning) should be maintained\n"+
                                                   "event when paging/scrolling up down with controls\n"+
-                                                  "of the ScrollableComponent2"
+                                                  "of the ScrollableComponent"
                                           );
             });
             
@@ -144,7 +144,7 @@ public class MultiLineTextInputTest {
     }
 
     static void getTextFromNameAndSetTitle(EventBus eventBus, 
-                                           ScrollableComponent2 hasTitle, 
+                                           ScrollableComponent hasTitle, 
                                            String title, 
                                            MultiLineTextInput mTextBox , 
                                            String textContent,

@@ -12,7 +12,7 @@ import dtb.terminalIO.components.input.DisplayableValue.StringDisplayValue;
 import dtb.terminalIO.components.input.DropdownListBox;
 import dtb.terminalIO.components.input.ListBox;
 import dtb.terminalIO.components.input.ListBox.TextComponentItemFactory;
-import dtb.terminalIO.components.scroll.ScrollableComponent2;
+import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
@@ -43,7 +43,7 @@ public class ListBoxTest {
 
             ListBox<String> longList = ListBox.fromStrings(Colors.IGre, longListItems(), new TextComponentItemFactory<String>());
             longList.setBorder(false);
-            ScrollableComponent2 longListPane = new ScrollableComponent2(Colors.Blu,
+            ScrollableComponent longListPane = new ScrollableComponent(Colors.Blu,
                     new Dimension.Simple(Math.min(15, longList.getHeight() - 5), longList.getWidth() + 20), longList);
             SearchFunctionForScrollableComponent.addFinderToScrollable(longListPane);
 

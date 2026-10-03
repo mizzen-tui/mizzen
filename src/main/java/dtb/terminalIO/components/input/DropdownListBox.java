@@ -13,7 +13,7 @@ import dtb.terminalIO.components.input.DisplayableValue.BooleanDisplayValue;
 import dtb.terminalIO.components.input.DisplayableValue.StringDisplayValue;
 import dtb.terminalIO.components.input.ListBox.ComponentItemFactory;
 import dtb.terminalIO.components.input.ListBox.TextComponentItemFactory;
-import dtb.terminalIO.components.scroll.ScrollableComponent2;
+import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventBus;
@@ -40,7 +40,7 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
                                            Clickable {
 
     private ListBox<T> listBox;
-    private ScrollableComponent2 listBoxScrollPane;
+    private ScrollableComponent listBoxScrollPane;
     private Button button;
     private Rectangle preferredRectangleForLayout;
     private T value;
@@ -473,7 +473,7 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
                 } else {
                     Rectangle desiredRect = listBoxParent.intersectWith(new Rectangle.Simple(listBoxPosition, listBox));
                     listBox.setBorder(false);
-                    this.listBoxScrollPane = new ScrollableComponent2(listBox.getColor(), new Dimension.Simple(desiredRect), listBox)
+                    this.listBoxScrollPane = new ScrollableComponent(listBox.getColor(), new Dimension.Simple(desiredRect), listBox)
                                                                 .removeFooterComponent()
                                                                 .setCycling(false)
                                                                 .setNavKeysNone();

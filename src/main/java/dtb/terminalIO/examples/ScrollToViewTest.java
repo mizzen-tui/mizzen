@@ -6,7 +6,7 @@ import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.composite.VerticalPanel;
-import dtb.terminalIO.components.scroll.ScrollableComponent2;
+import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.RequestHideCursorEvent;
@@ -130,7 +130,7 @@ public class ScrollToViewTest {
                 
             }
 
-            ScrollableComponent2 sc = new ScrollableComponent2(Colors.BIBlu, new Dimension.Simple(10,50), vp);
+            ScrollableComponent sc = new ScrollableComponent(Colors.BIBlu, new Dimension.Simple(10,50), vp);
             
             mainPanel.add(sc);
             

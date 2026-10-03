@@ -18,15 +18,11 @@ import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.input.CheckBoxInput;
 import dtb.terminalIO.components.input.DropdownListBox;
-import dtb.terminalIO.components.input.HasValue;
 import dtb.terminalIO.components.input.TextInput;
-import dtb.terminalIO.components.scroll.ScrollableComponent2;
+import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Colors;
-import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.OnIdleEventEventHandler.RepeatingInterval;
-import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.keyboard.Keys;
-import dtb.terminalIO.events.mouse.ApplicationMouseEvent;
 import dtb.terminalIO.examples.BarChartTest.BarChartRandomDataDemo;
 import dtb.terminalIO.examples.GridBrailleTest.BrailleDemo;
 import dtb.terminalIO.examples.plot.Test1GamesSeparateThread;
@@ -117,7 +113,7 @@ public class TextBoxTest {
 
             topPanel.add(2,1, horizontalPanel);
 
-            ScrollableComponent2 sc_1 = new ScrollableComponent2(Colors.Blu, new Dimension.Simple(Math.min(tApp.getCanvas().getHeight()-15, panel1.getHeight()+2), 50), panel1);
+            ScrollableComponent sc_1 = new ScrollableComponent(Colors.Blu, new Dimension.Simple(Math.min(tApp.getCanvas().getHeight()-15, panel1.getHeight()+2), 50), panel1);
 
             sc_1.setTitle("Scrollable with form");
 

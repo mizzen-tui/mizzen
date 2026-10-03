@@ -34,7 +34,7 @@ import dtb.terminalIO.components.plot.image.ImageViewerFactory.ImageRenderReques
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.ImageRenderer;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.RGBPlotPredicate;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.RGBToAnsiColorControlCode;
-import dtb.terminalIO.components.scroll.ScrollableComponent2;
+import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.core.ScreenCanvasBackend;
@@ -109,7 +109,7 @@ public class ImageViewer {
                             throw new RuntimeException(e1);
                         } // new BrailleGrid(Colors.BBlu, plotterDimension);
 
-                        ScrollableComponent2 scrollableWithPlotter = new ScrollableComponent2(Colors.BCya, new Dimension.Simple(scrollableWithPlotterSize),plotter);
+                        ScrollableComponent scrollableWithPlotter = new ScrollableComponent(Colors.BCya, new Dimension.Simple(scrollableWithPlotterSize),plotter);
 
                         scrollableWithPlotter.setTitle(Colors.BCya, "Image Viewer");
 
@@ -155,7 +155,7 @@ public class ImageViewer {
                         imagesListbox.setSelected(0);
                         Dimension maxImagesSize = new Dimension.Simple(20,35);
                         if ( ! maxImagesSize.contains(imagesListbox)) {
-                            ScrollableComponent2 imagesSC = new ScrollableComponent2(imagesListbox.getColor(), maxImagesSize, imagesListbox);
+                            ScrollableComponent imagesSC = new ScrollableComponent(imagesListbox.getColor(), maxImagesSize, imagesListbox);
                             formPanel.add(imagesSC);
                         } else {
                            formPanel.add(imagesListbox);

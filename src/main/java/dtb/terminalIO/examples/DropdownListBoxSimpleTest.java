@@ -13,7 +13,7 @@ import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.input.DropdownListBox;
 import dtb.terminalIO.components.input.ListBox;
 import dtb.terminalIO.components.input.TextInput;
-import dtb.terminalIO.components.scroll.ScrollableComponent2;
+import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle.Simple;
@@ -58,7 +58,7 @@ public class DropdownListBoxSimpleTest {
 
             vp.add(hpLists);
             ListBox<String> lb1 = ListBox.fromStrings( new String[] {"AAAAAAAAA","B","C","D","E"});
-            ScrollableComponent2 lb1_sc = new ScrollableComponent2(Colors.DEFAULT_COLOR, new Dimension.Simple(4, lb1.getWidth()), lb1).removeFooterComponent();
+            ScrollableComponent lb1_sc = new ScrollableComponent(Colors.DEFAULT_COLOR, new Dimension.Simple(4, lb1.getWidth()), lb1).removeFooterComponent();
             vp.add(lb1_sc);
             vp.add(new TextInput("A TextInput Component"));
             vp.add(DropdownListBox.fromStrings(PackageScanner.getClasses("dtb.terminalIO.controlcodes.color").toArray(new String[0])).setTitle(Colors.BIYel, "dtb.terminalIO.controlcodes.color"));

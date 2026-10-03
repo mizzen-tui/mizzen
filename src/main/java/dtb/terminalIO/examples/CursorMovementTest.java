@@ -9,14 +9,13 @@ import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.input.ShowComponentOnFocus;
-import dtb.terminalIO.components.scroll.ScrollableComponent2;
+import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.core.ScreenCanvasBackend;
 import dtb.terminalIO.core.ScreenCanvasBackend.UpdateStrategy;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
-import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
@@ -84,7 +83,7 @@ public class CursorMovementTest {
                                                     tApp.getMainApplicationPanel().getWidth() - 10);
                     });
 
-                    ScrollableComponent2 sc = new ScrollableComponent2(Colors.Whi,
+                    ScrollableComponent sc = new ScrollableComponent(Colors.Whi,
                                                                      scDimension, 
                                                                      mTextBox);
                     sc.setFillOnClear(false);
