@@ -354,7 +354,7 @@ Terms used below:
       WIDGET first offers the key to its own handlers (e.g. a dropdown's "DOWN opens my list");
       then each is asked where focus should go (point 3). *(done - step 5: widgets' own keys)*
    So the most specific wish wins: the focused component, then a widget's own handlers, then moving
-   focus. The order lives in `KeyRouter` only; a widget just declares its policy, its nav keys
+   focus. The order lives in `KeyRouter` only; a component just declares its policy, its nav keys
    and its own keys (`KeyboardHandler.onKey`, or appended handlers handed out via `AsKeyboardHandler`).
 
 3. **Focus managers answer two questions; they decide, their parent doesn't.** *(done - steps 1 and 2)*

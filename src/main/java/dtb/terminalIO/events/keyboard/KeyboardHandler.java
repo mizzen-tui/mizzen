@@ -2,14 +2,14 @@ package dtb.terminalIO.events.keyboard;
 
 /**
  * Something that handles key presses for a component.
- *
+ * <p/>
  * Keys go to the focused component first, then to each component around it (its parents), until
  * one handles it - "bubbling", as in a web browser. Only if nobody did does focus move (TAB, a
- * widget's arrows) or a hot key fire.
- *
+ * dropdown's arrows) or a hot key fire.
+ * <p/>
  * Example: a dropdown whose button has focus. DOWN goes to the button first (it doesn't use it),
  * then to the dropdown, whose onKey opens the list and returns true - so focus does not move.
- *
+ * <p/>
  * A component gets one by implementing this interface, or by handing one out (AsKeyboardHandler) -
  * e.g. its usual event handlers, adapted with AsKeyboardHandler.UTIL.toKeyboardHandler.
  * Works for the focused component and for any component around it; nothing to register.

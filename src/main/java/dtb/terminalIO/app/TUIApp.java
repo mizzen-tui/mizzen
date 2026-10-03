@@ -515,7 +515,7 @@ public class TUIApp implements ComponentFinder {
             }
         });
 
-        // first on the bus: app-wide, whatever has focus (a focused widget may take every key)
+        // first on the bus: app-wide, whatever has focus (a focused component may take every key)
         getEventBus().prependEventHandler(inspectorToggleHandler);
 
         return this;
@@ -605,7 +605,7 @@ public class TUIApp implements ComponentFinder {
             mouseEventOchestrator.disableMouseHandling();
         }
 
-        // first on the bus, so it works whatever has focus (a focused widget may take every key)
+        // first on the bus, so it works whatever has focus (a focused component may take every key)
         terminateAppHotKeyEventHandler = new KeyInputEventHandler(terminateAppHotKey, (te) -> onClick_terminateAppHotKey(te) );
         eventBus.prependEventHandler(terminateAppHotKeyEventHandler);
 

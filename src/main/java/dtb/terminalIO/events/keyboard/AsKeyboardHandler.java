@@ -9,15 +9,17 @@ import dtb.terminalIO.events.focus.ToFocusable;
 
 /**
  * "I am not a KeyboardHandler, but here is one for me" - like ToFocusable for focus.
- *
+ * <p/>
  * Lets a component keep its key handling in the usual event handler style (a KeyInputEventHandler,
  * a chain of ConditionalEventHandlers ...) and still take part in key routing (bubbling, see
  * KeyboardHandler): hand that handler out, adapted with UTIL.toKeyboardHandler.
- *
- * Example (CheckBoxInput):
+ * <p/>
+ * Example:
+ * <pre>
  *     private final KeyboardHandler keys = AsKeyboardHandler.UTIL.toKeyboardHandler(
  *             new KeyInputEventHandler(te -> toggle(), Keys.ENTER_KEYSTROKE, Keys.SPACE_KEYSTROKE));
  *     public KeyboardHandler asKeyboardHandler() { return keys; }
+ * </pre>
  */
 public interface AsKeyboardHandler {
 
@@ -47,12 +49,15 @@ public interface AsKeyboardHandler {
 
         /**
          * Any object used as a KeyboardHandler, digging inside it if needed:
+         * <pre>
          *   - a KeyboardHandler: itself; an AsKeyboardHandler: the one it hands out
          *   - an event handler (ConditionalEventHandler, ChainedEventHandler): it takes a key if
          *     its canHandle says so - e.g. a KeyInputEventHandler for ENTER and SPACE
          *   - a component that is focusable (ToFocusable): its Focusable - which is an event handler
+         * </pre>
          * null if none of these. Unlike a plain onKey, an adapted event handler can tell whether it
          * wants a key without acting (wantsKey).
+         * <p/>
          * A focus manager is refused (IllegalArgumentException): its canHandle passes events on to
          * its children, which would then get the key a second time. Use its own handlers instead.
          */

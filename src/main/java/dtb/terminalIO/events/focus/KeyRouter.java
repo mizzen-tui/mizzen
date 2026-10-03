@@ -10,27 +10,29 @@ import dtb.terminalIO.events.keyboard.KeyStroke;
 /**
  * Delivers key presses for a navigation root: the application's root focus manager, or a modal
  * dialog's (TRAP), which gets keys first. The root hands it every key (DefaultFocusManager).
- *
+ * <p/>
  * A key goes to the focused component first, then up through the components around it, until
- * someone uses it ("bubbling"). At each focus manager on the way up (a panel of fields, a widget
+ * someone uses it ("bubbling"). At each focus manager on the way up (a panel of fields, a component
  * such as a dropdown, the root) the order is:
- *   1. the focus manager's component, if it handles keys (KeyboardHandler, or one it hands out -
- *      AsKeyboardHandler; e.g. a dropdown's "DOWN opens my list", or a wrapper's appended handlers)
- *   2. a hot key of one of its other children (e.g. F2 on a button next to the focused field)
- *   3. the focus manager's custom handler (DefaultFocusManager.setCustomExtendedEventHandler)
- *   4. its navigation keys: move focus (advance) - MOVED: focus moves; STAY: focus stays (key used);
- *      DONE: no further child in it, so go on to the next focus manager out
- * Components between two focus managers that handle keys are asked on the way up too.
+ * <pre>
+ *   1. its component's keyboard handler (KeyboardHandler, or one it hands out - AsKeyboardHandler),
+ *      e.g. a dropdown's "DOWN opens my list", or a wrapper's appended handlers
+ *   2. a hot key of one of its other children, e.g. F2 on a button next to the focused field
+ *   3. its custom handler (DefaultFocusManager.setCustomExtendedEventHandler)
+ *   4. its navigation keys (advance): MOVED - focus moves; STAY - focus stays, key used;
+ *      DONE - no further child in it, so on to the next focus manager out
+ * </pre>
+ * Components between two focus managers that have a keyboard handler are asked on the way up too.
  * The walk ends at the root; if nobody used the key, the root doesn't take it.
- *
- * Example: form [name, dropdown(button, list)], focus on the dropdown's button, DOWN pressed:
- * the button doesn't use it -> the dropdown's own handler does ("open my list") -> done.
- * TAB instead: button no, dropdown no (TAB isn't its key) -> the form moves focus to the next field.
- *
+ * <p/>
+ * Example: form [name, dropdown(button, list)], focus on the dropdown's button, DOWN pressed: the
+ * button doesn't use it, the dropdown does ("open my list") - done. TAB instead: the button and
+ * the dropdown don't use it (TAB isn't the dropdown's key), so the form moves focus to the next field.
+ * <p/>
  * When nothing has focus - not yet, or the focused component went away (e.g. a dropdown's list
  * closed) - navigation keys carry on from the most recently focused component that is still there;
  * if there is none, TAB focuses the first component and SHIFT-TAB the last (as browsers do).
- *
+ * <p/>
  * Focus is moved with FocusManager.UTIL.moveFocus, the same as a mouse click (so hilite,
  * unFocus/focus hand-off etc. behave the same).
  */
