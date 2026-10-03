@@ -2,9 +2,11 @@ package dtb.terminalIO.components.input.tree;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import dtb.terminalIO.components.BlockChars;
 import dtb.terminalIO.components.BoundedComponent;
@@ -13,135 +15,583 @@ import dtb.terminalIO.components.GetComponentAtOffset;
 import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.components.input.HasValue;
+import dtb.terminalIO.components.input.LeafFocusBehaviour;
+import dtb.terminalIO.components.input.ListBox;
+import dtb.terminalIO.components.input.SettableHasValueComponentMixen;
 import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors;
+import dtb.terminalIO.events.ConditionalEventHandler;
+import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.RequestScrollToView;
+import dtb.terminalIO.events.RequestUpdateCanvasEvent;
+import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.focus.ToFocusable;
+import dtb.terminalIO.events.keyboard.AsKeyboardHandler;
+import dtb.terminalIO.events.keyboard.KeyEvent;
+import dtb.terminalIO.events.keyboard.KeyStroke;
+import dtb.terminalIO.events.keyboard.KeyboardHandler;
+import dtb.terminalIO.events.keyboard.Keys;
+import dtb.terminalIO.events.mouse.ApplicationMouseEvent;
+import dtb.terminalIO.events.mouse.Clickable;
+import dtb.terminalIO.events.mouse.MOUSE_ACTION;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
-import dtb.terminalIO.util.StringUtils;
 
-//  TODO:  This control needs a lot of work before its considered done ..
-public class TreeView<T> extends BoundedComponent<BoundedComponent<?>> 
-                         implements ParentContainer,  
-                                    GetComponentAtOffset {
+/**
+ * A tree of nodes you can expand, collapse and select - one TAB stop that draws its own rows.
+ * <pre>
+ *     ▾ Shapes
+ *       ├─▾ Round
+ *       │   ├── Circle        the selected row is hilited while the tree has focus
+ *       │   └── Ellipse
+ *       └─▸ Polygons          ▸ collapsed, ▾ expanded (asciiStyle: &gt; and v)
+ * </pre>
+ * Keys: UP / DOWN select the row above / below; RIGHT expands (or goes to the first child); LEFT
+ * collapses (or goes to the parent); HOME / END the first / last row; ENTER expands / collapses, or
+ * activates a leaf. Mouse: a click selects a row; a click on ▸ / ▾ expands / collapses; a click on
+ * the selected row activates it (a leaf) or expands / collapses it.
+ * <p/>
+ * The nodes come from a TreeViewModel (only asked for a node's children when it is expanded); for
+ * a tree built by hand see DefaultTreeNode. nodeText sets the text shown for a node.
+ * <p/>
+ * The selected node is the value (settable, so forms can bind it). onChange hears it change - by
+ * default on every move (like ListBox); setEventTriggerForValueChanged(ListBox.VALUE_CHANGED_ON_...)
+ * picks which moves count, e.g. only ENTER and clicks. onExpansion hears nodes expand / collapse;
+ * onActivate hears ENTER or a click on the selected leaf (e.g. "open this file").
+ * <p/>
+ * While the tree doesn't have focus its selected row shows in the setUnfocusedSelection style
+ * (default DIM: the selected colour, not inverted).
+ */
+public class TreeView<N> extends BoundedComponent<TreeView<N>>
+                         implements SettableHasValueComponentMixen<TreeView<N>, N>, ToFocusable, AsKeyboardHandler,
+                                    Clickable, ParentContainer, GetComponentAtOffset {
 
-    TreeViewModel<T> model;
-    Function<T, String> nodeAsString;
-    List<BoundedComponent<?>> children;
+    /** how the selected row shows while the tree doesn't have focus */
+    public enum UnfocusedSelection {
+        /** in the selected colour, not inverted */
+        DIM,
+        /** "[Circle]" */
+        BRACKETS,
+        /** "> Circle" */
+        ARROW,
+        /** not marked */
+        NONE
+    }
 
-    public TreeView(Color color, Dimension d, Function<T, String> nodeAsString) {
+    /** a node was expanded (true) or collapsed (false) by the user */
+    public interface ExpansionListener<N> {
+        void expansionChanged(N node, boolean expanded, EventBus eventBus);
+    }
+
+    /** one visible row: its node, where it sits, and what it shows */
+    private class Row {
+        final N node;
+        final Row parent;
+        final boolean expandable;
+        final int markCol;          // the column of its ▸ / ▾ (expandable rows only)
+        final String text;
+
+        Row(N node, Row parent, boolean expandable, int markCol, String text) {
+            this.node = node;
+            this.parent = parent;
+            this.expandable = expandable;
+            this.markCol = markCol;
+            this.text = text;
+        }
+    }
+
+    private TreeViewModel<N> model;
+    private Function<N, String> nodeText;
+    private final Set<N> expanded = new HashSet<N>();
+    private final List<Row> rows = new ArrayList<Row>();
+    private final List<TextComponent> rowComponents = new ArrayList<TextComponent>();
+    private N selected;
+
+    private Color selectedColor = new Colors.FGBGColors(Colors.IYel);     // as ListBox
+    private UnfocusedSelection unfocusedSelection = UnfocusedSelection.DIM;
+    private String collapsedMark = "▸";
+    private String expandedMark = "▾";
+    private boolean ascii = false;
+    private int eventTriggerForValueChanged = ListBox.DEFAULT_TRIGGER_FOR_ONVALUE_CHANGED;
+
+    private HasValue.OnValueChangedEventHandler<N> actionOnChangeHandler;
+    private ExpansionListener<N> onExpansion = (node, isExpanded, bus) -> { };
+    private BiConsumer<N, EventBus> onActivate = (node, bus) -> { };
+
+    private final LeafFocusBehaviour focus = LeafFocusBehaviour.of(this)
+            .look(LeafFocusBehaviour.Look.NONE)                 // the selected row shows focus
+            .showOnFocus(this::selectedRowRectangle)
+            .onKey(new TreeKeys())
+            .onFocusGained(this::focusGained)
+            .onFocusLost(this::repaint)
+            .otherEvents(new ConditionalEventHandler.Impl(
+                    (te) -> this.actionOnChangeHandler != null && this.actionOnChangeHandler.canHandle(te) != null,
+                    (te) -> this.actionOnChangeHandler.handle(te)));
+
+    public TreeView(TreeViewModel<N> model) {
+        this(Colors.DEFAULT_COLOR, new Dimension.Simple(1, 1));
+        setModel(model);
+    }
+
+    public TreeView(Color color, Dimension d, Function<N, String> nodeText) {
         super(color, d);
-        this.nodeAsString = nodeAsString;
-        this.children = new ArrayList<BoundedComponent<?>>();
+        this.nodeText = nodeText;
     }
-    
+
     public TreeView(Color color, Dimension d) {
-        this(color, d, (node)->String.valueOf(node));
+        this(color, d, (node) -> String.valueOf(node));
     }
 
-    public void setModel(TreeViewModel<T> model) {
+    /** the nodes to show; the root starts expanded and selected */
+    public void setModel(TreeViewModel<N> model) {
         this.model = model;
-        buildFromModel();
-        this.clear();
-        this.markAsDirty();
+        this.expanded.clear();
+        N root = model.getRoot();
+        if (root != null) {
+            expanded.add(root);
+        }
+        this.selected = root;
+        rebuild();
     }
 
-    private boolean isLastChild(T parent, T child) {
-        int parentChildCount = model.getChildCount(parent);
-        int childIdx = model.getIndexOfChild(parent, child);
-        return childIdx == parentChildCount-1;
+    // ---- looks ------------------------------------------------------------------------------
+
+    /** the text shown for a node (default: String.valueOf) */
+    public TreeView<N> nodeText(Function<N, String> nodeText) {
+        this.nodeText = nodeText;
+        rebuild();
+        return this;
     }
-    
-    private int drawNode(Color color, 
-                         T node, 
-                         int callCount,
-                         List<T> ancestor) {  //ancestor.get(0) is parent node
 
-        int newCallCount = callCount;  // needed to track treeview row
+    /** the colour of the selected row (inverted while the tree has focus) */
+    public TreeView<N> setSelectedColor(Color selectedColor) {
+        this.selectedColor = selectedColor;
+        rebuild();
+        return this;
+    }
 
-        String _branchComponentText = "";
-        int depth = ancestor.size();
-        if (depth > 0) {
-            BlockChars blockChars = this.getBlockChars();
-            String shortHLine = StringUtils.repeat(blockChars.getHORIZONTAL_LINE(),2);
-            T currentNode = node;
-            for (int i = 0; i < depth; i++) {
-                T parent = ancestor.get(i);
-                boolean isLastChild = isLastChild(parent, currentNode);
-                if (i == 0) {
-                   _branchComponentText = " "+(isLastChild ? blockChars.getBOTTOM_LEFT() : blockChars.getVERTICAL_RIGHT()) + shortHLine + _branchComponentText;
-                } else {
-                    _branchComponentText = " "+(isLastChild ? "    " : (""+blockChars.getVERTICAL_LINE() + "   ") ) + _branchComponentText;
-                }
-                currentNode = parent;
+    public TreeView<N> setUnfocusedSelection(UnfocusedSelection unfocusedSelection) {
+        this.unfocusedSelection = unfocusedSelection;
+        rebuild();
+        return this;
+    }
+
+    /** the marks before a collapsed / expanded node, e.g. "▸" and "▾" */
+    public TreeView<N> setExpanders(String collapsed, String expanded) {
+        this.collapsedMark = collapsed;
+        this.expandedMark = expanded;
+        rebuild();
+        return this;
+    }
+
+    /** plain ASCII: "&gt;" / "v" marks and |- `- branch lines, for terminals without box drawing characters */
+    public TreeView<N> asciiStyle() {
+        this.ascii = true;
+        return setExpanders(">", "v");
+    }
+
+    @Override
+    public TreeView<N> setColor(Color color) {
+        super.setColor(color);
+        if (rows != null) {          // null while the super constructor sets the first color
+            rebuild();
+        }
+        return this;
+    }
+
+    // ---- expansion --------------------------------------------------------------------------
+
+    /** expand node (by code: onExpansion is not told) */
+    public TreeView<N> expand(N node) {
+        if (model != null && !model.isLeaf(node) && expanded.add(node)) {
+            rebuild();
+        }
+        return this;
+    }
+
+    /** collapse node (by code: onExpansion is not told); a selection inside it moves to node */
+    public TreeView<N> collapse(N node) {
+        if (expanded.remove(node)) {
+            if (isInside(selected, node)) {
+                selected = node;
             }
-            _branchComponentText += " ";
+            rebuild();
         }
-        String output = nodeAsString.apply(node);
-        int theRow = getRow() + newCallCount;
-        int col = getCol();
-        String branchComponentText = _branchComponentText;
-        if ( ! StringUtils.isEmptyStr(_branchComponentText)) {
-            col +=  makeChildComponent(()->  new TextComponent(color, theRow, getCol(), branchComponentText)).getWidth()-1;
-        }
-        int theNodeComponentCol = col;
-        // makeChildComponent(() -> new Button(color, theRow, theNodeComponentCol, output, false));
-        makeChildComponent(() -> new TextComponent(color, theRow, theNodeComponentCol, output));
-
-        int childCount = this.model.getChildCount(node);
-        ancestor.add(0, node);
-
-        for (int i = 0; i < childCount; i++) {
-            T child = this.model.getChild(node, i);
-            newCallCount = drawNode(color, child, newCallCount + 1, ancestor);
-        }
-
-        ancestor.remove(node);
-
-        return newCallCount;
-
-    }
-    
-    private void buildFromModel() {
-        T root = model.getRoot();
-        this.children.clear();
-        drawNode(this.getColor(), root, 0, new ArrayList<T>());
-
-        this.resize(Rectangle.UTIL.calcDimensionsWith(children));
-
-    }
-    
-    protected <T extends BoundedComponent<?>> T makeChildComponent(Supplier<T> createComponent) {
-        T child = super.makeChildComponent(createComponent);
-        this.children.add(child);
-        return child;
+        return this;
     }
 
+    /** expand every node - asks the model for the whole tree */
+    public TreeView<N> expandAll() {
+        if (model != null && model.getRoot() != null) {
+            expandAllBelow(model.getRoot());
+            rebuild();
+        }
+        return this;
+    }
 
+    public boolean isExpanded(N node) {
+        return expanded.contains(node);
+    }
+
+    // ---- value: the selected node -----------------------------------------------------------
+
+    @Override
+    public N getValue() {
+        return selected;
+    }
+
+    /** select node, expanding the nodes above it */
+    @Override
+    public void setValue(N node) {
+        List<N> path = pathTo(node);
+        if (path == null) {
+            throw new IllegalArgumentException("TreeView(" + HasName.UTIL.getName(this) + ").setValue(" + node + "): not in the tree");
+        }
+        expanded.addAll(path.subList(0, path.size() - 1));
+        selected = node;
+        rebuild();
+    }
+
+    public void onChange(EventHandler handler) {
+        actionOnChangeHandler = HasValue.UTIL.wrapHandlerIntoOnValueChangedHandler(this, handler);
+    }
+
+    /** which selection moves fire onChange - ListBox.VALUE_CHANGED_ON_... flags (default: all) */
+    public TreeView<N> setEventTriggerForValueChanged(int eventTriggerForValueChanged) {
+        this.eventTriggerForValueChanged = eventTriggerForValueChanged;
+        return this;
+    }
+
+    public TreeView<N> onExpansion(ExpansionListener<N> onExpansion) {
+        this.onExpansion = onExpansion;
+        return this;
+    }
+
+    public TreeView<N> onActivate(BiConsumer<N, EventBus> onActivate) {
+        this.onActivate = onActivate;
+        return this;
+    }
+
+    // ---- focus, keys, mouse -----------------------------------------------------------------
+
+    @Override
+    public Focusable asFocusable() {
+        return focus.asFocusable();
+    }
+
+    @Override
+    public KeyboardHandler asKeyboardHandler() {
+        return focus.asKeyboardHandler();
+    }
+
+    /** the tree's keys - see the class comment. It wants only these, so other keys go on to its parents. */
+    private class TreeKeys implements KeyboardHandler {
+        private final KeyStroke[] mine = { Keys.UP_KEYSTROKE, Keys.DOWN_KEYSTROKE, Keys.LEFT_KEYSTROKE, Keys.RIGHT_KEYSTROKE,
+                                           Keys.HOME_KEYSTROKE, Keys.END_KEYSTROKE, Keys.ENTER_KEYSTROKE };
+
+        @Override
+        public boolean wantsKey(KeyEvent ke) {
+            if (rows.isEmpty()) {
+                return false;
+            }
+            for (KeyStroke key : mine) {
+                if (ke.isKeyStroke(key)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public boolean onKey(KeyEvent ke) {
+            if (!wantsKey(ke)) {
+                return false;
+            }
+            EventBus bus = ke.getEventBus();
+            int index = selectedIndex();
+            Row row = rows.get(index);
+            if (ke.isKeyStroke(Keys.UP_KEYSTROKE)) {
+                select(index - 1, ListBox.VALUE_CHANGED_ON_PREV_KEYSTROKE, bus);
+            } else if (ke.isKeyStroke(Keys.DOWN_KEYSTROKE)) {
+                select(index + 1, ListBox.VALUE_CHANGED_ON_NEXT_KEYSTROKE, bus);
+            } else if (ke.isKeyStroke(Keys.HOME_KEYSTROKE)) {
+                select(0, ListBox.VALUE_CHANGED_ON_PREV_KEYSTROKE, bus);
+            } else if (ke.isKeyStroke(Keys.END_KEYSTROKE)) {
+                select(rows.size() - 1, ListBox.VALUE_CHANGED_ON_NEXT_KEYSTROKE, bus);
+            } else if (ke.isKeyStroke(Keys.RIGHT_KEYSTROKE)) {
+                if (row.expandable && !expanded.contains(row.node)) {
+                    setExpanded(row.node, true, bus);
+                } else if (row.expandable) {
+                    select(index + 1, ListBox.VALUE_CHANGED_ON_NEXT_KEYSTROKE, bus);     // its first child
+                }
+            } else if (ke.isKeyStroke(Keys.LEFT_KEYSTROKE)) {
+                if (row.expandable && expanded.contains(row.node)) {
+                    setExpanded(row.node, false, bus);
+                } else if (row.parent != null) {
+                    select(rows.indexOf(row.parent), ListBox.VALUE_CHANGED_ON_PREV_KEYSTROKE, bus);
+                }
+            } else if (ke.isKeyStroke(Keys.ENTER_KEYSTROKE)) {
+                enter(row, ListBox.VALUE_CHANGED_ON_ENTER_KEY, bus);
+            }
+            return true;     // the tree's keys are used up even at the top / bottom row
+        }
+    }
+
+    /**
+     * A click: on a row's ▸ / ▾ expands / collapses it; on another row selects it; on the selected
+     * row activates it (a leaf) or expands / collapses it. Position: relative to the tree.
+     */
+    @Override
+    public void onClick(ApplicationMouseEvent appMouseEvent) {
+        if (!MOUSE_ACTION.DOWN_LEFT.equals(appMouseEvent.getMouseAction())) {
+            return;
+        }
+        EventBus bus = appMouseEvent.getEventBus();
+        focus.requestFocus(bus);
+        Position at = appMouseEvent.getMousePosition();
+        if (at.getRow() < 0 || at.getRow() >= rows.size()) {
+            return;
+        }
+        Row row = rows.get(at.getRow());
+        if (row.expandable && at.getCol() == row.markCol) {
+            setExpanded(row.node, !expanded.contains(row.node), bus);
+        } else if (row.node == selected) {
+            enter(row, ListBox.VALUE_CHANGED_ON_MOUSE_CLICK, bus);
+        } else {
+            select(at.getRow(), ListBox.VALUE_CHANGED_ON_MOUSE_CLICK, bus);
+        }
+    }
+
+    @Override
+    public void onClick(EventBus eventBus) {
+        focus.requestFocus(eventBus);
+    }
+
+    // ---- inside: selection, expansion, events -----------------------------------------------
+
+    /** select the row at index (if there is one); onChange is told if trigger is one of the chosen triggers */
+    private void select(int index, int trigger, EventBus bus) {
+        if (index < 0 || index >= rows.size() || rows.get(index).node == selected) {
+            return;
+        }
+        selected = rows.get(index).node;
+        rebuild();
+        bus.raiseEvent(new RequestScrollToView(this, this, selectedRowRectangle()));
+        fireValueChangedIf(trigger, bus);
+        repaint(bus);
+    }
+
+    /** ENTER (or a click on the selected row): a parent expands / collapses, a leaf is activated */
+    private void enter(Row row, int trigger, EventBus bus) {
+        if (row.expandable) {
+            setExpanded(row.node, !expanded.contains(row.node), bus);
+        } else {
+            onActivate.accept(row.node, bus);
+        }
+        fireValueChangedIf(trigger, bus);
+    }
+
+    /** expand / collapse by the user: onExpansion is told; a selection inside a collapsed node moves to it */
+    private void setExpanded(N node, boolean expand, EventBus bus) {
+        N selectedBefore = selected;
+        if (expand) {
+            expand(node);
+        } else {
+            collapse(node);
+        }
+        onExpansion.expansionChanged(node, expand, bus);
+        if (selected != selectedBefore) {
+            fireValueChangedIf(ListBox.VALUE_CHANGED_ON_PREV_KEYSTROKE, bus);
+        }
+        repaint(bus);
+    }
+
+    private void fireValueChangedIf(int trigger, EventBus bus) {
+        if ((eventTriggerForValueChanged & trigger) != 0) {
+            bus.raiseEvent(new HasValue.ValueChangedEvent<N>(this));
+        }
+    }
+
+    private void focusGained(EventBus bus) {
+        fireValueChangedIf(ListBox.VALUE_CHANGED_ON_FOCUS, bus);
+        repaint(bus);
+    }
+
+    private void repaint(EventBus bus) {
+        rebuild();
+        RequestUpdateCanvasEvent.invoke(bus, this);
+    }
+
+    // ---- inside: rows -----------------------------------------------------------------------
+
+    /** work out the visible rows again and redraw them (selected row in its colours) */
+    private void rebuild() {
+        rows.clear();
+        rowComponents.clear();
+        if (model != null && model.getRoot() != null) {
+            addRows(model.getRoot(), null, "", true, true);
+        }
+        if (selected != null && selectedIndex() < 0) {
+            selected = rows.isEmpty() ? null : rows.get(0).node;
+        }
+        int width = 1;
+        for (int i = 0; i < rows.size(); i++) {
+            Row row = rows.get(i);
+            boolean isSelected = row.node == selected;
+            String text = isSelected ? selectedText(row) : row.text;
+            Color color = isSelected ? selectedRowColor() : getColor();
+            int rowIndex = i;
+            TextComponent component = makeChildComponent(() -> new TextComponent(color, rowIndex, 0, text));
+            rowComponents.add(component);
+            width = Math.max(width, component.getWidth());
+        }
+        resize(new Dimension.Simple(Math.max(1, rows.size()), width));
+        markAsDirty();
+    }
+
+    /**
+     * Add node's row (and, if it is expanded, its children's rows). prefix: the branch lines of the
+     * levels above it; last: it is its parent's last child.
+     */
+    private void addRows(N node, Row parent, String prefix, boolean last, boolean isRoot) {
+        boolean expandable = !model.isLeaf(node);
+        String branch = isRoot ? "" : prefix + (last ? lastBranch() : teeBranch());
+        String mark = expandable ? (expanded.contains(node) ? expandedMark : collapsedMark) : (isRoot ? "" : horizontal());
+        String text = branch + mark + (mark.isEmpty() ? "" : " ") + nodeText.apply(node);
+        Row row = new Row(node, parent, expandable, branch.length(), text);
+        rows.add(row);
+        if (!expandable || !expanded.contains(node)) {
+            return;
+        }
+        String childPrefix = isRoot ? "  " : prefix + (last ? "    " : vertical() + "   ");
+        int count = model.getChildCount(node);
+        for (int i = 0; i < count; i++) {
+            addRows(model.getChild(node, i), row, childPrefix, i == count - 1, false);
+        }
+    }
+
+    private String selectedText(Row row) {
+        if (focus.hasFocus()) {
+            return row.text;
+        }
+        switch (unfocusedSelection) {
+            case BRACKETS: return bracketed(row);
+            case ARROW:    return "> " + row.text;
+            default:       return row.text;
+        }
+    }
+
+    /** "├── [Circle]": the brackets around the node's text, not its branch lines */
+    private String bracketed(Row row) {
+        String shown = nodeText.apply(row.node);
+        int at = row.text.lastIndexOf(shown);
+        return at < 0 ? "[" + row.text + "]" : row.text.substring(0, at) + "[" + shown + "]";
+    }
+
+    private Color selectedRowColor() {
+        if (focus.hasFocus()) {
+            return selectedColor.invert();
+        }
+        return unfocusedSelection == UnfocusedSelection.DIM ? selectedColor : getColor();
+    }
+
+    private int selectedIndex() {
+        for (int i = 0; i < rows.size(); i++) {
+            if (rows.get(i).node == selected) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /** the selected row, relative to the tree - what to scroll into view */
+    private Rectangle selectedRowRectangle() {
+        int index = Math.max(0, selectedIndex());
+        return new Rectangle.Simple(index, 0, 1, Math.max(1, getWidth()));
+    }
+
+    /** is node inside ancestor (or ancestor itself)? - by the visible rows */
+    private boolean isInside(N node, N ancestor) {
+        for (Row row = rowOf(node); row != null; row = row.parent) {
+            if (row.node == ancestor) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private Row rowOf(N node) {
+        for (Row row : rows) {
+            if (row.node == node) {
+                return row;
+            }
+        }
+        return null;
+    }
+
+    private void expandAllBelow(N node) {
+        if (model.isLeaf(node)) {
+            return;
+        }
+        expanded.add(node);
+        for (int i = 0; i < model.getChildCount(node); i++) {
+            expandAllBelow(model.getChild(node, i));
+        }
+    }
+
+    /** the nodes from the root down to node (searching the whole model); null if node isn't in it */
+    private List<N> pathTo(N node) {
+        if (model == null || model.getRoot() == null) {
+            return null;
+        }
+        List<N> path = new ArrayList<N>();
+        return findPath(model.getRoot(), node, path) ? path : null;
+    }
+
+    private boolean findPath(N at, N node, List<N> path) {
+        path.add(at);
+        if (at == node || at.equals(node)) {
+            return true;
+        }
+        for (int i = 0; i < model.getChildCount(at); i++) {
+            if (findPath(model.getChild(at, i), node, path)) {
+                return true;
+            }
+        }
+        path.remove(path.size() - 1);
+        return false;
+    }
+
+    private String teeBranch()   { return ascii ? "|-" : "" + blockChars().getVERTICAL_RIGHT() + blockChars().getHORIZONTAL_LINE(); }
+    private String lastBranch()  { return ascii ? "`-" : "" + blockChars().getBOTTOM_LEFT() + blockChars().getHORIZONTAL_LINE(); }
+    private String horizontal()  { return ascii ? "-"  : "" + blockChars().getHORIZONTAL_LINE(); }
+    private String vertical()    { return ascii ? "|"  : "" + blockChars().getVERTICAL_LINE(); }
+
+    private BlockChars blockChars() {
+        return getBlockChars();
+    }
+
+    // ---- drawing and children (the row components) ------------------------------------------
+
+    @Override
     public void draw(Color color, IScreenLineSegmentsBuffer segments) {
-
-        if (this.model == null) {
-            throw new NullPointerException(
-                    "Attempted to draw TreeView before setting TreeViewModel! Call setModel(..) first!");
+        for (Component<?> row : rowComponents) {
+            segments.merge(row.getSegmentsBuffer());
         }
-
-        for ( Component<?> child : children ) {
-               segments.merge(child.getSegmentsBuffer());
-        }
-
     }
 
     @Override
     public Collection<? extends Component<?>> getChildren() {
-        return children;
+        return rowComponents;
     }
 
     @Override
     public Position getPositionRelativeToParent(Component<?> child) {
-        if ( ! this.children.contains(child)) {
-            throw new IllegalArgumentException(HasName.UTIL.getName(child) + " not a child of " + HasName.UTIL.getName(this));
-        }
-        return child.getPostion_TopLeft();
+        return child instanceof BoundedComponent ? ((BoundedComponent<?>) child).getPostion_TopLeft() : null;
     }
 
     @Override
@@ -151,21 +601,6 @@ public class TreeView<T> extends BoundedComponent<BoundedComponent<?>>
 
     @Override
     public Component<?> getComponentAtOffset(Position offset) {
-
-        if ( ! this.containsPosition(offset)) {
-            return null;
-        }
-        for (BoundedComponent<?> child : children) {
-            if (child.containsPosition(offset)) {
-                if (child instanceof GetComponentAtOffset) {
-                    Position relativeOffset =  offset.offsetAdd(child.getPostion_TopLeft().negate());
-                    return ((GetComponentAtOffset)child).getComponentAtOffset(relativeOffset);
-                } else {
-                    return child;
-                }
-            }
-        }
-        return this;
+        return this.containsPosition(offset) ? this : null;
     }
-
 }

@@ -1,5 +1,8 @@
 package dtb.terminalIO.components.input;
 
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
@@ -10,6 +13,7 @@ import dtb.terminalIO.events.focus.Focusable.FocusableFromParts;
 import dtb.terminalIO.events.focus.RequestFocusEvent;
 import dtb.terminalIO.events.keyboard.KeyEvent;
 import dtb.terminalIO.events.keyboard.KeyboardHandler;
+import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
 
 /**
@@ -32,7 +36,14 @@ import dtb.terminalIO.geom.position.Position;
  */
 public final class LeafFocusBehaviour {
 
+    /** how focus shows: HILITE - the whole component is hilited while focused; NONE - the component draws it itself */
+    public enum Look { HILITE, NONE }
+
     private final Component<?> component;
+    private Look look = Look.HILITE;
+    private Supplier<Rectangle> partToShow;                      // null: the whole component
+    private Consumer<EventBus> onFocusGained = (bus) -> { };
+    private Consumer<EventBus> onFocusLost = (bus) -> { };
     private Position cursorAt;                                   // null: no cursor
     private KeyboardHandler keys = (ke) -> false;
     private ConditionalEventHandler otherEvents = ConditionalEventHandler.NOOP;
@@ -45,6 +56,39 @@ public final class LeafFocusBehaviour {
     /** focus behaviour for component (usually: this) */
     public static LeafFocusBehaviour of(Component<?> component) {
         return new LeafFocusBehaviour(component);
+    }
+
+    /**
+     * HILITE (default): the whole component is hilited while focused. NONE: the component shows
+     * focus itself - e.g. a tree hilites its selected row. Set before asFocusable() is first used.
+     */
+    public LeafFocusBehaviour look(Look look) {
+        if (focusable != null) {
+            throw new IllegalStateException("LeafFocusBehaviour.look(" + look + ") must be set before asFocusable() is used");
+        }
+        this.look = look;
+        return this;
+    }
+
+    /**
+     * The part of the component to scroll into view when it gets focus (relative to the component),
+     * instead of the whole component - e.g. a tree's selected row.
+     */
+    public LeafFocusBehaviour showOnFocus(Supplier<Rectangle> partToShow) {
+        this.partToShow = partToShow;
+        return this;
+    }
+
+    /** focus arrived (it didn't have focus before) */
+    public LeafFocusBehaviour onFocusGained(Consumer<EventBus> onFocusGained) {
+        this.onFocusGained = onFocusGained;
+        return this;
+    }
+
+    /** focus left (it had focus before) */
+    public LeafFocusBehaviour onFocusLost(Consumer<EventBus> onFocusLost) {
+        this.onFocusLost = onFocusLost;
+        return this;
     }
 
     /** show the terminal cursor at this position inside the component while it has focus */
@@ -106,23 +150,84 @@ public final class LeafFocusBehaviour {
         };
     }
 
-    /** hilite while focused; on getting focus: scroll into view, show the cursor; on losing it: hide the cursor */
+    /**
+     * Hilited while focused (unless look NONE). On getting focus: scroll into view, show the cursor;
+     * on losing it: hide the cursor. onFocusGained / onFocusLost: when focus really arrives / leaves -
+     * the focus code may tell it with setFocus, or with focus / unFocus.
+     */
     private FocusBehaviour buildFocusBehaviour() {
-        return new DefaultFocusableBehaviour.ComponentHiliterFocusableBehaviour(component) {
+        if (look == Look.NONE) {
+            return new DefaultFocusableBehaviour(component) {
+                @Override
+                public void setFocus(boolean focus, EventBus eventBus) {
+                    boolean had = hasFocus();
+                    super.setFocus(focus, eventBus);
+                    afterSetFocus(focus, eventBus);
+                    afterChange(had, hasFocus(), eventBus);
+                }
 
+                @Override
+                public void focus(Focusable oldFocusable, EventBus eventBus) {
+                    boolean had = hasFocus();
+                    super.focus(oldFocusable, eventBus);
+                    afterChange(had, hasFocus(), eventBus);
+                }
+
+                @Override
+                public void unFocus(Focusable newFocusable, EventBus eventBus) {
+                    boolean had = hasFocus();
+                    super.unFocus(newFocusable, eventBus);
+                    afterChange(had, hasFocus(), eventBus);
+                }
+            };
+        }
+        return new DefaultFocusableBehaviour.ComponentHiliterFocusableBehaviour(component) {
             @Override
             public void setFocus(boolean focus, EventBus eventBus) {
+                boolean had = hasFocus();
                 super.setFocus(focus, eventBus);
-                if (focus) {
-                    new ShowComponentOnFocus().onFocus(component, eventBus);
-                    if (cursorAt != null) {
-                        Component.UTIL.requestShowCursorAtComponent(component, cursorAt, eventBus);
-                    }
-                } else if (cursorAt != null) {
-                    eventBus.raiseEvent(new RequestHideCursorEvent(component));
-                }
+                afterSetFocus(focus, eventBus);
+                afterChange(had, hasFocus(), eventBus);
+            }
+
+            @Override
+            public void focus(Focusable oldFocusable, EventBus eventBus) {
+                boolean had = hasFocus();
+                super.focus(oldFocusable, eventBus);
+                afterChange(had, hasFocus(), eventBus);
+            }
+
+            @Override
+            public void unFocus(Focusable newFocusable, EventBus eventBus) {
+                boolean had = hasFocus();
+                super.unFocus(newFocusable, eventBus);
+                afterChange(had, hasFocus(), eventBus);
             }
         };
+    }
+
+    /** after setFocus: scroll into view and show the cursor, or hide it */
+    private void afterSetFocus(boolean focus, EventBus eventBus) {
+        if (focus) {
+            if (partToShow != null) {
+                new ShowComponentOnFocus().onFocus(component, partToShow.get(), eventBus);
+            } else {
+                new ShowComponentOnFocus().onFocus(component, eventBus);
+            }
+            if (cursorAt != null) {
+                Component.UTIL.requestShowCursorAtComponent(component, cursorAt, eventBus);
+            }
+        } else if (cursorAt != null) {
+            eventBus.raiseEvent(new RequestHideCursorEvent(component));
+        }
+    }
+
+    private void afterChange(boolean had, boolean has, EventBus eventBus) {
+        if (!had && has) {
+            onFocusGained.accept(eventBus);
+        } else if (had && !has) {
+            onFocusLost.accept(eventBus);
+        }
     }
 
     /** the other events, looked up when asked - so otherEvents may be set after asFocusable() */
