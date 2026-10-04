@@ -175,11 +175,9 @@ travelling down the focus tree. A redesign must keep delivering every row.
 | VALUE_CHANGED | `onChange` on TextInput, MultiLineTextInput, TextInputForType, Button, RadioGroup, TabButtonComponent, ListBox, DropdownListBox, TextInputWithIncrDecrButtons, ScrollBars, ImageManipulationControls (`HasValue.UTIL.bindConsumerAsOnValueChangedHandler`) | component actions (a Button's action is a VALUE_CHANGED handler) |
 | VALUE_CHANGED (from children) | `FormBinder.onChange` on the **form panel** (ancestor) | form-level change handling: needs delivery through ancestors |
 | VIEW_OFFSET_CHANGED | `HasViewPortWindow` (`newOnChangedHandler`) | viewport scroll sync |
-| TABLE_ROW_SELECTED / TABLE_CELL_SELECTED | `TableComponent` (`rowSelectedHandler`, `cellSelectedHandler`) | table selection callbacks |
-| REQUEST_SCROLL_TO_VIEW | `WindowViewComponent.ScrollToViewHandler` in `ScrollableComponent`, `ScrollableComponent2`, `WindowFrame`, `WindowFrameFocusable` chains (plus a bus-level `FindScrollToViewHandler` in `TUIApp`) | scroll a focused/requested component into view. **Focus side effect:** focusing inside a scrollable can scroll it (see comment in `MouseEventOrchestrator`) |
-| REQUEST_FOCUS | `ScrollableComponent` adds its **own** request-focus handler ("not a standard FocusManager") | focus requests resolved inside the scrollable |
-| any (forwarded) | `ScrollableComponent2`: if the footer (e.g. search box) has focus and cannot handle an event but the viewed component can, it forwards the event **and then raises `RequestFocusEvent` for that component** | *event-driven focus*: typing moves focus to the component that consumes it |
-| any | `ScrollableComponent` prepends each child focusable directly into its own chain | a fourth focus-manager flavour, besides the three base classes in §3.1 |
+| TABLE_ROW_SELECTED / TABLE_CELL_SELECTED | `TableComponent` (`rowSelectedHandler`, `cellSelectedHandler`) | table selection callbacks (row: clicks and, since Oct 2026, key moves) |
+| REQUEST_SCROLL_TO_VIEW | `WindowViewComponent.ScrollToViewHandler` in `ScrollableComponent`, `WindowFrame`, `WindowFrameFocusable` chains (plus a bus-level `FindScrollToViewHandler` in `TUIApp`) | scroll a focused/requested component into view. **Focus side effect:** focusing inside a scrollable can scroll it (see comment in `MouseEventOrchestrator`) |
+| any (forwarded) | `ScrollableComponent`: if the footer (e.g. search box) has focus and cannot handle an event but the viewed component can, it forwards the event **and then raises `RequestFocusEvent` for that component** | *event-driven focus*: typing moves focus to the component that consumes it |
 | any | `customExtendedEventHandler` on `DefaultFocusManager` (`TextInputWithIncrDecrButtons`, `MovingPicturesViewer`, `AbstractWrappedComponentWithFocusManager`) | extra per-manager handling |
 | KEYPRESS (modal) | `ModalEventHandler` prepends itself to its parent container (bus or component), inner chain + keyboard sinkhole | modal dialogs swallow all keys |
 
@@ -191,35 +189,40 @@ resize, `FindScrollToViewHandler`, mouse orchestrator, component inspector,
 
 ## 3. How components get focus managers
 
-### 3.1 Three base classes own a `DefaultFocusManager`
+### 3.1 Today (Oct 2026): a derived focus tree and held behaviours
+
+There is no focus list to keep in step any more. A focus manager works out its children from its
+component whenever it needs them: the nearest visible focusable components below it, with popups
+(a dropdown's open list, a menu) counted under the component that owns them
+(`FocusManager.UTIL.derivedChildFocusables`, `parentOf`; see §4.3 C). Adding, removing or hiding a
+component later needs no call to anything.
+
+A component gets focus by **holding a behaviour**, not by extending a focus base class:
+
+| Behaviour | For | Examples |
+|---|---|---|
+| `LeafFocusBehaviour` | a component that is a TAB stop itself: hilite (or `look(NONE)` - it draws focus itself), scroll into view, optional cursor, its keys, focus gained / lost | CheckBoxInput, TreeView, TableComponent, RadioGroup's options |
+| `ParentFocusBehaviour` | a component whose focus goes to components inside it: optionally one TAB stop with arrow keys (`oneStop`), which child focus enters, keys its children didn't use, focus gained / lost | RadioGroup, DropdownListBox |
+| none | a plain panel of fields: its fields are TAB stops anyway | any app's form panel |
+
+The component hands the behaviour out (`ToFocusable.asFocusable()`, `AsKeyboardHandler.asKeyboardHandler()`).
+Keys reach it through `KeyRouter` (§2.2): a component handles keys with `KeyboardHandler.onKey`,
+or hands out its usual event handlers adapted with `AsKeyboardHandler.UTIL.toKeyboardHandler`.
+
+### 3.2 The older base classes (still used, to be retired)
 
 | Class | Shape |
 |---|---|
 | `CompositeWithFocusManager` | *is* a `Composite`, delegates focus to an inner DFM |
-| `ComponentWithFocusManager` | *wraps* a `Composite`, delegates focus to an inner DFM |
+| `ComponentWithFocusManager` | *wraps* a `Composite`, delegates focus to an inner DFM; its appended handlers are its keyboard handler (`AsKeyboardHandler`) |
 | `AbstractWrappedComponentWithFocusManager` | wraps any component; `asFocusable()` returns the inner DFM |
 
-Subclasses with their own manager include `ButtonBar`, `DropdownListBox`,
-`TextInputWithIncrDecrButtons`, `Menu`, `MenuBar`, `MovingPicturesViewer`,
-`ScrollableComponent(2)`, `SearchFunctionForScrollableComponent`,
-`WindowFrameFocusable`, `LinuxProcessViewer`.
-
-The wrappers call `DefaultFocusManager.setActual(wrapper)`, so children added to
-the inner DFM record the **wrapper** as their parent, not the DFM. This keeps
-the tree consistent as long as every wrapper does it (see §4.2). The code's own
-comment: *"this feels all very hacky — a weakness in my model I suspect"*.
-
-### 3.2 Keeping the focus tree in sync — `BehaviourForCompositeAndFocusManager`
-
-When a child component is added to a composite that owns a manager, the child's
-focusables are collected and added to the manager:
-`FocusManager.UTIL.focusablesFromComponent(child)` descends the component tree
-and **stops at the first Focusable/ToFocusable on each branch**. So
-nested managers become a single entry, and plain nested composites are
-flattened into the parent's list.
-
-This is a **snapshot at add time**. If something is later added deeper inside a
-child that is *not* itself a manager, the parent manager never hears about it.
+Still extended by ButtonBar, ScrollableComponent, Menu, MenuBar, TextInputWithIncrDecrButtons,
+NavButtonsPanel, SearchFunctionForScrollableComponent, TUIApp's default panel, MovingPicturesViewer
+and two plot examples. Each can move to a held behaviour the way DropdownListBox did; the base
+classes can be deprecated once none is left. (They used to register focusables with their manager
+on add / remove - `BehaviourForCompositeAndFocusManager`, a snapshot that went stale when a deeper
+component changed. That class is gone: the derived tree replaced it.)
 
 ### 3.3 The root — `TUIApp`
 
@@ -532,6 +535,12 @@ intermittent open/close glitches. Not yet reproduced in a test.
 
 ### 4.7 Secondary objective: simplify the component base classes
 
+**Status (Oct 2026):** done in a different form than first planned - delegation, not new base
+classes: components hold `LeafFocusBehaviour` / `ParentFocusBehaviour` (§3.1). RadioGroup and
+TreeView were built on them as the two proofs; CheckBoxInput, DropdownListBox and TableComponent
+moved over. ScrollableComponent2 replaced the old ScrollableComponent (renamed back to
+`ScrollableComponent`). Left: the classes listed in §3.2. The text below is the original plan.
+
 Once focusables are discovered on demand (§4.3 C), components no longer have to keep a focus
 list in step with their children. That removes the main reason several mid-level base classes
 exist, so the redesign should **reduce them where it can be done carefully**.
@@ -582,17 +591,17 @@ that a plain container can declare. Do this class by class, not in the engine co
 
 | Where | Issue |
 |---|---|
-| `events/EventHandlerContainer.java:22-31` | `Simple.prependEventHandler` appends and `appendEventHandler` prepends (swapped) |
-| `events/ChainedEventHandler.java:211-215` | removing a pending prepend never works (`!contains` inside a `contains` check) |
-| `events/ChainedEventHandler.java:143` | public `ChainedEventHandler(EventHandler)` ctor leaves strategy null → NPE on first event |
-| `events/ChainedEventHandler.java:403` | `TRACE_AND_LOG_EVENT_HANDLERS = true` logs every handler test for every keypress (likely cause of the 200 MB `dtbTerminal.log`) |
-| `events/EventBusImpl.java:186-195` | full queue: `offer` result ignored, event silently dropped |
-| `events/ConditionalEventHandler.java:133` | `AbstractDelegate.setName` ignores its argument |
-| `events/focus/DefaultFocusManager.java:161-163` | `setChildAsCurrentFocus(null)` → NPE (`focusable.getParentFocusManager()` before null check) |
+| `events/EventHandlerContainer.java` | **fixed (Oct 2026):** `Simple.prependEventHandler` appended and `appendEventHandler` prepended (swapped). `prependTo` now keeps the container's order. |
+| `events/ChainedEventHandler.java` | **fixed (Oct 2026):** removing a pending prepend never worked (`!contains` inside a `contains` check). |
+| `events/ChainedEventHandler.java` | **fixed (Oct 2026):** the public `ChainedEventHandler(EventHandler)` constructor left the strategy null (NullPointerException on the first event); it is a chain-of-responsibility chain now. |
+| `events/ChainedEventHandler.java` | **fixed (Oct 2026):** `TRACE_AND_LOG_EVENT_HANDLERS` was `true` - every handler test for every keypress went to the log (the 200 MB `dtbTerminal.log`). Now `false`. |
+| `events/EventBusImpl.java` | **fixed (Oct 2026):** with the queue full an event was dropped silently; now it is logged (still dropped after a 25 ms wait). |
+| `events/ConditionalEventHandler.java` | **fixed (Oct 2026):** `AbstractDelegate.setName` ignored its argument. |
+| `events/focus/DefaultFocusManager.java` | **fixed:** `setChildAsCurrentFocus(null)` threw a NullPointerException; it now refuses with an IllegalArgumentException saying so. |
 | `events/focus/DefaultFocusManager.java` | **removed (step 6):** nav styles (field default `NAVKEYS_LAST`, constructor `NAVKEYS_FIRST`), cycling inference, the per-manager navigation |
 | `events/focus/DefaultFocusManager.java` | **removed (step 4):** dead `getPrevOLD` / `getNextOLD` |
-| `components/BehaviourForCompositeAndFocusManager.java:169-174` | insert index uses a *map* index as a *children-list* index → wrong tab order when inserting before existing children |
-| `controlcodes/ControlCode.java` | several `DISABLE_*` mouse codes have an extra digit (`[?10021l` should be `[?1002l`, etc.) |
+| `components/BehaviourForCompositeAndFocusManager.java` | **gone (Oct 2026):** its insert-index bug went with the class (the derived focus tree replaced it). |
+| `controlcodes/ControlCode.java` | **fixed (Oct 2026):** several mouse mode codes (`SET_*` and `DISABLE_*`) had an extra digit (`[?10021l` for `[?1002l` ...). Only SGR mode (`-Ddtb.legacyMouseMode=false`, off by default - it has other bugs) used a broken enable code. |
 | `components/ButtonBar.java:77-80` | **fixed (Sep 2026):** `setNextKeyStroke` called `setPrevKeyStroke`, so "next" stayed TAB and the prev key was overwritten (e.g. `TabPanelTest`'s Ctrl-Left/Ctrl-Right never worked) |
 | `components/tab/TabPanel.java` | **fixed (Sep 2026):** tab strip navigated with TAB + `setCycling(true)` (a focus trap), and activating a tab always moved focus into its content, so strip navigation stopped after one step. Now: on the strip, Left/Right (wrapping) show tabs and focus **stays on the strip**; TAB goes strip → content → `<-` `->`; click, tab hot key and the prev/next shortcuts (`setPrevKeyStroke`/`setNextKeyStroke`) show the tab **and** focus its content. The shortcuts work from anywhere inside the panel but sit last in its chain (`customExtendedEventHandler`), so the content gets the key first |
 | `components/input/DropdownListBox.java` | **fixed (step 7c):** the open list is drawn on the root panel (never clipped, never grows its container) but counts as part of the dropdown for focus (`Component.getPopupOwner`). The interim TAB re-raise hack is gone. |
@@ -602,19 +611,25 @@ that a plain container can declare. Do this class by class, not in the engine co
 | focus flags (distributed state) | **observed (Oct 2026):** two components reporting `hasFocus()==true` at once. In `ImageSplitterTest`, after clicking from a dropdown's open list (inside the Options dialog) onto the image, the dropdown's button still had `hasFocus()==true` while the viewer had focus. Concrete evidence for a single focus owner (§4.3 A). `DropdownListBox` now asks the root focus manager instead of trusting flags |
 | `events/focus/FocusManager.java` (`buildRequestFocusEventHandler`) | **keep (Oct 2026):** each click re-sends `setFocus(true)` down the currently focused chain before moving focus. Looks redundant but re-asserts hilite / bring-to-front of ancestors that stay focused; see §4.4 |
 | `events/focus/DefaultFocusManager.java` (`getCurrentOrSet`) | **fixed (step 3):** a container with no current child picked child 0 and focused it - on the first click, and whenever its current child had been removed (e.g. a dropdown's list closing), for **any** event reaching it. In `ImageSplitterTest` that brought the wrong window to front. Now clicks / TAB go through `moveFocus` (records the path first), and non-key events never pick a child. Key events in the old routing still may |
-| `components/scroll/ScrollableComponent.java` (old) | its users moved to `ScrollableComponent2` (Oct 2026); the class is kept but unused, apart from its own unit test. Its focus wiring is incomplete (no parent links), so do not use it. |
+| `components/scroll/ScrollableComponent.java` (old) | **gone (Oct 2026):** the old class was deleted; `ScrollableComponent2` was renamed `ScrollableComponent`. |
 
 | `components/input/DropdownListBox.java` - "leftover border" | **fixed (Oct 2026), old - seen on master too:** after ENTER / ESC in the open list a bottom border row stayed on screen. Not a drawing bug: the list was never closed. ENTER / ESC gave focus back to the dropdown's button (the `hideListBox()` calls were commented out); focus coming back brings the dropdown's panel to the front, *over* the still-open list, so only the list's bottom row - below that panel - stayed visible. The handler now closes the list once focus is back on the button. (Checked on the way and fine: the dirty flag, panel sizes, the canvas and the changed-only screen update.) |
 | `events/focus/DefaultFocusManager.java` - "Bad state: offset null" | **fixed (Oct 2026), from step 7c:** `NullPointerException: Bad state: offset null for TextComponent[PLOT_...]` (TabPanelTest, ImageSplitterTest dialogs). Non-key events were offered to the remembered *current* child read raw - which could be a removed component, e.g. a dropdown's old scroll pane from a previous opening of its list. That pane still named the list as its view source, so it claimed the scroll-to-view request, then could not find the item climbing up (it is in the new pane). Non-key routing now uses `getCurrentChildFocus()`, which only returns the remembered child while it is still a child. Pinned by `DynamicStructureCharacterisationTest.testRemovedFocusedComponentGetsNoMoreEvents`. |
 | `components/menu/Menu.java` (`isFocusablePartOfMenu`) | **simplified (Oct 2026):** the hand-written "is this part of my menu?" check is now `FocusManager.UTIL.containsFocusable` on the menu's list (submenus at any depth count, being part of the menu that opened them). Its submenu branch could never match (it compared the focusable with a `MenuContainer`). Pinned by two new two-level-submenu tests. |
 | `components/input/RockerButton.java` | **gone (Oct 2026):** toggling left both its ON and OFF parts claiming focus. RockerButton was removed; `RadioGroup.onOff(...)` replaces it. |
 | `components/table/TableComponent.java` (column sizing) | **open (Oct 2026), old:** on a short screen (about 20-30 rows) Table01Test's right-hand table in the horizontal view shows no cell contents: the column sizing doesn't give the long "Bio" column enough room. Confirmed on the old build. |
-| `components/menu/Menu.java` | **open (Oct 2026), probably old:** an open menu stays open when the user clicks an empty, non-focusable area (e.g. a text display): the click moves focus nowhere, so nothing tells the menu to close. ESC inside a menu does nothing either (pinned as `_today_`). |
-| `components/scroll/ScrollableComponent2.java` | **open, old:** the footer buttons' hot keys (DOWN = `v`, RIGHT = `»` ...) fire whenever focus is inside the pane and nothing takes the key first, moving focus to the (non-TAB-stop) footer button. |
+| `examples/ExecTest.java` | **open, old:** terminal control codes in a process's output are shown raw. |
+| `examples/FrameSetTest.java` | **open, old:** drag-resizing the frames doesn't work properly. |
+| sprites (plot) | **open, old:** a NullPointerException seen with sprites (details not recorded - reproduce first). |
+| focus cue on borders | **open:** a bordered container doesn't show that focus is inside it (no border focus cue). |
+| examples (demo infrastructure) | **open:** `Demo` / `SimpleDemo`, `LineChartDemo`, `BarChartRandomDataDemo` are to be replaced in the example clean-up. |
+| focus tree "where focus was" | **idea:** cycles in the focus / component tree should fail fast with a readable component tree, not loop or be guarded silently. |
+| `components/menu/Menu.java` | **open (Oct 2026), probably old:** an open menu stays open when the user clicks an empty, non-focusable area (e.g. a text display): the click moves focus nowhere, so nothing tells the menu to close (needs a "click outside" hook - same area as the modal mouse issue). **Fixed:** ESC in a menu now closes it (all levels) and focus goes back to its menu button. |
+| `components/scroll/ScrollableComponent.java` | **fixed (Oct 2026):** the footer buttons' hot keys (DOWN = `v`, RIGHT = `»` ...) moved focus onto a (non-TAB-stop) footer button whenever nothing inside the pane took the key. As hot keys they even worked from outside the pane. The buttons have no hot keys now (they stay for the mouse); the pane scrolls for those keys itself while focus is inside it. |
 | `components/input/DropdownListBox.java` (`calcAndSetMaxItemWidth`) | **fixed (Oct 2026):** an empty item list crashed (`Optional.get()` on the max width). |
-| `examples/DropdownListBoxSimpleTest.java` (`PackageScanner`) | **open, old:** a small helper inside this example that fills its demo dropdown / list with the class names of two packages, by reading the package as a folder. Inside a jar that comes back empty (then the empty dropdown crashes - see `calcAndSetMaxItemWidth`). Simplest fix: fill the demo with fixed sample strings instead. |
-| `examples/StdoutViewerTest.java` | **open, old:** "MVN Content" reads a hard-coded `/home/dbalme/workspace/LabManager/mvnOutput.txt` (wrong folder) and prints the stack trace onto the screen. |
-| `components/scroll/ScrollableComponent2.java` | `setBorder(boolean)` (and other inherited `ComponentWithFocusManager` border methods except the overridden title / border colour) still act on the invisible outer box. Goes away with the base-class simplification (§4.7). |
+| `examples/DropdownListBoxSimpleTest.java` (`PackageScanner`) | **gone (Oct 2026):** the helper that filled the demo lists from package folders (empty inside a jar) was removed; the demo uses fixed lists. |
+| `examples/StdoutViewerTest.java` | **gone (Oct 2026):** the "MVN Content" button (a hard-coded path to another project) was removed. |
+| `components/scroll/ScrollableComponent.java` | **fixed (Oct 2026):** `setBorder(boolean)` acted on the invisible outer box. A scroll pane always shows its border: `setBorder(false)` is now refused. |
 ---
 
 ## 6. Characterisation tests (focus safety net)
@@ -644,7 +659,7 @@ expected to fail when the redesign fixes them.
 handler (bus-level handlers are not involved), `then(..)` callbacks run after each event, `asynch`
 tasks run when the queue is empty, repeating timers are ignored.
 
-Not covered yet: menus (popups on a live canvas), `ScrollableComponent2` footer focus forwarding,
+Not covered yet: menus (popups on a live canvas), `ScrollableComponent` footer focus forwarding,
 actual scrolling, hotkeys, table selection events, bring-to-front.
 
 ## 7. TODO (parked)

@@ -16,6 +16,9 @@ import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.RequestFocusEvent;
 import dtb.terminalIO.events.focus.ToFocusable;
+import dtb.terminalIO.events.keyboard.KeyEvent;
+import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
+import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
@@ -277,8 +280,11 @@ public class ScrollableComponent  extends ComponentWithFocusManager<ScrollableCo
     
     public ScrollableComponent removeFooterComponent() {
         borderedComponent.removeFooterComponent();
+        footerShown = false;
         return this;
     }
+
+    private boolean footerShown = true;
 
     private void buildAndPopulateFooterPanel() {
         Color borderColor = borderedComponent.getColor();
@@ -286,16 +292,34 @@ public class ScrollableComponent  extends ComponentWithFocusManager<ScrollableCo
             return ;
         }
         footerControls = new ButtonBar(borderColor, HasName.UTIL.getName(this)+".buttonBar");
-        // scroll buttons are for the mouse (their keys work as hot keys) - not TAB stops
+        // scroll buttons are for the mouse - not TAB stops, and no hot keys: their keys are handled by the
+        // pane itself while focus is in it (below). As hot keys they worked from anywhere in the app,
+        // pulling focus onto a footer button.
         footerControls.setTabStop(false);
-        footerControls.addButton("^",    Keys.UP_KEYSTROKE,    (te) -> emitViewOffsetChangedOnOperation(te,()-> ScrollableComponent.this.up(1)));
-        footerControls.addButton("v",    Keys.DOWN_KEYSTROKE,  (te) -> emitViewOffsetChangedOnOperation(te,()-> ScrollableComponent.this.down(1)));
-        footerControls.addButton("PgUp", Keys.PGUP_KEYSTROKE,  (te) -> emitViewOffsetChangedOnOperation(te,()-> ScrollableComponent.this.pageup()));
-        footerControls.addButton("PgDn", Keys.PGDN_KEYSTROKE,  (te) -> emitViewOffsetChangedOnOperation(te,()-> ScrollableComponent.this.pagedown()));
-        footerControls.addButton("«",    Keys.LEFT_KEYSTROKE,  (te) -> emitViewOffsetChangedOnOperation(te,()-> ScrollableComponent.this.left(1)));
-        footerControls.addButton("»",    Keys.RIGHT_KEYSTROKE, (te) -> emitViewOffsetChangedOnOperation(te,()-> ScrollableComponent.this.right(1)));
+        footerControls.addButton("^",    null, (te) -> emitViewOffsetChangedOnOperation(te,()-> ScrollableComponent.this.up(1)));
+        footerControls.addButton("v",    null, (te) -> emitViewOffsetChangedOnOperation(te,()-> ScrollableComponent.this.down(1)));
+        footerControls.addButton("PgUp", null, (te) -> emitViewOffsetChangedOnOperation(te,()-> ScrollableComponent.this.pageup()));
+        footerControls.addButton("PgDn", null, (te) -> emitViewOffsetChangedOnOperation(te,()-> ScrollableComponent.this.pagedown()));
+        footerControls.addButton("«",    null, (te) -> emitViewOffsetChangedOnOperation(te,()-> ScrollableComponent.this.left(1)));
+        footerControls.addButton("»",    null, (te) -> emitViewOffsetChangedOnOperation(te,()-> ScrollableComponent.this.right(1)));
 
         this.borderedComponent.setFooter(footerControls);
+
+        // the buttons' keys, while focus is anywhere in the pane and nothing inside used them: scroll here
+        this.appendEventHandler(new KeyInputEventHandler(
+                new KeyStroke[] { Keys.UP_KEYSTROKE, Keys.DOWN_KEYSTROKE, Keys.PGUP_KEYSTROKE, Keys.PGDN_KEYSTROKE, Keys.LEFT_KEYSTROKE, Keys.RIGHT_KEYSTROKE },
+                (te) -> footerShown,
+                (te) -> emitViewOffsetChangedOnOperation(te, scrollFor((KeyEvent) te))));
+    }
+
+    /** the scroll a key stands for (UP / DOWN a line, PgUp / PgDn a page, LEFT / RIGHT a column) */
+    private Runnable scrollFor(KeyEvent ke) {
+        if (ke.isKeyStroke(Keys.UP_KEYSTROKE))   return () -> up(1);
+        if (ke.isKeyStroke(Keys.DOWN_KEYSTROKE)) return () -> down(1);
+        if (ke.isKeyStroke(Keys.PGUP_KEYSTROKE)) return this::pageup;
+        if (ke.isKeyStroke(Keys.PGDN_KEYSTROKE)) return this::pagedown;
+        if (ke.isKeyStroke(Keys.LEFT_KEYSTROKE)) return () -> left(1);
+        return () -> right(1);
     }
 
     private void emitViewOffsetChangedOnOperation(TerminalEvent<?> event, Runnable operation) {
@@ -312,6 +336,23 @@ public class ScrollableComponent  extends ComponentWithFocusManager<ScrollableCo
 
     public void onViewPortChanged(EventHandler consumeChange) {
         onViewPortWindowChangedEventHandler = HasViewPortWindow.UTIL.bindConsumerAsOnViewPortWindowChangedEventHandler(this, onViewPortWindowChangedEventHandler, this.getEventHandlerContainer(), consumeChange);
+    }
+
+    /**
+     * A scroll pane always shows its border (its scrollbars and footer sit on it): true is fine, false
+     * is refused - before, it silently switched off an invisible box around the pane instead.
+     */
+    @Override
+    public ScrollableComponent setBorder(boolean hasBorder) {
+        if (!hasBorder) {
+            throw new IllegalStateException(HasName.UTIL.getName(this) + ": a ScrollableComponent always shows its border");
+        }
+        return this;
+    }
+
+    @Override
+    public boolean hasBorder() {
+        return this.borderedComponent.hasBorder();
     }
 
     /** the visible border's colour (the bordered view's, also used for the scrollbars and footer) */

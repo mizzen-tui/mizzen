@@ -19,7 +19,6 @@ import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.OnTerminateEventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
-import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.util.Logging;
@@ -108,11 +107,6 @@ public class StdoutViewerTest {
                         populateTask.accept("dtbTerminal.log");
                     });
 
-                    Button populateMvnContent = new Button("MVN Content");
-                    populateMvnContent.onChange((te)->{
-                        populateTask.accept("/home/dbalme/workspace/LabManager/mvnOutput.txt");
-                    });
-
                     Button populateSlowRunner = new Button("Slow Runnnert");
                     populateSlowRunner.onChange((te)->{
                         startSlowRunner(viewer, te);
@@ -121,7 +115,6 @@ public class StdoutViewerTest {
                     bBar.addComponent(clearButton);
                     bBar.addComponent(populateAgain);
                     bBar.addComponent(populateLarge);
-                    bBar.addComponent(populateMvnContent);
                     bBar.addComponent(populateSlowRunner);
 
                     tApp.getMainApplicationPanel().add(0,10, bBar);

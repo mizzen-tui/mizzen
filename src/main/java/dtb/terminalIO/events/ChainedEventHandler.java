@@ -140,7 +140,9 @@ public class ChainedEventHandler implements EventHandler, EventHandlerContainer,
         return useHandleAllStrategy("handleAll");
     }
 
+    /** a chain-of-responsibility chain; notfound_event_handler gets the events no handler in it takes */
     public ChainedEventHandler(EventHandler notfound_event_handler) {
+        this("ChainedEventHandler");
         this.notfound_event_handler = notfound_event_handler;
     }
 
@@ -210,7 +212,7 @@ public class ChainedEventHandler implements EventHandler, EventHandlerContainer,
             } else {
                 if ( this.preppendList.contains(eventHandler) ) {
                     synchronized (preppendList) {
-                        if (!preppendList.contains(eventHandler)) {
+                        if (preppendList.contains(eventHandler)) {
                             preppendList.remove(eventHandler);
                         }
                     }
@@ -400,7 +402,7 @@ public class ChainedEventHandler implements EventHandler, EventHandlerContainer,
 
     }
     
-    public static boolean TRACE_AND_LOG_EVENT_HANDLERS = true;
+    public static boolean TRACE_AND_LOG_EVENT_HANDLERS = false;     // true: logs every handler asked, for every event (huge logs)
     private EventTracerLogger eventTracerLogger = new EventTracerLogger();
     private static Set<TerminalEvent.TYPE> tracerEventTypeBlackList = new HashSet<TerminalEvent.TYPE>();
     static {

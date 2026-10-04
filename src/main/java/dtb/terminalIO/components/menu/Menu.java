@@ -394,6 +394,16 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
                         menu.selectNextLeft(te);
                     }));
 
+            // ESC closes the menu - all its levels - and focus goes back to its menu button, as when an item is
+            // chosen. (Closing only a submenu would not last: its item reopens it while the parent menu has focus.)
+            getListBox().appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE,
+                    (te)-> {
+                        Menu root = menu.getRootMenu();
+                        Component.UTIL.returnFocusToPopupOwner(root.menuContainer, te.getEventBus());
+                        root.popDownMenu();
+                        RequestUpdateCanvasEvent.invoke(te, MenuContainer.this);
+                    }));
+
             getListBox().appendEventHandler(new KeyInputEventHandler(Keys.UP_KEYSTROKE, 
                     (te)->  getListBox().getSelectedIndex() == 0,
                     (te)->  {

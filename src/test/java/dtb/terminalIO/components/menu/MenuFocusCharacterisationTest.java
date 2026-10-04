@@ -135,16 +135,28 @@ public class MenuFocusCharacterisationTest extends TestCase {
         assertEquals("MenuBarButton[Edit]", focusedName());
     }
 
-    /** TODAY: ESC inside an open menu does nothing */
-    public void testEscInsideMenu_today_doesNothing() {
+    /** ESC inside a submenu closes the whole menu (all levels); focus goes back to its menu button */
+    public void testEscInsideSubmenuClosesTheWholeMenu() {
+        openFile();
+        press(Keys.DOWN_KEYSTROKE);              // New selected, its submenu open
+        press(Keys.TAB_KEYSTROKE);               // into the submenu
+
+        press(Keys.ESC_KEYSTROKE);
+
+        assertEquals("", open());
+        assertEquals("MenuBarButton[File]", focusedName());
+    }
+
+    /** ESC inside an open menu closes it; focus goes back to its menu button. (Before: ESC did nothing.) */
+    public void testEscInsideMenuClosesIt() {
         openFile();
         press(Keys.DOWN_KEYSTROKE);
         press(Keys.DOWN_KEYSTROKE);
 
         press(Keys.ESC_KEYSTROKE);
 
-        assertEquals("File ", open());
-        assertTrue(focusedName(), focusedName().contains("File-ListBox"));
+        assertEquals("", open());
+        assertEquals("MenuBarButton[File]", focusedName());
     }
 
     /**

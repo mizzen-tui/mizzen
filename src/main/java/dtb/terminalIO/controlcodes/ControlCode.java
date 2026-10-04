@@ -134,17 +134,17 @@ public abstract class ControlCode implements Renderer, HasName<ControlCode> {
     public static final ControlCode SET_VT200_HIGHLIGHT_MOUSE   = new BaseTextControlCode(escape_CHR + "[?1001h").setName("SET_VT200_HIGHLIGHT_MOUSE");
     public static final ControlCode SET_BTN_MOTION_TRACKING     = new BaseTextControlCode(escape_CHR + "[?1002h").setName("SET_BTN_MOTION_TRACKING");
     public static final ControlCode SET_BTN_MOTION_TRACKING_DISABLE     = new BaseTextControlCode(escape_CHR + "[?1002l").setName("SET_BTN_MOTION_TRACKING_DISABLE");
-    public static final ControlCode SET_BTN_EVENT_MOUSE         = new BaseTextControlCode(escape_CHR + "[?10021h").setName("SET_BTN_EVENT_MOUSE");
-    public static final ControlCode SET_ANY_EVENT_MOUSE         = new BaseTextControlCode(escape_CHR + "[?10031h").setName("SET_ANY_EVENT_MOUSE");
+    public static final ControlCode SET_BTN_EVENT_MOUSE         = new BaseTextControlCode(escape_CHR + "[?1002h").setName("SET_BTN_EVENT_MOUSE");
+    public static final ControlCode SET_ANY_EVENT_MOUSE         = new BaseTextControlCode(escape_CHR + "[?1003h").setName("SET_ANY_EVENT_MOUSE");
 
-    public static final ControlCode SET_FOCUS_EVENT_MOUSE       = new BaseTextControlCode(escape_CHR + "[?10041h").setName("SET_FOCUS_EVENT_MOUSE");
+    public static final ControlCode SET_FOCUS_EVENT_MOUSE       = new BaseTextControlCode(escape_CHR + "[?1004h").setName("SET_FOCUS_EVENT_MOUSE");
 
-    public static final ControlCode SET_ALTERNATE_SCROLL        = new BaseTextControlCode(escape_CHR + "[?10071h").setName("SET_ALTERNATE_SCROLL");
+    public static final ControlCode SET_ALTERNATE_SCROLL        = new BaseTextControlCode(escape_CHR + "[?1007h").setName("SET_ALTERNATE_SCROLL");
 
-    public static final ControlCode SET_EXT_MODE_MOUSE          = new BaseTextControlCode(escape_CHR + "[?10051h").setName("SET_EXT_MODE_MOUSE");
-    public static final ControlCode SET_SGR_EXT_MODE_MOUSE      = new BaseTextControlCode(escape_CHR + "[?10061h").setName("SET_SGR_EXT_MODE_MOUSE");
-    public static final ControlCode SET_URXVT_EXT_MODE_MOUSE    = new BaseTextControlCode(escape_CHR + "[?10151h").setName("SET_URXVT_EXT_MODE_MOUSE");
-    public static final ControlCode SET_PIXEL_POSITION_MOUSE    = new BaseTextControlCode(escape_CHR + "[?10161h").setName("SET_PIXEL_POSITION_MOUSE");
+    public static final ControlCode SET_EXT_MODE_MOUSE          = new BaseTextControlCode(escape_CHR + "[?1005h").setName("SET_EXT_MODE_MOUSE");
+    public static final ControlCode SET_SGR_EXT_MODE_MOUSE      = new BaseTextControlCode(escape_CHR + "[?1006h").setName("SET_SGR_EXT_MODE_MOUSE");
+    public static final ControlCode SET_URXVT_EXT_MODE_MOUSE    = new BaseTextControlCode(escape_CHR + "[?1015h").setName("SET_URXVT_EXT_MODE_MOUSE");
+    public static final ControlCode SET_PIXEL_POSITION_MOUSE    = new BaseTextControlCode(escape_CHR + "[?1016h").setName("SET_PIXEL_POSITION_MOUSE");
 
     public static final ControlCode ENABLE_MOUSE_TRACKING  = SET_BTN_MOTION_TRACKING; //SET_VT200_HIGHLIGHT_MOUSE; //SET_VT200_MOUSE;
     public static final ControlCode DISABLE_MOUSE_TRACKING = new BaseTextControlCode(escape_CHR + "[?1000l").setName("DISABLE_MOUSE_TRACKING");
@@ -159,13 +159,13 @@ public abstract class ControlCode implements Renderer, HasName<ControlCode> {
     public static final ControlCode DISABLE_VT200_MOUSE           = new BaseTextControlCode(escape_CHR + "[?1000l").setName("DISABLE_VT200_MOUSE");
     public static final ControlCode DISABLE_VT200_HIGHLIGHT_MOUSE= new BaseTextControlCode(escape_CHR + "[?1001l").setName("DISABLE_VT200_HIGHLIGHT_MOUSE");
     public static final ControlCode DISABLE_BTN_MOTION_TRACKING   = new BaseTextControlCode(escape_CHR + "[?1002l").setName("DISABLE_BTN_MOTION_TRACKING");
-    public static final ControlCode DISABLE_BTN_EVENT_MOUSE       = new BaseTextControlCode(escape_CHR + "[?10021l").setName("DISABLE_BTN_EVENT_MOUSE");
-    public static final ControlCode DISABLE_ANY_EVENT_MOUSE       = new BaseTextControlCode(escape_CHR + "[?10031l").setName("DISABLE_ANY_EVENT_MOUSE");
-    public static final ControlCode DISABLE_FOCUS_EVENT_MOUSE     = new BaseTextControlCode(escape_CHR + "[?10041l").setName("DISABLE_FOCUS_EVENT_MOUSE");
-    public static final ControlCode DISABLE_ALTERNATE_SCROLL      = new BaseTextControlCode(escape_CHR + "[?10071l").setName("DISABLE_ALTERNATE_SCROLL");
-    public static final ControlCode DISABLE_EXT_MODE_MOUSE        = new BaseTextControlCode(escape_CHR + "[?10051l").setName("DISABLE_EXT_MODE_MOUSE");
-    public static final ControlCode DISABLE_URXVT_EXT_MODE_MOUSE  = new BaseTextControlCode(escape_CHR + "[?10151l").setName("DISABLE_URXVT_EXT_MODE_MOUSE");
-    public static final ControlCode DISABLE_PIXEL_POSITION_MOUSE  = new BaseTextControlCode(escape_CHR + "[?10161l").setName("DISABLE_PIXEL_POSITION_MOUSE");
+    public static final ControlCode DISABLE_BTN_EVENT_MOUSE       = new BaseTextControlCode(escape_CHR + "[?1002l").setName("DISABLE_BTN_EVENT_MOUSE");
+    public static final ControlCode DISABLE_ANY_EVENT_MOUSE       = new BaseTextControlCode(escape_CHR + "[?1003l").setName("DISABLE_ANY_EVENT_MOUSE");
+    public static final ControlCode DISABLE_FOCUS_EVENT_MOUSE     = new BaseTextControlCode(escape_CHR + "[?1004l").setName("DISABLE_FOCUS_EVENT_MOUSE");
+    public static final ControlCode DISABLE_ALTERNATE_SCROLL      = new BaseTextControlCode(escape_CHR + "[?1007l").setName("DISABLE_ALTERNATE_SCROLL");
+    public static final ControlCode DISABLE_EXT_MODE_MOUSE        = new BaseTextControlCode(escape_CHR + "[?1005l").setName("DISABLE_EXT_MODE_MOUSE");
+    public static final ControlCode DISABLE_URXVT_EXT_MODE_MOUSE  = new BaseTextControlCode(escape_CHR + "[?1015l").setName("DISABLE_URXVT_EXT_MODE_MOUSE");
+    public static final ControlCode DISABLE_PIXEL_POSITION_MOUSE  = new BaseTextControlCode(escape_CHR + "[?1016l").setName("DISABLE_PIXEL_POSITION_MOUSE");
     
     
     

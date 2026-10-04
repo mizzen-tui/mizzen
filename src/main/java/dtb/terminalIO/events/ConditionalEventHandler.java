@@ -131,6 +131,7 @@ public interface ConditionalEventHandler extends EventHandler {
         }
 
         public AbstractDelegate setName(String name) {
+            this.name = name;
             return this;
         }
 

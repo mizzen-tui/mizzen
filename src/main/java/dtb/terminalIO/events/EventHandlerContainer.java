@@ -20,13 +20,13 @@ public interface EventHandlerContainer {
         
         @Override
         public EventHandlerContainer prependEventHandler(ConditionalEventHandler eventHandler) {
-            eventHandlers.add(eventHandler);                
+            eventHandlers.add(0, eventHandler);
             return this;
         }
 
         @Override
         public EventHandlerContainer appendEventHandler(ConditionalEventHandler eventHandler) {
-            eventHandlers.add(0, eventHandler);
+            eventHandlers.add(eventHandler);
             return this;
         }
 
@@ -42,9 +42,10 @@ public interface EventHandlerContainer {
             }
         }
 
+        /** put these handlers in front of dest's, keeping their order (the first one here ends up first there) */
         public void prependTo(EventHandlerContainer dest) {
-            for (ConditionalEventHandler eventHandler : eventHandlers) {
-                dest.prependEventHandler(eventHandler);
+            for (int i = eventHandlers.size() - 1; i >= 0; i--) {
+                dest.prependEventHandler(eventHandlers.get(i));
             }
         }
 
