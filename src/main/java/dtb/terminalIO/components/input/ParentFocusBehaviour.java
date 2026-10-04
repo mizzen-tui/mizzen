@@ -1,9 +1,11 @@
 package dtb.terminalIO.components.input;
 
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.ConditionalEventHandler;
@@ -65,6 +67,8 @@ public final class ParentFocusBehaviour {
     private ConditionalEventHandler otherEvents = ConditionalEventHandler.NOOP;
     private Function<FocusDirection, Component<?>> childOnEntry = (dir) -> null;
     private BiConsumer<Component<?>, EventBus> onChildFocused = (child, bus) -> { };
+    private Consumer<EventBus> onFocusGained = (bus) -> { };
+    private Consumer<EventBus> onFocusLost = (bus) -> { };
 
     private ParentFocusBehaviour(ParentContainer component) {
         this.component = component;
@@ -111,6 +115,21 @@ public final class ParentFocusBehaviour {
     /** focus moved to another of its children - by arrows, TAB or a click */
     public ParentFocusBehaviour onChildFocused(BiConsumer<Component<?>, EventBus> onChildFocused) {
         this.onChildFocused = onChildFocused;
+        return this;
+    }
+
+    /**
+     * Focus arrived in the component (it had none inside it before) - e.g. a dropdown opens its list.
+     * Moving between its own children (and a popup it owns) doesn't count.
+     */
+    public ParentFocusBehaviour onFocusGained(Consumer<EventBus> onFocusGained) {
+        this.onFocusGained = onFocusGained;
+        return this;
+    }
+
+    /** focus left the component and everything in it (and a popup it owns) - e.g. a dropdown closes its list */
+    public ParentFocusBehaviour onFocusLost(Consumer<EventBus> onFocusLost) {
+        this.onFocusLost = onFocusLost;
         return this;
     }
 
@@ -166,10 +185,47 @@ public final class ParentFocusBehaviour {
             return component instanceof Component ? (Component<?>) component : null;
         }
 
+        /** its component's name - so focus logs and errors name the component (it may be named after this is built) */
+        @Override
+        public String getName() {
+            return HasName.UTIL.getName(component);
+        }
+
         @Override
         public Focusable enter(FocusDirection dir) {
             Focusable chosen = enterableChild(childOnEntry.apply(dir), dir);
             return chosen != null ? chosen : super.enter(dir);
+        }
+
+        @Override
+        public void setFocus(boolean focus, EventBus eventBus) {
+            boolean had = hasFocus();
+            super.setFocus(focus, eventBus);
+            afterChange(had, eventBus);
+        }
+
+        @Override
+        public void focus(Focusable oldFocusable, EventBus eventBus) {
+            boolean had = hasFocus();
+            super.focus(oldFocusable, eventBus);
+            afterChange(had, eventBus);
+        }
+
+        @Override
+        public void unFocus(Focusable newFocusable, EventBus eventBus) {
+            boolean had = hasFocus();
+            super.unFocus(newFocusable, eventBus);
+            afterChange(had, eventBus);
+        }
+
+        /** tell onFocusGained / onFocusLost when the component's focus really changed */
+        private void afterChange(boolean had, EventBus eventBus) {
+            boolean has = hasFocus();
+            if (!had && has) {
+                onFocusGained.accept(eventBus);
+            } else if (had && !has) {
+                onFocusLost.accept(eventBus);
+            }
         }
 
         @Override

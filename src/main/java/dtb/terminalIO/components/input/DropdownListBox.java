@@ -5,7 +5,8 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.components.ComponentWithFocusManager;
+import dtb.terminalIO.components.AbstractComponentWrappper;
+import dtb.terminalIO.components.HasTitleAndBorder;
 import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.composite.VerticalPanel;
@@ -16,12 +17,11 @@ import dtb.terminalIO.components.input.ListBox.TextComponentItemFactory;
 import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
+import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
-import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
-import dtb.terminalIO.events.focus.FocusPolicy;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.RequestFocusEvent;
 import dtb.terminalIO.events.focus.ToFocusable;
@@ -36,8 +36,10 @@ import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.StringUtils;
 
-public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBox<T>>  
-                                implements SettableHasValueComponentMixen<DropdownListBox<T>,T> , 
+public class DropdownListBox<T> extends AbstractComponentWrappper<VerticalPanel>
+                                implements SettableHasValueComponentMixen<AbstractComponentWrappper<VerticalPanel>, T>,
+                                           HasTitleAndBorder<DropdownListBox<T>>,
+                                           ToFocusable,
                                            Clickable,
                                            KeyboardHandler {
 
@@ -53,12 +55,17 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
     boolean returningFocusFromListBox = false;
     // ENTER / ESC / mouse pick: keep the selection, focus back to the button, close the list (see constructor)
     private final EventHandler onSelectedItemHandler;
+    // focus: one TAB stop (button + open list), UP / DOWN move between them; opens / closes the list
+    private final ParentFocusBehaviour focus;
+    // its own "value changed" event, for onChange
+    private final ChainedEventHandler events = ChainedEventHandler.useChainOfResponsibilityStrategy("DropdownListBox-events");
 
     protected DropdownListBox(Color color) {
-        super(color, new VerticalPanel(color).setName("vertical-Panel-ddlb"));
+        super(color, new VerticalPanel(color));
+        getWrappedComponent().setName("vertical-Panel-ddlb");
 
         this.button = new Button(color, "");
-        this.getContainer().add(this.button);
+        getWrappedComponent().add(this.button);
 
         
         // ENTER / ESC / mouse pick in the open list: keep the selection, give focus back to the button,
@@ -99,14 +106,15 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
 
         this.listBox.setBorder(true);
 
-        // ONE_STOP: one TAB stop; UP / DOWN are its own keys (they also open the list)
-        DefaultFocusManager fm = new DefaultFocusManager(Keys.UP_KEYSTROKE, Keys.DOWN_KEYSTROKE)
-                                                                                                .setCycling(false)
-                                                                                                .setFocusPolicy(FocusPolicy.ONE_STOP);
+        // one TAB stop: the button and the open list (it counts as this dropdown's - Component.getPopupOwner);
+        // UP / DOWN move between them (and open the list - see onKey)
+        this.focus = ParentFocusBehaviour.of(this)
+                                         .oneStop(Keys.UP_KEYSTROKE, Keys.DOWN_KEYSTROKE, false)
+                                         .onKey(this)
+                                         .onFocusGained(this::focusArrived)
+                                         .onFocusLost(this::focusLeft)
+                                         .otherEvents(events.asConditionalEventHandler());
         this.setName("DropdownListBox");
-        fm.setNameFromOwner(this);
-        this.setFocusManager( fm );
-        getMyDefaultFocusManager().addFocusable(button);
 
         setSelectedOntoTextView();
 
@@ -283,10 +291,62 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
         return yesNoDropDown(Colors.FGBGColors.NO_COLOR_SPECIFIED);
     }
 
-    private DefaultFocusManager getMyDefaultFocusManager() {
-        return (DefaultFocusManager)super.getFocusManager();
+    @Override
+    public Focusable asFocusable() {
+        return focus.asFocusable();
     }
-    
+
+    /** does the dropdown (its button or its open list) have focus? */
+    public boolean hasFocus() {
+        return focus.hasFocus();
+    }
+
+    // ---- title and border: its panel's ------------------------------------------------------
+
+    @Override
+    public boolean hasBorder() {
+        return getWrappedComponent().hasBorder();
+    }
+
+    @Override
+    public DropdownListBox<T> setBorder(boolean hasBorder) {
+        getWrappedComponent().setBorder(hasBorder);
+        return this;
+    }
+
+    @Override
+    public DropdownListBox<T> setBorderColor(Color borderColors) {
+        getWrappedComponent().setBorderColor(borderColors);
+        return this;
+    }
+
+    @Override
+    public DropdownListBox<T> setTitle(Color titleColors, String title) {
+        getWrappedComponent().setTitle(titleColors, title);
+        return this;
+    }
+
+    @Override
+    public DropdownListBox<T> setTitle(String title) {
+        getWrappedComponent().setTitle(title);
+        return this;
+    }
+
+    @Override
+    public String getTitle() {
+        return getWrappedComponent().getTitle();
+    }
+
+    @Override
+    public void hilite() {
+        getWrappedComponent().hilite();
+    }
+
+    @Override
+    public void unHilite() {
+        getWrappedComponent().unHilite();
+    }
+
     public DropdownListBox<T> setName(String name) {
         super.setName(name);
         if (this.listBox != null) {
@@ -432,7 +492,7 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
             return rootPanel;
         }
 
-        return this.getContainer();
+        return getWrappedComponent();
     }
 
 
@@ -473,7 +533,7 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
             return;
         }
 
-        if (listBoxParent == getContainer()) {
+        if (listBoxParent == getWrappedComponent()) {
             this.getListBoxParent().add(this.getListBoxOrItsScrollPane());
         } else {
             // if we can, we place the listBox on the root panel and bring to the front ..
@@ -531,80 +591,55 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
         }
     }
 
-    @Override
-    public void setFocus(boolean focus, EventBus eventBus) {
-        super.setFocus(focus, eventBus);
+    /**
+     * Focus arrived at the dropdown: open the list (on top) and move focus into it - unless focus is
+     * only coming back from the list (an item was picked: see onSelectedItemHandler).
+     */
+    private void focusArrived(EventBus eventBus) {
         setSelectedOntoTextView();
-        // note:  important - must bring to front this component
-        //        and then if needed, showListBox() after - this ensures ListBox on top
+        // note: important - bring this component to front first, then showListBox(): the list ends up on top
         Component.UTIL.bringToFront(DropdownListBox.this);
-        // focus arriving at the dropdown opens the list (on top - see above) and moves into it; if focus
-        // is already in the list (it is part of this dropdown: a click on an item re-asserts focus
-        // through here) the list is only brought back on top
-        if (focus && !returningFocusFromListBox) {
-            boolean alreadyInList = listHasFocus();
-            showListBox();
-            if (!isDirty()) {
-                this.markAsDirty();
-            }
-            if (alreadyInList) {
-                eventBus.raiseEvent(new RequestUpdateCanvasEvent(this));
-            } else {
-                eventBus.raiseEvent(new RequestFocusEvent(ToFocusable.UTIL.toFocusable(this.listBox ))
-                                          .then(()-> eventBus.raiseEvent(new RequestUpdateCanvasEvent(this))));
-            }
-        }
-
-        if (!focus) {
-            hideListBox();
+        if (!returningFocusFromListBox) {
+            openListAndEnterIt(eventBus);
         }
     }
 
-    //@Override
-    public void unFocusOLD(Focusable newFocusable, EventBus eventBus) {
-        super.unFocus(newFocusable, eventBus);
+    /** focus left the dropdown and its list: close the list */
+    private void focusLeft(EventBus eventBus) {
         setSelectedOntoTextView();
-        // note:  important - must bring to front this component
-        //        and then if needed, showListBox() after - this ensures ListBox on top
-        boolean isListBoxOrItsScrollPane = ToFocusable.UTIL.toFocusable(this.getListBoxOrItsScrollPane() ).equals(newFocusable) ||
-                                           ToFocusable.UTIL.toFocusable(this.listBox ).equals(newFocusable)  ;
-        //Component.UTIL.bringToFront(DropdownListBox.this);
-        if (!isListBoxOrItsScrollPane) {
-            hideListBox();
-        }
+        hideListBox();
     }
 
-    @Override
-    public void unFocus(Focusable newFocusable, EventBus eventBus) {
-        super.unFocus(newFocusable, eventBus);
-        setSelectedOntoTextView();
-    
-        if (newFocusable == null || 
-            (!ToFocusable.UTIL.toFocusable(this.getListBoxOrItsScrollPane()).equals(newFocusable) &&
-             !ToFocusable.UTIL.toFocusable(this.listBox).equals(newFocusable))) {
-            Logging.info("DropdownListBox: Focus moved OUTSIDE, hiding dropdown.");
-            hideListBox();
+    /** show the list (on top) and move focus into it - unless focus is in it already (then only repaint) */
+    private void openListAndEnterIt(EventBus eventBus) {
+        boolean alreadyInList = listHasFocus();
+        showListBox();
+        if (!isDirty()) {
+            this.markAsDirty();
+        }
+        if (alreadyInList) {
+            eventBus.raiseEvent(new RequestUpdateCanvasEvent(this));
         } else {
-            Logging.info("DropdownListBox: Focus moved inside ListBox, keeping open.");
+            eventBus.raiseEvent(new RequestFocusEvent(ToFocusable.UTIL.toFocusable(this.listBox))
+                                      .then(() -> eventBus.raiseEvent(new RequestUpdateCanvasEvent(this))));
         }
     }
-        
-    @Override
-    public void focus(Focusable oldFocusable, EventBus eventBus) {
-        super.focus(oldFocusable, eventBus);
-        setFocus(true, eventBus);
-    }
 
+    /** a click on the dropdown: focus it (which opens the list), or - if it has focus - open the list */
     @Override
     public void onClick(EventBus eventBus) {
-        this.setFocus(true, eventBus);
-       // RequestUpdateCanvasEvent.invoke(eventBus, this);
+        if (focus.hasFocus()) {
+            Component.UTIL.bringToFront(DropdownListBox.this);
+            openListAndEnterIt(eventBus);
+        } else {
+            eventBus.raiseEvent(new RequestFocusEvent(this.button));
+        }
     }
 
     HasValue.OnValueChangedEventHandler<T> onChangeHandler;
 
     public void onChange(EventHandler consumeChange) {
-        onChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, onChangeHandler, this, consumeChange);
+        onChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, onChangeHandler, events, consumeChange);
     }
 
     @Override

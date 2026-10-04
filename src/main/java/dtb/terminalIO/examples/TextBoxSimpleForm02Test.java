@@ -8,6 +8,7 @@ import java.util.function.Predicate;
 
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.BorderedComponent;
+import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.composite.HorizontalPanel;
@@ -19,9 +20,7 @@ import dtb.terminalIO.components.input.TextInput;
 import dtb.terminalIO.components.input.form.FormBinder;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
-import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.RequestFocusEvent;
-import dtb.terminalIO.events.focus.ToFocusable;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.StringUtils;
@@ -115,7 +114,7 @@ public class TextBoxSimpleForm02Test {
                                 testForm.findComponentByName("cityField",LabeledInputComponent.class).setErrorMessage("");
                                 return true;
                             }
-                            evtBus.raiseEvent(RequestFocusEvent.fromSource(testForm.findComponentByName("city",Focusable.class))); 
+                            evtBus.raiseEvent(RequestFocusEvent.fromSource(testForm.findComponentByName("city", Component.class))); 
                             testForm.findComponentByName("cityField",LabeledInputComponent.class).setErrorMessage("Bad city");
                             return false;
                         }, "city must be one of "+ validCities.keySet())
@@ -132,7 +131,7 @@ public class TextBoxSimpleForm02Test {
                             testForm.findComponentByName("provinceField",LabeledInputComponent.class).setErrorMessage("");
                             return true;
                         }
-                        evtBus.raiseEvent(RequestFocusEvent.fromSource(testForm.findComponentByName("province",Focusable.class)));
+                        evtBus.raiseEvent(RequestFocusEvent.fromSource(testForm.findComponentByName("province", Component.class)));
                         testForm.findComponentByName("provinceField",LabeledInputComponent.class).setErrorMessage("province  not compatible with city");
                         testForm.findComponentByName("street").setEnabled(false, evtBus);
                         return false;
@@ -165,7 +164,7 @@ public class TextBoxSimpleForm02Test {
             tApp.getMainApplicationPanel().add(2,2, hpMain);
 
             tApp.getEventBus().asynch((te)->{
-                te.getEventBus().raiseEvent( new RequestFocusEvent(testForm.findComponentByNameOrFail("street", Focusable.class)) );
+                te.getEventBus().raiseEvent( RequestFocusEvent.fromSource(testForm.findComponentByNameOrFail("street", Component.class)) );
             });
 
             formBinder.onChange((te)->{

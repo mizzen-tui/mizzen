@@ -51,7 +51,7 @@ public class TestDropDownListBox extends TestCase {
         assertEquals(ti, mainFocusManager.getCurrentChildFocus());
 
         hitKey.accept(Keys.SHIFT_TAB_KEYSTROKE);
-        assertEquals(ddlb, mainFocusManager.getCurrentChildFocus());
+        assertEquals(ddlb.asFocusable(), mainFocusManager.getCurrentChildFocus());
 
         System.out.println(ddlb.getValue());
 
@@ -60,7 +60,7 @@ public class TestDropDownListBox extends TestCase {
 
         System.out.println(ddlb.getValue());
 
-        System.out.println( HasName.UTIL.getName(ddlb.getCurrentChildFocus(), "<no current child>"));
+        System.out.println( HasName.UTIL.getName(((dtb.terminalIO.events.focus.FocusManager) ddlb.asFocusable()).getCurrentChildFocus(), "<no current child>"));
 
     }
 
