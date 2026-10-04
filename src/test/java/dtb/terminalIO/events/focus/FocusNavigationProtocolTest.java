@@ -41,12 +41,12 @@ public class FocusNavigationProtocolTest extends TestCase {
         return new ComponentWithFocusManager<>(panel);
     }
 
-    /** a WIDGET: one stop, UP / DOWN move inside (like DropdownListBox) */
-    private static ComponentWithFocusManager<?> widget(TextInput... fields) {
+    /** a ONE_STOP manager: one stop, UP / DOWN move inside (like DropdownListBox) */
+    private static ComponentWithFocusManager<?> oneStop(TextInput... fields) {
         ComponentWithFocusManager<?> w = group(fields);
         ((DefaultFocusManager) w.getFocusManager()).setPrevKeyStroke(Keys.UP_KEYSTROKE)
                                                    .setNextKeyStroke(Keys.DOWN_KEYSTROKE)
-                                                   .setFocusPolicy(FocusPolicy.WIDGET);
+                                                   .setFocusPolicy(FocusPolicy.ONE_STOP);
         return w;
     }
 
@@ -137,17 +137,17 @@ public class FocusNavigationProtocolTest extends TestCase {
         assertEquals("B D A B", keys(root, new TextInput[] { a, b, c, d }, times(Keys.TAB_KEYSTROKE, 4)));
     }
 
-    // ---------------------------------------------------------------- WIDGET
+    // ---------------------------------------------------------------- ONE_STOP
 
-    /** a widget is one stop; its own keys move inside; TAB re-enters at the remembered child */
-    public void testWidget_oneStop_remembersChild() {
+    /** a one-stop component is one stop; its own keys move inside; TAB re-enters at the remembered child */
+    public void testOneStop_remembersChild() {
         TextInput a = field("A"), b = field("B"), c = field("C"), d = field("D");
-        CompositeWithFocusManager root = root(a, widget(b, c), d);
+        CompositeWithFocusManager root = root(a, oneStop(b, c), d);
         TextInput[] all = { a, b, c, d };
         click(a);
 
         assertEquals("B D A B", keys(root, all, times(Keys.TAB_KEYSTROKE, 4)));
-        assertEquals("C", keys(root, all, Keys.DOWN_KEYSTROKE));          // move inside the widget
+        assertEquals("C", keys(root, all, Keys.DOWN_KEYSTROKE));          // move inside the one-stop component
         assertEquals("C", keys(root, all, Keys.DOWN_KEYSTROKE));          // at the end: stays
         assertEquals("D A C", keys(root, all, times(Keys.TAB_KEYSTROKE, 3)));   // re-enters at C
         assertEquals("A C", keys(root, all, Keys.SHIFT_TAB_KEYSTROKE, Keys.TAB_KEYSTROKE));

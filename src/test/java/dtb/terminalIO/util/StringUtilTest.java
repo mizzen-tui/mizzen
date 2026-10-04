@@ -2,7 +2,7 @@ package dtb.terminalIO.util;
 
 import junit.framework.TestCase;
 
-public class StringUtilTests extends TestCase {
+public class StringUtilTest extends TestCase {
     
     public void testStrWidthSimple() {
         assertEquals(5, StringUtils.strWidth("12345"));

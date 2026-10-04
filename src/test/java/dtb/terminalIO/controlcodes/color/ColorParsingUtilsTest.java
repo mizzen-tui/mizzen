@@ -6,7 +6,7 @@ import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.textsegments.CleanString;
 import junit.framework.TestCase;
 
-public class ColorParsingUtilsTests extends TestCase {
+public class ColorParsingUtilsTest extends TestCase {
 
     private String someSizeText() {
         Dimension someSize = new Dimension.Simple(10, 10);

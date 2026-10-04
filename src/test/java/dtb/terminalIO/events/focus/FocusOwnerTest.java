@@ -74,10 +74,10 @@ public class FocusOwnerTest extends TestCase {
         assertSame(c, FocusManager.UTIL.findCurrentFocus(root));
     }
 
-    /** a widget's own arrow keys still move focus the old way - the owner follows those moves too */
+    /** a one-stop component's own arrow keys still move focus the old way - the owner follows those moves too */
     public void testOwnerFollowsMovesMadeByTheOldRouting() {
         Leaf a = new Leaf("A"), b = new Leaf("B"), c = new Leaf("C");
-        DefaultFocusManager list = new DefaultFocusManager(Keys.UP_KEYSTROKE, Keys.DOWN_KEYSTROKE).setFocusPolicy(FocusPolicy.WIDGET).setName("list");
+        DefaultFocusManager list = new DefaultFocusManager(Keys.UP_KEYSTROKE, Keys.DOWN_KEYSTROKE).setFocusPolicy(FocusPolicy.ONE_STOP).setName("list");
         list.addFocusable(b);
         list.addFocusable(c);
         DefaultFocusManager root = root(a, list);

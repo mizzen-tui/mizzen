@@ -63,8 +63,8 @@ public class TabPanel extends AbstractComponentWrappper<CompositeWithFocusManage
 
         // tab strip: arrows move between tabs (wrapping) and show them, focus stays on the strip;
         // TAB leaves the strip into the tab's content. Using TAB here made the strip a focus trap.
-        // WIDGET: the strip is one TAB stop that remembers the active tab
-        tabsButtonBar = new ButtonBar().setCycling(true).setNoBorderChars().setFocusPolicy(FocusPolicy.WIDGET)
+        // ONE_STOP: the strip is one TAB stop that remembers the active tab
+        tabsButtonBar = new ButtonBar().setCycling(true).setNoBorderChars().setFocusPolicy(FocusPolicy.ONE_STOP)
                                        .setPrevKeyStroke(Keys.LEFT_KEYSTROKE)
                                        .setNextKeyStroke(Keys.RIGHT_KEYSTROKE);
 

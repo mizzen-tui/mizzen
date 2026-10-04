@@ -71,17 +71,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
     Color          selectedColor           = new Colors.FGBGColors(Colors.IYel);
     int            eventTriggerForValueChanged = DEFAULT_TRIGGER_FOR_ONVALUE_CHANGED;
     
-    public static final int VALUE_CHANGED_ON_PREV_KEYSTROKE = 1;
-    public static final int VALUE_CHANGED_ON_NEXT_KEYSTROKE = 2;
-    public static final int VALUE_CHANGED_ON_FOCUS = 4;
-    public static final int VALUE_CHANGED_ON_ENTER_KEY = 8;
-    public static final int VALUE_CHANGED_ON_MOUSE_CLICK = 16;
-    
-    public static final int DEFAULT_TRIGGER_FOR_ONVALUE_CHANGED = VALUE_CHANGED_ON_PREV_KEYSTROKE | 
-                                                                  VALUE_CHANGED_ON_NEXT_KEYSTROKE |
-                                                                  VALUE_CHANGED_ON_FOCUS |
-                                                                  VALUE_CHANGED_ON_ENTER_KEY |
-                                                                  VALUE_CHANGED_ON_MOUSE_CLICK;
+    // VALUE_CHANGED_ON_... flags (setEventTriggerForValueChanged): see HasValue
 
     public static interface ItemComponent  {
         Component<?> getComponent();

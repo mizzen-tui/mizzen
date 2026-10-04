@@ -127,7 +127,7 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
         return (T) this;
     }
 
-    /** What kind of focus container this is: GROUP (default), WIDGET or TRAP - see FocusPolicy. */
+    /** What kind of focus container this is: GROUP (default), ONE_STOP or TRAP - see FocusPolicy. */
     public T setFocusPolicy(FocusPolicy focusPolicy) {
         getAssertDefaultFocusManager("setFocusPolicy()").setFocusPolicy(focusPolicy);
         return (T) this;

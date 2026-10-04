@@ -10,7 +10,7 @@ import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.supportfortesting.CanvasForTesting;
 import junit.framework.TestCase;
 
-public class ComponentOffsetTests extends TestCase {
+public class ComponentOffsetTest extends TestCase {
     
     
     private static String TC_TEXT = "The Rain\n in Spain\nStays mainly\non the plain!\nAnd now we are done\n";

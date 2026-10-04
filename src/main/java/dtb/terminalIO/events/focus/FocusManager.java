@@ -58,7 +58,7 @@ public interface FocusManager extends Focusable {
 
     /**
      * What kind of focus manager this is - decides how it answers enter / advance:
-     * GROUP (fields TAB through), WIDGET (one stop, e.g. list box), TRAP (modal, focus can't leave).
+     * GROUP (fields TAB through), ONE_STOP (one stop, e.g. list box), TRAP (modal, focus can't leave).
      * Wrapper components ask their inner manager; anything else is a GROUP.
      */
     default FocusPolicy getFocusPolicy() {
@@ -88,7 +88,7 @@ public interface FocusManager extends Focusable {
     }
 
     /**
-     * For a WIDGET: does moving past its last child go back to its first (and before the first to
+     * For a ONE_STOP manager: does moving past its last child go back to its first (and before the first to
      * the last)? E.g. a tab strip: RIGHT on the last tab shows the first. false (default): focus
      * stays at the end. Wrapper components ask their inner manager.
      */
@@ -265,7 +265,7 @@ public interface FocusManager extends Focusable {
          * Focus is moving INTO this focus manager (e.g. TAB from the field before it).
          * Returns the component inside it that focus should land on, without changing anything:
          *   GROUP  - first component when moving forward, last one when moving backward
-         *   WIDGET - the child it had last time (else the first)
+         *   ONE_STOP - the child it had last time (else the first)
          *   TRAP   - like GROUP
          * Returns null if nothing in here can take focus (empty / all disabled / not a TAB stop) -
          * skip this focus manager.
@@ -276,7 +276,7 @@ public interface FocusManager extends Focusable {
             }
             List<Focusable> children = new ArrayList<Focusable>(focusManager.getChildFocusables());
             FocusDirection order = dir;
-            if (focusManager.getFocusPolicy() == FocusPolicy.WIDGET) {
+            if (focusManager.getFocusPolicy() == FocusPolicy.ONE_STOP) {
                 // resume the remembered child; fall back to the first
                 Focusable remembered = focusManager.getCurrentChildFocus();
                 if (remembered != null && children.contains(remembered)) {
@@ -302,9 +302,9 @@ public interface FocusManager extends Focusable {
          * focus. Decides where focus goes next, without changing anything:
          *   MOVED(target) - next / previous child in here (entered via its own enter())
          *   DONE          - no more children that way; let the parent focus manager decide
-         *   STAY          - WIDGET at its first / last child, or a TRAP with nowhere else to go:
+         *   STAY          - ONE_STOP at its first / last child, or a TRAP with nowhere else to go:
          *                   keep focus where it is
-         * A TRAP, the root focus manager (no parent), or a WIDGET that wrapsAround(), wraps around
+         * A TRAP, the root focus manager (no parent), or a ONE_STOP manager that wrapsAround(), wraps around
          * instead.
          */
         public static Navigation advance(FocusManager focusManager, Focusable focusedLeaf, FocusDirection dir) {
@@ -319,7 +319,7 @@ public interface FocusManager extends Focusable {
             FocusPolicy policy = focusManager.getFocusPolicy();
             // a root focus manager (no parent) wraps around, like a trap
             boolean wraps = policy == FocusPolicy.TRAP || parentOf(focusManager) == null
-                         || (policy == FocusPolicy.WIDGET && focusManager.wrapsAround());
+                         || (policy == FocusPolicy.ONE_STOP && focusManager.wrapsAround());
             int step = dir == FocusDirection.FORWARD ? 1 : -1;
             int j = from;
             for (int n = 0; n < children.size(); n++) {
@@ -337,7 +337,7 @@ public interface FocusManager extends Focusable {
                     return Navigation.movedTo(target);
                 }
             }
-            // focus never leaves a WIDGET through its own keys, nor a TRAP at all
+            // focus never leaves a ONE_STOP manager through its own keys, nor a TRAP at all
             return policy == FocusPolicy.GROUP ? Navigation.DONE : Navigation.STAY;
         }
 

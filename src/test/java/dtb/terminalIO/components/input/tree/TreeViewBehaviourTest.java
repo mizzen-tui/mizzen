@@ -7,7 +7,7 @@ import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.CompositeWithFocusManager;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.input.CheckBoxInput;
-import dtb.terminalIO.components.input.ListBox;
+import dtb.terminalIO.components.input.HasValue;
 import dtb.terminalIO.components.input.TextInput;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.focus.FocusManager;
@@ -118,7 +118,7 @@ public class TreeViewBehaviourTest extends TestCase {
 
     /** onChange only on ENTER and clicks: moving with the arrows is quiet */
     public void testTriggerOnlyOnEnter() {
-        tree.setEventTriggerForValueChanged(ListBox.VALUE_CHANGED_ON_ENTER_KEY | ListBox.VALUE_CHANGED_ON_MOUSE_CLICK);
+        tree.setEventTriggerForValueChanged(HasValue.VALUE_CHANGED_ON_ENTER_KEY | HasValue.VALUE_CHANGED_ON_MOUSE_CLICK);
 
         press(Keys.DOWN_KEYSTROKE, Keys.DOWN_KEYSTROKE, Keys.ENTER_KEYSTROKE);
 

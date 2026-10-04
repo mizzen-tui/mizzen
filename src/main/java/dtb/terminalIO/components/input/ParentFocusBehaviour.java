@@ -83,7 +83,7 @@ public final class ParentFocusBehaviour {
         focusManager.setPrevKeyStroke(prev)
                     .setNextKeyStroke(next)
                     .setCycling(wrap)
-                    .setFocusPolicy(FocusPolicy.WIDGET);
+                    .setFocusPolicy(FocusPolicy.ONE_STOP);
         return this;
     }
 

@@ -99,10 +99,10 @@ public class DropdownListBox<T> extends ComponentWithFocusManager<DropdownListBo
 
         this.listBox.setBorder(true);
 
-        // WIDGET: one TAB stop; UP / DOWN are its own keys (they also open the list)
+        // ONE_STOP: one TAB stop; UP / DOWN are its own keys (they also open the list)
         DefaultFocusManager fm = new DefaultFocusManager(Keys.UP_KEYSTROKE, Keys.DOWN_KEYSTROKE)
                                                                                                 .setCycling(false)
-                                                                                                .setFocusPolicy(FocusPolicy.WIDGET);
+                                                                                                .setFocusPolicy(FocusPolicy.ONE_STOP);
         this.setName("DropdownListBox");
         fm.setNameFromOwner(this);
         this.setFocusManager( fm );

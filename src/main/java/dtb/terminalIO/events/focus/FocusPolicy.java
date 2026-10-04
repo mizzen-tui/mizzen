@@ -19,14 +19,14 @@ public enum FocusPolicy {
      * (falls back to the first). Its own nav keys move between children; at either end focus stays
      * (or wraps around, if set to cycle - e.g. the tab strip).
      *
-     * To make a widget, declare three things - keyboard navigation does the rest, in the same order
-     * for every widget (the focused part first, then the widget's own handlers, then moving focus):
-     *   1. setFocusPolicy(FocusPolicy.WIDGET)
-     *   2. its nav keys, e.g. new DefaultFocusManager(Keys.UP_KEYSTROKE, Keys.DOWN_KEYSTROKE)
-     *   3. any keys of its own (KeyboardHandler.onKey, or appended handlers) - e.g. "DOWN opens my list"
-     * Example: DropdownListBox.
+     * <p/>
+     * The easy way to get one: ParentFocusBehaviour.oneStop(prev, next, wrap) (e.g. RadioGroup). By
+     * hand: setFocusPolicy(FocusPolicy.ONE_STOP), its nav keys (e.g. new DefaultFocusManager(Keys.UP_KEYSTROKE,
+     * Keys.DOWN_KEYSTROKE)), and any keys of its own (KeyboardHandler.onKey) - e.g. "DOWN opens my list".
+     * Keys go the same way for every one: the focused part first, then the component's own keys,
+     * then moving focus.
      */
-    WIDGET,
+    ONE_STOP,
 
     /**
      * Focus never leaves (modal dialog): navigation wraps around inside. A TRAP decides keyboard

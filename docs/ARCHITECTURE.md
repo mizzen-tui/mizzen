@@ -103,7 +103,7 @@ routing chain:
 5. the custom extra handler (`setCustomExtendedEventHandler`)
 
 Per manager: its nav keys (`setPrev/NextKeyStroke`, `setNavKeysNone()` for none), its policy
-(GROUP / WIDGET / TRAP), `setTabStop`, and for a WIDGET `setCycling(true)` to wrap around.
+(GROUP / ONE_STOP / TRAP), `setTabStop`, and for a ONE_STOP `setCycling(true)` to wrap around.
 Disabled children are skipped; a manager is enabled if any child is.
 
 (Before step 6 each manager navigated itself, ordered by a per-class "nav style"
@@ -269,14 +269,14 @@ Causes:
    that need opposite rules:
    - *Grouping focus manager* (form section, panel of fields): children are separate tab
      stops. TAB entering forwards should start at the first child, entering backwards at the last.
-   - *Composite widget* (ListBox, DropdownListBox, menu, tab strip): the widget is **one**
+   - *One-stop component* (ListBox, DropdownListBox, menu, tab strip): the component is **one**
      tab stop, arrow keys move inside it, and re-entry **should** resume the remembered child.
 
    A `DefaultFocusManager` can't tell which kind it is. Re-entry always resumes the
-   remembered `current` (widget behaviour), but if the manager's nav keys are TAB it also
+   remembered `current` (one-stop behaviour), but if the manager's nav keys are TAB it also
    makes each child a tab stop (grouping behaviour). The result follows neither rule:
    first lap `A B C D`, then B is unreachable. Managers that navigate with other keys
-   (`DropdownListBox` uses UP/DOWN) already behave correctly as widgets. The manager is
+   (`DropdownListBox` uses UP/DOWN) already behave correctly as one-stop components. The manager is
    also never told the direction focus arrived from, which a grouping focus manager needs.
 2. **Nav-style mismatch across levels.** An outer `NAVKEYS_FIRST` manager takes
    TAB before the inner group sees it, so the inner group can't be traversed. Nav
@@ -340,7 +340,7 @@ Terms used below:
    moves, `moveFocus` also checks the previous owner really let go: if it still claims focus (missed
    its `unFocus`), it is switched off - so exactly one component claims focus.
    Still there, but no longer the source of truth: components' `hasFocus()` flags (display state:
-   hilite) and focus managers' "current child" (a widget's memory of its last child). Removing them
+   hilite) and focus managers' "current child" (a one-stop component's memory of its last child). Removing them
    entirely - `hasFocus()` meaning "am I the owner?" - would touch every focusable component; only
    worth doing if they cause trouble again.
 
@@ -351,9 +351,9 @@ Terms used below:
    2. If the focused component wants it anyway, it gets it - e.g. a multi-line editor that inserts
       TAB characters. *(Planned: such an editor releases TAB again after Esc.)*
    3. Otherwise the focus managers around the focused component are asked, innermost first. A
-      WIDGET first offers the key to its own handlers (e.g. a dropdown's "DOWN opens my list");
-      then each is asked where focus should go (point 3). *(done - step 5: widgets' own keys)*
-   So the most specific wish wins: the focused component, then a widget's own handlers, then moving
+      ONE_STOP first offers the key to its own handlers (e.g. a dropdown's "DOWN opens my list");
+      then each is asked where focus should go (point 3). *(done - step 5: one-stop components' own keys)*
+   So the most specific wish wins: the focused component, then a component's own keys, then moving
    focus. The order lives in `KeyRouter` only; a component just declares its policy, its nav keys
    and its own keys (`KeyboardHandler.onKey`, or appended handlers handed out via `AsKeyboardHandler`).
 
@@ -368,17 +368,17 @@ Terms used below:
    - **GROUP** - each child is its own stop (a form section: TAB visits every field). Entered
      forward it starts at its first child, backward at its last. The outermost focus manager wraps
      around instead of answering DONE.
-   - **WIDGET** - the whole focus manager is one stop (dropdown, list box, tab strip). Entering it
+   - **ONE_STOP** - the whole focus manager is one stop (dropdown, list box, tab strip). Entering it
      returns to the child it had last time. Its own arrow keys move inside it; at either end focus
-     stays (STAY: the key is used up, it does not go further out), unless the widget is set to wrap
-     around (`setCycling(true)`, e.g. the tab strip). *(Step 5: widgets' own keys go through these
+     stays (STAY: the key is used up, it does not go further out), unless the component is set to wrap
+     around (`setCycling(true)`, e.g. the tab strip). *(Step 5: one-stop components' own keys go through these
      answers too.)*
    - **TRAP** - focus cannot leave (modal dialog): navigation wraps around inside.
    A focus manager - or a single component - can also be marked *not a TAB stop* (`setTabStop(false)`):
    TAB skips it, clicks and hot keys still work - e.g. the scroll buttons under a scrollable panel,
    and a window's title bar and resize corner (so TAB goes straight to the window's content).
    Example, form `A, [B, C], D` where `[B, C]` is a GROUP: TAB goes A B C D A B C D...; if `[B, C]`
-   were a WIDGET, TAB would go A B D A B D... and arrow keys move between B and C.
+   were a ONE_STOP, TAB would go A B D A B D... and arrow keys move between B and C.
 
 4. **One way to move focus.** *(done for clicks and TAB - step 3, `FocusManager.UTIL.moveFocus`)*
    `moveFocus` changes focus and sends the existing notifications: `unFocus(new)` to what loses focus,
@@ -442,7 +442,7 @@ the engine → migrate classes one by one. Work on branch `focus-redesign`.
 | Focused component hidden/disabled | move focus to the next focusable (else previous, else none); triggered via `setEnabled(boolean, EventBus)` / hide |
 
 This follows the same approach as browsers (tab order derived from the DOM, roving
-tabindex for composite widgets) and most modern TUI toolkits.
+tabindex for one-stop controls) and most modern TUI toolkits.
 
 ### 4.4 Constraints any redesign must keep
 
@@ -451,7 +451,7 @@ tabindex for composite widgets) and most modern TUI toolkits.
 - **The child decides.** A parent offers the nav key to its current child first. The
   child answers "moved internally" or "done", and the parent moves on only when the
   child is done. Entry carries a direction, so a grouping child can pick its first or last
-  child and a widget can resume its remembered one. A child with nothing focusable
+  child and a one-stop component can resume its remembered one. A child with nothing focusable
   (empty, disabled, and possibly hidden) answers "skip me".
 - **Keep the cooperative hand-off.** `unFocus(newFocusable)` is load-bearing:
   `DropdownListBox` stays open when focus moves into its own list, and `Menu`/`MenuBar`
@@ -490,7 +490,7 @@ tabindex for composite widgets) and most modern TUI toolkits.
   behave as leaving the owner in that direction.
 - **Existing modal trap:** `ModalEventHandler` is prepended to the bus and swallows all keys
   (keyboard sinkhole). It is separate from focus managers and must keep working.
-- **Remembered state belongs to the widget** (for example, a ListBox's selected index), not to a
+- **Remembered state belongs to the component** (for example, a ListBox's selected index), not to a
   stored list in a manager. If the remembered child is gone, disabled or hidden, fall back
   to the first child.
 - **Visibility:** the focus code currently has no notion of hidden components.
@@ -506,10 +506,10 @@ tabindex for composite widgets) and most modern TUI toolkits.
 
 A standalone prototype of §4.3 and §4.4 ([docs/prototype/ProtoFocus.java](prototype/ProtoFocus.java), outside `src` so it is not built; one focus root, children discovered
 on demand, `enter(dir)`/`advance(dir)`, four kinds of focus manager: transparent panel, group,
-widget, trap) passes all 20 scenarios:
+one-stop, trap) passes all 20 scenarios:
 
 - grouping: `A,[B,C],D` gives `A B C D A B C D…`, and SHIFT-TAB gives `D C B A…`
-- widget: one tab stop, arrows move inside, re-entry resumes the remembered child (also after a click)
+- one-stop: one tab stop, arrows move inside, re-entry resumes the remembered child (also after a click)
 - a single nested group as the root's only child gives no dead end
 - plain panels are transparent (flattened); disabled, hidden and empty focus managers are skipped;
   a disabled remembered child falls back to the first
@@ -573,7 +573,7 @@ problem and extends a newer base); expect one to be removed, or both replaced, a
 cleanup. Neither is worth investing in until then.
 
 Approach: after the engine switch, list each base class with its subclasses and what it still does;
-then merge or remove only where the remaining behaviour is a focus *policy* (GROUP / WIDGET / TRAP)
+then merge or remove only where the remaining behaviour is a focus *policy* (GROUP / ONE_STOP / TRAP)
 that a plain container can declare. Do this class by class, not in the engine commit.
 
 ---
@@ -635,7 +635,7 @@ expected to fail when the redesign fixes them.
 | `components/input/DropdownPopupCharacterisationTest` | the dropdown's list as a popup: drawn on the root panel, container keeps its size, TAB carries on after the dropdown, keys reach it inside a dialog |
 | `components/menu/MenuFocusCharacterisationTest` | menus: open, DOWN / RIGHT / ENTER / ESC / TAB / SHIFT-TAB inside, focus back on the button, click elsewhere |
 | `components/HotKeyCharacterisationTest` | hot keys reach other components (typed as new KeyStrokes), incl. a parent component's hot key (RadioGroup.onOff) |
-| `events/focus/WidgetNavigationTest` | a widget's own keys: own handler before moving focus, STAY at the end, wrap when set to cycle, TAB leaves |
+| `events/focus/OneStopNavigationTest` | a one-stop component's own keys: own handler before moving focus, STAY at the end, wrap when set to cycle, TAB leaves |
 | `components/tab/TabPanelCharacterisationTest` | click / arrows / TAB / shortcuts |
 | `components/modal/ModalEventHandlerCharacterisationTest` | modal key sinkhole |
 

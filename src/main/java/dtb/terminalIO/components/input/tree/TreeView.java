@@ -17,7 +17,6 @@ import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.input.HasValue;
 import dtb.terminalIO.components.input.LeafFocusBehaviour;
-import dtb.terminalIO.components.input.ListBox;
 import dtb.terminalIO.components.input.SettableHasValueComponentMixen;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
@@ -59,7 +58,7 @@ import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
  * a tree built by hand see DefaultTreeNode. nodeText sets the text shown for a node.
  * <p/>
  * The selected node is the value (settable, so forms can bind it). onChange hears it change - by
- * default on every move (like ListBox); setEventTriggerForValueChanged(ListBox.VALUE_CHANGED_ON_...)
+ * default on every move (like ListBox); setEventTriggerForValueChanged(HasValue.VALUE_CHANGED_ON_...)
  * picks which moves count, e.g. only ENTER and clicks. onExpansion hears nodes expand / collapse;
  * onActivate hears ENTER or a click on the selected leaf (e.g. "open this file").
  * <p/>
@@ -116,7 +115,7 @@ public class TreeView<N> extends BoundedComponent<TreeView<N>>
     private String collapsedMark = "▸";
     private String expandedMark = "▾";
     private boolean ascii = false;
-    private int eventTriggerForValueChanged = ListBox.DEFAULT_TRIGGER_FOR_ONVALUE_CHANGED;
+    private int eventTriggerForValueChanged = HasValue.DEFAULT_TRIGGER_FOR_ONVALUE_CHANGED;
 
     private HasValue.OnValueChangedEventHandler<N> actionOnChangeHandler;
     private ExpansionListener<N> onExpansion = (node, isExpanded, bus) -> { };
@@ -260,7 +259,7 @@ public class TreeView<N> extends BoundedComponent<TreeView<N>>
         actionOnChangeHandler = HasValue.UTIL.wrapHandlerIntoOnValueChangedHandler(this, handler);
     }
 
-    /** which selection moves fire onChange - ListBox.VALUE_CHANGED_ON_... flags (default: all) */
+    /** which selection moves fire onChange - HasValue.VALUE_CHANGED_ON_... flags (default: all) */
     public TreeView<N> setEventTriggerForValueChanged(int eventTriggerForValueChanged) {
         this.eventTriggerForValueChanged = eventTriggerForValueChanged;
         return this;
@@ -315,27 +314,27 @@ public class TreeView<N> extends BoundedComponent<TreeView<N>>
             int index = selectedIndex();
             Row row = rows.get(index);
             if (ke.isKeyStroke(Keys.UP_KEYSTROKE)) {
-                select(index - 1, ListBox.VALUE_CHANGED_ON_PREV_KEYSTROKE, bus);
+                select(index - 1, HasValue.VALUE_CHANGED_ON_PREV_KEYSTROKE, bus);
             } else if (ke.isKeyStroke(Keys.DOWN_KEYSTROKE)) {
-                select(index + 1, ListBox.VALUE_CHANGED_ON_NEXT_KEYSTROKE, bus);
+                select(index + 1, HasValue.VALUE_CHANGED_ON_NEXT_KEYSTROKE, bus);
             } else if (ke.isKeyStroke(Keys.HOME_KEYSTROKE)) {
-                select(0, ListBox.VALUE_CHANGED_ON_PREV_KEYSTROKE, bus);
+                select(0, HasValue.VALUE_CHANGED_ON_PREV_KEYSTROKE, bus);
             } else if (ke.isKeyStroke(Keys.END_KEYSTROKE)) {
-                select(rows.size() - 1, ListBox.VALUE_CHANGED_ON_NEXT_KEYSTROKE, bus);
+                select(rows.size() - 1, HasValue.VALUE_CHANGED_ON_NEXT_KEYSTROKE, bus);
             } else if (ke.isKeyStroke(Keys.RIGHT_KEYSTROKE)) {
                 if (row.expandable && !expanded.contains(row.node)) {
                     setExpanded(row.node, true, bus);
                 } else if (row.expandable) {
-                    select(index + 1, ListBox.VALUE_CHANGED_ON_NEXT_KEYSTROKE, bus);     // its first child
+                    select(index + 1, HasValue.VALUE_CHANGED_ON_NEXT_KEYSTROKE, bus);     // its first child
                 }
             } else if (ke.isKeyStroke(Keys.LEFT_KEYSTROKE)) {
                 if (row.expandable && expanded.contains(row.node)) {
                     setExpanded(row.node, false, bus);
                 } else if (row.parent != null) {
-                    select(rows.indexOf(row.parent), ListBox.VALUE_CHANGED_ON_PREV_KEYSTROKE, bus);
+                    select(rows.indexOf(row.parent), HasValue.VALUE_CHANGED_ON_PREV_KEYSTROKE, bus);
                 }
             } else if (ke.isKeyStroke(Keys.ENTER_KEYSTROKE)) {
-                enter(row, ListBox.VALUE_CHANGED_ON_ENTER_KEY, bus);
+                enter(row, HasValue.VALUE_CHANGED_ON_ENTER_KEY, bus);
             }
             return true;     // the tree's keys are used up even at the top / bottom row
         }
@@ -360,9 +359,9 @@ public class TreeView<N> extends BoundedComponent<TreeView<N>>
         if (row.expandable && at.getCol() == row.markCol) {
             setExpanded(row.node, !expanded.contains(row.node), bus);
         } else if (row.node == selected) {
-            enter(row, ListBox.VALUE_CHANGED_ON_MOUSE_CLICK, bus);
+            enter(row, HasValue.VALUE_CHANGED_ON_MOUSE_CLICK, bus);
         } else {
-            select(at.getRow(), ListBox.VALUE_CHANGED_ON_MOUSE_CLICK, bus);
+            select(at.getRow(), HasValue.VALUE_CHANGED_ON_MOUSE_CLICK, bus);
         }
     }
 
@@ -405,7 +404,7 @@ public class TreeView<N> extends BoundedComponent<TreeView<N>>
         }
         onExpansion.expansionChanged(node, expand, bus);
         if (selected != selectedBefore) {
-            fireValueChangedIf(ListBox.VALUE_CHANGED_ON_PREV_KEYSTROKE, bus);
+            fireValueChangedIf(HasValue.VALUE_CHANGED_ON_PREV_KEYSTROKE, bus);
         }
         repaint(bus);
     }
@@ -417,7 +416,7 @@ public class TreeView<N> extends BoundedComponent<TreeView<N>>
     }
 
     private void focusGained(EventBus bus) {
-        fireValueChangedIf(ListBox.VALUE_CHANGED_ON_FOCUS, bus);
+        fireValueChangedIf(HasValue.VALUE_CHANGED_ON_FOCUS, bus);
         repaint(bus);
     }
 

@@ -62,7 +62,7 @@ public class DefaultFocusManager implements FocusManager,
     private Object initialFocus = null;
     private boolean tabStop = true;    // false: TAB / SHIFT-TAB skip this focus manager (see FocusManager.isTabStop)
     private FocusPolicy focusPolicy = FocusPolicy.GROUP;  // what kind of focus manager (see FocusPolicy)
-    private boolean cycling = false;  // WIDGET only: wraps around from its last child to its first (see wrapsAround)
+    private boolean cycling = false;  // ONE_STOP only: wraps around from its last child to its first (see wrapsAround)
 
     private String name;
 
@@ -138,7 +138,7 @@ public class DefaultFocusManager implements FocusManager,
         return this;
     }
 
-    /** What kind of focus manager this is: GROUP (default), WIDGET or TRAP - see FocusPolicy. */
+    /** What kind of focus manager this is: GROUP (default), ONE_STOP or TRAP - see FocusPolicy. */
     public DefaultFocusManager setFocusPolicy(FocusPolicy focusPolicy) {
         this.focusPolicy = focusPolicy;
         return this;
@@ -231,7 +231,7 @@ public class DefaultFocusManager implements FocusManager,
     }
 
     /**
-     * For a WIDGET: true = its nav keys wrap around, from the last child to the first and back
+     * For a ONE_STOP manager: true = its nav keys wrap around, from the last child to the first and back
      * (e.g. a tab strip). Default false: focus stays at the ends. Ignored for GROUP / TRAP (a GROUP
      * hands on to its parent at the ends; a TRAP and the root always wrap).
      */
