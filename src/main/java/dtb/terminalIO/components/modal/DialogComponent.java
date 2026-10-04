@@ -4,6 +4,7 @@ import dtb.terminalIO.components.AbstractComponentWithContainer;
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.CompositeWithFocusManager;
+import dtb.terminalIO.events.focus.FocusPolicy;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.composite.HorizontalPanel;
@@ -122,6 +123,8 @@ public class DialogComponent extends AbstractComponentWithContainer<CompositeWit
     
     public DialogComponent(Color color, IconStyle icon,  String title) {
         super(color, new CompositeWithFocusManager(color));
+        // modal: TAB / SHIFT-TAB wrap around inside the dialog, focus never leaves it (FocusPolicy.TRAP)
+        getWrappedComponent().getFocusManager().setFocusPolicy(FocusPolicy.TRAP);
 
         this.icon = icon;
 

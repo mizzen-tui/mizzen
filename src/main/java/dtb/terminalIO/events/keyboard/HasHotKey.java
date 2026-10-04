@@ -48,7 +48,8 @@ public interface HasHotKey {
                 @Override
                 public int visit(Object c) {
                     
-                    if (c instanceof HasHotKey && ((HasHotKey)c).getHotKey()==hotKey) {
+                    // equals, not ==: a key typed on the keyboard is a new KeyStroke object
+                    if (c instanceof HasHotKey && hotKey.equals(((HasHotKey)c).getHotKey())) {
                         if (c instanceof Focusable) {
                             foundFocusable.add((Focusable)c);
                             return Traverser.STOP_TRAVERSE;

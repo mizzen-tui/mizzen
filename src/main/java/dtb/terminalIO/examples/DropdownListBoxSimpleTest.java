@@ -1,11 +1,5 @@
 package dtb.terminalIO.examples;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.HorizontalPanel;
@@ -13,13 +7,11 @@ import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.input.DropdownListBox;
 import dtb.terminalIO.components.input.ListBox;
 import dtb.terminalIO.components.input.TextInput;
-import dtb.terminalIO.components.scroll.ScrollableComponent2;
+import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle.Simple;
 import dtb.terminalIO.util.Logging;
-import dtb.terminalIO.util.StringUtils;
-
 public class DropdownListBoxSimpleTest {
 
     public static void main(String args[]) {
@@ -58,35 +50,21 @@ public class DropdownListBoxSimpleTest {
 
             vp.add(hpLists);
             ListBox<String> lb1 = ListBox.fromStrings( new String[] {"AAAAAAAAA","B","C","D","E"});
-            ScrollableComponent2 lb1_sc = new ScrollableComponent2(Colors.DEFAULT_COLOR, new Dimension.Simple(4, lb1.getWidth()), lb1).removeFooterComponent();
+            ScrollableComponent lb1_sc = new ScrollableComponent(Colors.DEFAULT_COLOR, new Dimension.Simple(4, lb1.getWidth()), lb1).removeFooterComponent();
             vp.add(lb1_sc);
             vp.add(new TextInput("A TextInput Component"));
-            vp.add(DropdownListBox.fromStrings(PackageScanner.getClasses("dtb.terminalIO.controlcodes.color").toArray(new String[0])).setTitle(Colors.BIYel, "dtb.terminalIO.controlcodes.color"));
-            vp.add(ListBox.fromStrings(PackageScanner.getClasses("dtb.terminalIO.util.formatters").toArray(new String[0])).setTitle(Colors.IBlu, "dtb.terminalIO.util.formatters"));
+            vp.add(DropdownListBox.fromStrings(COLOURS).setTitle(Colors.BIYel, "Colours"));
+            vp.add(ListBox.fromStrings(PLANETS).setTitle(Colors.IBlu, "Planets"));
 
             tApp.getMainApplicationPanel().add(vp);
 
         }).start();
     }
 
-    static class PackageScanner {
-
-        public static Set<String> getClasses(String packageName) {
-            Set<String> classNames = findAllClassNamesUsingClassLoader(packageName);
-            return classNames;
-        }
-
-        public static Set<String> findAllClassNamesUsingClassLoader(String packageName) {
-            InputStream stream = ClassLoader.getSystemClassLoader()
-                    .getResourceAsStream(packageName.replaceAll("[.]", "/"));
-            BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-            return reader.lines()
-                    .filter(line -> line.endsWith(".class"))
-                    //.filter(line-> !line.contains("$"))
-                    .map(line -> line.substring(0, line.lastIndexOf('.')))
-                    .filter(line -> !StringUtils.isEmptyStr(line))
-                    .collect(Collectors.toSet());
-        }
-    }
+    // longer item lists, for the dropdown and the list box above
+    private static final String[] COLOURS = { "Black", "Blue", "Brown", "Cyan", "Gold", "Green", "Grey", "Indigo",
+                                              "Lime", "Magenta", "Maroon", "Navy", "Olive", "Orange", "Pink",
+                                              "Purple", "Red", "Silver", "Teal", "Violet", "White", "Yellow" };
+    private static final String[] PLANETS = { "Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune" };
 
 }

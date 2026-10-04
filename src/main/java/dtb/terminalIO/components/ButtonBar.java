@@ -38,7 +38,6 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
         this.setFocusManager( new DefaultFocusManager()
                                           .setNameFromOwner(this)
                                           .setCycling(false)
-                                          .setNavKeysFirst(false)
                                           .setPrevKeyStroke(Keys.SHIFT_TAB_KEYSTROKE)
                                           .setNextKeyStroke(Keys.TAB_KEYSTROKE));
         nonDividerComponents = new ArrayList<>();
@@ -75,7 +74,7 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
     }
 
     public ButtonBar setNextKeyStroke(KeyStroke nextKeyStroke) {
-        getDefaultFocusManager().setPrevKeyStroke(nextKeyStroke);
+        getDefaultFocusManager().setNextKeyStroke(nextKeyStroke);
         return this;
     }
 
@@ -165,7 +164,6 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
 
         getContainer().add(component);
         nonDividerComponents.add(component);
-        addComponentFocusablesToFocusManager(component);
 
         if (this.rightMostBorderChar > 0) {
             lastDivider = new CharComponent(this.getColor(), this.rightMostBorderChar);
@@ -207,7 +205,6 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
         }
 
         getContainer().insert(indexInContainer, component);
-        addComponentFocusablesToFocusManager(component);
         nonDividerComponents.add(index, component);
 
         count++;
@@ -250,7 +247,6 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
             getContainer().remove(nextChild);
         }
 
-        removeComponentFocusablesFromFocusManager(component);
         getContainer().remove(component);
 
         nonDividerComponents.remove(component);

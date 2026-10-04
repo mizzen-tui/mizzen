@@ -1,6 +1,9 @@
 package dtb.terminalIO.examples;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.function.Predicate;
 
 import dtb.terminalIO.app.TUIApp;
@@ -39,14 +42,16 @@ import dtb.terminalIO.geom.VAlign;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.geom.position.PositionRelativeFactory;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.components.input.DisplayableValue.SimpleDisplayValue;
 import dtb.terminalIO.util.Logging;
+import dtb.terminalIO.util.VeryBasicArgsHelper;
 import dtb.terminalIO.util.TerminalDimensions;
 
 public class WindowFrameTest {
 
     static boolean useFocusable = false;
     
-    static String DEFAULT_IMG_PATH="/home/dbalme/workspace/tmpImages/car.jpeg";
+    static String DEFAULT_IMG_PATH="/home/dbalme/eclipse-workspace/tmpImages/car.jpeg";
     static String imgFilePath = DEFAULT_IMG_PATH;
     
     static RGBPlotPredicate plotPredicate = ImageViewerFactory.PLOT_ALWAYS;
@@ -54,7 +59,12 @@ public class WindowFrameTest {
     static IMAGE_RENDER_TYPE  renderType = ImageViewerFactory.IMAGE_RENDER_TYPE.BLOCK;
     
     private static void dumbArgsParse(String[] args) {
+        if (args != null && Stream.of(args).anyMatch(a -> VeryBasicArgsHelper.isArgName(a, "HELP") || "-h".equals(a) || "-?".equals(a))) {
+            printHelp();
+            System.exit(0);
+        }
         if (args == null || args.length == 0) {
+            checkImageFile();
             return;
         }
         
@@ -75,7 +85,42 @@ public class WindowFrameTest {
                 renderType = NotNull(ImageViewerFactory.nameToImageRenderType(args[i]),"IMAGERENDER "+args[i]+" unknown");
             }
         }
-        
+        checkImageFile();
+    }
+
+    /** the image shown in the window must exist - otherwise say so, show the help and stop */
+    private static void checkImageFile() {
+        if (!new File(imgFilePath).isFile()) {
+            System.out.println("image file not found: " + imgFilePath + "\n");
+            printHelp();
+            System.exit(1);
+        }
+    }
+
+    static void printHelp() {
+        String cls = WindowFrameTest.class.getName();
+        System.out.println(String.join("\n",
+            "WindowFrameTest - window frames (drag the title to move, the corner to resize) holding a table, text and an image",
+            "",
+            "usage: ./runDBG.sh " + cls + " [options] [IMAGE <file>]",
+            "",
+            "  IMAGE <file>           image shown in one of the windows (default " + DEFAULT_IMG_PATH + ")",
+            "  FOCUS                  use focusable window frames (WindowFrameFocusable)",
+            "  IMAGERENDER <type>     " + names(ImageViewerFactory.imageRenderTypeOptions(), renderType),
+            "  IMAGECOLOR <map>       " + names(ImageViewerFactory.colorMap(), colorMapping),
+            "  IMAGEPLOT <condition>  which pixels to plot: " + names(ImageViewerFactory.plotPointPredicateOptions(), plotPredicate),
+            "  HELP | -h | -?         this help",
+            "",
+            "example: ./runDBG.sh " + cls + " FOCUS IMAGE ~/eclipse-workspace/tmpImages/blackhole.jpg"));
+    }
+
+    private static <V> String names(SimpleDisplayValue<V>[] options, V defaultValue) {
+        return Stream.of(options)
+                     .map(o -> {
+                         String name = o.getDisplayValue().contains(" ") ? "\"" + o.getDisplayValue() + "\"" : o.getDisplayValue();
+                         return o.getValue() == defaultValue ? name + " (default)" : name;
+                     })
+                     .collect(Collectors.joining(", "));
     }
     
     static <T> T NotNull(T t, String error) {

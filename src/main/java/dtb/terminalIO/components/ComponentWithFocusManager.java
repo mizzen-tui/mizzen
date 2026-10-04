@@ -16,8 +16,10 @@ import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.FocusManagerProvider;
+import dtb.terminalIO.events.focus.FocusPolicy;
 import dtb.terminalIO.events.focus.Focusable;
-import dtb.terminalIO.events.focus.DefaultFocusManager.NAV_STYLE;
+import dtb.terminalIO.events.keyboard.AsKeyboardHandler;
+import dtb.terminalIO.events.keyboard.KeyboardHandler;
 import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
@@ -38,13 +40,13 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
                                 FocusManager,
                                 GetComponentAtOffset,
                                 EventHandlerContainer,
-                                FocusManagerProvider {
+                                FocusManagerProvider,
+                                AsKeyboardHandler {
 
     private Composite container;
     private FocusManager focusManager;
     private ChainedEventHandler chainedEventHandler;
     private ConditionalEventHandler chainedEventHandlerAsConditionalEventHandler;
-    private BehaviourForCompositeAndFocusManager focusBehaviourManager;
 
     private Function<EventBus, FocusManager> focusManagerBuilder;
 
@@ -57,7 +59,6 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
             focusManager = new DefaultFocusManager().setNameFromOwner(this);
         }
         this.setFocusManager(focusManager);
-        this.focusBehaviourManager = new BehaviourForCompositeAndFocusManager(this.container, this.focusManager);
     }
 
     public ComponentWithFocusManager(Composite container) {
@@ -80,7 +81,6 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
         // which tells DefaultFocusManager it is purely acting as a proxy only needed for its "behaviour"
         // And yes .. this feels all very "hacky" - A weakness in my model I suspect
         DefaultFocusManager.setDefaultNameAndActualFromParentObject(focusManager, this);
-        this.focusBehaviourManager = new BehaviourForCompositeAndFocusManager(this.container, this.focusManager);
     }
 
     public void setFocusManagerBuilder(Function<EventBus, FocusManager> focusManagerBuilder) {
@@ -121,10 +121,18 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
         return (T) this;
     }
 
-    public T setNavKeysFirst(boolean navKeysFirst) {
-        getAssertDefaultFocusManager("setNavKeysFirst()").setNavKeysFirst(navKeysFirst);
+    /** false: TAB / SHIFT-TAB skip this component and everything in it; clicks and hot keys still work */
+    public T setTabStop(boolean tabStop) {
+        getAssertDefaultFocusManager("setTabStop()").setTabStop(tabStop);
         return (T) this;
     }
+
+    /** What kind of focus container this is: GROUP (default), ONE_STOP or TRAP - see FocusPolicy. */
+    public T setFocusPolicy(FocusPolicy focusPolicy) {
+        getAssertDefaultFocusManager("setFocusPolicy()").setFocusPolicy(focusPolicy);
+        return (T) this;
+    }
+
 
     public T setNavKeysNone() {
         getAssertDefaultFocusManager("setNavKeysNone()").setNavKeysNone();
@@ -143,22 +151,6 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
         return getOrBuildChainedEventHandler();
     }
 
-    protected void addComponentAndItsFocusables(Position offset, Component<?> component) {
-        this.focusBehaviourManager.addComponentAndItsFocusables(offset, component);
-    }
-
-    protected void addComponentAndItsFocusables(Component<?> component) {
-        this.focusBehaviourManager.addComponentAndItsFocusables(Position.ZERO, component);
-    }
-
-    // ASSUMPTION:  component has already been added to the container
-    protected void addComponentFocusablesToFocusManager(Component<?> component) { 
-        this.focusBehaviourManager.addComponentFocusablesToFocusManager(component);
-    }
-
-    protected void removeComponentFocusablesFromFocusManager(Component<?> component) {
-        this.focusBehaviourManager.removeComponentFocusablesFromFocusManager(component);
-    }
 
     public T setEmptyChar(char emptyChar) {
         super.setEmptyChar(emptyChar);
@@ -271,6 +263,18 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
             return null;
         }
         return this;
+    }
+
+    /**
+     * Keys for this component: its own handlers (added with appendEventHandler / prependEventHandler),
+     * offered a key on its way up from the focused component inside it (see KeyRouter).
+     * null if it has none. Example: ScrollableComponent's "key typed on a footer button goes to the
+     * content". A subclass that implements KeyboardHandler (onKey) is asked that instead.
+     */
+    @Override
+    public KeyboardHandler asKeyboardHandler() {
+        ConditionalEventHandler mine = chainedEventHandlerAsConditionalEventHandler;
+        return mine != null ? AsKeyboardHandler.UTIL.toKeyboardHandler(mine) : null;
     }
 
     @Override
@@ -411,8 +415,7 @@ public class ComponentWithFocusManager<T extends ComponentWithFocusManager<?>>
 
     public void removeChildren() {
 
-        for (Component<?> child : getContainer().getChildren()) {
-            removeComponentFocusablesFromFocusManager(child);
+        for (Component<?> child : new java.util.ArrayList<Component<?>>(getContainer().getChildren())) {
             getContainer().remove(child);
         }
 //        getContainer().removeChildren();

@@ -26,6 +26,20 @@ public interface HasValue<V> {  // TODO:  Make a SettableValue that extends this
 
     V getValue();
 
+    /*
+     * When a component you pick a value with (ListBox, DropdownListBox, TreeView ...) reports a
+     * change - flags for its setEventTriggerForValueChanged, combined with |. Default: all of them,
+     * so the value is reported on every move (e.g. to preview as you go); ENTER | MOUSE_CLICK only
+     * reports a pick.
+     */
+    int VALUE_CHANGED_ON_PREV_KEYSTROKE = 1;
+    int VALUE_CHANGED_ON_NEXT_KEYSTROKE = 2;
+    int VALUE_CHANGED_ON_FOCUS = 4;
+    int VALUE_CHANGED_ON_ENTER_KEY = 8;
+    int VALUE_CHANGED_ON_MOUSE_CLICK = 16;
+    int DEFAULT_TRIGGER_FOR_ONVALUE_CHANGED = VALUE_CHANGED_ON_PREV_KEYSTROKE | VALUE_CHANGED_ON_NEXT_KEYSTROKE
+                                            | VALUE_CHANGED_ON_FOCUS | VALUE_CHANGED_ON_ENTER_KEY | VALUE_CHANGED_ON_MOUSE_CLICK;
+
     public static class ValueChangedEvent<V> extends TerminalEvent<HasValue<V>> {
 
         private static final long serialVersionUID = 4544682502113778402L;

@@ -53,7 +53,6 @@ public abstract class TextInputWithIncrDecrButtons<T> extends AbstractWrappedCom
         chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
         setCustomExtendedEventHandler( chainedEventHandler.asConditionalEventHandler()  );
 
-        registerAllFocusables();
 
     }
 

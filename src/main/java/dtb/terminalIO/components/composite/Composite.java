@@ -701,6 +701,16 @@ public class Composite extends AbstractComponent<Composite>
         return this;
     }
 
+    /** is child shown (not hidden with hide())? false if it is not a child of this composite */
+    public boolean isShown(Component<?> child) {
+        for (ComponentWithOffset c : getChildrenComponentsWithOffset()) {
+            if (c.component == child) {
+                return c.visible;
+            }
+        }
+        return false;
+    }
+
     public Composite show(Component<?> component) {
 
         if (component == null) {

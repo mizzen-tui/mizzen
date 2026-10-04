@@ -9,7 +9,7 @@ import dtb.terminalIO.components.input.DisplayableValue.StringDisplayValue;
 import dtb.terminalIO.components.input.DropdownListBox;
 import dtb.terminalIO.components.input.ListBox;
 import dtb.terminalIO.components.input.ListBox.TextComponentItemFactory;
-import dtb.terminalIO.components.scroll.ScrollableComponent2;
+import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.geom.Dimension;
@@ -48,7 +48,7 @@ public class ListBoxTest2 {
             //ListBox<String> lb1 = ListBox.fromStrings(Colors.IGre,new String[]{"Test-1 "});
             //ListBox<String> lb1 = ListBox.fromStrings(Colors.IGre,LIST_DATA.SMALL_LIST);
             ListBox<String> lb1 = ListBox.fromStrings(Colors.Gre,LIST_DATA.LARGE_LIST);
-            ScrollableComponent2 lb1_sc = new ScrollableComponent2(Colors.Blu, new Dimension.Simple(Math.min(15,lb1.getHeight()-5), lb1.getWidth()+20), lb1);
+            ScrollableComponent lb1_sc = new ScrollableComponent(Colors.Blu, new Dimension.Simple(Math.min(15,lb1.getHeight()-5), lb1.getWidth()+20), lb1);
             SearchFunctionForScrollableComponent.addFinderToScrollable(lb1_sc);  
             //lb1_sc.setCycling(false);
             lb1.onChange((te)-> status.setTextAndResize( lb1.getValue() ) );

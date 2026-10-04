@@ -11,7 +11,7 @@ import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.input.DropdownListBox;
 import dtb.terminalIO.components.input.FloatInputWithIncrDecrButtons;
 import dtb.terminalIO.components.input.HasValue;
-import dtb.terminalIO.components.input.RockerButton;
+import dtb.terminalIO.components.input.RadioGroup;
 import dtb.terminalIO.components.input.TextInputFloat;
 import dtb.terminalIO.components.plot.PathPlotter;
 import dtb.terminalIO.components.plot.PathPlotter.CirclePathPlotter;
@@ -203,8 +203,7 @@ public class TestCube {
                         redrawShape.run();
                     }));                    
 
-                    RockerButton simulationToggle = new RockerButton(grid.getColor(), "Simulation", "START", "STOP",
-                            true);
+                    RadioGroup<Boolean> simulationToggle = RadioGroup.onOff("Simulation", "START", "STOP", true).setColor(grid.getColor());
 
                     Runnable startStopSimulation = () -> {
                         if (simulationToggle.getValue()) {
@@ -304,7 +303,6 @@ public class TestCube {
             chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
             setCustomExtendedEventHandler(chainedEventHandler.asConditionalEventHandler());
 
-            registerAllFocusables();
 
         }
 
@@ -379,7 +377,6 @@ public class TestCube {
             chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
             setCustomExtendedEventHandler(chainedEventHandler.asConditionalEventHandler());
 
-            registerAllFocusables();
         }
 
         public void refreshFromProjection() {
@@ -462,7 +459,6 @@ public class TestCube {
             chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
             setCustomExtendedEventHandler(chainedEventHandler.asConditionalEventHandler());
 
-            registerAllFocusables();
 
         }
 

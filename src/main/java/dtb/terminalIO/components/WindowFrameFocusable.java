@@ -22,7 +22,9 @@ import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.keyboard.AsKeyboardHandler;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
+import dtb.terminalIO.events.keyboard.KeyboardHandler;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
@@ -39,6 +41,7 @@ public class WindowFrameFocusable extends AbstractComponent<WindowFrameFocusable
                                                                            GetComponentAtOffset, 
                                                                            HasName<WindowFrameFocusable>, 
                                                                            FocusManager, 
+                                                                           AsKeyboardHandler,
                                                                            HasTitleAndBorder<WindowFrameFocusable> {
 
     private SimpleBorder border;
@@ -70,7 +73,8 @@ public class WindowFrameFocusable extends AbstractComponent<WindowFrameFocusable
         super(color);
         this.child = child;
         this.banner = new Composite(color);
-        this.banner.add(new DraggableTextComponent(color, title, this));
+        // title bar and resize corner are for the mouse: TAB goes straight to the window's content
+        this.banner.add(new DraggableTextComponent(color, title, this).setTabStop(false));
         this.banner.setBounds(new Dimension.Simple(1, this.child.getWidth()));
 
         this.childOffsetPosition = new Position.Simple(1, 1);
@@ -82,7 +86,7 @@ public class WindowFrameFocusable extends AbstractComponent<WindowFrameFocusable
         this.border = new SimpleBorder(color, bounds);
         this.border.setParentContainer(this);
 
-        this.resizeAnchor = new ResizeAnchor(this);
+        this.resizeAnchor = new ResizeAnchor(this).setTabStop(false);
 
         this.row = pChildPosition.getRow();
         this.col = pChildPosition.getCol();
@@ -466,7 +470,6 @@ public class WindowFrameFocusable extends AbstractComponent<WindowFrameFocusable
                                                                                                  eventBus,
                                                                                                  () -> new DefaultFocusManager().setPrevKeyStroke(Keys.SHIFT_TAB_KEYSTROKE)
                                                                                                                                 .setNextKeyStroke(Keys.TAB_KEYSTROKE)
-                                                                                                                                .setNavKeysFirst(false)
                                                                                                                                 .setNameFromOwner(this)
                                                                                                                                 .setCycling(false));
             if (focusManager == null) {
@@ -496,6 +499,12 @@ public class WindowFrameFocusable extends AbstractComponent<WindowFrameFocusable
     }
     
     
+    /** keys its children didn't use: scrolling, with the scrollbars' keys (see the constructor) */
+    @Override
+    public KeyboardHandler asKeyboardHandler() {
+        return AsKeyboardHandler.UTIL.toKeyboardHandler(this.eventHandler);
+    }
+
     @Override
     public EventHandler canHandle(TerminalEvent<?> te) {
         if (getFocusManager(te.getEventBus()).canHandle(te) != null) {

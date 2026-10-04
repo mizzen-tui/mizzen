@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -41,7 +40,6 @@ import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TimedRequestedController;
-import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
@@ -128,8 +126,7 @@ public class ReadImageFileToScreenTest {
 
             ScrollableComponent sc = new ScrollableComponent(viewerTextColor, 
                                                              (Dimension)tApp.getMainApplicationPanel(), 
-                                                             loadingImage,
-                                                             ()-> new DefaultFocusManager(Keys.SHIFT_TAB_KEYSTROKE, Keys.TAB_KEYSTROKE).setNavKeysFirst(false));
+                                                             loadingImage);
             sc.setFillOnClear(false);
             //sc.setEmptyChar('░');
 

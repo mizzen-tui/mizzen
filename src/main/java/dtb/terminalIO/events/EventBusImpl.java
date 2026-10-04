@@ -187,8 +187,10 @@ public class EventBusImpl implements EventHandlerContainer, EventBus {
             queue.add(te);
         } else {
             try {
-                //queue.put(te);
-                queue.offer(te,25, TimeUnit.MILLISECONDS);
+                if (!queue.offer(te, 25, TimeUnit.MILLISECONDS)) {
+                    // still full after waiting: the event is lost - say so instead of dropping it silently
+                    Logging.forceLogInfo("EventBus: queue full (" + EVENT_Q_CAPACITY + "), event dropped: " + te);
+                }
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }

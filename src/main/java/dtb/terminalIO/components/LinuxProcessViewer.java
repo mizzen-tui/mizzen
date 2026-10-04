@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 import dtb.terminalIO.components.scroll.ScrollableComponent;
-import dtb.terminalIO.components.scroll.ScrollableSearch;
+import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.ChainedEventHandler;
@@ -81,7 +81,6 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
         this.scrollableView.setFillOnClear(true);
         this.scrollableView.setParentContainer(this);
         this.setFillOnClear(false);
-        this.scrollableView.asEventHandler();
         this.scrollableView.setBorderColor(color);
         this.textLineFormatter = new DefaultTextFormatter();
     }
@@ -119,8 +118,7 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
             return;
         }
         finderAdded = true;
-        //SearchFunctionForScrollableComponent.addFinderToScrollable(this.scrollView);
-        ScrollableSearch.UTIL.addSearch(this.scrollableView);
+        SearchFunctionForScrollableComponent.addFinderToScrollable(this.scrollableView);
     }
 
     public void resize(Dimension d) {

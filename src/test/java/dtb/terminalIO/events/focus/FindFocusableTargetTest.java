@@ -149,7 +149,7 @@ public class FindFocusableTargetTest  extends TestCase {
 
         assertTrue(result.size()>0);
 
-        result =  FocusManager.UTIL.findTargetAsPath(mainFocusManager, ddlb);
+        result =  FocusManager.UTIL.findTargetAsPath(mainFocusManager, ddlb.asFocusable());
 
         assertNotNull(result);
 

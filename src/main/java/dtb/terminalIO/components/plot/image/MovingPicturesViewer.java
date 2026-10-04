@@ -45,7 +45,6 @@ public class MovingPicturesViewer extends AbstractWrappedComponentWithFocusManag
         Position bPos = PositionRelativeFactory.fromAlign(VAlign.TOP, Align.RIGHT, imageViewer, popupImageControlsButton);
         imageViewer.add(bPos,  popupImageControlsButton);
 
-        registerAllFocusables();
 
     }
     

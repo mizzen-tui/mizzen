@@ -13,8 +13,12 @@ import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.focus.RequestFocusEvent;
+import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
+import dtb.terminalIO.events.keyboard.KeyEvent;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.focus.FocusManager;
+import dtb.terminalIO.events.focus.FocusPolicy;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.ToFocusable;
 import dtb.terminalIO.events.keyboard.KeyStroke;
@@ -42,11 +46,12 @@ public class TabPanel extends AbstractComponentWrappper<CompositeWithFocusManage
 
     Color textActiveTabColor = Colors.DEFAULT_COLOR.bold();
 
-    // NOTE : using TAB and SHIFT_TAB for hotkeys is a really bad idea because circumvents normal
-    //        FocusManager Navigation via tab ... so for now disabling these hot keys (see below in constructor) 
-    //        until I figure out better keys to use for this.
-    KeyStroke previousTabHotKey = Keys.SHIFT_TAB_KEYSTROKE;
-    KeyStroke nextTabHotKey = Keys.TAB_KEYSTROKE;
+    // Optional shortcuts to switch to the previous / next tab from anywhere inside this TabPanel
+    // (see setPrevKeyStroke / setNextKeyStroke). The tab's content always gets the key first;
+    // these only fire if the content does not handle it. None by default.
+    // NOTE : never use TAB / SHIFT_TAB here - that circumvents normal FocusManager navigation.
+    KeyStroke previousTabHotKey = null;
+    KeyStroke nextTabHotKey = null;
 
     
     public TabPanel(Color color, Dimension bounds) {
@@ -56,7 +61,12 @@ public class TabPanel extends AbstractComponentWrappper<CompositeWithFocusManage
         border = new SimpleBorder(getColor(), new Dimension.Simple(bounds.getHeight()-2, bounds.getWidth()));
         getWrappedComponent().add(workAreaPosition.addRows(-1).addCols(-1), border);
 
-        tabsButtonBar = new ButtonBar().setCycling(true).setNoBorderChars();
+        // tab strip: arrows move between tabs (wrapping) and show them, focus stays on the strip;
+        // TAB leaves the strip into the tab's content. Using TAB here made the strip a focus trap.
+        // ONE_STOP: the strip is one TAB stop that remembers the active tab
+        tabsButtonBar = new ButtonBar().setCycling(true).setNoBorderChars().setFocusPolicy(FocusPolicy.ONE_STOP)
+                                       .setPrevKeyStroke(Keys.LEFT_KEYSTROKE)
+                                       .setNextKeyStroke(Keys.RIGHT_KEYSTROKE);
 
         getWrappedComponent().add(Position.ZERO.addCols(1), tabsButtonBar);
 
@@ -80,6 +90,23 @@ public class TabPanel extends AbstractComponentWrappper<CompositeWithFocusManage
         Position navControlsPosition = PositionRelativeFactory.fromAlign(VAlign.BOTTOM, Align.RIGHT,  this, this.prevNextButtonBar);
         getWrappedComponent().add(navControlsPosition, prevNextButtonBar);
         
+        // prev / next tab shortcuts: last in this panel's handler chain, so they only fire
+        // when neither the tab strip nor the tab's content handled the key
+        getWrappedComponent().getFocusManager().setCustomExtendedEventHandler(
+            new KeyInputEventHandler(
+                (te) -> {
+                    KeyEvent ke = (KeyEvent) te;
+                    return (previousTabHotKey != null && ke.isKeyStroke(previousTabHotKey))
+                        || (nextTabHotKey != null && ke.isKeyStroke(nextTabHotKey));
+                },
+                (te) -> {
+                    if (previousTabHotKey != null && ((KeyEvent) te).isKeyStroke(previousTabHotKey)) {
+                        setPreviousAsCurrentFocus(te.getEventBus());
+                    } else {
+                        setNextAsCurrentFocus(te.getEventBus());
+                    }
+                }));
+
         FocusManager.UTIL.verifyPathsToFocusables(getWrappedComponent(), getWrappedComponent());
 
     }
@@ -101,15 +128,21 @@ public class TabPanel extends AbstractComponentWrappper<CompositeWithFocusManage
         }
     }
 
+    /**
+     * Shortcut to switch to the previous tab from anywhere inside this TabPanel
+     * (only fires if the tab's content does not handle the key). null = none.
+     */
     public TabPanel setPrevKeyStroke(KeyStroke prevKeyStroke) {
         this.previousTabHotKey = prevKeyStroke;
-        this.tabsButtonBar.setPrevKeyStroke(prevKeyStroke);
         return this;
     }
 
+    /**
+     * Shortcut to switch to the next tab from anywhere inside this TabPanel
+     * (only fires if the tab's content does not handle the key). null = none.
+     */
     public TabPanel setNextKeyStroke(KeyStroke nextKeyStroke) {
         this.nextTabHotKey = nextKeyStroke;
-        this.tabsButtonBar.setNextKeyStroke(nextKeyStroke);
         return this;
     }
 
@@ -139,7 +172,14 @@ public class TabPanel extends AbstractComponentWrappper<CompositeWithFocusManage
 
         tabButton.onChange((te)->{
 
+            // explicitly chosen (click / hot key / shortcut) -> focus goes into the tab's content;
+            // reached by navigating the tab strip -> focus stays on the strip
+            boolean focusContent = tabButton.consumeFocusContentRequest();
+
             if ( current ==  tabButton ) {
+                if (focusContent) {
+                    te.getEventBus().asynch((te2) -> requestFocusOnCurrentTabContent(te2.getEventBus()));
+                }
                 return;
             }
 
@@ -156,12 +196,18 @@ public class TabPanel extends AbstractComponentWrappper<CompositeWithFocusManage
                 throw new NullPointerException("tabAction.getComponentForTab(ctx) returned null for tabAction : '"+tabButton.getTabText()+"'");
             }
 
-            TabPanel.this.getWrappedComponent().add(workAreaPosition, currentComponentInTab);
+            // insert the content before the prev/next buttons so TAB order is:
+            // tab strip -> tab content -> prev/next buttons
+            TabPanel.this.getWrappedComponent().insert(getWrappedComponent().indexOf(prevNextButtonBar),
+                                                       workAreaPosition, currentComponentInTab);
 
             te.getEventBus().asynch((te2) -> {
                 // activate the panel on the next event loop
                 current.tabAction.activate(te2.getEventBus(), getTabContext());
                 current.setActive(true);
+                if (focusContent) {
+                    requestFocusOnCurrentTabContent(te2.getEventBus());
+                }
                 te2.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(currentComponentInTab));
             });
 
@@ -187,6 +233,16 @@ public class TabPanel extends AbstractComponentWrappper<CompositeWithFocusManage
         return addTab(tabText,null, component);
     }
 
+
+    private void requestFocusOnCurrentTabContent(EventBus eventBus) {
+        if (current == null) {
+            return;
+        }
+        Focusable focusable = current.tabAction.getFocusableForActivation(getTabContext());
+        if (focusable != null) {
+            eventBus.raiseEvent( new RequestFocusEvent( focusable ));
+        }
+    }
 
     TabContext getTabContext() {
         return new TabContext() {

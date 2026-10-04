@@ -1,7 +1,7 @@
 package dtb.terminalIO.components;
 
 import dtb.terminalIO.components.scroll.ScrollableComponent;
-import dtb.terminalIO.components.scroll.ScrollableComponent2;
+import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.components.scroll.WindowViewComponent;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.core.Canvas;
@@ -10,7 +10,7 @@ import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.supportfortesting.CanvasForTesting;
 import junit.framework.TestCase;
 
-public class ComponentOffsetTests extends TestCase {
+public class ComponentOffsetTest extends TestCase {
     
     
     private static String TC_TEXT = "The Rain\n in Spain\nStays mainly\non the plain!\nAnd now we are done\n";
@@ -57,40 +57,6 @@ public class ComponentOffsetTests extends TestCase {
 
     }
     
-    public void testScrollableComponent2_getCanvasOffsets() throws Exception {
-        
-        System.out.println("testScrollableComponent2_getCanvasOffsets--");
-        
-        Canvas canvas = buildCanvasForTesting();
-
-        TextComponent tc = new TextComponent(TC_TEXT);
-
-        ScrollableComponent2 sc = new ScrollableComponent2(Colors.DEFAULT_COLOR, new Dimension.Simple(10,10), tc);
-
-        canvas.addComponentSegments(0, 0, sc);
-
-        System.out.println( new Dimension.Simple(tc));
-
-        System.out.println( Component.UTIL.getCanvasOffsetFor(tc));
-
-        assertTrue(new Position.Simple(1,1).isSameLocation(Component.UTIL.getCanvasOffsetFor(tc)));
-
-        assertTrue(sc.setViewOffset(5,5));
-
-        assertTrue(new Position.Simple(-4,-4).isSameLocation(Component.UTIL.getCanvasOffsetFor(tc)));
-
-        System.out.println( Component.UTIL.getCanvasOffsetFor(tc));
-
-        Position canvasPosition = new Position.Simple(1,1);
-
-        Position offsetInto_TC_from_canvas_00 = Component.UTIL.getCanvasOffsetFor(tc).offsetTo(canvasPosition);
-
-        System.out.println(offsetInto_TC_from_canvas_00);
-        
-        assertTrue(new Position.Simple(5,5).isSameLocation(offsetInto_TC_from_canvas_00));
-
-    }
-
     public void testScrollableComponent_getCanvasOffsets() throws Exception {
         
         System.out.println("testScrollableComponent_getCanvasOffsets--");
@@ -111,8 +77,6 @@ public class ComponentOffsetTests extends TestCase {
 
         assertTrue(sc.setViewOffset(5,5));
 
-        System.out.println( Component.UTIL.getCanvasOffsetFor(tc));
-
         assertTrue(new Position.Simple(-4,-4).isSameLocation(Component.UTIL.getCanvasOffsetFor(tc)));
 
         System.out.println( Component.UTIL.getCanvasOffsetFor(tc));
@@ -126,6 +90,7 @@ public class ComponentOffsetTests extends TestCase {
         assertTrue(new Position.Simple(5,5).isSameLocation(offsetInto_TC_from_canvas_00));
 
     }
+
  
 
 }

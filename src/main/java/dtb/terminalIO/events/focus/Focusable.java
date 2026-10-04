@@ -26,10 +26,50 @@ import dtb.terminalIO.events.TerminalEvent;
  */
 public interface Focusable extends FocusBehaviour, ConditionalEventHandler {
 
+    /**
+     * The component this focusable belongs to: itself if it is a component; for a helper object (a
+     * focus behaviour, a wrapper's inner focus manager) the component that handed it out. null if
+     * unknown (e.g. one built by hand without a component). Used to work out the focus tree from the
+     * component tree - e.g. a ListBox hands out a focus behaviour, whose component is the ListBox.
+     */
+    default Component<?> getFocusComponent() {
+        return this instanceof Component ? (Component<?>) this : null;
+    }
+
+
     FocusManager getParentFocusManager();
 
     void setParentFocusManager(FocusManager focusManager);
-    
+
+    /**
+     * Focus is moving onto this (e.g. TAB from the previous field): which focusable should it
+     * land on? A plain component (not a focus manager) lands on itself, or returns null ("skip me") if disabled.
+     * Focus managers pick one of their children instead (see FocusManager.UTIL.enter).
+     * Only answers - changes nothing. Not yet used by the focus routing (focus redesign).
+     */
+    default Focusable enter(FocusDirection dir) {
+        return isEnabled() && isTabStop() ? this : null;
+    }
+
+    /**
+     * Can TAB / SHIFT-TAB land here? false = skip it (like HTML tabindex=-1); it can still be clicked
+     * or reached with a hot key. Example: a window's title bar and resize corner - they are for the
+     * mouse, so TAB goes straight to the window's content. Default: true.
+     */
+    default boolean isTabStop() {
+        return true;
+    }
+
+    /**
+     * A nav key (e.g. TAB) was pressed while focusedLeaf, somewhere inside this, has focus:
+     * where should focus go next? A plain component (not a focus manager) has nothing inside it, so it answers DONE
+     * ("not me - ask my parent"). Focus managers decide among their children (see FocusManager.UTIL.advance).
+     * Only answers - changes nothing. Not yet used by the focus routing (focus redesign).
+     */
+    default Navigation advance(Focusable focusedLeaf, FocusDirection dir) {
+        return Navigation.DONE;
+    }
+
     public static class NOOPFocusable implements Focusable {
 
         @Override
@@ -77,6 +117,11 @@ public interface Focusable extends FocusBehaviour, ConditionalEventHandler {
             this.component = component;
             this.behaviour = behaviour;
             this.eventHandler = eventHandler;
+        }
+
+        @Override
+        public Component<?> getFocusComponent() {
+            return component;
         }
 
         public FocusBehaviour getBehaviour() {

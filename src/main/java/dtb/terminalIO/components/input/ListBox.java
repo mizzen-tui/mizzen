@@ -71,17 +71,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
     Color          selectedColor           = new Colors.FGBGColors(Colors.IYel);
     int            eventTriggerForValueChanged = DEFAULT_TRIGGER_FOR_ONVALUE_CHANGED;
     
-    public static final int VALUE_CHANGED_ON_PREV_KEYSTROKE = 1;
-    public static final int VALUE_CHANGED_ON_NEXT_KEYSTROKE = 2;
-    public static final int VALUE_CHANGED_ON_FOCUS = 4;
-    public static final int VALUE_CHANGED_ON_ENTER_KEY = 8;
-    public static final int VALUE_CHANGED_ON_MOUSE_CLICK = 16;
-    
-    public static final int DEFAULT_TRIGGER_FOR_ONVALUE_CHANGED = VALUE_CHANGED_ON_PREV_KEYSTROKE | 
-                                                                  VALUE_CHANGED_ON_NEXT_KEYSTROKE |
-                                                                  VALUE_CHANGED_ON_FOCUS |
-                                                                  VALUE_CHANGED_ON_ENTER_KEY |
-                                                                  VALUE_CHANGED_ON_MOUSE_CLICK;
+    // VALUE_CHANGED_ON_... flags (setEventTriggerForValueChanged): see HasValue
 
     public static interface ItemComponent  {
         Component<?> getComponent();
@@ -659,6 +649,14 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         return focusable;
     }
 
+    /**
+     * Called after this ListBox has lost focus. Override to react (e.g. DropdownListBox closes its
+     * popup list). Note newFocusable is the new focusable at the level where focus moved, which may
+     * be a container of the final target rather than the target itself.
+     */
+    protected void onUnFocus(Focusable newFocusable, EventBus eventBus) {
+    }
+
     private Focusable makeFocusable() {
 
         ChainedEventHandler chainedHandler = getChainedEventHandler();
@@ -675,6 +673,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
                        curSelectedComponent.selectWithNoFocus(newFocusable);
                    }
                 }
+                onUnFocus(newFocusable, eventBus);
             }
 
             public void focus(Focusable oldFocusable, EventBus eventBus) {

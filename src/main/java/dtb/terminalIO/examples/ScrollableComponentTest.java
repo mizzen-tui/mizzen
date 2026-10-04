@@ -10,7 +10,7 @@ import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.frameset.HorizontalSplitter;
 import dtb.terminalIO.components.frameset.VerticalSplitter;
-import dtb.terminalIO.components.scroll.ScrollableComponent2;
+import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
@@ -50,7 +50,7 @@ public class ScrollableComponentTest {
             TextComponent largeTextComponent = new TextViewer().getComponent(Colors.Gre, tApp.getCanvas().getWidth()-2);
             String originalLargeText = largeTextComponent.getText();
    
-            ScrollableComponent2 sc1 = new ScrollableComponent2(Colors.Gre, 
+            ScrollableComponent sc1 = new ScrollableComponent(Colors.Gre, 
                                                                 calcScrollableDimension.get(), 
                                                                 largeTextComponent);
 
@@ -72,7 +72,7 @@ public class ScrollableComponentTest {
 
             Composite brailleContainer = new Composite(Colors.Blu).setBounds(tApp.getCanvas().getHeight()-7, tApp.getCanvas().getWidth()/2 -2);
             brailleDemoSetup(brailleContainer, tApp.getEventBus());
-            ScrollableComponent2 sc2 = new ScrollableComponent2(Colors.Blu, calcScrollableDimension.get(), brailleContainer);
+            ScrollableComponent sc2 = new ScrollableComponent(Colors.Blu, calcScrollableDimension.get(), brailleContainer);
             sc2.setName("ScrollableComponent-sc2");
             sc2.appendOnResizeRule((newSize)->{
                 brailleContainer.resize(newSize);

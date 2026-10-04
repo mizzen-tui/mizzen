@@ -10,7 +10,7 @@ import dtb.terminalIO.components.WindowFrameFocusable;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.input.DropdownListBox;
-import dtb.terminalIO.components.input.RockerButton;
+import dtb.terminalIO.components.input.RadioGroup;
 import dtb.terminalIO.components.table.TableComponent;
 import dtb.terminalIO.components.table.TableComponent.TableLinesStyle;
 import dtb.terminalIO.controlcodes.color.Colors;
@@ -30,8 +30,7 @@ public class TableResizeTest {
            // HorizontalPanel controls = new HorizontalPanel().setHorizontalSpacer(2);
             controls.add(new TextComponent("TEST TABLE RESIZE"));
 
-            //  Color color, String label, String onText, String offText, boolean value
-            RockerButton rb = new RockerButton(Colors.IWhi, "Table Data", "sampleData1", "sampleData2", true);
+            RadioGroup<Boolean> rb = RadioGroup.onOff("Table Data", "sampleData1", "sampleData2", true).setColor(Colors.IWhi);
 
             controls.add(rb);
 

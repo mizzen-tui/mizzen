@@ -5,15 +5,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import dtb.terminalIO.app.TUIApp;
+import dtb.terminalIO.events.RequestUpdateCanvasEvent;
+import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.frameset.HorizontalSplitter;
 import dtb.terminalIO.components.frameset.VerticalSplitter;
 import dtb.terminalIO.components.input.DropdownListBox;
-import dtb.terminalIO.components.input.RockerButton;
+import dtb.terminalIO.components.input.RadioGroup;
 import dtb.terminalIO.components.input.TextInput;
 import dtb.terminalIO.components.table.DefaultTableModel;
 import dtb.terminalIO.components.table.TableComponent;
@@ -31,12 +34,25 @@ public class Table01Test {
 
         new TUIApp(args).setDefaultMainApplicationPanel().setOnReadyStart((tApp) -> {
 
-            //  Color color, String label, String onText, String offText, boolean value
-            RockerButton rockerButton = new RockerButton(Colors.BIPur, "Splitter View", "Vertical", "Horizontal", true);
+            RadioGroup<Boolean> splitterView = RadioGroup.onOff("Splitter View", "Vertical", "Horizontal", true).setColor(Colors.BIPur);
             HorizontalPanel topBanner = new HorizontalPanel().setHorizontalSpacer(3);
 
             topBanner.t("Table Tester 01");
-            topBanner.add(rockerButton);
+            topBanner.add(splitterView);
+
+            // the tables' selection events: UP/DOWN/HOME/END/PgUp/PgDn select, ENTER or a click on the selected row activates
+            TextComponent status = new TextComponent(Colors.IGre, "arrows select a row, ENTER activates");
+            topBanner.add(status);
+            Consumer<TableComponent> showEvents = (table) -> {
+                table.onRowSelected((te) -> {
+                    status.setTextAndResize(table.getName() + ": selected row " + te.getRowSelected().getTableRow());
+                    te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(status));
+                });
+                table.onRowActivated((row, eventBus) -> {
+                    status.setTextAndResize(table.getName() + ": ACTIVATED row " + row);
+                    eventBus.raiseEvent(new RequestUpdateCanvasEvent(status));
+                });
+            };
 
             VerticalPanel mainViewPanel =  new VerticalPanel();
 
@@ -61,10 +77,8 @@ public class Table01Test {
                 t2.setName("t2-vsView");
 
                 vs.addComponent(t1);
-
-                t1.onRowSelected((te)-> {
-                    Logging.info("Table01Test-: onClick-ROW("+ te.getRowSelected().getTableRow() +") --> \n        ");
-                });
+                showEvents.accept(t1);
+                showEvents.accept(t2);
 
                 t1.onCellSelected((te)-> {
                     Logging.info("Table01Test-: onClick-CELL("+ te.getCellSelected().getTableRow() + "," + te.getCellSelected().getTableCol() +") --> \n        ");
@@ -77,7 +91,6 @@ public class Table01Test {
                                                                            "Untenable Option-3"}));
                 mainViewPanel.add(vs);
 
-                tApp.rebuildFocusManager();
                 
                 tApp.setOnResizeAction((ta, newSize)->{
                     defaultResizeAction.accept(ta, newSize);
@@ -105,6 +118,8 @@ public class Table01Test {
 
                 hs.addComponent(t1);
                 hs.addComponent(t2);
+                showEvents.accept(t1);
+                showEvents.accept(t2);
  
                 mainViewPanel.add(new TextInput(new FGBGColors(Colors.BWhi, Colors.On_IBla), 20).setEmptyChar('_').setEmptyColor(new FGBGColors(Colors.BWhi, Colors.On_IBla)));
                 mainViewPanel.add(hs);
@@ -115,11 +130,10 @@ public class Table01Test {
                     hs.resize(hsDim);
                 });
 
-                tApp.rebuildFocusManager();
             };
 
-            rockerButton.onChange((te)->{
-                if (rockerButton.getValue()) {
+            splitterView.onChange((te)->{
+                if (splitterView.getValue()) {
                     vsView.run();
                 } else {
                     hsView.run();

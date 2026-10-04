@@ -81,6 +81,7 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
             TreeView<Component<?>> tvComponents = new TreeView<Component<?>>(Colors.IBlu, new Dimension.Simple(90, 60),
                     (node) -> nodeName(node));
             tvComponents.setModel(new FilteredTreeViewModel<Component<?>>((c)->c != ComponentInspector.this, new HasChildrenTreeViewModel<Component<?>>(componentToInspect)));
+            tvComponents.expandAll();     // the inspector shows the whole tree
 
             if (scrollingArea != null) {
                 this.scrollingArea.setParentContainer(null);
@@ -109,6 +110,7 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
 
             tvFocusable.setModel(new CachingTreeviewModel<Focusable>(new HasChildrenTreeViewModel<Focusable>(focusManagerToInspect.get(),
                                                                          new FocusManagerHasChildrenAdapter())));
+            tvFocusable.expandAll();      // the inspector shows the whole tree
 
             if (scrollingArea != null) {
                 this.scrollingArea.setParentContainer(null);

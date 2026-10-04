@@ -144,15 +144,5 @@ public  abstract class AbstractWrappedComponentWithFocusManager<T extends Compon
         focusableOp( fm -> fm.removeFocusable(focusable), "removeFocusable()" );
     }
     
-    public void addAllFocusables(Collection<Focusable> focusables) {
-        for (Focusable focusable : focusables) {
-            addFocusable(focusable);
-        }
-    }
-
-    public void registerAllFocusables() {
-        Collection<Focusable> focusables = FocusManager.UTIL.focusablesFromComponent(this.getWrappedComponent());
-        addAllFocusables(focusables);
-    }
 
 }

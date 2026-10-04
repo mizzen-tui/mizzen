@@ -7,6 +7,9 @@ flaw; see its §4.
 
 ## Git commits
 
+- **Never commit without the owner's explicit approval.** Make and verify the change, then
+  present it for review (diff, what/why, alternatives, how verified, where it fits in the plan).
+  Remind the owner when uncommitted work is piling up.
 - Do NOT add a `Co-Authored-By` line (or any other AI attribution) to commit messages.
 - Keep commit messages short: a subject line plus at most ~4 lines of body.
 - Size the message by how much the *design* changed, not by how many files changed.

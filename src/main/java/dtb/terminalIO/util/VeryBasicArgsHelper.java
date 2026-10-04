@@ -1,5 +1,7 @@
 package dtb.terminalIO.util;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -117,6 +119,31 @@ public class VeryBasicArgsHelper {
         __onNamedArg(args, argNameCaseInsensitive, transform, argHandler);
     }
     
+    /**
+     * All values of a named arg that may be repeated, e.g. "IMAGE a.gif IMAGE b.gif" -> [a.gif, b.gif].
+     * Same name matching as the other methods (name, -name, --name, case insensitive).
+     * Returns an empty list if not found.
+     */
+    public static List<String> getAllArgs(String[] args, String argNameCaseInsensitive) {
+        List<String> values = new ArrayList<>();
+        if (args == null || argNameCaseInsensitive == null) {
+            return values;
+        }
+        for (int i = 0; i < args.length - 1; i++) {
+            if (isArgName(args[i], argNameCaseInsensitive)) {
+                values.add(args[++i]);
+            }
+        }
+        return values;
+    }
+
+    /** true if arg is argName, -argName or --argName (case insensitive) */
+    public static boolean isArgName(String arg, String argNameCaseInsensitive) {
+        return argNameCaseInsensitive.equalsIgnoreCase(arg)
+            || ("-" + argNameCaseInsensitive).equalsIgnoreCase(arg)
+            || ("--" + argNameCaseInsensitive).equalsIgnoreCase(arg);
+    }
+
     public static <T> T getFromArgs(String[] args, String argNameCaseInsensitive, Function<String, T> fromArgValueBuilder) {
         
         String value = getArg(args, argNameCaseInsensitive);

@@ -65,7 +65,6 @@ public class CharacterViewerTest {
 
         StringSpinner spinner = new StringSpinner(StringSpinner.ARC);
 
-        scrollPanel.asEventHandler(); // TODO: fixme!!!!!!  .. time passes ... why? .. oh .. I get it ..
         app.getEventBus().appendEventHandler(scrollPanel);
 
         BlockingQueue<String> stringQueue = new ArrayBlockingQueue<String>(1000);

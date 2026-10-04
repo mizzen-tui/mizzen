@@ -22,8 +22,6 @@ import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
-import dtb.terminalIO.events.focus.Focusables;
-import dtb.terminalIO.events.focus.FocusablesContainer;
 import dtb.terminalIO.events.focus.RequestFocusEvent;
 import dtb.terminalIO.events.focus.ToFocusable;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
@@ -145,23 +143,11 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
         }
 
         this.menuContainer.setItems(menuItemsAsDisplayableItems(), new MenuTextComponentItemFactory(this));
+        // drawn on the root panel, but part of parent (its menu button / parent menu) for keyboard focus
+        Component.UTIL.setPopupOwner(this.menuContainer, parent);
         getMenuRootPanel(parent).add(position, this.menuContainer);
         getMenuRootPanel(this.menuContainer).bringToFront(this.menuContainer);
 
-        if (this.menuContainer.getParentFocusManager() == null) {
-            Focusable parentAsFocusable = ToFocusable.UTIL.toFocusable(parent);
-            if (parentAsFocusable == null) {
-                throw new IllegalArgumentException("Error in popUpMenu().  Parent Parameter is not a focusable and a focusable cannot be derived from it");
-            }
-
-            Focusables fm;
-            if (parent instanceof Focusables) {
-                fm = (Focusables) parent;
-            } else {
-                fm = ((FocusablesContainer)FocusManager.UTIL.getRootFocusManager( parentAsFocusable ));
-            }
-            fm.addFocusable(this.menuContainer);
-        }
 
         this.menuContainer.onChange((te)-> {
             try {
@@ -169,6 +155,8 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
                 // Logging.info("this.menuContainer.onChange()-------- " + menuItem.toString());
                 menuItem.onSelected(te);
                 if (menuItem instanceof MenuItem.Simple) {
+                     // the menus close: focus goes back to the root menu's owner (its menu button)
+                     Component.UTIL.returnFocusToPopupOwner(this.getRootMenu().menuContainer, te.getEventBus());
                      this.getRootMenu().popDownMenu();
                      if (this.getRootMenu().menuBar != null) {
                          this.getRootMenu().menuBar.unFocus(null, te.getEventBus());
@@ -185,12 +173,6 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
         if (this.menuContainer != null) {
             this.traverseAllSubMenus((m)-> m.popDownMenu());
             getMenuRootPanel(this.menuContainer).remove(this.menuContainer);
-            Focusable listBoxAsFocusable = ToFocusable.UTIL.toFocusable(this.menuContainer);
-            if (listBoxAsFocusable.getParentFocusManager() != null && listBoxAsFocusable.getParentFocusManager() instanceof FocusablesContainer) {
-                // At this point Root panel is not a FocusManager (its just a component) so we need to manually remove the focusable from its parent
-                //Logging.info("Removed menuItem " + HasName.UTIL.getName(this.menuContainer) + " from " + HasName.UTIL.getName((FocusablesContainer)listBoxAsFocusable.getParentFocusManager()));
-                ((Focusables)listBoxAsFocusable.getParentFocusManager()).removeFocusable(listBoxAsFocusable);
-            }
             this.menuContainer = null;
             return;
         }
@@ -224,23 +206,20 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
         return false;
     }
 
+    /**
+     * Is focusable part of this menu: the menu bar itself, this menu's list, or anything inside it -
+     * its submenus at any depth, since a submenu counts as part of the menu it opened from (see
+     * Component.getPopupOwner). Used to decide whether a menu stays open when its focus moves.
+     */
     boolean isFocusablePartOfMenu(Focusable focusable) {
-        if (this.menuBar != null && ToFocusable.UTIL.toFocusable(this.menuBar)  == focusable) {
+        if (focusable == null) {
+            return false;
+        }
+        if (this.menuBar != null && ToFocusable.UTIL.toFocusable(this.menuBar) == focusable) {
             return true;
         }
-        if (this.menuContainer != null) {
-            if (ToFocusable.UTIL.toFocusable(this.menuContainer)  == focusable) {
-                return true;
-            }
-            if (focusable instanceof MenuContainer) {
-                
-                MenuContainer focusableAsMenuContainer = (MenuContainer)focusable;
-                if (focusableAsMenuContainer.menu.parentMenu != null && focusableAsMenuContainer.menu.parentMenu == this) {
-                    return true;   
-                }
-            }
-        }
-        return false;
+        Focusable menuNode = this.menuContainer == null ? null : ToFocusable.UTIL.toFocusable(this.menuContainer);
+        return menuNode != null && FocusManager.UTIL.containsFocusable(menuNode, focusable);
     }
 
     public void setMenuRootPanel(Composite rootPanel) {
@@ -368,7 +347,7 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
 
         @Override
         public void selectWithNoFocus(Focusable newFocusable) {
-//            Logging.info("selectWithNoFocus" + HasName.UTIL.getName(newFocusable));
+//            Logging.info("selectWithNoFocus" + HasName.UTIL.getName(newFocusable, "<none>"));
             Menu menu = getMenu();
             Color color = menu.color;
             color = color.bold();
@@ -415,6 +394,16 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
                         menu.selectNextLeft(te);
                     }));
 
+            // ESC closes the menu - all its levels - and focus goes back to its menu button, as when an item is
+            // chosen. (Closing only a submenu would not last: its item reopens it while the parent menu has focus.)
+            getListBox().appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE,
+                    (te)-> {
+                        Menu root = menu.getRootMenu();
+                        Component.UTIL.returnFocusToPopupOwner(root.menuContainer, te.getEventBus());
+                        root.popDownMenu();
+                        RequestUpdateCanvasEvent.invoke(te, MenuContainer.this);
+                    }));
+
             getListBox().appendEventHandler(new KeyInputEventHandler(Keys.UP_KEYSTROKE, 
                     (te)->  getListBox().getSelectedIndex() == 0,
                     (te)->  {
@@ -455,19 +444,22 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
         }
 
         public void unFocus(Focusable newFocusable, EventBus eventBus) {
-            Logging.info(HasName.UTIL.getName(this)+ " unFocus   to next: " + HasName.UTIL.getName(newFocusable));
+            Logging.info(HasName.UTIL.getName(this)+ " unFocus   to next: " + HasName.UTIL.getName(newFocusable, "<none>"));
 
             super.unFocus(newFocusable, eventBus);
             if (!this.menu.isFocusablePartOfMenu(newFocusable)) {
                 this.menu.popDownMenu();
-                if (this.menu.menuBar != null) {
+                // the menu bar lets go only if focus leaves it - not when it moves to one of its own
+                // buttons (the open menu is part of the menu bar for focus)
+                Focusable menuBarNode = this.menu.menuBar == null ? null : ToFocusable.UTIL.toFocusable(this.menu.menuBar);
+                if (menuBarNode != null && (newFocusable == null || !FocusManager.UTIL.containsFocusable(menuBarNode, newFocusable))) {
                     this.menu.menuBar.unFocus(newFocusable, eventBus);
                 }
             }
         }
 
         public void focus(Focusable oldFocusable, EventBus eventBus) {
-            Logging.info(HasName.UTIL.getName(this)+ " focus  from prev: " + HasName.UTIL.getName(oldFocusable));
+            Logging.info(HasName.UTIL.getName(this)+ " focus  from prev: " + HasName.UTIL.getName(oldFocusable, "<none>"));
             super.focus(oldFocusable, eventBus);
         }
 

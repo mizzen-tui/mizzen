@@ -2,6 +2,22 @@ package dtb.terminalIO.events;
 
 import dtb.terminalIO.events.OnIdleEventEventHandler.OneTimeAfterInterval;
 
+/**
+ * Runs an action once requests stop coming - a debouncer, for actions too slow to run on every
+ * request (redrawing a preview while the user holds an arrow key, searching while they type).
+ * <p/>
+ * Call onRequest(eventBus) as often as you like. The action runs once no new request has come for
+ * timerDelayMillis (default 250 ms) - so a burst of requests gives one run, after it. While requests
+ * keep coming it still runs at least every maxStarvationTime (default 750 ms), so the screen never
+ * looks frozen. Override isRequestDifferentFromPrevious to ignore requests that change nothing.
+ * <p/>
+ * Example (TreeViewTest):
+ * <pre>
+ *     TimedRequestedController redraw = new TimedRequestedController((te) -> drawSelected(grid, tree.getValue()));
+ *     tree.onChange((te) -> redraw.onRequest(te.getEventBus()));     // every move asks; the drawing catches up
+ * </pre>
+ * The action runs on the event bus (as an idle-time event), not on the caller's thread.
+ */
 public class TimedRequestedController {
 
     private static final int DEFAULT_timerDelayMillis = 250;

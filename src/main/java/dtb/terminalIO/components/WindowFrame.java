@@ -66,7 +66,8 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
         super(color);
         this.child = child;
         this.banner = new Composite(color);
-        this.banner.add(new DraggableTextComponent(color, title, this));
+        // title bar and resize corner are for the mouse: TAB goes straight to the window's content
+        this.banner.add(new DraggableTextComponent(color, title, this).setTabStop(false));
         this.banner.setBounds(new Dimension.Simple(1, this.child.getWidth()));
 
         this.childPosition = new Position.Simple(1, 1);
@@ -77,7 +78,7 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
         this.border = new SimpleBorder(color, bounds);
         this.border.setParentContainer(this);
 
-        this.resizeAnchor = new ResizeAnchor(color, this);
+        this.resizeAnchor = new ResizeAnchor(color, this).setTabStop(false);
 
         this.row = p.getRow();
         this.col = p.getCol();
@@ -505,7 +506,6 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
 //                                                                                                 eventBus,
 //                                                                                                 () -> new DefaultFocusManager().setPrevKeyStroke(Keys.SHIFT_TAB_KEYSTROKE)
 //                                                                                                                                .setNextKeyStroke(Keys.TAB_KEYSTROKE)
-//                                                                                                                                .setNavKeysFirst(false)
 //                                                                                                                                .setCycling(false));
 //            if (focusManager == null) {
 //                focusManager = new DefaultFocusManager(); // FocusManager.UTIL.buildFocusManagerFromComponent() is weird

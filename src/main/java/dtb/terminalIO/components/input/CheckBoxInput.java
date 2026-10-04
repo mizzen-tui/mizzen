@@ -2,8 +2,6 @@ package dtb.terminalIO.components.input;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.function.Predicate;
-
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.ParentContainer;
@@ -13,15 +11,12 @@ import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
-import dtb.terminalIO.events.RequestHideCursorEvent;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
-import dtb.terminalIO.events.TerminalEvent;
-import dtb.terminalIO.events.focus.FocusBehaviour;
 import dtb.terminalIO.events.focus.Focusable;
-import dtb.terminalIO.events.focus.Focusable.FocusableFromParts;
-import dtb.terminalIO.events.focus.RequestFocusEvent;
 import dtb.terminalIO.events.focus.ToFocusable;
-import dtb.terminalIO.events.keyboard.KeyEvent;
+import dtb.terminalIO.events.keyboard.AsKeyboardHandler;
+import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
+import dtb.terminalIO.events.keyboard.KeyboardHandler;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.events.mouse.Clickable;
 import dtb.terminalIO.geom.Dimension;
@@ -30,7 +25,7 @@ import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.StringUtils;
 
 public class CheckBoxInput extends BoundedComponent<CheckBoxInput> 
-             implements HasValue<Boolean>, ParentContainer, ToFocusable, Clickable   {
+             implements HasValue<Boolean>, ParentContainer, ToFocusable, Clickable, AsKeyboardHandler   {
 
     private TextComponent textRenderer;
 
@@ -132,120 +127,44 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
     }
     
 
-    private void requestShowCursorAtComponent(EventBus eventBus) {
-        Component.UTIL.requestShowCursorAtComponent(this, new Position.Simple(0,2), eventBus);
-    }
-
-    private void requestHideCursor(EventBus eventBus) {
-        eventBus.raiseEvent(new RequestHideCursorEvent(this));
-    }
-
     protected void checkBoxPressed(EventBus eventBus) {
         boolean newValue = !  CheckBoxInput.this.getValue();  // toggle the value
         CheckBoxInput.this.setValue(  newValue  );  
         eventBus.raiseEvent(new HasValue.ValueChangedEvent<>(CheckBoxInput.this) );
         eventBus.raiseEvent(new RequestUpdateCanvasEvent(this));
     }
-    
 
     public void onClick(EventBus eventBus) {
-        if (!asFocusable().hasFocus()) {
-            // focus manager should have already put focus here - but just in case ..
-            eventBus.raiseEvent(new RequestFocusEvent(asFocusable()));
-        }
+        focus.requestFocus(eventBus);   // the mouse handling should have focused it already - just in case
         checkBoxPressed(eventBus);
     }
 
-    OnValueChangedEventHandler<Boolean> actionOnChangeHandler;
+    private OnValueChangedEventHandler<Boolean> actionOnChangeHandler;
 
     public void onChange(EventHandler handler) {
-
         actionOnChangeHandler = HasValue.UTIL.wrapHandlerIntoOnValueChangedHandler(this, handler);
-
     }
 
-    Focusable meAsFocusable;
+    /**
+     * Focus: hilited, scrolled into view, the cursor on the box. ENTER or SPACE toggles it. Its own
+     * "value changed" event goes to the onChange listener.
+     */
+    private final LeafFocusBehaviour focus = LeafFocusBehaviour.of(this)
+            .showsCursorAt(new Position.Simple(0, 2))
+            .onKey(AsKeyboardHandler.UTIL.toKeyboardHandler(
+                    new KeyInputEventHandler((te) -> checkBoxPressed(te.getEventBus()), Keys.ENTER_KEYSTROKE, Keys.SPACE_KEYSTROKE)))
+            .otherEvents(new ConditionalEventHandler.Impl(
+                    (te) -> this.actionOnChangeHandler != null && this.actionOnChangeHandler.canHandle(te) != null,
+                    (te) -> this.actionOnChangeHandler.handle(te)));
 
+    @Override
     public Focusable asFocusable() {
+        return focus.asFocusable();
+    }
 
-        if (meAsFocusable != null) {
-            return meAsFocusable;
-        }
-
-        Predicate<TerminalEvent<?>> canHandleOnChangeEvent = (te)-> {
-            if (this.actionOnChangeHandler == null) {
-                return false;
-            }
-            if (this.actionOnChangeHandler.canHandle(te)!=null) {
-                return true;
-            }
-            return false;
-        };
-
-        ConditionalEventHandler evtHandler = new ConditionalEventHandler() {
-
-            @Override
-            public EventHandler canHandle(TerminalEvent<?> te) {
-
-                if (canHandleOnChangeEvent.test(te)) {
-                    return this;
-                }
-
-                if (!(te instanceof KeyEvent)) {
-                    return null;
-                }
-
-                KeyEvent ke = (KeyEvent) te; 
-
-                if (ke.isKeyStroke( Keys.ENTER_KEYSTROKE )  || ke.isKeyStroke(Keys.SPACE_KEYSTROKE)) {
-                    return this;
-                }
-                return null;
-            }
-
-            @Override
-            public void handle(TerminalEvent<?> te) {
-
-                if (canHandleOnChangeEvent.test(te)) {
-                    actionOnChangeHandler.handle(te);
-                    return;
-                }
-
-                if (!(te instanceof KeyEvent)) {
-                    return;
-                }
-
-                KeyEvent ke = (KeyEvent) te; 
-
-                if (ke.isKeyStroke( Keys.ENTER_KEYSTROKE )  || ke.isKeyStroke(Keys.SPACE_KEYSTROKE)) {
-                    checkBoxPressed(te.getEventBus());
-                }
-            }
-
-        };
-
-        FocusBehaviour focusBehaviour = new DefaultFocusableBehaviour.ComponentHiliterFocusableBehaviour(this) {
-
-            @Override
-            public void setFocus(boolean focus, EventBus eventBus) {
-                super.setFocus(focus, eventBus);
-                if (focus) {
-                    new ShowComponentOnFocus().onFocus(CheckBoxInput.this, eventBus);
-                    requestShowCursorAtComponent(eventBus);
-                } else {
-                    requestHideCursor(eventBus);
-                }
-            }
-
-            public String toString() {
-                return "ToFocusable(CheckBoxInput, value="+CheckBoxInput.this.getValue()+")";
-            }
-
-        };
-        
-        meAsFocusable =   new FocusableFromParts(this, focusBehaviour, evtHandler);
-        
-        return meAsFocusable;
+    @Override
+    public KeyboardHandler asKeyboardHandler() {
+        return focus.asKeyboardHandler();
     }
 
     @Override

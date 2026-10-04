@@ -23,7 +23,7 @@ import dtb.terminalIO.traverse.FindPathToTarget;
 import dtb.terminalIO.util.ElapsedTime;
 
 /**
- * Used exclusively by the ScrollableComponent.  It is the View into the scrollable content.
+ * Used by ScrollableComponent.  It is the View into the scrollable content.
  */
 public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
                                  implements  ParentContainer, 

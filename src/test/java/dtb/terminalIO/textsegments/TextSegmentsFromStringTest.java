@@ -7,7 +7,7 @@ import dtb.terminalIO.textsegments.ScreenLineSegment.SegmentImpl;
 import dtb.terminalIO.textsegments.ScreenLineSegment.UTIL.SegmentsFromStringResult;
 import junit.framework.TestCase;
 
-public class TextSegmentsFromStringTests extends TestCase {
+public class TextSegmentsFromStringTest extends TestCase {
 
     
     private String someSizeText() {

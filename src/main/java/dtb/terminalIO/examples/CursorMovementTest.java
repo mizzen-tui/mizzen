@@ -16,7 +16,6 @@ import dtb.terminalIO.core.ScreenCanvasBackend.UpdateStrategy;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
-import dtb.terminalIO.events.focus.DefaultFocusManager;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
@@ -86,9 +85,7 @@ public class CursorMovementTest {
 
                     ScrollableComponent sc = new ScrollableComponent(Colors.Whi,
                                                                      scDimension, 
-                                                                     mTextBox,
-                                                                     () -> new DefaultFocusManager(Keys.SHIFT_TAB_KEYSTROKE, Keys.TAB_KEYSTROKE)
-                                                                               .setNavKeysFirst(false));
+                                                                     mTextBox);
                     sc.setFillOnClear(false);
                     
                     BiFunction<KeyStroke, String, String> hotKeyHelpText = (key, helpText) -> {

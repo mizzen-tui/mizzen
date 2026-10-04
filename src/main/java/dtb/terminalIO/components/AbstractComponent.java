@@ -31,6 +31,7 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
     BlockChars                        blockChars = BlockChars.DEFAULT;
 
     ParentContainer parentContainer;
+    Component<?> popupOwner;     // see Component.getPopupOwner
 
     FillOnClearPolicy.AbstractImpl<T>    fillPolicy = new FillOnClearPolicy.AbstractImpl<T>(this) {
                                                      @Override
@@ -284,6 +285,11 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
 
     public ParentContainer getParentContainer() {
         return this.parentContainer;
+    }
+
+    @Override
+    public Component<?> getPopupOwner() {
+        return this.popupOwner;
     }
 
 }
