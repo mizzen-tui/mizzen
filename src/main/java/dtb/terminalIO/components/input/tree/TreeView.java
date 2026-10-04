@@ -18,6 +18,7 @@ import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.input.HasValue;
 import dtb.terminalIO.components.input.LeafFocusBehaviour;
 import dtb.terminalIO.components.input.SettableHasValueComponentMixen;
+import dtb.terminalIO.components.input.UnfocusedSelection;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.ConditionalEventHandler;
@@ -68,18 +69,6 @@ import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 public class TreeView<N> extends BoundedComponent<TreeView<N>>
                          implements SettableHasValueComponentMixen<TreeView<N>, N>, ToFocusable, AsKeyboardHandler,
                                     Clickable, ParentContainer, GetComponentAtOffset {
-
-    /** how the selected row shows while the tree doesn't have focus */
-    public enum UnfocusedSelection {
-        /** in the selected colour, not inverted */
-        DIM,
-        /** "[Circle]" */
-        BRACKETS,
-        /** "> Circle" */
-        ARROW,
-        /** not marked */
-        NONE
-    }
 
     /** a node was expanded (true) or collapsed (false) by the user */
     public interface ExpansionListener<N> {

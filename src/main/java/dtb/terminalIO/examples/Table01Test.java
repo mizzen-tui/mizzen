@@ -5,8 +5,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import dtb.terminalIO.app.TUIApp;
+import dtb.terminalIO.events.RequestUpdateCanvasEvent;
+import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.composite.VerticalPanel;
@@ -37,6 +40,20 @@ public class Table01Test {
             topBanner.t("Table Tester 01");
             topBanner.add(splitterView);
 
+            // the tables' selection events: UP/DOWN/HOME/END/PgUp/PgDn select, ENTER or a click on the selected row activates
+            TextComponent status = new TextComponent(Colors.IGre, "arrows select a row, ENTER activates");
+            topBanner.add(status);
+            Consumer<TableComponent> showEvents = (table) -> {
+                table.onRowSelected((te) -> {
+                    status.setTextAndResize(table.getName() + ": selected row " + te.getRowSelected().getTableRow());
+                    te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(status));
+                });
+                table.onRowActivated((row, eventBus) -> {
+                    status.setTextAndResize(table.getName() + ": ACTIVATED row " + row);
+                    eventBus.raiseEvent(new RequestUpdateCanvasEvent(status));
+                });
+            };
+
             VerticalPanel mainViewPanel =  new VerticalPanel();
 
             Runnable removeComponents = () -> {
@@ -60,10 +77,8 @@ public class Table01Test {
                 t2.setName("t2-vsView");
 
                 vs.addComponent(t1);
-
-                t1.onRowSelected((te)-> {
-                    Logging.info("Table01Test-: onClick-ROW("+ te.getRowSelected().getTableRow() +") --> \n        ");
-                });
+                showEvents.accept(t1);
+                showEvents.accept(t2);
 
                 t1.onCellSelected((te)-> {
                     Logging.info("Table01Test-: onClick-CELL("+ te.getCellSelected().getTableRow() + "," + te.getCellSelected().getTableCol() +") --> \n        ");
@@ -103,6 +118,8 @@ public class Table01Test {
 
                 hs.addComponent(t1);
                 hs.addComponent(t2);
+                showEvents.accept(t1);
+                showEvents.accept(t2);
  
                 mainViewPanel.add(new TextInput(new FGBGColors(Colors.BWhi, Colors.On_IBla), 20).setEmptyChar('_').setEmptyColor(new FGBGColors(Colors.BWhi, Colors.On_IBla)));
                 mainViewPanel.add(hs);

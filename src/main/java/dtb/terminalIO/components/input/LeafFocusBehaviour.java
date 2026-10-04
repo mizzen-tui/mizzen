@@ -4,6 +4,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.RequestHideCursorEvent;
@@ -130,7 +131,7 @@ public final class LeafFocusBehaviour {
     /** for the component's ToFocusable.asFocusable() */
     public Focusable asFocusable() {
         if (focusable == null) {
-            focusable = new FocusableFromParts(component, buildFocusBehaviour(), otherEventsHandler());
+            focusable = new NamedAfterComponent(component, buildFocusBehaviour(), otherEventsHandler());
         }
         return focusable;
     }
@@ -227,6 +228,26 @@ public final class LeafFocusBehaviour {
             onFocusGained.accept(eventBus);
         } else if (had && !has) {
             onFocusLost.accept(eventBus);
+        }
+    }
+
+    /** the focusable, named after its component - so focus logs and errors name the component */
+    private static class NamedAfterComponent extends FocusableFromParts implements HasName<NamedAfterComponent> {
+        private final Component<?> component;
+
+        NamedAfterComponent(Component<?> component, FocusBehaviour behaviour, ConditionalEventHandler eventHandler) {
+            super(component, behaviour, eventHandler);
+            this.component = component;
+        }
+
+        @Override
+        public String getName() {
+            return HasName.UTIL.getName(component);
+        }
+
+        @Override
+        public NamedAfterComponent setName(String name) {
+            return this;     // the component's name is used
         }
     }
 

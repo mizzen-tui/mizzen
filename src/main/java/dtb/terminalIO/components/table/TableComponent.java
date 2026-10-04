@@ -13,20 +13,23 @@ import java.util.function.Predicate;
 
 import dtb.terminalIO.components.BlockChars;
 import dtb.terminalIO.components.BoundedComponent;
-import dtb.terminalIO.components.input.DefaultFocusableBehaviour;
 import dtb.terminalIO.components.input.DisplayableValue.SimpleDisplayValue;
-import dtb.terminalIO.components.input.ShowComponentOnFocus;
+import dtb.terminalIO.components.input.LeafFocusBehaviour;
+import dtb.terminalIO.components.input.UnfocusedSelection;
 import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
-import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
-import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
-import dtb.terminalIO.events.focus.RequestFocusEvent;
-import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
+import dtb.terminalIO.events.focus.ToFocusable;
+import dtb.terminalIO.events.keyboard.AsKeyboardHandler;
+import dtb.terminalIO.events.keyboard.KeyEvent;
+import dtb.terminalIO.events.keyboard.KeyStroke;
+import dtb.terminalIO.events.keyboard.KeyboardHandler;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.events.mouse.ApplicationMouseEvent;
 import dtb.terminalIO.events.mouse.Clickable;
@@ -39,9 +42,19 @@ import dtb.terminalIO.textsegments.ScreenLineSegment;
 import dtb.terminalIO.textsegments.ScreenLineSegment.SegmentImpl;
 import dtb.terminalIO.textsegments.ScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.ElapsedTime;
-import dtb.terminalIO.util.Logging;
-
-public class TableComponent extends BoundedComponent<TableComponent> implements Focusable, Clickable {
+/**
+ * A table: a header row and data rows from a TableModel, painted cell by cell (no component per
+ * cell - each cell's text is copied in; only the rows on screen are measured and painted).
+ * <p/>
+ * One TAB stop. A selected row: UP / DOWN, HOME / END, PgUp / PgDn move it (the table scrolls to
+ * keep it on screen); a click selects a row; ENTER - or a click on the selected row - activates it
+ * (onRowActivated, e.g. "open this file"). onRowSelected hears every selection move (keys and
+ * clicks); onCellSelected hears clicks on a cell.
+ * <p/>
+ * The selected row is hilited while the table has focus (setSelectedColor, inverted); without focus
+ * it shows in the setUnfocusedSelection style (DIM by default, or NONE).
+ */
+public class TableComponent extends BoundedComponent<TableComponent> implements ToFocusable, AsKeyboardHandler, Clickable {
 
 
     TableModelWidthData tableModel;
@@ -53,7 +66,22 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
 
     ConditionalEventHandler eventHandler;
     ChainedEventHandler chainedEventHandler;
-    Focusable focusable;
+    int selectedRow = -1;                     // -1: no row selected yet
+    int topRow = 0;                           // the first data row on screen
+    Rectangle selectedRowArea;                // where the selected row was painted (for scrolling it into view)
+    Color selectedColor = new Colors.FGBGColors(Colors.IYel);     // as ListBox / TreeView
+    UnfocusedSelection unfocusedSelection = UnfocusedSelection.DIM;
+    BiConsumer<Integer, EventBus> onRowActivated = (row, bus) -> { };
+
+    /** focus: the table shows it itself (its selected row); keys see TableKeys; its own events (onRowSelected ...) */
+    private final LeafFocusBehaviour focus = LeafFocusBehaviour.of(this)
+            .look(LeafFocusBehaviour.Look.NONE)
+            .showOnFocus(this::selectedRowRectangle)
+            .onKey(new TableKeys())
+            .onFocusGained(this::repaint)
+            .onFocusLost(this::repaint)
+            .otherEvents(new ConditionalEventHandler.Impl((te) -> getEventHandler().canHandle(te) != null,
+                                                          (te) -> getEventHandler().handle(te)));
     TableCellAtPositions tableCellAtPositions;
 
     public TableComponent(Color color, Dimension d, TableModel tableModel) {
@@ -82,12 +110,19 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
     }
 
     private TreeSet<ScreenLineSegment> copyCellSegments(IScreenLineSegmentsBuffer cellSegmentsBuffer, Position offset) {
+        return copyCellSegments(cellSegmentsBuffer, offset, null);
+    }
+
+    /** the cell's segments moved to offset - in color if given (the selected row), else as they are */
+    private TreeSet<ScreenLineSegment> copyCellSegments(IScreenLineSegmentsBuffer cellSegmentsBuffer, Position offset, Color color) {
 
         //ElapsedTime elapsedTime = new ElapsedTime();
 
         TreeSet<ScreenLineSegment> destination = ScreenLineSegment.UTIL.makeCollection(null);
 
-        cellSegmentsBuffer.getSegments().stream().map(s -> s.fromOffset(offset)).forEach(s -> destination.add(s));
+        cellSegmentsBuffer.getSegments().stream().map(s -> s.fromOffset(offset))
+                          .map(s -> color == null ? s : new SegmentImpl(color, new Position.Simple(s.getRow(), s.getCol()), s.getId(), s.getText()))
+                          .forEach(s -> destination.add(s));
 
         //Logging.info("cell copied " + elapsedTime + "   count " + destination.size());
 
@@ -175,7 +210,7 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
 
         // FIRST LOOP -- generate column Data as Segments and store in TableModel
         // calculated row/col positions
-        for (int row = 0; row < rowCount; row++) {
+        for (int row = topRow; row < rowCount; row++) {
             int maxRowHeight = -1;
             int colOffset = 1;
             for (int col = 0; col < colCount; col++) {
@@ -237,7 +272,7 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
                 if (cellWidth < 1) {
                     maxCol--;
                 } else {
-                    for (int row = 0; row < maxRow; row++) {
+                    for (int row = topRow; row < maxRow; row++) {
                         int rowHeight = tableModel.getMaxHeightForRow(row);
                         tableModel.getOrSetSegmentsDataAt(row, maxCol, rowHeight, cellWidth, renderer);
                     }
@@ -280,8 +315,13 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
             rowpos += rowHeight + 1;
         }
 
-        for (int row = 0; row <= maxRow; row++) {
+        this.selectedRowArea = null;
+        for (int row = topRow; row <= maxRow; row++) {
             int rowHeight = tableModel.getMaxHeightForRow(row);
+            Color rowColor = row == selectedRow ? selectedRowColor() : null;
+            if (row == selectedRow) {
+                selectedRowArea = new Rectangle.Simple(rowpos, 0, Math.max(1, rowHeight), getWidth());
+            }
             for (int col = 0; col <= maxCol; col++) {
                 int colWidth = tableModel.getMaxWidthForColumn(col);
                 IScreenLineSegmentsBuffer cellSegmentsBuffer = tableModel.getSegmentsDataAt(row, col);
@@ -289,7 +329,7 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
                     throw new NullPointerException("NULL SEGMENTSBUFFER AT (" + row + "/" + col + ")- cannot render!");
                 }
                 Position cellOffset = new Position.Simple(rowpos, colOffset);
-                mySegments.merge(copyCellSegments(cellSegmentsBuffer, cellOffset));
+                mySegments.merge(copyCellSegments(cellSegmentsBuffer, cellOffset, rowColor));
 //                Logging.info("(" + row + "/" + col + ")mySegments.merge :  " + ElapsedTime
 //                        .onRunOf(() -> mySegments.merge(copyCellSegments(cellSegmentsBuffer, cellOffset))));
                 this.tableCellAtPositions.addDataCell(cellOffset, row, col);
@@ -1268,77 +1308,147 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
         return this.chainedEventHandler;
     }
 
-    private Focusable asFocusable() {
-        if (focusable == null) {
-            this.focusable = new DefaultFocusableBehaviour.Simple(this, true) {
-                @Override
-                public void setFocus(boolean focus, EventBus eventBus) {
-                    super.setFocus(focus, eventBus);
-                    if (focus) {
-                        new ShowComponentOnFocus().onFocus(TableComponent.this, eventBus);
-                    } else {
-                    }
-                }
-                @Override
-                public void unFocus(Focusable newFocusable, EventBus eventBus) {
-                    super.unFocus(newFocusable, eventBus);
-                }
-                @Override
-                public void focus(Focusable oldFocusable, EventBus eventBus) {
-                    super.focus(oldFocusable, eventBus);
-                    new ShowComponentOnFocus().onFocus(TableComponent.this, eventBus);
-                }
-            };
-        }
-        return focusable;
-    }
-    
+    // ---- focus, keys, selection -------------------------------------------------------------
+
     @Override
-    public boolean hasFocus() {
-        return asFocusable().hasFocus();
+    public Focusable asFocusable() {
+        return focus.asFocusable();
     }
 
     @Override
-    public void setFocus(boolean focus, EventBus eventBus) {
-        asFocusable().setFocus(focus, eventBus);
+    public KeyboardHandler asKeyboardHandler() {
+        return focus.asKeyboardHandler();
     }
-    
-    @Override
-    public void focus(Focusable oldFocusable, EventBus eventBus) {
-        asFocusable().focus(oldFocusable, eventBus);
+
+    public boolean hasFocus() {
+        return focus.hasFocus();
     }
 
     public void requestFocus(TerminalEvent<?> te) {
-        te.getEventBus().raiseEvent(new RequestFocusEvent(this));
+        focus.requestFocus(te.getEventBus());
     }
 
-    @Override
-    public EventHandler canHandle(TerminalEvent<?> te) {
-        if (getEventHandler().canHandle(te) == null) {
-            return null;
+    /** the selected data row; -1 if none */
+    public int getSelectedRow() {
+        return selectedRow;
+    }
+
+    /** select row (by code: onRowSelected is not told); the table scrolls to show it */
+    public TableComponent setSelectedRow(int row) {
+        if (row >= -1 && row < tableModel.getRowCount()) {
+            selectedRow = row;
+            scrollToSelectedRow();
+            markAsDirty();
         }
         return this;
     }
 
-    @Override
-    public void handle(TerminalEvent<?> te) {
-        if (!this.hasFocus()) {
-            // Compensating for a bug in defaultFocusManager/TUIApp 
-            requestFocus(te);
+    /** the colour of the selected row (inverted while the table has focus) */
+    public TableComponent setSelectedColor(Color selectedColor) {
+        this.selectedColor = selectedColor;
+        markAsDirty();
+        return this;
+    }
+
+    /** how the selected row shows without focus: DIM (default) or NONE (BRACKETS / ARROW show as DIM) */
+    public TableComponent setUnfocusedSelection(UnfocusedSelection unfocusedSelection) {
+        this.unfocusedSelection = unfocusedSelection;
+        markAsDirty();
+        return this;
+    }
+
+    /** ENTER, or a click on the selected row: (row, eventBus) */
+    public TableComponent onRowActivated(BiConsumer<Integer, EventBus> onRowActivated) {
+        this.onRowActivated = onRowActivated;
+        return this;
+    }
+
+    /** the table's keys - see the class comment. It wants only these, so other keys go on to its parents. */
+    private class TableKeys implements KeyboardHandler {
+        private final KeyStroke[] mine = { Keys.UP_KEYSTROKE, Keys.DOWN_KEYSTROKE, Keys.HOME_KEYSTROKE, Keys.END_KEYSTROKE,
+                                           Keys.PGUP_KEYSTROKE, Keys.PGDN_KEYSTROKE, Keys.ENTER_KEYSTROKE };
+
+        @Override
+        public boolean wantsKey(KeyEvent ke) {
+            if (tableModel.getRowCount() == 0) {
+                return false;
+            }
+            for (KeyStroke key : mine) {
+                if (ke.isKeyStroke(key)) {
+                    return true;
+                }
+            }
+            return false;
         }
-        getEventHandler().handle(te);
+
+        @Override
+        public boolean onKey(KeyEvent ke) {
+            if (!wantsKey(ke)) {
+                return false;
+            }
+            EventBus bus = ke.getEventBus();
+            int page = Math.max(1, rowsDisplayed > 2 ? rowsDisplayed - 1 : rowsDisplayed);   // a screenful, keeping one row in view
+            if (ke.isKeyStroke(Keys.UP_KEYSTROKE)) {
+                select(selectedRow < 0 ? 0 : selectedRow - 1, bus);
+            } else if (ke.isKeyStroke(Keys.DOWN_KEYSTROKE)) {
+                select(selectedRow + 1, bus);
+            } else if (ke.isKeyStroke(Keys.HOME_KEYSTROKE)) {
+                select(0, bus);
+            } else if (ke.isKeyStroke(Keys.END_KEYSTROKE)) {
+                select(tableModel.getRowCount() - 1, bus);
+            } else if (ke.isKeyStroke(Keys.PGUP_KEYSTROKE)) {
+                select(Math.max(0, selectedRow - page), bus);
+            } else if (ke.isKeyStroke(Keys.PGDN_KEYSTROKE)) {
+                select(Math.min(tableModel.getRowCount() - 1, Math.max(0, selectedRow) + page), bus);
+            } else if (ke.isKeyStroke(Keys.ENTER_KEYSTROKE) && selectedRow >= 0) {
+                onRowActivated.accept(selectedRow, bus);
+            }
+            return true;     // the table's keys are used up even at the first / last row
+        }
     }
 
-    @Override
-    public FocusManager getParentFocusManager() {
-        return asFocusable().getParentFocusManager();
+    /** select row (if it is one), scroll to it, and tell onRowSelected */
+    private void select(int row, EventBus bus) {
+        if (row < 0 || row >= tableModel.getRowCount() || row == selectedRow) {
+            return;
+        }
+        selectedRow = row;
+        scrollToSelectedRow();
+        bus.raiseEvent(new RowSelectedEvent(this, new RowSelected(new TableDataCellAtPosition(Position.ZERO, row, -1, tableModel, false))));
+        repaint(bus);
     }
 
-    @Override
-    public void setParentFocusManager(FocusManager focusManager) {
-        Focusable.UTIL.setParentFocusManager(this, focusManager, (fm)-> asFocusable().setParentFocusManager(fm));
+    /** keep the selected row on screen: move the first row shown if the selected one is above or below the screen */
+    private void scrollToSelectedRow() {
+        if (selectedRow < 0) {
+            return;
+        }
+        if (selectedRow < topRow) {
+            topRow = selectedRow;
+            clearData();
+        } else if (rowsDisplayed > 0 && selectedRow >= topRow + rowsDisplayed) {
+            topRow = selectedRow - rowsDisplayed + 1;
+            clearData();
+        }
     }
-    
+
+    private Color selectedRowColor() {
+        if (focus.hasFocus()) {
+            return selectedColor.invert();
+        }
+        return unfocusedSelection == UnfocusedSelection.NONE ? null : selectedColor;
+    }
+
+    /** where the selected row is on the table (for scrolling it into view); the whole table if it isn't painted yet */
+    private Rectangle selectedRowRectangle() {
+        return selectedRowArea != null ? selectedRowArea : new Rectangle.Simple(0, 0, getHeight(), getWidth());
+    }
+
+    private void repaint(EventBus bus) {
+        markAsDirty();
+        RequestUpdateCanvasEvent.invoke(bus, this);
+    }
+
     public void onClick(EventBus eventBus) {
         // place-holder - not used see onClick(ApplicationMouseEvent appMouseEvent)
     }
@@ -1348,9 +1458,17 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
 
             Position positionWithinTableComponent = appMouseEvent.getMousePosition();
             TableDataCellAtPosition cell = this.tableCellAtPositions.findDataCellFromPosition(positionWithinTableComponent);
+            EventBus bus = appMouseEvent.getEventBus();
+            focus.requestFocus(bus);
             if (cell != null) {
-                appMouseEvent.getEventBus().raiseEvent(new CellSelectedEvent(this, new CellSelected(cell)));
-                appMouseEvent.getEventBus().raiseEvent(new RowSelectedEvent(this, new RowSelected(cell)));
+                bus.raiseEvent(new CellSelectedEvent(this, new CellSelected(cell)));
+                if (cell.tableRow == selectedRow) {
+                    onRowActivated.accept(selectedRow, bus);     // a click on the selected row activates it
+                } else {
+                    selectedRow = cell.tableRow;
+                    bus.raiseEvent(new RowSelectedEvent(this, new RowSelected(cell)));
+                    repaint(bus);
+                }
             }
         }
     }

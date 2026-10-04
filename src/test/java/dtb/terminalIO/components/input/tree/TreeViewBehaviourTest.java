@@ -9,6 +9,7 @@ import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.input.CheckBoxInput;
 import dtb.terminalIO.components.input.HasValue;
 import dtb.terminalIO.components.input.TextInput;
+import dtb.terminalIO.components.input.UnfocusedSelection;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
@@ -166,13 +167,13 @@ public class TreeViewBehaviourTest extends TestCase {
     /** without focus the selected row shows in the unfocused style */
     public void testUnfocusedSelectionStyles() {
         press(Keys.DOWN_KEYSTROKE);
-        tree.setUnfocusedSelection(TreeView.UnfocusedSelection.BRACKETS);
+        tree.setUnfocusedSelection(UnfocusedSelection.BRACKETS);
         assertEquals("  ├─▸ Round", rows().get(1));          // focused: no brackets
 
         press(Keys.TAB_KEYSTROKE);
         assertEquals("  ├─▸ [Round]", rows().get(1));
 
-        tree.setUnfocusedSelection(TreeView.UnfocusedSelection.ARROW);
+        tree.setUnfocusedSelection(UnfocusedSelection.ARROW);
         assertEquals(">   ├─▸ Round", rows().get(1));
     }
 
