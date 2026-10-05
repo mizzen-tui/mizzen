@@ -51,8 +51,8 @@ public class WindowFrameTest {
 
     static boolean useFocusable = false;
     
-    static String DEFAULT_IMG_PATH="/home/dbalme/eclipse-workspace/tmpImages/car.jpeg";
-    static String imgFilePath = DEFAULT_IMG_PATH;
+    static final String DEFAULT_IMAGE = "/dtb/terminalIO/examples/sampledata/images/earth-messenger.jpg";   // bundled
+    static String imgFilePath = null;     // IMAGE <file>; none: the bundled image
     
     static RGBPlotPredicate plotPredicate = ImageViewerFactory.PLOT_ALWAYS;
     static RGBToAnsiColorControlCode colorMapping = ImageViewerFactory.rgbColorMapDIRECT;
@@ -88,9 +88,9 @@ public class WindowFrameTest {
         checkImageFile();
     }
 
-    /** the image shown in the window must exist - otherwise say so, show the help and stop */
+    /** an image file given must exist - otherwise say so, show the help and stop */
     private static void checkImageFile() {
-        if (!new File(imgFilePath).isFile()) {
+        if (imgFilePath != null && !new File(imgFilePath).isFile()) {
             System.out.println("image file not found: " + imgFilePath + "\n");
             printHelp();
             System.exit(1);
@@ -104,14 +104,14 @@ public class WindowFrameTest {
             "",
             "usage: ./runDBG.sh " + cls + " [options] [IMAGE <file>]",
             "",
-            "  IMAGE <file>           image shown in one of the windows (default " + DEFAULT_IMG_PATH + ")",
+            "  IMAGE <file>           image shown in one of the windows (default: a bundled photo of the Earth)",
             "  FOCUS                  use focusable window frames (WindowFrameFocusable)",
             "  IMAGERENDER <type>     " + names(ImageViewerFactory.imageRenderTypeOptions(), renderType),
             "  IMAGECOLOR <map>       " + names(ImageViewerFactory.colorMap(), colorMapping),
             "  IMAGEPLOT <condition>  which pixels to plot: " + names(ImageViewerFactory.plotPointPredicateOptions(), plotPredicate),
             "  HELP | -h | -?         this help",
             "",
-            "example: ./runDBG.sh " + cls + " FOCUS IMAGE ~/eclipse-workspace/tmpImages/blackhole.jpg"));
+            "example: ./runDBG.sh " + cls + " FOCUS IMAGE ~/Pictures/photo.jpg"));
     }
 
     private static <V> String names(SimpleDisplayValue<V>[] options, V defaultValue) {
@@ -211,7 +211,9 @@ public class WindowFrameTest {
             tApp.getMainApplicationPanel().add(20, 40, nestedWindows);
             tApp.getMainApplicationPanel().add(22, 45, wfSimpleText);
 
-            ResizableImageViewer imageViewer = new ResizableImageViewer (Colors.Whi, new Dimension.Simple(25,50), new BufferedImageProvider.FromFilePath(imgFilePath));
+            BufferedImageProvider image = imgFilePath == null ? new BufferedImageProvider.FromResource(DEFAULT_IMAGE)
+                                                              : new BufferedImageProvider.FromFilePath(imgFilePath);
+            ResizableImageViewer imageViewer = new ResizableImageViewer (Colors.Whi, new Dimension.Simple(25,50), image);
 
             imageViewer.setPlotPredicate(plotPredicate);
             imageViewer.setColorMapping(colorMapping);

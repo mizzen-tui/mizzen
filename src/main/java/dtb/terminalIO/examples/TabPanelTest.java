@@ -146,24 +146,23 @@ public class TabPanelTest {
             ImageAnimatorComponent animatorComponent;
             @Override
             protected VerticalPanel getComponent(TabContext tabContext) {
-                int IMAGEWIDTH=150;
-                int IMAGEHEIGHT=70;
-
-                                          //  0  10   150  10    300 10    450 10    0 10   150  10   300  10   450  10   0  105   150  105   300  105   450  105   0  200   150  200   300  200   450  200
-                int[] offsetNbrs = new int[] {0, 10,  150, 10,  300, 10,  450, 10,  0, 10,  150, 10,  300, 10,  450, 10,  0, 105,  150, 105,  300, 105,  450, 105,  0, 200,  150, 200,  300, 200,  450, 200};
+                // the rocket sprite sheet: 4 x 2 frames of 96 x 96 (x y of each frame's top-left corner)
+                int IMAGEWIDTH=96;
+                int IMAGEHEIGHT=96;
+                int[] offsetNbrs = new int[] {0, 0,  96, 0,  192, 0,  288, 0,  0, 96,  96, 96,  192, 96,  288, 96};
                 List<Position> offsets = new ArrayList<Position>();
                 for (int i=0; i< offsetNbrs.length; i+=2) {
                     offsets.add(new Position.Simple(offsetNbrs[i+1],offsetNbrs[i]));
                 }
                 ImageRenderRequest imageRequest = new ImageRenderRequest();
                 imageRequest.setDesiredImgSizeInCharacters(tabContext.getBounds());
-                imageRequest.setColorMap(ImageViewerFactory.rgbColorMapRCol);
+                imageRequest.setColorMap(ImageViewerFactory.rgbColorMapDIRECT);     // full colour blocks (as the dropdowns show)
                 imageRequest.setToPlotOrNot(ImageViewerFactory.PLOT_ALWAYS);
-                imageRequest.setImageRenderType(ImageViewerFactory.IMAGE_RENDER_TYPE.ASCII);
+                imageRequest.setImageRenderType(ImageViewerFactory.IMAGE_RENDER_TYPE.BLOCK);
                 Function<Dimension, Dimension> imgSizeCalculator = (size)-> new Dimension.Simple(tabContext.getBounds().getHeight()-2, tabContext.getBounds().getWidth());
                 imageRequest.setDesiredImgSizeInCharacters(imgSizeCalculator.apply(tabContext.getBounds()));
                 try {
-                    BufferedImage img = ImageIO.read(this.getClass().getResource("/lionRunning.jpg"));
+                    BufferedImage img = ImageIO.read(this.getClass().getResource("/dtb/terminalIO/examples/sampledata/images/rocket-sprites.png"));
                     imageRequest.setImageToView(img);
                     ImageSplitter splitter = new ImageSplitter(imageRequest.getImageToView(), offsets, IMAGEHEIGHT, IMAGEWIDTH);
                     animatorComponent = new ImageAnimatorComponent(Colors.DEFAULT_COLOR, imageRequest, splitter, imageRequest.getDesiredImgSizeInCharacters());
@@ -173,7 +172,7 @@ public class TabPanelTest {
                     vp.add(drawingControlSettings);
                     
                     DropdownListBox<ImageViewerFactory.IMAGE_RENDER_TYPE> imageRendererTypeDDLB = new DropdownListBox<ImageViewerFactory.IMAGE_RENDER_TYPE>(ImageViewerFactory.imageRenderTypeOptions());
-                    imageRendererTypeDDLB.setSelected(0);
+                    imageRendererTypeDDLB.setSelectedValue(ImageViewerFactory.IMAGE_RENDER_TYPE.BLOCK);
                     imageRendererTypeDDLB.onChange((te) -> {
                         imageRequest.setImageRenderType(imageRendererTypeDDLB.getValue());
                     });
@@ -204,7 +203,7 @@ public class TabPanelTest {
                 }
             }
             public void activateComponent(EventBus eventBus, TabContext tabContext, VerticalPanel vp) {
-                animatorComponent.buildTimer(250);
+                animatorComponent.buildTimer(120);
                 eventBus.appendIdleEventHandler( animatorComponent.getIdleEventEventHandler()  );
             }
 
@@ -222,16 +221,19 @@ public class TabPanelTest {
             @Override
             protected Composite getComponent(TabContext tabContext) {
                 VerticalPanel vp = new VerticalPanel();
-                // "/lionRunning.jpg"
-                // "/grannySmithAppleSingle.jpg"
-                imageViewer = new ResizableImageViewer(Colors.DEFAULT_COLOR, imgSizeCalculator.apply(tabContext.getBounds()), new BufferedImageProvider.FromResource("/grannySmithAppleSingle.jpg") );
+                imageViewer = new ResizableImageViewer(Colors.DEFAULT_COLOR, imgSizeCalculator.apply(tabContext.getBounds()),
+                                                       new BufferedImageProvider.FromResource("/dtb/terminalIO/examples/sampledata/images/earth-messenger.jpg"));
+                // a photo: full colour blocks (the dropdowns below show these settings)
+                imageViewer.setImageRenderType(ImageViewerFactory.IMAGE_RENDER_TYPE.BLOCK);
+                imageViewer.setColorMapping(ImageViewerFactory.rgbColorMapDIRECT);
+                imageViewer.setPlotPredicate(ImageViewerFactory.PLOT_ALWAYS);
                 vp.add(imageViewer);
 
                 HorizontalPanel drawingControlSettings = new HorizontalPanel(Colors.BBlu);
                 vp.add(drawingControlSettings);
 
                 DropdownListBox<ImageViewerFactory.IMAGE_RENDER_TYPE> imageRendererTypeDDLB = new DropdownListBox<ImageViewerFactory.IMAGE_RENDER_TYPE>(ImageViewerFactory.imageRenderTypeOptions());
-                imageRendererTypeDDLB.setSelected(0);
+                imageRendererTypeDDLB.setSelectedValue(ImageViewerFactory.IMAGE_RENDER_TYPE.BLOCK);
                 imageRendererTypeDDLB.onChange((te) -> {
                     imageViewer.setImageRenderType(imageRendererTypeDDLB.getValue());
                     imageViewer.resizeImageAsynch(te.getEventBus(), new Dimension.Simple(imageViewer)); 
