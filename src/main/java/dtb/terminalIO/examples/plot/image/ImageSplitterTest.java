@@ -3,10 +3,6 @@ package dtb.terminalIO.examples.plot.image;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import dtb.terminalIO.components.input.DisplayableValue.SimpleDisplayValue;
@@ -27,6 +23,7 @@ import dtb.terminalIO.components.plot.image.MovingPicturesViewer;
 import dtb.terminalIO.components.plot.image.animate.AnimatedGifImageIterator;
 import dtb.terminalIO.components.plot.image.animate.ImageIterator;
 import dtb.terminalIO.components.plot.image.animate.ImageSplitter;
+import dtb.terminalIO.examples.sampledata.ReadSampleFiles;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
@@ -215,44 +212,20 @@ public class ImageSplitterTest {
         }
     }
 
-    /** the images bundled with the examples (a classpath resource folder, not a directory on disk) */
-    static final String BUNDLED_IMAGES = "/dtb/terminalIO/examples/sampledata/images/";
-
     /** the GIF shown when no IMAGE is given */
-    static final String DEFAULT_GIF = BUNDLED_IMAGES + "rocket-launch.gif";
+    static final String DEFAULT_GIF = "rocket-launch.gif";
 
     /**
      * IMAGE's value as a file to read: a file path as it is; otherwise a bundled image - by its
-     * resource name (/dtb/.../shapes.gif) or just its name (shapes.gif) - copied to a temporary file
-     * (the GIF reader reads files). Neither: the path as given (reported as not found).
+     * resource name (/dtb/.../shapes.gif) or just its name (shapes.gif) - as a temporary copy.
+     * Neither: the path as given (reported as not found).
      */
     static String asFile(String image) {
         if (new File(image).exists()) {
             return image;
         }
-        for (String resource : new String[] { image, BUNDLED_IMAGES + image }) {
-            if (ImageSplitterTest.class.getResource(resource) != null) {
-                return bundledImage(resource);
-            }
-        }
-        return image;
-    }
-
-    /** a bundled image as a temporary file */
-    private static String bundledImage(String resource) {
-        try (InputStream in = ImageSplitterTest.class.getResourceAsStream(resource)) {
-            if (in == null) {
-                throw new IllegalStateException("bundled image missing: " + resource);
-            }
-            File dir = Files.createTempDirectory("dtb-demo").toFile();
-            File copy = new File(dir, new File(resource).getName());     // keeps its name: the window title
-            dir.deleteOnExit();
-            copy.deleteOnExit();
-            Files.copy(in, copy.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            return copy.getPath();
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        File bundled = ReadSampleFiles.resourceAsFile(image);
+        return bundled != null ? bundled.getPath() : image;
     }
 
     private static String value(String[] args, int i, String argName) {

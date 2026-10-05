@@ -1,9 +1,13 @@
 package dtb.terminalIO.examples.sampledata;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 
 import dtb.terminalIO.controlcodes.color.ColorParsingUtils;
@@ -12,6 +16,31 @@ import dtb.terminalIO.textsegments.ScreenLineSegment;
 import dtb.terminalIO.textsegments.ScreenLineSegment.UTIL.SegmentsFromStringResult;
 
 public class ReadSampleFiles {
+
+    /** where the bundled demo images are: a classpath resource folder, not a directory on disk */
+    public static final String IMAGES = "/dtb/terminalIO/examples/sampledata/images/";
+
+    /**
+     * A bundled resource as a file, for readers that only read files (e.g. the animated GIF
+     * reader): copied to a temporary folder, keeping its name. resource: a resource name
+     * ("/dtb/.../ketch.gif") or a bundled image's name ("ketch.gif"); null if there is no such resource.
+     */
+    public static File resourceAsFile(String resource) {
+        String name = ReadSampleFiles.class.getResource(resource) != null ? resource : IMAGES + resource;
+        try (InputStream in = ReadSampleFiles.class.getResourceAsStream(name)) {
+            if (in == null) {
+                return null;
+            }
+            File dir = Files.createTempDirectory("dtb-demo").toFile();
+            File copy = new File(dir, new File(name).getName());
+            dir.deleteOnExit();
+            copy.deleteOnExit();
+            Files.copy(in, copy.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            return copy;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
 
     /** the whole stream as UTF-8 text (the sample files use characters such as █ and ⠿) */
     public static String readStreamToString(InputStream stream) throws IOException {
