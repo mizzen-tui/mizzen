@@ -1,8 +1,9 @@
 package dtb.terminalIO.examples.sampledata;
 
-import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import dtb.terminalIO.controlcodes.color.ColorParsingUtils;
@@ -12,14 +13,14 @@ import dtb.terminalIO.textsegments.ScreenLineSegment.UTIL.SegmentsFromStringResu
 
 public class ReadSampleFiles {
 
+    /** the whole stream as UTF-8 text (the sample files use characters such as █ and ⠿) */
     public static String readStreamToString(InputStream stream) throws IOException {
-        BufferedInputStream in = new BufferedInputStream(stream);
-        StringBuilder sb = new StringBuilder();
-        while (in.available() > 0) {
-            int ch = in.read();
-            sb.append((char) ch);
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        byte[] buffer = new byte[8192];
+        for (int n; (n = stream.read(buffer)) != -1; ) {
+            bytes.write(buffer, 0, n);
         }
-        return sb.toString();
+        return new String(bytes.toByteArray(), StandardCharsets.UTF_8);
     }
 
     public static String readSampleFile(String relativeFileName) throws IOException {

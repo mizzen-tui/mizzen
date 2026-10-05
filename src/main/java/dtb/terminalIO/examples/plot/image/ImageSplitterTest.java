@@ -59,7 +59,7 @@ public class ImageSplitterTest {
                int offset = 0;
 
                for (ImageSpec spec : images) {
-                   String imgFilePath = spec.path;
+                   String imgFilePath = asFile(spec.path);
                    ImageSettings settings = spec.settings;
                    ImageIterator imageIterator;
 
@@ -208,18 +208,38 @@ public class ImageSplitterTest {
         }
 
         if (images.isEmpty()) {
-            images.add(new ImageSpec(bundledGif(DEFAULT_GIF), current.copy()));
+            images.add(new ImageSpec(DEFAULT_GIF, current.copy()));
         }
         if (lastOptionIndex > lastImageIndex) {
             System.err.println("WARNING: options after the last IMAGE apply to no image (" + args[lastOptionIndex] + " ...)");
         }
     }
 
-    /** the GIF shown when no IMAGE is given - bundled with the examples */
-    static final String DEFAULT_GIF = "/dtb/terminalIO/examples/sampledata/images/rocket-launch.gif";
+    /** the images bundled with the examples (a classpath resource folder, not a directory on disk) */
+    static final String BUNDLED_IMAGES = "/dtb/terminalIO/examples/sampledata/images/";
 
-    /** a bundled GIF as a temporary file (the GIF reader reads files) */
-    private static String bundledGif(String resource) {
+    /** the GIF shown when no IMAGE is given */
+    static final String DEFAULT_GIF = BUNDLED_IMAGES + "rocket-launch.gif";
+
+    /**
+     * IMAGE's value as a file to read: a file path as it is; otherwise a bundled image - by its
+     * resource name (/dtb/.../shapes.gif) or just its name (shapes.gif) - copied to a temporary file
+     * (the GIF reader reads files). Neither: the path as given (reported as not found).
+     */
+    static String asFile(String image) {
+        if (new File(image).exists()) {
+            return image;
+        }
+        for (String resource : new String[] { image, BUNDLED_IMAGES + image }) {
+            if (ImageSplitterTest.class.getResource(resource) != null) {
+                return bundledImage(resource);
+            }
+        }
+        return image;
+    }
+
+    /** a bundled image as a temporary file */
+    private static String bundledImage(String resource) {
         try (InputStream in = ImageSplitterTest.class.getResourceAsStream(resource)) {
             if (in == null) {
                 throw new IllegalStateException("bundled image missing: " + resource);
@@ -272,7 +292,9 @@ public class ImageSplitterTest {
             "",
             "Options are sticky: each applies to every IMAGE that follows it, until given again.",
             "",
-            "  IMAGE <file>           image to show; repeat for several windows (none: a bundled rocket launch GIF).",
+            "  IMAGE <file>           image to show; repeat for several windows (none: the bundled rocket-launch.gif).",
+            "                         A file, or a bundled image by name: rocket-launch.gif, rocket-sprites.png, shapes.gif,",
+            "                         bouncing-ball.gif, solar-system.gif, ball-sprites.png, earth-messenger.jpg.",
             "                         .gif files animate their own",
             "                         frames; other images are cut into frames using OFFSETS / IMAGEWIDTH / IMAGEHEIGHT",
             "  INTERVAL <ms>          time between frames (default " + DEFAULTS.interval + ")",

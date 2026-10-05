@@ -630,6 +630,7 @@ that a plain container can declare. Do this class by class, not in the engine co
 | `examples/DropdownListBoxSimpleTest.java` (`PackageScanner`) | **gone (Oct 2026):** the helper that filled the demo lists from package folders (empty inside a jar) was removed; the demo uses fixed lists. |
 | `examples/StdoutViewerTest.java` | **gone (Oct 2026):** the "MVN Content" button (a hard-coded path to another project) was removed. |
 | `components/scroll/ScrollableComponent.java` | **fixed (Oct 2026):** `setBorder(boolean)` acted on the invisible outer box. A scroll pane always shows its border: `setBorder(false)` is now refused. |
+| `textsegments/ScreenLineSegment.java` (text width) | **open, design limit:** a segment's width is its number of Java `char`s - one char, one column. Wrong for wide characters (CJK, most emoji: one char, two columns) and for characters outside Java's basic range (two chars, one column). Everything the project ships is ASCII plus single-column symbols (box drawing, `█`, braille). **Not to be changed without discussion first:** measuring columns means scanning text, which costs performance, and the segment merging / splitting code (`ScreenLineSegment.UTIL` and others) relies on length = width - it needs a well thought-out design. |
 ---
 
 ## 6. Characterisation tests (focus safety net)

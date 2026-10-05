@@ -5,5 +5,5 @@ earth-messenger.jpg
     Credit: NASA/Johns Hopkins University Applied Physics Laboratory/Carnegie Institution of Washington
     Source: https://images.nasa.gov/details/PIA10120
 
-rocket-launch.gif, rocket-sprites.png, shapes.gif, bouncing-ball.gif, solar-system.gif, ball-sprites.png
-    Drawn by dtb.terminalIO.examples.sampledata.DemoImageGenerator (and RocketLaunch), part of this project.
+rocket-launch.gif, rocket-sprites.png, ketch.gif, shapes.gif, bouncing-ball.gif, solar-system.gif, ball-sprites.png
+    Drawn by dtb.terminalIO.examples.sampledata.DemoImageGenerator (with RocketLaunch and SailingKetch), part of this project.

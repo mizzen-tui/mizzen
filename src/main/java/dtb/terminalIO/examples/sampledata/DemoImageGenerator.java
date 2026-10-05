@@ -11,6 +11,8 @@ import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -29,9 +31,10 @@ import javax.imageio.stream.ImageOutputStream;
  * <p/>
  * usage: ./runDBG.sh dtb.terminalIO.examples.sampledata.DemoImageGenerator [output directory]
  * <p/>
- * Writes rocket-launch.gif (see RocketLaunch), shapes.gif, bouncing-ball.gif, solar-system.gif,
+ * Writes rocket-launch.gif (see RocketLaunch), ketch.gif (see SailingKetch), shapes.gif, bouncing-ball.gif, solar-system.gif,
  * and two sprite sheets of 4 x 2 frames: rocket-sprites.png (96 x 96 each) and ball-sprites.png
- * (64 x 64). Apart from the launch, each animation loops without a jump.
+ * (64 x 64). Apart from the launch, each animation loops without a jump. Also the coloured text
+ * banner ../colour-banner.txt (colour codes in text, for the colour-text demo).
  */
 public class DemoImageGenerator {
 
@@ -48,6 +51,8 @@ public class DemoImageGenerator {
         ImageIO.write(spriteSheet(), "png", new File(dir, "ball-sprites.png"));
         writeGif(new File(dir, "rocket-launch.gif"), RocketLaunch.gif(), 50);
         ImageIO.write(RocketLaunch.sprites(), "png", new File(dir, "rocket-sprites.png"));
+        writeGif(new File(dir, "ketch.gif"), SailingKetch.gif(), 80);
+        Files.write(new File(dir.getParentFile(), "colour-banner.txt").toPath(), colourBanner().getBytes(StandardCharsets.UTF_8));
         System.out.println("demo images written to " + dir.getPath());
     }
 
@@ -128,6 +133,53 @@ public class DemoImageGenerator {
         }
         g.dispose();
         return sheet;
+    }
+
+    /**
+     * "dtbTerminalIO" in block letters: white on stripes of deep colour, as text with colour codes
+     * (24-bit white letters, 256-colour backgrounds - deep shades, so the white stands out).
+     */
+    static String colourBanner() {
+        String[][] font = {
+            { "d", "   ##", "   ##", " ####", "## ##", " ####" },
+            { "t", " ##  ", "#### ", " ##  ", " ##  ", "  ## " },
+            { "b", "##   ", "##   ", "#### ", "## ##", "#### " },
+            { "T", "######", "  ##  ", "  ##  ", "  ##  ", "  ##  " },
+            { "e", "     ", " ### ", "#####", "##   ", " ####" },
+            { "r", "     ", "## # ", "###  ", "##   ", "##   " },
+            { "m", "       ", "### ## ", "## # ##", "## # ##", "## # ##" },
+            { "i", "##", "  ", "##", "##", "##" },
+            { "n", "     ", "#### ", "## ##", "## ##", "## ##" },
+            { "a", "     ", " ### ", "   ##", "#####", " ####" },
+            { "l", "##", "##", "##", "##", "##" },
+            { "I", "####", " ## ", " ## ", " ## ", "####" },
+            { "O", " #### ", "##  ##", "##  ##", "##  ##", " #### " } };
+        int[] backgrounds = { 124, 166, 136, 28, 30, 25, 54, 90 };     // red, orange, ochre, green, teal, blue, violet, magenta
+        String esc = "\u001b[";
+        StringBuilder[] rows = new StringBuilder[5];
+        for (int r = 0; r < 5; r++) {
+            rows[r] = new StringBuilder("   ");
+            for (char c : "dtbTerminalIO".toCharArray()) {
+                for (String[] glyph : font) {
+                    if (glyph[0].charAt(0) == c) {
+                        rows[r].append(glyph[r + 1]).append(' ');
+                    }
+                }
+            }
+        }
+        int width = rows[0].length() + 3;
+        StringBuilder out = new StringBuilder();
+        for (int r = -1; r <= 5; r++) {
+            String text = r < 0 || r == 5 ? "" : rows[r].toString();
+            for (int x = 0; x < width; x++) {
+                int bg = backgrounds[(x / 6 + r + 1) % backgrounds.length];
+                boolean letter = x < text.length() && text.charAt(x) == '#';
+                out.append(esc).append(letter ? "1;38;2;255;255;255" : "0").append(";48;5;").append(bg).append('m')
+                   .append(letter ? '\u2588' : ' ');
+            }
+            out.append(esc).append("0m\n");
+        }
+        return out.toString();
     }
 
     // ---- pieces
