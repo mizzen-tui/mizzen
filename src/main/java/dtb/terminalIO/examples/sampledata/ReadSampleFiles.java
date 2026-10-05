@@ -37,8 +37,8 @@ public class ReadSampleFiles {
     }
 
     public static void main(String args[]) throws Exception {
-        // System.out.println( readSampleFile("acme-white-200.txt", false ));
-        String text = readSampleFile("acme-white-200.txt", false);
+        // System.out.println( readSampleFile("colour-banner.txt", false ));
+        String text = readSampleFile("colour-banner.txt", false);
         // System.out.println(text);
         long start = System.currentTimeMillis();
         List<ColorParsingUtils.ColorParseSegment> result = ColorParsingUtils.parseColors(text);

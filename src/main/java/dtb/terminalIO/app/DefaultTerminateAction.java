@@ -4,6 +4,7 @@ import java.util.function.Consumer;
 
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.Renderer;
+import dtb.terminalIO.core.ScreenCanvasBackend;
 import dtb.terminalIO.util.Stty;
 
 public class DefaultTerminateAction implements Consumer<TUIApp> {
@@ -13,8 +14,10 @@ public class DefaultTerminateAction implements Consumer<TUIApp> {
 
         resetTerminalForExiting(tApp);
 
-        // next refresh() is necessary to get cursor to be below
-        // rendered canvas
+        // a full redraw leaves the cursor below the canvas (the shell prompt goes under the output)
+        if (tApp.getCanvas().getCanvasBackend() instanceof ScreenCanvasBackend) {
+            ((ScreenCanvasBackend) tApp.getCanvas().getCanvasBackend()).fullUpdateOnNextRefresh();
+        }
         tApp.getCanvas().refresh();
 
         if (tApp.lastException != null) {

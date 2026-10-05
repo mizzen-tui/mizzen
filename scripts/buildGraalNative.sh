@@ -19,7 +19,7 @@ $NATIVE_IMG    -H:+AllowIncompleteClasspath  \
                --static \
                $INIT_AT_BUILD_TIME  \
                -Djava.awt.headless=true  \
-               -cp ./target/dtbTerminalIO-0.0.1-SNAPSHOT.jar:.  \
+               -cp "$(ls ./target/dtbTerminalIO-*.jar | grep -v sources | head -1)":.  \
                 $MAIN_CLASS  
                
 if [[ $? -ne 0 ]] ; then

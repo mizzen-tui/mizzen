@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd $(dirname $0)
+cd $(dirname $0)/..    # the project root
 
 function colorMarkupON() { # turns colors on
 
@@ -43,8 +43,6 @@ echo "slow runner : $(pwd)"
 
 $(pwd)/runDBG.sh NOCLEAR dtb.terminalIO.examples.StringOutputTest
 
-echo "LABMANAGER_DIR     = $LABMANAGER_DIR"
-echo "DTB_TERMINALIO_DIR = $DTB_TERMINALIO_DIR"
 
 echo "sleeping for 5 seconds .. "
 
@@ -82,34 +80,18 @@ echo "2"
 echo "3"
 
 
-#pushd /home/dbalme/workspace/LabManager
-
-#mvn clean install
-
-#popd
-
-
 echo "------------brought to you by ----------------------------------"
 printf "${Cya}"
-cat $(pwd)/slowRunner.sh
+cat scripts/slowRunner.sh
 printf "${RCol}"
-
-
-echo "Some text images"
-
-cat ../tmpImages/roltLargeIMG.txt
-
-echo -e "\n\n 24 bit colors \n\n"
-
-cat ../tmpImages/24BitColors.txt
 
 
 echo -e "\n\n BANNER \n\n"
 
-cat ../tmpImages/AcmeBannner.txt 
+cat src/main/resources/dtb/terminalIO/examples/sampledata/colour-banner.txt
 
 
-find .. -name "*.sh" | xargs cat
+cat scripts/*.sh
 
 
 echo "$0 Done! ............................................."

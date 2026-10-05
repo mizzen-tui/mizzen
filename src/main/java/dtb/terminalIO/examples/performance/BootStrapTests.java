@@ -1,9 +1,10 @@
-package dtb.terminalIO.examples;
+package dtb.terminalIO.examples.performance;
 
 import dtb.terminalIO.core.CLIEmitter.CountOutputEmitter;
 import dtb.terminalIO.core.Canvas;
 import dtb.terminalIO.core.ScreenCanvasBackend;
 import dtb.terminalIO.core.TerminalScreen;
+import dtb.terminalIO.examples.TestsCommon;
 
 /**
  * A simple test to compare Screen update strategies..

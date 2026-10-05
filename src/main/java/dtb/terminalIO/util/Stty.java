@@ -29,7 +29,29 @@ public class Stty {
 
     }
 
+    private static Boolean stdinIsTerminal;
+
+    /**
+     * Is this program's input a terminal? Not when it runs as a child of another program with its
+     * input piped - e.g. inside a StdoutViewer. Then raw / cooked mode is left alone: the terminal
+     * (/dev/tty) belongs to the parent, and "stty sane cooked" on exit would break the parent's raw mode.
+     */
+    public static synchronized boolean stdinIsTerminal() {
+        if (stdinIsTerminal == null) {
+            try {
+                Process test = new ProcessBuilder("sh", "-c", "[ -t 0 ]").redirectInput(ProcessBuilder.Redirect.INHERIT).start();
+                stdinIsTerminal = test.waitFor() == 0;
+            } catch (Exception e) {
+                stdinIsTerminal = true;     // can't tell: behave as before
+            }
+        }
+        return stdinIsTerminal;
+    }
+
     public static void setRaw() throws Exception {
+        if (!stdinIsTerminal()) {
+            return;
+        }
         /*
         ExecUtil
                 .executeWithShell("stty -ignbrk -brkint -parmrk -istrip " + 
@@ -46,6 +68,9 @@ public class Stty {
     }
 
     public static void setCooked() throws Exception {
+        if (!stdinIsTerminal()) {
+            return;
+        }
         ExecUtil.executeWithShell("stty sane cooked " + (OSType.isCYGWIN() ? "" : "< /dev/tty"));
 
         rawSet = false;

@@ -507,7 +507,7 @@ tabindex for one-stop controls) and most modern TUI toolkits.
 
 ### 4.5 Prototype result (Sep 2026)
 
-A standalone prototype of §4.3 and §4.4 ([docs/prototype/ProtoFocus.java](prototype/ProtoFocus.java), outside `src` so it is not built; one focus root, children discovered
+A standalone prototype of §4.3 and §4.4 (removed once the real implementation replaced it; one focus root, children discovered
 on demand, `enter(dir)`/`advance(dir)`, four kinds of focus manager: transparent panel, group,
 one-stop, trap) passes all 20 scenarios:
 

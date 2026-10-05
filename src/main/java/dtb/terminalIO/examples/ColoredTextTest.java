@@ -24,7 +24,7 @@ public class ColoredTextTest {
         TUIApp app = new TUIApp().initFromArgs(args).setDefaultMainApplicationPanel();
 
 
-        String fileName = "acme-white-150.txt";
+        String fileName = "colour-banner.txt";
 
         SegmentsFromStringResult r = new SegmentsFromStringResult(null, null);
 

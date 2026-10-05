@@ -147,7 +147,7 @@ public class StdoutViewerTest {
 
     static void startSlowRunner(StdoutViewer viewer, TerminalEvent<?> te) {
 
-        String cmd = "/home/dbalme/workspace/dtbTerminalIO/slowRunner.sh";
+        String cmd = "scripts/slowRunner.sh";   // run from the project root
 
         LinuxProcessWatcher processWatcher = new LinuxProcessWatcher();
 
