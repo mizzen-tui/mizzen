@@ -59,6 +59,9 @@ public class EmbeddedAppTest {
              });
             vPanel.onResizeExpandRight(status);
 
+            main.add(vPanel);
+            main.onResizeExpandDownAndRight(vPanel);
+
 
             // left: the examples 
             VerticalPanel picks = new VerticalPanel();
@@ -92,11 +95,7 @@ public class EmbeddedAppTest {
                 }
             });
 
-            // last, and in this order: a panel's rules run when it is resized, and resize() does nothing
-            // when the size is unchanged - so the inner rules (slot in hPanel) must exist before the
-            // outer ones (vPanel in main) size the panels; then run them once for the starting size
-            main.add(vPanel);
-            main.onResizeExpandDownAndRight(vPanel);
+            // the rules above run on a resize: run them once now, for the starting size
             main.applyResizeRules();
             
 

@@ -536,7 +536,36 @@ final class TerminalApp implements TUIAppInterface {
         return mainFocusManager;
     }
 
+    // the TerminalApp that has the terminal: from start() until it terminates. There is one terminal,
+    // so a second TerminalApp starting meanwhile is a mistake - a TUIApp meant to run inside another
+    // is started through TUIApp.runEmbedded, which makes it an EmbeddedApp, not a TerminalApp.
+    private static TerminalApp hasTheTerminal;
+
+    static synchronized void claimTheTerminal(TerminalApp app) {
+        if (hasTheTerminal != null && hasTheTerminal != app) {
+            throw new IllegalStateException("A TUIApp is already running on this terminal - there can be only one.\n"
+                                            + "  To run a TUIApp inside another, start it with TUIApp.runEmbedded(host, panel, launch).");
+        }
+        hasTheTerminal = app;
+    }
+
+    static synchronized void releaseTheTerminal(TerminalApp app) {
+        if (hasTheTerminal == app) {
+            hasTheTerminal = null;
+        }
+    }
+
     public void start() {
+        claimTheTerminal(this);
+        try {
+            startOnTheTerminal();
+        } catch (RuntimeException e) {
+            releaseTheTerminal(this);
+            throw e;
+        }
+    }
+
+    private void startOnTheTerminal() {
 
         this.started = true;
 
@@ -630,9 +659,16 @@ final class TerminalApp implements TUIAppInterface {
             eventBus.appendEventHandler(new OnRequestUpdateCanvasEventHandler(refreshCanvasIfModifiedAction));
         }
 
-        if (terminateAction != null) {
-            eventBus.appendEventHandler(new OnTerminateEventHandler(() -> terminateAction.accept(owner)));
-        }
+        // on terminate: the application's terminate action, then the terminal is free for another TUIApp
+        eventBus.appendEventHandler(new OnTerminateEventHandler(() -> {
+            try {
+                if (terminateAction != null) {
+                    terminateAction.accept(owner);
+                }
+            } finally {
+                releaseTheTerminal(this);
+            }
+        }));
 
         if (this.updateCanvas != null) {
             eventBus.appendEventHandler(new OnIdleEventEventHandler.OneTime(refreshCanvasIfModifiedAction));

@@ -288,8 +288,19 @@ public class Composite extends AbstractComponent<Composite>
         }
     }
     
+    /**
+     * Run the resize rules once, at the current sizes: this Composite's, then those of each Composite
+     * inside it, all the way down - whether or not a size changed. A resize skips a panel whose size
+     * did not change, rules and all, so a rule added after its panel was sized would otherwise wait
+     * for the next terminal resize. For setting up; a resize runs the rules as it goes.
+     */
     public void applyResizeRules() {
         this.onResizeService.resize(this.getPreferredRectangleForLayout());
+        for (ComponentWithOffset child : children) {
+            if (child.component instanceof Composite) {
+                ((Composite) child.component).applyResizeRules();
+            }
+        }
     }
     
     public Rectangle getInnerRectangle() {

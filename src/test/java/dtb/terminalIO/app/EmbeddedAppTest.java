@@ -137,6 +137,21 @@ public class EmbeddedAppTest extends TestCase {
         assertTrue(hostBus.handlers.isEmpty());
     }
 
+    /** what a handler adds through its event (te.getEventBus()), as a dialog does, is the app's too */
+    public void testWhatAHandlerAddsThroughItsEventIsTakenOutOnClose() {
+        Embedding embedding = TUIApp.runEmbedded(host, slot, () -> new TUIApp().setDefaultMainApplicationPanel().start());
+        hostBus.idle();
+        ConditionalEventHandler dialog = new KeyInputEventHandler(Keys.ESC_KEYSTROKE, (te) -> {});
+        embedding.tuiApp().getEventBus().appendIdleEventHandler(new OnIdleEventEventHandler.OneTime(
+                (te) -> te.getEventBus().prependEventHandler(dialog)));
+        hostBus.idle();
+        assertEquals("the dialog's handler, through the event's bus", 1, embedding.handlersOnHostBus());
+        assertEquals(1, hostBus.handlers.size());
+
+        embedding.close();
+        assertTrue("closing took the dialog's handler off too", hostBus.handlers.isEmpty());
+    }
+
     public void testATUIAppOutsideRunEmbeddedIsTheTerminalOne() {
         TUIApp.runEmbedded(host, slot, () -> new TUIApp().setDefaultMainApplicationPanel().start()).close();
         assertNotNull(new TUIApp().terminal());
@@ -179,6 +194,34 @@ public class EmbeddedAppTest extends TestCase {
         } catch (UnsupportedOperationException expected) {
         }
         embedding.close();
+    }
+
+    /** one terminal: a second TUIApp starting on it fails (pointing at runEmbedded) until the first terminates */
+    public void testOnlyOneTUIAppAtATimeHasTheTerminal() {
+        TerminalApp first = new TUIApp().terminal();
+        TerminalApp second = new TUIApp().terminal();
+        TerminalApp.claimTheTerminal(first);
+        try {
+            TerminalApp.claimTheTerminal(first);          // the same one again: fine
+            try {
+                TerminalApp.claimTheTerminal(second);
+                fail("a second TUIApp got the terminal");
+            } catch (IllegalStateException expected) {
+                assertTrue(expected.getMessage().contains("runEmbedded"));
+            }
+            TerminalApp.releaseTheTerminal(second);       // not its to release: no effect
+            try {
+                TerminalApp.claimTheTerminal(second);
+                fail("released by the wrong TUIApp");
+            } catch (IllegalStateException expected) {
+            }
+            // an embedded TUIApp is not a terminal one: fine while the first has the terminal
+            TUIApp.runEmbedded(host, slot, () -> new TUIApp().setDefaultMainApplicationPanel().start()).close();
+        } finally {
+            TerminalApp.releaseTheTerminal(first);
+        }
+        TerminalApp.claimTheTerminal(second);              // free again
+        TerminalApp.releaseTheTerminal(second);
     }
 
     private void assertFails(String messagePart, Embedding.Launch launch) {
