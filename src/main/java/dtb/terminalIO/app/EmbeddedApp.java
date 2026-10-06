@@ -263,6 +263,14 @@ final class EmbeddedApp implements TUIAppInterface {
         return embedding.host.getApplicationFocusManager();
     }
 
+    public EmbeddedApp setFullScreen(boolean fullScreen) {
+        return this;                            // the terminal is the host's
+    }
+
+    public boolean isFullScreen() {
+        return embedding.host.isFullScreen();
+    }
+
     /** into the host's panel; the setup code (setOnReadyStart) runs next on the host's bus */
     public void start() {
         if (mainApplicationPanel == null) {

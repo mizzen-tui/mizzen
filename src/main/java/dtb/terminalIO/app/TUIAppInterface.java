@@ -62,5 +62,7 @@ interface TUIAppInterface extends ComponentFinder {
     TUIAppInterface enableComponentInspector();
     TUIAppInterface enableComponentInspector(KeyStroke toggleKey);
     FocusManager getApplicationFocusManager();
+    TUIAppInterface setFullScreen(boolean fullScreen);
+    boolean isFullScreen();
     void start();
 }

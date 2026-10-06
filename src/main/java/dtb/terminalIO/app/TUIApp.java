@@ -340,6 +340,26 @@ public class TUIApp implements TUIAppInterface {
         return app.getApplicationFocusManager();
     }
 
+    /**
+     * true: the app takes the whole terminal - its alternate screen, as less, nano or vim do - and on
+     * exit the shell's screen comes back exactly as it was. false: the app draws below the shell
+     * prompt and stays in the scrollback (it may be smaller than the terminal: a pop-up in a command
+     * line session).
+     * <p/>
+     * Not set: start() decides by size - full screen when the canvas is the terminal's size. Set
+     * before start(); it cannot change after.
+     */
+    @Override
+    public TUIApp setFullScreen(boolean fullScreen) {
+        app.setFullScreen(fullScreen);
+        return this;
+    }
+
+    @Override
+    public boolean isFullScreen() {
+        return app.isFullScreen();
+    }
+
     @Override
     public void start() {
         app.start();

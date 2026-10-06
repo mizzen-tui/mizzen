@@ -17,6 +17,7 @@ import dtb.terminalIO.components.scroll.FindScrollToViewHandler;
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.core.Canvas;
+import dtb.terminalIO.core.FullScreenMode;
 import dtb.terminalIO.core.TerminalScreen;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
@@ -100,6 +101,9 @@ final class TerminalApp implements TUIAppInterface {
     boolean useMouse = true;
 
     boolean started = false;
+
+    // full screen (alternate screen) or inline - null until set, or until start() decides by size
+    Boolean fullScreen = null;
 
     TerminalApp(TUIApp owner, Function<EventBus, InputEventsProducer> inputEventsProducerBuilder) {
         this(owner);
@@ -565,16 +569,38 @@ final class TerminalApp implements TUIAppInterface {
         }
     }
 
+    public TerminalApp setFullScreen(boolean fullScreen) {
+        if (started) {
+            throw new IllegalStateException("setFullScreen(..) must be called before start()");
+        }
+        this.fullScreen = fullScreen;
+        return this;
+    }
+
+    public boolean isFullScreen() {
+        return Boolean.TRUE.equals(fullScreen);
+    }
+
+    // the canvas is the terminal's size (as it is unless the app set a smaller one)
+    private boolean canvasFillsTheTerminal() {
+        Dimension terminal = TestsCommon.terminalSize();
+        return getCanvas().getHeight() >= terminal.getHeight() && getCanvas().getWidth() >= terminal.getWidth();
+    }
+
     private void startOnTheTerminal() {
+
+        if (fullScreen == null) {
+            setFullScreen(canvasFillsTheTerminal());
+        }
+        if (fullScreen) {
+            screen.setScreenMode(new FullScreenMode(screen));
+        }
 
         this.started = true;
 
-        // We do an initial refresh before going into RAW mode (caused by
-        // makeEventBus())
-        // in order that canvas is correctly refreshed after current screen cursor
-        // position.  This is especially useful when the canvas is not full screen and
-        // you want the canvas position just below last prompt on the terminal
-        getCanvas().refresh();
+        // before raw mode (makeEventBus() below): inline, the first paint makes room below the prompt;
+        // full screen, the terminal switches to its alternate screen
+        screen.getScreenMode().takeOverTerminal(getCanvas());
 
         screen.add(ControlCode.HIDE_CURSOR);
         screen.refresh();

@@ -4,7 +4,6 @@ import java.util.function.Consumer;
 
 import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.controlcodes.Renderer;
-import dtb.terminalIO.core.ScreenCanvasBackend;
 import dtb.terminalIO.util.Stty;
 
 public class DefaultTerminateAction implements Consumer<TUIApp> {
@@ -14,11 +13,9 @@ public class DefaultTerminateAction implements Consumer<TUIApp> {
 
         resetTerminalForExiting(tApp);
 
-        // a full redraw leaves the cursor below the canvas (the shell prompt goes under the output)
-        if (tApp.getCanvas().getCanvasBackend() instanceof ScreenCanvasBackend) {
-            ((ScreenCanvasBackend) tApp.getCanvas().getCanvasBackend()).fullUpdateOnNextRefresh();
-        }
-        tApp.getCanvas().refresh();
+        // inline: a full redraw leaves the cursor below the canvas (the shell prompt goes under the
+        // output); full screen: back to the shell's screen as it was
+        tApp.getScreen().getScreenMode().handBackTerminal(tApp.getCanvas());
 
         if (tApp.terminal().lastException != null) {
             

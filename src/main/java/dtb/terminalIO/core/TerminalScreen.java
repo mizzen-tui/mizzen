@@ -21,6 +21,9 @@ public class TerminalScreen implements ControlCodeContext {
 
     boolean                 refreshed   = false;
 
+    // how the screen sits in the terminal: below the prompt (inline) or the whole terminal
+    private ScreenMode      screenMode  = new InlineScreenMode(this);
+
     // this ctx is used simply to hold the iscolor and is controlcode enables flags
     ControlCodeContext      ctx        = ControlCodeContext.DEFAULT;
 
@@ -129,7 +132,7 @@ public class TerminalScreen implements ControlCodeContext {
     
     public TerminalScreen add(Renderer r) {
         if (refreshed) {
-            out.clearLastTrackedLines(false);
+            screenMode.home();
             refreshed = false;
         }
         rb.append( colorPipe.wrap(r));
@@ -145,7 +148,7 @@ public class TerminalScreen implements ControlCodeContext {
     }
 
     public TerminalScreen refresh() {
-        rb.render(this);
+        screenMode.render(() -> rb.render(this));
         rb.clear();
         refreshed = true;
         return this;
@@ -157,7 +160,7 @@ public class TerminalScreen implements ControlCodeContext {
 
     public TerminalScreen clear() {
         rb.clear();
-        out.clearLastTrackedLines(true);
+        screenMode.clear();
         refreshed = true;
         return this;
     }
@@ -166,8 +169,17 @@ public class TerminalScreen implements ControlCodeContext {
      * Move cursor to screen's top-left (0,0) position
      */
     public TerminalScreen home() {
-        boolean erasePreviousContent = false;
-        this.getEmitter().clearLastTrackedLines(erasePreviousContent);
+        screenMode.home();
+        return this;
+    }
+
+    public ScreenMode getScreenMode() {
+        return screenMode;
+    }
+
+    /** inline (the default) or full screen - set before the app starts drawing */
+    public TerminalScreen setScreenMode(ScreenMode screenMode) {
+        this.screenMode = screenMode;
         return this;
     }
 
@@ -182,7 +194,7 @@ public class TerminalScreen implements ControlCodeContext {
             showCursorPosition.getCol()<0) {
             throw new IllegalStateException("showCursor request illegal " + String.valueOf(showCursorPosition));
         }
-        out.showCursorAt(showCursorPosition, showCursor);
+        screenMode.showCursorAt(showCursorPosition, showCursor);
     }
 
     public void showCursor() {
