@@ -196,7 +196,7 @@ public class ImageSplitterTest {
                     throw new IllegalArgumentException("OFFSETS needs x y pairs (odd number of values)");
                 }
                 current.offsets = offsets;
-            } else if (VeryBasicArgsHelper.isArgName(arg, "NOGRAPHICS") || (i == 0 && "netcat".equalsIgnoreCase(arg))) {
+            } else if (VeryBasicArgsHelper.isArgName(arg, "NOGRAPHICS")) {
                 continue;   // read by TUIApp itself
             } else {
                 throw new IllegalArgumentException("unknown option '" + arg + "'");

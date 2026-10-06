@@ -1,10 +1,5 @@
 package dtb.terminalIO.examples;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintStream;
-import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.function.Consumer;
 
 import dtb.terminalIO.components.BlockChars;
@@ -49,7 +44,7 @@ public class TestsCommon {
 
     private static TerminalScreen __getTerminalScreenForTesting(String[] args) {
         TerminalScreen screen = new TerminalScreen();
-        screen.setPrintStream(getOutputStream(args));
+        screen.setPrintStream(System.out);
         return screen;
     }
 
@@ -131,54 +126,6 @@ public class TestsCommon {
         return master_canvas;
     }
 
-    static class MyPrintStream extends PrintStream {
-
-        Socket socket;
-
-        public MyPrintStream(OutputStream out, Socket socket) {
-            super(out);
-            this.socket = socket;
-        }
-    }
-
-    // static Socket socket;
-
-    public static PrintStream getNetCatStream() {
-        // String hostname = "localhost";
-        String hostname = "192.168.2.16";
-        int port = 9878;
-
-        try {
-
-            Socket socket = new Socket(hostname, port);
-
-            OutputStream out = socket.getOutputStream();
-
-            MyPrintStream p = new MyPrintStream(out, socket);
-
-            p.println("Initiating contact!");
-
-            return p;
-
-        } catch (UnknownHostException ex) {
-
-            System.out.println("Server not found: " + ex.getMessage());
-            return null;
-
-        } catch (IOException ex) {
-
-            System.out.println("I/O error: " + ex.getMessage());
-            return null;
-        }
-    }
-
-    public static PrintStream getOutputStream(String[] args) {
-        if (args == null || args.length < 1 || !args[0].equalsIgnoreCase("netcat")) {
-            return System.out;
-        }
-
-        return getNetCatStream();
-    }
     
     public static KeyInputEventHandler toggleScreenupStrategyKeyboardHandling(Canvas canvas, 
                                                               EventBus eventBus,
