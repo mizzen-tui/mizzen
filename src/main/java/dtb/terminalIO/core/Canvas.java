@@ -337,7 +337,7 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
     public synchronized Canvas refresh() {
 
         if (segmentsBuffer.isEmpty()) {
-            outputBlankLines(0, this.height);
+            outputBlankLines(0, this.height - 1);
             refreshBackend();
             return this;
         }
@@ -409,8 +409,8 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
             backend.writeToBackend(blankSegment(row, lastRightMostPlus1, this.width - lastRightMostPlus1));
         }
         backend.signal_eol();
-        if (row != this.height)
-            backend.cr();
+        if (row != this.height - 1)     // rows count from 0: no row end after the last row (it would leave
+            backend.cr();               // the cursor below the canvas and the line count one too high)
     }
 
     private void mergeColorsAndwriteSegmentToBackEnd(ScreenLineSegment scs) {

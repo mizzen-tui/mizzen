@@ -1,5 +1,6 @@
 package dtb.terminalIO.core;
 
+import dtb.terminalIO.controlcodes.ControlCode;
 import dtb.terminalIO.geom.position.Position;
 
 /**
@@ -44,12 +45,13 @@ public class InlineScreenMode implements ScreenMode {
         render.run();
     }
 
-    /** a full redraw (raw mode is off: real newlines) leaves the cursor below the canvas, for the prompt */
+    /** a full redraw (raw mode is off: real newlines), then one more newline: the prompt goes below the canvas */
     @Override
     public void handBackTerminal(Canvas canvas) {
         if (canvas.getCanvasBackend() instanceof ScreenCanvasBackend) {
             ((ScreenCanvasBackend) canvas.getCanvasBackend()).fullUpdateOnNextRefresh();
         }
         canvas.refresh();
+        screen.getEmitter().outputRenderer(ControlCode.CR);     // straight out: screen.cr() would go home first
     }
 }
