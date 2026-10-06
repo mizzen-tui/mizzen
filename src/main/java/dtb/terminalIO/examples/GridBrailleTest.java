@@ -292,8 +292,8 @@ public class GridBrailleTest {
 
             Position movementKeysPosition = PositionRelativeFactory.fromAlign(VAlign.BOTTOM, 3, Align.CENTER, 0,  getBrailleComponent(), movementKeys);
             getBrailleComponent().add(movementKeysPosition, movementKeys);
-
-            addAndRememberEventHandler(eventBus, movementKeys);
+            // its hot keys reach it through the component tree (nearest to the focus first) - not put
+            // on the event bus, where they would act before everything else, wherever focus is
 
         }
 

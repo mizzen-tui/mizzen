@@ -148,13 +148,12 @@ public class TreeViewTest {
                show(detail, shown, viewFor(tree.getValue(), detail), tApp.getEventBus());
                tApp.getMainApplicationPanel().add(1, 2, page);
 
-               // the panes follow the terminal's size; the view is rebuilt to fit
+               // the panes follow the terminal's size; the view inside detail follows detail (its resize rule, see show)
                tApp.appendOnResizeAction((app, size) -> {
                    Dimension newSize = viewSize(size);
                    treePane.resize(new Dimension.Simple(newSize.getHeight(), TREE_WIDTH));
                    detail.resize(newSize);
-                   show(detail, shown, viewFor(tree.getValue(), newSize), app.getEventBus());
-                   panes.fullrecalcDim();
+                   panes.fullrecalcDim();     // a Composite that changes size doesn't (yet) tell its parent to lay out again
                    page.fullrecalcDim();
                });
 
@@ -222,7 +221,8 @@ public class TreeViewTest {
     /**
      * What the right-hand side shows for a node - built when the node is selected, like a tab's
      * content (see TabAction). shown / hidden: it came on screen / went off it - e.g. to start and
-     * stop an animation's timer.
+     * stop an animation's timer. Its component follows the size of the right-hand side (resize rule);
+     * each view adjusts what is inside it - it is never rebuilt for a new size.
      */
     interface NodeView {
         Component<?> component();
@@ -253,6 +253,7 @@ public class TreeViewTest {
         }
         shown[0] = view;
         detail.add(view.component());
+        detail.onResizeExpandDownAndRight(view.component());     // the view follows detail's size (the rule goes with the view)
         view.shown(eventBus);
     }
 
@@ -261,6 +262,17 @@ public class TreeViewTest {
      * a group of groups (the root) - the groups' names, one under the other.
      */
     private static NodeView drawingView(DefaultTreeNode<DemoNode> node, Dimension size) {
+        Composite slot = new Composite(new Dimension.Simple(size));
+        slot.add(drawing(node, size));
+        slot.appendOnResize((newSize) -> {                    // a new size: the drawing again, at that size
+            slot.removeChildren();
+            slot.add(drawing(node, newSize));
+        });
+        return () -> slot;
+    }
+
+    /** the Braille drawing for node, filling size */
+    private static BrailleGrid drawing(DefaultTreeNode<DemoNode> node, Dimension size) {
         BrailleGrid grid = new BrailleGrid(Colors.BGre, inside(size));      // the size given is inside its border
         grid.setTitle(Colors.BPur, " " + node + " ");
         List<DefaultTreeNode<DemoNode>> children = node.getChildren();
@@ -286,7 +298,7 @@ public class TreeViewTest {
                 shape.draw(grid);
             }
         }
-        return () -> grid;
+        return grid;
     }
 
     /** an animated GIF, playing while it is shown; its Options button changes how it is drawn */
@@ -294,14 +306,17 @@ public class TreeViewTest {
         File gif = ReadSampleFiles.resourceAsFile(image.file);
         try {
             BufferedImage firstFrame = ImageIO.read(gif);
-            ImageRenderRequest request = colourBlocks(firstFrame, fit(firstFrame, inside(size)));
+            ImageRenderRequest request = colourBlocks(firstFrame, fit(firstFrame, inside(size)));     // inside the frame
             MovingPicturesViewer viewer = new MovingPicturesViewer(Colors.DEFAULT_COLOR, new AnimatedGifImageIterator(gif.getPath()), request);
-            viewer.setBorder(true);
-            viewer.setTitle(Colors.BPur, " " + image.name + " ");
+            Composite frame = new Composite(new Dimension.Simple(size));
+            frame.setBorder(true);
+            frame.setTitle(Colors.BPur, " " + image.name + " ");
+            frame.add(viewer);
+            frame.appendOnResize((newSize) -> request.setDesiredImgSizeInCharacters(fit(firstFrame, inside(newSize))));   // next frame: the new size
             return new NodeView() {
                 @Override
                 public Component<?> component() {
-                    return viewer;
+                    return frame;
                 }
 
                 @Override
@@ -336,6 +351,7 @@ public class TreeViewTest {
         frame.setTitle(Colors.BPur, " " + fractal.name + " ");
         FractalAnimation fractals = new FractalAnimation(inside(size), 1000);
         frame.add(fractals.component());
+        frame.appendOnResize((newSize) -> fractals.resize(inside(newSize)));
         return new NodeView() {
             @Override
             public Component<?> component() {
@@ -379,6 +395,7 @@ public class TreeViewTest {
         viewer.setColorMapping(ImageViewerFactory.rgbColorMapDIRECT);
         viewer.setPlotPredicate(ImageViewerFactory.PLOT_ALWAYS);
         frame.add(viewer);
+        frame.appendOnResize((newSize) -> viewer.resize(fit(picture, inside(newSize))));          // re-fit at the new size
         return new NodeView() {
             @Override
             public Component<?> component() {
