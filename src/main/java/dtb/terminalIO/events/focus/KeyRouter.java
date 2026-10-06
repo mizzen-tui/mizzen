@@ -22,6 +22,8 @@ import dtb.terminalIO.events.keyboard.KeyStroke;
  *   4. its navigation keys (advance): MOVED - focus moves; STAY - focus stays, key used;
  *      DONE - no further child in it, so on to the next focus manager out
  * </pre>
+ * If the focused component is itself a focus manager (a stop of its own, e.g. a scroll pane showing
+ * text), the hot keys of the components inside it are tried before going up (e.g. its Find button).
  * Components between two focus managers that have a keyboard handler are asked on the way up too.
  * The walk ends at the root; if nobody used the key, the root doesn't take it.
  * <p/>
@@ -59,7 +61,7 @@ final class KeyRouter {
     static Outcome route(FocusManager root, KeyEvent ke, boolean deliver) {
         Focusable focused = FocusManager.UTIL.findCurrentFocus(root);
         if (isFocusedComponent(focused, root)) {
-            return walk(root, focused, true, ke, deliver) ? Outcome.HANDLED : Outcome.NOT_WANTED;
+            return bubbleUp(root, focused, true, ke, deliver) ? Outcome.HANDLED : Outcome.NOT_WANTED;
         }
         // nothing has focus: navigation keys carry on from the most recently focused component that is still there ...
         Focusable lastPlace = recentlyFocusedStillInside(root);
@@ -67,7 +69,7 @@ final class KeyRouter {
             if (!isNavigationKeyAround(lastPlace, root, ke.getKeyStroke())) {
                 return Outcome.NOT_ROUTED;
             }
-            return walk(root, lastPlace, false, ke, deliver) ? Outcome.HANDLED : Outcome.NOT_ROUTED;
+            return bubbleUp(root, lastPlace, false, ke, deliver) ? Outcome.HANDLED : Outcome.NOT_ROUTED;
         }
         // ... or, if there is none (nothing was focused yet), go into root: TAB -> first, SHIFT-TAB -> last
         FocusDirection dir = root.navDirectionFor(ke.getKeyStroke());
@@ -82,18 +84,22 @@ final class KeyRouter {
     }
 
     /**
-     * Offers key ke to from (only if it has focus), then to everything around it up to root - see
-     * the class comment. Returns true if someone used it.
+     * Bubbling: offers key ke to start (if it has focus), then to everything start is inside, up to
+     * root - see the class comment. Returns true if someone used it.
      */
-    private static boolean walk(FocusManager root, Focusable from, boolean fromHasFocus, KeyEvent ke, boolean deliver) {
-        Component<?> fromComponent = from.getFocusComponent();
+    private static boolean bubbleUp(FocusManager root, Focusable start, boolean startHasFocus, KeyEvent ke, boolean deliver) {
+        Component<?> startComponent = start.getFocusComponent();
 
-        if (fromHasFocus && offerToFocused(from, fromComponent, ke, deliver)) {
+        if (startHasFocus && offerToFocused(start, startComponent, ke, deliver)) {
+            return true;
+        }
+        // a focus manager that is the focused stop itself: hot keys inside it come before anything outside
+        if (startHasFocus && start instanceof FocusManager && offerToHotKeysInside((FocusManager) start, ke, deliver)) {
             return true;
         }
 
-        Component<?> next = parentForKeys(fromComponent);
-        for (FocusManager focusManager = FocusManager.UTIL.parentOf(from); focusManager != null;
+        Component<?> next = parentForKeys(startComponent);
+        for (FocusManager focusManager = FocusManager.UTIL.parentOf(start); focusManager != null;
                           focusManager = nextOut(focusManager, root)) {
             Component<?> focusManagerComponent = focusManager.getFocusComponent();
 
@@ -106,7 +112,7 @@ final class KeyRouter {
                 }
             }
 
-            if (offerToFocusManager(root, focusManager, from, ke, deliver)) {
+            if (offerToFocusManager(root, focusManager, start, ke, deliver)) {
                 return true;
             }
             next = parentForKeys(focusManagerComponent);
@@ -128,8 +134,16 @@ final class KeyRouter {
         return true;
     }
 
+    /** a hot key of a component inside focusManager (e.g. a scroll pane's Find button, with the pane focused) */
+    private static boolean offerToHotKeysInside(FocusManager focusManager, KeyEvent ke, boolean deliver) {
+        boolean[] used = { false };
+        DefaultFocusManager.applyIfDefaultFocusManager(focusManager,
+                m -> used[0] = deliver ? m.handleHotKey(ke, false) : m.hotKeyChildFor(ke, false) != null);     // focus is on it: all its children count
+        return used[0];
+    }
+
     /** steps 1 - 4 of the class comment for one focus manager on the way up */
-    private static boolean offerToFocusManager(FocusManager root, FocusManager focusManager, Focusable from,
+    private static boolean offerToFocusManager(FocusManager root, FocusManager focusManager, Focusable start,
                                                KeyEvent ke, boolean deliver) {
         // 1. its component handles keys
         if (offerToKeyHandler(focusManager.getFocusComponent(), ke, deliver)) {
@@ -157,7 +171,7 @@ final class KeyRouter {
         if (dir == null) {
             return false;
         }
-        Navigation next = focusManager.advance(from, dir);
+        Navigation next = focusManager.advance(start, dir);
         if (next.getKind() == Navigation.Kind.MOVED) {
             if (deliver) {
                 FocusManager.UTIL.moveFocus(root, next.getTarget(), ke.getEventBus(), false);
@@ -191,9 +205,9 @@ final class KeyRouter {
         return up instanceof Component ? (Component<?>) up : null;
     }
 
-    /** does any focus manager around from (up to root) use key to move focus? */
-    private static boolean isNavigationKeyAround(Focusable from, FocusManager root, KeyStroke key) {
-        FocusManager focusManager = from instanceof FocusManager ? (FocusManager) from : FocusManager.UTIL.parentOf(from);
+    /** does any focus manager around start (up to root) use key to move focus? */
+    private static boolean isNavigationKeyAround(Focusable start, FocusManager root, KeyStroke key) {
+        FocusManager focusManager = start instanceof FocusManager ? (FocusManager) start : FocusManager.UTIL.parentOf(start);
         for (; focusManager != null; focusManager = nextOut(focusManager, root)) {
             if (focusManager.navDirectionFor(key) != null) {
                 return true;
@@ -212,8 +226,14 @@ final class KeyRouter {
         return focused != null && focused != root && !isFocusManagerWithChildren(focused);
     }
 
+    /**
+     * A focus manager that should have passed focus on to a child: it has children, and it is not a
+     * stop itself. A focus manager can be its own stop - its enter() returns itself (e.g. a scroll
+     * pane showing only text: nothing inside can take focus, so the pane does).
+     */
     private static boolean isFocusManagerWithChildren(Focusable focusable) {
-        return focusable instanceof FocusManager && !((FocusManager) focusable).getChildFocusables().isEmpty();
+        return focusable instanceof FocusManager && !((FocusManager) focusable).getChildFocusables().isEmpty()
+               && focusable.enter(FocusDirection.FORWARD) != focusable;
     }
 
     /** the most recently focused component that is still inside root (not removed since); null if none */

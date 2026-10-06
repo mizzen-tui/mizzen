@@ -500,8 +500,16 @@ public class DefaultFocusManager implements FocusManager,
      * Only answers - changes nothing (used by canHandle and KeyRouter). null if none.
      */
     Focusable hotKeyChildFor(KeyEvent te) {
+        return hotKeyChildFor(te, true);
+    }
+
+    /**
+     * skipCurrent: leave out the current child - the key comes from there (it is on its way up). Not
+     * when focus is on this focus manager itself (a stop of its own): all its children count.
+     */
+    Focusable hotKeyChildFor(KeyEvent te, boolean skipCurrent) {
         KeyStroke pressedKey = te.getKeyStroke();
-        Focusable focusable = peekCurrent();
+        Focusable focusable = skipCurrent ? peekCurrent() : null;
         for (Focusable focusableOther : children()) {
             if (focusableOther == focusable) {
                 continue;
@@ -543,19 +551,33 @@ public class DefaultFocusManager implements FocusManager,
     }
 
     /**
-     * If a child's hot key matches: move focus to that child and give it the key. Returns true if so.
-     * Focus moves like a click or TAB (FocusManager.UTIL.moveFocus), so every focus manager on the
-     * way is told and the previously focused component lets go.
+     * If a child's hot key matches: move focus to the component whose hot key it is - the child, or
+     * one inside it (e.g. a scroll pane's Find button in its footer) - and give it the key. Returns
+     * true if so. Focus moves like a click or TAB (FocusManager.UTIL.moveFocus), so every focus
+     * manager on the way is told and the previously focused component lets go.
      * (Used by handle and KeyRouter; asking without acting: hotKeyChildFor.)
      */
     boolean handleHotKey(KeyEvent te) {
-        Focusable hotKeyChild = hotKeyChildFor(te);
+        return handleHotKey(te, true);
+    }
+
+    /** skipCurrent: see hotKeyChildFor */
+    boolean handleHotKey(KeyEvent te, boolean skipCurrent) {
+        Focusable hotKeyChild = hotKeyChildFor(te, skipCurrent);
         if (hotKeyChild == null) {
             return false;
         }
         FocusManager top = this;
         while (FocusManager.UTIL.parentOf(top) != null) {
             top = FocusManager.UTIL.parentOf(top);
+        }
+        // the hot key's own component; none found (e.g. the key sits on a wrapper above the child): the child
+        Focusable owner = HasHotKey.UTIL.getFocusableFromHotKey(hotKeyChild, te.getKeyStroke());
+        if (owner != null && owner != hotKeyChild && FocusManager.UTIL.moveFocus(top, owner, te.getEventBus(), false)) {
+            if (owner.canHandle(te) != null) {
+                owner.handle(te);
+            }
+            return true;
         }
         if (!FocusManager.UTIL.moveFocus(top, hotKeyChild, te.getEventBus(), false)) {
             setChildAsCurrentFocus(hotKeyChild, te.getEventBus());     // not reachable from the top: as before
