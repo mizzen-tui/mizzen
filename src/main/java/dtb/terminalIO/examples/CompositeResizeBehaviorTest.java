@@ -7,6 +7,7 @@ import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.input.Button;
+import dtb.terminalIO.components.modal.MessageBox;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.geom.Dimension;
@@ -29,7 +30,6 @@ public class CompositeResizeBehaviorTest {
                 root.setBorder(true);
                 root.setBorderColor(Colors.ICya);
                 root.setTitle(Colors.ICya, "[Root-Panel]");
-                // root.resize(new Dimension.Simple(10,10));
 
                 Composite panel = new Composite(Colors.DEFAULT_COLOR);
                 panel.setBorder(true);
@@ -58,8 +58,10 @@ public class CompositeResizeBehaviorTest {
 
                 Button testButton = new Button(Colors.IGre, "Test");
                 TextComponent runningStatus = new TextComponent(Colors.DEFAULT_DISABLED_COLOR," Press test button to test");
+                Button infoButton = new Button(Colors.IGre, "Info");
                 bb.add(testButton);
                 bb.add(runningStatus);
+                bb.add(infoButton);
 
                 tApp.getMainApplicationPanel().add(0, 1, bb);
                 tApp.getMainApplicationPanel().add(3, 2, root);
@@ -74,33 +76,33 @@ public class CompositeResizeBehaviorTest {
                     isRunning[0] = true;
 
                     tApp.getEventBus().asynchAfter(1000, (te) -> {
-                        status.setText("STEP 2 - innerBox resize(8,34)");
+                        status.setTextAndResize("STEP 2 - innerBox resize(8,34)");
                         innerBox.resize(new Dimension.Simple(8, 34));
                         requestUpdate(tApp, root);
                     });
     
                     tApp.getEventBus().asynchAfter(2000, (te) -> {
-                        status.setText("STEP 3 - innerBox resize(8,34)");
+                        status.setTextAndResize("STEP 3 - innerBox resize(8,34)");
                         status.setColor(Colors.IWhi);
                         hello.setColor(Colors.IRed);
                         requestUpdate(tApp, root);
                     });
     
                     tApp.getEventBus().asynchAfter(3000, (te) -> {
-                        status.setText("STEP 5 - panel.moveChildTo(4,6)");
+                        status.setTextAndResize("STEP 5 - panel.moveChildTo(4,6)");
                         //root.moveChildTo(4, 6, panel);
                         panel.moveTo(4, 6);
                         root.markAsDirty();    // make it visible to root
                         root.fullrecalcDim();  // make it visible to root
                         requestUpdate(tApp, root);
                     });
-    
+
                     tApp.getEventBus().asynchAfter(6000, (te) -> {
-                        status.setText("STEP 6 - innerBox resize(4,14)");
+                        status.setTextAndResize("STEP 6 - innerBox resize(4,14)");
                         innerBox.resize(new Dimension.Simple(4, 14));
                         requestUpdate(tApp, root);
                     });
-    
+
                     tApp.getEventBus().asynchAfter(7000, (te) -> {
                         status.setColor(Colors.IPur);
                         world.setColor(Colors.ICya);
@@ -112,9 +114,8 @@ public class CompositeResizeBehaviorTest {
                         runningStatus.setColor(Colors.DEFAULT_DISABLED_COLOR);
                     });
 
-                };    
+                };
 
-                
                 testButton.setEnabled(true, tApp.getEventBus());
                 testButton.onChange((te)->{
                     if (isRunning[0]) {
@@ -126,9 +127,13 @@ public class CompositeResizeBehaviorTest {
                     testSequence.run();
                 });
 
-                //tApp.getMainApplicationPanel().add(0,2, testButton);
-
-
+                infoButton.setEnabled(true, tApp.getEventBus());
+                infoButton.onChange((te)->{
+                    MessageBox.showInfoDialog(te.getEventBus(), tApp.getMainApplicationPanel(), 
+                                               "Testing resize of child\n"+
+                                               "components to ensure parent \n"+
+                                               "components resize as well.");
+                });
 
             }).start();
     }

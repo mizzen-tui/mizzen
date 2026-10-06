@@ -48,6 +48,14 @@ public class ScreenCanvasBackend implements CanvasBackend {
                    : UpdateStrategy.UPDATE_CHANGED;
     }
 
+    /**
+     * The next refresh redraws the whole canvas, whatever the strategy - and so leaves the cursor
+     * below it (a partial update leaves it at the canvas top). E.g. the last refresh before exiting.
+     */
+    public void fullUpdateOnNextRefresh() {
+        previous.clear();
+    }
+
     public void setUpdateStrategy(UpdateStrategy updateStrategy) {
 
         if (updateStrategy == null) {

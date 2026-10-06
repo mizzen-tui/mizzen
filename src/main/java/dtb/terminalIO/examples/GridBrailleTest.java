@@ -122,9 +122,9 @@ public class GridBrailleTest {
                             + Colors.IYel.asBold().asString() + "    .........." + textCOLOR.asString() + "\n" + "\n"
                             + "In this example we are\n" + "plotting boxes, circles and triangles.\n" + "\n"
                             + "We transform (move/rotate) their positions\n" + "using simple trigonometry\n" + "\n"
-                            + "A more practical Acme use-case for\n" + "this plotting technique would be to\n"
-                            + "to build terminal-based charts for\n" + "monitoring values stored in the OLT-MGR\n"
-                            + "and rendered via CLIApp.java");
+                            + "A more practical use for\n" + "this plotting technique is\n"
+                            + "terminal-based charts for\n" + "monitoring values (see the\n"
+                            + "line, bar and spark-line examples)");
 
             getBrailleComponent().add(tcBrailleChars);
             getBrailleComponent().add(2, 0, tc);
@@ -292,8 +292,8 @@ public class GridBrailleTest {
 
             Position movementKeysPosition = PositionRelativeFactory.fromAlign(VAlign.BOTTOM, 3, Align.CENTER, 0,  getBrailleComponent(), movementKeys);
             getBrailleComponent().add(movementKeysPosition, movementKeys);
-
-            addAndRememberEventHandler(eventBus, movementKeys);
+            // its hot keys reach it through the component tree (nearest to the focus first) - not put
+            // on the event bus, where they would act before everything else, wherever focus is
 
         }
 

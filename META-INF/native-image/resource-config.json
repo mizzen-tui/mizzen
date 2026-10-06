@@ -1,10 +1,7 @@
 {
   "resources":{
   "includes":[
-    {"pattern":"\\Qnorthforge-final-large_TM.png\\E"}, 
-    {"pattern":"\\QroltOutlinedHandMadeStrokeLayerOnly01.png\\E"},
-    {"pattern":"\\QgrannySmithAppleSingle.jpg\\E"},
-    {"pattern":"\\QlionRunning.jpg\\E"}
+    {"pattern":"\\Qdtb/terminalIO/examples/sampledata/\\E.*"}
   ]},
   "bundles":[{"name":"sun.awt.resources.awt"}]
 }

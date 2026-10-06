@@ -1100,9 +1100,7 @@ public class Composite extends AbstractComponent<Composite>
         Position offset = Position.ZERO;
         if (this.hasBorder()) {
             offset = offset.offsetToRowCol(1, 1);
-            if (boundsFixedFlag) {
-                clippedArea = new Rectangle.Simple(bounds.getRow()+1, bounds.getCol()+1, bounds.getHeight()-2, bounds.getWidth()-2);
-            }
+            clippedArea = new Rectangle.Simple(bounds.getRow()+1, bounds.getCol()+1, bounds.getHeight()-2, bounds.getWidth()-2);   // children stay inside the border
         }
 
         // loop thru children and draw each
@@ -1114,7 +1112,7 @@ public class Composite extends AbstractComponent<Composite>
 
             Position childOffset = child.offset.offsetAdd(offset);
 
-            if (boundsFixedFlag) {
+            if (boundsFixedFlag || this.hasBorder()) {
                 ScreenLineSegment.UTIL.addSegmentsWithOffsetBounded(childOffset, clippedArea, destinationSegments.getSegments(),
                                                                     child.component.getSegmentsBuffer().getSegments());
                 addDropShadowIfNeeded(childOffset, child, clippedArea, destinationSegments);
@@ -1269,9 +1267,9 @@ public class Composite extends AbstractComponent<Composite>
             Position offsetForBorder;
             if (parent.hasBorder()) {
                 offsetForBorder = Position.ZERO.offsetToRowCol(1, 1);
-                if (boundsFixedFlag) {
-                    clippedArea = new Rectangle.Simple(clippedArea.getRow()+1, clippedArea.getCol()+1, clippedArea.getHeight()-2, clippedArea.getWidth()-2);
-                }
+                // children stay inside the border - fixed size or growing: a child placed relative to
+                // the composite itself (e.g. top-right) can reach the border even when it grows
+                clippedArea = new Rectangle.Simple(clippedArea.getRow()+1, clippedArea.getCol()+1, clippedArea.getHeight()-2, clippedArea.getWidth()-2);
             } else {
                 offsetForBorder = Position.ZERO;
             }

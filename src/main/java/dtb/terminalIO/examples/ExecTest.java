@@ -199,7 +199,7 @@ public class ExecTest {
                     }
                 } else {
                     linuxProc = new LinuxProcessWatcher();
-                    linuxProc.setInvokeScript("./slowRunner.sh testme");
+                    linuxProc.setInvokeScript("scripts/slowRunner.sh testme");
                 }
             }
 
@@ -207,7 +207,7 @@ public class ExecTest {
                 lprocViewer.setLinuxProcessWatcher(linuxProc);
                 lprocViewer.invoke(tApp.getEventBus());
             }
-            lprocViewer2.setLinuxProcessWatcher( new LinuxProcessWatcher().setInvokeScript("./slowRunner.sh testme")  );
+            lprocViewer2.setLinuxProcessWatcher( new LinuxProcessWatcher().setInvokeScript("scripts/slowRunner.sh testme")  );
             lprocViewer2.invoke(tApp.getEventBus());
 
         });

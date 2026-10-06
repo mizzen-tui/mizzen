@@ -47,6 +47,48 @@ public class TerminalStreamingTest extends TestCase {
     }
     
     
+    /** what the parser passes on: text as is, control codes as {NAME} */
+    private static String parsed(String input) {
+        StringBuilder out = new StringBuilder();
+        new TerminalStreamOutputParser(new TerminalStreamConsumer() {
+            @Override
+            public void consumeTextChar(char ch) {
+                out.append(ch);
+            }
+
+            @Override
+            public void consumeControlCode(ControlCode controlCode) {
+                out.append(controlCode instanceof dtb.terminalIO.controlcodes.color.Color ? "{colour}" : "{" + controlCode + "}");
+            }
+        }).parseInput(input);
+        return out.toString();
+    }
+
+    /** control codes it doesn't use are dropped, not shown as text (before: "[3J", a stray "B", "0;title" ...) */
+    public void testUnusedControlCodesAreNotShown() {
+        assertEquals("AB", parsed("A\033[3JB"));             // "clear" ends with this (clear scrollback)
+        assertEquals("AB", parsed("A\033[?2004hB"));         // bash: bracketed paste
+        assertEquals("AB", parsed("A\033[5;10HB"));          // cursor position
+        assertEquals("AB", parsed("A\033]0;title\007B"));    // window title
+        assertEquals("AB", parsed("A\033]0;title\033\\B"));  // ... ended by ESC \\ instead
+        assertEquals("AB", parsed("A\0337\0338B"));          // save / restore cursor
+        assertTrue(parsed("A\033(B\033[mB").matches("A(\\{colour\\})?B"));   // tput sgr0
+    }
+
+    public void testCursorMovesWithoutACount() {
+        assertEquals("A{CursorUp(1)}B", parsed("A\033[AB"));
+    }
+
+    /** ESC[nG: to column n */
+    public void testCursorToColumn() {
+        assertEquals("A{" + ControlCode.CURSOR_LEFT + "}B", parsed("A\033[GB"));
+        assertTrue(parsed("A\033[10GB").startsWith("A{" + ControlCode.CURSOR_LEFT + "}{"));
+    }
+
+    public void testTextAroundCodesIsKept() {
+        assertEquals("ç ⠁ █", parsed("ç ⠁ █"));
+    }
+
     static class TestStreamConsumer implements TerminalStreamConsumer {
 
         @Override

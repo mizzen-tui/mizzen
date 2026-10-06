@@ -609,6 +609,14 @@ public class TUIApp implements ComponentFinder {
         terminateAppHotKeyEventHandler = new KeyInputEventHandler(terminateAppHotKey, (te) -> onClick_terminateAppHotKey(te) );
         eventBus.prependEventHandler(terminateAppHotKeyEventHandler);
 
+        // the application's focus manager goes on the bus before the application's setup code
+        // (setOnReadyStart) adds its own handlers: a key goes to the focused component and what it is
+        // inside first; an app-wide key handler added by the application gets only the keys nobody
+        // there used (as an accelerator should). CTRL-C (above) stays first.
+        if (mainApplicationPanel instanceof FocusManager) {
+            getApplicationFocusManager();
+        }
+
         makeRefreshCanvasIfModifiedAction();
 
         // if updateCanvas not specified by client app, then let's try to make our own

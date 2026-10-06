@@ -38,16 +38,12 @@ public class TerminalStreamOutputParser {
     
     
     private static final int STATE_START = 1;
-    private static final int STATE_ESCAPE_INTERMEDIATE = 2;
     private static final int STATE_ESCAPE = 3;
     private static final int STATE_CONTROL_CODE_START = 4;
-    private static final int STATE_CONTROL_CODE_END = 5;
+    private static final int STATE_OSC = 6;               // ESC ] ... - ends with BEL or ESC \
+    private static final int STATE_SKIP_ONE = 7;          // ESC ( B and friends: one more char, then done
 
     private int parse_STATE = STATE_START;
-    private int parsed_row = 0;
-    private int parsed_col = 0;
-    private String accumulatedDigits;
-    private char lastChar = Character.MIN_VALUE;
 
     private StringBuilder buffer = new StringBuilder();
     
@@ -59,7 +55,7 @@ public class TerminalStreamOutputParser {
     }
 
     public void parseInput(String input) {
-        parseInput( input.getBytes(), input.getBytes().length );
+        parseInput(input.toCharArray(), input.length());
     }
    
     public void parseInput(byte[] buffer, int readIn) {
@@ -84,14 +80,6 @@ public class TerminalStreamOutputParser {
         buffer = new StringBuilder(); // expensive
     }
     
-    private void flushBufferToText() {
-        int bufferLen = buffer.length();
-        for (int i=0; i < bufferLen; i++) {
-            streamConsumer.consumeTextChar(buffer.charAt(i));
-        }
-        clearBuffer();
-    }
-    
     private boolean bufferIsKnownControlCode() {
         return (knownControlCodes.containsKey(buffer.toString()));
     }
@@ -105,6 +93,12 @@ public class TerminalStreamOutputParser {
         clearBuffer();
     }
     
+    /**
+     * One char of the stream: text goes to the consumer, control codes are collected and passed on.
+     * <p/>
+     * A control code it doesn't know is dropped, never shown as text - e.g. ESC[3J (clear scrollback,
+     * sent by "clear"), ESC(B (from "tput sgr0"), ESC]0;title BEL (window title), ESC[?2004h.
+     */
     public void parseInput(char ch) {
         
         switch (parse_STATE) {
@@ -116,104 +110,100 @@ public class TerminalStreamOutputParser {
             }
             streamConsumer.consumeTextChar(ch);
             return;
+
         case STATE_ESCAPE:
             if (ch == '[') {
                 addToBuffer(ch);
                 parse_STATE = STATE_CONTROL_CODE_START;
                 return;
             }
-            resetTo_STATE_START();
-            flushBufferToText();
+            clearBuffer();
+            if (ch == ']') {
+                parse_STATE = STATE_OSC;
+            } else if (ch == '(' || ch == ')' || ch == '*' || ch == '+' || ch == '#' || ch == '%') {
+                parse_STATE = STATE_SKIP_ONE;
+            } else {
+                resetTo_STATE_START();      // ESC 7, ESC 8, ESC =, ESC > ...: nothing to show
+            }
             return;
 
         case STATE_CONTROL_CODE_START:
             addToBuffer(ch);
-            if (Character.isLetter(ch)) {
+            if (ch >= 0x40 && ch <= 0x7E) {   // the final char of ESC [ ... (a letter, @, ~ ...)
                 handleControlCodeEnd(ch);
-                return;
             }
             return;
 
-         default:
-             flushBufferToText();
-             resetTo_STATE_START();
-             return;
+        case STATE_OSC:
+            if (ch == 0x07) {
+                resetTo_STATE_START();
+            } else if (ch == 0x1B) {
+                parse_STATE = STATE_SKIP_ONE;   // ESC \ ends it
+            }
+            return;
+
+        case STATE_SKIP_ONE:
+        default:
+            resetTo_STATE_START();
+            return;
         }
 
     }
     
+    /** ESC [ params final: lastChar is the final char */
     private void handleControlCodeEnd(char lastChar) {
-        // lastChar is a letter
         if (bufferIsKnownControlCode()) {
             flushBufferAsControlCode();
             resetTo_STATE_START();
             return;
         }
-        
-        if (lastChar == 'm') {  // COLOR CODE
-            // could be color code
+
+        String params = buffer.substring(2, buffer.length() - 1);
+        switch (lastChar) {
+        case 'm':   // colour
             Color color = parseColor(buffer.toString());
             if (color != null) {
                 streamConsumer.consumeControlCode(color);
-                clearBuffer();
-            } else {
-                flushBufferToText();
             }
-            resetTo_STATE_START();
-            return ;
-        }
-
-        if (lastChar == 'A') {  // CURSOR UP
-            try {
-               int nLines = Integer.parseInt( buffer.substring(2, buffer.length()-1) );
-               streamConsumer.consumeControlCode(new CursorUp(nLines));
-               clearBuffer();
-            } catch (NumberFormatException | StringIndexOutOfBoundsException e ) {
-                flushBufferToText();
+            break;
+        case 'A':
+            streamConsumer.consumeControlCode(new CursorUp(count(params)));
+            break;
+        case 'B':
+            streamConsumer.consumeControlCode(new CursorDown(count(params)));
+            break;
+        case 'C':
+            streamConsumer.consumeControlCode(new CursorForward(count(params)));
+            break;
+        case 'D':
+            streamConsumer.consumeControlCode(new CursorBackward(count(params)));
+            break;
+        case 'G':   // to column n (1 = the first)
+            streamConsumer.consumeControlCode(ControlCode.CURSOR_LEFT);
+            if (count(params) > 1) {
+                streamConsumer.consumeControlCode(new CursorForward(count(params) - 1));
             }
-            resetTo_STATE_START();
-            return ;
-        }
-
-        if (lastChar == 'B') {  // CURSOR DOWN
-            try {
-               int nLines = Integer.parseInt( buffer.substring(2, buffer.length()-1) );
-               streamConsumer.consumeControlCode(new CursorDown(nLines));
-               clearBuffer();
-            } catch (NumberFormatException | StringIndexOutOfBoundsException e ) {
-                flushBufferToText();
+            break;
+        case 'K':
+            if (params.equals("0")) {
+                streamConsumer.consumeControlCode(ControlCode.ERASE_END_OF_LINE);
             }
-            resetTo_STATE_START();
-            return ;
+            break;
+        default:    // not shown (e.g. ESC[3J, ESC[?2004h, ESC[5;10H)
+            break;
         }
-
-        if (lastChar == 'C') {  // CURSOR FORWARD
-            try {
-               int nLines = Integer.parseInt( buffer.substring(2, buffer.length()-1) );
-               streamConsumer.consumeControlCode(new CursorForward(nLines));
-               clearBuffer();
-            } catch (NumberFormatException | StringIndexOutOfBoundsException e ) {
-                flushBufferToText();
-            }
-            resetTo_STATE_START();
-            return ;
-        }
-
-        if (lastChar == 'D') {  // CURSOR BACKWARD
-            try {
-               int nLines = Integer.parseInt( buffer.substring(2, buffer.length()-1) );
-               streamConsumer.consumeControlCode(new CursorBackward(nLines));
-               clearBuffer();
-            } catch (NumberFormatException | StringIndexOutOfBoundsException e ) {
-                flushBufferToText();
-            }
-            resetTo_STATE_START();
-            return ;
-        }
-
-        flushBufferToText();
+        clearBuffer();
         resetTo_STATE_START();
-        return;
+    }
+
+    /** the count in ESC [ n A ...; none (or 0) means 1 */
+    private static int count(String params) {
+        try {
+            int n = Integer.parseInt(params);
+            return n > 0 ? n : 1;
+        } catch (NumberFormatException e) {
+            return 1;
+        }
     }
 
     private Color parseColor(String colorCodedStr) {
@@ -235,11 +225,7 @@ public class TerminalStreamOutputParser {
     
     
     private void resetTo_STATE_START() {
-        parsed_row = -1;
-        parsed_col = -1;
-        accumulatedDigits = null;
         parse_STATE = STATE_START;
-        lastChar = Character.MIN_VALUE;
     }
     
     

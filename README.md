@@ -8,7 +8,7 @@ Purpose is to be able to render UI objects on a linux based terminals.
 ##### Background:
 
 Originally I wanted to make a very simple set of utility classes to help with VT-100 terminal Control Codes manipulation
-for use within the ACME OLT-Manager CLI system.
+for a command-line interface.
 
 To say I went a little overboard ..  Well .. that just under states it!  :)
 

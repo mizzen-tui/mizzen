@@ -20,9 +20,8 @@ public class CharacterViewerTest {
 
     public static void main(String[] args) throws IOException {
 
-        TUIApp app = new TUIApp();
+        TUIApp app = new TUIApp(args).setDefaultMainApplicationPanel();
 
-        app.initFromArgs(args);
 
         TextComponent dataToView = new TextComponent("\n\n Loading characters .. ");
         dataToView.setFillOnClear(false);
@@ -52,20 +51,13 @@ public class CharacterViewerTest {
 
         scrollPanel.setTitle(Colors.IGre, " ASCII VIEWER ");
 
-        app.enableMouseHandling(scrollPanel);
-
-        app.setUpdateCanvas((theApp) -> {
-            theApp.getCanvas().clearCanvas();
-            theApp.getCanvas().addComponentSegments(3, 5, scrollPanel);
-            return true;
-        });
+        app.getMainApplicationPanel().add(3, 5, scrollPanel);     // drawn, and given keys, as part of the main panel
 
         AtomicBoolean isProducerBusy = new AtomicBoolean(true);
         AtomicBoolean isConsumerBusy = new AtomicBoolean(true);
 
         StringSpinner spinner = new StringSpinner(StringSpinner.ARC);
 
-        app.getEventBus().appendEventHandler(scrollPanel);
 
         BlockingQueue<String> stringQueue = new ArrayBlockingQueue<String>(1000);
 

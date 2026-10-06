@@ -23,6 +23,7 @@ import dtb.terminalIO.components.plot.image.MovingPicturesViewer;
 import dtb.terminalIO.components.plot.image.animate.AnimatedGifImageIterator;
 import dtb.terminalIO.components.plot.image.animate.ImageIterator;
 import dtb.terminalIO.components.plot.image.animate.ImageSplitter;
+import dtb.terminalIO.examples.sampledata.ReadSampleFiles;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
@@ -55,7 +56,7 @@ public class ImageSplitterTest {
                int offset = 0;
 
                for (ImageSpec spec : images) {
-                   String imgFilePath = spec.path;
+                   String imgFilePath = asFile(spec.path);
                    ImageSettings settings = spec.settings;
                    ImageIterator imageIterator;
 
@@ -97,7 +98,7 @@ public class ImageSplitterTest {
                    
                    movingPicturesViewer.setBorder(false);
                    
-                   WindowFrame wf = new WindowFrame(movingPicturesViewer.getColor(), imgFilePath, movingPicturesViewer);
+                   WindowFrame wf = new WindowFrame(movingPicturesViewer.getColor(), imgFILE.getName(), movingPicturesViewer);
                    
                    
                    tApp.getMainApplicationPanel().add(offset, offset, wf);
@@ -152,8 +153,7 @@ public class ImageSplitterTest {
      * So an option applies to every following IMAGE until it is given again ("sticky").
      */
     private static void parseArgs(String[] args) {
-        if (args == null || args.length == 0 || Stream.of(args).anyMatch(a -> VeryBasicArgsHelper.isArgName(a, "HELP")
-                                                                         || "-h".equals(a) || "-?".equals(a))) {
+        if (Stream.of(args).anyMatch(a -> VeryBasicArgsHelper.isArgName(a, "HELP") || "-h".equals(a) || "-?".equals(a))) {
             printHelp();
             System.exit(0);
         }
@@ -205,11 +205,27 @@ public class ImageSplitterTest {
         }
 
         if (images.isEmpty()) {
-            throw new IllegalArgumentException("no IMAGE specified");
+            images.add(new ImageSpec(DEFAULT_GIF, current.copy()));
         }
         if (lastOptionIndex > lastImageIndex) {
             System.err.println("WARNING: options after the last IMAGE apply to no image (" + args[lastOptionIndex] + " ...)");
         }
+    }
+
+    /** the GIF shown when no IMAGE is given */
+    static final String DEFAULT_GIF = "rocket-launch.gif";
+
+    /**
+     * IMAGE's value as a file to read: a file path as it is; otherwise a bundled image - by its
+     * resource name (/dtb/.../shapes.gif) or just its name (shapes.gif) - as a temporary copy.
+     * Neither: the path as given (reported as not found).
+     */
+    static String asFile(String image) {
+        if (new File(image).exists()) {
+            return image;
+        }
+        File bundled = ReadSampleFiles.resourceAsFile(image);
+        return bundled != null ? bundled.getPath() : image;
     }
 
     private static String value(String[] args, int i, String argName) {
@@ -245,11 +261,14 @@ public class ImageSplitterTest {
         System.out.println(String.join("\n",
             "ImageSplitterTest - plays animated GIFs (or frames cut from a sprite sheet), each in its own window",
             "",
-            "usage: ./runDBG.sh " + cls + " [options] IMAGE <file> [[options] IMAGE <file> ...]",
+            "usage: ./runDBG.sh " + cls + " [options] [IMAGE <file> [[options] IMAGE <file> ...]]",
             "",
             "Options are sticky: each applies to every IMAGE that follows it, until given again.",
             "",
-            "  IMAGE <file>           image to show; repeat for several windows. .gif files animate their own",
+            "  IMAGE <file>           image to show; repeat for several windows (none: the bundled rocket-launch.gif).",
+            "                         A file, or a bundled image by name: rocket-launch.gif, rocket-sprites.png, shapes.gif,",
+            "                         bouncing-ball.gif, solar-system.gif, ball-sprites.png, earth-messenger.jpg.",
+            "                         .gif files animate their own",
             "                         frames; other images are cut into frames using OFFSETS / IMAGEWIDTH / IMAGEHEIGHT",
             "  INTERVAL <ms>          time between frames (default " + DEFAULTS.interval + ")",
             "  IMAGERENDER <type>     " + names(ImageViewerFactory.imageRenderTypeOptions(), DEFAULTS.renderType),
@@ -263,10 +282,11 @@ public class ImageSplitterTest {
             "  NOGRAPHICS             (TUIApp) draw without graphics characters",
             "  HELP | -h              this help",
             "",
-            "example (first two images in ASCII at 50ms, third in Braille, still at 50ms):",
-            "  ./runDBG.sh " + cls + " INTERVAL 50 IMAGERENDER ASCII \\",
-            "      IMAGE ../tmpImages/GIFS/jack_sparrow_and_compass.gif IMAGE ../tmpImages/GIFS/jack_sparrow_frightened.gif \\",
-            "      IMAGERENDER BRAILLE IMAGE ../tmpImages/GIFS/pulsating_colors1.gif"));
+            "example (two GIFs in ASCII at 50ms, then a sprite sheet of 4 x 2 frames of 96 x 96 in Braille):",
+            "  I=src/main/resources/dtb/terminalIO/examples/sampledata/images",
+            "  ./runDBG.sh " + cls + " INTERVAL 50 IMAGERENDER ASCII IMAGE $I/rocket-launch.gif IMAGE $I/shapes.gif \\",
+            "      IMAGERENDER BRAILLE IMAGEWIDTH 96 IMAGEHEIGHT 96 \\",
+            "      OFFSETS 0 0 96 0 192 0 288 0 0 96 96 96 192 96 288 96 IMAGE $I/rocket-sprites.png"));
     }
 
     static <T> T NotNull(T t, String error) {

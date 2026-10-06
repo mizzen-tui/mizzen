@@ -217,8 +217,7 @@ public class LineChartTest {
                     });
 
             // idleHandler.handle(null);
-            addAndRememberEventHandler(eventBus, menuButtonBar);
-            addAndRememberEventHandler(eventBus, idleHandler);
+            addAndRememberEventHandler(eventBus, idleHandler);      // (the menu bar's keys reach it through the component tree)
 
             doRenderLineChart = new Runnable() {
 
