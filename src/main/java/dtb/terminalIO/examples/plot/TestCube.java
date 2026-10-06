@@ -52,7 +52,7 @@ public class TestCube {
                 .confirmOnExit()
                 .setOnReadyStart((tApp) -> {
 
-                    float initialCubeDistanceFromCamera = 50f;
+                    float initialCubeDistanceFromCamera = 70f;
 
                     Dimension gridSize = new Dimension.Simple(
                             tApp.getMainApplicationPanel().getHeight() - 7,
@@ -82,7 +82,8 @@ public class TestCube {
                     plot2DInputForm.refreshFromProjection();
 
                     DropdownListBox<String> shapeChoice = DropdownListBox.fromStrings(new String[]{"Cube", "Sphere", "Both"});
-                    final boolean[] showBoth = { false }; 
+                    shapeChoice.setValue("Both");
+                    final boolean[] showBoth = { "Both".equalsIgnoreCase(shapeChoice.getValue() )}; 
 
                     Runnable redrawShape = () -> {
                         grid.clearPlots();

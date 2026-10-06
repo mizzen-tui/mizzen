@@ -36,8 +36,8 @@ public class TabPanelTest2 {
             Address address = new Address("123 Main St", "SmallVille", "Ontario");
             FormBinder<Address> formBinder = FormBinder.UTIL.get(address, tApp.getEventBus());
 
-            ScreenCanvasBackend canvasBackend = ((ScreenCanvasBackend)tApp.getCanvas().getCanvasBackend());
-            canvasBackend.setUpdateStrategy(UpdateStrategy.UPDATE_FULL);
+            // ScreenCanvasBackend canvasBackend = ((ScreenCanvasBackend)tApp.getCanvas().getCanvasBackend());
+            // canvasBackend.setUpdateStrategy(UpdateStrategy.UPDATE_FULL);
 
             TabPanel tp = new TabPanel(Colors.IGre, new Dimension.Simple(24, 96));
             tp.setName("MyTest2TabPanel");

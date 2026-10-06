@@ -1,0 +1,192 @@
+package dtb.terminalIO.app;
+
+import java.lang.reflect.Proxy;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+
+import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.composite.Composite;
+import dtb.terminalIO.events.ConditionalEventHandler;
+import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.EventHandlerContainer;
+import dtb.terminalIO.events.OnIdleEventEventHandler;
+import dtb.terminalIO.events.OnTerminateEventHandler;
+import dtb.terminalIO.events.TerminalEvent;
+import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
+import dtb.terminalIO.events.keyboard.Keys;
+import dtb.terminalIO.geom.Dimension;
+import junit.framework.TestCase;
+
+/**
+ * A TUIApp made inside TUIApp.runEmbedded runs inside the host: its main panel goes into the host's
+ * panel, its handlers onto the host's bus - and close() takes all of that out again. Outside
+ * runEmbedded a TUIApp is the usual terminal one. Bad launch code fails without leaving anything behind.
+ */
+public class EmbeddedAppTest extends TestCase {
+
+    /** the host's bus: keeps what is on it; idle() runs the idle handlers once, as the real bus does when idle */
+    static class HostBus extends EventBus.STUBBED {
+        final List<ConditionalEventHandler> handlers = new ArrayList<>();
+
+        @Override
+        public EventHandlerContainer prependEventHandler(ConditionalEventHandler eventHandler) {
+            handlers.add(0, eventHandler);
+            return this;
+        }
+
+        @Override
+        public EventHandlerContainer appendEventHandler(ConditionalEventHandler eventHandler) {
+            handlers.add(eventHandler);
+            return this;
+        }
+
+        @Override
+        public EventBus appendIdleEventHandler(OnIdleEventEventHandler onIdleEventHandler) {
+            handlers.add(onIdleEventHandler);
+            return this;
+        }
+
+        @Override
+        public EventBus appendTerminateEventHandler(OnTerminateEventHandler terminateHandler) {
+            handlers.add(terminateHandler);
+            return this;
+        }
+
+        @Override
+        public EventHandlerContainer removeEventHandler(ConditionalEventHandler eventHandler) {
+            handlers.remove(eventHandler);
+            return this;
+        }
+
+        @Override
+        public EventBus raiseEvent(TerminalEvent<?> te) {
+            return this;
+        }
+
+        void idle() {
+            TerminalEvent<Void> timer = new TerminalEvent<Void>(this, TerminalEvent.TYPE.TIMER, null, this);
+            for (ConditionalEventHandler handler : new ArrayList<>(handlers)) {
+                if (handler instanceof OnIdleEventEventHandler && handler.canHandle(timer) != null) {
+                    handler.handle(timer);
+                }
+            }
+        }
+    }
+
+    private final HostBus hostBus = new HostBus();
+    private final Composite slot = new Composite(new Dimension.Simple(10, 40));
+    private TUIApp host;
+
+    @Override
+    protected void setUp() {
+        // a host that is only a bus: the embedded app needs nothing else of it here
+        host = new TUIApp((TUIAppInterface) Proxy.newProxyInstance(TUIAppInterface.class.getClassLoader(),
+                new Class<?>[] { TUIAppInterface.class },
+                (proxy, method, args) -> method.getName().equals("getEventBus") ? hostBus : null));
+    }
+
+    public void testTheAppRunsInTheSlotAndCloseTakesEverythingOut() {
+        AtomicReference<TUIApp> setupGot = new AtomicReference<>();
+        Embedding embedding = TUIApp.runEmbedded(host, slot, () -> {
+            new TUIApp(new String[0])
+                .setDefaultMainApplicationPanel()
+                .setOnReadyStart((tApp) -> {
+                    setupGot.set(tApp);
+                    tApp.getEventBus().appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, (te) -> {}));
+                    tApp.getEventBus().appendIdleEventHandler(new OnIdleEventEventHandler.RepeatingInterval(100, (te) -> {}));
+                })
+                .start();
+        });
+        Component<?> panel = (Component<?>) embedding.tuiApp().getMainApplicationPanel();
+        assertTrue("its main panel is in the host's panel", slot.containsChild(panel));
+        assertEquals("its main panel is the host panel's size", 40, panel.getWidth());
+
+        assertEquals("before the setup ran: the setup task is on the bus", 1, embedding.handlersOnHostBus());
+        hostBus.idle();
+        assertSame("the setup code got the embedded TUIApp", embedding.tuiApp(), setupGot.get());
+        assertEquals("after: its key handler and timer (the setup task has gone)", 2, embedding.handlersOnHostBus());
+        assertEquals(2, hostBus.handlers.size());
+
+        embedding.close();
+        assertTrue("nothing of it left on the host's bus", hostBus.handlers.isEmpty());
+        assertEquals(0, embedding.handlersOnHostBus());
+        assertFalse("its panel is out of the host's panel", slot.containsChild(panel));
+        embedding.close();                          // again: nothing happens
+    }
+
+    public void testHandlersItRemovesItselfAreForgotten() {
+        Embedding embedding = TUIApp.runEmbedded(host, slot, () -> new TUIApp().setDefaultMainApplicationPanel().start());
+        hostBus.idle();
+        ConditionalEventHandler key = new KeyInputEventHandler(Keys.ESC_KEYSTROKE, (te) -> {});
+        EventBus bus = embedding.tuiApp().getEventBus();
+        bus.appendEventHandler(key);
+        assertEquals(1, embedding.handlersOnHostBus());
+        bus.removeEventHandler(key);
+        assertEquals(0, embedding.handlersOnHostBus());
+        assertTrue(hostBus.handlers.isEmpty());
+
+        // a one-shot task: forgotten once it ran, though it takes itself off the host's bus (te.getEventBus())
+        AtomicInteger ran = new AtomicInteger();
+        bus.asynch((te) -> ran.incrementAndGet());
+        assertEquals(1, embedding.handlersOnHostBus());
+        hostBus.idle();
+        assertEquals(1, ran.get());
+        assertEquals(0, embedding.handlersOnHostBus());
+        assertTrue(hostBus.handlers.isEmpty());
+    }
+
+    public void testATUIAppOutsideRunEmbeddedIsTheTerminalOne() {
+        TUIApp.runEmbedded(host, slot, () -> new TUIApp().setDefaultMainApplicationPanel().start()).close();
+        assertNotNull(new TUIApp().terminal());
+    }
+
+    public void testLaunchCodeThatThrowsLeavesNothingBehind() {
+        RuntimeException failure = new RuntimeException("setup failed");
+        try {
+            TUIApp.runEmbedded(host, slot, () -> {
+                TUIApp app = new TUIApp().setDefaultMainApplicationPanel();
+                app.getEventBus().appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, (te) -> {}));
+                app.start();
+                throw failure;
+            });
+            fail("expected the launch code's exception");
+        } catch (RuntimeException e) {
+            assertSame(failure, e);
+        }
+        assertTrue(hostBus.handlers.isEmpty());
+        assertTrue(slot.getChildren().isEmpty());
+        assertNotNull("not embedding any more", new TUIApp().terminal());
+    }
+
+    public void testLaunchCodeMustMakeAndStartOneTUIApp() {
+        assertFails("made no TUIApp", () -> {});
+        assertFails("did not start", () -> new TUIApp().setDefaultMainApplicationPanel());
+        assertFails("second TUIApp", () -> {
+            new TUIApp().setDefaultMainApplicationPanel().start();
+            new TUIApp();
+        });
+        assertTrue(hostBus.handlers.isEmpty());
+        assertTrue(slot.getChildren().isEmpty());
+    }
+
+    public void testTheTerminalIsTheHosts() {
+        Embedding embedding = TUIApp.runEmbedded(host, slot, () -> new TUIApp().setDefaultMainApplicationPanel().start());
+        try {
+            embedding.tuiApp().getScreen();
+            fail("an embedded app has no screen");
+        } catch (UnsupportedOperationException expected) {
+        }
+        embedding.close();
+    }
+
+    private void assertFails(String messagePart, Embedding.Launch launch) {
+        try {
+            TUIApp.runEmbedded(host, slot, launch);
+            fail("expected a failure: " + messagePart);
+        } catch (IllegalStateException e) {
+            assertTrue(e.getMessage(), e.getMessage().contains(messagePart));
+        }
+    }
+}

@@ -13,7 +13,7 @@ public class DefaultExceptionAction implements BiConsumer<TUIApp, TerminalEvent<
         // DefaultTerminateAction.resetTerminalForExiting(tApp);
 
         Exception e = (Exception) te.getEventData();
-        tApp.lastException = e;
+        tApp.terminal().lastException = e;
         // e.getEventBus().raiseEvent(new TerminalEvent<Void>(e.getEventBus(), TYPE.TERMINATE, null)
         te.getEventBus().raiseEvent(new TerminalEvent<Void>(this, TYPE.TERMINATE, null));
     }

@@ -20,9 +20,9 @@ public class DefaultTerminateAction implements Consumer<TUIApp> {
         }
         tApp.getCanvas().refresh();
 
-        if (tApp.lastException != null) {
+        if (tApp.terminal().lastException != null) {
             
-            tApp.lastException.printStackTrace();
+            tApp.terminal().lastException.printStackTrace();
             
         }
         
@@ -35,8 +35,8 @@ public class DefaultTerminateAction implements Consumer<TUIApp> {
     
     public static void resetTerminalForExiting(TUIApp tApp, Renderer r) {
         tApp.getEventBus().stopConsuming();
-        if (tApp.mouseEventOchestrator != null) {
-        	tApp.mouseEventOchestrator.disableMouseHandling();
+        if (tApp.terminal().mouseEventOchestrator != null) {
+        	tApp.terminal().mouseEventOchestrator.disableMouseHandling();
         	
         }
 //        tApp.getScreen().add( ControlCode.DISABLE_MOUSE_TRACKING );
