@@ -7,8 +7,6 @@ import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
-import dtb.terminalIO.events.ChainedEventHandler;
-import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
@@ -20,69 +18,39 @@ import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
-import dtb.terminalIO.util.ElapsedTime;
-import dtb.terminalIO.util.formatters.DefaultTextFormatter;
-import dtb.terminalIO.util.formatters.TextLineFormatter;
 import dtb.terminalIO.util.linuxproc.LinuxProcessWatcher;
+import dtb.terminalIO.util.linuxproc.TerminalStreamOutputParser;
 
+/**
+ * Runs a program (a LinuxProcessWatcher) and shows its output as a terminal would: the output goes
+ * through TerminalStreamOutputParser into a StdoutViewer, which applies the control codes - colours,
+ * and cursor movement too, so a program that redraws (a progress bar, a TUI app moving a circle) shows
+ * as it does in a terminal. Scrolls to follow the output; CTRL-F finds text (addFinder).
+ * <p/>
+ * The program's output is read on its own thread; StdoutViewer queues it and applies it on the event
+ * bus (enableTimedFlush), so drawing never races the reading.
+ */
 public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxProcessViewer>>
         implements ParentContainer, FocusManager, GetComponentAtOffset {
 
-    ScrollableComponent scrollableView;
-    public TextComponent textContentView;
+    private static final int FLUSH_INTERVAL = 100;     // ms between applying what was read to the view
+    private static final int TITLE_INTERVAL = 500;     // ms between updates of the title's line count
 
-    Focusable focusable;
-    ChainedEventHandler chainedEventHandler;
-    ConditionalEventHandler eventHandler;
+    ScrollableComponent scrollableView;
+    public final StdoutViewer contentView;
 
     LinuxProcessWatcher linuProcWatcher;
     OnTerminateEventHandler terminateHandler;
-    TextLineFormatter textLineFormatter;
-
-    final TextBuffer textBuffer = new TextBuffer();
-
-    static class TextBuffer {
-        int height = 0;
-        int lastRenderedHeight = -1;
-        StringBuilder sb = new StringBuilder();
-
-        void synchHeights() {
-            lastRenderedHeight = height;
-        }
-
-        synchronized boolean isModified() {
-            return lastRenderedHeight != height;
-        }
-
-        synchronized void addLine(String line) {
-            sb.append(line).append("\n");
-            height += Dimension.UTIL.stringToDimension(line).getHeight();
-        }
-
-        public synchronized boolean getForDisplayIfModified(Runnable r) {
-            if (!isModified()) {
-                return false;
-            }
-            this.synchHeights();
-            r.run();
-            return true;
-        }
-
-        public String toString() {
-            return sb.toString();
-        }
-    }
 
     public LinuxProcessViewer(Color color, Dimension d) {
         super(color, d);
-        this.textContentView = new TextComponent(color, "Initializing..");
-        this.textContentView.setFillOnClear(false);
-        this.scrollableView = new ScrollableComponent(color, d, textContentView);
+        this.contentView = new StdoutViewer(color);
+        this.contentView.setFillOnClear(false);
+        this.scrollableView = new ScrollableComponent(color, d, contentView);
         this.scrollableView.setFillOnClear(true);
         this.scrollableView.setParentContainer(this);
         this.setFillOnClear(false);
         this.scrollableView.setBorderColor(color);
-        this.textLineFormatter = new DefaultTextFormatter();
     }
 
     public LinuxProcessViewer(Dimension d) {
@@ -103,8 +71,8 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
     }
     
     public void setContentColor(Color drawingColor) {
-        this.textContentView.setColor(drawingColor);
-        this.textContentView.setEmptyColor(drawingColor);
+        this.contentView.setColor(drawingColor);
+        this.contentView.setEmptyColor(drawingColor);
         this.scrollableView.setColor(drawingColor);
         this.scrollableView.setContentColor(drawingColor);
         this.scrollableView.setEmptyColor(drawingColor);
@@ -124,10 +92,6 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
     public void resize(Dimension d) {
         super.resize(d);
         this.scrollableView.resize(d);
-    }
-
-    private void updateCanvas(EventBus eventBus) {
-        eventBus.raiseEvent(new RequestUpdateCanvasEvent(this));
     }
 
     public LinuxProcessViewer setTitle(String title) {
@@ -153,94 +117,52 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
         return this;
     }
 
-    boolean idleEventsAdded = false;
+    boolean eventHandlersAdded = false;
 
-    private void addIdleAndTerminateEventsToEventBus(EventBus eventBus) {
-        
-        // FIXME/TODO " if existing linuProcWatcher then we need to kill it
+    // once: apply what was read (flush), keep the title's line count current, stop the program on exit
+    private void addEventHandlers(EventBus eventBus) {
+        eventHandlersAdded = true;
 
-//        eventHandlerContainer.prependEventHandler(scrollView.asEventHandler());
+        contentView.enableTimedFlush(FLUSH_INTERVAL, eventBus);
 
-        idleEventsAdded = true;
-
-        eventBus.appendEventHandler(new OnIdleEventEventHandler.RepeatingInterval(300, new EventHandler() {
-
-            @Override
-            public void handle(TerminalEvent<?> te) {
-
-                textBuffer.getForDisplayIfModified(() -> {
-
-                    String rawText = textBuffer.toString();
-                    ElapsedTime elapsed = ElapsedTime.onRunOf(() -> textContentView.setTextAndResize(rawText));
-
-                    int vHeight = scrollableView.getHeight() - 2;
-
-                    int height = textBuffer.height;
-
-                    if (vHeight < height) {
-                        int offsetRow = height - vHeight;
-                        scrollableView.setViewOffset(offsetRow, scrollableView.getOffsetIntoSource().getCol());
-                        scrollableView.getOffsetIntoSource();
-                    }
-
-                    setTitle("lines: " + height + "  elapsed: " + elapsed);
-
-                    LinuxProcessViewer.this.markAsDirty();
-                    
-                    updateCanvas(te.getEventBus());
-
-                });
+        int[] shownLines = { -1 };
+        eventBus.appendEventHandler(new OnIdleEventEventHandler.RepeatingInterval(TITLE_INTERVAL, (te) -> {
+            int lines = contentView.getHeight();
+            if (lines != shownLines[0]) {
+                shownLines[0] = lines;
+                setTitle("lines: " + lines);
+                markAsDirty();
+                te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(this));
             }
         }));
-        
-        
+
         terminateHandler = new OnTerminateEventHandler(() -> stopRequest(LinuxProcessViewer.this.linuProcWatcher));
-
         eventBus.appendEventHandler(terminateHandler);
-
     }
 
+    /** start the program: its output goes, as it comes, through the parser into the view */
     public void invoke(EventBus eventBus) {
 
-        if (!idleEventsAdded) {
-            synchronized (this) {
-                if (!idleEventsAdded) {
-                    addIdleAndTerminateEventsToEventBus(eventBus);
-                }
+        synchronized (this) {
+            if (!eventHandlersAdded) {
+                addEventHandlers(eventBus);
             }
         }
 
-        eventBus.asynch(new EventHandler() {
-            @Override
-            public void handle(TerminalEvent<?> te) {
+        try {
+            linuProcWatcher.invokeLongRunning(new TerminalStreamOutputParser(contentView),
+                                              (result) -> {},
+                                              (e) -> show("\n" + e + "\n"));
+        } catch (Exception e) {
+            show(e.toString());
+        }
+    }
 
-                try {
-                    int[] sleepCTR = new int[] { 0 };
-                    linuProcWatcher.invokeLongRunning((line) -> {
-                        if (textLineFormatter != null) {
-                            line = textLineFormatter.getFormattedText(line);
-                        }
-
-                        textBuffer.addLine(line);
-                        sleepCTR[0]++;
-                        if (sleepCTR[0] > 25) {  // every 25 lines sleep to give UI a chance to render
-                            try {
-                                Thread.sleep(50); // FIXME: I dont like that I have to sleep - doing this to avoid
-                                                   // starvation. I must have a structural problem here
-                            } catch (InterruptedException e) {
-                                return;
-                            }
-                            sleepCTR[0] = 0;
-                        }
-                    }, (result) -> {
-                    });
-
-                } catch (Exception e) {
-                    textContentView.setTextAndResize(e.toString());
-                    updateCanvas(te.getEventBus());
-                }
-            }
-        });
+    // text into the view as if the program had written it
+    private void show(String text) {
+        for (char ch : text.toCharArray()) {
+            contentView.consumeTextChar(ch);
+        }
     }
 
     public void stopRequest() {
@@ -248,7 +170,9 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
     }
 
     private void stopRequest(final LinuxProcessWatcher linuProcWatcher) {
-        linuProcWatcher.stopRequest();
+        if (linuProcWatcher != null) {
+            linuProcWatcher.stopRequest();
+        }
     }
 
     @Override

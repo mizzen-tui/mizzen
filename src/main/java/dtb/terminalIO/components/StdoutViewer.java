@@ -130,6 +130,10 @@ public class StdoutViewer extends AbstractComponent<StdoutViewer>  implements Te
 
     ThrottledRunnable throttleForRequestScrollToView = new ThrottledRunnable(500);
 
+    // new output came in and the view has not scrolled to it yet. The throttle drops a scroll asked
+    // for too soon, so the last output would stay out of view; it is owed until it happens.
+    private boolean scrollToBottomOwed = false;
+
     public void flush(EventBus eventBus) {
         int countTasksExecuted = drainQWithTimeLimit(10);
 
@@ -168,8 +172,13 @@ public class StdoutViewer extends AbstractComponent<StdoutViewer>  implements Te
                     }
                 }
 
-                throttleForRequestScrollToView.run(()->scrollToBottomOfViewer(eventBus));
-
+                scrollToBottomOwed = true;
+            }
+            if (scrollToBottomOwed) {
+                throttleForRequestScrollToView.run(() -> {
+                    scrollToBottomOwed = false;
+                    scrollToBottomOfViewer(eventBus);
+                });
             }
             if (firstFlushCall) {
                 firstFlushCall = false;

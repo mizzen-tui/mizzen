@@ -140,36 +140,23 @@ public class ExecUtil {
 
         char buffer[] = new char[1024];
 
+        // the start of a line whose end has not arrived yet
+        private String pendingOutput = null;
+
+        /**
+         * Hands on each line of the program's output as it completes (a line ends at \n or \r); a
+         * partial line waits for the rest. The read blocks until the program writes something or its
+         * output ends - no polling - and the thread ends at the end of the output (or when isActive
+         * says to stop, at the next read).
+         */
         @Override
         public void run() {
             try {
-                String pendingOutput = null;
                 BufferedReader reader = new BufferedReader(new InputStreamReader(is));
                 isEOF = false;
                 while (isActive.get() && !isEOF && !Thread.interrupted()) {
-                    int available = is.available();
-                    if (available > 0 && reader.ready()) {
-                        int count = reader.read(buffer, 0, Math.min(available / 2, buffer.length));
-                        isEOF = (count < 0);
-                        if (isEOF) break; // todo - need to ensure that pending gets output at end of loop
-                        int j = 0;
-                        int i = 0;
-                        for (; i < count; i++) {
-                            if (buffer[i] == '\n' || buffer[i] == '\r') {
-                                String output = ((pendingOutput != null) ? pendingOutput : "") + new String(buffer,j, i-j);
-                                j = i+1;
-                                pendingOutput = null;
-                                outputConsumer.accept(output);
-                            }
-                        }
-                        if (j+1 != i) {
-                            pendingOutput = new String(buffer,j, i-j);
-                        }
-                    } else {
-                        Thread.sleep(100);
-                    }
+                    isEOF = !readAndHandOn(reader);
                 }
-                
                 if (pendingOutput != null && pendingOutput.length()>0) {
                     outputConsumer.accept(pendingOutput);
                 }
@@ -183,6 +170,30 @@ public class ExecUtil {
                 }
             }
 
+        }
+
+        /** one read: complete lines handed on, the rest kept pending. false at end of stream. */
+        private boolean readAndHandOn(BufferedReader reader) throws Exception {
+            int count = reader.read(buffer, 0, buffer.length);
+            if (count < 0) {
+                return false;
+            }
+            int j = 0;
+            for (int i = 0; i < count; i++) {
+                if (buffer[i] == '\n' || buffer[i] == '\r') {
+                    String output = ((pendingOutput != null) ? pendingOutput : "") + new String(buffer, j, i - j);
+                    j = i + 1;
+                    pendingOutput = null;
+                    outputConsumer.accept(output);
+                }
+            }
+            // what follows the last line break starts the next line - all of it (even one char: often
+            // an ESC), added to what is pending (a read with no line break at all)
+            if (j < count) {
+                String rest = new String(buffer, j, count - j);
+                pendingOutput = (pendingOutput != null) ? pendingOutput + rest : rest;
+            }
+            return true;
         }
     }
     
