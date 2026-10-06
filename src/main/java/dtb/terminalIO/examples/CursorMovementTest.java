@@ -2,10 +2,10 @@ package dtb.terminalIO.examples;
 
 import java.io.IOException;
 import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import dtb.terminalIO.app.TUIApp;
+import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.input.ShowComponentOnFocus;
@@ -16,8 +16,6 @@ import dtb.terminalIO.core.ScreenCanvasBackend.UpdateStrategy;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
-import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
-import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
@@ -58,25 +56,18 @@ public class CursorMovementTest {
                         }
                     };
 
-                    // up-cursor
-                    tApp.getEventBus().appendEventHandler(new KeyInputEventHandler(Keys.CTRL_T_KEYSTROKE, (te) -> {
-                        moveCursorAction.accept(te.getEventBus(), new Position.Simple(-1, 0));
-                    }));
-
-                    // down-cursor
-                    tApp.getEventBus().appendEventHandler(new KeyInputEventHandler(Keys.CTRL_V_KEYSTROKE, (te) -> {
-                        moveCursorAction.accept(te.getEventBus(), new Position.Simple(1, 0));
-                    }));
-
-                    // left-cursor
-                    tApp.getEventBus().appendEventHandler(new KeyInputEventHandler(Keys.CTRL_F_KEYSTROKE, (te) -> {
-                        moveCursorAction.accept(te.getEventBus(), new Position.Simple(0, -1));
-                    }));
-
-                    // right-cursor
-                    tApp.getEventBus().appendEventHandler(new KeyInputEventHandler(Keys.CTRL_G_KEYSTROKE, (te) -> {
-                        moveCursorAction.accept(te.getEventBus(), new Position.Simple(0, 1));
-                    }));
+                    // the cursor's moves: a button bar - each button's key (shown on it) presses it, nearest to the focus first
+                    ButtonBar moves = new ButtonBar(Colors.BBlu, "cursorMoves");
+                    moves.setBorder(false);
+                    moves.setNoBorderChars();
+                    moves.addButton("up",    Keys.CTRL_T_KEYSTROKE, (te) -> moveCursorAction.accept(te.getEventBus(), new Position.Simple(-1, 0)))
+                         .setDisplayHotKey(true);
+                    moves.addButton("down",  Keys.CTRL_V_KEYSTROKE, (te) -> moveCursorAction.accept(te.getEventBus(), new Position.Simple(1, 0)))
+                         .setDisplayHotKey(true);
+                    moves.addButton("left",  Keys.CTRL_F_KEYSTROKE, (te) -> moveCursorAction.accept(te.getEventBus(), new Position.Simple(0, -1)))
+                         .setDisplayHotKey(true);
+                    moves.addButton("right", Keys.CTRL_G_KEYSTROKE, (te) -> moveCursorAction.accept(te.getEventBus(), new Position.Simple(0, 1)))
+                         .setDisplayHotKey(true);
 
                     Dimension scDimension = new Dimension.SupplierAsDimension(() -> {
                         return new Dimension.Simple(tApp.getMainApplicationPanel().getHeight() -10,
@@ -88,22 +79,9 @@ public class CursorMovementTest {
                                                                      mTextBox);
                     sc.setFillOnClear(false);
                     
-                    BiFunction<KeyStroke, String, String> hotKeyHelpText = (key, helpText) -> {
-                         return Colors.coloredText(Colors.BBlu, key.getName())+" : "+helpText;
-                    };
-
-
-                    TextComponent helpText = new TextComponent(hotKeyHelpText.apply(Keys.CTRL_T_KEYSTROKE,"up")   + " | " +
-                                                               hotKeyHelpText.apply(Keys.CTRL_V_KEYSTROKE,"down") + " | " +
-                                                               hotKeyHelpText.apply(Keys.CTRL_F_KEYSTROKE,"left") + " | " +
-                                                               hotKeyHelpText.apply(Keys.CTRL_G_KEYSTROKE,"right")+ " | " +
-                                                               hotKeyHelpText.apply(Keys.CTRL_U_KEYSTROKE,"Update Strategy")+ " | " +
-                                                               hotKeyHelpText.apply(Keys.CTRL_C_KEYSTROKE,"Quit")
-                                                                );
-                    
                     TextComponent debugText = new TextComponent("");
 
-                    tApp.getMainApplicationPanel().add(2, 4, helpText);
+                    tApp.getMainApplicationPanel().add(0, 4, moves);
                     tApp.getMainApplicationPanel().add(4, 4, debugText);
                     tApp.getMainApplicationPanel().add(6, 4, sc);
 
@@ -145,10 +123,11 @@ public class CursorMovementTest {
                         }
                     };
 
-                    tApp.getEventBus().appendEventHandler(new KeyInputEventHandler(Keys.CTRL_U_KEYSTROKE, (te) -> {
+                    moves.addButton("Update strategy", Keys.CTRL_U_KEYSTROKE, (te) -> {
                         toggleScreenUpdateStrategy.run();
                         te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(tApp));
-                    }));
+                    }).setDisplayHotKey(true);
+                    moves.addComponent(new TextComponent(" " + Keys.CTRL_C_KEYSTROKE.getName() + " Quit"));
 
                     canvasBackend.setUpdateStrategy(UpdateStrategy.UPDATE_CHANGED);
                     sc.setTitle("UPDATE STRATEGY: "+canvasBackend.getScreenUpdateStrategy());

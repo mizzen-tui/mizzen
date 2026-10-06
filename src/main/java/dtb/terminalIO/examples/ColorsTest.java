@@ -84,10 +84,7 @@ public class ColorsTest {
             
             sc.resize(  new Dimension.Simple(sc.getHeight()-1, sc.getWidth()));
             
-            tApp.getMainApplicationPanel().add(1,0, sc);
-            
-            
-            tApp.getEventBus().appendEventHandler( sc );
+            tApp.getMainApplicationPanel().add(1,0, sc);      // its keys reach it through the component tree
             
             tApp.setOnResizeAction((tSameApp, size)->{
                 tApp.clearCanvas();
