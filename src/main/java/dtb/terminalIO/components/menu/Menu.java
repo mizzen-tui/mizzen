@@ -5,26 +5,26 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import dtb.terminalIO.components.AbstractComponentWrappper;
-import dtb.terminalIO.components.AbstractWrappedComponentWithFocusManager;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.input.DisplayableValue;
-import dtb.terminalIO.components.input.ListBox;
 import dtb.terminalIO.components.input.ListBox.ComponentItemFactory;
+import dtb.terminalIO.components.input.ListBox;
+import dtb.terminalIO.components.input.ParentFocusBehaviour;
 import dtb.terminalIO.components.menu.MenuItem.LeftRightSelector;
 import dtb.terminalIO.components.menu.MenuItem.SubMenu;
 import dtb.terminalIO.controlcodes.color.Color;
-import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
-import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.RequestFocusEvent;
 import dtb.terminalIO.events.focus.ToFocusable;
+import dtb.terminalIO.events.keyboard.AsKeyboardHandler;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
+import dtb.terminalIO.events.keyboard.KeyboardHandler;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.util.Logging;
@@ -159,7 +159,7 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
                      Component.UTIL.returnFocusToPopupOwner(this.getRootMenu().menuContainer, te.getEventBus());
                      this.getRootMenu().popDownMenu();
                      if (this.getRootMenu().menuBar != null) {
-                         this.getRootMenu().menuBar.unFocus(null, te.getEventBus());
+                         this.getRootMenu().menuBar.closeActiveMenu();
                      }
                 }
             } catch (Exception e) {
@@ -200,26 +200,10 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
         if (!isVisible()) {
             return false;
         }
-        if (this.menuContainer.hasFocus()) {
+        if (this.menuContainer.asFocusable().hasFocus()) {
             return true;
         }
         return false;
-    }
-
-    /**
-     * Is focusable part of this menu: the menu bar itself, this menu's list, or anything inside it -
-     * its submenus at any depth, since a submenu counts as part of the menu it opened from (see
-     * Component.getPopupOwner). Used to decide whether a menu stays open when its focus moves.
-     */
-    boolean isFocusablePartOfMenu(Focusable focusable) {
-        if (focusable == null) {
-            return false;
-        }
-        if (this.menuBar != null && ToFocusable.UTIL.toFocusable(this.menuBar) == focusable) {
-            return true;
-        }
-        Focusable menuNode = this.menuContainer == null ? null : ToFocusable.UTIL.toFocusable(this.menuContainer);
-        return menuNode != null && FocusManager.UTIL.containsFocusable(menuNode, focusable);
     }
 
     public void setMenuRootPanel(Composite rootPanel) {
@@ -369,12 +353,19 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
 
     }
 
-    static class MenuContainer extends AbstractWrappedComponentWithFocusManager<ListBox<Object>> {
+    /**
+     * An open menu: its list of items. When focus leaves it (and any submenu it opened) it closes;
+     * when focus arrives it comes to the front.
+     */
+    static class MenuContainer extends AbstractComponentWrappper<ListBox<Object>> implements ToFocusable, AsKeyboardHandler {
 
         Menu menu;
+        private final ParentFocusBehaviour focus = ParentFocusBehaviour.of(this)
+                .whenFocusArrives((bus) -> Component.UTIL.bringToFront(this))
+                .whenFocusLeaves((bus) -> menu.popDownMenu());
+
         protected MenuContainer(Menu menu, Color color) {
             super(color, new ListBox<Object>());
-            this.addFocusable( getListBox().asFocusable() );
             getListBox().setBorder(true);
             getListBox().setEventTriggerForValueChanged(ListBox.VALUE_CHANGED_ON_ENTER_KEY |
                                                         ListBox.VALUE_CHANGED_ON_MOUSE_CLICK);
@@ -443,24 +434,14 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
             getListBox().setBorder(hasBorder);
         }
 
-        public void unFocus(Focusable newFocusable, EventBus eventBus) {
-            Logging.info(HasName.UTIL.getName(this)+ " unFocus   to next: " + HasName.UTIL.getName(newFocusable, "<none>"));
-
-            super.unFocus(newFocusable, eventBus);
-            if (!this.menu.isFocusablePartOfMenu(newFocusable)) {
-                this.menu.popDownMenu();
-                // the menu bar lets go only if focus leaves it - not when it moves to one of its own
-                // buttons (the open menu is part of the menu bar for focus)
-                Focusable menuBarNode = this.menu.menuBar == null ? null : ToFocusable.UTIL.toFocusable(this.menu.menuBar);
-                if (menuBarNode != null && (newFocusable == null || !FocusManager.UTIL.containsFocusable(menuBarNode, newFocusable))) {
-                    this.menu.menuBar.unFocus(newFocusable, eventBus);
-                }
-            }
+        @Override
+        public Focusable asFocusable() {
+            return focus.asFocusable();
         }
 
-        public void focus(Focusable oldFocusable, EventBus eventBus) {
-            Logging.info(HasName.UTIL.getName(this)+ " focus  from prev: " + HasName.UTIL.getName(oldFocusable, "<none>"));
-            super.focus(oldFocusable, eventBus);
+        @Override
+        public KeyboardHandler asKeyboardHandler() {
+            return focus.asKeyboardHandler();
         }
 
         public void selectFirst(TerminalEvent<?> te) {
@@ -505,7 +486,6 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
         if (this.parentMenu != null) {
             this.parentMenu.getMenuContainer().selectFirst(te);
         } else if (this.menuBar != null) {
-            this.menuBar.focus(null, te.getEventBus());
             this.menuBar.selectNextLeft(te);
         }
         te.getEventBus().raiseEvent(  new RequestUpdateCanvasEvent(this) );
@@ -521,7 +501,6 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
                 subMenu.getMenu().menuContainer.selectFirst(te);
             }
         } else if (this.menuBar != null) {
-            this.menuBar.focus(null, te.getEventBus());
             this.menuBar.selectNextRight(te);
         }
         te.getEventBus().raiseEvent(  new RequestUpdateCanvasEvent(this) );

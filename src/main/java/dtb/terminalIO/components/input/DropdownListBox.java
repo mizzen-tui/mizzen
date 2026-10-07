@@ -109,11 +109,12 @@ public class DropdownListBox<T> extends AbstractComponentWrappper<VerticalPanel>
         // one TAB stop: the button and the open list (it counts as this dropdown's - Component.getPopupOwner);
         // UP / DOWN move between them (and open the list - see onKey)
         this.focus = ParentFocusBehaviour.of(this)
-                                         .oneStop(Keys.UP_KEYSTROKE, Keys.DOWN_KEYSTROKE, false)
-                                         .onKey(this)
-                                         .onFocusGained(this::focusArrived)
-                                         .onFocusLost(this::focusLeft)
-                                         .otherEvents(events.asConditionalEventHandler());
+                                         .singleTabStop()
+                                         .arrowsMoveInside(ArrowKeys.UP_DOWN)
+                                         .handleKeys(this)
+                                         .whenFocusArrives(this::focusArrived)
+                                         .whenFocusLeaves(this::focusLeft)
+                                         .handleEvents(events.asConditionalEventHandler());
         this.setName("DropdownListBox");
 
         setSelectedOntoTextView();
@@ -555,9 +556,7 @@ public class DropdownListBox<T> extends AbstractComponentWrappper<VerticalPanel>
                     Rectangle desiredRect = listBoxParent.intersectWith(new Rectangle.Simple(listBoxPosition, listBox));
                     listBox.setBorder(false);
                     this.listBoxScrollPane = new ScrollableComponent(listBox.getColor(), new Dimension.Simple(desiredRect), listBox)
-                                                                .removeFooterComponent()
-                                                                .setCycling(false)
-                                                                .setNavKeysNone();
+                                                                .removeFooterComponent();
                     listBoxScrollPane.setName(this.getName()+"-listBoxScrollPane");
                 }
             }

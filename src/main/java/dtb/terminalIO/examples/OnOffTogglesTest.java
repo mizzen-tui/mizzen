@@ -11,7 +11,6 @@ import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.input.DefaultFocusableBehaviour;
-import dtb.terminalIO.components.input.HasValue;
 import dtb.terminalIO.components.input.RadioGroup;
 import dtb.terminalIO.components.input.TextInput;
 import dtb.terminalIO.components.modal.MessageBox;
@@ -51,23 +50,7 @@ public class OnOffTogglesTest {
 
         app.getMainApplicationPanel().add(new ClickableBackground(app.getCanvas()));
 
-        ButtonBar buttons = new ButtonBar("OnOffTogglesTest-buttonBar") {
-            @Override
-            public EventHandler canHandle(TerminalEvent<?> te) {
-                if (te instanceof HasValue.ValueChangedEvent) {
-                    return super.canHandle(te);
-                }
-                return super.canHandle(te);
-            }
-            @Override
-            public void handle(TerminalEvent<?> te) {
-                if (te instanceof HasValue.ValueChangedEvent) {
-                    super.handle(te);
-                    return;
-                }
-                super.handle(te);
-            }
-        };
+        ButtonBar buttons = new ButtonBar("OnOffTogglesTest-buttonBar");
         buttons.setLeftMostBorderChar((char) 0);
         buttons.setRightMostBorderChar((char) 0);
 
@@ -146,7 +129,7 @@ public class OnOffTogglesTest {
                     new Dimension.Simple((int)(app.getMainApplicationPanel().getHeight()*.55),
                             (int)(app.getMainApplicationPanel().getWidth()*.35)), 
                     buttons, 
-                    buttons);
+                    (FocusManager) buttons.asFocusable());
             
             componentInspector.setTitle("CTRL-T: Toggle inspector view");
 

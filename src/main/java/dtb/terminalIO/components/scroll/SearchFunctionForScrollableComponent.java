@@ -5,7 +5,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import dtb.terminalIO.components.AbstractWrappedComponentWithFocusManager;
+import dtb.terminalIO.components.ComponentWithFocus;
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.Component;
@@ -13,35 +13,39 @@ import dtb.terminalIO.components.HilitingComponent;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.input.Button;
-import dtb.terminalIO.components.input.HasValue;
 import dtb.terminalIO.components.input.HasValue.TimerControlledOnValueChangedEventHandler;
+import dtb.terminalIO.components.input.HasValue;
 import dtb.terminalIO.components.input.TextInput;
 import dtb.terminalIO.components.scroll.WindowViewComponent.CustomComponentDrawFunction;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
-import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.OnIdleEventEventHandler.RepeatingIntervalWhileCond;
+import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.RequestHideCursorEvent;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
-import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.RequestReleaseFocusEvent;
+import dtb.terminalIO.events.keyboard.KeyEvent;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
+import dtb.terminalIO.events.keyboard.KeyboardHandler;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
-import dtb.terminalIO.textsegments.SegmentsSearchUtils;
 import dtb.terminalIO.textsegments.SegmentsSearchUtils.TextInSegmentSearchResult;
+import dtb.terminalIO.textsegments.SegmentsSearchUtils;
 import dtb.terminalIO.util.ElapsedTime;
 import dtb.terminalIO.util.ListComparator;
 import dtb.terminalIO.util.StringSpinner;
 
-public class SearchFunctionForScrollableComponent extends AbstractWrappedComponentWithFocusManager<ButtonBar> {
+public class SearchFunctionForScrollableComponent extends ComponentWithFocus<ButtonBar, SearchFunctionForScrollableComponent> {
+
+
+
 
     private List<Rectangle> searchResult;
     private TextInSegmentSearchResult currentSearchResult;
@@ -97,6 +101,23 @@ public class SearchFunctionForScrollableComponent extends AbstractWrappedCompone
 
     public SearchFunctionForScrollableComponent(Color color, SearchableView viewComp) {
         super(color, new ButtonBar(color).setNoBorderChars());
+        // its buttons and search box are TAB stops; ESC typed in the search box ends the search
+        focus().whenChildFocused((child, eventBus) -> eventBus.raiseEvent(new RequestUpdateCanvasEvent(this)))
+               .handleKeys(new KeyboardHandler() {
+                   @Override
+                   public boolean onKey(KeyEvent ke) {
+                       if (!wantsKey(ke)) {
+                           return false;
+                       }
+                       finishSearchInputEventHandler.handle(ke);
+                       return true;
+                   }
+
+                   @Override
+                   public boolean wantsKey(KeyEvent ke) {
+                       return finishSearchInputEventHandler != null && finishSearchInputEventHandler.canHandle(ke) != null;
+                   }
+               });
         getWrappedComponent().setName("SearchFunctionForScrollableComponent-buttonBar");
         this.viewComp = viewComp;
         this.findButton = new Button(SearchFunctionForScrollableComponent.this.getColor(),
@@ -180,11 +201,6 @@ public class SearchFunctionForScrollableComponent extends AbstractWrappedCompone
         }
     }
 
-    @Override
-    public void setFocus(boolean focus, EventBus eventBus) {
-        super.setFocus(focus, eventBus);
-    }
-    
     int hilitesSelectedIDX = -1;
     List<Rectangle> previoushiliteRegionsInView = null;
     ListComparator<Rectangle> hilitesComparator = new ListComparator<Rectangle>(Rectangle.DEFAULT_COMPARATOR_FULL);
@@ -275,16 +291,6 @@ public class SearchFunctionForScrollableComponent extends AbstractWrappedCompone
         addFinderToScrollable(viewComp.asSearchableView());
     }
 
-    @Override
-    public void childHasCurrentFocus(Focusable focusableChild, EventBus eventBus) {
-        eventBus.raiseEvent( new RequestUpdateCanvasEvent(this));
-    }
-
-    @Override
-    public void setChildAsCurrentFocus(Focusable focusableChild, EventBus eventBus) {
-       super.setChildAsCurrentFocus(focusableChild, eventBus);
-    }
-
     private Color textInputSelectedColor() {
         return SearchFunctionForScrollableComponent.this.getColor().invert();
     }
@@ -301,10 +307,7 @@ public class SearchFunctionForScrollableComponent extends AbstractWrappedCompone
             SearchFunctionForScrollableComponent.this.lastFindText = textInput.getText();
             eventBus.raiseEvent(new RequestReleaseFocusEvent(textInput));
             eventBus.raiseEvent(new RequestHideCursorEvent(textInput));
-            if (SearchFunctionForScrollableComponent.this.finishSearchInputEventHandler != null) {
-                this.getWrappedComponent().removeEventHandler(SearchFunctionForScrollableComponent.this.finishSearchInputEventHandler);
-                SearchFunctionForScrollableComponent.this.finishSearchInputEventHandler = null;
-            }
+            SearchFunctionForScrollableComponent.this.finishSearchInputEventHandler = null;     // ESC no longer ends a search
             this.getWrappedComponent().remove(textInput);
             addRemoveNavButtonsOnSearchResults(null);
             viewComp.refreshFooter();
@@ -378,7 +381,7 @@ public class SearchFunctionForScrollableComponent extends AbstractWrappedCompone
                                                                                                 lastFindText = null;
                                                                                             }
                                                                                         }));
-            this.getWrappedComponent().prependEventHandler(finishSearchInputEventHandler);
+            // (ESC reaches it through onKey while the search box is open)
 
             updateTitleOnTextChangedHandler = new TimerControlledOnValueChangedEventHandler<String>(findTextInput) {
                 @Override

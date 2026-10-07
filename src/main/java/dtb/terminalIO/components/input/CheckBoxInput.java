@@ -151,9 +151,9 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
      */
     private final LeafFocusBehaviour focus = LeafFocusBehaviour.of(this)
             .showsCursorAt(new Position.Simple(0, 2))
-            .onKey(AsKeyboardHandler.UTIL.toKeyboardHandler(
+            .handleKeys(AsKeyboardHandler.UTIL.toKeyboardHandler(
                     new KeyInputEventHandler((te) -> checkBoxPressed(te.getEventBus()), Keys.ENTER_KEYSTROKE, Keys.SPACE_KEYSTROKE)))
-            .otherEvents(new ConditionalEventHandler.Impl(
+            .handleEvents(new ConditionalEventHandler.Impl(
                     (te) -> this.actionOnChangeHandler != null && this.actionOnChangeHandler.canHandle(te) != null,
                     (te) -> this.actionOnChangeHandler.handle(te)));
 

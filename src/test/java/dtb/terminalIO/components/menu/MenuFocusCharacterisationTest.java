@@ -216,7 +216,7 @@ public class MenuFocusCharacterisationTest extends TestCase {
      */
     public void testFocusIntoMenuFromNothingFocused() {
         openFile();
-        file.getMenuContainer().focus(null, bus);
+        file.getMenuContainer().asFocusable().focus(null, bus);
 
         assertTrue(file.isVisible());
     }

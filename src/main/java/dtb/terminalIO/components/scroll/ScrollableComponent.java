@@ -2,29 +2,29 @@ package dtb.terminalIO.components.scroll;
 
 import java.util.function.Consumer;
 
+import dtb.terminalIO.components.ComponentWithFocus;
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.components.ComponentWithFocusManager;
 import dtb.terminalIO.components.HasName;
+import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent.AsSearchableView;
 import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent.SearchableView;
-import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.controlcodes.color.Color;
+import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
-import dtb.terminalIO.events.focus.FocusDirection;
-import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.RequestFocusEvent;
 import dtb.terminalIO.events.focus.ToFocusable;
+import dtb.terminalIO.events.keyboard.AsKeyboardHandler;
 import dtb.terminalIO.events.keyboard.KeyEvent;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
-import dtb.terminalIO.events.keyboard.KeyboardHandler;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
@@ -32,7 +32,17 @@ import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.util.Logging;
 
-public class ScrollableComponent  extends ComponentWithFocusManager<ScrollableComponent> implements CanScrollToView, ViewPortNavigable, HasViewPortWindow, AsSearchableView {
+/**
+ * A view onto a component larger than itself, with scrollbars, a footer of scroll buttons (for the
+ * mouse) and scroll keys (UP, DOWN, PgUp, PgDn, LEFT, RIGHT). When the viewed component can take
+ * focus, focus goes inside it and the scroll keys work for whatever it doesn't use; when it can't (a
+ * TextComponent), the pane itself is the TAB stop - its border hilites and its keys scroll it.
+ */
+public class ScrollableComponent  extends ComponentWithFocus<Composite, ScrollableComponent>
+                                  implements CanScrollToView, ViewPortNavigable, HasViewPortWindow, AsSearchableView {
+
+    // its own handlers: the scroll keys, footer keys for the content, scroll-to-view and view-port-changed
+    private final ChainedEventHandler ownHandlers = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
 
     WindowViewComponent viewer;
     BorderedComponent borderedComponent;
@@ -47,7 +57,7 @@ public class ScrollableComponent  extends ComponentWithFocusManager<ScrollableCo
 
 
     public ScrollableComponent(Color color, Dimension d, Component<?> componentBeingViewed)  {
-        super(color);
+        super(color, new Composite());
         
     //    this.setBorder(true);
 
@@ -102,14 +112,14 @@ public class ScrollableComponent  extends ComponentWithFocusManager<ScrollableCo
         this.getContainer().add(hScrollBar);
         this.getContainer().add(vScrollBar);
 
-        this.appendEventHandler(new  WindowViewComponent.ScrollToViewHandler(()->this.viewer, this));
+        ownHandlers.appendEventHandler(new  WindowViewComponent.ScrollToViewHandler(()->this.viewer, this));
 
-        this.appendEventHandler(new ConditionalEventHandler() {
+        ownHandlers.appendEventHandler(new ConditionalEventHandler() {
 
             @Override
             public void handle(TerminalEvent<?> te) {
                 // TODO Auto-generated method stub
-                if (footerControls.hasFocus()) {
+                if (footerControls.asFocusable().hasFocus()) {
                     Logging.info("FOOTER focus evt = " + te);
                     Focusable focusableChild = ToFocusable.UTIL.toFocusable(ScrollableComponent.this.componentBeingViewed);
                     if (focusableChild == null) {
@@ -126,7 +136,7 @@ public class ScrollableComponent  extends ComponentWithFocusManager<ScrollableCo
 
             @Override
             public EventHandler canHandle(TerminalEvent<?> te) {
-                if (footerControls.hasFocus() && footerControls.canHandle(te)==null ) {
+                if (footerControls.asFocusable().hasFocus() && footerControls.asFocusable().canHandle(te)==null ) {
                     // footer cannot handle it
                     if ( ToFocusable.UTIL.isFocusable(ScrollableComponent.this.componentBeingViewed) ) {
                         Focusable focusableChild = ToFocusable.UTIL.toFocusable(ScrollableComponent.this.componentBeingViewed);
@@ -146,6 +156,19 @@ public class ScrollableComponent  extends ComponentWithFocusManager<ScrollableCo
             });
         }
 
+        // focus: inside the viewed component if it can take it, else on the pane itself; keys and other
+        // events go to its own handlers
+        ConditionalEventHandler own = ownHandlers.asConditionalEventHandler();
+        focus().takeFocusItselfWhenNoChildCan()
+               .handleKeys(AsKeyboardHandler.UTIL.toKeyboardHandler(own))
+               .handleEvents(new ConditionalEventHandler.Impl(
+                       (te) -> !(te instanceof KeyEvent) && own.canHandle(te) != null,
+                       (te) -> own.handle(te)));
+    }
+
+
+    private Composite getContainer() {
+        return getPanel();
     }
 
     public ScrollableComponent setTitle(String title) {
@@ -301,7 +324,7 @@ public class ScrollableComponent  extends ComponentWithFocusManager<ScrollableCo
         // the footer buttons are for the mouse - not TAB stops, no hot keys (scroll keys are the pane's
         // own keys, as for any scrollable area: they reach the pane from the focused component inside it,
         // or with focus on the pane itself, and don't move focus)
-        footerControls.setTabStop(false);
+        footerControls.focus().skippedByTab();
         for (ScrollAction action : SCROLL_ACTIONS) {
             footerControls.addButton(action.label, null, (te) -> emitViewOffsetChangedOnOperation(te, () -> action.scroll.accept(this)));
         }
@@ -313,7 +336,7 @@ public class ScrollableComponent  extends ComponentWithFocusManager<ScrollableCo
         for (int i = 0; i < keys.length; i++) {
             keys[i] = SCROLL_ACTIONS[i].key;
         }
-        this.appendEventHandler(new KeyInputEventHandler(keys, (te) -> footerShown, (te) -> {
+        ownHandlers.appendEventHandler(new KeyInputEventHandler(keys, (te) -> footerShown, (te) -> {
             for (ScrollAction action : SCROLL_ACTIONS) {
                 if (((KeyEvent) te).isKeyStroke(action.key)) {
                     emitViewOffsetChangedOnOperation(te, () -> action.scroll.accept(this));
@@ -362,83 +385,7 @@ public class ScrollableComponent  extends ComponentWithFocusManager<ScrollableCo
     OnViewPortWindowChangedEventHandler onViewPortWindowChangedEventHandler;
 
     public void onViewPortChanged(EventHandler consumeChange) {
-        onViewPortWindowChangedEventHandler = HasViewPortWindow.UTIL.bindConsumerAsOnViewPortWindowChangedEventHandler(this, onViewPortWindowChangedEventHandler, this.getEventHandlerContainer(), consumeChange);
-    }
-
-    // ---- focus: when nothing inside the pane can take focus (e.g. it shows a TextComponent), the pane
-    //      itself is the TAB stop - its keys scroll it. Otherwise focus goes inside, as for any group.
-
-    private boolean focusedItself = false;
-
-    /** nothing in the pane can take focus by TAB (the footer and scroll bars are for the mouse) */
-    private boolean nothingInsideTakesFocus() {
-        return FocusManager.UTIL.enter(getFocusManager(), FocusDirection.FORWARD) == null;
-    }
-
-    @Override
-    public Focusable enter(FocusDirection dir) {
-        if (nothingInsideTakesFocus()) {
-            return isEnabled() && isTabStop() ? this : null;
-        }
-        return super.enter(dir);
-    }
-
-    @Override
-    public boolean hasFocus() {
-        return focusedItself || super.hasFocus();
-    }
-
-    @Override
-    public void setFocus(boolean focus, EventBus eventBus) {
-        if (focusedItself || nothingInsideTakesFocus()) {
-            setFocusedItself(focus, eventBus);
-            return;
-        }
-        super.setFocus(focus, eventBus);
-    }
-
-    @Override
-    public void focus(Focusable oldFocusable, EventBus eventBus) {
-        if (nothingInsideTakesFocus()) {
-            setFocusedItself(true, eventBus);
-            return;
-        }
-        super.focus(oldFocusable, eventBus);
-    }
-
-    @Override
-    public void unFocus(Focusable newFocusable, EventBus eventBus) {
-        if (focusedItself) {
-            setFocusedItself(false, eventBus);
-            return;
-        }
-        super.unFocus(newFocusable, eventBus);
-    }
-
-    /**
-     * As the focus stop, a key is claimed only if the pane's own handlers use it (the scroll keys);
-     * the rest - TAB, SHIFT-TAB - go on to the container around it (its focus manager inside would
-     * take them for moving focus among children it doesn't have).
-     */
-    @Override
-    public EventHandler canHandle(TerminalEvent<?> te) {
-        if (focusedItself && te instanceof KeyEvent) {
-            KeyboardHandler own = asKeyboardHandler();
-            return own != null && own.wantsKey((KeyEvent) te) ? this : null;
-        }
-        return super.canHandle(te);
-    }
-
-    @Override
-    public void handle(TerminalEvent<?> te) {
-        if (focusedItself && te instanceof KeyEvent) {
-            KeyboardHandler own = asKeyboardHandler();
-            if (own != null) {
-                own.onKey((KeyEvent) te);
-            }
-            return;
-        }
-        super.handle(te);
+        onViewPortWindowChangedEventHandler = HasViewPortWindow.UTIL.bindConsumerAsOnViewPortWindowChangedEventHandler(this, onViewPortWindowChangedEventHandler, ownHandlers, consumeChange);
     }
 
     /** the pane's border is its BorderedComponent's (the container around it has none) - hilite that one */
@@ -452,19 +399,9 @@ public class ScrollableComponent  extends ComponentWithFocusManager<ScrollableCo
         borderedComponent.unHilite();
     }
 
-    /** the pane as the focus stop: its border shows it */
-    private void setFocusedItself(boolean focus, EventBus eventBus) {
-        if (focusedItself == focus) {
-            return;
-        }
-        focusedItself = focus;
-        if (focus) {
-            hilite();
-        } else {
-            unHilite();
-        }
-        markAsDirty();
-        eventBus.raiseEvent(new RequestUpdateCanvasEvent(this));
+    @Override
+    public String getTitle() {
+        return borderedComponent.getTitle();
     }
 
     /**

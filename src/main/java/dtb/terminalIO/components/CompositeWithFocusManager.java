@@ -12,6 +12,12 @@ import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.FocusManagerProvider;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.geom.Dimension;
+/**
+ * The root panel of an app: a Composite that is also the app's root focus manager - the one on the
+ * event bus that routes every key (TUIApp makes it: setDefaultMainApplicationPanel). Not something to
+ * extend: for a component made of focusable components extend ComponentWithFocus; for a layout, a
+ * Composite is enough.
+ */
 public class CompositeWithFocusManager  extends Composite implements FocusManager, FocusManagerProvider
 {
 

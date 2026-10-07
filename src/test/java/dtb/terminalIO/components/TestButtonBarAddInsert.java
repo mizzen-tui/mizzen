@@ -33,8 +33,8 @@ public class TestButtonBarAddInsert extends TestCase {
     
     public void testSize() {
 
-        assertNotNull(bbar1.getChildFocusables());
-        assertEquals(bbar1.getChildFocusables().size(),3);
+        assertNotNull(focusablesIn(bbar1));
+        assertEquals(focusablesIn(bbar1).size(),3);
         
         
     }
@@ -45,9 +45,9 @@ public class TestButtonBarAddInsert extends TestCase {
         
         bbar1.addComponent(t);
         
-        assertNotNull(bbar1.getChildFocusables());
+        assertNotNull(focusablesIn(bbar1));
         // t is not a focusable
-        assertEquals(bbar1.getChildFocusables().size(),3);
+        assertEquals(focusablesIn(bbar1).size(),3);
         
         assertTrue(bbar1.containsChild(t));
         assertEquals(3,bbar1.indexOf(t));
@@ -61,9 +61,9 @@ public class TestButtonBarAddInsert extends TestCase {
 
         bbar1.insertComponent(0, t);
         
-        assertNotNull(bbar1.getChildFocusables());
+        assertNotNull(focusablesIn(bbar1));
         // t is not a focusable
-        assertEquals(bbar1.getChildFocusables().size(),3);
+        assertEquals(focusablesIn(bbar1).size(),3);
         
         assertTrue(bbar1.containsChild(t));
         assertEquals(0,bbar1.indexOf(t));
@@ -76,9 +76,9 @@ public class TestButtonBarAddInsert extends TestCase {
 
         bbar1.insertComponent(1, t);
 
-        assertNotNull(bbar1.getChildFocusables());
+        assertNotNull(focusablesIn(bbar1));
         // t is not a focusable
-        assertEquals(bbar1.getChildFocusables().size(),3);
+        assertEquals(focusablesIn(bbar1).size(),3);
 
         assertTrue(bbar1.containsChild(t));
         assertEquals(1,bbar1.indexOf(t));
@@ -91,12 +91,17 @@ public class TestButtonBarAddInsert extends TestCase {
 
         bbar1.insertComponent(2, t);
 
-        assertNotNull(bbar1.getChildFocusables());
+        assertNotNull(focusablesIn(bbar1));
         // t is not a focusable
-        assertEquals(bbar1.getChildFocusables().size(),3);
+        assertEquals(focusablesIn(bbar1).size(),3);
 
         assertTrue(bbar1.containsChild(t));
         assertEquals(2,bbar1.indexOf(t));
     }
 
+
+    /** the bar's focusable children, as its focus manager works them out */
+    private static java.util.Collection<? extends dtb.terminalIO.events.focus.Focusable> focusablesIn(ButtonBar bar) {
+        return ((dtb.terminalIO.events.focus.FocusManager) bar.asFocusable()).getChildFocusables();
+    }
 }

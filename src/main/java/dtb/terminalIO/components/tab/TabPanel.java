@@ -9,6 +9,7 @@ import dtb.terminalIO.components.Hiliter;
 import dtb.terminalIO.components.ParentContainer;
 import dtb.terminalIO.components.SimpleBorder;
 import dtb.terminalIO.components.composite.HorizontalPanel;
+import dtb.terminalIO.components.input.ArrowKeys;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
@@ -64,9 +65,10 @@ public class TabPanel extends AbstractComponentWrappper<CompositeWithFocusManage
         // tab strip: arrows move between tabs (wrapping) and show them, focus stays on the strip;
         // TAB leaves the strip into the tab's content. Using TAB here made the strip a focus trap.
         // ONE_STOP: the strip is one TAB stop that remembers the active tab
-        tabsButtonBar = new ButtonBar().setCycling(true).setNoBorderChars().setFocusPolicy(FocusPolicy.ONE_STOP)
-                                       .setPrevKeyStroke(Keys.LEFT_KEYSTROKE)
-                                       .setNextKeyStroke(Keys.RIGHT_KEYSTROKE);
+        tabsButtonBar = new ButtonBar().setNoBorderChars();
+        tabsButtonBar.focus().singleTabStop()
+                             .arrowsMoveInside(ArrowKeys.LEFT_RIGHT)
+                             .wrapAround();
 
         getWrappedComponent().add(Position.ZERO.addCols(1), tabsButtonBar);
 
@@ -280,8 +282,8 @@ public class TabPanel extends AbstractComponentWrappper<CompositeWithFocusManage
         if (this.current == null  && initial != null) {
             initial.onClick(eventBus);
         }
-        if (this.tabsButtonBar.getCurrentFocus() != null && this.tabsButtonBar.getCurrentFocus() instanceof TabButtonComponent) {
-            ((TabButtonComponent)tabsButtonBar.getCurrentFocus()).onClick(eventBus);
+        if (this.tabsButtonBar.focus().currentChild() != null && this.tabsButtonBar.focus().currentChild() instanceof TabButtonComponent) {
+            ((TabButtonComponent)tabsButtonBar.focus().currentChild()).onClick(eventBus);
             return true;
         }
         return false;
@@ -289,18 +291,18 @@ public class TabPanel extends AbstractComponentWrappper<CompositeWithFocusManage
 
     
     public boolean setPreviousAsCurrentFocus(EventBus eventBus) {
-        boolean previousSet = this.tabsButtonBar.setPreviousAsCurrentFocus(eventBus);
+        boolean previousSet = this.tabsButtonBar.focus().focusPrevious(eventBus);
         
-        if (previousSet  && this.tabsButtonBar.getCurrentFocus() instanceof TabButtonComponent) {
-            ((TabButtonComponent)tabsButtonBar.getCurrentFocus()).onClick(eventBus);
+        if (previousSet  && this.tabsButtonBar.focus().currentChild() instanceof TabButtonComponent) {
+            ((TabButtonComponent)tabsButtonBar.focus().currentChild()).onClick(eventBus);
         }
         return previousSet;
     }
 
     public boolean setNextAsCurrentFocus(EventBus eventBus) {
-        boolean nextSet = this.tabsButtonBar.setNextAsCurrentFocus(eventBus);
-        if (nextSet  && this.tabsButtonBar.getCurrentFocus() instanceof TabButtonComponent) {
-            ((TabButtonComponent)tabsButtonBar.getCurrentFocus()).onClick(eventBus);
+        boolean nextSet = this.tabsButtonBar.focus().focusNext(eventBus);
+        if (nextSet  && this.tabsButtonBar.focus().currentChild() instanceof TabButtonComponent) {
+            ((TabButtonComponent)tabsButtonBar.focus().currentChild()).onClick(eventBus);
         }
         return nextSet;
     }

@@ -220,33 +220,8 @@ final class TerminalApp implements TUIAppInterface {
         return this;
     }
     
-    static  IS_Event_TYPE IS_KEYPRESS = new IS_Event_TYPE(TerminalEvent.TYPE.KEYPRESS);
-
-    
-    static class TUIDefaultPanel extends CompositeWithFocusManager {
-        TUIDefaultPanel(){
-            super();
-        }
-        
-        @Override
-        public EventHandler canHandle(TerminalEvent<?> te)
-        {
-            if (IS_KEYPRESS.test(te)) {
-                return super.canHandle(te);
-            }
-            return super.canHandle(te);
-        }
-        
-        @Override
-        public void handle(TerminalEvent<?> te)
-        {
-            super.handle(te);
-        }
-        
-    }
-
     public TerminalApp setDefaultMainApplicationPanel() {
-        return setMainApplicationPanel(  new TUIDefaultPanel()
+        return setMainApplicationPanel(  new CompositeWithFocusManager()
                                                  .setBounds(this.getCanvas())
                                                  .setEmptyChar(this.getCanvas().getEmptyChar()));
     }

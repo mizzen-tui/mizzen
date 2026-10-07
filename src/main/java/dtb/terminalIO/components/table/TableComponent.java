@@ -77,10 +77,10 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
     private final LeafFocusBehaviour focus = LeafFocusBehaviour.of(this)
             .look(LeafFocusBehaviour.Look.NONE)
             .showOnFocus(this::selectedRowRectangle)
-            .onKey(new TableKeys())
-            .onFocusGained(this::repaint)
-            .onFocusLost(this::repaint)
-            .otherEvents(new ConditionalEventHandler.Impl((te) -> getEventHandler().canHandle(te) != null,
+            .handleKeys(new TableKeys())
+            .whenFocusArrives(this::repaint)
+            .whenFocusLeaves(this::repaint)
+            .handleEvents(new ConditionalEventHandler.Impl((te) -> getEventHandler().canHandle(te) != null,
                                                           (te) -> getEventHandler().handle(te)));
     TableCellAtPositions tableCellAtPositions;
 

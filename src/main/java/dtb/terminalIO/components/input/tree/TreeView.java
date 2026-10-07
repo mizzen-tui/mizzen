@@ -113,10 +113,10 @@ public class TreeView<N> extends BoundedComponent<TreeView<N>>
     private final LeafFocusBehaviour focus = LeafFocusBehaviour.of(this)
             .look(LeafFocusBehaviour.Look.NONE)                 // the selected row shows focus
             .showOnFocus(this::selectedRowRectangle)
-            .onKey(new TreeKeys())
-            .onFocusGained(this::focusGained)
-            .onFocusLost(this::repaint)
-            .otherEvents(new ConditionalEventHandler.Impl(
+            .handleKeys(new TreeKeys())
+            .whenFocusArrives(this::focusGained)
+            .whenFocusLeaves(this::repaint)
+            .handleEvents(new ConditionalEventHandler.Impl(
                     (te) -> this.actionOnChangeHandler != null && this.actionOnChangeHandler.canHandle(te) != null,
                     (te) -> this.actionOnChangeHandler.handle(te)));
 

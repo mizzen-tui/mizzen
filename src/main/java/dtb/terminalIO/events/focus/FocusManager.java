@@ -10,9 +10,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import dtb.terminalIO.components.AbstractWrappedComponentWithFocusManager;
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.components.ComponentWithFocusManager;
 import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
@@ -150,7 +148,7 @@ public interface FocusManager extends Focusable {
     public static class UTIL {
 
         /**
-         * Wrapper components (ComponentWithFocusManager, CompositeWithFocusManager, ...) are focus
+         * Wrapper components (ComponentWithFocus, CompositeWithFocusManager, ...) are focus
          * managers that hand the real work to an inner DefaultFocusManager. Returns that inner
          * manager, or null if fm is not such a wrapper.
          */
@@ -169,7 +167,7 @@ public interface FocusManager extends Focusable {
          * Answered by walking up from focusable through its parent focus managers.
          *
          * Note: a wrapper and its inner manager count as the same node, because a child can
-         * point at either one as its parent (ComponentWithFocusManager adds its children to the
+         * point at either one as its parent (a wrapper's manager adds its children to the
          * inner manager before it registers itself as the "actual" parent).
          */
         public static boolean containsFocusable(Focusable node, Focusable focusable) {
@@ -186,6 +184,9 @@ public interface FocusManager extends Focusable {
         static boolean isSameNode(Focusable a, Focusable b) {
             if (a == b) {
                 return true;
+            }
+            if (a == null || b == null) {
+                return false;       // else a focus manager providing none (null) would match null
             }
             if (a instanceof FocusManager && providedFocusManager((FocusManager) a) == b) {
                 return true;
@@ -800,22 +801,7 @@ public interface FocusManager extends Focusable {
         public static void verifyPathsToFocusables(FocusManager focusManager, Component<?> component) {
 
 
-            // this is a hack.. because ComponentWithFocusManager and AbstractWrappedComponentWithFocusManager
-            //                  do not play nicely with this method..  
-            Predicate<Component<?>> skipProxiedManagers = (c)-> {
-                if (c.getParentContainer() == null) {
-                    return true;
-                }
-                if (c.getParentContainer() instanceof ComponentWithFocusManager ) {
-                    return false;
-                }
-                if (c.getParentContainer() instanceof AbstractWrappedComponentWithFocusManager ) {
-                    return false;
-                }
-                return true;
-            };
-
-            skipProxiedManagers = (c)-> true;
+            Predicate<Component<?>> skipProxiedManagers = (c)-> true;
 
             List<Focusable> focusables = Traverser.asList(component, (c)-> ToFocusable.UTIL.isFocusable(c) )
                                                   .stream()

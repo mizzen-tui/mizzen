@@ -8,13 +8,9 @@ import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventBus;
-import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.OnTerminateEventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
-import dtb.terminalIO.events.TerminalEvent;
-import dtb.terminalIO.events.focus.FocusManager;
-import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
@@ -31,7 +27,7 @@ import dtb.terminalIO.util.linuxproc.TerminalStreamOutputParser;
  * bus (enableTimedFlush), so drawing never races the reading.
  */
 public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxProcessViewer>>
-        implements ParentContainer, FocusManager, GetComponentAtOffset {
+        implements ParentContainer, GetComponentAtOffset {
 
     private static final int FLUSH_INTERVAL = 100;     // ms between applying what was read to the view
     private static final int TITLE_INTERVAL = 500;     // ms between updates of the title's line count
@@ -205,56 +201,5 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
         this.markAsDirty();
     }
 
-    @Override
-    public EventHandler canHandle(TerminalEvent<?> te) {
-        if ( this.scrollableView.canHandle(te) != null) {
-            return this;
-        }
-        return null;
-    }
-
-    @Override
-    public void handle(TerminalEvent<?> te) {
-        this.scrollableView.handle(te);
-    }
-
-    @Override
-    public boolean hasFocus() {
-        return getCurrentChildFocus().hasFocus();
-    }
-
-    @Override
-    public void setFocus(boolean focus, EventBus eventBus) {
-        getCurrentChildFocus().setFocus(focus, eventBus);
-    }
-
-    @Override
-    public FocusManager getParentFocusManager() {
-        return scrollableView.getParentFocusManager();
-    }
-
-    @Override
-    public void setParentFocusManager(FocusManager focusManager) {
-        Focusable.UTIL.setParentFocusManager(this, focusManager, (fm)-> scrollableView.setParentFocusManager(fm));
-    }
-    
-    
-    @Override
-    public void setChildAsCurrentFocus(Focusable focusableChild, EventBus eventBus) {
-        if (this.scrollableView != focusableChild) {
-            throw new IllegalStateException("Who knew?");
-        }
-    }
-
-    @Override
-    public Focusable getCurrentChildFocus() {
-        return this.scrollableView;
-    }
-
-    @Override
-    public Collection<Focusable> getChildFocusables() {
-        // TODO Auto-generated method stub
-        return Collections.singleton(getCurrentChildFocus());
-    }
-
+    // focus: the scroll pane inside it is found by the focus tree like any child (a plain container)
 }

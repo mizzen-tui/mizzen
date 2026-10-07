@@ -30,8 +30,8 @@ public class LeafFocusBehaviourTest extends TestCase {
             setName(name);
             focus = LeafFocusBehaviour.of(this)
                                       .look(look)
-                                      .onFocusGained((bus) -> heard.add("gained:" + name))
-                                      .onFocusLost((bus) -> heard.add("lost:" + name));
+                                      .whenFocusArrives((bus) -> heard.add("gained:" + name))
+                                      .whenFocusLeaves((bus) -> heard.add("lost:" + name));
         }
 
         @Override

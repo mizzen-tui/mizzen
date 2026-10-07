@@ -68,7 +68,7 @@ public class ScrollableComponentFocusTest extends TestCase {
         press(Keys.TAB_KEYSTROKE);
 
         assertEquals("pane", focusedName());
-        assertTrue(pane.hasFocus());
+        assertTrue(pane.asFocusable().hasFocus());
     }
 
     /** with focus on the pane PgDn scrolls it - and asks for a repaint (before: scrolled, but the screen didn't change) */
@@ -87,7 +87,7 @@ public class ScrollableComponentFocusTest extends TestCase {
         press(Keys.TAB_KEYSTROKE);
         press(Keys.TAB_KEYSTROKE);
         assertEquals("after", focusedName());
-        assertFalse(pane.hasFocus());
+        assertFalse(pane.asFocusable().hasFocus());
 
         press(Keys.SHIFT_TAB_KEYSTROKE);
         assertEquals("pane", focusedName());

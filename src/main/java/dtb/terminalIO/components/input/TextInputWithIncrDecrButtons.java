@@ -1,13 +1,18 @@
 package dtb.terminalIO.components.input;
 
-import dtb.terminalIO.components.AbstractWrappedComponentWithFocusManager;
+import dtb.terminalIO.components.ComponentWithFocus;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.EventHandler;
 
-public abstract class TextInputWithIncrDecrButtons<T> extends AbstractWrappedComponentWithFocusManager<HorizontalPanel> implements SettableHasValue<T> {
+/**
+ * "label  <-  value  ->": a text input for a value, with a button each side to step it down and up.
+ * Its buttons and input are ordinary TAB stops; onChange hears every change, typed or stepped.
+ */
+public abstract class TextInputWithIncrDecrButtons<T> extends ComponentWithFocus<HorizontalPanel, TextInputWithIncrDecrButtons<T>>
+                                                      implements SettableHasValue<T> {
 
     ChainedEventHandler chainedEventHandler;
     TextInputForType<T> input;
@@ -15,7 +20,7 @@ public abstract class TextInputWithIncrDecrButtons<T> extends AbstractWrappedCom
     public TextInputWithIncrDecrButtons(Color color, String labelText, String downButtonText, String upButtonText) {
         super(color, new HorizontalPanel());
 
-        HorizontalPanel controlsInGrid = getWrappedComponent();
+        HorizontalPanel controlsInGrid = getPanel();
 
         input = buildTextInputForType();
         input.setValue( getValue() );
@@ -50,11 +55,13 @@ public abstract class TextInputWithIncrDecrButtons<T> extends AbstractWrappedCom
             evtHandlerBroadcastValueChanged.handle(te);
         });
 
+        // its "value changed" events reach the onChange handlers through its focus behaviour
         chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
-        setCustomExtendedEventHandler( chainedEventHandler.asConditionalEventHandler()  );
+        focus().handleEvents(chainedEventHandler.asConditionalEventHandler());
 
 
     }
+
 
     OnValueChangedEventHandler<T> actionOnChangeHandler;
 

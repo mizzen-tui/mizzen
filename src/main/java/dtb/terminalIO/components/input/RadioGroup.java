@@ -106,11 +106,13 @@ public class RadioGroup<V> extends AbstractComponentWrappper<Composite>
         setMarkers("(•)", "( )");
         setItems(items);
         this.focus = ParentFocusBehaviour.of(this)
-                                         .oneStop(prev, next, true)
-                                         .entry((dir) -> optionFor(this.value))
-                                         .onChildFocused((child, bus) -> choose(optionAt(child), bus))
-                                         .onKey(new HotKeyChoosesNext())
-                                         .otherEvents(new ConditionalEventHandler.Impl(
+                                         .singleTabStop()
+                                         .arrowsMoveInside(ArrowKeys.of(prev, next))
+                                         .wrapAround()
+                                         .enterAt(() -> optionFor(this.value))
+                                         .whenChildFocused((child, bus) -> choose(optionAt(child), bus))
+                                         .handleKeys(new HotKeyChoosesNext())
+                                         .handleEvents(new ConditionalEventHandler.Impl(
                                                  (te) -> this.actionOnChangeHandler != null && this.actionOnChangeHandler.canHandle(te) != null,
                                                  (te) -> this.actionOnChangeHandler.handle(te)));
         refresh();

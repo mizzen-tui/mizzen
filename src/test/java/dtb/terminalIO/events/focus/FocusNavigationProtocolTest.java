@@ -2,7 +2,8 @@ package dtb.terminalIO.events.focus;
 
 import java.util.StringJoiner;
 
-import dtb.terminalIO.components.ComponentWithFocusManager;
+import dtb.terminalIO.components.input.ArrowKeys;
+import dtb.terminalIO.supportfortesting.FocusGroup;
 import dtb.terminalIO.components.CompositeWithFocusManager;
 import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.input.TextInput;
@@ -35,18 +36,17 @@ public class FocusNavigationProtocolTest extends TestCase {
         return ToFocusable.UTIL.toFocusable(component);
     }
 
-    private static ComponentWithFocusManager<?> group(TextInput... fields) {
+    private static FocusGroup group(TextInput... fields) {
         VerticalPanel panel = new VerticalPanel();
         for (TextInput f : fields) panel.add(f);
-        return new ComponentWithFocusManager<>(panel);
+        return new FocusGroup(panel);
     }
 
     /** a ONE_STOP manager: one stop, UP / DOWN move inside (like DropdownListBox) */
-    private static ComponentWithFocusManager<?> oneStop(TextInput... fields) {
-        ComponentWithFocusManager<?> w = group(fields);
-        ((DefaultFocusManager) w.getFocusManager()).setPrevKeyStroke(Keys.UP_KEYSTROKE)
-                                                   .setNextKeyStroke(Keys.DOWN_KEYSTROKE)
-                                                   .setFocusPolicy(FocusPolicy.ONE_STOP);
+    private static FocusGroup oneStop(TextInput... fields) {
+        FocusGroup w = group(fields);
+        w.focus().singleTabStop()
+                 .arrowsMoveInside(ArrowKeys.UP_DOWN);
         return w;
     }
 
@@ -157,8 +157,8 @@ public class FocusNavigationProtocolTest extends TestCase {
 
     public void testTrap_focusNeverLeaves() {
         TextInput a = field("A"), ok = field("OK"), cancel = field("CANCEL"), d = field("D");
-        ComponentWithFocusManager<?> dialog = group(ok, cancel);
-        ((DefaultFocusManager) dialog.getFocusManager()).setFocusPolicy(FocusPolicy.TRAP);
+        FocusGroup dialog = group(ok, cancel);
+        dialog.focus().keepsFocusInside();
         CompositeWithFocusManager root = root(a, dialog, d);
         click(ok);
 
@@ -211,11 +211,11 @@ public class FocusNavigationProtocolTest extends TestCase {
     /** enter / advance only answer: asking changes no focus state */
     public void testEnterAndAdvanceDoNotChangeFocus() {
         TextInput a = field("A"), b = field("B"), c = field("C");
-        ComponentWithFocusManager<?> g = group(b, c);
+        FocusGroup g = group(b, c);
         CompositeWithFocusManager root = root(a, g);
         click(a);
 
-        Focusable entered = g.enter(FocusDirection.BACKWARD);
+        Focusable entered = ((FocusManager) g.asFocusable()).enter(FocusDirection.BACKWARD);
         Navigation next = root.advance(focusable(a), FocusDirection.FORWARD);
 
         assertSame(focusable(c), entered);

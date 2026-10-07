@@ -1,6 +1,6 @@
 package dtb.terminalIO.components.input.form;
 
-import dtb.terminalIO.components.ComponentWithFocusManager;
+import dtb.terminalIO.supportfortesting.FocusGroup;
 import dtb.terminalIO.components.CompositeWithFocusManager;
 import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.input.TextInput;
@@ -50,7 +50,7 @@ public class FormChangeCharacterisationTest extends TestCase {
         VerticalPanel inputs = new VerticalPanel();
         inputs.add(street);
         inputs.add(city);
-        ComponentWithFocusManager<?> formPanel = new ComponentWithFocusManager<>(inputs);
+        FocusGroup formPanel = new FocusGroup(inputs);
 
         CompositeWithFocusManager root = new CompositeWithFocusManager();
         root.add(field("elsewhere"));
@@ -85,7 +85,7 @@ public class FormChangeCharacterisationTest extends TestCase {
         CompositeWithFocusManager root = new CompositeWithFocusManager();
         root.add(street);                                   // input directly under root
         bus.setRoot(root);
-        ComponentWithFocusManager<?> detachedPanel = new ComponentWithFocusManager<>(new VerticalPanel());
+        FocusGroup detachedPanel = new FocusGroup(new VerticalPanel());
 
         FormBinder<Address> form = FormBinder.UTIL.get(address, detachedPanel, bus);
         int[] fieldChanged = { 0 }, formChanged = { 0 };

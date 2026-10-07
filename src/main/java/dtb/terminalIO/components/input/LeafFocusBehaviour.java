@@ -30,7 +30,7 @@ import dtb.terminalIO.geom.position.Position;
  * <pre>
  *     private final LeafFocusBehaviour focus = LeafFocusBehaviour.of(this)
  *                                                                .showsCursorAt(new Position.Simple(0, 2))
- *                                                                .onKey(this::key);
+ *                                                                .handleKeys(this::key);
  *     public Focusable       asFocusable()       { return focus.asFocusable(); }
  *     public KeyboardHandler asKeyboardHandler() { return focus.asKeyboardHandler(); }
  * </pre>
@@ -81,13 +81,13 @@ public final class LeafFocusBehaviour {
     }
 
     /** focus arrived (it didn't have focus before) */
-    public LeafFocusBehaviour onFocusGained(Consumer<EventBus> onFocusGained) {
+    public LeafFocusBehaviour whenFocusArrives(Consumer<EventBus> onFocusGained) {
         this.onFocusGained = onFocusGained;
         return this;
     }
 
     /** focus left (it had focus before) */
-    public LeafFocusBehaviour onFocusLost(Consumer<EventBus> onFocusLost) {
+    public LeafFocusBehaviour whenFocusLeaves(Consumer<EventBus> onFocusLost) {
         this.onFocusLost = onFocusLost;
         return this;
     }
@@ -103,7 +103,7 @@ public final class LeafFocusBehaviour {
      * key) or an adapted event handler (AsKeyboardHandler.UTIL.toKeyboardHandler) - the latter can
      * tell whether it wants a key without acting, so keys it doesn't want go on down the event bus.
      */
-    public LeafFocusBehaviour onKey(KeyboardHandler keys) {
+    public LeafFocusBehaviour handleKeys(KeyboardHandler keys) {
         this.keys = keys;
         return this;
     }
@@ -112,7 +112,7 @@ public final class LeafFocusBehaviour {
      * Events other than keys the component listens to while it is in the focus tree - e.g. its own
      * "value changed" event, for its onChange listener.
      */
-    public LeafFocusBehaviour otherEvents(ConditionalEventHandler otherEvents) {
+    public LeafFocusBehaviour handleEvents(ConditionalEventHandler otherEvents) {
         this.otherEvents = otherEvents;
         return this;
     }
@@ -153,7 +153,7 @@ public final class LeafFocusBehaviour {
 
     /**
      * Hilited while focused (unless look NONE). On getting focus: scroll into view, show the cursor;
-     * on losing it: hide the cursor. onFocusGained / onFocusLost: when focus really arrives / leaves -
+     * on losing it: hide the cursor. whenFocusArrives / whenFocusLeaves: when focus really arrives / leaves -
      * the focus code may tell it with setFocus, or with focus / unFocus.
      */
     private FocusBehaviour buildFocusBehaviour() {
@@ -251,7 +251,7 @@ public final class LeafFocusBehaviour {
         }
     }
 
-    /** the other events, looked up when asked - so otherEvents may be set after asFocusable() */
+    /** the other events, looked up when asked - so handleEvents may be set after asFocusable() */
     private ConditionalEventHandler otherEventsHandler() {
         return new ConditionalEventHandler.Impl((te) -> otherEvents.canHandle(te) != null,
                                                 (te) -> otherEvents.handle(te));

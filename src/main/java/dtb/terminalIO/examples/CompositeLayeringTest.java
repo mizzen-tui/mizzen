@@ -101,7 +101,7 @@ public class CompositeLayeringTest {
     static class MovableBox extends AbstractComponentWrappper<BorderedComponent> implements ToFocusable, AsKeyboardHandler {
 
         private final Map<KeyStroke, Runnable> keys = new LinkedHashMap<KeyStroke, Runnable>();
-        private final LeafFocusBehaviour focus = LeafFocusBehaviour.of(this).onKey(new KeyboardHandler() {
+        private final LeafFocusBehaviour focus = LeafFocusBehaviour.of(this).handleKeys(new KeyboardHandler() {
             @Override
             public boolean wantsKey(KeyEvent ke) {
                 return keys.containsKey(ke.getKeyStroke());

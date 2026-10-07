@@ -6,6 +6,7 @@ import java.util.function.Function;
 
 import dtb.terminalIO.components.ChildComponentManager;
 import dtb.terminalIO.components.Component;
+import dtb.terminalIO.components.CompositeWithFocusManager;
 import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.core.Canvas;
@@ -125,7 +126,7 @@ final class EmbeddedApp implements TUIAppInterface {
     }
 
     public EmbeddedApp setDefaultMainApplicationPanel() {
-        return setMainApplicationPanel(new TerminalApp.TUIDefaultPanel()
+        return setMainApplicationPanel(new CompositeWithFocusManager()
                                                .setBounds(canvas)
                                                .setEmptyChar(canvas.getEmptyChar()));
     }

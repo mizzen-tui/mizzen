@@ -1,8 +1,7 @@
 package dtb.terminalIO.components.plot.image;
 
-import dtb.terminalIO.components.AbstractWrappedComponentWithFocusManager;
+import dtb.terminalIO.components.ComponentWithFocus;
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.components.HasTitleAndBorder;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.plot.image.ImageViewerFactory.ImageRenderRequest;
 import dtb.terminalIO.components.plot.image.animate.ImageAnimatorComponent;
@@ -16,8 +15,11 @@ import dtb.terminalIO.geom.VAlign;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.geom.position.PositionRelativeFactory;
 
-public class MovingPicturesViewer extends AbstractWrappedComponentWithFocusManager<Composite> 
-      implements HasTitleAndBorder<MovingPicturesViewer>, AutoCloseable  {
+/**
+ * An animation (an ImageIterator's frames) with an Options button top right that opens a dialog of
+ * render settings. Border and title are its panel's.
+ */
+public class MovingPicturesViewer extends ComponentWithFocus<Composite, MovingPicturesViewer> implements AutoCloseable {
 
     ChainedEventHandler chainedEventHandler;
     ImageAnimatorComponent animatorComponent;
@@ -27,12 +29,13 @@ public class MovingPicturesViewer extends AbstractWrappedComponentWithFocusManag
 
         super(color, new Composite(color));
 
-        imageViewer = getWrappedComponent();
+        imageViewer = getPanel();
 
         //imageViewer = new BorderedComponent(new TextComponent("Placeholder"));
 
+        // the options dialog's "settings changed" events reach the dialog's handlers through here
         chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
-        setCustomExtendedEventHandler( chainedEventHandler.asConditionalEventHandler()  );
+        focus().handleEvents(chainedEventHandler.asConditionalEventHandler());
 
         Component<?> popupImageControlsButton = ImageManipulationControls.popupOnClick("Options", rqst, imageViewer, chainedEventHandler, null);
 
@@ -57,50 +60,6 @@ public class MovingPicturesViewer extends AbstractWrappedComponentWithFocusManag
         return start(te.getEventBus(), interval);
     }
 
-    @Override
-    public void hilite() {
-        imageViewer.hilite();
-    }
-
-    @Override
-    public void unHilite() {
-        imageViewer.unHilite();
-    }
-
-    @Override
-    public boolean hasBorder() {
-        return imageViewer.hasBorder();
-    }
-
-    @Override
-    public MovingPicturesViewer setBorder(boolean hasBorder) {
-        imageViewer.setBorder(hasBorder);
-        return this;
-    }
-
-    @Override
-    public MovingPicturesViewer setBorderColor(Color borderColors) {
-        imageViewer.setBorderColor(borderColors);
-        return this;
-    }
-
-    @Override
-    public MovingPicturesViewer setTitle(Color titleColors, String title) {
-        imageViewer.setTitle(titleColors, title);
-        return this;
-    }
-
-    @Override
-    public MovingPicturesViewer setTitle(String title) {
-        imageViewer.setTitle(title);
-        return this;
-    }
-
-    @Override
-    public String getTitle() {
-        return imageViewer.getTitle();
-    }
-    
     @Override
     public void close() {
         animatorComponent.close();

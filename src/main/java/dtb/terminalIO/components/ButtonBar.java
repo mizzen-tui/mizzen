@@ -2,20 +2,31 @@ package dtb.terminalIO.components;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.input.Button;
+import dtb.terminalIO.components.input.ParentFocusBehaviour;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
-import dtb.terminalIO.events.focus.DefaultFocusManager;
+import dtb.terminalIO.events.focus.FocusPolicy;
 import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.focus.ToFocusable;
+import dtb.terminalIO.events.keyboard.AsKeyboardHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
+import dtb.terminalIO.events.keyboard.KeyboardHandler;
 import dtb.terminalIO.events.keyboard.Keys;
+import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
 
-public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
+/**
+ * A row of buttons (or any components) with divider characters between them. Its buttons are TAB
+ * stops; for a tab strip make it one stop moving with the arrows:
+ * focus().singleTabStop().arrowsMoveInside(ArrowKeys.LEFT_RIGHT).wrapAround().
+ */
+public class ButtonBar extends ComponentWithFocus<HorizontalPanel, ButtonBar> {
 
 
     private char leftMostBorderChar;
@@ -26,6 +37,7 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
 
     private Component<?> lastDivider = null;
     private List<Component<?>> nonDividerComponents;
+
     
     public ButtonBar(Color color, String name) {
         super(color, new HorizontalPanel().setHorizontalSpacer(0));
@@ -35,11 +47,6 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
         rightMostBorderChar = blockChars.getVERTICAL_RIGHT();
         this.setName(name==null? "buttonBar" : name);
         getContainer().setName(getName() +".horizontalPanel");
-        this.setFocusManager( new DefaultFocusManager()
-                                          .setNameFromOwner(this)
-                                          .setCycling(false)
-                                          .setPrevKeyStroke(Keys.SHIFT_TAB_KEYSTROKE)
-                                          .setNextKeyStroke(Keys.TAB_KEYSTROKE));
         nonDividerComponents = new ArrayList<>();
     }
     public ButtonBar(Color color) {
@@ -53,46 +60,19 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
     public ButtonBar(String name) {
         this(Colors.FGBGColors.NO_COLOR_SPECIFIED, name);
     }
+
+    private HorizontalPanel getContainer() {
+        return getPanel();
+    }
     
     public ButtonBar setHorizontalSpacer(int horizontalSpacer) {
-        ((HorizontalPanel)getContainer()).setHorizontalSpacer(horizontalSpacer);
+        getContainer().setHorizontalSpacer(horizontalSpacer);
         getContainer().fullrecalcDim();
         return this;
     }
     
     public int getHorizontalSpacer() {
-        return ((HorizontalPanel)getContainer()).getHorizontalSpacer();
-    }
-
-    private DefaultFocusManager getDefaultFocusManager() {
-        return (DefaultFocusManager) super.getFocusManager();
-    }
-
-    public ButtonBar setPrevKeyStroke(KeyStroke prevKeyStroke) {
-        getDefaultFocusManager().setPrevKeyStroke(prevKeyStroke);
-        return this;
-    }
-
-    public ButtonBar setNextKeyStroke(KeyStroke nextKeyStroke) {
-        getDefaultFocusManager().setNextKeyStroke(nextKeyStroke);
-        return this;
-    }
-
-    public boolean setPreviousAsCurrentFocus(EventBus eventBus) {
-        return getDefaultFocusManager().setPreviousAsCurrentFocus(eventBus);
-    }
-
-    public Focusable getCurrentFocus() {
-        return getDefaultFocusManager().getCurrentChildFocus();
-    }
-
-    public boolean setNextAsCurrentFocus(EventBus eventBus) {
-        return getDefaultFocusManager().setNextAsCurrentFocus(eventBus);
-    }
-    
-    public ButtonBar setCycling(boolean cycling) {
-        getDefaultFocusManager().setCycling(cycling);
-        return this;
+        return getContainer().getHorizontalSpacer();
     }
 
     public ButtonBar setLeftMostBorderChar(char leftMostBorderChar) {
@@ -124,7 +104,7 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
         
         if (getContainer() != null) {
             getContainer().setColor(drawingcolor);
-            for (Component<?> child : getChildren()) {
+            for (Component<?> child : getContainer().getChildren()) {
                 if (child instanceof CharComponent) { // assume divider
                     child.setColor(drawingcolor);
                 } else {
@@ -135,9 +115,8 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
         return this;
     }
 
-    @Override
-    protected ButtonBar addComponentToInternalContainer(Position offset, Component<?> component) {
-        // we override ancestor to reroute to addComponent(..)
+    /** a ButtonBar places its components itself: add(..) is addComponent(..), with no position */
+    public ButtonBar add(Position offset, Component<?> component) {
         if (offset != null && !offset.equals(Position.ZERO)) {
             throw new IllegalStateException("ButtonBar cannot specify position when adding components");
         }
@@ -145,6 +124,9 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
         return this;
     }
 
+    public ButtonBar add(Component<?> component) {
+        return add(Position.ZERO, component);
+    }
 
     public <C extends Component<?>> C addComponent(C component) {
 
@@ -263,7 +245,7 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
     }
 
     public void removeChildren() {
-        super.removeChildren();
+        removeAllFromPanel();
         nonDividerComponents.clear();
         count = 0;
         lastDivider = null;
@@ -271,12 +253,18 @@ public class ButtonBar extends ComponentWithFocusManager<ButtonBar>   {
 
     protected void clearAndRebuild() {
         // clear
-        super.removeChildren();
+        removeAllFromPanel();
         count = 0;
         lastDivider = null;
         // rebuild
         for (Component<?> child : nonDividerComponents) {
             this.addComponent(child);
+        }
+    }
+
+    private void removeAllFromPanel() {
+        for (Component<?> child : new ArrayList<Component<?>>(getContainer().getChildren())) {
+            getContainer().remove(child);
         }
     }
 

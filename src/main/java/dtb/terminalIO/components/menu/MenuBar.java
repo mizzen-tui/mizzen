@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import dtb.terminalIO.events.focus.RequestFocusEvent;
-import dtb.terminalIO.components.AbstractWrappedComponentWithFocusManager;
+import dtb.terminalIO.components.ComponentWithFocus;
 import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.HasName;
@@ -12,17 +12,15 @@ import dtb.terminalIO.components.Hiliter;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.menu.MenuItem.LeftRightSelector;
 import dtb.terminalIO.controlcodes.color.Color;
-import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
-import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.Logging;
 
-public class MenuBar extends AbstractWrappedComponentWithFocusManager<ButtonBar> implements LeftRightSelector {
+public class MenuBar extends ComponentWithFocus<ButtonBar, MenuBar> implements LeftRightSelector {
 
     Menu currentActiveMenu = null;
     MenuBarButton currentMenuButton = null;
@@ -30,7 +28,11 @@ public class MenuBar extends AbstractWrappedComponentWithFocusManager<ButtonBar>
 
     public MenuBar(Color color) {
         super(color, new ButtonBar(color));
-        this.getWrappedComponent().setNoBorderChars();
+        getPanel().setNoBorderChars();
+
+        // an open menu is part of the menu bar for focus (it is its button's popup): when focus leaves
+        // both, the menu closes
+        focus().whenFocusLeaves((bus) -> closeActiveMenu());
 
         // TODO's
 
@@ -50,22 +52,16 @@ public class MenuBar extends AbstractWrappedComponentWithFocusManager<ButtonBar>
         menu.setSelectedColor(getColor().invert());
         menu.setMenuBar(this);
 
-        this.getWrappedComponent().addComponent(menuButton);
+        getPanel().addComponent(menuButton);
         this.menuBarItems.add(menuButton);
     }
 
-    @Override
-    public void unFocus(Focusable newFocusable, EventBus eventBus) {
-        super.unFocus(newFocusable, eventBus);
+    /** close the open menu, if any, and show its button as not chosen */
+    void closeActiveMenu() {
         if (currentActiveMenu != null) {
-            if (currentActiveMenu.isFocusablePartOfMenu(newFocusable)) {
-                return;
-            }
-            // the new focusable component is not part of this menu
-            // so do normal unfocus behaviour which is to pop down (remove) the menu
             currentActiveMenu.popDownMenu();
             currentActiveMenu = null;
-            currentMenuButton.setColor(getColor()); 
+            currentMenuButton.setColor(getColor());
             currentMenuButton = null;
         }
     }

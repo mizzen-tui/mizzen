@@ -3,7 +3,7 @@ package dtb.terminalIO.examples.plot;
 import java.io.IOException;
 
 import dtb.terminalIO.app.TUIApp;
-import dtb.terminalIO.components.AbstractWrappedComponentWithFocusManager;
+import dtb.terminalIO.components.ComponentWithFocus;
 import dtb.terminalIO.components.ClickableDraggableComponentWrapper;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.HorizontalPanel;
@@ -13,8 +13,8 @@ import dtb.terminalIO.components.input.FloatInputWithIncrDecrButtons;
 import dtb.terminalIO.components.input.HasValue;
 import dtb.terminalIO.components.input.RadioGroup;
 import dtb.terminalIO.components.input.TextInputFloat;
-import dtb.terminalIO.components.plot.PathPlotter;
 import dtb.terminalIO.components.plot.PathPlotter.CirclePathPlotter;
+import dtb.terminalIO.components.plot.PathPlotter;
 import dtb.terminalIO.components.plot.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.braille.BrailleUtils;
 import dtb.terminalIO.components.plot.grid.DragRotate3DOnGrid;
@@ -36,8 +36,8 @@ import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.mouse.Draggable;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
-import dtb.terminalIO.geom.position.Vec3;
 import dtb.terminalIO.geom.position.Vec3.BaseVec3;
+import dtb.terminalIO.geom.position.Vec3;
 import dtb.terminalIO.util.Logging;
 
 public class TestCube {
@@ -247,7 +247,7 @@ public class TestCube {
                 }).start();
     }
 
-    static class Plot2DConfigForm extends AbstractWrappedComponentWithFocusManager<HorizontalPanel>
+    static class Plot2DConfigForm extends ComponentWithFocus<HorizontalPanel, Plot2DConfigForm>
             implements HasValue<Plot2D> {
 
         Plot2DSimple plot2D;
@@ -302,10 +302,11 @@ public class TestCube {
             });
 
             chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
-            setCustomExtendedEventHandler(chainedEventHandler.asConditionalEventHandler());
+            focus().handleEvents(chainedEventHandler.asConditionalEventHandler());
 
 
         }
+
 
         OnValueChangedEventHandler<Plot2D> actionOnChangeHandler;
 
@@ -323,7 +324,7 @@ public class TestCube {
 
     }
 
-    static class Plot2DConfigFormProjection extends AbstractWrappedComponentWithFocusManager<HorizontalPanel>
+    static class Plot2DConfigFormProjection extends ComponentWithFocus<HorizontalPanel, Plot2DConfigFormProjection>
             implements HasValue<Plot2D> {
 
         Plot2DFromProjection plot2D;
@@ -376,7 +377,7 @@ public class TestCube {
             });
 
             chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
-            setCustomExtendedEventHandler(chainedEventHandler.asConditionalEventHandler());
+            focus().handleEvents(chainedEventHandler.asConditionalEventHandler());
 
         }
 
@@ -389,6 +390,7 @@ public class TestCube {
                             plot2D.getThetaY(),
                             plot2D.getThetaZ()));
         }
+
 
 
         OnValueChangedEventHandler<Plot2D> actionOnChangeHandler;
@@ -407,7 +409,7 @@ public class TestCube {
 
     }
 
-    static class Vector3DPanel extends AbstractWrappedComponentWithFocusManager<HorizontalPanel>
+    static class Vector3DPanel extends ComponentWithFocus<HorizontalPanel, Vector3DPanel>
             implements HasValue<Vec3<?>> {
 
         Vec3<?> vector;
@@ -458,7 +460,7 @@ public class TestCube {
             });
 
             chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
-            setCustomExtendedEventHandler(chainedEventHandler.asConditionalEventHandler());
+            focus().handleEvents(chainedEventHandler.asConditionalEventHandler());
 
 
         }
@@ -474,6 +476,7 @@ public class TestCube {
         public Vector3DPanel(Color color) {
             this(color, "Point3D");
         }
+
 
         OnValueChangedEventHandler<Vec3<?>> actionOnChangeHandler;
 

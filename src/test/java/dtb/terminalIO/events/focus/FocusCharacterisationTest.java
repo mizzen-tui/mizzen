@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringJoiner;
 
-import dtb.terminalIO.components.ComponentWithFocusManager;
+import dtb.terminalIO.supportfortesting.FocusGroup;
 import dtb.terminalIO.components.CompositeWithFocusManager;
 import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.input.Button;
@@ -93,13 +93,13 @@ public class FocusCharacterisationTest extends TestCase {
 
     /**
      * root[A, group[B, C], D] -- root as TUIApp builds it (CompositeWithFocusManager),
-     * group a ComponentWithFocusManager.
+     * group a ComponentWithFocus.
      */
     private CompositeWithFocusManager nestedLayout(TextInput a, TextInput b, TextInput c, TextInput d) {
         VerticalPanel groupPanel = new VerticalPanel();
         groupPanel.add(b);
         groupPanel.add(c);
-        ComponentWithFocusManager<?> group = new ComponentWithFocusManager<>(groupPanel);
+        FocusGroup group = new FocusGroup(groupPanel);
 
         CompositeWithFocusManager root = new CompositeWithFocusManager();
         root.add(a);
@@ -147,7 +147,7 @@ public class FocusCharacterisationTest extends TestCase {
         VerticalPanel groupPanel = new VerticalPanel();
         groupPanel.add(field("inGroup"));
         groupPanel.add(button);
-        ComponentWithFocusManager<?> group = new ComponentWithFocusManager<>(groupPanel);
+        FocusGroup group = new FocusGroup(groupPanel);
 
         TextInput first = field("first");
         CompositeWithFocusManager root = new CompositeWithFocusManager();

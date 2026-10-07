@@ -49,7 +49,7 @@ public class HideShowTest {
             testVertical.setVerticalSpacer(1);
             testVertical.setBorder(true);
 
-            ButtonBar vertMainMenu = new ButtonBar().setNoBorderChars().setHorizontalSpacer(1).setCycling(false);
+            ButtonBar vertMainMenu = new ButtonBar().setNoBorderChars().setHorizontalSpacer(1);
 
             mainLayout.add(testVertical);
 

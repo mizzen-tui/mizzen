@@ -85,7 +85,7 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
 
             if (scrollingArea != null) {
                 this.scrollingArea.setParentContainer(null);
-                this.scrollingArea.setParentFocusManager(null);
+                this.scrollingArea.asFocusable().setParentFocusManager(null);
             }
 
             scrollingArea = new ScrollableComponent(Colors.BIGre, d, tvComponents);
@@ -114,7 +114,7 @@ public class ComponentInspector extends AbstractComponent<ComponentInspector>
 
             if (scrollingArea != null) {
                 this.scrollingArea.setParentContainer(null);
-                this.scrollingArea.setParentFocusManager(null);
+                this.scrollingArea.asFocusable().setParentFocusManager(null);
             }
             scrollingArea = new ScrollableComponent(Colors.BIGre, d, tvFocusable);
             SearchFunctionForScrollableComponent.addFinderToScrollable(scrollingArea.asSearchableView());

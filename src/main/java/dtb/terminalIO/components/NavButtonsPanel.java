@@ -2,7 +2,10 @@ package dtb.terminalIO.components;
 
 import java.util.function.Consumer;
 
+import dtb.terminalIO.components.composite.Composite;
+import dtb.terminalIO.components.input.ArrowKeys;
 import dtb.terminalIO.components.input.Button;
+import dtb.terminalIO.components.input.ParentFocusBehaviour.Entry;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
@@ -21,37 +24,43 @@ import dtb.terminalIO.geom.position.Vec2;
  *       <--        -->
  *             |
  *             V
- *      
- * </pre> 
- *       
+ *
+ * </pre>
+ * One TAB stop: UP / DOWN move between its buttons (in the order « ^ » v, not wrapping round); TAB
+ * coming in lands on the first button, SHIFT-TAB on the last. Each button's hot key (CTRL-T, CTRL-V,
+ * CTRL-F, CTRL-G) works from anywhere.
  */
-public class NavButtonsPanel extends CompositeWithFocusManager {
+public class NavButtonsPanel extends ComponentWithFocus<Composite, NavButtonsPanel> {
+
+    private final Composite panel;
 
     Button up;
     Button down;
     Button left;
     Button right;
 
-    public NavButtonsPanel(Color color, 
+    public NavButtonsPanel(Color color,
                            EventHandler upAction,
                            EventHandler downAction,
                            EventHandler leftAction,
                            EventHandler rightAction) {
-        
-        super(color);
-        
-        this.getFocusManager().setNextKeyStroke(Keys.DOWN_KEYSTROKE);
-        this.getFocusManager().setPrevKeyStroke(Keys.UP_KEYSTROKE);
-        
+
+        super(color, new Composite(color));
+        this.panel = getPanel();
+
         buildButtons(upAction, downAction, leftAction, rightAction);
+
+        focus().singleTabStop()
+               .arrowsMoveInside(ArrowKeys.UP_DOWN)
+               .enterAt(Entry.FIRST_OR_LAST);
     }
 
     public NavButtonsPanel(Color color, Consumer<Vec2<?>> clickDirection) {
-           this(    color, 
-                    (te)-> clickDirection.accept( new BaseVec2( 0, -1)),  // up
-                    (te)-> clickDirection.accept( new BaseVec2( 0,  1)),  // down
-                    (te)-> clickDirection.accept( new BaseVec2(-1,  0)),  // left
-                    (te)-> clickDirection.accept( new BaseVec2( 1,  0))   // right
+           this(    color,
+                    (te)-> clickDirection.accept( new Vec2.BaseVec2( 0, -1)),  // up
+                    (te)-> clickDirection.accept( new Vec2.BaseVec2( 0,  1)),  // down
+                    (te)-> clickDirection.accept( new Vec2.BaseVec2(-1,  0)),  // left
+                    (te)-> clickDirection.accept( new Vec2.BaseVec2( 1,  0))   // right
                 );
     }
 
@@ -98,32 +107,32 @@ public class NavButtonsPanel extends CompositeWithFocusManager {
 
         Position upPosition  = new PositionDelegate(upVPosition, new PositionHorizontalRelative(left,1));
         Position leftPosition = new PositionDelegate(new PositionVerticalRelative(up, 0), leftHPosition);
-        
-        Position rightPosition = new PositionDelegate(leftPosition, 
+
+        Position rightPosition = new PositionDelegate(leftPosition,
                                                       ()-> up.getWidth() + left.getWidth() + leftPosition.getCol() + 2);
-        
+
         Position downPosition =  new PositionDelegate(()->upVPosition.getRow()+up.getHeight()+ left.getHeight(),
                                                       upPosition);
-        this.add(leftPosition, left);
-        this.add(upPosition, up);
-        this.add(rightPosition, right);
-        this.add(downPosition, down);
+        panel.add(leftPosition, left);
+        panel.add(upPosition, up);
+        panel.add(rightPosition, right);
+        panel.add(downPosition, down);
 
-        
+
     }
-    
-    public static NavButtonsPanel leftRight(Color color, 
+
+    public static NavButtonsPanel leftRight(Color color,
                                             EventHandler leftAction,
                                             EventHandler rightAction) {
-        
-        NavButtonsPanel navPanel = new NavButtonsPanel(color, 
+
+        NavButtonsPanel navPanel = new NavButtonsPanel(color,
                                                       (te)->{},
                                                       (te)->{},
                                                       leftAction,
                                                       rightAction);
-        navPanel.remove(navPanel.up);
-        navPanel.remove(navPanel.down);
+        navPanel.panel.remove(navPanel.up);
+        navPanel.panel.remove(navPanel.down);
         return navPanel;
     }
-    
+
 }

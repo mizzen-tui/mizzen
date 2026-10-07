@@ -9,7 +9,6 @@ import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.ChildComponentManager;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.ComponentInspector;
-import dtb.terminalIO.components.ComponentWithFocusManager;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.WindowFrame;
 import dtb.terminalIO.components.composite.Composite;
@@ -118,7 +117,7 @@ public class TextBoxTest {
             sc_1.setTitle("Scrollable with form");
 
             horizontalPanel.add(sc_1);
-            horizontalPanel.add( new ComponentWithFocusManager<ComponentWithFocusManager<?>>(panel2));
+            horizontalPanel.add(panel2);
 
             TextComponent eventDisplayer = new TextComponent("                                       ");
 

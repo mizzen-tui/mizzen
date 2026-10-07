@@ -2,7 +2,7 @@ package dtb.terminalIO.events.focus;
 
 import java.util.List;
 
-import dtb.terminalIO.components.AbstractWrappedComponentWithFocusManager;
+import dtb.terminalIO.components.ComponentWithFocus;
 import dtb.terminalIO.components.CompositeWithFocusManager;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.Composite;
@@ -179,7 +179,7 @@ public class FindFocusableTargetTest  extends TestCase {
 
     }
 
-    static class TestComponent1 extends AbstractWrappedComponentWithFocusManager<CompositeWithFocusManager> {
+    static class TestComponent1 extends ComponentWithFocus<CompositeWithFocusManager, TestComponent1> {
 
         Button button;
 
