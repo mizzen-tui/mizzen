@@ -61,6 +61,9 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
     private Position caret = Position.ZERO;
     private boolean multiLine = true;
 
+    /** TAB inserts spaces up to the next multiple of this column; the text never holds a tab char (it would draw as nothing) */
+    public static final int TAB_WIDTH = 4;
+
     ConditionalEventHandler eventHandler;
     ChainedEventHandler chainedEventHandler;  // test
 
@@ -157,7 +160,7 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
     }
 
     private void __setText(String text) {
-        this.buffer = new MultiLineTextBuffer(Arrays.stream(text.split("\n", -1)).map(line -> new StringBuilder(line))
+        this.buffer = new MultiLineTextBuffer(Arrays.stream(text.split("\n", -1)).map(line -> new StringBuilder(expandTabs(line)))
                                                                                  .collect(Collectors.toList()));
         this.textRendererNeedsUpdate = true;
         signalResized();
@@ -405,6 +408,34 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
             this.textRendererNeedsUpdate = true;
             return true;
         }
+    }
+
+    /** spaces from the caret to the next tab stop */
+    private boolean addTabAtCaret() {
+        int spaces = TAB_WIDTH - caret.getCol() % TAB_WIDTH;
+        boolean added = false;
+        for (int i = 0; i < spaces; i++) {
+            added = addCharAtCaret(' ') || added;
+        }
+        return added;
+    }
+
+    /** a line with each tab replaced by spaces up to the next tab stop, e.g. "a\tb" -> "a   b" */
+    static String expandTabs(String line) {
+        if (line.indexOf('\t') < 0) {
+            return line;
+        }
+        StringBuilder sb = new StringBuilder(line.length() + TAB_WIDTH);
+        for (char ch : line.toCharArray()) {
+            if (ch == '\t') {
+                do {
+                    sb.append(' ');
+                } while (sb.length() % TAB_WIDTH != 0);
+            } else {
+                sb.append(ch);
+            }
+        }
+        return sb.toString();
     }
 
     private boolean lineBreakAtCaret() {
@@ -711,6 +742,10 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
             return;
         }));
 
+        appendEventHandler(new KeyInputEventHandler(Keys.TAB_KEYSTROKE,
+                (te) -> multiLine,
+                (te) -> raiseEventOnChanged(te.getEventBus(), () -> addTabAtCaret())));
+
         appendEventHandler(new KeyInputEventHandler(Keys.HOME_KEYSTROKE,
                 (te) -> raiseEventOnChanged(te.getEventBus(), () -> caretHome())));
 
@@ -726,8 +761,8 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
                 if (ke.getKeyStroke().isCtrlKey() || ke.getKeyStroke().isAltKey()) {
                     return false;
                 }
-                if (ke.isKeyStroke(Keys.TAB_KEYSTROKE) && !multiLine) {
-                    return false;
+                if (ke.isKeyStroke(Keys.TAB_KEYSTROKE)) {
+                    return false;               // spaces, by the TAB handler above (multi line only)
                 }
                 if (ke.isKeyStroke(Keys.SHIFT_TAB_KEYSTROKE) && !multiLine) {
                     return false;

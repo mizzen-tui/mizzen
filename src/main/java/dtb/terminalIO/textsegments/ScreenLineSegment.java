@@ -924,8 +924,9 @@ public interface ScreenLineSegment extends Rectangle, CleanString  {
             String lines[] = multiLineString.split("\n", -1);
             lines[0] = clip(lines[0], boundAndClipped.getWidth());
             ScreenLineSegment sc = null;
-            if (lines[0] != null && lines[0].length() > 0) {
-                sc = createSegment.apply(position, new CleanString.Simple(lines[0]));
+            CleanString line = lines[0] == null ? null : new CleanString.Simple(lines[0]);
+            if (line != null && line.getText().length() > 0) {     // after cleaning: a line of only control chars makes no segment
+                sc = createSegment.apply(position, line);
                 ts.add(sc);
             }
             int lineLimit = Math.min(lines.length, boundAndClipped.getHeight());
@@ -936,8 +937,9 @@ public interface ScreenLineSegment extends Rectangle, CleanString  {
                                                                                     // to start of next line (moveTo)
                 lines[i] = clip(lines[i], originalWidth); // and now we use width of original rectangle for subsequent
                                                           // clippings
-                if (lines[i] != null && lines[i].length() > 0) {
-                    sc = createSegment.apply(position, new CleanString.Simple(lines[i]));
+                line = lines[i] == null ? null : new CleanString.Simple(lines[i]);
+                if (line != null && line.getText().length() > 0) {
+                    sc = createSegment.apply(position, line);
                     ts.add(sc);
                 }
             }
