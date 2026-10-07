@@ -248,6 +248,25 @@ public class MouseEventOrchestrator {
                 return c;
             };
 
+            /**
+             * A drag needs no focus: the draggable between the component under the mouse and the first
+             * focusable one above it - one that hands out no focusable, e.g. a drag wrapper around a
+             * grid that also holds controls (focus goes to the controls, the drag to the wrapper).
+             * null: none (a focusable draggable is found the usual way, with focus).
+             */
+            private Draggable draggableBelowFocus(Component<?> c) {
+                while (c != null) {
+                    if (ToFocusable.UTIL.isFocusable(c)) {
+                        return null;
+                    }
+                    if (c instanceof Draggable && c.isEnabled()) {
+                        return (Draggable) c;
+                    }
+                    c = (Component<?>) c.getParentContainer();
+                }
+                return null;
+            }
+
             IS_Event_TYPE appMouseType = new IS_Event_TYPE(TYPE.APPLICATION_MOUSE);
             
             
@@ -298,6 +317,10 @@ public class MouseEventOrchestrator {
                             }
                             return c;
                         };
+
+                if (action == MOUSE_ACTION.DOWN_LEFT_DRAG && draggableBelowFocus(componentClicked) != null) {
+                    return true;
+                }
 
                 Component<?> focusCandidate = findFocusableParent.apply(componentClicked, false);
 
@@ -376,6 +399,13 @@ public class MouseEventOrchestrator {
 //                    }
 //                    return c;
 //                };
+
+                if (appMouseEvent.getMouseAction() == MOUSE_ACTION.DOWN_LEFT_DRAG && currentDraggable == null) {
+                    Draggable draggable = draggableBelowFocus(componentClicked);
+                    if (draggable != null && checkHandleDragStart(draggable, appMouseEvent)) {
+                        return;
+                    }
+                }
 
                 componentClicked = findFocusableParent.apply(componentClicked, false);
 
