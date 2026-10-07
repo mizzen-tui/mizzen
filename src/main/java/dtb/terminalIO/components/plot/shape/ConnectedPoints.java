@@ -1,9 +1,8 @@
 package dtb.terminalIO.components.plot.shape;
 
 import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.Collections;
 import java.util.List;
-import java.util.TreeSet;
 
 import dtb.terminalIO.components.plot.PointPlotter;
 import dtb.terminalIO.components.plot.PointPlotter.PointPlot;
@@ -101,98 +100,57 @@ public class ConnectedPoints<T extends ConnectedPoints<?>> extends AbstractShape
 
     }
 
+    /**
+     * Fills the shape, then draws its outline on top. Scan-line fill over the (transformed) corner
+     * points: for each row, where does each edge cross it - fill between the 1st and 2nd crossing,
+     * the 3rd and 4th, ... An edge counts on a row if the row is in [its top y, its bottom y) - top
+     * end in, bottom end out - so a corner where the outline turns back (a peak or a valley) counts
+     * 0 or 2 times and a corner it passes through counts once: concave shapes fill right.
+     * Horizontal edges cross no row (the outline draws them).
+     */
     protected void drawfilled(PointPlotter pointPlotter, PositionTransform positionTransform) {
-
-        //TreeSet<PointPlot> sortedPoints = new TreeSet<PointPlot>(Vec2.UTIL.VEC2_COMPARE);
-
-        TreeSet<PointPlot> sortedPoints = new TreeSet<PointPlot>(new Vec2_ScanLineComparator());
-        //
-
-        PointPlotter plotToColumnEndPointsArray = new PointPlotter() {
-
-            @Override
-            public void plot(float x, float y) {
-                sortedPoints.add( new PointPlot(x, y) );
+        int n = points.size();
+        if (n >= 3) {
+            float[] xs = new float[n];
+            float[] ys = new float[n];
+            float yMin = Float.MAX_VALUE;
+            float yMax = -Float.MAX_VALUE;
+            for (int i = 0; i < n; i++) {
+                Vec2<?> p = positionTransform.transform(points.get(i));
+                xs[i] = p.getX();
+                ys[i] = p.getY();
+                yMin = Math.min(yMin, ys[i]);
+                yMax = Math.max(yMax, ys[i]);
             }
 
-            @Override
-            public Color setNextPlotColor(Color color) {
-                return color;
-            }
-
-            @Override
-            public void clearPlots() {
-                sortedPoints.clear();
-            }
-
-        };
-
-        drawOutlineWithTransform(plotToColumnEndPointsArray, positionTransform);
-
-        // outline has now been drawn in memory - lets do a "scan-line" fill into
-        // the actual destination (real) plotter
-
-        float currentY = Float.MIN_VALUE;
-        boolean drawToggle = false;
-        PointPlot lastPoint = null;
-        int linePointCount = 0;
-        int pointCount = 0;
-
-        for ( PointPlot point :  sortedPoints ) { 
-            pointCount++;
-            
-            
-            // TODO:  THIS DOES NOT WORK -- but problem is simple..
-            // We are scanning the edges.. check to ensure that the previous plot (if on the same line) is greater than
-            // one pixel away.  If not, do not trigger the drawToggle logic
-            
-            boolean newLine = Math.round(point.y) != Math.round(currentY);
-            if (newLine) {
-                linePointCount = 0;
-            }
-            drawToggle = (linePointCount % 2) == 1; // only draw on odd numbers
-            if (drawToggle) {
-                float x2 = point.x;
-                // draw the line..
-                for (float x = lastPoint.x; x<= x2; x++) {
-                    pointPlotter.plot(x, currentY);
+            List<Float> crossings = new ArrayList<Float>();
+            for (int y = (int) Math.ceil(yMin); y <= (int) Math.floor(yMax); y++) {
+                crossings.clear();
+                for (int i = 0; i < n; i++) {
+                    int j = (i + 1) % n;                      // the edge from corner i to the next (the last closes the shape)
+                    float y0 = ys[i], y1 = ys[j];
+                    float x0 = xs[i], x1 = xs[j];
+                    if (y0 == y1) {
+                        continue;                             // horizontal
+                    }
+                    if (y0 > y1) {                            // top end first
+                        float t = y0; y0 = y1; y1 = t;
+                        t = x0; x0 = x1; x1 = t;
+                    }
+                    if (y >= y0 && y < y1) {
+                        crossings.add(x0 + (y - y0) * (x1 - x0) / (y1 - y0));
+                    }
+                }
+                Collections.sort(crossings);
+                for (int k = 0; k + 1 < crossings.size(); k += 2) {
+                    for (int x = Math.round(crossings.get(k)); x <= Math.round(crossings.get(k + 1)); x++) {
+                        pointPlotter.plot(x, y);
+                    }
                 }
             }
-            if (newLine || (point==null) || (lastPoint == null)|| ( (Math.round(point.x) - Math.round(lastPoint.x)>1))) {
-                linePointCount = linePointCount + 1;
-//            } else {
-//                linePointCount++;
-            }
-            lastPoint = point;
-            currentY = Math.round(point.y);
         }
 
-
-        //Color preColor = pointPlotter.setNextPlotColor(Colors.BRed);
-        drawOutlineWithTransform(pointPlotter,  positionTransform);
-        
-        /*
-        for (PointPlot point : points) {
-            Color prevColor = pointPlotter.setNextPlotColor(Colors.IYel);
-            ((BrailleGrid)pointPlotter).plot(new Position.Simple(positionTransform.transform(point)));
-            ((BrailleGrid)pointPlotter).plotPosition(new Position.Simple(point.y,point.x+2), new CleanString.Simple("(x="+point.x+",y="+point.y+")"));
-            pointPlotter.setNextPlotColor(prevColor);
-        }*/
-
-        //pointPlotter.setNextPlotColor(preColor);
-
-    }
-
-    private static class Vec2_ScanLineComparator implements Comparator<Vec2<?>> {
-        @Override
-        public int compare(Vec2<?> vec1, Vec2<?> vec2) {
-            if (vec1 == vec2)
-                return 0;
-            int cmp = Integer.compare(Math.round(vec1.getY()), Math.round(vec2.getY()));
-            if (cmp != 0)
-                return cmp;
-            return Float.compare(vec1.getX(), vec2.getX());
-        }
+        drawOutlineWithTransform(pointPlotter, positionTransform);
     }
 
     @SuppressWarnings("unchecked")
