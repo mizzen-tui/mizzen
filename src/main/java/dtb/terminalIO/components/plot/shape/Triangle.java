@@ -1,6 +1,5 @@
 package dtb.terminalIO.components.plot.shape;
 
-import java.util.Arrays;
 import java.util.List;
 
 import dtb.terminalIO.components.plot.PointPlotter;
@@ -62,86 +61,25 @@ public class Triangle extends AbstractShape<Triangle> implements Fillable<Triang
         }
     };
     
+    /** filled: a three-corner polygon, filled (see ConnectedPoints.drawfilled), in the triangle's colour */
     public static DrawTriangleAlgorithm drawFilled = new DrawTriangleAlgorithm() {
         @Override
         public void draw(Vec2<?> p1, Vec2<?> p2, Vec2<?> p3, Color color, PointPlotter pointPlotter) {
-            
-            List<Vec2<?>> points = Vec2.UTIL.getSorted(p1,p2,p3); 
-
-            p1 = points.get(0);
-            p2 = points.get(1);
-            p3 = points.get(2);
-
-            float rowOffset = p1.getY();
-            int height = Math.round(p3.getY() - p1.getY() + 1);
-            
-            float[] columnEndPointsX1X2 = new float[height*2];
-            float unAssigned = Integer.MIN_VALUE;
-            Arrays.fill(columnEndPointsX1X2, unAssigned);
-            
-            PointPlotter plotToColumnEndPointsArray = new PointPlotter() {
-
-                @Override
-                public void plot(float x, float y) {
-                    int colIdx1 = (int)(y - rowOffset)*2;
-                    int colIdx2 = colIdx1 + 1;
-                    if (columnEndPointsX1X2[colIdx1] == unAssigned) {
-                        columnEndPointsX1X2[colIdx1] = x;
-                    } else {
-                        if (x < columnEndPointsX1X2[colIdx1]) {
-                            float oldX1 = columnEndPointsX1X2[colIdx1];
-                            columnEndPointsX1X2[colIdx1] = x;
-                            if (columnEndPointsX1X2[colIdx2] == unAssigned || oldX1>columnEndPointsX1X2[colIdx2]) {
-                                columnEndPointsX1X2[colIdx2] = oldX1;
-                            }
-                        } else {
-                            if (x > columnEndPointsX1X2[colIdx2]) {
-                               columnEndPointsX1X2[colIdx2] = x;
-                            } 
-                        }
-                    }
-                }
-
-                @Override
-                public Color setNextPlotColor(Color color) {
-                    return color;
-                }
-
-                @Override
-                public void clearPlots() {
-                    Arrays.fill(columnEndPointsX1X2, unAssigned);
-                    pointPlotter.clearPlots();
-                }
-            };
-
-            // first draw to columnEndPointsX1X2 array..
-            drawOutline.draw(p1, p2, p3, color, plotToColumnEndPointsArray);
-            
-            // now take the populated columnEndPointsX1X2 array and draw using original PointsPlotter
-
             Color lastColor = null;
             if (color != null) {
                 lastColor = pointPlotter.setNextPlotColor(color);
             }
 
-            // we will draw line by line from first row to last row
-            for (int row = 0; row < height; row++) {
-                
-                float y = row + rowOffset;
-                
-                float x1 = columnEndPointsX1X2[row*2];
-                float x2 = columnEndPointsX1X2[row*2 + 1];
-                if (x1 != unAssigned && x2 != unAssigned) {
-                    for (float x = x1; x<= x2; x++) {
-                        pointPlotter.plot(x, y);
-                    }
-                }
-            }
+            Polygon polygon = new Polygon();
+            polygon.addPoint(p1, color);
+            polygon.addPoint(p2, color);
+            polygon.addPoint(p3, color);
+            polygon.setFilled(true);
+            polygon.draw(pointPlotter);
 
             if (color != null) {
                 pointPlotter.setNextPlotColor(lastColor);
             }
-
         }
     };
     
