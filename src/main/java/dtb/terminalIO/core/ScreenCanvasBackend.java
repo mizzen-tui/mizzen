@@ -326,7 +326,10 @@ public class ScreenCanvasBackend implements CanvasBackend {
             if (!doFullUpdate) {
                 if (refreshChangedCounter>MAX_PARTIAL_UPDATES) {
                    refreshChangedCounter = 0;
-                   revertToFullUPdateForNext_n_refreshs(1);
+                   // the screen is still the right shape: the full update just overwrites every cell
+                   // (no erase first - on a terminal without synchronized output the blank screen
+                   // would show until the repaint arrives: a flicker)
+                   revertToFullUPdateForNext_n_refreshs(1, false);
                 } else {
                     refreshChangedCounter++;
                 }
@@ -341,14 +344,21 @@ public class ScreenCanvasBackend implements CanvasBackend {
             }
         }
 
-        protected void revertToFullUPdateForNext_n_refreshs(int n) {
+        /**
+         * The next n refreshes are full updates. erase: blank the screen first - needed only when what
+         * is on screen may not match the canvas's shape (after a resize); a full update writes every
+         * cell of the canvas, so otherwise it simply overwrites from home.
+         */
+        protected void revertToFullUPdateForNext_n_refreshs(int n, boolean erase) {
             previous.clear();   // forces full update on next update
             current.clear();
             
             counter = n ;     // # of full screen refreshes (UPDATE_FULL) before 
                               // we revert back to partial (and more optimized) screen updates
             screen.home();
-            screen.clear();
+            if (erase) {
+                screen.clear();
+            }
         }
         
         @Override
@@ -366,7 +376,7 @@ public class ScreenCanvasBackend implements CanvasBackend {
             // fully repaint itself.. then after that, we revert to 
             // partial updates again.. 
 
-            revertToFullUPdateForNext_n_refreshs(5);
+            revertToFullUPdateForNext_n_refreshs(5, true);
 
         }
 
