@@ -4,10 +4,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import dtb.terminalIO.app.TUIApp;
+import dtb.terminalIO.components.ClickableDraggableComponentWrapper;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.NavButtonsPanel;
 import dtb.terminalIO.components.TextComponent;
@@ -19,9 +21,12 @@ import dtb.terminalIO.components.input.ListBox;
 import dtb.terminalIO.components.input.RadioGroup;
 import dtb.terminalIO.components.input.TextInputInteger;
 import dtb.terminalIO.components.plot.PointPlotter;
+import dtb.terminalIO.components.plot.PointPlotter.PointPlot;
+import dtb.terminalIO.components.plot.PointPlotter.PointPlotterList;
 import dtb.terminalIO.components.plot.RotationButtonBar;
 import dtb.terminalIO.components.plot.ScaleButtonBar;
 import dtb.terminalIO.components.plot.braille.BrailleGrid;
+import dtb.terminalIO.components.plot.braille.BrailleUtils;
 import dtb.terminalIO.components.plot.shape.AbstractCompositeShape;
 import dtb.terminalIO.components.plot.shape.Circle;
 import dtb.terminalIO.components.plot.shape.CompositeShape;
@@ -33,7 +38,10 @@ import dtb.terminalIO.components.plot.shape.Shape;
 import dtb.terminalIO.components.plot.shape.Triangle;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.TimedRequestedController;
+import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
+import dtb.terminalIO.events.mouse.ApplicationMouseEvent;
+import dtb.terminalIO.events.mouse.Draggable;
 import dtb.terminalIO.geom.Align;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
@@ -94,9 +102,11 @@ public class TestScale {
 //                       MessageBox.showInfoDialog(te.getEventBus(), tApp.getMainApplicationPanel()  , "click at");
 //                   };
 
-                   grid.setTitle(Colors.BPur, " Shape : ");
+                   grid.setTitle(Colors.BPur, " Shape : pick one - then drag it with the mouse ");
 
                    PointPlotter pp = grid; //.asPointPlotter();
+
+                   AtomicBoolean beingDragged = new AtomicBoolean(false);     // hilite: a box around the shape
 
                    Consumer<Shape<?>> drawShape = (shape)-> {
                        if (shape == null) {
@@ -104,18 +114,18 @@ public class TestScale {
                            return;
                        }
 
-                       Vec2<?>  midPoint = grid.getGridRectangle().centerPosition();
-
-                       PositionTransform.FofG transForm = new PositionTransform.FofG(new RotateAroundFixedPoint(rotationControls.getValue(),midPoint),translateTranFormer);
+                       // scale and turn the shape around its own middle, then move it (the arrows, a drag):
+                       // a move is then always straight, whatever the rotation or scale
+                       Vec2<?> centre = shapeCentre(shape);
+                       PositionTransform turnAndSize = new RotateAroundFixedPoint(rotationControls.getValue(), centre);
 
                        Integer scaleValuePercent = scaleInput.getValue();
                        if (scaleValuePercent != null && scaleValuePercent != 100) {
                            double scaleValue = ((double)scaleValuePercent) / 100d;
-                           Scale scaleTransform = new Scale(scaleValue);
-                           transForm = new PositionTransform.FofG(transForm, scaleTransform);
+                           turnAndSize = new PositionTransform.FofG(turnAndSize, scaleAround(new Scale(scaleValue), centre));
                        }
 
-                       shape.setPositionTransform(transForm);
+                       shape.setPositionTransform(new PositionTransform.FofG(translateTranFormer, turnAndSize));
 
                        grid.clearPlots();
 
@@ -126,6 +136,9 @@ public class TestScale {
                            fillOption.hide();
                        }
 
+                       if (beingDragged.get()) {
+                           drawHilite(shape, pp);
+                       }
                        shape.draw(pp);
                        grid.markAsDirty();
                        tApp.doRefreshCanvasIfModified();
@@ -134,7 +147,7 @@ public class TestScale {
                    shapesChoiceComponent.onChange((te)->{
                        Shape<?> shape = shapesChoiceComponent.getValue();
                        msg.accept("Shape selected: " + shape.getClass().getSimpleName());
-                       grid.setTitle(" Shape : "+shape.getClass().getSimpleName()+" ");
+                       grid.setTitle(" Shape : "+shape.getClass().getSimpleName()+" (drag it with the mouse) ");
 
                        drawShape.accept(shape);
 
@@ -190,7 +203,17 @@ public class TestScale {
 
                    hp.add(shapesChoiceComponent);
 
-                   hp.add(grid);
+                   // a drag that starts on the shape moves it
+                   ClickableDraggableComponentWrapper draggableGrid = new ClickableDraggableComponentWrapper(grid.getColor(), grid);
+                   draggableGrid.setDraggable(new MoveShapeOnDrag(() -> Component.UTIL.getCanvasOffsetFor(grid.getPlotter()),
+                                                                  shapesChoiceComponent::getSelectedValue,
+                                                                  translateTranFormer,
+                                                                  beingDragged,
+                                                                  (bus) -> {
+                                                                      delayedDraw.onRequest(bus);
+                                                                      msg.accept("Dragged to  " + translateTranFormer.getRowDelta() + ", " + translateTranFormer.getColDelta());
+                                                                  }));
+                   hp.add(draggableGrid);
 
                    VerticalPanel vp = new VerticalPanel().setVerticalSpacer(2);
 
@@ -295,6 +318,129 @@ public class TestScale {
     
     
     
+
+    /** the box around the points the shape plots now (with its transform); null if it plots none */
+    static Rectangle plottedBox(Shape<?> shape) {
+        PointPlotterList plots = new PointPlotterList();
+        shape.draw(plots);
+        if (plots.size() == 0) {
+            return null;
+        }
+        int minRow = Integer.MAX_VALUE, minCol = Integer.MAX_VALUE, maxRow = Integer.MIN_VALUE, maxCol = Integer.MIN_VALUE;
+        for (PointPlot p : plots.getPlots()) {
+            minRow = Math.min(minRow, p.getRow());
+            maxRow = Math.max(maxRow, p.getRow());
+            minCol = Math.min(minCol, p.getCol());
+            maxCol = Math.max(maxCol, p.getCol());
+        }
+        return new Rectangle.Simple(minRow, minCol, maxRow - minRow + 1, maxCol - minCol + 1);
+    }
+
+    /** the hilite while dragging: a dim box around the shape, one dot clear of it, drawn behind it */
+    static void drawHilite(Shape<?> shape, PointPlotter plotter) {
+        Rectangle box = plottedBox(shape);
+        if (box == null) {
+            return;
+        }
+        new RectangleShape(new Rectangle.Simple(box.getRow() - 1, box.getCol() - 1, box.getHeight() + 2, box.getWidth() + 2), Colors.BBla).draw(plotter);
+    }
+
+    /** the middle of the shape as defined - before any transform */
+    static Vec2<?> shapeCentre(Shape<?> shape) {
+        PositionTransform current = shape.getPositionTransform();
+        shape.setPositionTransform(PositionTransform.NOOP);
+        Rectangle box = plottedBox(shape);
+        shape.setPositionTransform(current);
+        return box == null ? Position.ZERO : box.centerPosition();
+    }
+
+    /** scale around a point (it stays put) instead of around 0,0 */
+    static PositionTransform scaleAround(Scale scale, Vec2<?> point) {
+        return new PositionTransform.FofG(new PositionTransform.Translate(point),
+                                          new PositionTransform.FofG(scale, new PositionTransform.Translate(point.negate())));
+    }
+
+    /**
+     * Dragging moves the shape: a drag that starts on it (within its box) hilites it (a box around it)
+     * and moves it by as much as the mouse moved - by changing the move (translate) part of its
+     * transform, so rotation and scale don't change where it goes. The hilite goes when the drag ends.
+     */
+    static class MoveShapeOnDrag implements Draggable {
+
+        private static final int MARGIN = 2;        // grid dots around the shape that still grab it
+
+        private final Supplier<Position> gridOnCanvas;
+        private final Supplier<Shape<?>> shape;
+        private final PositionTransform.Translate move;
+        private final AtomicBoolean hilited;
+        private final Consumer<EventBus> redraw;
+        private Position dragFrom;                   // null: not dragging
+        private float rowAtStart;
+        private float colAtStart;
+
+        /** gridOnCanvas: where the grid's dots start on the screen (mouse positions come relative to the screen) */
+        MoveShapeOnDrag(Supplier<Position> gridOnCanvas, Supplier<Shape<?>> shape, PositionTransform.Translate move, AtomicBoolean hilited, Consumer<EventBus> redraw) {
+            this.gridOnCanvas = gridOnCanvas;
+            this.shape = shape;
+            this.move = move;
+            this.hilited = hilited;
+            this.redraw = redraw;
+        }
+
+        /** the mouse in grid dots (the top-left dot of the character under it); null if the grid isn't on screen */
+        private Position gridPosition(ApplicationMouseEvent e) {
+            Position origin = gridOnCanvas.get();
+            if (origin == null || e.getMousePosition() == null) {
+                return null;
+            }
+            return BrailleUtils.componentPosToGridPos(e.getMousePosition().offsetAdd(origin.negate()));
+        }
+
+        @Override
+        public boolean onDragStart(ApplicationMouseEvent e) {
+            dragFrom = null;
+            Shape<?> current = shape.get();
+            Rectangle box = current == null ? null : plottedBox(current);
+            Position at = gridPosition(e);
+            if (box == null || at == null) {
+                return false;
+            }
+            Rectangle grab = new Rectangle.Simple(box.getRow() - MARGIN, box.getCol() - MARGIN,
+                                                  box.getHeight() + 2 * MARGIN, box.getWidth() + 2 * MARGIN);
+            if (!grab.contains(new Rectangle.Simple(at.getRow(), at.getCol(), 1, 1))) {
+                return false;                         // not on the shape
+            }
+            dragFrom = at;
+            rowAtStart = move.getRowDelta();
+            colAtStart = move.getColDelta();
+            hilited.set(true);
+            redraw.accept(e.getEventBus());
+            return true;
+        }
+
+        @Override
+        public boolean onDrag(ApplicationMouseEvent e) {
+            Position at = gridPosition(e);
+            if (dragFrom == null || at == null) {
+                return false;
+            }
+            move.setRowDelta(rowAtStart + at.getRow() - dragFrom.getRow());
+            move.setColDelta(colAtStart + at.getCol() - dragFrom.getCol());
+            redraw.accept(e.getEventBus());
+            return true;
+        }
+
+        @Override
+        public boolean onDragStop(ApplicationMouseEvent e) {
+            boolean wasDragging = dragFrom != null;
+            dragFrom = null;
+            if (wasDragging) {
+                hilited.set(false);
+                redraw.accept(e.getEventBus());
+            }
+            return wasDragging;
+        }
+    }
 
     static class ShapeDisplayValue implements DisplayableValue<Shape<?>> {
 
