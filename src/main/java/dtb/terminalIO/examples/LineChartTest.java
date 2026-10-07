@@ -3,14 +3,17 @@ package dtb.terminalIO.examples;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.app.TUIApp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 import dtb.terminalIO.components.ButtonBar;
+import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.chart.LineChart;
 import dtb.terminalIO.components.composite.Composite;
+import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.input.RadioGroup;
 import dtb.terminalIO.controlcodes.color.Color;
@@ -30,7 +33,7 @@ public class LineChartTest {
 
     public static class LineChartDemo extends SimpleDemo {
 
-        LineChart lc;
+        dtb.terminalIO.components.chart.legacy.LineChart lc;
         Function<Dimension, Dimension> lineChartSize;
 
         ButtonBar menuButtonBar;
@@ -76,7 +79,7 @@ public class LineChartTest {
             
             Dimension lc_bounds = calc_lc_bounds(this.lineChartSize.apply(drawingArea));
 
-            lc = new LineChart(lc_bounds);
+            lc = new dtb.terminalIO.components.chart.legacy.LineChart(lc_bounds);
             lc.setBorder(true);
             lc.setPlotColor(new Colors.FGBGColors(Colors.IYel));
             lc.setSeriesColor("cos", Colors.Blu);
@@ -238,48 +241,143 @@ public class LineChartTest {
     }
 
 
-    /** chart sizes: the size argument at start, and the keys t / s / m / l while running */
+    /** chart sizes: the size argument at start, and the keys t / s / m / l while running (legacy) */
     private static final String[][] SIZE_KEYS = { {"t", "TINY"}, {"s", "SMALL"}, {"m", "MEDIUM"}, {"l", "LARGE"} };
 
+    /** what is on show: its components, and what to undo when it goes */
+    static class Shown {
+        final List<Component<?>> components;
+        final Runnable stop;
+
+        Shown(List<Component<?>> components, Runnable stop) {
+            this.components = components;
+            this.stop = stop;
+        }
+    }
+
+    private static Shown shown;
+
     /**
-     * Line chart demo: five series plotted with Braille characters, redrawn 10 times a second.
-     * Keys 1..5 (or clicking the buttons below the chart) switch a series on / off;
-     * t / s / m / l make the chart tiny / small / medium / large (full window). Ctrl-C quits.
+     * Line charts: the new one (sine and cosine, and a series fed live - click a line or its name,
+     * LEFT / RIGHT along it, UP / DOWN between series, [x] in the legend hides / shows one) and, to compare, the legacy demo (five series redrawn 10 times a second; keys
+     * 1..5 switch a series, t / s / m / l size the chart). The switch at the top picks which is shown.
+     * When the legacy charts are dropped, so is the switch and renderLegacy.
      *
-     * usage: LineChartTest [tiny | small | medium]   (default: large)
-     *
-     * (Rewritten Oct 2026 to use TUIApp - it used to build the screen, event bus, focus manager,
-     * mouse handling and resize handling by hand.)
+     * usage: LineChartTest [tiny | small | medium]   (the legacy chart's starting size; default: large)
      */
     public static void main(String[] args) {
         String startSize = args.length > 0 ? args[0].toUpperCase() : "LARGE";
-
         new TUIApp(args)
         .setDefaultMainApplicationPanel()
         .confirmOnExit()
         .setOnReadyStart((tApp) -> {
+            RadioGroup<String> version = RadioGroup.horizontal("new", "legacy");
+            HorizontalPanel top = new HorizontalPanel();
+            top.add(new TextComponent(" Line chart: "));
+            top.add(version);
+            tApp.getMainApplicationPanel().add(0, 0, top);
 
-            Composite appPanel = (Composite) tApp.getMainApplicationPanel();
-            String[] size = { startSize };
-
-            LineChartDemo lineChartDemo = new LineChartDemo();
-            lineChartDemo.setUpDemo(tApp.getEventBus(), chartBounds(size[0], appPanel));
-            lineChartDemo.setFlushDemoOutput(() -> tApp.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(lineChartDemo)));
-            appPanel.add(lineChartDemo.getLineChartPanelComponent());
-
-            appPanel.setOnResize((newSize) -> lineChartDemo.resize(chartBounds(size[0], appPanel)));
-
-            for (String[] sizeKey : SIZE_KEYS) {
-                tApp.getEventBus().appendEventHandler(new KeyInputEventHandler(
-                        (te) -> {
-                            size[0] = sizeKey[1];
-                            tApp.clearCanvas();
-                            lineChartDemo.resize(chartBounds(size[0], appPanel));
-                            appPanel.markAsDirty();
-                        },
-                        new KeyStroke(sizeKey[0].charAt(0)), new KeyStroke(sizeKey[0].toUpperCase().charAt(0))));
-            }
+            show(tApp, renderNew(tApp));
+            version.onChange((te) -> {
+                show(tApp, "legacy".equals(version.getValue()) ? renderLegacy(tApp, startSize) : renderNew(tApp));
+                te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent((Component<?>) tApp.getMainApplicationPanel()));
+            });
         }).start();
+    }
+
+    /** takes off what was shown, puts on the new */
+    private static void show(TUIApp tApp, Shown next) {
+        if (shown != null) {
+            shown.stop.run();
+            for (Component<?> c : shown.components) {
+                tApp.getMainApplicationPanel().remove(c);
+            }
+        }
+        shown = next;
+    }
+
+    /** the new chart: sine (filled), cosine, and a series fed a point every 200 ms (the latest 120 kept) */
+    static Shown renderNew(TUIApp tApp) {
+        Composite appPanel = (Composite) tApp.getMainApplicationPanel();
+        LineChart chart = new LineChart(Colors.Gre, new Dimension.Simple(Math.max(10, appPanel.getHeight() - 4), appPanel.getWidth()))
+                .series("sine", Colors.Blu)
+                .series("cosine", Colors.BYel)
+                .series("live", Colors.BRed);
+        for (int i = 0; i <= 120; i++) {
+            double x = i / 10.0;
+            chart.add("sine", x, Math.sin(x) * 3 + 4).add("cosine", x, Math.cos(x) * 2 + 4);
+        }
+        chart.fillUnder("sine", true);
+        chart.setTitle(" Line chart - click a line or its name: LEFT / RIGHT along it, UP / DOWN between series; [x] hides ");
+
+        TextComponent status = new TextComponent(" Nothing selected yet");
+        chart.onChange((te) -> {
+            LineChart.Point p = chart.getValue();
+            status.setTextAndResize(String.format(" %s point %d: x=%.2f  y=%.2f", p.series(), p.index(), p.x(), p.y()));
+            te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(status));
+        });
+
+        List<double[]> live = new ArrayList<double[]>();
+        double[] t = { 0 };
+        OnIdleEventEventHandler.RepeatingInterval feed = new OnIdleEventEventHandler.RepeatingInterval(200, (te) -> {
+            live.add(new double[] { t[0], 4 + Math.sin(t[0] * 3) * 1.5 + (Math.random() - 0.5) });
+            if (live.size() > 120) {
+                live.remove(0);
+            }
+            t[0] += 0.1;
+            chart.clear("live");
+            for (double[] p : live) {
+                chart.add("live", p[0], p[1]);
+            }
+            chart.redraw();
+            te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(chart));
+        });
+        tApp.getEventBus().appendEventHandler(feed);
+
+        appPanel.add(2, 0, chart);
+        appPanel.add(appPanel.getHeight() - 1, 0, status);
+
+        // the terminal resized: the chart takes the new size (and redraws to fit), the status line goes to the new bottom
+        appPanel.setOnResize((size) -> {
+            chart.resize(new Dimension.Simple(Math.max(10, size.getHeight() - 4), size.getWidth()));
+            appPanel.remove(status);
+            appPanel.add(size.getHeight() - 1, 0, status);
+        });
+        return new Shown(Arrays.<Component<?>>asList(chart, status), () -> {
+            tApp.getEventBus().removeEventHandler(feed);
+            appPanel.setOnResize((size) -> { });
+        });
+    }
+
+    /** the legacy demo, as it was */
+    static Shown renderLegacy(TUIApp tApp, String startSize) {
+        Composite appPanel = (Composite) tApp.getMainApplicationPanel();
+        String[] size = { startSize };
+        LineChartDemo lineChartDemo = new LineChartDemo();
+        lineChartDemo.setUpDemo(tApp.getEventBus(), chartBounds(size[0], appPanel));
+        lineChartDemo.setFlushDemoOutput(() -> tApp.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(lineChartDemo)));
+        appPanel.add(1, 0, lineChartDemo.getLineChartPanelComponent());
+        appPanel.setOnResize((newSize) -> lineChartDemo.resize(chartBounds(size[0], appPanel)));
+        List<KeyInputEventHandler> sizeKeys = new ArrayList<KeyInputEventHandler>();
+        for (String[] sizeKey : SIZE_KEYS) {
+            KeyInputEventHandler key = new KeyInputEventHandler(
+                    (te) -> {
+                        size[0] = sizeKey[1];
+                        tApp.clearCanvas();
+                        lineChartDemo.resize(chartBounds(size[0], appPanel));
+                        appPanel.markAsDirty();
+                    },
+                    new KeyStroke(sizeKey[0].charAt(0)), new KeyStroke(sizeKey[0].toUpperCase().charAt(0)));
+            sizeKeys.add(key);
+            tApp.getEventBus().appendEventHandler(key);
+        }
+        return new Shown(Arrays.<Component<?>>asList(lineChartDemo.getLineChartPanelComponent()), () -> {
+            lineChartDemo.tearDownDemo(tApp.getEventBus());
+            appPanel.setOnResize((newSize) -> { });
+            for (KeyInputEventHandler key : sizeKeys) {
+                tApp.getEventBus().removeEventHandler(key);
+            }
+        });
     }
 
     /** the chart's area for a size name, never bigger than the app's panel */
@@ -293,7 +391,7 @@ public class LineChartTest {
         if ("MEDIUM".equals(size)) {
             return new Rectangle.Simple(0, 0, Math.min(25, panel.getHeight()), Math.min(100, panel.getWidth()));
         }
-        return new Rectangle.Simple(0, 0, panel.getHeight(), panel.getWidth());
+        return new Rectangle.Simple(0, 0, panel.getHeight() - 1, panel.getWidth());
     }
 
 }

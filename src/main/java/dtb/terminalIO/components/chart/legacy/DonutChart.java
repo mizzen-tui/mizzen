@@ -1,4 +1,4 @@
-package dtb.terminalIO.components.chart;
+package dtb.terminalIO.components.chart.legacy;
 
 import java.util.Collection;
 import java.util.Collections;
