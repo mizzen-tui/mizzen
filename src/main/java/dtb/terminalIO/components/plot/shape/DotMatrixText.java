@@ -8,8 +8,9 @@ import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.geom.Movable;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.geom.position.PositionTransform;
+import dtb.terminalIO.geom.position.Vec2;
 
-public class DotMatrixText extends AbstractShape<Triangle> implements Movable {
+public class DotMatrixText extends AbstractShape<DotMatrixText> implements Movable {
 
     String text;
     Color color;
@@ -44,11 +45,38 @@ public class DotMatrixText extends AbstractShape<Triangle> implements Movable {
             lastColor = pointPlotter.setNextPlotColor(color);
         }
 
-        DotMatrixRenderer.plotStringWithSpacing(pointPlotter, this.text, 2, offset.getX(), offset.getY());
+        PointPlotter letters = positionTransform == PositionTransform.NOOP ? pointPlotter : transformed(pointPlotter, positionTransform);
+        DotMatrixRenderer.plotStringWithSpacing(letters, this.text, 2, offset.getX(), offset.getY());
 
         if (color != null) {
             pointPlotter.setNextPlotColor(lastColor);
         }
+    }
+
+    /**
+     * Each letter dot through the transform (rotated, scaled, moved). Scaled up, a dot becomes a
+     * square block as wide as the scale, so the letters stay solid instead of turning into spaced-out
+     * dots.
+     */
+    private static PointPlotter transformed(PointPlotter pointPlotter, PositionTransform positionTransform) {
+        Vec2<?> origin = positionTransform.transform(0, 0);
+        Vec2<?> oneAlong = positionTransform.transform(1, 0);
+        float scale = (float) Math.hypot(oneAlong.getX() - origin.getX(), oneAlong.getY() - origin.getY());
+        int block = Math.max(1, Math.round(scale));
+
+        return new PointPlotter.Delegate(pointPlotter) {
+            @Override
+            public void plot(float x, float y) {
+                Vec2<?> p = positionTransform.transform(x, y);
+                float left = p.getX() - (block - 1) / 2f;
+                float top = p.getY() - (block - 1) / 2f;
+                for (int row = 0; row < block; row++) {
+                    for (int col = 0; col < block; col++) {
+                        super.plot(left + col, top + row);
+                    }
+                }
+            }
+        };
     }
 
     @Override

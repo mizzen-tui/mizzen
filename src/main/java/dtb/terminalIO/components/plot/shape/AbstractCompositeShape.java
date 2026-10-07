@@ -61,6 +61,7 @@ public abstract class AbstractCompositeShape<T extends AbstractCompositeShape<?>
     @SuppressWarnings("unchecked")
     @Override
     public T setName(String name) {
+        this.name = name;
         return (T)this;
     }
 

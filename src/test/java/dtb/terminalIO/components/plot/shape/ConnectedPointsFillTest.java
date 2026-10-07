@@ -1,10 +1,12 @@
 package dtb.terminalIO.components.plot.shape;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
 import dtb.terminalIO.components.plot.PointPlotter.PointPlot;
 import dtb.terminalIO.components.plot.PointPlotter.PointPlotterList;
+import dtb.terminalIO.geom.position.Vec2;
 import junit.framework.TestCase;
 
 /**
@@ -92,6 +94,20 @@ public class ConnectedPointsFillTest extends TestCase {
         }
         assertEquals("dots filled outside the shape", 0, spilled);
         assertEquals("dots inside the shape left empty", 0, missed);
+    }
+
+    /** a ring: a square with a square hole - filled between them, the hole left empty */
+    public void testAHoleIsLeftEmpty() {
+        Polygon ring = new Polygon(new int[][] { { 0, 0 }, { 40, 0 }, { 40, 40 }, { 0, 40 } });
+        ring.addHole(Arrays.<Vec2<?>>asList(new Vec2.BaseVec2(10, 10), new Vec2.BaseVec2(30, 10),
+                                            new Vec2.BaseVec2(30, 30), new Vec2.BaseVec2(10, 30)));
+        Set<String> at = filled(ring);
+        assertTrue("between the outlines", at.contains("5,20"));
+        assertTrue("between the outlines", at.contains("35,20"));
+        assertTrue("between the outlines", at.contains("20,5"));
+        assertTrue("the hole's outline is drawn", at.contains("10,20"));
+        assertFalse("in the hole", at.contains("20,20"));
+        assertFalse("in the hole", at.contains("15,25"));
     }
 
     /** a convex shape fills solid: every row between top and bottom has its middle filled */
