@@ -8,17 +8,17 @@ import java.util.function.Function;
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.ChildComponentManager;
-import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.chart.SparkLineComponent;
-import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
-import dtb.terminalIO.events.focus.FocusManager;
+import dtb.terminalIO.events.keyboard.AsKeyboardHandler;
+import dtb.terminalIO.events.keyboard.KeyEvent;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
@@ -56,20 +56,26 @@ public class SparklineTest {
             bannerPanel.addButton(Colors.IGre,"CTRL-C",Keys.CTRL_C_KEYSTROKE, (te) -> terminateAppHotKeyEventHandler.handle(te)  );
             bannerPanel.addComponent(new TextComponent(" to quit "));
         }
-        bannerPanel.addButton(Colors.IGre,"increase", Keys.UP_KEYSTROKE, (te)->{
+        EventHandler increase = (te) -> {
             if (sparkLine1.getHeight()<20) {
                 sparkLine1.resize( new Dimension.Simple(sparkLine1.getHeight()+1, sparkLine1.getWidth()) );
                 sparkLine1Label.setText("Sparkline : \nheight="+hiliteSparklineHeight.apply(sparkLine1.getHeight()));
             }
-        } ); 
-        // need to bind the events below - chicken and egg situation ( forward declaration issue with sparkline1)
-        bannerPanel.addComponent(new TextComponent("/"));
-        bannerPanel.addButton(Colors.IGre,"decrease", Keys.DOWN_KEYSTROKE, (te)->{
+        };
+        EventHandler decrease = (te) -> {
             if (sparkLine1.getHeight()>1) {
                 sparkLine1.resize( new Dimension.Simple(sparkLine1.getHeight()-1, sparkLine1.getWidth()) );
                 sparkLine1Label.setText("Sparkline : \nheight="+ hiliteSparklineHeight.apply(sparkLine1.getHeight()));
             }
-        });
+        };
+        bannerPanel.addButton(Colors.IGre,"UP increase", null, increase);
+        bannerPanel.addComponent(new TextComponent("/"));
+        bannerPanel.addButton(Colors.IGre,"DOWN decrease", null, decrease);
+        // UP and DOWN only while focus is in this bar - as hot keys they would take the arrows
+        // from every other component on the screen (e.g. a text box in another window)
+        bannerPanel.focus().handleKeys(AsKeyboardHandler.UTIL.toKeyboardHandler(new KeyInputEventHandler(
+                (te) -> (Keys.UP_KEYSTROKE.equals(((KeyEvent) te).getKeyStroke()) ? increase : decrease).handle(te),
+                Keys.UP_KEYSTROKE, Keys.DOWN_KEYSTROKE)));
         bannerPanel.addComponent(new TextComponent(" sparkline height"));
         mainPanel.add(1, 1,bannerPanel);
 
