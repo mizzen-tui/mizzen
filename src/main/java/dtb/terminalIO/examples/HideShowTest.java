@@ -3,7 +3,7 @@ package dtb.terminalIO.examples;
 import java.io.IOException;
 
 import dtb.terminalIO.app.TUIApp;
-import dtb.terminalIO.components.AbstractWrappedComponentAndFocusable;
+import dtb.terminalIO.components.AbstractComponentWrappper;
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.ChildComponentManager;
@@ -19,6 +19,7 @@ import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.focus.ToFocusable;
 import dtb.terminalIO.events.mouse.Clickable;
 
 /**
@@ -96,7 +97,7 @@ public class HideShowTest {
 
     }
 
-    public static class ClickableRectangle extends AbstractWrappedComponentAndFocusable<BorderedComponent> implements Clickable {
+    public static class ClickableRectangle extends AbstractComponentWrappper<BorderedComponent> implements ToFocusable, Clickable {
 
         Focusable focusable = null;
         String text;
@@ -113,7 +114,7 @@ public class HideShowTest {
         }
 
         @Override
-        protected Focusable asFocusable() {
+        public Focusable asFocusable() {
             return focusable;
         }
     }

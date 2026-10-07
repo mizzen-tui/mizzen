@@ -3,7 +3,7 @@ package dtb.terminalIO.examples;
 import java.util.function.Function;
 
 import dtb.terminalIO.app.TUIApp;
-import dtb.terminalIO.components.AbstractWrappedComponentAndFocusable;
+import dtb.terminalIO.components.AbstractComponentWrappper;
 import dtb.terminalIO.components.chart.BarChart;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.composite.HorizontalPanel;
@@ -17,11 +17,10 @@ import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
-import dtb.terminalIO.events.TerminalEvent.TYPE;
 import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.focus.ToFocusable;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
-import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.TerminalDimensions;
 
 /**
@@ -33,7 +32,7 @@ public class BarChartTest {
     public static double[] bc_DATA       = new double[] { 10.0, 5.0, 13.0, 4.0, 6.0, 5.0, 6.0, 7.0, 8.0 };
     public static String[] bc_DATALabels = new String[] { "Lumber", "Metal", "Fish", "Beef", "Lamb", "Liquor", "Milk", "Butter", "Cherries" };
 
-    public static class BarChartRandomDataDemo extends AbstractWrappedComponentAndFocusable<BarChart>{
+    public static class BarChartRandomDataDemo extends AbstractComponentWrappper<BarChart> implements ToFocusable {
 
         Focusable focusable = null;
         OnIdleEventEventHandler.RepeatingInterval  drawChartTimedEventHandler;
@@ -86,24 +85,7 @@ public class BarChartTest {
         }
 
         @Override
-        public EventHandler canHandle(TerminalEvent<?> te) {
-            if ( eventHandler().canHandle(te) == null ) {
-                return null;
-            }
-            return this;
-        }
-
-        @Override
-        public void handle(TerminalEvent<?> te) {
-            if (te.getType()  == TYPE.TIMER) {
-                Logging.info("HOW?");
-            }
-            eventHandler().handle(te);
-        }
-        
-        
-        @Override
-        protected Focusable asFocusable() {
+        public Focusable asFocusable() {
             return focusable;
         }
     } 

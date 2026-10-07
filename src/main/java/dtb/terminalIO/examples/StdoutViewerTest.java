@@ -10,7 +10,7 @@ import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.StdoutViewer;
 import dtb.terminalIO.components.TextComponent;
-import dtb.terminalIO.components.WindowFrameFocusable;
+import dtb.terminalIO.components.WindowFrame;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.controlcodes.color.Colors;
@@ -69,7 +69,7 @@ public class StdoutViewerTest {
 
                     statsArea.add(0, 1,  new BorderedComponent(statsData));
 
-                    WindowFrameFocusable wf = new WindowFrameFocusable(Colors.Cya, "Test viewer", viewer);
+                    WindowFrame wf = new WindowFrame(Colors.Cya, "Test viewer", viewer);
                     wf.resize(new Dimension.Simple(18,52));
 
                     workArea.add(wf);

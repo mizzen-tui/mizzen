@@ -6,7 +6,7 @@ import java.util.function.BiFunction;
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.TextComponent;
-import dtb.terminalIO.components.WindowFrameFocusable;
+import dtb.terminalIO.components.WindowFrame;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.input.DropdownListBox;
@@ -52,7 +52,7 @@ public class TableResizeTest {
             t1.setName("t1");
 
             //   Color color, String title, Component<?> child
-            WindowFrameFocusable wf = new WindowFrameFocusable(Colors.Blu, "Table Resize Test", t1);
+            WindowFrame wf = new WindowFrame(Colors.Blu, "Table Resize Test", t1);
 
             mainWorkArea.add(wf);
 

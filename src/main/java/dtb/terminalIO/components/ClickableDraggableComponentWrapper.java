@@ -12,7 +12,7 @@ import dtb.terminalIO.events.mouse.Clickable;
 import dtb.terminalIO.events.mouse.Draggable;
 import dtb.terminalIO.events.mouse.MOUSE_ACTION;
 
-public class ClickableDraggableComponentWrapper extends AbstractWrappedComponentAndFocusable<Component<?>> implements Clickable, Draggable {
+public class ClickableDraggableComponentWrapper extends AbstractComponentWrappper<Component<?>> implements ToFocusable, Clickable, Draggable {
 
     public ClickableDraggableComponentWrapper(Color color, Component<?> container) {
         super(color, container);
@@ -30,7 +30,7 @@ public class ClickableDraggableComponentWrapper extends AbstractWrappedComponent
     }
 
     @Override
-    protected Focusable asFocusable() {
+    public Focusable asFocusable() {
         if (meAsFocusable != null) {
             return meAsFocusable;
         }
@@ -45,7 +45,7 @@ public class ClickableDraggableComponentWrapper extends AbstractWrappedComponent
             focusBehaviour = (FocusBehaviour) this.getWrappedComponent();
         }
 
-        meAsFocusable = new FocusableFromParts(this, focusBehaviour, null);
+        meAsFocusable = new Focusable.FocusableFromParts(this, focusBehaviour, null);
         
         return meAsFocusable;
     }
@@ -103,9 +103,9 @@ public class ClickableDraggableComponentWrapper extends AbstractWrappedComponent
             meAsClickable.onClick(eventBus);
             return;
         }
-        if (!hasFocus()) {
+        if (!asFocusable().hasFocus()) {
             // focus manager should have already put focus here - but just in case ..
-            eventBus.raiseEvent(new RequestFocusEvent(this));
+            eventBus.raiseEvent(new RequestFocusEvent(asFocusable()));
         }
     }
 

@@ -28,7 +28,7 @@ public class FocusSideEffectsCharacterisationTest extends TestCase {
     private final List<String> log = new ArrayList<>();
 
     /** records hilite / unHilite calls (the frame has no getter for its hilite state) */
-    class SpyFrame extends WindowFrameFocusable {
+    class SpyFrame extends WindowFrame {
         SpyFrame(String title, Component<?> child) {
             super(Colors.IYel, title, child);
         }

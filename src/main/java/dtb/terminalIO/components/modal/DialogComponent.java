@@ -3,8 +3,6 @@ package dtb.terminalIO.components.modal;
 import dtb.terminalIO.components.AbstractComponentWithContainer;
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.components.CompositeWithFocusManager;
-import dtb.terminalIO.events.focus.FocusPolicy;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.composite.HorizontalPanel;
@@ -18,7 +16,7 @@ import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
 
-public class DialogComponent extends AbstractComponentWithContainer<CompositeWithFocusManager>{
+public class DialogComponent extends AbstractComponentWithContainer<ModalPanel>{
 
     public static enum IconStyle {
         QUESTION,
@@ -122,9 +120,7 @@ public class DialogComponent extends AbstractComponentWithContainer<CompositeWit
     
     
     public DialogComponent(Color color, IconStyle icon,  String title) {
-        super(color, new CompositeWithFocusManager(color));
-        // modal: TAB / SHIFT-TAB wrap around inside the dialog, focus never leaves it (FocusPolicy.TRAP)
-        getWrappedComponent().getFocusManager().setFocusPolicy(FocusPolicy.TRAP);
+        super(color, new ModalPanel(color));      // modal: TAB / SHIFT-TAB go round inside it
 
         this.icon = icon;
 

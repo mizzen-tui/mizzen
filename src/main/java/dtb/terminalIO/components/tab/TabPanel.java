@@ -1,9 +1,11 @@
 package dtb.terminalIO.components.tab;
 
-import dtb.terminalIO.components.AbstractComponentWrappper;
+import java.util.Collection;
+
 import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.components.CompositeWithFocusManager;
+import dtb.terminalIO.components.ComponentWithFocus;
+import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.GetComponentAtOffset;
 import dtb.terminalIO.components.Hiliter;
 import dtb.terminalIO.components.ParentContainer;
@@ -16,14 +18,13 @@ import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.focus.RequestFocusEvent;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
+import dtb.terminalIO.events.keyboard.AsKeyboardHandler;
 import dtb.terminalIO.events.keyboard.KeyEvent;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.focus.FocusManager;
-import dtb.terminalIO.events.focus.FocusPolicy;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.ToFocusable;
 import dtb.terminalIO.events.keyboard.KeyStroke;
-import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Align;
 import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
@@ -32,7 +33,7 @@ import dtb.terminalIO.geom.VAlign;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.geom.position.PositionRelativeFactory;
 
-public class TabPanel extends AbstractComponentWrappper<CompositeWithFocusManager> 
+public class TabPanel extends ComponentWithFocus<Composite, TabPanel> 
                       implements CanResize, ParentContainer, GetComponentAtOffset, Hiliter {
 
     private ButtonBar tabsButtonBar;
@@ -56,7 +57,7 @@ public class TabPanel extends AbstractComponentWrappper<CompositeWithFocusManage
 
     
     public TabPanel(Color color, Dimension bounds) {
-        super(color, new CompositeWithFocusManager(color));
+        super(color, new Composite(color));
         getWrappedComponent().setBounds(bounds);
 
         border = new SimpleBorder(getColor(), new Dimension.Simple(bounds.getHeight()-2, bounds.getWidth()));
@@ -94,7 +95,7 @@ public class TabPanel extends AbstractComponentWrappper<CompositeWithFocusManage
         
         // prev / next tab shortcuts: last in this panel's handler chain, so they only fire
         // when neither the tab strip nor the tab's content handled the key
-        getWrappedComponent().getFocusManager().setCustomExtendedEventHandler(
+        focus().handleKeys(AsKeyboardHandler.UTIL.toKeyboardHandler(
             new KeyInputEventHandler(
                 (te) -> {
                     KeyEvent ke = (KeyEvent) te;
@@ -107,9 +108,9 @@ public class TabPanel extends AbstractComponentWrappper<CompositeWithFocusManage
                     } else {
                         setNextAsCurrentFocus(te.getEventBus());
                     }
-                }));
+                })));
 
-        FocusManager.UTIL.verifyPathsToFocusables(getWrappedComponent(), getWrappedComponent());
+        FocusManager.UTIL.verifyPathsToFocusables((FocusManager) asFocusable(), getWrappedComponent());
 
     }
 
@@ -213,7 +214,7 @@ public class TabPanel extends AbstractComponentWrappper<CompositeWithFocusManage
                 te2.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(currentComponentInTab));
             });
 
-            FocusManager.UTIL.verifyPathsToFocusables(getWrappedComponent(), getWrappedComponent());
+            FocusManager.UTIL.verifyPathsToFocusables((FocusManager) asFocusable(), getWrappedComponent());
 
         });
 
@@ -270,9 +271,9 @@ public class TabPanel extends AbstractComponentWrappper<CompositeWithFocusManage
                 if (!getWrappedComponent().containsChild(componentForTab)) {
                     return null;
                 }
-                focusable = getWrappedComponent().getFocusableForChild(componentForTab);
-
-                return focusable;
+                // the first focusable inside it
+                Collection<Focusable> inside = FocusManager.UTIL.focusablesFromComponent(componentForTab);
+                return inside.isEmpty() ? null : inside.iterator().next();
             }
 
         };

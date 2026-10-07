@@ -10,7 +10,7 @@ import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.ToFocusable;
 import dtb.terminalIO.events.mouse.Clickable;
 
-public class ClickableFocusableWrapper<T extends Component<?>> extends AbstractWrappedComponentAndFocusable<T> implements Clickable {
+public class ClickableFocusableWrapper<T extends Component<?>> extends AbstractComponentWrappper<T> implements ToFocusable, Clickable {
 
     Focusable focusable = null;
 
@@ -25,7 +25,9 @@ public class ClickableFocusableWrapper<T extends Component<?>> extends AbstractW
             focusable = new DefaultFocusableBehaviour.HiliteOnFocus(this.getWrappedComponent());
             return;
         }
-        focusable = FocusManager.UTIL.buildFocusManagerFromComponent(getWrappedComponent(), null);
+        // components inside take focus themselves: the wrapper has none of its own (asFocusable() null),
+        // so focus goes straight to them and the focus tree follows the component tree
+        focusable = null;
     }
 
     public ClickableFocusableWrapper(T component) {
@@ -42,7 +44,7 @@ public class ClickableFocusableWrapper<T extends Component<?>> extends AbstractW
     }
 
     @Override
-    protected Focusable asFocusable() {
+    public Focusable asFocusable() {
         return focusable;
     }
     

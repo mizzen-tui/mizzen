@@ -1,9 +1,7 @@
 package dtb.terminalIO.components.modal;
 
-import dtb.terminalIO.events.focus.FocusPolicy;
 import dtb.terminalIO.components.ChildComponentManager;
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.components.CompositeWithFocusManager;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.composite.VerticalPanel;
@@ -125,7 +123,7 @@ public class MessageBox {
         dialogColor.setBoldTransform((c)-> new Colors.FGBGColors(Colors.BIWhi, Colors.On_Bla));
         dialogColor.setInvertTransform((c)-> new Colors.FGBGColors(Colors.BIWhi, Colors.On_Bla));
 
-        CompositeWithFocusManager dialog = new CompositeWithFocusManager( dialogColor );
+        ModalPanel dialog = new ModalPanel( dialogColor );      // modal: TAB / SHIFT-TAB go round inside it
 
         dialog.setBorderColor(DialogComponent.iconToIconColor(icon));
         dialog.setBorder(true); 
@@ -135,8 +133,6 @@ public class MessageBox {
         dialog.setFillOnClear(true);
         dialog.setEmptyColor(dialogColor);
         dialog.setName("dialog");
-        // modal: TAB / SHIFT-TAB wrap around inside the dialog, focus never leaves it (FocusPolicy.TRAP)
-        dialog.getFocusManager().setFocusPolicy(FocusPolicy.TRAP);
 
         if (icon != null && Dimension.UTIL.stringToDimension(message).getHeight()==1) {
             message = "\n" + message;
@@ -214,7 +210,7 @@ public class MessageBox {
 
         EventHandler removeDialog = (te)->{
             parentPanel.remove(dialog);
-            dialog.setFocus(false, te.getEventBus());
+            dialog.asFocusable().setFocus(false, te.getEventBus());
             te.getEventBus().removeEventHandler(modalDialogEvents);
             te.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(dialog)  );
             if (onCloseHandler != null) {
@@ -244,7 +240,7 @@ public class MessageBox {
         modalDialogEvents.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, noActionHandler ) );
 
 
-        modalDialogEvents.appendEventHandler(dialog);
+        modalDialogEvents.appendEventHandler(dialog.asEventHandler());
 //        if (customComponent != null && customComponent instanceof ConditionalEventHandler) {
 //            modalDialogEvents.appendEventHandler((ConditionalEventHandler)customComponent);
 //        }

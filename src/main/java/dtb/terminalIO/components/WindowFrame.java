@@ -4,13 +4,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.TreeSet;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import dtb.terminalIO.components.composite.Composite;
-import dtb.terminalIO.components.input.DefaultFocusableBehaviour;
 import dtb.terminalIO.components.input.DraggableTextComponent;
+import dtb.terminalIO.components.input.ParentFocusBehaviour;
 import dtb.terminalIO.components.input.ResizeAnchor;
 import dtb.terminalIO.components.scroll.CanScrollToView;
 import dtb.terminalIO.components.scroll.ScrollBarHorizontal;
@@ -18,8 +16,15 @@ import dtb.terminalIO.components.scroll.ScrollBarVertical;
 import dtb.terminalIO.components.scroll.WindowViewComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.events.ChainedEventHandler;
+import dtb.terminalIO.events.ConditionalEventHandler;
+import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.focus.ToFocusable;
+import dtb.terminalIO.events.keyboard.AsKeyboardHandler;
+import dtb.terminalIO.events.keyboard.KeyEvent;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
+import dtb.terminalIO.events.keyboard.KeyboardHandler;
 import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
@@ -28,13 +33,23 @@ import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.textsegments.ScreenLineSegment;
 import dtb.terminalIO.util.Logging;
 
-public class WindowFrame extends AbstractComponent<WindowFrame> implements ParentContainer, 
+/**
+ * A window: a title bar to drag it by, a corner to resize it, a border, and its content - with
+ * scrollbars when the content is bigger than the window.
+ * <p/>
+ * Focus: when the content has focusable components, TAB moves among them; the window's border lights
+ * while focus is anywhere in it, and it comes to the front. When the content can't take focus (an
+ * image, text), the window itself is the TAB stop and the arrow keys scroll it. The title bar,
+ * resize corner and scrollbars are for the mouse, not TAB stops.
+ */
+public class WindowFrame extends AbstractComponent<WindowFrame> implements ParentContainer,
                                                                            CanResize,
                                                                            CanScrollToView,
-                                                                          // Focusable,
-                                                                           GetComponentAtOffset, 
-                                                                           HasName<WindowFrame>, 
-                                                                           HasTitleAndBorder<WindowFrame> {
+                                                                           GetComponentAtOffset,
+                                                                           HasName<WindowFrame>,
+                                                                           HasTitleAndBorder<WindowFrame>,
+                                                                           ToFocusable,
+                                                                           AsKeyboardHandler {
 
     private SimpleBorder border;
     private Component<?> child;
@@ -55,11 +70,9 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
     private ScrollBarHorizontal hScrollBar;
     private WindowViewComponent viewer;
 
-    //private FocusManager focusManager;
-    //private Function<EventBus, FocusManager> focusManagerBuilder;
-//    private ConditionalEventHandler eventHandler;
-//    private ChainedEventHandler     eventHandlerAsChainedEventHandler;
-    private Focusable               meAsFocusable;
+    // its own handlers: scrolling with the scrollbars' keys, scroll-to-view requests
+    private final ChainedEventHandler ownHandlers;
+    private final ParentFocusBehaviour focus;
 
 
     public WindowFrame(Color color, String title, Component<?> child) {
@@ -89,9 +102,45 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
         Position anchorPos = calcAnchorPosition();
         this.resizeAnchor.moveTo(anchorPos.getRow(), anchorPos.getCol());
 
-        //buildFocusManager();
-
         this.setName(HasName.UTIL.deriveName(this) + "-" + title);
+
+        this.ownHandlers = ChainedEventHandler.useChainOfResponsibilityStrategy(HasName.UTIL.getName(this) + "-chainOfResponsibility");
+        ownHandlers.appendEventHandler(new WindowViewComponent.ScrollToViewHandler(() -> this.viewer, this));
+        ownHandlers.appendEventHandler(new KeyInputEventHandler((te) -> this.hScrollBar != null && this.hScrollBar.canHandle(te) != null,
+                                                                (te) -> this.hScrollBar.handle(te)));
+        ownHandlers.appendEventHandler(new KeyInputEventHandler((te) -> this.vScrollBar != null && this.vScrollBar.canHandle(te) != null,
+                                                                (te) -> this.vScrollBar.handle(te)));
+        ConditionalEventHandler own = ownHandlers.asConditionalEventHandler();
+        this.focus = ParentFocusBehaviour.of(this)
+                                         .takeFocusItselfWhenNoChildCan()
+                                         .handleKeys(AsKeyboardHandler.UTIL.toKeyboardHandler(own))
+                                         .handleEvents(new ConditionalEventHandler.Impl(
+                                                 (te) -> !(te instanceof KeyEvent) && own.canHandle(te) != null,
+                                                 (te) -> own.handle(te)))
+                                         .whenFocusArrives((bus) -> showFocus(true, bus))
+                                         .whenFocusLeaves((bus) -> showFocus(false, bus));
+    }
+
+    @Override
+    public Focusable asFocusable() {
+        return focus.asFocusable();
+    }
+
+    @Override
+    public KeyboardHandler asKeyboardHandler() {
+        return focus.asKeyboardHandler();
+    }
+
+    /** focus arrived in the window (or left it): its border lights, and it comes to the front */
+    private void showFocus(boolean focused, EventBus eventBus) {
+        if (focused) {
+            hilite();
+            Component.UTIL.bringToFront(this);
+        } else {
+            unHilite();
+        }
+        markAsDirty();
+        eventBus.raiseEvent(new RequestUpdateCanvasEvent(this));
     }
     
     public void setChild(Component<?> child) {
@@ -100,7 +149,6 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
         }
         this.child = child;
         populateChildrenList();
-        //buildFocusManager();
     }
 
     private void populateChildrenList() {
@@ -275,6 +323,7 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
 
         Position anchorPos = calcAnchorPosition();
         this.resizeAnchor.moveTo(anchorPos.getRow(), anchorPos.getCol());
+        this.resizeAnchor.markAsDirty();
 
         if (autoScrollbars) {
             attachScrollbarsIfNeeded(d);
@@ -313,21 +362,14 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
                     this.getParentContainer().childResized(this);
                 }
             }
-        } else {
-            // size is bounded scenario - meaning we have done an explicit resize in the past...
-            //                            now we want to adjust scrollbars display based on change of child size
-            /*
-            Dimension d = new Dimension.Simple(this.getHeight(), this.getWidth());
-            
+        } else if (this.viewer == null) {
+            // a window sized by the user: its content changed size - fit it again (scrollbars if needed)
+            Dimension windowSize = new Dimension.Simple(this.getHeight(), this.getWidth());
             if (autoScrollbars) {
-                Logging.info(HasName.UTIL.getName(this) + ":attachScrollbarsIfNeeded :" + String.valueOf(d));
-                attachScrollbarsIfNeeded(d);
-            } else {
-                if (this.child instanceof CanResize) {
-                    ((CanResize) this.child).resize(new Dimension.Simple(d.getHeight() - 2, d.getWidth() - 2));
-                }
+                attachScrollbarsIfNeeded(windowSize);
+            } else if (this.child instanceof CanResize) {
+                ((CanResize) this.child).resize(new Dimension.Simple(windowSize.getHeight() - 2, windowSize.getWidth() - 2));
             }
-            */
             
         }
 
@@ -404,27 +446,6 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
         return this;
     }
 
-//    private FocusManager getFocusManager(EventBus eventBus) {
-//        if (this.focusManager == null) {
-//            if (focusManagerBuilder == null) {
-//                throw new IllegalStateException(
-//                        "focusManager and focusManagerBuilder are null - cannot get access to a focusManager for "
-//                                + this.getClass().getName());
-//            }
-//            this.focusManager = focusManagerBuilder.apply(eventBus);
-//        }
-//        return this.focusManager;
-//    }
-//
-//    protected FocusManager getFocusManager() {
-//        if (this.focusManager == null) {
-//            throw new NullPointerException(
-//                    "getFocusManager(): focusManager is null - cannot get access to a focusManager for "
-//                            + this.getClass().getName());
-//        }
-//        return this.focusManager;
-//    }
-
     @Override
     public void hilite() {
         this.border.hilite();
@@ -455,13 +476,13 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
 
     @Override
     public WindowFrame setTitle(Color titleColors, String title) {
-        this.setTitle(titleColors, title);
+        this.border.setTitle(titleColors, title);
         return this;
     }
 
     @Override
     public WindowFrame setTitle(String title) {
-        setTitle(title);
+        this.border.setTitle(title);
         return this;
     }
 
@@ -470,100 +491,6 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
         return this.border.getTitle();
     }
     
-    private Focusable asFocusable() {
-
-        if (meAsFocusable != null) {
-            return meAsFocusable;
-        }
-        
-
-
-        ChainedEventHandler chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(HasName.UTIL.getName(this)+"-chainOfResponsibility");
-
-        // hookup scroll to view requests
-        chainedEventHandler.appendEventHandler( new  WindowViewComponent.ScrollToViewHandler(()->this.viewer, this));
-
-        chainedEventHandler.appendEventHandler( new KeyInputEventHandler((te)-> this.hScrollBar != null && this.hScrollBar.canHandle(te)!=null,
-                                                                                       (te)-> {
-                                                                                           this.hScrollBar.handle(te);
-                                                                                       }));
-
-        chainedEventHandler.appendEventHandler( new KeyInputEventHandler((te)-> this.vScrollBar != null && this.vScrollBar.canHandle(te)!=null,
-                                                                                       (te)-> {
-                                                                                           this.vScrollBar.handle(te);
-                                                                                       }));
-        
-        meAsFocusable = new DefaultFocusableBehaviour.Simple(this, chainedEventHandler.asConditionalEventHandler());
-        return meAsFocusable;
-
-    }
-    
-    
-
-//    private void buildFocusManager() {
-//        this.focusManagerBuilder = (eventBus) -> {
-//            FocusManager focusManager = FocusManager.UTIL.buildFocusManagerFromComponentChildren(this, 
-//                                                                                                 eventBus,
-//                                                                                                 () -> new DefaultFocusManager().setPrevKeyStroke(Keys.SHIFT_TAB_KEYSTROKE)
-//                                                                                                                                .setNextKeyStroke(Keys.TAB_KEYSTROKE)
-//                                                                                                                                .setCycling(false));
-//            if (focusManager == null) {
-//                focusManager = new DefaultFocusManager(); // FocusManager.UTIL.buildFocusManagerFromComponent() is weird
-//                                                          // - that's why this extra call
-//            }
-//            return focusManager;
-//        };
-//
-//        this.focusManager = this.focusManagerBuilder.apply(new EventBus.STUBBED());
-//        this.eventHandlerAsChainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(HasName.UTIL.getName(this)+"-chainOfResponsibility");
-//        this.eventHandler = this.eventHandlerAsChainedEventHandler.asConditionalEventHandler();
-//
-//        // hookup scroll to view requests
-//        eventHandlerAsChainedEventHandler.appendEventHandler( new  WindowViewComponent.ScrollToViewHandler(()->this.viewer, this));
-//
-//        eventHandlerAsChainedEventHandler.appendEventHandler( new KeyInputEventHandler((te)-> this.hScrollBar != null && this.hScrollBar.canHandle(te)!=null,
-//                                                                                       (te)-> {
-//                                                                                           this.hScrollBar.handle(te);
-//                                                                                       }));
-//
-//        eventHandlerAsChainedEventHandler.appendEventHandler( new KeyInputEventHandler((te)-> this.vScrollBar != null && this.vScrollBar.canHandle(te)!=null,
-//                                                                                       (te)-> {
-//                                                                                           this.vScrollBar.handle(te);
-//                                                                                       }));
-//
-//    }
-    
-    
-//    @Override
-//    public EventHandler canHandle(TerminalEvent<?> te) {
-//        if (asFocusable().canHandle(te) != null) {
-//            return this;
-//        }
-//        return null;
-//    }
-//
-//    @Override
-//    public void handle(TerminalEvent<?> te) {
-//        asFocusable().handle(te);
-//    }
-//
-//    @Override
-//    public boolean hasFocus() {
-//        return asFocusable().hasFocus();
-//    }
-//
-//    @Override
-//    public void setFocus(boolean focus, EventBus eventBus) {
-//        asFocusable().setFocus(focus, eventBus);
-//
-//        if (focus) {
-//            this.hilite();
-//        } else {
-//            this.unHilite();
-//        }
-//
-//    }
-
     private Position getOffsetIntoSource() {
         if (viewer == null) {
             throw new NullPointerException(HasName.UTIL.getName(this)+" called getOffsetIntoSource when viewer is null!");
@@ -652,7 +579,7 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
                                          this.child);
 
         vScrollBar = new ScrollBarVertical(this.border.getBorderColor(),
-                this.border.getPostion_TopRight().offsetAdd(1, 0), this.border.getHeight() - 2);
+                this.border.getPostion_TopRight().offsetAdd(1, 0), this.border.getHeight() - 2).setTabStop(false);   // for the mouse
 
         HasName.UTIL.decorateWithParentsNamePrefix(vScrollBar, this);
         vScrollBar.setOffset(Position.ZERO);
@@ -666,7 +593,7 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
         });
 
         hScrollBar = new ScrollBarHorizontal(this.border.getBorderColor(), this.border.getPostion_BottomLeft().offsetAdd(0, 1),
-                this.border.getWidth() - 2);
+                this.border.getWidth() - 2).setTabStop(false);   // for the mouse
 
         HasName.UTIL.decorateWithParentsNamePrefix(hScrollBar, this);
 

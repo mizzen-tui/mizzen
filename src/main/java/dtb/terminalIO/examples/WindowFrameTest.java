@@ -15,7 +15,6 @@ import dtb.terminalIO.components.ComponentInspector;
 import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.WindowFrame;
-import dtb.terminalIO.components.WindowFrameFocusable;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.composite.LayoutManagerUtils;
@@ -31,7 +30,6 @@ import dtb.terminalIO.components.plot.image.ResizableImageViewer;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.controlcodes.color.Colors.FGBGColors;
-import dtb.terminalIO.core.ScreenCanvasBackend;
 import dtb.terminalIO.events.OnIdleEventEventHandler.RepeatingInterval;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.focus.FocusManager;
@@ -49,7 +47,6 @@ import dtb.terminalIO.util.TerminalDimensions;
 
 public class WindowFrameTest {
 
-    static boolean useFocusable = false;
     
     static final String DEFAULT_IMAGE = "/dtb/terminalIO/examples/sampledata/images/earth-messenger.jpg";   // bundled
     static String imgFilePath = null;     // IMAGE <file>; none: the bundled image
@@ -69,9 +66,7 @@ public class WindowFrameTest {
         }
         
         for (int i=0; i<args.length; i++) {
-            if ("FOCUS".equalsIgnoreCase(args[i])) {
-                useFocusable = true;
-            } else if ("IMAGE".equalsIgnoreCase(args[i]) && i+1<args.length) {
+            if ("IMAGE".equalsIgnoreCase(args[i]) && i+1<args.length) {
                 i++;
                 imgFilePath=args[i];
             } else if ("IMAGEPLOT".equalsIgnoreCase(args[i]) && i+1<args.length) {
@@ -105,13 +100,12 @@ public class WindowFrameTest {
             "usage: ./runDBG.sh " + cls + " [options] [IMAGE <file>]",
             "",
             "  IMAGE <file>           image shown in one of the windows (default: a bundled photo of the Earth)",
-            "  FOCUS                  use focusable window frames (WindowFrameFocusable)",
             "  IMAGERENDER <type>     " + names(ImageViewerFactory.imageRenderTypeOptions(), renderType),
             "  IMAGECOLOR <map>       " + names(ImageViewerFactory.colorMap(), colorMapping),
             "  IMAGEPLOT <condition>  which pixels to plot: " + names(ImageViewerFactory.plotPointPredicateOptions(), plotPredicate),
             "  HELP | -h | -?         this help",
             "",
-            "example: ./runDBG.sh " + cls + " FOCUS IMAGE ~/Pictures/photo.jpg"));
+            "example: ./runDBG.sh " + cls + " IMAGE ~/Pictures/photo.jpg"));
     }
 
     private static <V> String names(SimpleDisplayValue<V>[] options, V defaultValue) {
@@ -307,7 +301,6 @@ public class WindowFrameTest {
 
             tApp.getMainApplicationPanel().add(22,44, wfInspector);
 
-            tApp.getMainApplicationPanel().add(0,0,new TextComponent("WindowFrame class: " + usedWindoManagerClass().getSimpleName()));
 
             tApp.getResizeAction().accept(tApp, TerminalDimensions.create());
             
@@ -338,17 +331,7 @@ public class WindowFrameTest {
     }
 
     static AbstractComponent<?> makeWF(Color color, String title, Component<?> child) {
-        if (useFocusable) {
-            AbstractComponent<?> component = new WindowFrameFocusable(color, title, child);
-            return component;
-        } else {
-            AbstractComponent<?> component = new WindowFrame(color, title, child);
-            return component;
-        }
-    }
-
-    static Class<?>  usedWindoManagerClass() {
-        return makeWF(Colors.DEFAULT_COLOR, "dummy", new TextComponent(" ")).getClass();
+        return new WindowFrame(color, title, child);
     }
 
 }

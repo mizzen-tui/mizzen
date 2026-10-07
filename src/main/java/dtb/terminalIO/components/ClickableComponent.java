@@ -4,9 +4,10 @@ import dtb.terminalIO.components.input.DefaultFocusableBehaviour;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.focus.Focusable;
+import dtb.terminalIO.events.focus.ToFocusable;
 import dtb.terminalIO.events.mouse.Clickable;
 
-public class ClickableComponent<T extends Component<?>> extends AbstractWrappedComponentAndFocusable<T> implements Clickable {
+public class ClickableComponent<T extends Component<?>> extends AbstractComponentWrappper<T> implements ToFocusable, Clickable {
 
     Clickable clickable;
     Focusable focusable = null;
@@ -43,7 +44,7 @@ public class ClickableComponent<T extends Component<?>> extends AbstractWrappedC
     }
 
     @Override
-    protected Focusable asFocusable() {
+    public Focusable asFocusable() {
         return focusable;
     }
 

@@ -175,7 +175,7 @@ travelling down the focus tree. A redesign must keep delivering every row.
 | VALUE_CHANGED (from children) | `FormBinder.onChange` on the **form panel** (ancestor) | form-level change handling: needs delivery through ancestors |
 | VIEW_OFFSET_CHANGED | `HasViewPortWindow` (`newOnChangedHandler`) | viewport scroll sync |
 | TABLE_ROW_SELECTED / TABLE_CELL_SELECTED | `TableComponent` (`rowSelectedHandler`, `cellSelectedHandler`) | table selection callbacks (row: clicks and, since Oct 2026, key moves) |
-| REQUEST_SCROLL_TO_VIEW | `WindowViewComponent.ScrollToViewHandler` in `ScrollableComponent`, `WindowFrame`, `WindowFrameFocusable` chains (plus a bus-level `FindScrollToViewHandler` in `TUIApp`) | scroll a focused/requested component into view. **Focus side effect:** focusing inside a scrollable can scroll it (see comment in `MouseEventOrchestrator`) |
+| REQUEST_SCROLL_TO_VIEW | `WindowViewComponent.ScrollToViewHandler` in `ScrollableComponent`, `WindowFrame` chains (plus a bus-level `FindScrollToViewHandler` in `TUIApp`) | scroll a focused/requested component into view. **Focus side effect:** focusing inside a scrollable can scroll it (see comment in `MouseEventOrchestrator`) |
 | any (forwarded) | `ScrollableComponent`: if the footer (e.g. search box) has focus and cannot handle an event but the viewed component can, it forwards the event **and then raises `RequestFocusEvent` for that component** | *event-driven focus*: typing moves focus to the component that consumes it |
 | any | a behaviour's `handleEvents(..)` (`TextInputWithIncrDecrButtons`, `MovingPicturesViewer`, `ScrollableComponent`) - underneath, `customExtendedEventHandler` on its `DefaultFocusManager` | extra per-component handling |
 | KEYPRESS (modal) | `ModalEventHandler` prepends itself to its parent container (bus or component), inner chain + keyboard sinkhole | modal dialogs swallow all keys |
@@ -228,14 +228,25 @@ or hands out its usual event handlers adapted with `AsKeyboardHandler.UTIL.toKey
 
 ### 3.2 The older base classes
 
-Gone (Oct 2026): `ComponentWithFocusManager`, `AbstractWrappedComponentWithFocusManager` - every
-user moved to `ComponentWithFocus` or a held behaviour. `CompositeWithFocusManager` stays as the
-**app's root panel** only: a Composite that is also the root focus manager on the bus (TUIApp's
-default panel; the focus tests' roots) - not something to extend. Still to move: the windows and
-dialogs (`WindowFrameFocusable`: MessageBox, DialogComponent, TabPanel) and the Clickable wrappers
-(`AbstractWrappedComponentAndFocusable`). (The old bases used to register focusables with their
-manager on add / remove - `BehaviourForCompositeAndFocusManager`, a snapshot that went stale when a
-deeper component changed. That class is gone: the derived tree replaced it.)
+Gone (Oct 2026): `ComponentWithFocusManager`, `AbstractWrappedComponentWithFocusManager`,
+`AbstractWrappedComponentAndFocusable` and `WindowFrameFocusable` - every user moved to
+`ComponentWithFocus`, a held behaviour, or (the Clickable wrappers) `ToFocusable` handing out the
+focusable they build. `CompositeWithFocusManager` stays as the **app's root panel** only: a Composite
+that is also the root focus manager on the bus (TUIApp's default panel; the focus tests' roots) - not
+something to extend. A dialog's panel is a `ModalPanel` (a Composite with `keepsFocusInside()`).
+
+`WindowFrame` and `WindowFrameFocusable` were two halves of one idea, built side by side in 2021: a
+window as one stop (its keys scroll the content) and a window as a group (TAB among its fields, the
+frame lit while focus is inside). They are one `WindowFrame` now: a group when the content has
+focusable components, the stop itself when it has none (`takeFocusItselfWhenNoChildCan`).
+
+A wrapper that hands out no focusable (`ToFocusable.asFocusable()` null - `ClickableFocusableWrapper`
+around a panel of fields) is not focusable (`ToFocusable.UTIL.isFocusable`): focus goes to what is
+inside it, so the focus tree follows the component tree. (Before, that wrapper built a focus manager
+of its own over the fields - a second tree that disagreed with the real one: TAB stayed inside, and a
+hot key into it threw.) (The old bases used to register focusables with their manager on add /
+remove - `BehaviourForCompositeAndFocusManager`, a snapshot that went stale when a deeper component
+changed. That class is gone: the derived tree replaced it.)
 
 ### 3.3 The root — `TUIApp`
 
@@ -554,7 +565,7 @@ TreeView were built on them as the two proofs; CheckBoxInput, DropdownListBox an
 moved over. ScrollableComponent2 replaced the old ScrollableComponent (renamed back to
 `ScrollableComponent`). Then (Oct 2026) one base for components made of focusable components,
 `ComponentWithFocus`, with the focus settings in plain words (§3.1); the old bases went, except the
-app's root panel and the windows / Clickable wrappers still to move (§3.2). The text below is the original plan.
+app's root panel (§3.2). The text below is the original plan.
 
 Once focusables are discovered on demand (§4.3 C), components no longer have to keep a focus
 list in step with their children. That removes the main reason several mid-level base classes

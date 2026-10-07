@@ -28,14 +28,16 @@ public interface ToFocusable {
     public static class UTIL {
 
         /**
-         * return true if object (o) is a Focusable or ToFocusable
+         * true if o is a Focusable, or a ToFocusable that hands one out (asFocusable() not null). A
+         * ToFocusable that hands out none - a wrapper around components that take focus themselves -
+         * is not: focus goes to what is inside it.
          */
         public static boolean isFocusable(Object o) {
             if (o instanceof Focusable) {
                 return true;
             }
             if (o instanceof ToFocusable) {
-                return true;
+                return ((ToFocusable) o).asFocusable() != null;
             }
             return false;
         }
