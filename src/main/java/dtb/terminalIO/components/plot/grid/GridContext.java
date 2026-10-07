@@ -67,10 +67,10 @@ public interface GridContext {
         if (GRID_TYPE.BRAILLE_GRID_CTX.equals(gridContextType)) {
             return new BrailleGridContext(new BrailleGrid(color, Dimension.ZERO));
         }
-        if (GRID_TYPE.BRAILLE_GRID_CTX.equals(gridContextType)) {
+        if (GRID_TYPE.BLOCK_GRID_CTX.equals(gridContextType)) {
             return new BlocksGridContext(new BlocksGrid(color, Dimension.ZERO));
         }
-        if (GRID_TYPE.BRAILLE_GRID_CTX.equals(gridContextType)) {
+        if (GRID_TYPE.SIMPLE_GRID_CTX.equals(gridContextType)) {
             return new PlotterGridContext(new Plotter(color, Dimension.ZERO));
         }
 

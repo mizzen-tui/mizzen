@@ -71,13 +71,13 @@ public class Plotter extends BoundedComponent<Plotter> {
     public Plotter addText(int row, int col, CleanString text, Color color) {
         int sLen = text.length();
         for (int i = 0; i < sLen; i++) {
-            addPlot(row, col+i, text.charAt(i));
+            addPlot(row, col+i, text.charAt(i), color);
         }
         return this;
     }
 
     public Plotter addText(int row, int col, CleanString text) {
-        return addText(row, col, text);
+        return addText(row, col, text, this.getColor());
     }
 
 //    protected void drawOLD(Color color, IScreenLineSegmentsBuffer segments) {

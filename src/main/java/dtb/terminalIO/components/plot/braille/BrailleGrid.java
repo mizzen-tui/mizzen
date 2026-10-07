@@ -46,8 +46,24 @@ public class BrailleGrid extends Composite implements PointPlotter {
             return;
         }
         super.resize(d);
-        // what about if we have a border on this component
-        this.plotter.resize(d);
+        fitPlotterInside();
+    }
+
+    /** a border (a title turns one on) takes a character on each side: the plotter fits inside it */
+    @Override
+    public BrailleGrid setBorder(boolean hasBorder) {
+        super.setBorder(hasBorder);
+        fitPlotterInside();
+        return this;
+    }
+
+    /** the plotter: the grid's size, less the border if it has one */
+    private void fitPlotterInside() {
+        if (this.plotter == null) {
+            return;                                     // still being built
+        }
+        int edge = hasBorder() ? 2 : 0;
+        this.plotter.resize(new Dimension.Simple(Math.max(0, getHeight() - edge), Math.max(0, getWidth() - edge)));
         gridRectangle = BrailleUtils.componentRectangleToGridRectangle(plotter);
     }
 
