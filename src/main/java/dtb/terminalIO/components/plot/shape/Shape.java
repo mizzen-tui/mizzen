@@ -25,6 +25,15 @@ public interface Shape<T extends Shape<?>> extends HasName<T> {
 
     PositionTransform getPositionTransform();
 
+    /**
+     * The box around the shape as it draws now - its transform applied (a rotated shape's box is
+     * generally bigger than its unrotated one). Shapes that know their corners work it out from
+     * them; any other is drawn into a box-measuring plotter.
+     */
+    default Rectangle2D.Float2D bounds() {
+        return UTIL.getAsRectangle(this);
+    }
+
     void setPositionTransform(PositionTransform positionTransform);
 
     public static abstract class AbstractShape<T extends AbstractShape<?>> implements Shape<T> {

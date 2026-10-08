@@ -97,11 +97,10 @@ public class PlotArea extends AbstractComponentWrappper<Component<?>> implements
 
     private final List<Drawn> drawn = new ArrayList<Drawn>();  // this frame's shapes, in drawing order, with their dots
     private final Map<Shape<?>, PositionTransform.Translate> draggable = new IdentityHashMap<Shape<?>, PositionTransform.Translate>();
-    private Shape<?> dragging;
+    private DragMove dragging;                                 // null: no shape being dragged
     private boolean panByDrag = false;
     private boolean panning;
-    private Vec2<?> dragFrom;                                  // data
-    private float dragRowAtStart, dragColAtStart;
+    private Vec2<?> panFrom;                                   // data: the point grabbed to pan
 
     private final LeafFocusBehaviour focus = LeafFocusBehaviour.of(this);
 
@@ -665,14 +664,11 @@ public class PlotArea extends AbstractComponentWrappper<Component<?>> implements
                 return false;
             }
             panning = true;                                       // empty space: move the view
-            dragFrom = middleOf(under);
+            panFrom = middleOf(under);
             return true;
         }
-        dragging = shape;
-        dragFrom = middleOf(under);
-        PositionTransform.Translate moved = draggable.get(shape);
-        dragRowAtStart = moved.getRowDelta();
-        dragColAtStart = moved.getColDelta();
+        dragging = DragMove.of(draggable.get(shape));             // its offset, in your numbers
+        dragging.start(middleOf(under));
         return true;
     }
 
@@ -681,17 +677,14 @@ public class PlotArea extends AbstractComponentWrappper<Component<?>> implements
         Rectangle under = dotsUnder(e.getMousePosition());
         if (panning && under != null) {
             Vec2<?> now = middleOf(under);                        // the grabbed point goes back under the mouse
-            pan(dragFrom.getX() - now.getX(), dragFrom.getY() - now.getY());
+            pan(panFrom.getX() - now.getX(), panFrom.getY() - now.getY());
             e.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(this));
             return true;
         }
         if (dragging == null || under == null) {
             return false;
         }
-        Vec2<?> now = middleOf(under);
-        PositionTransform.Translate moved = draggable.get(dragging);
-        moved.setColDelta(dragColAtStart + now.getX() - dragFrom.getX());   // x: Translate's column
-        moved.setRowDelta(dragRowAtStart + now.getY() - dragFrom.getY());   // y: Translate's row (data y, up)
+        dragging.moveTo(middleOf(under));
         redraw();
         e.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(this));
         return true;

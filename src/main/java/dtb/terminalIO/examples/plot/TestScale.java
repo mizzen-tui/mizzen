@@ -20,9 +20,8 @@ import dtb.terminalIO.components.input.DisplayableValue;
 import dtb.terminalIO.components.input.ListBox;
 import dtb.terminalIO.components.input.RadioGroup;
 import dtb.terminalIO.components.input.TextInputInteger;
+import dtb.terminalIO.components.plot.DragMove;
 import dtb.terminalIO.components.plot.PointPlotter;
-import dtb.terminalIO.components.plot.PointPlotter.PointPlot;
-import dtb.terminalIO.components.plot.PointPlotter.PointPlotterList;
 import dtb.terminalIO.components.plot.RotationButtonBar;
 import dtb.terminalIO.components.plot.ScaleButtonBar;
 import dtb.terminalIO.components.plot.braille.BrailleGrid;
@@ -333,29 +332,9 @@ public class TestScale {
     
     
 
-    /** the box around the points the shape plots now (with its transform); null if it plots none */
-    static Rectangle plottedBox(Shape<?> shape) {
-        PointPlotterList plots = new PointPlotterList();
-        shape.draw(plots);
-        if (plots.size() == 0) {
-            return null;
-        }
-        int minRow = Integer.MAX_VALUE, minCol = Integer.MAX_VALUE, maxRow = Integer.MIN_VALUE, maxCol = Integer.MIN_VALUE;
-        for (PointPlot p : plots.getPlots()) {
-            minRow = Math.min(minRow, p.getRow());
-            maxRow = Math.max(maxRow, p.getRow());
-            minCol = Math.min(minCol, p.getCol());
-            maxCol = Math.max(maxCol, p.getCol());
-        }
-        return new Rectangle.Simple(minRow, minCol, maxRow - minRow + 1, maxCol - minCol + 1);
-    }
-
     /** the hilite while dragging: a dim box around the shape, one dot clear of it, drawn behind it */
     static void drawHilite(Shape<?> shape, PointPlotter plotter) {
-        Rectangle box = plottedBox(shape);
-        if (box == null) {
-            return;
-        }
+        Rectangle box = shape.bounds().toRectangle();
         new RectangleShape(new Rectangle.Simple(box.getRow() - 1, box.getCol() - 1, box.getHeight() + 2, box.getWidth() + 2), Colors.BBla).draw(plotter);
     }
 
@@ -363,9 +342,9 @@ public class TestScale {
     static Vec2<?> shapeCentre(Shape<?> shape) {
         PositionTransform current = shape.getPositionTransform();
         shape.setPositionTransform(PositionTransform.NOOP);
-        Rectangle box = plottedBox(shape);
+        Vec2<?> centre = shape.bounds().centerPosition();
         shape.setPositionTransform(current);
-        return box == null ? Position.ZERO : box.centerPosition();
+        return centre == null ? Position.ZERO : centre;
     }
 
     /** scale around a point (it stays put) instead of around 0,0 */
@@ -385,18 +364,15 @@ public class TestScale {
 
         private final Supplier<Position> gridOnCanvas;
         private final Supplier<Shape<?>> shape;
-        private final PositionTransform.Translate move;
         private final AtomicBoolean hilited;
         private final Consumer<EventBus> redraw;
-        private Position dragFrom;                   // null: not dragging
-        private float rowAtStart;
-        private float colAtStart;
+        private final DragMove dragMove;
 
         /** gridOnCanvas: where the grid's dots start on the screen (mouse positions come relative to the screen) */
         MoveShapeOnDrag(Supplier<Position> gridOnCanvas, Supplier<Shape<?>> shape, PositionTransform.Translate move, AtomicBoolean hilited, Consumer<EventBus> redraw) {
             this.gridOnCanvas = gridOnCanvas;
             this.shape = shape;
-            this.move = move;
+            this.dragMove = DragMove.of(move);        // the shape's move (translate), in grid dots
             this.hilited = hilited;
             this.redraw = redraw;
         }
@@ -412,9 +388,9 @@ public class TestScale {
 
         @Override
         public boolean onDragStart(ApplicationMouseEvent e) {
-            dragFrom = null;
+            dragMove.stop();
             Shape<?> current = shape.get();
-            Rectangle box = current == null ? null : plottedBox(current);
+            Rectangle box = current == null ? null : current.bounds().toRectangle();
             Position at = gridPosition(e);
             if (box == null || at == null) {
                 return false;
@@ -424,9 +400,7 @@ public class TestScale {
             if (!grab.contains(new Rectangle.Simple(at.getRow(), at.getCol(), 1, 1))) {
                 return false;                         // not on the shape
             }
-            dragFrom = at;
-            rowAtStart = move.getRowDelta();
-            colAtStart = move.getColDelta();
+            dragMove.start(at);
             hilited.set(true);
             redraw.accept(e.getEventBus());
             return true;
@@ -435,19 +409,18 @@ public class TestScale {
         @Override
         public boolean onDrag(ApplicationMouseEvent e) {
             Position at = gridPosition(e);
-            if (dragFrom == null || at == null) {
+            if (!dragMove.isMoving() || at == null) {
                 return false;
             }
-            move.setRowDelta(rowAtStart + at.getRow() - dragFrom.getRow());
-            move.setColDelta(colAtStart + at.getCol() - dragFrom.getCol());
+            dragMove.moveTo(at);
             redraw.accept(e.getEventBus());
             return true;
         }
 
         @Override
         public boolean onDragStop(ApplicationMouseEvent e) {
-            boolean wasDragging = dragFrom != null;
-            dragFrom = null;
+            boolean wasDragging = dragMove.isMoving();
+            dragMove.stop();
             if (wasDragging) {
                 hilited.set(false);
                 redraw.accept(e.getEventBus());
