@@ -186,7 +186,7 @@ public class Triangle extends AbstractShape<Triangle> implements Fillable<Triang
     }
 
     @Override
-    public Rectangle2D<Float> getRectangle2D() {
+    public Rectangle2D getRectangle2D() {
         PointPlotterAsRectangle calculatedRectanglePlotter = new PointPlotterAsRectangle();
         
         calculatedRectanglePlotter.plot(positionTransform.transform(p1));

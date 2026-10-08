@@ -13,6 +13,16 @@ import dtb.terminalIO.geom.Relation.OverUnder;
  */
 public interface Position extends Vec2<Position>, Row, Column{
 
+    /** a position given as row, then column - the screen order; Vec2.xy is the maths order (x, then y) */
+    static Position rowCol(int row, int col) {
+        return new Simple(row, col);
+    }
+
+    /** as rowCol(int, int), for rows and columns worked out as floats (dots, plots) */
+    static Position rowCol(float row, float col) {
+        return new Simple(row, col);
+    }
+
     public default boolean isSameLocation(Position other) {
         if (other == null) {
             return false;

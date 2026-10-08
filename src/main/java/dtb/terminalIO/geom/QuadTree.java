@@ -3,7 +3,7 @@ package dtb.terminalIO.geom;
 import java.util.ArrayList;
 import java.util.List;
 
-public class QuadTree<T extends Rectangle2D<Float>> {
+public class QuadTree<T extends Rectangle2D> {
 
     private static final int DEFAULT_MAX_OBJECTS = 10;
     private static final int DEFAULT_MAX_LEVELS = 4;
@@ -11,15 +11,15 @@ public class QuadTree<T extends Rectangle2D<Float>> {
     private final int maxObjects;
     private final int maxLevels;
     private final int level;
-    private final Rectangle2D<Float> bounds;
+    private final Rectangle2D bounds;
     private final List<T> objects;
     private final List<QuadTree<T>> nodes;
 
-    public QuadTree(Rectangle2D<Float> bounds) {
+    public QuadTree(Rectangle2D bounds) {
         this(bounds, DEFAULT_MAX_OBJECTS, DEFAULT_MAX_LEVELS, 0);
     }
 
-    public QuadTree(Rectangle2D<Float> bounds, int maxObjects, int maxLevels, int level) {
+    public QuadTree(Rectangle2D bounds, int maxObjects, int maxLevels, int level) {
         this.bounds = bounds;
         this.maxObjects = maxObjects;
         this.maxLevels = maxLevels;
@@ -47,7 +47,7 @@ public class QuadTree<T extends Rectangle2D<Float>> {
     }
 
     // Determine which nodes an object intersects
-    private List<Integer> getIndexes(Rectangle2D<Float> rect) {
+    private List<Integer> getIndexes(Rectangle2D rect) {
         List<Integer> indexes = new ArrayList<>();
 
         float verticalMidpoint = bounds.getX1() + (bounds.getWidth() / 2);
@@ -93,7 +93,7 @@ public class QuadTree<T extends Rectangle2D<Float>> {
     }
 
     // Retrieves all objects that could collide with the given rectangle
-    public List<T> retrieve(Rectangle2D<Float> rect) {
+    public List<T> retrieve(Rectangle2D rect) {
         List<T> results = new ArrayList<>(objects);
 
         if (!nodes.isEmpty()) {

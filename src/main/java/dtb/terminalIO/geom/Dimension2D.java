@@ -1,31 +1,32 @@
 package dtb.terminalIO.geom;
 
-public interface Dimension2D<T extends Number> {
+/**
+ * A size in floats - a width and a height in any units (dots, your plot's numbers). The float
+ * partner of Dimension (whole character cells).
+ */
+public interface Dimension2D {
 
-    public T getWidth();
+    float getWidth();
 
-    public T getHeight();
+    float getHeight();
 
-    public default boolean contains(Dimension2D<?> other) 
-    {
-        return this.getWidth().longValue() >= other.getWidth().longValue() && 
-               this.getHeight().longValue() >= other.getHeight().longValue();
+    default boolean contains(Dimension2D other) {
+        return this.getWidth() >= other.getWidth() && this.getHeight() >= other.getHeight();
     }
 
-    public default boolean isSameDimension(Dimension2D<?> other) {
+    default boolean isSameDimension(Dimension2D other) {
         return this.getWidth() == other.getWidth() && this.getHeight() == other.getHeight();
     }
 
-    public static final Dimension2D<Long> ZERO = new Dimension2D<Long>() {
+    Dimension2D ZERO = new Dimension2D() {
+        @Override
+        public float getWidth() {
+            return 0;
+        }
 
         @Override
-        public Long getWidth() {
-            return 0L;
-        }
-        @Override
-        public Long getHeight() {
-            return 0L;
+        public float getHeight() {
+            return 0;
         }
     };
-    
 }

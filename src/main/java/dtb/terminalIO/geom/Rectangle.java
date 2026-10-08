@@ -318,11 +318,12 @@ public interface Rectangle extends Position, Dimension, Movable {
             this(r.getRow(), r.getCol(), r.getHeight(), r.getWidth());
         }
 
-        public <T extends Number> Simple(Rectangle2D<T> r2D) {
-            this( (int)r2D.toLong(r2D.getY1()), 
-                  (int)r2D.toLong(r2D.getX1()), 
-                  (int)r2D.toLong(r2D.getHeight()), 
-                  (int)r2D.toLong(r2D.getWidth()));
+        /** a float box's cells: corner and size cut to whole numbers (towards 0) */
+        public Simple(Rectangle2D r2D) {
+            this( (int) r2D.getY1(),
+                  (int) r2D.getX1(),
+                  (int) r2D.getHeight(),
+                  (int) r2D.getWidth());
         }
 
         public Simple(Position p, Dimension d) {

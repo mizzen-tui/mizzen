@@ -200,7 +200,7 @@ public class ConnectedPoints<T extends ConnectedPoints<?>> extends AbstractShape
     }
 
     @Override
-    public Rectangle2D<Float> getRectangle2D() {
+    public Rectangle2D getRectangle2D() {
         PointPlotterAsRectangle calculatedRectanglePlotter = new PointPlotterAsRectangle();
 
         for (PointPlot point : points) {

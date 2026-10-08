@@ -8,6 +8,11 @@ import java.util.List;
 import java.util.function.BiFunction;
 
 public interface Vec2<T extends Vec2<?>> {
+
+    /** a point given as x (across), then y - the maths order; Position.rowCol is the screen order (row, then column) */
+    static Vec2<?> xy(float x, float y) {
+        return new BaseVec2(x, y);
+    }
     
     public default boolean isSameLocation(T other) {
         if (other == null) {

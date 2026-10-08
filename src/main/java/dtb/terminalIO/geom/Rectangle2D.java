@@ -2,35 +2,44 @@ package dtb.terminalIO.geom;
 
 import dtb.terminalIO.geom.position.Vec2;
 
-public interface Rectangle2D<T extends Number> extends Dimension2D<T>{
+/**
+ * A box in floats, corner (x1, y1) to corner (x2, y2) inclusive - e.g. a shape's bounds, a quad
+ * tree's area. The float partner of Rectangle (whole character cells, rows and columns); between
+ * them: Float2D.of(rectangle) and toRectangle().
+ */
+public interface Rectangle2D extends Dimension2D {
 
-    T getX1();
-    T getY1();
-    T getX2();
-    T getY2();
+    float getX1();
 
-    Vec2<?> newFrom(T x, T y);
-    T castFromLong(long l);
-    default long toLong(T n) {
-        return n.longValue();
-    }
+    float getY1();
 
-    public default Vec2<?> centered(Dimension2D<?> d, Vec2<?> defaultPos) {
+    float getX2();
+
+    float getY2();
+
+    /** the centre of a box of size d placed in the middle of this one; defaultPos if d does not fit */
+    default Vec2<?> centered(Dimension2D d, Vec2<?> defaultPos) {
         if (!contains(d)) {
             return defaultPos;
         }
-        
-        long x = (this.getWidth().longValue()  - d.getWidth().longValue()  )/2 + this.getX1().longValue();
-        long y = (this.getHeight().longValue() - d.getHeight().longValue() )/2 + this.getY1().longValue();
-        
-        return newFrom(castFromLong(x), castFromLong(y));
-   }
+        long x = (long) (this.getWidth() - d.getWidth()) / 2 + (long) this.getX1();
+        long y = (long) (this.getHeight() - d.getHeight()) / 2 + (long) this.getY1();
+        return Vec2.xy(x, y);
+    }
 
-    public default Vec2<?> centerPosition() {
+    default Vec2<?> centerPosition() {
         return centered(Dimension2D.ZERO, null);
-   }
+    }
 
-    public static class Float2D implements Rectangle2D<Float> {
+    /**
+     * The character-cell rectangle: corner and size each cut to whole numbers (towards 0) - as the
+     * engine's collision boxes have always been.
+     */
+    default Rectangle toRectangle() {
+        return new Rectangle.Simple(this);
+    }
+
+    public static class Float2D implements Rectangle2D {
 
         float x1;
         float y1;
@@ -53,34 +62,38 @@ public interface Rectangle2D<T extends Number> extends Dimension2D<T>{
             this(topLeft.getX(), topLeft.getY(), bottomRight.getX(), bottomRight.getY());
         }
 
-        
+        /** the float box of a character-cell rectangle (its cells, corner to corner) */
+        public static Float2D of(Rectangle r) {
+            return new Float2D(r.getCol(), r.getRow(), r.getCol() + r.getWidth() - 1, r.getRow() + r.getHeight() - 1);
+        }
+
         @Override
-        public Float getWidth() {
+        public float getWidth() {
             return getX2() - getX1() + 1;
         }
 
         @Override
-        public Float getHeight() {
+        public float getHeight() {
             return getY2() - getY1() + 1;
         }
 
         @Override
-        public Float getX1() {
+        public float getX1() {
             return x1;
         }
 
         @Override
-        public Float getY1() {
+        public float getY1() {
             return y1;
         }
 
         @Override
-        public Float getX2() {
+        public float getX2() {
             return x2;
         }
 
         @Override
-        public Float getY2() {
+        public float getY2() {
             return y2;
         }
 
@@ -100,18 +113,6 @@ public interface Rectangle2D<T extends Number> extends Dimension2D<T>{
             this.y2 = y2;
         }
 
-        @Override
-        public Vec2<?> newFrom(Float x, Float y) {
-            return new Vec2.BaseVec2(x,y);
-        }
-
-        @Override
-        public Float castFromLong(long l) {
-            return (float) l;
-        }
-
         public static final Float2D ZERO = new Float2D(0,0,0,0);
-
     }
-
 }
