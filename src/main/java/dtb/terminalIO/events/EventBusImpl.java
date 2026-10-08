@@ -3,6 +3,7 @@ package dtb.terminalIO.events;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
@@ -189,7 +190,7 @@ public class EventBusImpl implements EventHandlerContainer, EventBus {
             try {
                 if (!queue.offer(te, 25, TimeUnit.MILLISECONDS)) {
                     // still full after waiting: the event is lost - say so instead of dropping it silently
-                    Logging.forceLogInfo("EventBus: queue full (" + EVENT_Q_CAPACITY + "), event dropped: " + te);
+                    noteDropped(te);
                 }
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
@@ -201,6 +202,23 @@ public class EventBusImpl implements EventHandlerContainer, EventBus {
     /* (non-Javadoc)
      * @see dtb.terminalIO.events.IEventBus#raiseEvent(java.lang.Object, dtb.terminalIO.events.TerminalEvent.TYPE, T)
      */
+    private final AtomicInteger droppedSinceLogged = new AtomicInteger();
+    private volatile long lastDropLogged = 0;
+
+    /**
+     * An event lost to a full queue: logged - the first at once, then at most a line a second with
+     * how many were lost (one line per lost event would flood the log just when the app is busiest).
+     */
+    private void noteDropped(TerminalEvent<?> te) {
+        int dropped = droppedSinceLogged.incrementAndGet();
+        long now = System.currentTimeMillis();
+        if (now - lastDropLogged >= 1000) {
+            lastDropLogged = now;
+            droppedSinceLogged.set(0);
+            Logging.forceLogInfo("EventBus: queue full (" + EVENT_Q_CAPACITY + "), " + dropped + " event(s) dropped since the last report; the last: " + te);
+        }
+    }
+
     @Override
     public <T> EventBus raiseEvent(Object source, TYPE type, T eventData) {
         TerminalEvent<T> te = new TerminalEvent<T>(source, type, eventData);
