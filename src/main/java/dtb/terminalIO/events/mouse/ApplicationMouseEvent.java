@@ -24,6 +24,13 @@ public class ApplicationMouseEvent extends AbstractMouseEvent {
     
     
     
+    /** the same mouse event at another position - e.g. passed on to a component inside, in its terms */
+    public ApplicationMouseEvent at(Position position) {
+        ApplicationMouseEvent moved = new ApplicationMouseEvent(getSource(), getMouseAction(), position);
+        moved.setEventBus(getEventBus());
+        return moved;
+    }
+
     static <T> boolean compareProperties(ApplicationMouseEvent ame1, ApplicationMouseEvent ame2, Function<ApplicationMouseEvent, T> property) {
         T property1 = property.apply(ame1);
         T property2 = property.apply(ame2);

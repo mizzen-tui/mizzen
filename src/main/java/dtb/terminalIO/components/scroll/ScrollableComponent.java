@@ -15,6 +15,8 @@ import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.ConditionalEventHandler;
 import dtb.terminalIO.events.EventBus;
+import dtb.terminalIO.events.mouse.ApplicationMouseEvent;
+import dtb.terminalIO.events.mouse.Clickable;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
@@ -39,7 +41,7 @@ import dtb.terminalIO.util.Logging;
  * TextComponent), the pane itself is the TAB stop - its border hilites and its keys scroll it.
  */
 public class ScrollableComponent  extends ComponentWithFocus<Composite, ScrollableComponent>
-                                  implements CanScrollToView, ViewPortNavigable, HasViewPortWindow, AsSearchableView {
+                                  implements CanScrollToView, ViewPortNavigable, HasViewPortWindow, AsSearchableView, Clickable {
 
     // its own handlers: the scroll keys, footer keys for the content, scroll-to-view and view-port-changed
     private final ChainedEventHandler ownHandlers = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
@@ -216,6 +218,56 @@ public class ScrollableComponent  extends ComponentWithFocus<Composite, Scrollab
             this.hScrollBar.setOffset(offset);
         }
         return changedOffset;
+    }
+
+    /**
+     * A fallback, for the one case the mouse handling cannot cover: a click in the view that does
+     * not land on the component shown. Most clicks never come here - the mouse handling finds the
+     * component under the mouse and delivers the click to it directly. This only makes up for the
+     * clicks where nothing of the component is under the mouse.
+     * <p/>
+     * When that happens: what is shown is only as big as its content - a text input is as wide as
+     * its longest line and as tall as its lines - so a click past the end of a short line, or below
+     * the last line, lands on this scrollable, not on what it shows:
+     * <pre>
+     *   +----------------------------+   the scrollable's border
+     *   |Rush - boat.................|
+     *   |in the yard.....X...........|   X: a click here
+     *   |............................|
+     *   +--| ^ | v | PgUp | PgDn |---+
+     *
+     *   the text input is only the letters' block (11 wide, 2 high);
+     *   the dots are the scrollable's own empty view
+     * </pre>
+     * The mouse handling only knows where the scrollable was clicked (X: row 2, col 17 of it). Which
+     * spot of the content that is, only the scrollable knows: one in from its border, plus how far
+     * it is scrolled (X: line 1, col 16 of the text). So it works that out and passes the click on,
+     * as a click on the content at that spot - and a text input puts its caret as near as it can:
+     * the end of that line.
+     * <p/>
+     * (Making the text input as big as the view would also catch these clicks, but only for that one
+     * component; this works for anything shown in a scrollable.)
+     */
+    @Override
+    public void onClick(ApplicationMouseEvent click) {
+        if (!(componentBeingViewed instanceof Clickable) || click.getMousePosition() == null) {
+            return;
+        }
+        Position me = Component.UTIL.getCanvasOffsetFor(this);
+        Position view = Component.UTIL.getCanvasOffsetFor(viewer);
+        if (me == null || view == null) {
+            return;
+        }
+        Position inView = me.offsetAdd(click.getMousePosition()).offsetAdd(view.negate());
+        if (inView.getRow() < 0 || inView.getCol() < 0 || inView.getRow() >= viewer.getHeight() || inView.getCol() >= viewer.getWidth()) {
+            return;                                        // on the border or the footer, not the view
+        }
+        ((Clickable) componentBeingViewed).onClick(click.at(inView.offsetAdd(getOffsetIntoSource())));
+    }
+
+    @Override
+    public void onClick(EventBus eventBus) {
+        // only clicks with a position mean anything here: onClick(ApplicationMouseEvent)
     }
 
     public Position getOffsetIntoSource() {

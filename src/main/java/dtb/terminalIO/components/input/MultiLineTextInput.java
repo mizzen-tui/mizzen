@@ -186,6 +186,11 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
     }
     
 
+    /** where typing goes: the line, and the column in it */
+    public Position getCaretPosition() {
+        return caret;
+    }
+
     public void setCaretPosition(Position newRequestedPosition) {
 
         int newRow = 0;
