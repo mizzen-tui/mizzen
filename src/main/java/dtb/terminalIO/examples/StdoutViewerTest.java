@@ -1,7 +1,6 @@
 package dtb.terminalIO.examples;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.util.Collections;
 import java.io.IOException;
 import java.util.function.Consumer;
 
@@ -25,7 +24,6 @@ import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.StringSpinner;
 import dtb.terminalIO.util.linuxproc.LinuxProcessWatcher;
 import dtb.terminalIO.util.linuxproc.TerminalStreamOutputParser;
-import dtb.terminalIO.util.linuxproc.TerminalStreamReader;
 
 public class StdoutViewerTest {
 
@@ -77,16 +75,18 @@ public class StdoutViewerTest {
                     tApp.getMainApplicationPanel().add(1,0,workArea);
                     tApp.getMainApplicationPanel().add(1,workArea.getWidth(),statsArea);
  
+                    // a file as it is now, read in on its own thread: the screen stays live while a big one streams in.
+                    // (showFile, not follow: the large one is this app's own log, which grows while it is read.)
+                    StdoutViewer.Feed[] reading = { null };
                     Consumer<String> populateTask = (fileName)-> {
+                          if (reading[0] != null) {
+                              reading[0].stop();
+                          }
                           viewer.clearContent();
-                          viewer.disableTimedFlush(tApp.getEventBus());
-                          TerminalStreamOutputParser streamParser = new TerminalStreamOutputParser(viewer);
- 
                           try {
-                              new TerminalStreamReader(streamParser).readAll(new FileInputStream(fileName));
-                          } catch (FileNotFoundException e) {
-                              // TODO Auto-generated catch block
-                              e.printStackTrace();
+                              reading[0] = viewer.showFile(fileName, tApp.getEventBus());
+                          } catch (IOException e) {
+                              viewer.follow(Collections.singletonList("Cannot read " + fileName + ": " + e.getMessage()), tApp.getEventBus());
                           }
                     };
 
