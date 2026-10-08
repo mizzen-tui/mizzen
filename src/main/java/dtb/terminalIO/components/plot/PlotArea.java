@@ -57,7 +57,8 @@ import dtb.terminalIO.geom.position.Vec2;
  * The mouse: onClick tells you which shape you clicked (the last drawn one under the mouse - tested
  * against the dots it drew, so what you see is what you click) and where, in your numbers;
  * draggable(shape) lets the user drag a shape - it moves in your numbers, so it stays put when the
- * window changes. A press on a draggable shape is also a click.
+ * window changes; panByDrag(true) makes a drag on empty space move the view. A press on a
+ * draggable shape is also a click.
  * <p/>
  * After changing what onDraw draws (new data), call redraw() and request a canvas update.
  */
@@ -97,6 +98,8 @@ public class PlotArea extends AbstractComponentWrappper<Component<?>> implements
     private final List<Drawn> drawn = new ArrayList<Drawn>();  // this frame's shapes, in drawing order, with their dots
     private final Map<Shape<?>, PositionTransform.Translate> draggable = new IdentityHashMap<Shape<?>, PositionTransform.Translate>();
     private Shape<?> dragging;
+    private boolean panByDrag = false;
+    private boolean panning;
     private Vec2<?> dragFrom;                                  // data
     private float dragRowAtStart, dragColAtStart;
 
@@ -262,6 +265,12 @@ public class PlotArea extends AbstractComponentWrappper<Component<?>> implements
     /** the user can drag this shape (drawn with pen.draw); it moves in your numbers */
     public PlotArea draggable(Shape<?> shape) {
         draggable.putIfAbsent(shape, new PositionTransform.Translate(0f, 0f));
+        return this;
+    }
+
+    /** a drag that starts on empty space (not on a draggable shape) moves the view - the point grabbed stays under the mouse */
+    public PlotArea panByDrag(boolean panByDrag) {
+        this.panByDrag = panByDrag;
         return this;
     }
 
@@ -645,13 +654,19 @@ public class PlotArea extends AbstractComponentWrappper<Component<?>> implements
     @Override
     public boolean onDragStart(ApplicationMouseEvent e) {
         dragging = null;
+        panning = false;
         Rectangle under = dotsUnder(e.getMousePosition());        // a drag comes relative to the screen
         if (under == null) {
             return false;
         }
         Shape<?> shape = shapeAt(under, true);
         if (shape == null) {
-            return false;
+            if (!panByDrag) {
+                return false;
+            }
+            panning = true;                                       // empty space: move the view
+            dragFrom = middleOf(under);
+            return true;
         }
         dragging = shape;
         dragFrom = middleOf(under);
@@ -664,6 +679,12 @@ public class PlotArea extends AbstractComponentWrappper<Component<?>> implements
     @Override
     public boolean onDrag(ApplicationMouseEvent e) {
         Rectangle under = dotsUnder(e.getMousePosition());
+        if (panning && under != null) {
+            Vec2<?> now = middleOf(under);                        // the grabbed point goes back under the mouse
+            pan(dragFrom.getX() - now.getX(), dragFrom.getY() - now.getY());
+            e.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(this));
+            return true;
+        }
         if (dragging == null || under == null) {
             return false;
         }
@@ -678,8 +699,9 @@ public class PlotArea extends AbstractComponentWrappper<Component<?>> implements
 
     @Override
     public boolean onDragStop(ApplicationMouseEvent e) {
-        boolean was = dragging != null;
+        boolean was = dragging != null || panning;
         dragging = null;
+        panning = false;
         return was;
     }
 

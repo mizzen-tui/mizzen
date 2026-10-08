@@ -20,9 +20,9 @@ import dtb.terminalIO.geom.position.Vec2;
 
 /**
  * A PlotArea: sine and cosine, the area under the sine, sample points, a label, and a star you can
- * drag - all in the plot's own numbers (x 0..2 pi, y up). Click anything: the status line says what
- * and where. < > ^ v pan, + / - zoom, and the scaling can be switched. The plot is in a window:
- * drag its corner and the plot redraws at the new size.
+ * drag - all in the plot's own numbers (x 0..2 pi, y up); drag empty space to move the view. Click anything: the status line says what
+ * and where. The window's footer holds the controls: < > ^ v pan, + / - zoom, and the scaling.
+ * Drag the window's corner and the plot redraws at the new size.
  */
 public class PlotAreaDemo {
 
@@ -63,6 +63,7 @@ public class PlotAreaDemo {
                                     .color(Colors.BPur).draw(star)
                                     .color(Colors.BWhi).text(Math.PI / 2 - 0.2, 1.2, "peak"));
                     plot.draggable(star);
+                    plot.panByDrag(true);                              // drag empty space: move the view
                     plot.onClick((click) -> {
                         status.setTextAndResize(String.format(" clicked %s at x=%.2f  y=%.2f",
                                 click.shape() == null ? "nothing" : click.shape().getName(), click.at().getX(), click.at().getY()));
@@ -82,24 +83,24 @@ public class PlotAreaDemo {
                     pan.addButton("v", null, (te) -> { plot.pan(0, -stepY(plot)); refresh(te.getEventBus(), plot); });
 
                     ButtonBar zoom = new ButtonBar();
-                    zoom.addButton("zoom in +", null, (te) -> { plot.zoom(1.5); refresh(te.getEventBus(), plot); });
-                    zoom.addButton("zoom out -", null, (te) -> { plot.zoom(1 / 1.5); refresh(te.getEventBus(), plot); });
+                    zoom.addButton("+", null, (te) -> { plot.zoom(1.5); refresh(te.getEventBus(), plot); });
+                    zoom.addButton("-", null, (te) -> { plot.zoom(1 / 1.5); refresh(te.getEventBus(), plot); });
 
                     HorizontalPanel controls = new HorizontalPanel();
-                    controls.add(new TextComponent(" Scaling: "));
+                    controls.add(new TextComponent(" "));
                     controls.add(scaling);
-                    controls.add(new TextComponent("   "));
+                    controls.add(new TextComponent("   zoom "));
                     controls.add(zoom);
-                    controls.add(new TextComponent("   pan: "));
+                    controls.add(new TextComponent("   pan "));
                     controls.add(pan);
 
                     // the window's border and title, and its corner to resize it: the plot redraws at the new size
                     WindowFrame window = new WindowFrame(Colors.Gre, "PlotArea: your numbers, y up - drag the corner to resize", plot);
+                    window.setFooter(controls);                       // the plot's controls along the window's bottom
 
                     // straight on the main panel (the terminal's size): a panel around the window would cut it off as it grows
-                    tApp.getMainApplicationPanel().add(0, 0, controls);
-                    tApp.getMainApplicationPanel().add(1, 0, status);
-                    tApp.getMainApplicationPanel().add(2, 0, window);
+                    tApp.getMainApplicationPanel().add(0, 0, status);
+                    tApp.getMainApplicationPanel().add(1, 0, window);
                 })
                 .start();
     }

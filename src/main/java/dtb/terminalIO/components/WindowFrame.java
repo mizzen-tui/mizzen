@@ -69,6 +69,7 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
     private ScrollBarVertical vScrollBar;
     private ScrollBarHorizontal hScrollBar;
     private WindowViewComponent viewer;
+    private Component<?> footer;                               // null: none; else the last inner row(s), above the bottom border
 
     // its own handlers: scrolling with the scrollbars' keys, scroll-to-view requests
     private final ChainedEventHandler ownHandlers;
@@ -143,6 +144,44 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
         eventBus.raiseEvent(new RequestUpdateCanvasEvent(this));
     }
     
+    /**
+     * Controls (or a status line) along the bottom of the window, inside the border: the window
+     * grows by the footer's height, the footer takes the window's inner width, and the content
+     * keeps the rest. E.g. a plot's zoom and pan buttons.
+     */
+    public WindowFrame setFooter(Component<?> footer) {
+        int before = footerHeight();
+        this.footer = footer;
+        populateChildrenList();
+        this.height += footerHeight() - before;
+        this.border.resize(new Dimension.Simple(this.height, this.width));
+        fitFooter();
+        Position anchorPos = calcAnchorPosition();
+        this.resizeAnchor.moveTo(anchorPos.getRow(), anchorPos.getCol());
+        markAsDirty();
+        return this;
+    }
+
+    public Component<?> getFooter() {
+        return footer;
+    }
+
+    private int footerHeight() {
+        return footer == null ? 0 : footer.getHeight();
+    }
+
+    /** where the footer sits: the inner rows just above the bottom border */
+    private Position footerPosition() {
+        return new Position.Simple(this.height - 1 - footerHeight(), 1);
+    }
+
+    /** the footer as wide as the window's inside */
+    private void fitFooter() {
+        if (footer instanceof CanResize && footer.getWidth() != this.width - 2) {
+            ((CanResize) footer).resize(new Dimension.Simple(footerHeight(), Math.max(1, this.width - 2)));
+        }
+    }
+
     public void setChild(Component<?> child) {
         if (this.child != null) {
             this.child.setParentContainer(null);
@@ -166,6 +205,9 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
             this.children.add(this.vScrollBar);
             this.children.add(this.hScrollBar);
         }
+        if (footer != null) {
+            this.children.add(this.footer);
+        }
         this.children.add(this.border);
         this.children.add(this.resizeAnchor);
 
@@ -181,6 +223,9 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
         }
         this.resizeAnchor.setParentContainer(this);
         this.border.setParentContainer(this);
+        if (footer != null) {
+            this.footer.setParentContainer(this);
+        }
     }
 
     private Position calcAnchorPosition() {
@@ -246,6 +291,16 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
             return this.hScrollBar;
         }
 
+        if (footer != null) {
+            Position offsetForFooter = offset.offsetAdd(footerPosition().negate());
+            if (footer.containsPosition(offsetForFooter)) {
+                if (footer instanceof GetComponentAtOffset) {
+                    return ((GetComponentAtOffset) footer).getComponentAtOffset(offsetForFooter);
+                }
+                return footer;
+            }
+        }
+
         Component<?> theChild = (viewer != null) ? viewer : this.child;
 
         Position offsetForChild = offset.offsetAdd(this.getPositionRelativeToParent(theChild).negate());
@@ -279,6 +334,10 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
             return this.border.getPostion_TopLeft();
         }
 
+        if (footer != null && child == this.footer) {
+            return footerPosition();
+        }
+
         if (this.hScrollBar != null && child == this.hScrollBar) {
             return this.hScrollBar.getPostion_TopLeft();
         }
@@ -292,7 +351,7 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
     }
 
     private Dimension sizeFromChildren() {
-        return new Dimension.Simple(this.child.getHeight() + this.banner.getHeight() + 1,
+        return new Dimension.Simple(this.child.getHeight() + this.banner.getHeight() + 1 + footerHeight(),
                 Math.max(this.banner.getWidth(), this.child.getWidth()) + 2);
     }
 
@@ -324,12 +383,13 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
         Position anchorPos = calcAnchorPosition();
         this.resizeAnchor.moveTo(anchorPos.getRow(), anchorPos.getCol());
         this.resizeAnchor.markAsDirty();
+        fitFooter();
 
         if (autoScrollbars) {
             attachScrollbarsIfNeeded(d);
         } else {
             if (this.child instanceof CanResize) {
-                ((CanResize) this.child).resize(new Dimension.Simple(d.getHeight() - 2, d.getWidth() - 2));
+                ((CanResize) this.child).resize(new Dimension.Simple(d.getHeight() - 2 - footerHeight(), d.getWidth() - 2));
             }
         }
         // Logging.info(HasName.UTIL.getName(this) + ":resize :" + String.valueOf(new Dimension.Simple(this)));
@@ -353,6 +413,7 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
             }
             this.banner.resize(new Dimension.Simple(1, this.width - 2));
             this.border.resize(new Dimension.Simple(this.height, this.width));
+            fitFooter();
 
             Position anchorPos = calcAnchorPosition();
             this.resizeAnchor.moveTo(anchorPos.getRow(), anchorPos.getCol());
@@ -368,7 +429,7 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
             if (autoScrollbars) {
                 attachScrollbarsIfNeeded(windowSize);
             } else if (this.child instanceof CanResize) {
-                ((CanResize) this.child).resize(new Dimension.Simple(windowSize.getHeight() - 2, windowSize.getWidth() - 2));
+                ((CanResize) this.child).resize(new Dimension.Simple(windowSize.getHeight() - 2 - footerHeight(), windowSize.getWidth() - 2));
             }
             
         }
@@ -395,7 +456,7 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
 
 //        Component.UTIL.assertSegmentsIntegrity(bounds, thisWindowSegments);
 
-        Rectangle clippedArea = new Rectangle.Simple(this.border.getRow()+1, this.border.getCol()+1, this.border.getHeight()-2, this.border.getWidth()-2);
+        Rectangle clippedArea = new Rectangle.Simple(this.border.getRow()+1, this.border.getCol()+1, this.border.getHeight()-2-footerHeight(), this.border.getWidth()-2);
         // draw child
         Rectangle childRectangleWithOffset = new Rectangle.Simple( new Position.Simple(theChild).offsetAdd(this.childPosition), theChild );
         if (clippedArea.contains(childRectangleWithOffset)) {
@@ -430,6 +491,10 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
         if (vScrollBar != null) {
             segments.merge(vScrollBar.getSegmentsBuffer());
             //Component.UTIL.assertSegmentsIntegrity(bounds, thisWindowSegments);
+        }
+
+        if (footer != null) {
+            segments.mergeAt(footerPosition(), this.footer.getSegmentsBuffer());
         }
 
         // draw the banner
@@ -537,7 +602,7 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
     }
 
     private void attachScrollbarsIfNeeded(Dimension d) {
-        Dimension desiredViewPortSize = new Dimension.Simple(d.getHeight() - 2, d.getWidth() - 2);
+        Dimension desiredViewPortSize = new Dimension.Simple(d.getHeight() - 2 - footerHeight(), d.getWidth() - 2);
         if (this.child instanceof CanResize) {
             ((CanResize) this.child).resize(desiredViewPortSize);
         }
@@ -559,7 +624,7 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
             this.border.resize(d);
 
             vScrollBar.setRectangle(new Rectangle.Simple(this.border.getPostion_TopRight().offsetAdd(1, 0),
-                                                         new Dimension.Simple(this.border.getHeight() - 2, 1)));
+                                                         new Dimension.Simple(this.border.getHeight() - 2 - footerHeight(), 1)));
             vScrollBar.markAsDirty();
 
             hScrollBar.setRectangle(new Rectangle.Simple(this.border.getPostion_BottomLeft().offsetAdd(0, 1),
@@ -579,7 +644,7 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
                                          this.child);
 
         vScrollBar = new ScrollBarVertical(this.border.getBorderColor(),
-                this.border.getPostion_TopRight().offsetAdd(1, 0), this.border.getHeight() - 2).setTabStop(false);   // for the mouse
+                this.border.getPostion_TopRight().offsetAdd(1, 0), this.border.getHeight() - 2 - footerHeight()).setTabStop(false);   // for the mouse
 
         HasName.UTIL.decorateWithParentsNamePrefix(vScrollBar, this);
         vScrollBar.setOffset(Position.ZERO);
