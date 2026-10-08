@@ -78,6 +78,7 @@ public class EmbeddedAppTest {
             picks.add(pick("Window Frame", host, slot, status, () -> WindowFrameTest.main(new String[0])));
             picks.add(pick("Plot-Area-Demo", host, slot, status, () -> PlotAreaDemo.main(new String[0])));
             picks.add(pick("Orbits", host, slot, status, () -> OrbitsDemo.main(new String[0])));
+            picks.add(pick("Parts shop", host, slot, status, () -> PartsShopDemo.main(new String[0])));
             picks.add(pick("TreeView", host, slot, status, () -> TreeViewTest.main(new String[0])));
             Button close = new Button("Close");
             close.onChange((te) -> {
