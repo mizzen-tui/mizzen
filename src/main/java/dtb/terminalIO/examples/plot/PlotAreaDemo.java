@@ -11,7 +11,7 @@ import dtb.terminalIO.components.WindowFrame;
 import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.input.RadioGroup;
 import dtb.terminalIO.components.plot.PlotArea;
-import dtb.terminalIO.components.plot.shape.Polygon;
+import dtb.terminalIO.components.plot.shape.catalog.Star;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
@@ -42,13 +42,9 @@ public class PlotAreaDemo {
                         samples.add(new Vec2.BaseVec2((float) x, (float) (Math.sin(x) * 0.8)));
                     }
 
-                    Polygon star = new Polygon();
-                    for (int i = 0; i < 10; i++) {
-                        double a = Math.toRadians(-90 + i * 36);
-                        double r = i % 2 == 0 ? 0.35 : 0.15;
-                        star.addPoint(new Vec2.BaseVec2((float) (4.5 + r * Math.cos(a)), (float) (0.9 - r * Math.sin(a))));
-                    }
-                    star.setFilled(true);
+                    Star star = new Star(4.5f, 0.9f, 0.35f, 0.15f)
+                            .setYUp(true)                              // a plot's y goes up
+                            .setFilled(true);
                     star.setName("star");
 
                     PlotArea plot = new PlotArea(Colors.Gre, new Dimension.Simple(22, 90))

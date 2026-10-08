@@ -2,7 +2,6 @@ package dtb.terminalIO.examples.plot;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -26,10 +25,8 @@ import dtb.terminalIO.components.plot.RotationButtonBar;
 import dtb.terminalIO.components.plot.ScaleButtonBar;
 import dtb.terminalIO.components.plot.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.braille.BrailleUtils;
-import dtb.terminalIO.components.plot.shape.AbstractCompositeShape;
 import dtb.terminalIO.components.plot.shape.Circle;
 import dtb.terminalIO.components.plot.shape.CompositeShape;
-import dtb.terminalIO.components.plot.shape.ConnectedPoints;
 import dtb.terminalIO.components.plot.shape.DotMatrixText;
 import dtb.terminalIO.components.plot.shape.Ellipse;
 import dtb.terminalIO.components.plot.shape.Fillable;
@@ -38,6 +35,15 @@ import dtb.terminalIO.components.plot.shape.Polygon;
 import dtb.terminalIO.components.plot.shape.RectangleShape;
 import dtb.terminalIO.components.plot.shape.Shape;
 import dtb.terminalIO.components.plot.shape.Triangle;
+import dtb.terminalIO.components.plot.shape.catalog.Gear;
+import dtb.terminalIO.components.plot.shape.catalog.Heart;
+import dtb.terminalIO.components.plot.shape.catalog.House;
+import dtb.terminalIO.components.plot.shape.catalog.RegularPolygon;
+import dtb.terminalIO.components.plot.shape.catalog.Ring;
+import dtb.terminalIO.components.plot.shape.catalog.Smiley;
+import dtb.terminalIO.components.plot.shape.catalog.Spirograph;
+import dtb.terminalIO.components.plot.shape.catalog.Spring;
+import dtb.terminalIO.components.plot.shape.catalog.Star;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.TimedRequestedController;
 import dtb.terminalIO.events.EventBus;
@@ -289,22 +295,8 @@ public class TestScale {
         choices.add(new ShapeDisplayValue(dino.getName(), dino ));
         
         
-        int[][] hexaDOTs =  new int[][]{ {10,10},
-                                         {25,10},
-                                         {35,20}, 
-                                         {35,30},
-                                         {25,40},
-                                         {10,40},
-                                         {0,30},
-                                         {0,20},
-                                         };
-        Polygon hexagon = new Polygon(hexaDOTs);
-        hexagon.setName("Hexagon");
-
-        choices.add(new ShapeDisplayValue(hexagon.getName(), hexagon ));
-
-
-        choices.add(new ShapeDisplayValue("SpiroGraph", new SpiroGraph(10.0f, 10.0f, 20, 30, 10f) ));
+        choices.add(new ShapeDisplayValue("Hexagon", new RegularPolygon(20, 25, 16, 6).setName("Hexagon")));
+        choices.add(new ShapeDisplayValue("Spirograph", new Spirograph(45, 45, 15, 25, 10)));
 
         choices.add(new ShapeDisplayValue("Circle+sqr", new CompositeShape().addShape(new Circle(20, 20, 20).setFilled(true))
                                                                             .addShape(new  RectangleShape( new Rectangle.Simple(0,0,42,42)  ))
@@ -313,11 +305,13 @@ public class TestScale {
         Ellipse ellipse = new Ellipse(35, 20, 70, 36);
         ellipse.setName("Ellipse");
         choices.add(new ShapeDisplayValue("Ellipse", ellipse));
-        choices.add(new ShapeDisplayValue("Star", star()));
-        choices.add(new ShapeDisplayValue("Heart", heart()));
-        choices.add(new ShapeDisplayValue("Gear", gear()));
-        choices.add(new ShapeDisplayValue("House", house()));
-        choices.add(new ShapeDisplayValue("Smiley", smiley()));
+        choices.add(new ShapeDisplayValue("Star", new Star(40, 40, 36, 15)));
+        choices.add(new ShapeDisplayValue("Heart", new Heart(40, 40, 70)));
+        choices.add(new ShapeDisplayValue("Gear", new Gear(40, 40, 12, 36)));
+        choices.add(new ShapeDisplayValue("Ring", new Ring(30, 30, 28, 12)));
+        choices.add(new ShapeDisplayValue("Spring", new Spring(40, 20, 70, 16, 6)));
+        choices.add(new ShapeDisplayValue("House", new House(30, 32, 60, 56)));
+        choices.add(new ShapeDisplayValue("Smiley", new Smiley(30, 30, 28)));
         choices.add(new ShapeDisplayValue("Text", new DotMatrixText("dtbTerminalIO", Colors.BYel)));
 
         
@@ -429,86 +423,6 @@ public class TestScale {
         }
     }
 
-    /** a point at angle degrees on a circle (y grows downwards, as on the grid) */
-    static Vec2<?> onCircle(float cx, float cy, float radius, double degrees) {
-        double a = Math.toRadians(degrees);
-        return new Vec2.BaseVec2((float) (cx + radius * Math.cos(a)), (float) (cy + radius * Math.sin(a)));
-    }
-
-    /** five points: corners alternating between an outer and an inner circle - concave, a good fill test */
-    static Polygon star() {
-        Polygon star = new Polygon();
-        for (int i = 0; i < 10; i++) {
-            star.addPoint(onCircle(40, 40, i % 2 == 0 ? 36 : 15, -90 + i * 36));
-        }
-        star.setName("Star");
-        return star;
-    }
-
-    /** the classic heart curve, x = 16 sin^3 t, y = 13 cos t - 5 cos 2t - 2 cos 3t - cos 4t, sampled */
-    static Polygon heart() {
-        Polygon heart = new Polygon();
-        for (int i = 0; i < 72; i++) {
-            double t = Math.toRadians(i * 5);
-            double x = 16 * Math.pow(Math.sin(t), 3);
-            double y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
-            heart.addPoint((float) (40 + 2.2 * x), (float) (40 - 2.2 * y));     // y flipped: the curve's y grows upwards
-        }
-        heart.setName("Heart");
-        return heart;
-    }
-
-    /** twelve teeth: each a rise to the outer circle, a flat top, a drop back to the root circle; a round axle hole */
-    static Polygon gear() {
-        Polygon gear = new Polygon();
-        int teeth = 12;
-        double step = 360d / teeth;
-        for (int i = 0; i < teeth; i++) {
-            double a = i * step;
-            gear.addPoint(onCircle(40, 40, 28, a));
-            gear.addPoint(onCircle(40, 40, 36, a + step * 0.15));
-            gear.addPoint(onCircle(40, 40, 36, a + step * 0.45));
-            gear.addPoint(onCircle(40, 40, 28, a + step * 0.6));
-        }
-        List<Vec2<?>> axle = new ArrayList<Vec2<?>>();      // a hole in the middle: stays empty when filled
-        for (int degrees = 0; degrees < 360; degrees += 15) {
-            axle.add(onCircle(40, 40, 10, degrees));
-        }
-        gear.addHole(axle);
-        gear.setName("Gear");
-        return gear;
-    }
-
-    /** a composite: walls, a filled roof, a filled door, a window and a chimney - one shape, it all moves together */
-    static CompositeShape house() {
-        CompositeShape house = new CompositeShape()
-                .addShape(new RectangleShape(new Rectangle.Simple(30, 5, 30, 50)))                    // walls
-                .addShape(new Triangle(0, 30, 30, 4, 60, 30).setFilled(true))                         // roof
-                .addShape(new RectangleShape(new Rectangle.Simple(8, 42, 12, 6)))                     // chimney
-                .addShape(new RectangleShape(new Rectangle.Simple(42, 22, 18, 11)).setFilled(true))   // door
-                .addShape(new RectangleShape(new Rectangle.Simple(36, 9, 9, 10)))                     // window
-                .addShape(new Line(14, 36, 14, 44))                                                   // window bars
-                .addShape(new Line(9, 40, 18, 40));
-        house.setName("House");
-        return house;
-    }
-
-    /** a composite: the face, two filled eyes, and the mouth - an open curve (not closed back to its start) */
-    @SuppressWarnings("rawtypes")
-    static CompositeShape smiley() {
-        ConnectedPoints mouth = new ConnectedPoints(false);
-        for (int degrees = 25; degrees <= 155; degrees += 5) {
-            mouth.addPoint(onCircle(30, 30, 18, degrees));
-        }
-        CompositeShape smiley = new CompositeShape()
-                .addShape(new Circle(30, 30, 28))                     // face
-                .addShape(new Circle(20, 20, 4).setFilled(true))      // eyes
-                .addShape(new Circle(40, 20, 4).setFilled(true))
-                .addShape(mouth);
-        smiley.setName("Smiley");
-        return smiley;
-    }
-
     static class ShapeDisplayValue implements DisplayableValue<Shape<?>> {
 
         String name;
@@ -529,51 +443,4 @@ public class TestScale {
             return name;
         }
     }
-    
-    
-    static class SpiroGraph extends AbstractCompositeShape<SpiroGraph> {
-
-        
-        float cx;
-        float cy;
-        int radius1;
-        int radius2;
-        float ratio;
-        
-        
-        public SpiroGraph(float cx, float cy, int radius1, int radius2, float ratio) {
-            super();
-            this.cx = cx;
-            this.cy = cy;
-            this.radius1 = radius1;
-            this.radius2 = radius2;
-            this.ratio = ratio;
-            this.setName("SpiroGraph");
-        }
-
-        Collection<Shape<?>> drawSpirographToLines(float cx, float cy, int radius1, int radius2, float ratio) {
-            double x,y, theta;
-            
-            List<Shape<?>> lines = new ArrayList<Shape<?>>();
-            
-            Vec2<?> currentPosition = new Vec2.BaseVec2(cx + radius1 + radius2,  cy);
-            
-            for (theta = 0; theta <= Math.PI * 2; theta += 0.01) {
-                x = cx + radius1 * Math.cos(theta) + radius2 * Math.cos(theta * ratio);
-                y = cy + radius1 * Math.sin(theta) + radius2 * Math.sin(theta * ratio);
-                Vec2<?> nextPosition = new Vec2.BaseVec2((float)x,  (float)y);
-                lines.add(new Line(currentPosition, nextPosition));
-                currentPosition = nextPosition;
-            }
-            return lines;
-        }
-
-        @Override
-        protected Collection<Shape<?>> buildShapes() {
-            return drawSpirographToLines(cx, cy, radius1, radius2, ratio);
-        }
-
-    }
-    
-
 }
