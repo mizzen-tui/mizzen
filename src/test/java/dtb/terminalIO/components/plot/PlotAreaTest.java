@@ -101,6 +101,41 @@ public class PlotAreaTest extends TestCase {
         assertNull("outside from..to", characters(area).getCharAt(area.toGrid(8, 2).getRow(), area.toGrid(8, 2).getCol()));
     }
 
+    private boolean plotted(PlotArea area, double x, double y) {
+        Position at = area.toGrid(x, y);
+        return characters(area).getCharAt(at.getRow(), at.getCol()) != null;
+    }
+
+    public void testPenTranslateMovesWhatFollowsAndRestoreComesBack() {
+        PlotArea area = area(11).onDraw((pen) -> pen
+                .save().translate(5, 5).line(0, 0, 2, 0).restore()
+                .line(0, 0, 2, 0));
+        assertTrue("moved", plotted(area, 6, 5));
+        assertTrue("and back after restore", plotted(area, 1, 0));
+        assertFalse(plotted(area, 6, 0));
+    }
+
+    public void testPenRotateTurnsCounterClockwiseWithYUp() {
+        PlotArea area = area(11).onDraw((pen) -> pen.rotate(90).line(0, 0, 4, 0));
+        assertTrue("now pointing up", plotted(area, 0, 3));
+        assertFalse("not along x any more", plotted(area, 3, 0));
+    }
+
+    public void testPenScaleAppliesToAShapeAtItsCorners() {
+        PlotArea area = area(11).onDraw((pen) -> pen.scale(2).draw(new Line(0, 0, 2, 0)));
+        assertTrue("twice as long", plotted(area, 4, 0));
+        assertTrue("no gaps", plotted(area, 3, 0));
+    }
+
+    public void testRestoreWithoutSaveFailsClearly() {
+        try {
+            area(11).onDraw((pen) -> pen.restore());
+            fail("expected an error");
+        } catch (IllegalStateException expected) {
+            assertTrue(expected.getMessage().contains("save"));
+        }
+    }
+
     public void testNiceSteps() {
         assertEquals(1.0, PlotArea.niceStep(10, 10), 1e-9);
         assertEquals(0.5, PlotArea.niceStep(2 * Math.PI, 12), 1e-9);

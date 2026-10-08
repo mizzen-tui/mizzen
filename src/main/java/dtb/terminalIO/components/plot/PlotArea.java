@@ -419,11 +419,14 @@ public class PlotArea extends AbstractComponentWrappper<Component<?>> implements
         };
     }
 
-    /** a shape, in data units (with its drag offset, if draggable), recorded for clicks */
-    void drawShape(Shape<?> shape, Color color) {
+    /** a shape, in data units (its own transform, its drag offset if draggable, then the pen's), recorded for clicks */
+    void drawShape(Shape<?> shape, Color color, PositionTransform penTransform) {
         PositionTransform own = shape.getPositionTransform();
         PositionTransform.Translate moved = draggable.get(shape);
         PositionTransform inData = moved == null ? own : new PositionTransform.FofG(moved, own);
+        if (penTransform != PositionTransform.NOOP) {
+            inData = new PositionTransform.FofG(penTransform, inData);       // where the pen says, after the shape's own
+        }
         BitSet recording = new BitSet();
         PointPlotter plotter = dotsPlotter(recording);
         plotter.setNextPlotColor(color);
