@@ -32,6 +32,7 @@ import dtb.terminalIO.components.plot.shape.Circle;
 import dtb.terminalIO.components.plot.shape.CompositeShape;
 import dtb.terminalIO.components.plot.shape.ConnectedPoints;
 import dtb.terminalIO.components.plot.shape.DotMatrixText;
+import dtb.terminalIO.components.plot.shape.Ellipse;
 import dtb.terminalIO.components.plot.shape.Fillable;
 import dtb.terminalIO.components.plot.shape.Line;
 import dtb.terminalIO.components.plot.shape.Polygon;
@@ -310,6 +311,9 @@ public class TestScale {
                                                                             .addShape(new  RectangleShape( new Rectangle.Simple(0,0,42,42)  ))
                                                                             .setName("Circle+sqr")));
 
+        Ellipse ellipse = new Ellipse(35, 20, 70, 36);
+        ellipse.setName("Ellipse");
+        choices.add(new ShapeDisplayValue("Ellipse", ellipse));
         choices.add(new ShapeDisplayValue("Star", star()));
         choices.add(new ShapeDisplayValue("Heart", heart()));
         choices.add(new ShapeDisplayValue("Gear", gear()));
