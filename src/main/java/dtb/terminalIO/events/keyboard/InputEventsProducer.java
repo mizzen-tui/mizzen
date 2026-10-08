@@ -45,6 +45,9 @@ public class InputEventsProducer implements Runnable {
     
     int idleEventStarvationLimit = IDLE_STARVATION_INTERVAL_LIMIT;
     int sleepInterval = IDLE_STARVATION_INTERVAL_LIMIT - 10;
+
+    // reads failing in a row: reported on the first, then every this many (a second apart by then: about every 10 s)
+    static final int REPORT_EVERY_FAILURES = 10;
     
     /* For auto-numbering KeyInputEventsProducer threads. */
     private static int threadInitNumber;
@@ -96,10 +99,12 @@ public class InputEventsProducer implements Runnable {
         boolean isEOF = false;
 
         boolean inputStreamHasMoreData = false;
+        int failuresInARow = 0;     // reads failing one after another: the terminal is gone, or this app is in the background
         
         while (eventBus.isActive() && !isEOF) {
             generateStarvedIdleEvent();
             inputStreamHasMoreData = false;
+            boolean failed = false;
             try {
                 int available = this.inputStream.available();
                 if (available > 0) {
@@ -124,14 +129,27 @@ public class InputEventsProducer implements Runnable {
                 } else {
                     e1 = (Exception) e;
                 }
-                eventBus.raiseEvent(InputEventsProducer.this, TYPE.EXCEPTION, e1);
+                failed = true;
+                failuresInARow++;
+                if (failuresInARow % REPORT_EVERY_FAILURES == 1) {
+                    // the first of a run of failures, and again every so often while it lasts (in case a report
+                    // was lost): when reads keep failing (the terminal went away, or the app was put in the
+                    // background), every retry would raise one more event and flood the bus and the log
+                    eventBus.raiseEvent(InputEventsProducer.this, TYPE.EXCEPTION, e1);
+                }
                 if (!(e instanceof Exception)) { // if not an Exception - then probably an Error - so better to get the hell out
                     throw new RuntimeException(e);
                 }
             }
+            if (!failed) {
+                failuresInARow = 0;
+            }
 
             try {
-                Thread.sleep(inputStreamHasMoreData ? 1 : sleepInterval);
+                // failing: wait longer each time (twice, up to a second) instead of retrying at full speed
+                long wait = failuresInARow > 0 ? Math.min(1000, (long) sleepInterval << Math.min(failuresInARow, 10))
+                                               : (inputStreamHasMoreData ? 1 : sleepInterval);
+                Thread.sleep(wait);
             } catch (InterruptedException e) {
                 // Ignoring intentionally
             }
