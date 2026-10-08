@@ -63,6 +63,7 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
     Color headerColor;
     int rowsDisplayed = 0;
     TableLinesStyle linesStyle = TableLinesStyle.ALL;
+    boolean spacedRows = true;
 
     ConditionalEventHandler eventHandler;
     ChainedEventHandler chainedEventHandler;
@@ -242,7 +243,7 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
             } /* eof-col-loop */
 
             maxCol = Math.min(maxCol, mmCol);
-            rowpos += maxRowHeight + 1;
+            rowpos += maxRowHeight + rowGap();
             maxCellHeight = this.getHeight() - 2 - rowpos;
             if (!this.containsPosition(new Position.Simple(rowpos, 0))) {
                 break;
@@ -339,7 +340,7 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
                     break;
                 }
             }
-            rowpos += rowHeight + 1;
+            rowpos += rowHeight + rowGap();
             if (maxColRendered >= 0) {
                 maxRowRendered = Math.max(maxRowRendered, row);
             }
@@ -569,6 +570,25 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
 
     }
     
+    /** the line under each data row: the line drawn there (ALL), else a blank line unless rows are packed */
+    int rowGap() {
+        return TableLinesStyle.ALL.equals(getLinesStyle()) || spacedRows ? 1 : 0;
+    }
+
+    public boolean isSpacedRows() {
+        return spacedRows;
+    }
+
+    /**
+     * true (the default): a blank line under each row - easier to read; false: rows one under the
+     * other, twice as many on show. With lines between rows (ALL) there is always the line.
+     */
+    public TableComponent setSpacedRows(boolean spacedRows) {
+        this.spacedRows = spacedRows;
+        clearData();
+        return this;
+    }
+
     TableLineDraw getLineDraw() {
         if (this.getLinesStyle() == null || TableLinesStyle.NONE.equals(this.getLinesStyle()) ) {
             return new DrawLines_NONE();
