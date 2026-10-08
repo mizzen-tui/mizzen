@@ -120,23 +120,36 @@ public class EventBusImpl implements EventHandlerContainer, EventBus {
         consumerTask = new Runnable() {
             @Override
             public void run() {
-                
-                while (isActive()) {
-                    try {
-                        // poll for an event with a short blocking timeout so that
-                        // we can loop and test (isActive()) to see if we need to terminate
-                        TerminalEvent<?> te = queue.poll(1, TimeUnit.SECONDS);
-                        if (te != null) {
-                            handleEvent(te);
+                try {
+                    while (isActive()) {
+                        try {
+                            // poll for an event with a short blocking timeout so that
+                            // we can loop and test (isActive()) to see if we need to terminate
+                            TerminalEvent<?> te = queue.poll(1, TimeUnit.SECONDS);
+                            if (te != null) {
+                                handleEvent(te);
+                            }
+                        } catch (Exception e) {
+                            handleEvent(new TerminalEvent<Exception>(EventBusImpl.this, TerminalEvent.TYPE.EXCEPTION, e).setEventBus(EventBusImpl.this));
+                            // hmm... Should I really be looping after an exception.. or should I
+                            //        terminate?..
+                            //        For now .. I'm letting the user application make the decision.
                         }
-                    } catch (Exception e) {
-                        handleEvent(new TerminalEvent<Exception>(EventBusImpl.this, TerminalEvent.TYPE.EXCEPTION, e).setEventBus(EventBusImpl.this));
-                        // hmm... Should I really be looping after an exception.. or should I
-                        //        terminate?..
-                        //        For now .. I'm letting the user application make the decision.
                     }
+                } catch (Throwable t) {
+                    // an Error (out of memory ...), or an exception thrown while handling an exception: this
+                    // thread is ending - say why (nothing else will)
+                    Logging.forceLogInfo("EventBus: the event thread stopped on " + t);
+                } finally {
+                    // however it ends, the bus is no longer active: the input thread (and anything else that
+                    // asks) stops too, instead of raising events nobody handles - and keeping the JVM alive
+                    stopConsuming.set(true);
                 }
-                handleEvent(new TerminalEvent<Exception>(EventBusImpl.this, TerminalEvent.TYPE.TERMINATE, null, EventBusImpl.this).setEventBus(EventBusImpl.this));
+                try {
+                    handleEvent(new TerminalEvent<Exception>(EventBusImpl.this, TerminalEvent.TYPE.TERMINATE, null, EventBusImpl.this).setEventBus(EventBusImpl.this));
+                } catch (Throwable t) {
+                    Logging.forceLogInfo("EventBus: ending, the terminate handlers failed: " + t);
+                }
             }
         };
 
@@ -182,6 +195,23 @@ public class EventBusImpl implements EventHandlerContainer, EventBus {
     /* (non-Javadoc)
      * @see dtb.terminalIO.events.IEventBus#raiseEvent(dtb.terminalIO.events.TerminalEvent)
      */
+    private final AtomicInteger droppedSinceLogged = new AtomicInteger();
+    private volatile long lastDropLogged = 0;
+
+    /**
+     * An event lost to a full queue: logged - the first at once, then at most a line a second with
+     * how many were lost (one line per lost event would flood the log just when the app is busiest).
+     */
+    private void noteDropped(TerminalEvent<?> te) {
+        int dropped = droppedSinceLogged.incrementAndGet();
+        long now = System.currentTimeMillis();
+        if (now - lastDropLogged >= 1000) {
+            lastDropLogged = now;
+            droppedSinceLogged.set(0);
+            Logging.forceLogInfo("EventBus: queue full (" + EVENT_Q_CAPACITY + "), " + dropped + " event(s) dropped since the last report; the last: " + te);
+        }
+    }
+
     @Override
     public EventBus raiseEvent(TerminalEvent<?> te) {
         if (queue.size() < EVENT_Q_CAPACITY) { // todo: make configurable - or block?
@@ -202,23 +232,6 @@ public class EventBusImpl implements EventHandlerContainer, EventBus {
     /* (non-Javadoc)
      * @see dtb.terminalIO.events.IEventBus#raiseEvent(java.lang.Object, dtb.terminalIO.events.TerminalEvent.TYPE, T)
      */
-    private final AtomicInteger droppedSinceLogged = new AtomicInteger();
-    private volatile long lastDropLogged = 0;
-
-    /**
-     * An event lost to a full queue: logged - the first at once, then at most a line a second with
-     * how many were lost (one line per lost event would flood the log just when the app is busiest).
-     */
-    private void noteDropped(TerminalEvent<?> te) {
-        int dropped = droppedSinceLogged.incrementAndGet();
-        long now = System.currentTimeMillis();
-        if (now - lastDropLogged >= 1000) {
-            lastDropLogged = now;
-            droppedSinceLogged.set(0);
-            Logging.forceLogInfo("EventBus: queue full (" + EVENT_Q_CAPACITY + "), " + dropped + " event(s) dropped since the last report; the last: " + te);
-        }
-    }
-
     @Override
     public <T> EventBus raiseEvent(Object source, TYPE type, T eventData) {
         TerminalEvent<T> te = new TerminalEvent<T>(source, type, eventData);
