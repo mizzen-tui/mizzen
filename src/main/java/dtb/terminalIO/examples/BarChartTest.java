@@ -168,7 +168,8 @@ public class BarChartTest {
             sales.add(new Sale(bc_DATALabels[i], bc_DATA[i]));
         }
 
-        BarChart<Sale> bars = new BarChart<Sale>(Colors.Cya, new Dimension.Simple(20, 90))
+        Composite appPanel = (Composite) tApp.getMainApplicationPanel();
+        BarChart<Sale> bars = new BarChart<Sale>(Colors.Cya, chartSize(appPanel))
                 .barSize((sale) -> sale.amount)
                 .barLabel((sale) -> sale.region)
                 .setItems(sales);
@@ -190,9 +191,24 @@ public class BarChartTest {
         });
         tApp.getEventBus().appendEventHandler(changing);
 
-        tApp.getMainApplicationPanel().add(2, 0, bars);
-        tApp.getMainApplicationPanel().add(23, 0, status);
-        return new Shown(Arrays.<Component<?>>asList(bars, status), () -> tApp.getEventBus().removeEventHandler(changing));
+        appPanel.add(2, 0, bars);
+        appPanel.add(appPanel.getHeight() - 1, 0, status);
+
+        // the terminal resized: the chart takes the new size (and redraws to fit), the status line goes to the new bottom
+        appPanel.setOnResize((size) -> {
+            bars.resize(chartSize(size));
+            appPanel.remove(status);
+            appPanel.add(size.getHeight() - 1, 0, status);
+        });
+        return new Shown(Arrays.<Component<?>>asList(bars, status), () -> {
+            tApp.getEventBus().removeEventHandler(changing);
+            appPanel.setOnResize((size) -> { });
+        });
+    }
+
+    /** the chart: the panel less the switch row, a blank row and the status line */
+    private static Dimension chartSize(Dimension panel) {
+        return new Dimension.Simple(Math.max(8, panel.getHeight() - 4), Math.max(30, panel.getWidth()));
     }
 
     /** the legacy chart: random values every half second */

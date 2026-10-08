@@ -92,7 +92,8 @@ public class DonutChartTest {
         List<Disk> disks = Arrays.asList(new Disk("/", 120), new Disk("/home", 340), new Disk("/var", 45),
                                          new Disk("/opt", 80), new Disk("/data", 410));
 
-        DonutChart<Disk> donut = new DonutChart<Disk>(Colors.Gre, new Dimension.Simple(18, 64))
+        Composite appPanel = (Composite) tApp.getMainApplicationPanel();
+        DonutChart<Disk> donut = new DonutChart<Disk>(Colors.Gre, chartSize(appPanel))
                 .sliceSize((d) -> d.usedGb)
                 .sliceLabel((d) -> d.mount)
                 .setItems(disks);
@@ -105,9 +106,21 @@ public class DonutChartTest {
             te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(status));
         });
 
-        tApp.getMainApplicationPanel().add(2, 0, donut);
-        tApp.getMainApplicationPanel().add(21, 0, status);
-        return new Shown(Arrays.<Component<?>>asList(donut, status), () -> { });
+        appPanel.add(2, 0, donut);
+        appPanel.add(appPanel.getHeight() - 1, 0, status);
+
+        // the terminal resized: the chart takes the new size (and redraws, still round), the status line goes to the new bottom
+        appPanel.setOnResize((size) -> {
+            donut.resize(chartSize(size));
+            appPanel.remove(status);
+            appPanel.add(size.getHeight() - 1, 0, status);
+        });
+        return new Shown(Arrays.<Component<?>>asList(donut, status), () -> appPanel.setOnResize((size) -> { }));
+    }
+
+    /** the chart: the panel less the switch row, a blank row and the status line */
+    private static Dimension chartSize(Dimension panel) {
+        return new Dimension.Simple(Math.max(8, panel.getHeight() - 4), Math.max(30, panel.getWidth()));
     }
 
     /** the legacy chart: one value going round, which can be typed in */
