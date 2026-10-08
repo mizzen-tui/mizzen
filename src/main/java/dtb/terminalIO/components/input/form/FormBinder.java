@@ -27,6 +27,14 @@ public interface FormBinder<T> extends HasValue<T>{
 
     T getFormData();
 
+    /**
+     * Shows another object in the form: its values go onto the components, and from now on edits go
+     * into it - e.g. the sale picked in a table. Given the same object, the form shows its values
+     * again (after the object was changed in code, or put back from a copy). Any field errors shown
+     * are cleared.
+     */
+    void setFormData(T formData);
+
     void onChange(EventHandler consumeChange);
 
     default T getValue() {
@@ -239,6 +247,22 @@ public interface FormBinder<T> extends HasValue<T>{
         @Override
         public T getFormData() {
             return this.formData;
+        }
+
+        @Override
+        public void setFormData(T formData) {
+            this.formData = formData;
+            setValuesOntoComponents();
+            boolean hadErrors = false;
+            for (FormBinderField<?, T> field : formFields) {
+                if (field instanceof DefaultFormBinderField) {
+                    hadErrors |= field.isInError();
+                    ((DefaultFormBinderField<?, T>) field).inError = false;
+                }
+            }
+            if (hadErrors && this.errorHandler != null) {
+                this.errorHandler.handleError(this.eventBus, null, formData);   // null: no error now
+            }
         }
 
         @Override

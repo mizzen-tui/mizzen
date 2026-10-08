@@ -25,7 +25,7 @@ import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.StringUtils;
 
 public class CheckBoxInput extends BoundedComponent<CheckBoxInput> 
-             implements HasValue<Boolean>, ParentContainer, ToFocusable, Clickable, AsKeyboardHandler   {
+             implements SettableHasValue<Boolean>, ParentContainer, ToFocusable, Clickable, AsKeyboardHandler   {
 
     private TextComponent textRenderer;
 
@@ -59,8 +59,10 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
         return super.isDirty() || (this.textRenderer != null && this.textRenderer.isDirty());
     }
 
-    public void setValue(boolean value) {
-        this.value = value;
+    /** ticked or not (null: not ticked) */
+    @Override
+    public void setValue(Boolean value) {
+        this.value = value != null && value;
         this.markAsDirty();
     }
 

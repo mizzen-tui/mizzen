@@ -46,9 +46,8 @@ import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.Logging;
 import dtb.terminalIO.util.StringUtils;
 
-
 public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
-                                implements HasValue<String>, 
+                                implements SettableHasValue<String>, 
                                            ParentContainer, 
                                            Focusable, 
                                            EventHandlerContainer,
@@ -154,6 +153,12 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
         setCaretPosition(new Position.Simple(this.buffer.size() - 1, this.buffer.get(this.buffer.size() - 1).length()));
     }
     
+    /** the text (as setText) - so a form can bind it */
+    @Override
+    public void setValue(String value) {
+        setText(value);
+    }
+
     public void setText(EventBus eventBus, String text) {
         setText(text);
         raiseEventOnChanged(eventBus, ()-> true);
