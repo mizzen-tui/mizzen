@@ -7,6 +7,7 @@ import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.WindowFrame;
 import dtb.terminalIO.components.composite.HorizontalPanel;
+import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.plot.Pen;
 import dtb.terminalIO.components.plot.PlotArea;
 import dtb.terminalIO.components.plot.shape.Circle;
@@ -64,13 +65,14 @@ public class OrbitsDemo {
                     double[] time = { 0 };                       // in Earth years
                     double[] speed = { 0.02 };                   // years per tick
                     boolean[] paused = { false };
+                    boolean[] displayName = { true };
 
                     TextComponent status = new TextComponent(" Click a planet (or its name)");
 
                     PlotArea plot = new PlotArea(Colors.Gre, new Dimension.Simple(24, 80))
                             .showing(-5, 5, -5, 5)
                             .scaling(PlotArea.Scaling.EQUAL)
-                            .onDraw((pen) -> drawSystem(pen, time[0]));
+                            .onDraw((pen) -> drawSystem(pen, time[0], displayName[0]));
                     plot.onClick((click) -> {
                         for (Planet p : PLANETS) {
                             if (click.shape() != null && p.name.equals(click.shape().getName())) {
@@ -83,10 +85,17 @@ public class OrbitsDemo {
                         click.eventBus().raiseEvent(new RequestUpdateCanvasEvent(status));
                     });
 
-                    ButtonBar controls = new ButtonBar();
+                    ButtonBar controls = new ButtonBar()
+                                               .setLeftMostBorderChar((char)0)
+                                               .setRightMostBorderChar((char)0);
                     controls.addButton("slower", null, (te) -> speed[0] /= 2);
                     controls.addButton("faster", null, (te) -> speed[0] *= 2);
-                    controls.addButton("pause / go", null, (te) -> paused[0] = !paused[0]);
+                    controls.addButton("pause / go", null, (te) -> paused[0] = !paused[0])
+                             .setToggleButton(true);
+
+                    controls.addButton("names", null, (te) -> displayName[0] = !displayName[0])
+                             .setToggleButton(true)
+                             .setValue(true);
 
                     tApp.getEventBus().appendEventHandler(new OnIdleEventEventHandler.RepeatingInterval(100, (te) -> {
                         if (paused[0]) {
@@ -97,20 +106,23 @@ public class OrbitsDemo {
                         te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(plot));
                     }));
 
-                    HorizontalPanel top = new HorizontalPanel();
-                    top.add(new TextComponent(" Orbits: "));
-                    top.add(controls);
+                    HorizontalPanel controlsPanel = new HorizontalPanel();
+                    controlsPanel.add(new TextComponent(" Orbits: "));
+                    controlsPanel.add(controls);
+                    VerticalPanel windowFooter = new VerticalPanel(Colors.IBla);
+                    windowFooter.add(controlsPanel);
+                    windowFooter.add(status);
+                    windowFooter.setTitle("Controls:");
 
                     WindowFrame window = new WindowFrame(Colors.Gre, "The inner planets and Jupiter (not to scale) - drag the corner to resize", plot);
-                    tApp.getMainApplicationPanel().add(0, 0, top);
-                    tApp.getMainApplicationPanel().add(1, 0, status);
+                    window.setFooter(windowFooter);
                     tApp.getMainApplicationPanel().add(2, 0, window);
                 })
                 .start();
     }
 
     /** the sun, each orbit, each planet where it is at this time (and Earth's moon), each labelled */
-    static void drawSystem(Pen pen, double time) {
+    static void drawSystem(Pen pen, double time, boolean displayName) {
         pen.color(Colors.BYel).draw(new Circle(0f, 0f, 0.35f).setFilled(true));
         for (Planet p : PLANETS) {
             pen.color(Colors.BBla).draw(new Circle(0f, 0f, (float) p.orbit));
@@ -122,7 +134,9 @@ public class OrbitsDemo {
             Circle planet = new Circle((float) x, (float) y, p.size).setFilled(true);
             planet.setName(p.name);
             pen.color(p.color).draw(planet);
-            pen.text(x + p.size + 0.15, y, p.name, planet);
+            if (displayName) {
+                pen.text(x + p.size + 0.15, y, p.name, planet);
+            }
             if ("Earth".equals(p.name)) {
                 double moonAngle = 2 * Math.PI * time / 0.075;
                 pen.color(Colors.BWhi).point(x + Math.cos(moonAngle) * 0.35, y + Math.sin(moonAngle) * 0.35);

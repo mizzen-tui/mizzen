@@ -102,6 +102,11 @@ public class Button extends BoundedComponent<Button> implements SettableHasValue
         return this;
     }
 
+    public Button setToggleButton(boolean asToggleButton) {
+        this.toggleButton = asToggleButton;
+        return this;
+    }
+
 
     public Button setHotKey(KeyStroke hotKey) {
         this.hotKey = hotKey;
