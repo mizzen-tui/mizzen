@@ -13,8 +13,6 @@ import dtb.terminalIO.components.input.RadioGroup;
 import dtb.terminalIO.components.plot.PlotArea;
 import dtb.terminalIO.components.plot.shape.catalog.Star;
 import dtb.terminalIO.controlcodes.color.Colors;
-import dtb.terminalIO.events.EventBus;
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Vec2;
 
@@ -63,24 +61,20 @@ public class PlotAreaDemo {
                     plot.onClick((click) -> {
                         status.setTextAndResize(String.format(" clicked %s at x=%.2f  y=%.2f",
                                 click.shape() == null ? "nothing" : click.shape().getName(), click.at().getX(), click.at().getY()));
-                        click.eventBus().raiseEvent(new RequestUpdateCanvasEvent(status));
                     });
 
                     RadioGroup<String> scaling = RadioGroup.horizontal("stretch", "equal", "none");
-                    scaling.onChange((te) -> {
-                        plot.scaling(PlotArea.Scaling.valueOf(scaling.getValue().toUpperCase()));
-                        refresh(te.getEventBus(), plot);
-                    });
+                    scaling.onChange((te) -> plot.scaling(PlotArea.Scaling.valueOf(scaling.getValue().toUpperCase())));
 
                     ButtonBar pan = new ButtonBar();
-                    pan.addButton("<", null, (te) -> { plot.pan(-stepX(plot), 0); refresh(te.getEventBus(), plot); });
-                    pan.addButton(">", null, (te) -> { plot.pan(stepX(plot), 0); refresh(te.getEventBus(), plot); });
-                    pan.addButton("^", null, (te) -> { plot.pan(0, stepY(plot)); refresh(te.getEventBus(), plot); });
-                    pan.addButton("v", null, (te) -> { plot.pan(0, -stepY(plot)); refresh(te.getEventBus(), plot); });
+                    pan.addButton("<", null, (te) -> plot.pan(-stepX(plot), 0));
+                    pan.addButton(">", null, (te) -> plot.pan(stepX(plot), 0));
+                    pan.addButton("^", null, (te) -> plot.pan(0, stepY(plot)));
+                    pan.addButton("v", null, (te) -> plot.pan(0, -stepY(plot)));
 
                     ButtonBar zoom = new ButtonBar();
-                    zoom.addButton("+", null, (te) -> { plot.zoom(1.5); refresh(te.getEventBus(), plot); });
-                    zoom.addButton("-", null, (te) -> { plot.zoom(1 / 1.5); refresh(te.getEventBus(), plot); });
+                    zoom.addButton("+", null, (te) -> plot.zoom(1.5));
+                    zoom.addButton("-", null, (te) -> plot.zoom(1 / 1.5));
 
                     HorizontalPanel controls = new HorizontalPanel();
                     controls.add(new TextComponent(" "));
@@ -108,9 +102,5 @@ public class PlotAreaDemo {
 
     private static double stepY(PlotArea plot) {
         return (plot.getYMax() - plot.getYMin()) / 10;
-    }
-
-    private static void refresh(EventBus bus, PlotArea plot) {
-        bus.raiseEvent(new RequestUpdateCanvasEvent(plot));
     }
 }

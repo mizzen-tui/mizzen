@@ -29,7 +29,7 @@ public class ScrollableClickTest extends TestCase {
             lines.append("\nline ").append(i);
         }
         text.setText(lines.toString());
-        scrollable = new ScrollableComponent(Colors.Yel, new Dimension.Simple(8, 30), text);
+        scrollable = new ScrollableComponent(Colors.Yel, new Dimension.Simple(8, 40), text);   // wide enough for its footer buttons
         Composite root = new Composite();
         root.add(scrollable);
         CanvasForTesting.buildCanvasForTestingNoControlCodesInOutput().addComponentSegments(root);

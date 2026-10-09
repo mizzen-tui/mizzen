@@ -37,8 +37,6 @@ import dtb.terminalIO.components.table.TableComponent;
 import dtb.terminalIO.components.table.TableComponent.TableLinesStyle;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
-import dtb.terminalIO.events.EventBus;
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.geom.Dimension;
 
 /**
@@ -273,11 +271,9 @@ public class PartsShopDemo {
             showSale(sales.get(te.getRowSelected().getTableRow()));
             message.setColor(Colors.IGre);
             message.setTextAndResize(" Sale " + sale.number + " - edit it below; the table, chart and totals follow");
-            redraw(te.getEventBus());
         });
         itemsTable.onRowSelected((te) -> {
             showItem(sale.items.get(te.getRowSelected().getTableRow()));
-            redraw(te.getEventBus());
         });
 
         salesTable.setSelectedRow(0);
@@ -324,7 +320,6 @@ public class PartsShopDemo {
             salesTable.clearData();                        // the edit is in the sale already: show it
             shipped.redraw();
             updateSummary();
-            redraw(te.getEventBus());
         });
 
         revertButton.onChange((te) -> {
@@ -334,7 +329,6 @@ public class PartsShopDemo {
             refreshAll();
             message.setTextAndResize(" Sale " + sale.number + " put back as it was");
             revertButton.hide();
-            redraw(te.getEventBus());
         });
         return form;
     }
@@ -373,7 +367,6 @@ public class PartsShopDemo {
         itemForm.onChange((te) -> {
             revertButton.show();
             refreshAll();
-            redraw(te.getEventBus());
         });
 
         VerticalSplitter items = new VerticalSplitter(Colors.BBlu, new Dimension.Simple(height, width));
@@ -386,7 +379,6 @@ public class PartsShopDemo {
         return (eventBus, problem, data) -> {
             message.setColor(problem == null ? Colors.IGre : Colors.BIRed);
             message.setTextAndResize(problem == null ? " All good" : " " + problem.getMessage());
-            redraw(eventBus);
         };
     }
 
@@ -442,9 +434,5 @@ public class PartsShopDemo {
         }
         summary.setTextAndResize(String.format("%d sales   %d shipped   %d not shipped   total %s",
                 sales.size(), (int) count(true), (int) count(false), money(total)));
-    }
-
-    private void redraw(EventBus eventBus) {
-        eventBus.raiseEvent(new RequestUpdateCanvasEvent((Component<?>) tApp.getMainApplicationPanel()));
     }
 }

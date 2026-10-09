@@ -27,6 +27,7 @@ import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.OnRequestUpdateCanvasEventHandler;
 import dtb.terminalIO.events.OnResizeEventHandler;
 import dtb.terminalIO.events.OnTerminateEventHandler;
+import dtb.terminalIO.events.RepaintWhenDirty;
 import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.IS_Event_TYPE;
@@ -658,6 +659,11 @@ final class TerminalApp implements TUIAppInterface {
 
         if (this.updateCanvas != null) {
             eventBus.appendEventHandler(new OnRequestUpdateCanvasEventHandler(refreshCanvasIfModifiedAction));
+        }
+
+        // repaint what changed without being asked: code that changes the screen need not raise RequestUpdateCanvasEvent
+        if (this.updateCanvas != null && mainApplicationPanel instanceof Component) {
+            eventBus.appendEventHandler(new RepaintWhenDirty((Component<?>) mainApplicationPanel));
         }
 
         // on terminate: the application's terminate action, then the terminal is free for another TUIApp
