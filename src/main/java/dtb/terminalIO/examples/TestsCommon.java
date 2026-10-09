@@ -10,7 +10,6 @@ import dtb.terminalIO.core.ScreenCanvasBackend.UpdateStrategy;
 import dtb.terminalIO.core.TerminalScreen;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
@@ -158,7 +157,6 @@ public class TestsCommon {
 
          KeyInputEventHandler toggleUpdateEventHandler = new KeyInputEventHandler(onKeyStroke, (te) -> {
              toggleScreenUpdateStrategy.run();
-             te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(canvas));
          });
          
         eventBus.appendEventHandler(toggleUpdateEventHandler);

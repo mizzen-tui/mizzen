@@ -9,7 +9,6 @@ import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.controlcodes.color.Colors;
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.util.Logging;
 
@@ -43,7 +42,6 @@ public class CompositeSimpleTest {
                     toggleDrawType.onChange((te)-> {
                        Composite.DRAW_VIA_PARTS = ! Composite.DRAW_VIA_PARTS;
                        toggleDrawType.setButtonText(Composite.DRAW_VIA_PARTS ? "Drawing via Parts" : "Drawing traditional");
-                       te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(toggleDrawType));
                     });
 
                     tApp.getMainApplicationPanel().add(1, 20, new BorderedComponent( toggleDrawType ));

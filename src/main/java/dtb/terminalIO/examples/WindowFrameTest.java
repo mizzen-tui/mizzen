@@ -31,7 +31,6 @@ import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.controlcodes.color.Colors.FGBGColors;
 import dtb.terminalIO.events.OnIdleEventEventHandler.RepeatingInterval;
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Align;
@@ -166,7 +165,6 @@ public class WindowFrameTest {
             toggleDrawType.onChange((te)-> {
                Composite.DRAW_VIA_PARTS = ! Composite.DRAW_VIA_PARTS;
                toggleDrawType.setButtonText(Composite.DRAW_VIA_PARTS ? "Drawing via Parts" : "Drawing traditional");
-               te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(toggleDrawType));
             });
 
             tApp.getMainApplicationPanel().add(5, 3, new BorderedComponent( toggleDrawType ));
@@ -240,7 +238,6 @@ public class WindowFrameTest {
                 } else {
                     redButton.setButtonText("Top widget");
                 }
-                te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(redButton));
             });
             BorderedComponent blue = new BorderedComponent(redButton);
             expandDownContainer.add(0,0,blue);

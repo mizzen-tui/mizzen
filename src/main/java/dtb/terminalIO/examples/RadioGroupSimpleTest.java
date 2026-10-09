@@ -8,7 +8,6 @@ import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.input.RadioGroup;
 import dtb.terminalIO.components.input.TextInput;
 import dtb.terminalIO.controlcodes.color.Colors;
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.keyboard.Keys;
 
 /**
@@ -35,10 +34,10 @@ public class RadioGroupSimpleTest {
                Runnable showValues = () -> values.setTextAndResize("size=" + size.getValue() + "  colour=" + colour.getValue()
                                                                    + "  wifi=" + wifi.getValue() + "  ascii=" + plain.getValue());
                showValues.run();
-               size.onChange((te) -> { showValues.run(); te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(values)); });
-               colour.onChange((te) -> { showValues.run(); te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(values)); });
-               wifi.onChange((te) -> { showValues.run(); te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(values)); });
-               plain.onChange((te) -> { showValues.run(); te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(values)); });
+               size.onChange((te) -> showValues.run());
+               colour.onChange((te) -> showValues.run());
+               wifi.onChange((te) -> showValues.run());
+               plain.onChange((te) -> showValues.run());
 
                VerticalPanel form = new VerticalPanel();
                form.add(new TextComponent(Colors.ICya, "TAB between groups, arrows choose, F2 toggles Wifi, F5 cycles Size, CTRL-C quits"));

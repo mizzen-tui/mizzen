@@ -24,7 +24,6 @@ import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.OnIdleEventEventHandler.RepeatingInterval;
 import dtb.terminalIO.events.RequestHideCursorEvent;
 import dtb.terminalIO.events.RequestShowCursorEvent;
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.focus.Focusable;
@@ -99,7 +98,6 @@ public class OnOffTogglesTest {
                 ScreenCanvasBackend canvasBackend = ((ScreenCanvasBackend)app.getCanvas().getCanvasBackend());
                 canvasBackend.setUpdateStrategy(UpdateStrategy.UPDATE_FULL);
             }
-            te.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(partialUpdates));
         });
 
         buttons.addComponent(partialUpdates);

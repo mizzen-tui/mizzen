@@ -37,7 +37,6 @@ import dtb.terminalIO.core.ScreenCanvasBackend;
 import dtb.terminalIO.core.StringCanvasBackEnd;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TimedRequestedController;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
@@ -175,7 +174,6 @@ public class ReadImageFileToScreenTest {
                         tApp.getEventBus().appendIdleEventHandler( new OnIdleEventEventHandler.OneTime((te)-> {
                             sc.setTitle("");
                             sc.setComponentBeingViewed(imgViewer);
-                            te.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(sc) );
                         } ));
 
                     } catch (Exception e) {

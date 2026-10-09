@@ -31,7 +31,6 @@ import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventBusImpl;
 import dtb.terminalIO.events.EventHandlerContainer;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.examples.BarChartTest.BarChartRandomDataDemo;
 import dtb.terminalIO.examples.GridBrailleTest.BrailleDemo;
@@ -320,7 +319,6 @@ public class TabPanelTest {
                                 "\n" + 
                                 "Text segments on screen: " + tApp.getCanvas().segmentsSize() + "  ");
         
-                        te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(tApp));
             }));
 
             tb.displayCurrentTab(tApp.getEventBus());

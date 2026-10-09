@@ -15,7 +15,6 @@ import dtb.terminalIO.core.ScreenCanvasBackend;
 import dtb.terminalIO.core.ScreenCanvasBackend.UpdateStrategy;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
@@ -50,7 +49,6 @@ public class CursorMovementTest {
                             eventBus.appendEventHandler(new OnIdleEventEventHandler.OneTime(() -> {
                                 Component.UTIL.requestShowCursorAtComponent(mTextBox, requestedPosition, eventBus);
                                 mTextBox.markAsDirty();
-                                eventBus.raiseEvent(new RequestUpdateCanvasEvent(mTextBox));
                                 cursorPositionContainer[0] = requestedPosition;
                             }));
                         }
@@ -125,7 +123,6 @@ public class CursorMovementTest {
 
                     moves.addButton("Update strategy", Keys.CTRL_U_KEYSTROKE, (te) -> {
                         toggleScreenUpdateStrategy.run();
-                        te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(tApp));
                     }).setDisplayHotKey(true);
                     moves.addComponent(new TextComponent(" " + Keys.CTRL_C_KEYSTROKE.getName() + " Quit"));
 

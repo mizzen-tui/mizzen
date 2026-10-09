@@ -20,7 +20,6 @@ import dtb.terminalIO.components.table.TableComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.controlcodes.color.Colors.FGBGColors;
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.examples.sampledata.ReadSampleFiles;
 import dtb.terminalIO.geom.Align;
 import dtb.terminalIO.geom.Dimension;
@@ -100,7 +99,6 @@ public class ColorsTestWithTable {
 
             markDirty.onChange((te)->{
                 combinedColorsTable.markAsDirty();
-                te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(combinedColorsTable));
             });
 
             int row = 0;

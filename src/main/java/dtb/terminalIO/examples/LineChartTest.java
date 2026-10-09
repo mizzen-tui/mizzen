@@ -1,6 +1,5 @@
 package dtb.terminalIO.examples;
 
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.app.TUIApp;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,7 +23,6 @@ import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
-import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.examples.Demo.SimpleDemo;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
@@ -280,7 +278,6 @@ public class LineChartTest {
             show(tApp, renderNew(tApp));
             version.onChange((te) -> {
                 show(tApp, "legacy".equals(version.getValue()) ? renderLegacy(tApp, startSize) : renderNew(tApp));
-                te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent((Component<?>) tApp.getMainApplicationPanel()));
             });
         }).start();
     }
@@ -314,7 +311,6 @@ public class LineChartTest {
         chart.onChange((te) -> {
             LineChart.Point p = chart.getValue();
             status.setTextAndResize(String.format(" %s point %d: x=%.2f  y=%.2f", p.series(), p.index(), p.x(), p.y()));
-            te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(status));
         });
 
         List<double[]> live = new ArrayList<double[]>();
@@ -330,7 +326,6 @@ public class LineChartTest {
                 chart.add("live", p[0], p[1]);
             }
             chart.redraw();
-            te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(chart));
         });
         tApp.getEventBus().appendEventHandler(feed);
 
@@ -355,7 +350,6 @@ public class LineChartTest {
         String[] size = { startSize };
         LineChartDemo lineChartDemo = new LineChartDemo();
         lineChartDemo.setUpDemo(tApp.getEventBus(), chartBounds(size[0], appPanel));
-        lineChartDemo.setFlushDemoOutput(() -> tApp.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(lineChartDemo)));
         appPanel.add(1, 0, lineChartDemo.getLineChartPanelComponent());
         appPanel.setOnResize((newSize) -> lineChartDemo.resize(chartBounds(size[0], appPanel)));
         List<KeyInputEventHandler> sizeKeys = new ArrayList<KeyInputEventHandler>();

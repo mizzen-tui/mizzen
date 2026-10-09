@@ -32,7 +32,6 @@ import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.ChainedEventHandler;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.OnIdleEventEventHandler.RepeatingInterval;
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.mouse.Draggable;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
@@ -88,7 +87,6 @@ public class TestCube {
                     Runnable redrawShape = () -> {
                         grid.clearPlots();
                         activeShape[0].  as2DShape(projection).draw(grid.asPointPlotter());
-                        tApp.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(vpMainPanel));
 
                         grid.clearPlots();
                         if (showBoth[0]) {
@@ -98,7 +96,6 @@ public class TestCube {
                             AbstractShape3D<?> s = shapeChoice.getValue().equals("Cube") ? cube3D : sphere3D;
                             s.as2DShape(projection).draw(grid.asPointPlotter());
                         }
-                        tApp.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(vpMainPanel));
 
                     };
 

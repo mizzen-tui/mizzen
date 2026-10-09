@@ -16,7 +16,6 @@ import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.keyboard.AsKeyboardHandler;
 import dtb.terminalIO.events.keyboard.KeyEvent;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
@@ -110,7 +109,6 @@ public class SparklineTest {
 
             dataPoints.setTextAndResize( Arrays.deepToString(data) );
 
-            te.getEventBus().raiseEvent(  new RequestUpdateCanvasEvent(mainPanel)  );
             
         } ));
         

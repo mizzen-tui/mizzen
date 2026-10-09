@@ -12,7 +12,6 @@ import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.input.LeafFocusBehaviour;
 import dtb.terminalIO.controlcodes.color.Colors;
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.ToFocusable;
 import dtb.terminalIO.events.keyboard.AsKeyboardHandler;
@@ -114,7 +113,6 @@ public class CompositeLayeringTest {
                     return false;
                 }
                 action.run();
-                ke.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(MovableBox.this));
                 return true;
             }
         });

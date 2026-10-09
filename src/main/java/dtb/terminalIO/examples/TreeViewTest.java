@@ -34,7 +34,6 @@ import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventBus;
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TimedRequestedController;
 import dtb.terminalIO.examples.plot.image.FractalAnimation;
 import dtb.terminalIO.examples.sampledata.ReadSampleFiles;
@@ -108,13 +107,11 @@ public class TreeViewTest {
                // building a view can be slow: switch once the selection stops moving (at least every 750 ms while it moves)
                TimedRequestedController redraw = new TimedRequestedController((te) -> {
                    show(detail, shown, viewFor(tree.getValue(), detail), te.getEventBus());
-                   te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(detail));
                });
 
                tree.onChange((te) -> {
                    showStatus.run();
                    redraw.onRequest(te.getEventBus());
-                   te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(status));
                });
                tree.onExpansion((node, expanded, eventBus) -> {
                    lastExpansion[0] = (expanded ? "expanded " : "collapsed ") + node;
@@ -161,7 +158,6 @@ public class TreeViewTest {
     }
 
     private static void repaint(EventBus eventBus, Object source) {
-        eventBus.raiseEvent(new RequestUpdateCanvasEvent(source));
     }
 
     /** what a tree node stands for: a group of nodes, a shape to draw, or an image (a bundled one, by name) */

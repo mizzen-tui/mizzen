@@ -17,7 +17,6 @@ import dtb.terminalIO.controlcodes.color.Colors.FGBGColors;
 import dtb.terminalIO.core.TerminalScreen;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.keyboard.InputParserManager;
 import dtb.terminalIO.events.keyboard.Keys;
@@ -159,7 +158,6 @@ public class AsciiDrawingTool {
 
 
             	        canvas.markAsDirty();
-            	        evt.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(canvas));
             	    }
             	}));
              

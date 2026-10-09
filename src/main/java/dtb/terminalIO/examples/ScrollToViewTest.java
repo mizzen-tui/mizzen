@@ -11,7 +11,6 @@ import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.RequestHideCursorEvent;
 import dtb.terminalIO.events.RequestScrollToView;
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyStroke;
 import dtb.terminalIO.events.keyboard.Keys;
@@ -63,7 +62,6 @@ public class ScrollToViewTest {
                     }
                     
                     toggle = ! toggle;
-                    te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(IKnowWhereIAm.this));
 
                     
 

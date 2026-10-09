@@ -17,7 +17,6 @@ import dtb.terminalIO.components.input.TextInputInteger;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
 
@@ -69,7 +68,6 @@ public class DonutChartTest {
             show(tApp, renderNew(tApp));
             version.onChange((te) -> {
                 show(tApp, "legacy".equals(version.getValue()) ? renderLegacy(tApp) : renderNew(tApp));
-                te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent((Component<?>) tApp.getMainApplicationPanel()));
             });
         })
         .start();
@@ -103,7 +101,6 @@ public class DonutChartTest {
         donut.onChange((te) -> {
             ChartItem<Disk> slice = donut.getValue();
             status.setTextAndResize(String.format(" %s: %d GB (%.1f%% of all)", slice.label(), slice.item().usedGb, slice.percent()));
-            te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(status));
         });
 
         appPanel.add(2, 0, donut);
@@ -153,7 +150,6 @@ public class DonutChartTest {
             int maxData = 360;
             dataPoint[0] = ( dataPoint[0] + 1 ) % maxData;
             donutChart.setData(dataPoint[0],maxData,String.format("%3d",dataPoint[0]));
-            te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(donutChart));
         });
         bus.appendEventHandler(animate);
         return new Shown(Arrays.<Component<?>>asList(donutChart, userControls), () -> bus.removeEventHandler(animate));

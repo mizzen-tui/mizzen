@@ -9,7 +9,6 @@ import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.modal.MessageBox;
 import dtb.terminalIO.controlcodes.color.Colors;
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.util.Logging;
 
@@ -67,7 +66,6 @@ public class CompositeResizeBehaviorTest {
                 tApp.getMainApplicationPanel().add(3, 2, root);
 
                 status.setText("STEP 1 - initial");
-                requestUpdate(tApp, root);
 
                 boolean isRunning[] = {false};
 
@@ -78,14 +76,12 @@ public class CompositeResizeBehaviorTest {
                     tApp.getEventBus().asynchAfter(1000, (te) -> {
                         status.setTextAndResize("STEP 2 - innerBox resize(8,34)");
                         innerBox.resize(new Dimension.Simple(8, 34));
-                        requestUpdate(tApp, root);
                     });
     
                     tApp.getEventBus().asynchAfter(2000, (te) -> {
                         status.setTextAndResize("STEP 3 - innerBox resize(8,34)");
                         status.setColor(Colors.IWhi);
                         hello.setColor(Colors.IRed);
-                        requestUpdate(tApp, root);
                     });
     
                     tApp.getEventBus().asynchAfter(3000, (te) -> {
@@ -94,19 +90,16 @@ public class CompositeResizeBehaviorTest {
                         panel.moveTo(4, 6);
                         root.markAsDirty();    // make it visible to root
                         root.fullrecalcDim();  // make it visible to root
-                        requestUpdate(tApp, root);
                     });
 
                     tApp.getEventBus().asynchAfter(6000, (te) -> {
                         status.setTextAndResize("STEP 6 - innerBox resize(4,14)");
                         innerBox.resize(new Dimension.Simple(4, 14));
-                        requestUpdate(tApp, root);
                     });
 
                     tApp.getEventBus().asynchAfter(7000, (te) -> {
                         status.setColor(Colors.IPur);
                         world.setColor(Colors.ICya);
-                        requestUpdate(tApp, root);
 
                         isRunning[0] = false;
                         testButton.setEnabled(true, te.getEventBus());
@@ -138,7 +131,4 @@ public class CompositeResizeBehaviorTest {
             }).start();
     }
 
-    private static void requestUpdate(TUIApp tApp, Object source) {
-        tApp.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(source));
-    }
 }

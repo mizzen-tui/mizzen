@@ -11,7 +11,6 @@ import dtb.terminalIO.components.frameset.FrameSet;
 import dtb.terminalIO.components.frameset.FrameSet.FrameHorizontalPanel;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.controlcodes.color.Colors;
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
@@ -41,7 +40,6 @@ public class FrameSetTest {
             bbar.addButton(toggleFSBorder, Keys.CTRL_B_KEYSTROKE, (te)->{
                 fs[0].setBorder( toggleFSBorder.getValue() );
                 fs[0].markAsDirty();
-                te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(toggleFSBorder));
             });
 
             BiConsumer<FrameSet, TerminalEvent<?>> addNewFrameSetToWindowFrame = (fsNew, te) -> {
@@ -49,7 +47,6 @@ public class FrameSetTest {
                 fs[0].setBorder( toggleFSBorder.getValue() );
                 fs[0].resize(new Dimension.Simple(wf.getHeight()-2, wf.getWidth()-2));
                 wf.setChild(fs[0]);
-                te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(fs[0]));
             };
 
             bbar.addButton("Test1", Keys.CTRL_A_KEYSTROKE, (te)->{

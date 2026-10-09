@@ -5,13 +5,9 @@ import java.io.IOException;
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.ButtonBar;
-import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.TextComponent;
-import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.modal.MessageBox;
 import dtb.terminalIO.controlcodes.color.Colors;
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
-import dtb.terminalIO.events.focus.FocusManager;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.geom.Dimension;
@@ -42,12 +38,10 @@ public class ButtonBarTest {
 
                     bbar1.addButton("F1", Keys.F1_KEYSTROKE, (te) -> {
                                         statusMSGs.setText("F1 Pressed");
-                                        te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(te.getSource()));
                                     }).setBorder(true);
 
                     bbar1.addButton("F2", Keys.F2_KEYSTROKE, (te) -> {
                                         statusMSGs.setText("F2 Pressed");
-                                        te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(te.getSource()));
                                     }).setBorder(true);
 
                     bbar1.addButton("F3", Keys.F3_KEYSTROKE, (te) -> {
@@ -57,7 +51,6 @@ public class ButtonBarTest {
                                         } else {
                                             bbar1.insertComponent(0, textArea);
                                         }
-                                        te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(te.getSource()));
                                     }).setBorder(true);
 
 

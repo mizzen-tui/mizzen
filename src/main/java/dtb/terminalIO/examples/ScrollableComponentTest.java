@@ -15,7 +15,6 @@ import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventBus;
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TimedRequestedController;
 import dtb.terminalIO.events.keyboard.Keys;
 import dtb.terminalIO.examples.BarChartTest.BarChartRandomDataDemo;
@@ -29,7 +28,6 @@ import dtb.terminalIO.util.StringUtils;
 import dtb.terminalIO.util.linuxproc.ExecUtil;
 
 // THIS DEMO NO LONGER WORKS .. I need to diagnose and fix
-
 
 public class ScrollableComponentTest {
 
@@ -59,7 +57,6 @@ public class ScrollableComponentTest {
                 largeText = StringUtils.wrap(largeText, sc1.getWidth()-7);
                 largeText = StringUtils.addLineNumbers(largeText);
                 largeTextComponent.setTextAndResize(largeText);
-                te.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(largeTextComponent) );
             });
             resizeWordWrapThrottler.setTimerDelayMillis(500); // 1/2 sec
             
@@ -143,9 +140,6 @@ public class ScrollableComponentTest {
        // sets up a braille demo using the source component both for size as well as 
        // the place where grid segments will be copied on a render iteration
        brailleDemo.setUpDemo(eventBus, container);
-       brailleDemo.setFlushDemoOutput(()->{
-           eventBus.raiseEvent(new RequestUpdateCanvasEvent(brailleDemo));
-       });
 
 
        Component<?> brailleComponent = brailleDemo.getBrailleComponent();
@@ -162,9 +156,6 @@ public class ScrollableComponentTest {
         lineChartDemo.setUpDemo(eventBus, clippedAreaForLinechart.get());
         container.add(lineChartDemo.getLineChartPanelComponent());
 
-        lineChartDemo.setFlushDemoOutput(()->{
-            eventBus.raiseEvent(new RequestUpdateCanvasEvent(lineChartDemo));
-        });
 
         container.setOnResize((newSize)-> lineChartDemo.resize(clippedAreaForLinechart.get()) );
 

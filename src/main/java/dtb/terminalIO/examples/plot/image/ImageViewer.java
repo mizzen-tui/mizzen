@@ -40,7 +40,6 @@ import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.core.ScreenCanvasBackend;
 import dtb.terminalIO.core.ScreenCanvasBackend.UpdateStrategy;
 import dtb.terminalIO.events.EventHandler;
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TimedRequestedController;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
@@ -254,7 +253,6 @@ public class ImageViewer {
                                 throw new RuntimeException(e);
 
                             }
-                            te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(plotter));
                         };
 
                         TimedRequestedController displayImgCTRL = new TimedRequestedController(()->{

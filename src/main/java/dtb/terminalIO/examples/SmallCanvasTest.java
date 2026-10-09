@@ -8,7 +8,6 @@ import dtb.terminalIO.components.plot.braille.BrailleGrid;
 import dtb.terminalIO.components.plot.shape.Circle;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.geom.position.Position;
 
@@ -53,7 +52,6 @@ public class SmallCanvasTest {
                             panel.moveChildToPosition(new Position.Simple(3, col), circle);
                             panel.moveChildToPosition(new Position.Simple(10, col), ball);
                         }
-                        te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(app));
                         if (left == 1) {
                             te.getEventBus().raiseEvent(new TerminalEvent<Object>(app, TerminalEvent.TYPE.TERMINATE, null));
                         }

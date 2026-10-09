@@ -14,7 +14,6 @@ import dtb.terminalIO.components.plot.shape.Circle;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.geom.Dimension;
 
 /**
@@ -82,7 +81,6 @@ public class OrbitsDemo {
                         if (click.shape() == null) {
                             status.setTextAndResize(String.format(" Empty space at %.1f, %.1f", click.at().getX(), click.at().getY()));
                         }
-                        click.eventBus().raiseEvent(new RequestUpdateCanvasEvent(status));
                     });
 
                     ButtonBar controls = new ButtonBar()
@@ -103,7 +101,6 @@ public class OrbitsDemo {
                         }
                         time[0] += speed[0];
                         plot.redraw();
-                        te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(plot));
                     }));
 
                     HorizontalPanel controlsPanel = new HorizontalPanel();

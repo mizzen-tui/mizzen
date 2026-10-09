@@ -7,7 +7,6 @@ import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
 import dtb.terminalIO.examples.sampledata.ReadSampleFiles;
@@ -80,7 +79,6 @@ public class ColoredTextTest {
 
                 stripColors[0] = !stripColors[0];
                
-                te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(tApp));
                 
                 if (count == 1) {
                     te.getEventBus().raiseEvent( new TerminalEvent<Object>(tApp, TYPE.TERMINATE, null) );

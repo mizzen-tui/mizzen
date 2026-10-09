@@ -21,7 +21,6 @@ import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.EventHandler;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.events.focus.Focusable;
 import dtb.terminalIO.events.focus.ToFocusable;
@@ -72,7 +71,6 @@ public class BarChartTest {
                             barchart.addData(d, bc_DATALabels[i]);
                         }
                         
-                        te.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(BarChartRandomDataDemo.this) );
                         
                     }
                 });
@@ -143,7 +141,6 @@ public class BarChartTest {
                             show(tApp, renderNew(tApp));
                             version.onChange((te) -> {
                                 show(tApp, "legacy".equals(version.getValue()) ? renderLegacy(tApp) : renderNew(tApp));
-                                te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent((Component<?>) tApp.getMainApplicationPanel()));
                             });
                         })
                         .start();
@@ -179,7 +176,6 @@ public class BarChartTest {
         bars.onChange((te) -> {
             ChartItem<Sale> bar = bars.getValue();
             status.setTextAndResize(String.format(" %s: %.1f (%.1f%% of all)", bar.label(), bar.value(), bar.percent()));
-            te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(status));
         });
 
         OnIdleEventEventHandler.RepeatingInterval changing = new OnIdleEventEventHandler.RepeatingInterval(1000, (te) -> {
@@ -187,7 +183,6 @@ public class BarChartTest {
                 sale.amount = Math.max(1, sale.amount + (Math.random() - 0.5) * 4);
             }
             bars.redraw();
-            te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(bars));
         });
         tApp.getEventBus().appendEventHandler(changing);
 

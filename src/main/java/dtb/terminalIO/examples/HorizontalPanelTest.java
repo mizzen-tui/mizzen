@@ -8,7 +8,6 @@ import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.input.Button;
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.geom.position.PositionVerticalRelative;
@@ -47,7 +46,6 @@ public class HorizontalPanelTest {
            b_toggleDrawAlgorithm.onChange((te)->{
                Composite.DRAW_VIA_PARTS = !Composite.DRAW_VIA_PARTS;
                b_toggleDrawAlgorithm.setButtonText(Composite.DRAW_VIA_PARTS?"Toggle (Parts)":"Toggle (Traditional)");
-               te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(b_toggleDrawAlgorithm));
            });
            b_toggleDrawAlgorithm.setBorder(true);
            hPanel1.add(b_toggleDrawAlgorithm);

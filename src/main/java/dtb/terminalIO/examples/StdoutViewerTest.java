@@ -16,7 +16,6 @@ import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.controlcodes.color.Colors.FGBGColors;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
 import dtb.terminalIO.events.OnTerminateEventHandler;
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
@@ -131,7 +130,6 @@ public class StdoutViewerTest {
 
                     tApp.getEventBus().appendIdleEventHandler( new OnIdleEventEventHandler.RepeatingInterval (500,(te)->{
                         statsData.setTextAndResize("STATS: " + Colors.BGre.asString()+spinner.spin() + statsData.getColor().asString() + "\n" + viewer.stats());
-                        te.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(statsData) );
                     }) );
 
                     tApp.appendOnResizeAction((app, size) -> {
@@ -168,7 +166,6 @@ public class StdoutViewerTest {
             processWatcher.invokeLongRunning(streamParser, 
                                                     (result)->{
                                                       streamParser.parseInput( Colors.BWhi.asString()+ "Done reading input : result code = "+ result+viewer.getColor().asString());
-                                                      evtbus.raiseEvent( new RequestUpdateCanvasEvent(viewer));
                                                       evtbus.removeEventHandler(watcherCleanupHandler);
                                                       },
                                              (e)->{  
@@ -179,7 +176,6 @@ public class StdoutViewerTest {
             throw new RuntimeException(e);
         }
 
-        evtbus.raiseEvent( new RequestUpdateCanvasEvent(viewer));
     }
 
 }

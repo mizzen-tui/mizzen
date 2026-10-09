@@ -9,7 +9,6 @@ import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.composite.VerticalPanel;
 import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.controlcodes.color.Colors;
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.examples.plot.OrbitsDemo;
 import dtb.terminalIO.examples.plot.PlotAreaDemo;
 import dtb.terminalIO.examples.plot.TestCube;
@@ -83,7 +82,6 @@ public class EmbeddedAppTest {
             Button close = new Button("Close");
             close.onChange((te) -> {
                 closeRunning(status, "closed");
-                te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(te.getSource()));
             });
             picks.add(new BorderedComponent(close));
 
@@ -118,9 +116,7 @@ public class EmbeddedAppTest {
             // its setup code runs next on the bus; count after it
             host.getEventBus().asynch((after) -> {
                 status.setText(" Running " + name + " - its handlers on the bus: " + embedding.handlersOnHostBus());
-                after.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(status));
             });
-            te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(te.getSource()));
         });
         return new BorderedComponent(button);
     }

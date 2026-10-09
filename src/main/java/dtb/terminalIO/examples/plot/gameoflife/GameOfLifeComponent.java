@@ -12,7 +12,6 @@ import dtb.terminalIO.components.input.ListBox.ComponentItemFactory;
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.OnIdleEventEventHandler;
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.util.StringUtils;
@@ -60,7 +59,6 @@ public class GameOfLifeComponent extends AbstractComponentWithContainer<Composit
             replaceRendererComponent(newRenderer);
             this.mainPanel.markAsDirty();
             this.markAsDirty();
-            te.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(GameOfLifeComponent.this));
         });
 
         HorizontalPanel optionsPanel = new HorizontalPanel().setHorizontalSpacer(1);
@@ -160,7 +158,6 @@ public class GameOfLifeComponent extends AbstractComponentWithContainer<Composit
         if (gameTicker == null) {
             gameTicker = new OnIdleEventEventHandler.RepeatingInterval(gameTickInterval, (te)-> {
                 renderNextGeneration();
-                te.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(GameOfLifeComponent.this));
             });
         }
 

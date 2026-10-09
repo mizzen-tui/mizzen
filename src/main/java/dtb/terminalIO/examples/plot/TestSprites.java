@@ -28,7 +28,6 @@ import dtb.terminalIO.controlcodes.color.Colors;
 import dtb.terminalIO.events.EventBus;
 import dtb.terminalIO.events.OnIdleEventEventHandler.OneTimeAfterInterval;
 import dtb.terminalIO.events.OnIdleEventEventHandler.RepeatingInterval;
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.events.TerminalEvent.TYPE;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
@@ -89,7 +88,6 @@ public class TestSprites {
             }
 
             grid.markAsDirty();
-            te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(te));
 
         }));
 

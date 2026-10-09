@@ -8,7 +8,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import dtb.terminalIO.app.TUIApp;
-import dtb.terminalIO.events.RequestUpdateCanvasEvent;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.composite.HorizontalPanel;
@@ -46,11 +45,9 @@ public class Table01Test {
             Consumer<TableComponent> showEvents = (table) -> {
                 table.onRowSelected((te) -> {
                     status.setTextAndResize(table.getName() + ": selected row " + te.getRowSelected().getTableRow());
-                    te.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(status));
                 });
                 table.onRowActivated((row, eventBus) -> {
                     status.setTextAndResize(table.getName() + ": ACTIVATED row " + row);
-                    eventBus.raiseEvent(new RequestUpdateCanvasEvent(status));
                 });
             };
 
