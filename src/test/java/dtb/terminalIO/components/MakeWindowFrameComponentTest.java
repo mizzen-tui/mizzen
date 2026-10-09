@@ -25,6 +25,12 @@ import junit.framework.TestCase;
  *
  */
 public class MakeWindowFrameComponentTest extends TestCase {
+
+    /** the tests here turn the strict layout check on: off again after each, so other tests don't depend on running after these */
+    @Override
+    protected void tearDown() {
+        Component.UTIL.COMPONENT_SEGMENTS_INTEGRITY_CHECK_FLAG = false;
+    }
     
     public void testMakeBasicWindowFrameComponent() {
 
