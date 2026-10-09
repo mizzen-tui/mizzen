@@ -84,7 +84,6 @@ public class AsciiDrawingTool {
 
                 clearBtn.onChange(ev -> {
                     canvas.clearPlots();
-                    canvas.markAsDirty();
                 });
 
 
@@ -157,7 +156,6 @@ public class AsciiDrawingTool {
             	        }
 
 
-            	        canvas.markAsDirty();
             	    }
             	}));
              
@@ -174,7 +172,6 @@ public class AsciiDrawingTool {
                     if (newHeight <= 0 || newWidth <= 0) return;
 
                     canvas.resize(new Dimension.Simple(newHeight, newWidth));
-                    canvas.markAsDirty();
                 });
 
             })

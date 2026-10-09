@@ -88,7 +88,6 @@ public class CompositeResizeBehaviorTest {
                         status.setTextAndResize("STEP 5 - panel.moveChildTo(4,6)");
                         //root.moveChildTo(4, 6, panel);
                         panel.moveTo(4, 6);
-                        root.markAsDirty();    // make it visible to root
                         root.fullrecalcDim();  // make it visible to root
                     });
 

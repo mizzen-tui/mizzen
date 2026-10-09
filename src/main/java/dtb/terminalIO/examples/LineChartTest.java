@@ -359,7 +359,6 @@ public class LineChartTest {
                         size[0] = sizeKey[1];
                         tApp.clearCanvas();
                         lineChartDemo.resize(chartBounds(size[0], appPanel));
-                        appPanel.markAsDirty();
                     },
                     new KeyStroke(sizeKey[0].charAt(0)), new KeyStroke(sizeKey[0].toUpperCase().charAt(0)));
             sizeKeys.add(key);

@@ -39,7 +39,6 @@ public class FrameSetTest {
             Button toggleFSBorder = new Button("Show FS Border", true);
             bbar.addButton(toggleFSBorder, Keys.CTRL_B_KEYSTROKE, (te)->{
                 fs[0].setBorder( toggleFSBorder.getValue() );
-                fs[0].markAsDirty();
             });
 
             BiConsumer<FrameSet, TerminalEvent<?>> addNewFrameSetToWindowFrame = (fsNew, te) -> {

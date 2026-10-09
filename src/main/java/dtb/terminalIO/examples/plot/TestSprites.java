@@ -87,7 +87,6 @@ public class TestSprites {
                 ppGrid.plot(pp.x, pp.y);
             }
 
-            grid.markAsDirty();
 
         }));
 

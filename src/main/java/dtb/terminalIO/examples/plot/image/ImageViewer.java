@@ -396,10 +396,8 @@ public class ImageViewer {
                 ((FillOnClearPolicy.Provider)c).getFillOnClearPolicy().setFillOnClear(fillOnEmpty);
                 ((FillOnClearPolicy.Provider)c).getFillOnClearPolicy().setEmptyColor(emptyColor);
                 ((FillOnClearPolicy.Provider)c).getFillOnClearPolicy().setEmptyChar(emptyChar);
-                c.markAsDirty();
             } else {
                 ((FillOnClearPolicy.Provider)c).getFillOnClearPolicy().setFillOnClear(fillOnEmpty);
-                c.markAsDirty();
             }
         }
 

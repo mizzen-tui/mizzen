@@ -48,7 +48,6 @@ public class CursorMovementTest {
                             // now move cursor to caret and then request a canvas update
                             eventBus.appendEventHandler(new OnIdleEventEventHandler.OneTime(() -> {
                                 Component.UTIL.requestShowCursorAtComponent(mTextBox, requestedPosition, eventBus);
-                                mTextBox.markAsDirty();
                                 cursorPositionContainer[0] = requestedPosition;
                             }));
                         }

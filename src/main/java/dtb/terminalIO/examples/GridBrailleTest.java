@@ -1,6 +1,5 @@
 package dtb.terminalIO.examples;
 
-
 import java.util.Comparator;
 
 import dtb.terminalIO.app.TUIApp;
@@ -174,14 +173,12 @@ public class GridBrailleTest {
 
                     renderPreUPdate();
 
-                    getBrailleComponent().markAsDirty();
 
                     grid.clear(); // clears and marks as dirty
                     grid.clearPlots();
 
                     // draw the shapes into the pointPlotter ( into the grid )
                     shapes.draw(pointPlotter);
-                    grid.markAsDirty();
 
                     flushOutput();
                 }

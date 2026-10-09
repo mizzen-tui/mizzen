@@ -169,7 +169,6 @@ public class ExecTest {
             lprocViewer2.resize(sizeOfWindow);
             hPanel.resize(sizeOfPanel);
             hPanel.fullrecalcDim();
-            hPanel.markAsDirty();
         };
         
         app.setOnResizeAction(resizeAction);

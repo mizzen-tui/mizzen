@@ -141,7 +141,6 @@ public class Test1GamesSeparateThread {
                 ppGrid.plot(pp.x, pp.y);
             }
 
-            grid.markAsDirty();
             tApp.doRefreshCanvasIfModified();
         }));
 
