@@ -45,6 +45,7 @@ public class Plotter extends BoundedComponent<Plotter> {
             color = new Colors.FGBGColors(Colors.IRed);
         }
         plots.add(new Plot(row, col, plotChar, color));
+        changed();
         return this;
     }
 
@@ -56,7 +57,18 @@ public class Plotter extends BoundedComponent<Plotter> {
             plot.setPlotColor(color);
         }
         plots.add(plot);
+        changed();
         return this;
+    }
+
+    /**
+     * The plots changed: redraw on the next canvas update. Plotting can add thousands of points a
+     * frame, so it only writes the flag when it is not set yet - after the first point, a read.
+     */
+    public void changed() {
+        if (!isDirty()) {
+            markAsDirty();
+        }
     }
 
     public Plotter addPlot(int row, int col, char plotChar) {

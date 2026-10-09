@@ -115,6 +115,7 @@ public class BrailleGrid extends Composite implements PointPlotter {
         if (plotAtPos != null) {
             plotAtPos.setPlotChar(theCHAR);
             plotAtPos.setPlotColor(plotColor);
+            this.plotter.changed();                      // changed in place: the plotter can't see it
         } else {
             this.plotter.addPlot(plotterCharacterPosition.getRow(), plotterCharacterPosition.getCol(), theCHAR,
                     plotColor);

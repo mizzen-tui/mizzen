@@ -1041,6 +1041,9 @@ public class Composite extends AbstractComponent<Composite>
         Position delta = this.offsetToRowCol(row, col);
         bounds.moveDelta(delta.getRow(), delta.getCol());
         fullrecalcDim();
+        if (delta.getRow() != 0 || delta.getCol() != 0) {
+            markAsDirty();                               // moved: its panels redraw, clearing where it was
+        }
     }
 
     public void clearAndRemoveAllChildren() {

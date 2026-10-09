@@ -49,8 +49,21 @@ public interface FillOnClearPolicy<T> extends EmptyAttributes<T> {
         }
 
         public T setEmptyChar(char emptyChar) {
-            this.emptyChar = emptyChar;
+            if (this.emptyChar != emptyChar) {
+                this.emptyChar = emptyChar;
+                changed();
+            }
             return (T) parentColorProvider;
+        }
+
+        /** a setting changed: the component it belongs to redraws (if it is one) */
+        private void changed() {
+            if (parentColorProvider instanceof DirtyFlag) {
+                DirtyFlag owner = (DirtyFlag) parentColorProvider;
+                if (!owner.isDirty()) {
+                    owner.markAsDirty();
+                }
+            }
         }
         
         public Color getParentColor() {
@@ -74,7 +87,11 @@ public interface FillOnClearPolicy<T> extends EmptyAttributes<T> {
         }
 
         public T setEmptyColor(Color emptyColor) {
-            this.emptyColor = emptyColor==null? Colors.FGBGColors.NO_COLOR_SPECIFIED : emptyColor;
+            Color newColor = emptyColor == null ? Colors.FGBGColors.NO_COLOR_SPECIFIED : emptyColor;
+            if (!newColor.equals(this.emptyColor)) {
+                this.emptyColor = newColor;
+                changed();
+            }
             return (T) parentColorProvider;
         }
 
@@ -84,7 +101,10 @@ public interface FillOnClearPolicy<T> extends EmptyAttributes<T> {
         }
 
         public void setFillOnClear(boolean fillOnClear) {
-            this.fillOnClear = fillOnClear;
+            if (this.fillOnClear != fillOnClear) {
+                this.fillOnClear = fillOnClear;
+                changed();
+            }
         }
 
         @Override
