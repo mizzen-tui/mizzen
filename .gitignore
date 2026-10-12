@@ -18,6 +18,7 @@ hs_err_pid*
 
 # local only: Claude Code project notes (kept on each dev box, not published)
 /CLAUDE.md
+/.claude/
 
 # local only: the owner's personal tools and notes (LOC.sh, compStats.sh, ExamplesStatusReport.txt ...), not published
 /local/
