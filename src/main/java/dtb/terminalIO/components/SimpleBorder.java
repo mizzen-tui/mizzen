@@ -132,9 +132,11 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>
             // need to do a "smart(slow) merge" here
             segments.mergeAt(titlePosition, titleComponent.getSegmentsBuffer());
         }
-        if (footerComponent != null) {
+        if (footerComponent != null && footerComponent.getWidth() <= this.getWidth() - 2) {   // only between the corners: a footer too wide for a narrow border isn't drawn
             if (footerPosition == null) {
-                footerPosition = PositionRelativeFactory.fromAlign(VAlign.BOTTOM, this.footerAlign, this, footerComponent);
+                // follows the border's size; LEFT starts one in, so the corner shows (RIGHT already ends one in)
+                int fromTheSide = Align.LEFT.equals(this.footerAlign) ? 1 : 0;
+                footerPosition = PositionRelativeFactory.fromAlign(VAlign.BOTTOM, 0, this.footerAlign, fromTheSide, this, footerComponent);
             }
             // need to do a "smart(slow) merge" here
             segments.mergeAt(footerPosition, footerComponent.getSegmentsBuffer());
@@ -317,7 +319,8 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>
         if (titleComponent != null && titleComponent.containsPosition(offset.offsetAdd(titlePosition.negate()))) {
             return GetComponentAtOffset.UTIL.getComponentAtOffset(this.titleComponent, offset.offsetAdd(titlePosition.negate()));
         }
-        if (footerComponent != null && footerComponent.containsPosition(offset.offsetAdd(footerPosition.negate()))) {
+        if (footerComponent != null && footerPosition != null && footerComponent.getWidth() <= this.getWidth() - 2   // shown
+                && footerComponent.containsPosition(offset.offsetAdd(footerPosition.negate()))) {
             return GetComponentAtOffset.UTIL.getComponentAtOffset(this.footerComponent, offset.offsetAdd(footerPosition.negate()));
         }
         if (offset.getRow() == 0 || offset.getCol() == 0 || offset.getRow() == this.getBottomMostRow() || offset.getCol() == this.getRightMostCol()) {
