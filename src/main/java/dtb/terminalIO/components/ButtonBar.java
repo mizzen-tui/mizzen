@@ -175,8 +175,8 @@ public class ButtonBar extends ComponentWithFocus<HorizontalPanel, ButtonBar> {
         if (index > nonDividerComponents.size()) {
             throw new IndexOutOfBoundsException(HasName.UTIL.getName(this)+": index>buttonbar size");
         }
-        if (nonDividerComponents.size()==0) {
-            return addComponent(component);
+        if (index == nonDividerComponents.size()) {
+            return addComponent(component);            // at the end (or into an empty bar): an append
         }
 
         Component<?> originalComponentAtIndex = nonDividerComponents.get(index);
