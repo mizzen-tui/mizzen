@@ -177,7 +177,7 @@ public class LineChart extends Composite {
 
     public void resize(Dimension d) {
         super.resize(d);
-        this.grid.resize(__brailleGridSizeFromLineChartSize(d));
+        this.grid.resize(__brailleGridSizeFromLineChartSize(new Dimension.Simple(this)));   // not d: the parent's rules may have resized this again
         this.clearData();
         this.clear();
     }

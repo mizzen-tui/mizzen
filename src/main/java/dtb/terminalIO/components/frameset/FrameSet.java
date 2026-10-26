@@ -188,24 +188,24 @@ public class FrameSet extends BoundedComponent<FrameSet> implements HasTitleAndB
         return addRowBelow(anchorComponent, false);
     }
 
-    public void onResizeExpandRight(Component<?> component, int percent) {
-        container.onResizeExpandRight(component, percent);
+    public ExpandOnResize onResizeExpandRight(Component<?> component, int percent) {
+        return container.onResizeExpandRight(component, percent);
     }
 
-    public void onResizeExpandRight(Component<?> component) {
-        container.onResizeExpandRight(component);
+    public ExpandOnResize onResizeExpandRight(Component<?> component) {
+        return container.onResizeExpandRight(component);
     }
 
-    public void onResizeExpandDown(Component<?> component) {
-        container.onResizeExpandDown(component);
+    public ExpandOnResize onResizeExpandDown(Component<?> component) {
+        return container.onResizeExpandDown(component);
     }
 
-    public void onResizeExpandDown(Component<?> component, int percent) {
-        container.onResizeExpandDown(component, percent);
+    public ExpandOnResize onResizeExpandDown(Component<?> component, int percent) {
+        return container.onResizeExpandDown(component, percent);
     }
 
-    public void onResizeExpandDownAndRight(Component<?> component) {
-        container.onResizeExpandDownAndRight(component);
+    public ExpandOnResize onResizeExpandDownAndRight(Component<?> component) {
+        return container.onResizeExpandDownAndRight(component);
     }
 
     @Override
@@ -214,7 +214,7 @@ public class FrameSet extends BoundedComponent<FrameSet> implements HasTitleAndB
             return ;
         }
         super.resize(d);
-        this.container.resize(d);
+        this.container.resize(sizeAfterSuperResize());              // not d: the parent's rules may have resized this again
     }
 
     private boolean resizeRulesAppliedAtLeastOnce = false;

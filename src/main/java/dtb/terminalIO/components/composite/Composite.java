@@ -256,6 +256,7 @@ public class Composite extends AbstractComponent<Composite>
     }
 
     private boolean resizing = false;
+    private boolean resizeRulesToRun = false;                  // rules added since the last draw: they run before the next one
 
     public void resize(Dimension size) {
         if (resizing) {
@@ -291,10 +292,11 @@ public class Composite extends AbstractComponent<Composite>
     /**
      * Run the resize rules once, at the current sizes: this Composite's, then those of each Composite
      * inside it, all the way down - whether or not a size changed. A resize skips a panel whose size
-     * did not change, rules and all, so a rule added after its panel was sized would otherwise wait
-     * for the next terminal resize. For setting up; a resize runs the rules as it goes.
+     * did not change, rules and all. Rules added run before the next draw anyway; call this to have
+     * the sizes now (e.g. to read them before anything is drawn). A resize runs the rules as it goes.
      */
     public void applyResizeRules() {
+        resizeRulesToRun = false;
         this.onResizeService.resize(this.getPreferredRectangleForLayout());
         for (ComponentWithOffset child : children) {
             if (child.component instanceof Composite) {
@@ -334,11 +336,11 @@ public class Composite extends AbstractComponent<Composite>
         };
     }
     
-    public void onResizeExpandDown(Component<?> component) {
-        onResizeExpandDown(component, 0); 
+    public ExpandOnResize onResizeExpandDown(Component<?> component) {
+        return onResizeExpandDown(component, 0);
     }
     
-    public void onResizeExpandDown(Component<?> component, int percent) {
+    public ExpandOnResize onResizeExpandDown(Component<?> component, int percent) {
         if (component == null) {
             throw new NullPointerException("Component onResizeExpandDown failure: Null component!");
         }
@@ -347,28 +349,99 @@ public class Composite extends AbstractComponent<Composite>
         if ( ! (child.component instanceof CanResize)) {
             throw new IllegalArgumentException("child component ("+HasName.UTIL.getName(child.component)+") does not implement "+CanResize.class.getSimpleName());
         }
-        CanResize childResizeRule = percent>0 
+        ExpandOnResize childResizeRule = percent>0 
                 ? new  ExpandDownByPercent(getInnerRectangle(), Position.ZERO,  child, (CanResize)child.component, percent)
                 : new  ExpandDown(getInnerRectangle(), Position.ZERO,  child, (CanResize)child.component);
 
-        addChildResizeRule(child, childResizeRule);
-        
+        addChildResizeRule(child, childResizeRule.leaveRoomAfter(() -> roomAfter(child)));
+        return childResizeRule;
     }
 
-    private void addChildResizeRule(ComponentWithOffset child, CanResize childResizeRule) {
-        removeChildResizeRule(child); // remove existing and add new
+    /**
+     * The room the siblings after a child need, for a rule that grows it: the columns to its right
+     * (siblings on its rows) and the rows below it (siblings on its columns). A sibling placed
+     * relative to the ones before it (a panel's, addRight, addBelow) moves as the child grows, so it
+     * needs its own width (or height) and its gap; one at a fixed position stays put, so the child
+     * stops at its edge.
+     * A sibling that itself fills that way needs only its gap: it takes whatever is left.
+     * <pre>
+     *     HorizontalPanel: [ table ...fills... ][gap][ actions: 26 ]   -> the table leaves gap + 26
+     * </pre>
+     */
+    private Dimension roomAfter(ComponentWithOffset child) {
+        Rectangle inside = getInnerRectangle();
+        int childRight = child.getCol() + child.getWidth(), childBottom = child.getRow() + child.getHeight();
+        int right = 0, below = 0;
+        for (ComponentWithOffset sibling : getVisibleChildrenComponentsWithOffset()) {
+            if (sibling == child) {
+                continue;
+            }
+            boolean moves = !(sibling.offset instanceof Position.Simple);
+            boolean sameRows = sibling.getRow() < childBottom && child.getRow() < sibling.getRow() + sibling.getHeight();
+            boolean sameCols = sibling.getCol() < childRight && child.getCol() < sibling.getCol() + sibling.getWidth();
+            int grows = childToResizeRule == null || childToResizeRule.get(sibling) == null ? 0 : directions(childToResizeRule.get(sibling));
+            if (sameRows && sibling.getCol() >= childRight) {
+                int needs = (grows & 2) != 0 ? 0 : sibling.getWidth();        // a sibling that fills takes what is left: its gap is enough
+                right = Math.max(right, moves ? sibling.getCol() + needs - childRight : inside.getWidth() - sibling.getCol());
+            }
+            if (sameCols && sibling.getRow() >= childBottom) {
+                int needs = (grows & 1) != 0 ? 0 : sibling.getHeight();
+                below = Math.max(below, moves ? sibling.getRow() + needs - childBottom : inside.getHeight() - sibling.getRow());
+            }
+        }
+        return new Dimension.Simple(below, right);
+    }
+
+    /**
+     * The child's rule: one per child, as the parent sees it. A rule for the other direction joins
+     * the one there (a CanResize.Chain: a width rule and a height rule); one for the same direction
+     * replaces it.
+     * <pre>
+     *     onResizeExpandRight(top);          // top: ExpandRight
+     *     onResizeExpandDown(top, 40);       // top: Chain(ExpandRight, ExpandDownByPercent)
+     *     onResizeExpandDown(top, 25);       // top: Chain(ExpandRight, ExpandDownByPercent 25)
+     *     onResizeExpandDownAndRight(top);   // top: ExpandDownAndRight
+     * </pre>
+     */
+    private void addChildResizeRule(ComponentWithOffset child, ExpandOnResize childResizeRule) {
         if (this.childToResizeRule == null) {
             this.childToResizeRule = new HashMap<ComponentWithOffset, CanResize>();
         }
-        this.childToResizeRule.put(child, childResizeRule);
-        appendOnResizeRule(childResizeRule);
+        CanResize kept = null;                                  // the part of the child's rule for the other direction
+        CanResize existing = this.childToResizeRule.get(child);
+        if (existing instanceof CanResize.Chain) {
+            CanResize.Chain chain = (CanResize.Chain) existing;
+            kept = otherDirection(chain.getDelegate(), childResizeRule) != null ? chain.getDelegate() : otherDirection(chain.getNext(), childResizeRule);
+        } else {
+            kept = otherDirection(existing, childResizeRule);
+        }
+        removeChildResizeRule(child);
+        CanResize rule = kept == null ? childResizeRule : new CanResize.Chain(kept, childResizeRule);
+        this.childToResizeRule.put(child, rule);
+        appendOnResizeRule(rule);
+    }
+
+    /** rule, if it sizes only the other direction from newRule (a height rule beside a width rule), else null */
+    private static CanResize otherDirection(CanResize rule, ExpandOnResize newRule) {
+        return rule != null && (directions(rule) & directions(newRule)) == 0 ? rule : null;
+    }
+
+    /** 1: the height, 2: the width, 3: both (or not known: replaced by any new rule) */
+    private static int directions(CanResize rule) {
+        if (rule instanceof ExpandDown || rule instanceof ExpandDownByPercent) {
+            return 1;
+        }
+        if (rule instanceof ExpandRight || rule instanceof ExpandRightByPercent) {
+            return 2;
+        }
+        return 3;
     }
     
-    public void onResizeExpandRight(Component<?> component) {
-        onResizeExpandRight(component, 0);
+    public ExpandOnResize onResizeExpandRight(Component<?> component) {
+        return onResizeExpandRight(component, 0);
     }
     
-    public void onResizeExpandRight(Component<?> component, int percent) {
+    public ExpandOnResize onResizeExpandRight(Component<?> component, int percent) {
         if (component == null) {
             throw new NullPointerException("Component onResizeExpandRight failure: Null component!");
         }
@@ -378,14 +451,15 @@ public class Composite extends AbstractComponent<Composite>
             throw new IllegalArgumentException("child component ("+HasName.UTIL.getName(child.component)+") does not implement "+CanResize.class.getSimpleName());
         }
 
-        CanResize childResizeRule = percent>0 
+        ExpandOnResize childResizeRule = percent>0 
                                             ? new  ExpandRightByPercent(getInnerRectangle(), Position.ZERO,  child, (CanResize)child.component, percent)
                                             : new  ExpandRight(getInnerRectangle(), Position.ZERO,  child, (CanResize)child.component);
 
-        addChildResizeRule(child, childResizeRule);
+        addChildResizeRule(child, childResizeRule.leaveRoomAfter(() -> roomAfter(child)));
+        return childResizeRule;
     }
 
-    public void onResizeExpandDownAndRight(Component<?> component) {
+    public ExpandOnResize onResizeExpandDownAndRight(Component<?> component) {
         if (component == null) {
             throw new NullPointerException("Component onResizeExpandDownAndRight failure: Null component!");
         }
@@ -395,8 +469,9 @@ public class Composite extends AbstractComponent<Composite>
             throw new IllegalArgumentException("child component ("+HasName.UTIL.getName(child.component)+") does not implement "+CanResize.class.getSimpleName());
         }
 
-        ExpandDownAndRight childResizeRule = new ExpandDownAndRight(getInnerRectangle(), Position.ZERO,  child, (CanResize)child.component);
-        addChildResizeRule(child, childResizeRule);
+        ExpandOnResize childResizeRule = new ExpandDownAndRight(getInnerRectangle(), Position.ZERO,  child, (CanResize)child.component);
+        addChildResizeRule(child, childResizeRule.leaveRoomAfter(() -> roomAfter(child)));
+        return childResizeRule;
     }
 
     public void onResizeExpandDownAndRight(Component<?> component, int percentDown, int percentRight) {
@@ -409,19 +484,19 @@ public class Composite extends AbstractComponent<Composite>
             throw new IllegalArgumentException("child component ("+HasName.UTIL.getName(child.component)+") does not implement "+CanResize.class.getSimpleName());
         }
         
-        CanResize childResizeRightRule = percentRight>0 
+        ExpandOnResize childResizeRightRule = percentRight>0 
                 ? new  ExpandRightByPercent(getInnerRectangle(), Position.ZERO,  child, (CanResize)child.component, percentRight)
                 : new  ExpandRight(getInnerRectangle(), Position.ZERO,  child, (CanResize)child.component);
 
         
-        CanResize childResizeDownRule = percentDown>0 
+        ExpandOnResize childResizeDownRule = percentDown>0 
                 ? new  ExpandDownByPercent(getInnerRectangle(), Position.ZERO,  child, (CanResize)child.component, percentDown)
                 : new  ExpandDown(getInnerRectangle(), Position.ZERO,  child, (CanResize)child.component);
 
                 
-        CanResize childResizeDownAndRightByPercentRule = new CanResize.Chain(childResizeRightRule, childResizeDownRule);
-                
-        addChildResizeRule(child, childResizeDownAndRightByPercentRule);
+        removeChildResizeRule(child);                           // replaces whatever the child had, like the one without percents
+        addChildResizeRule(child, childResizeRightRule.leaveRoomAfter(() -> roomAfter(child)));
+        addChildResizeRule(child, childResizeDownRule.leaveRoomAfter(() -> roomAfter(child)));
 
     }
 
@@ -441,6 +516,8 @@ public class Composite extends AbstractComponent<Composite>
         //                     need to be able to remove rules when child removed!
         
         this.onResizeService = new CanResize.Chain(this.onResizeService, resizableRule);
+        resizeRulesToRun = true;
+        markAsDirty();
         return this;
     }
 
@@ -643,13 +720,13 @@ public class Composite extends AbstractComponent<Composite>
     }
     
     private void removeChildResizeRule(ComponentWithOffset componentWithOffset) {
-        if (this.onResizeService == null || 
-            this.onResizeService == CanResize.NOOP || 
-            this.childToResizeRule == null || 
-            this.childToResizeRule.get(componentWithOffset) == null) {
+        if (this.childToResizeRule == null) {
             return;
         }
-        CanResize resizeChildRule = this.childToResizeRule.get(componentWithOffset);
+        CanResize resizeChildRule = this.childToResizeRule.remove(componentWithOffset);
+        if (resizeChildRule == null) {
+            return;
+        }
         if (resizeChildRule == this.onResizeService) {
             this.onResizeService = CanResize.NOOP;
             return;
@@ -1094,6 +1171,10 @@ public class Composite extends AbstractComponent<Composite>
 
 
     protected void draw(Color color, IScreenLineSegmentsBuffer segments, boolean boundsFixedFlag) {
+        if (resizeRulesToRun) {                                 // new rules lay out the children: the first layout needs no sums
+            resizeRulesToRun = false;
+            this.onResizeService.resize(this.getPreferredRectangleForLayout());
+        }
         drawBorderIfNeeded(segments);
         if (DRAW_VIA_PARTS /*&& children != null && children.size()>1*/) {
             clearComputedChildPositionsIfNeeded();

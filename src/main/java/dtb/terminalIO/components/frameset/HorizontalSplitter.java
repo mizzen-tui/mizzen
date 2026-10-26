@@ -34,6 +34,16 @@ public class HorizontalSplitter extends AbstractComponentWrappper<FrameSet> impl
         return this;
     }
 
+    /** a pane's height as a share of the splitter's, e.g. onResizeExpandDown(top, 40).atLeast(9) - a pane after it takes the rest */
+    public ExpandOnResize onResizeExpandDown(Component<?> pane, int percent) {
+        return getWrappedComponent().onResizeExpandDown(pane, percent);
+    }
+
+    /** a pane's width as a share of the splitter's, e.g. onResizeExpandRight(left, 30) - a pane after it takes the rest */
+    public ExpandOnResize onResizeExpandRight(Component<?> pane, int percent) {
+        return getWrappedComponent().onResizeExpandRight(pane, percent);
+    }
+
     @Override
     public void hilite() {
         getWrappedComponent().hilite();

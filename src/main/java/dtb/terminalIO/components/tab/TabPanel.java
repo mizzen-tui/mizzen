@@ -125,7 +125,8 @@ public class TabPanel extends ComponentWithFocus<Composite, TabPanel>
         }
         
         super.resize(size);
-        this.border.resize(new Dimension.Simple(size.getHeight()-2, size.getWidth()));
+        Dimension sizeAfterSuperResize = new Dimension.Simple(this);   // not size: the parent's rules may have resized this again
+        this.border.resize(new Dimension.Simple(sizeAfterSuperResize.getHeight()-2, sizeAfterSuperResize.getWidth()));
         if (current != null) {
             current.tabAction.resize(getTabContext());
         }

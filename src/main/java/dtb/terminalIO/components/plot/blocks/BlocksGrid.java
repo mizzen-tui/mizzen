@@ -46,7 +46,7 @@ public class BlocksGrid extends BoundedComponent<BlocksGrid>  implements ParentC
             return;
         }
         super.resize(d);
-        this.plotter.resize(d);
+        this.plotter.resize(sizeAfterSuperResize());                // not d: the parent's rules may have resized this again
         gridRectangle = BlocksUtils.componentRectangleToGridRectangle(plotter);
     }
 

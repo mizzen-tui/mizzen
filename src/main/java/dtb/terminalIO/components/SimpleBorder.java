@@ -74,7 +74,7 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>
 
     public void resize(Dimension d) {
         super.resize(d);
-        this.border.resize(d);
+        this.border.resize(sizeAfterSuperResize());                 // not d: the parent's rules may have resized this again
         if (this.titleComponent != null && this.titleComponent instanceof CanResize) {
             
         }

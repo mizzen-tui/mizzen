@@ -106,6 +106,22 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
         markAsDirty();
     }
 
+    /**
+     * The size this component's own resize left it at, for a resize that passes its size on to its
+     * parts. super.resize(d) tells the parent, and the parent's rules can resize this again before it
+     * returns (e.g. a width rule after a height rule) - so the parts take this size, not d.
+     * <pre>
+     *     public void resize(Dimension d) {
+     *         super.resize(d);
+     *         inner.resize(sizeAfterSuperResize());
+     *     }
+     * </pre>
+     * It reads the size stored by the resize, so it holds when getWidth()/getHeight() are overridden.
+     */
+    protected Dimension sizeAfterSuperResize() {
+        return new Dimension.Simple(getRectangle());
+    }
+
     public void clear() {
         segments.clear();
         //fillPolicy.fillEmptyIfConfigured();

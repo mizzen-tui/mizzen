@@ -62,7 +62,7 @@ public class WindowViewComponent extends BoundedComponent<WindowViewComponent>
     @Override
     public void resize(Dimension d) {
         super.resize(d);
-        segmentsViewBuffer.resize(d);
+        segmentsViewBuffer.resize(sizeAfterSuperResize());          // not d: the parent's rules may have resized this again
     }
 
     public void markAsDirty() {

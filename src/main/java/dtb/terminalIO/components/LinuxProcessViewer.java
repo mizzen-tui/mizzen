@@ -87,7 +87,7 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
 
     public void resize(Dimension d) {
         super.resize(d);
-        this.scrollableView.resize(d);
+        this.scrollableView.resize(sizeAfterSuperResize());         // not d: the parent's rules may have resized this again
     }
 
     public LinuxProcessViewer setTitle(String title) {

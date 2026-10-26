@@ -171,9 +171,10 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
             return;
         }
         super.resize(d);
-        this.border.resize(d);
+        Dimension sizeAfterSuperResize = sizeAfterSuperResize();       // not d: the parent's rules may have resized this again
+        this.border.resize(sizeAfterSuperResize);
         if ( this.component instanceof CanResize)
-           ((CanResize)this.component).resize(new Dimension.Simple(d.getHeight()-2, d.getWidth()-2));
+           ((CanResize)this.component).resize(new Dimension.Simple(sizeAfterSuperResize.getHeight()-2, sizeAfterSuperResize.getWidth()-2));
     }
 
 

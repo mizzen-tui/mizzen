@@ -1,6 +1,7 @@
 package dtb.terminalIO.geom;
 
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import dtb.terminalIO.components.BoundedComponent;
 import dtb.terminalIO.components.Component;
@@ -87,6 +88,10 @@ public interface CanResize {
             }
         }
         
+        public CanResize getNext() {
+            return next;
+        }
+
         public void append(CanResize next) {
             if (next == null) {
                 return;
@@ -184,12 +189,25 @@ public interface CanResize {
         }
     }
 
-    static abstract class ExpandOnResize  implements CanResize {
+    /**
+     * A resize rule that grows a child to fill its parent, down and/or right, from where the child
+     * is. It belongs to the parent (anchorComponent: the parent's inside) and runs when the parent is
+     * resized; it reads the parent's size and the child's position, and resizes the child.
+     * <pre>
+     *     panel.onResizeExpandDown(list);                 // the list reaches the panel's bottom
+     *     panel.onResizeExpandDown(top, 40).atLeast(9);   // 40% of the panel's height, never under 9 rows
+     * </pre>
+     * It leaves room for the siblings after the child (roomAfter, set by the parent): in a stack, a
+     * list that fills down stops short of the buttons under it instead of pushing them off the edge.
+     */
+    public static abstract class ExpandOnResize  implements CanResize {
 
         Rectangle anchorComponent;
         private Position  targetOffsetPosition;
         private Rectangle targetComponent;
         private CanResize targetToResize;
+        private Supplier<Dimension> roomAfter = () -> Dimension.ZERO;
+        private int atLeast = 0;
 
         public ExpandOnResize(Rectangle anchorComponent, Position targetOffsetPosition, Rectangle targetComponent,
                 CanResize targetToResize) {
@@ -202,6 +220,32 @@ public interface CanResize {
 
         @Override
         abstract public void resize(Dimension d);
+
+        /** the size it grows never goes under this: rows when growing down, columns when growing right (both for down and right) */
+        public ExpandOnResize atLeast(int atLeast) {
+            this.atLeast = atLeast;
+            return this;
+        }
+
+        /** the rows below and the columns to the right that the siblings after the child need (default none) */
+        public ExpandOnResize leaveRoomAfter(Supplier<Dimension> roomAfter) {
+            this.roomAfter = roomAfter;
+            return this;
+        }
+
+        /** from the child's row to the parent's bottom, less the rows the siblings below it need */
+        protected int heightToBottom() {
+            return anchorComponent.getHeight() - getTargetComponent().getRow() - getTargetOffsetPosition().getRow() - roomAfter.get().getHeight();
+        }
+
+        /** from the child's column to the parent's right edge, less the columns the siblings right of it need */
+        protected int widthToRight() {
+            return anchorComponent.getWidth() - getTargetComponent().getCol() - getTargetOffsetPosition().getCol() - roomAfter.get().getWidth();
+        }
+
+        protected int notUnderAtLeast(int size) {
+            return Math.max(atLeast, size);
+        }
 
         protected Rectangle getTargetComponent() {
             return targetComponent;
@@ -249,9 +293,7 @@ public interface CanResize {
 
         @Override
         public void resize(Dimension d) {
-            Dimension newSizeForTarget = new Dimension.Simple(anchorComponent.getHeight() - getTargetComponent().getRow() - getTargetOffsetPosition().getRow()  ,
-                                                              getTargetComponent().getWidth());
-            resizeTarget(newSizeForTarget);
+            resizeTarget(new Dimension.Simple(notUnderAtLeast(heightToBottom()), getTargetComponent().getWidth()));
         }
 
     }
@@ -278,13 +320,8 @@ public interface CanResize {
 
         @Override
         public void resize(Dimension d) {
-            
-            int max = anchorComponent.getHeight() - getTargetComponent().getRow() - getTargetOffsetPosition().getRow();
             int byPercent = (int)(anchorComponent.getHeight()*((double)percent / 100d));
-
-            Dimension newSizeForTarget = new Dimension.Simple(Math.min(max, byPercent),
-                                                              getTargetComponent().getWidth());
-            resizeTarget(newSizeForTarget);
+            resizeTarget(new Dimension.Simple(notUnderAtLeast(Math.min(heightToBottom(), byPercent)), getTargetComponent().getWidth()));
         }
 
     }
@@ -311,13 +348,8 @@ public interface CanResize {
 
         @Override
         public void resize(Dimension d) {
-            
-            int max = anchorComponent.getWidth()  - getTargetComponent().getCol() - getTargetOffsetPosition().getCol();
             int byPercent = (int)(anchorComponent.getWidth()*((double)percent / 100d));
-
-            Dimension newSizeForTarget = new Dimension.Simple(getTargetComponent().getHeight(),
-                                                              Math.min(max, byPercent));
-            resizeTarget(newSizeForTarget);
+            resizeTarget(new Dimension.Simple(getTargetComponent().getHeight(), notUnderAtLeast(Math.min(widthToRight(), byPercent))));
         }
 
     }
@@ -339,10 +371,7 @@ public interface CanResize {
 
         @Override
         public void resize(Dimension d) {
-            Dimension newSizeForTarget = new Dimension.Simple(getTargetComponent().getHeight(),
-                                                              anchorComponent.getWidth()  - getTargetComponent().getCol() - getTargetOffsetPosition().getCol());
-
-            resizeTarget(newSizeForTarget);
+            resizeTarget(new Dimension.Simple(getTargetComponent().getHeight(), notUnderAtLeast(widthToRight())));
         }
         
     }
@@ -361,10 +390,7 @@ public interface CanResize {
 
         @Override
         public void resize(Dimension d) {
-            Dimension newSizeForTarget = new Dimension.Simple(anchorComponent.getHeight() - getTargetComponent().getRow() - getTargetOffsetPosition().getRow(),
-                                                              anchorComponent.getWidth()  - getTargetComponent().getCol() - getTargetOffsetPosition().getCol());
-
-            resizeTarget(newSizeForTarget);
+            resizeTarget(new Dimension.Simple(notUnderAtLeast(heightToBottom()), notUnderAtLeast(widthToRight())));
         }
         
     }

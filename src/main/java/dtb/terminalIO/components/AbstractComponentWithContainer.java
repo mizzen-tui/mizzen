@@ -75,16 +75,16 @@ public abstract class AbstractComponentWithContainer<T extends Composite>  exten
         }
     }
     
-    public void onResizeExpandRight(Component<?> component, int percent) {
-        getWrappedComponent().onResizeExpandRight(component, percent);
+    public ExpandOnResize onResizeExpandRight(Component<?> component, int percent) {
+        return getWrappedComponent().onResizeExpandRight(component, percent);
     }
     
-    public void onResizeExpandDown(Component<?> component, int percent) {
-        getWrappedComponent().onResizeExpandDown(component, percent);
+    public ExpandOnResize onResizeExpandDown(Component<?> component, int percent) {
+        return getWrappedComponent().onResizeExpandDown(component, percent);
     }
 
-    public void onResizeExpandDownAndRight(Component<?> component) {
-        getWrappedComponent().onResizeExpandDownAndRight(component);
+    public ExpandOnResize onResizeExpandDownAndRight(Component<?> component) {
+        return getWrappedComponent().onResizeExpandDownAndRight(component);
     }
 
     public AbstractComponentWithContainer<T>  setBorder(boolean hasBorder) {
