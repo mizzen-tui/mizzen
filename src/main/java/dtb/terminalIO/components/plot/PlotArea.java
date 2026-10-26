@@ -208,6 +208,10 @@ public class PlotArea extends AbstractComponentWrappper<Component<?>> implements
         return showing(x0 - mx, x1 + mx, y0 - my, y1 + my);
     }
 
+    public Scaling getScaling() {
+        return scaling;
+    }
+
     public PlotArea scaling(Scaling scaling) {
         this.scaling = scaling;
         redraw();
@@ -273,14 +277,33 @@ public class PlotArea extends AbstractComponentWrappper<Component<?>> implements
         return this;
     }
 
+    /** zoom in about the middle: factor 2 shows half as much each way, 0.5 twice as much */
     public PlotArea zoom(double factor) {
         double cx = (xMin + xMax) / 2, cy = (yMin + yMax) / 2;
         double hx = (xMax - xMin) / 2 / factor, hy = (yMax - yMin) / 2 / factor;
         return showing(cx - hx, cx + hx, cy - hy, cy + hy);
     }
 
+    /** move the view by dx, dy in your numbers, e.g. pan(1, 0) shows one unit further right */
     public PlotArea pan(double dx, double dy) {
         return showing(xMin + dx, xMax + dx, yMin + dy, yMax + dy);
+    }
+
+    /** move the view by a share of what it shows, e.g. panByFraction(0.1, 0) moves it a tenth of its width right, whatever the zoom */
+    public PlotArea panByFraction(double fractionX, double fractionY) {
+        return pan(fractionX * (xMax - xMin), fractionY * (yMax - yMin));
+    }
+
+    /**
+     * ready-made controls for this plot - scaling, zoom (+ -) and pan (< > ^ v), on one row - to
+     * put wherever suits, e.g. a WindowFrame's footer; each part can be left out:
+     * <pre>
+     *     window.setFooterPanel(plot.navigationControls());
+     *     window.setFooterPanel(plot.navigationControls().showScaling(false));    // zoom and pan only
+     * </pre>
+     */
+    public PlotNavigation navigationControls() {
+        return new PlotNavigation(this);
     }
 
     /** a title (and so a border: the grid's inside shrinks by a character each side - drawn again to fit) */

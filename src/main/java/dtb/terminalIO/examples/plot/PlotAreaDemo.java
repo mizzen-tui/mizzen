@@ -5,11 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import dtb.terminalIO.app.TUIApp;
-import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.WindowFrame;
-import dtb.terminalIO.components.composite.HorizontalPanel;
-import dtb.terminalIO.components.input.RadioGroup;
 import dtb.terminalIO.components.plot.PlotArea;
 import dtb.terminalIO.components.plot.shape.catalog.Star;
 import dtb.terminalIO.controlcodes.color.Colors;
@@ -63,30 +60,9 @@ public class PlotAreaDemo {
                                 click.shape() == null ? "nothing" : click.shape().getName(), click.at().getX(), click.at().getY()));
                     });
 
-                    RadioGroup<String> scaling = RadioGroup.horizontal("stretch", "equal", "none");
-                    scaling.onChange((te) -> plot.scaling(PlotArea.Scaling.valueOf(scaling.getValue().toUpperCase())));
-
-                    ButtonBar pan = new ButtonBar();
-                    pan.addButton("<", null, (te) -> plot.pan(-stepX(plot), 0));
-                    pan.addButton(">", null, (te) -> plot.pan(stepX(plot), 0));
-                    pan.addButton("^", null, (te) -> plot.pan(0, stepY(plot)));
-                    pan.addButton("v", null, (te) -> plot.pan(0, -stepY(plot)));
-
-                    ButtonBar zoom = new ButtonBar();
-                    zoom.addButton("+", null, (te) -> plot.zoom(1.5));
-                    zoom.addButton("-", null, (te) -> plot.zoom(1 / 1.5));
-
-                    HorizontalPanel controls = new HorizontalPanel();
-                    controls.add(new TextComponent(" "));
-                    controls.add(scaling);
-                    controls.add(new TextComponent("   zoom "));
-                    controls.add(zoom);
-                    controls.add(new TextComponent("   pan "));
-                    controls.add(pan);
-
                     // the window's border and title, and its corner to resize it: the plot redraws at the new size
                     WindowFrame window = new WindowFrame(Colors.Gre, "PlotArea: your numbers, y up - drag the corner to resize", plot);
-                    window.setFooterPanel(controls);                     // the plot's controls along the window's bottom
+                    window.setFooterPanel(plot.navigationControls());    // scaling, zoom and pan along the window's bottom
 
                     // straight on the main panel (the terminal's size): a panel around the window would cut it off as it grows
                     tApp.getMainApplicationPanel().add(0, 0, status);
@@ -95,12 +71,4 @@ public class PlotAreaDemo {
                 .start();
     }
 
-    /** a tenth of the window */
-    private static double stepX(PlotArea plot) {
-        return (plot.getXMax() - plot.getXMin()) / 10;
-    }
-
-    private static double stepY(PlotArea plot) {
-        return (plot.getYMax() - plot.getYMin()) / 10;
-    }
 }
