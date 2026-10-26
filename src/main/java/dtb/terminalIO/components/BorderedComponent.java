@@ -85,7 +85,12 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
     public void childResized(Component<?> child) {
         if (child == this.border) {
             if (this.border.isSameDimension(this)) {
-                return ;
+                // the box is the same size, but a part on its border (the title, a footer) changed size:
+                // tell the parent anyway - it may lay those parts out (e.g. a scrollable's bottom line)
+                if (this.getParentContainer() != null) {
+                    this.getParentContainer().childResized(this);
+                }
+                return;
             }
             super.resize( (Dimension)this.border );
             return;

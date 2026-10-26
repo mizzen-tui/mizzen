@@ -74,6 +74,43 @@ public class ScrollableFooterStatusTest extends TestCase {
         assertEquals(80 - 2 - buttonsAndSearch - 10, meter.getWidth());
     }
 
+    /** a footer text is the status too: they share the slot, the last one set shows; a text keeps its own width */
+    public void testAFooterTextSharesTheStatusSlotAndKeepsItsWidth() {
+        pane.setFooterText("count: 42");
+        assertEquals("the text replaced the meter", "count: 42".length(), pane.getFooterStatus().getWidth());
+        String bottom = bottomRow();
+        assertTrue(bottom, bottom.contains("count: 42") && !bottom.contains("Copying"));
+        pane.setFooterText("count: 43");                                // changes the text, same slot
+        assertTrue(bottomRow(), bottomRow().contains("count: 43"));
+        pane.setFooterStatus(meter);                                     // and back to the meter
+        assertTrue(bottomRow(), bottomRow().contains("Copying") && !bottomRow().contains("count:"));
+    }
+
+    /** once the footer is removed, setting any part of it says so (they would never show) */
+    public void testWithTheFooterRemovedEveryPartFailsClearly() {
+        pane.removeFooter();
+        for (Runnable set : new Runnable[] { () -> pane.setFooterText("x"), () -> pane.setFooterStatus(meter),
+                                             () -> pane.addFooterComponent(new dtb.terminalIO.components.TextComponent("x")) }) {
+            try {
+                set.run();
+                fail();
+            } catch (IllegalStateException expected) {
+                assertTrue(expected.getMessage(), expected.getMessage().contains("footer was removed"));
+            }
+        }
+    }
+
+    /** a footer part that resizes itself (no call to the scrollable) still gets the bottom line laid out again */
+    public void testAStatusThatResizesItselfIsLaidOutAgain() {
+        pane.setFooterText("short");
+        assertTrue(bottomRow(), bottomRow().contains("«"));
+        ((dtb.terminalIO.components.TextComponent) pane.getFooterStatus())
+                .setTextAndResize("a status text grown long enough to push the scroll buttons off");   // the text grows by itself
+        String bottom = bottomRow();
+        assertTrue("whole: " + bottom, bottom.contains("a status text grown long enough to push the scroll buttons off"));
+        assertFalse("buttons dropped to make room: " + bottom, bottom.contains("«"));
+    }
+
     public void testATwoRowStatusIsRefused() {
         try {
             pane.setFooterStatus(new ProgressMeter(10));                // two rows by default

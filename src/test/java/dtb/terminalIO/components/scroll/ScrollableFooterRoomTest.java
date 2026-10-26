@@ -59,6 +59,16 @@ public class ScrollableFooterRoomTest extends TestCase {
         assertTrue("in their order: " + bottom, bottom.indexOf("^") < bottom.indexOf("PgUp") && bottom.indexOf("PgUp") < bottom.indexOf("«"));
     }
 
+    /** the last buttons (« ») dropped with nothing after them come back at the end of the bar (it threw: CharacterViewerTest) */
+    public void testButtonsDroppedFromTheEndComeBackAtTheEnd() {
+        ScrollableComponent pane = pane(55);
+        pane.setFooterText("a status text long enough to push the scroll buttons off");
+        pane.setFooterText("short");                                     // room again
+        String bottom = bottomRow(pane);
+        assertTrue(bottom, bottom.contains("«") && bottom.contains("»"));
+        assertTrue("in their order: " + bottom, bottom.indexOf("^") < bottom.indexOf("«") && bottom.indexOf("«") < bottom.indexOf("»"));
+    }
+
     public void testPastAllThatTheLineIsClippedKeepingItsRightEnd() {
         ScrollableComponent pane = pane(20);
         pane.addFooterComponent(new TextComponent("a long footer part ending in SEARCH"));

@@ -7,8 +7,13 @@ import dtb.terminalIO.components.Component;
 import dtb.terminalIO.geom.position.Position;
 
 /**
- * Specifies how to resize itself
+ * Specifies how to resize itself. Also the shape of a resize rule (Composite.appendOnResizeRule,
+ * ScrollableComponent.appendOnResizeRule): the rule gets the new size of the component it is
+ * attached to, and is called by that component's own resize - e.g. (size) -> child.resize(...).
+ * <p/>
+ * One method only, so a lambda will do: keep it that way.
  */
+@FunctionalInterface
 public interface CanResize {
 
     

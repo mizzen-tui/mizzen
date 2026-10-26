@@ -35,6 +35,7 @@ import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
 import dtb.terminalIO.geom.position.Position;
+import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
 import dtb.terminalIO.util.Logging;
 
 /**
@@ -79,6 +80,13 @@ public class ScrollableComponent  extends ComponentWithFocus<Composite, Scrollab
         this.getContainer().onResizeExpandDownAndRight(borderedComponent);
 
         buildAndPopulateFooterPanel();
+        // the panel re-measures when it is resized or when a part on the box's border changes size:
+        // either way the bottom line is laid out again - before the next draw, not in the middle of the
+        // size-change notices (their outer steps would put back the sizes they had worked out)
+        this.getContainer().appendOnResizeRule((size) -> {
+            footerLayoutOwed = true;
+            markAsDirty();
+        });
 
         vScrollBar = new ScrollBarVertical(color,
                                            borderedComponent.getPostion_TopRight().offsetAdd(1, 0),
@@ -312,6 +320,15 @@ public class ScrollableComponent  extends ComponentWithFocus<Composite, Scrollab
         this.componentBeingViewed.markAsDirty();
     }
     
+    @Override
+    protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
+        if (footerLayoutOwed) {
+            footerLayoutOwed = false;
+            layOutFooter();
+        }
+        super.draw(color, segments);
+    }
+
     public void markAsDirty() {
         super.markAsDirty();
         if (vScrollBar != null) {
@@ -361,6 +378,7 @@ public class ScrollableComponent  extends ComponentWithFocus<Composite, Scrollab
     /** dropped in pairs when the bottom line is short of room: « », then PgUp PgDn, then ^ v */
     private static final int[][] SCROLL_BUTTONS_DROP_ORDER = { { 4, 5 }, { 2, 3 }, { 0, 1 } };
     private boolean layingOutFooter;
+    private boolean footerLayoutOwed;                    // a footer part changed size: lay the line out before drawing
 
     /**
      * The bottom line: the footer parts (status, text, scroll buttons, other components such as
@@ -421,7 +439,7 @@ public class ScrollableComponent  extends ComponentWithFocus<Composite, Scrollab
             if (footerControls.indexOf(button) >= 0) {
                 continue;
             }
-            int at = (footerStatus != null ? 1 : 0) + (footerText != null ? 1 : 0);
+            int at = footerStatus != null ? 1 : 0;      // after the status
             for (int before = i - 1; before >= 0; before--) {
                 int index = footerControls.indexOf(scrollButtons.get(before));
                 if (index >= 0) {
@@ -433,10 +451,24 @@ public class ScrollableComponent  extends ComponentWithFocus<Composite, Scrollab
         }
     }
     
-    public ScrollableComponent removeFooterComponent() {
+    /** no footer at all: no scroll buttons, status or other parts on the bottom line (the scroll keys still work) */
+    public ScrollableComponent removeFooter() {
         borderedComponent.removeFooterComponent();
         footerShown = false;
         return this;
+    }
+
+    /** @deprecated it removes the whole footer, not one component: use removeFooter() */
+    @Deprecated
+    public ScrollableComponent removeFooterComponent() {
+        return removeFooter();
+    }
+
+    /** the footer parts can't be set once the footer is gone: say so rather than set them where they never show */
+    private void assertFooterShown(String what) {
+        if (!footerShown) {
+            throw new IllegalStateException(HasName.UTIL.getName(this) + ": cannot " + what + " - the footer was removed (removeFooter)");
+        }
     }
 
     private boolean footerShown = true;
@@ -571,8 +603,9 @@ public class ScrollableComponent  extends ComponentWithFocus<Composite, Scrollab
         this.viewer.setColor(contentColor);
     }
 
-    private TextComponent footerText;
+    private TextComponent footerText;                    // the status, when set by setFooterText
     private Component<?> footerStatus;
+    private boolean footerStatusFitted;                  // a component status is fitted to the room; a text keeps its width
 
     /** the horizontal scrollbar keeps at least this much of the bottom line when a status is fitted */
     private static final int MIN_HSCROLLBAR_WIDTH = 10;
@@ -586,25 +619,53 @@ public class ScrollableComponent  extends ComponentWithFocus<Composite, Scrollab
      * </pre>
      * If it can resize, it is kept as wide as the bottom line allows - the width less the scroll
      * buttons and room for the horizontal scrollbar - as the pane is resized. Calling it again
-     * replaces the status; null removes it. Does nothing if the footer was removed.
+     * replaces the status (and a footer text: they share the slot); null removes it. Throws if the
+     * footer was removed.
      */
     public ScrollableComponent setFooterStatus(Component<?> status) {
-        if (footerControls == null) {
-            return this;
-        }
+        assertFooterShown("set a footer status");
+        footerText = null;
+        footerStatusFitted = true;
+        return putFooterStatus(status);
+    }
+
+    /** the status slot: the one component before the scroll buttons */
+    private ScrollableComponent putFooterStatus(Component<?> status) {
         if (status != null && status.getHeight() != 1) {
             throw new IllegalArgumentException("A footer status is one row high, not " + status.getHeight()
                     + " (" + HasName.UTIL.getName(status) + ")");
         }
-        if (footerStatus != null) {
-            footerControls.remove(footerStatus);
-        }
-        footerStatus = status;
-        if (status != null) {
-            footerControls.insertComponent(0, status);
-        }
+        changeFooter(() -> {
+            if (footerStatus != null) {
+                footerControls.remove(footerStatus);
+            }
+            footerStatus = status;
+            if (status != null) {
+                footerControls.insertComponent(0, status);
+            }
+        });
         resize((Dimension) this);                        // fit it, and re-fit the horizontal scrollbar
         return this;
+    }
+
+    /**
+     * A change to the footer bar made here: while it happens the bar is half changed (a button gone,
+     * its separator not yet), so the layout - which a size change in the bar would start - waits
+     * until it is done, then runs once.
+     */
+    private void changeFooter(Runnable change) {
+        boolean outermost = !layingOutFooter;
+        layingOutFooter = true;
+        try {
+            change.run();
+        } finally {
+            if (outermost) {
+                layingOutFooter = false;
+            }
+        }
+        if (outermost) {
+            layOutFooter();
+        }
     }
 
     public Component<?> getFooterStatus() {
@@ -613,7 +674,7 @@ public class ScrollableComponent  extends ComponentWithFocus<Composite, Scrollab
 
     /** the status as wide as the line allows after the other footer parts and what the scrollbar keeps */
     private void fitFooterStatus(int room, int keepForScrollbar) {
-        if (!(footerStatus instanceof CanResize)) {
+        if (!footerStatusFitted || !(footerStatus instanceof CanResize)) {
             return;
         }
         int others = footerControls.getWidth() - footerStatus.getWidth();
@@ -624,31 +685,28 @@ public class ScrollableComponent  extends ComponentWithFocus<Composite, Scrollab
     }
 
     /**
-     * A short text in the footer, before the scroll buttons, e.g. "count: 42". Calling it again
-     * replaces the text. Does nothing if the footer was removed (removeFooterComponent).
+     * A short text as the footer status, before the scroll buttons, e.g. "count: 42" - it keeps its
+     * own width. Calling it again changes the text; it shares the slot with setFooterStatus (the
+     * last one set shows). Throws if the footer was removed.
      */
     public ScrollableComponent setFooterText(String text) {
-        if (footerControls == null) {
+        assertFooterShown("set a footer text");
+        if (footerText != null && footerStatus == footerText) {
+            changeFooter(() -> footerText.setTextAndResize(text));   // then laid out again: its width changed
             return this;
         }
-        if (footerText == null) {
-            footerText = new TextComponent(getBorderColor(), text);
-            footerControls.insertComponent(0, footerText);
-        } else {
-            footerText.setTextAndResize(text);
-        }
-        resize((Dimension) this);     // footer width changed: re-fit the horizontal scrollbar
-        return this;
+        footerText = new TextComponent(getBorderColor(), text);
+        footerStatusFitted = false;
+        return putFooterStatus(footerText);
     }
 
+    /** a component after the scroll buttons, e.g. search; throws if the footer was removed */
     public void addFooterComponent(Component<?> componentForButtonBar) {
-
-        if (footerControls == null) {
-            throw new IllegalStateException("FooterControls object is null! Cannot add component control yet!");
-        }
-        footerControls.addComponent(componentForButtonBar);
-        addedFooterParts.add(componentForButtonBar);
-        layOutFooter();                                  // make room for it
+        assertFooterShown("add a footer component");
+        changeFooter(() -> {                             // then laid out: room is made for it
+            footerControls.addComponent(componentForButtonBar);
+            addedFooterParts.add(componentForButtonBar);
+        });
     }
 
     public void up(int iLines) {

@@ -50,7 +50,7 @@ public class DropdownListBoxSimpleTest {
 
             vp.add(hpLists);
             ListBox<String> lb1 = ListBox.fromStrings( new String[] {"AAAAAAAAA","B","C","D","E"});
-            ScrollableComponent lb1_sc = new ScrollableComponent(Colors.DEFAULT_COLOR, new Dimension.Simple(4, lb1.getWidth()), lb1).removeFooterComponent();
+            ScrollableComponent lb1_sc = new ScrollableComponent(Colors.DEFAULT_COLOR, new Dimension.Simple(4, lb1.getWidth()), lb1).removeFooter();
             vp.add(lb1_sc);
             vp.add(new TextInput("A TextInput Component"));
             vp.add(DropdownListBox.fromStrings(COLOURS).setTitle(Colors.BIYel, "Colours"));
