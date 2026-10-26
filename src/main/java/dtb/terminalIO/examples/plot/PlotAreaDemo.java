@@ -86,7 +86,7 @@ public class PlotAreaDemo {
 
                     // the window's border and title, and its corner to resize it: the plot redraws at the new size
                     WindowFrame window = new WindowFrame(Colors.Gre, "PlotArea: your numbers, y up - drag the corner to resize", plot);
-                    window.setFooter(controls);                       // the plot's controls along the window's bottom
+                    window.setFooterPanel(controls);                     // the plot's controls along the window's bottom
 
                     // straight on the main panel (the terminal's size): a panel around the window would cut it off as it grows
                     tApp.getMainApplicationPanel().add(0, 0, status);

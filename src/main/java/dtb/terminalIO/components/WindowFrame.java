@@ -25,6 +25,7 @@ import dtb.terminalIO.events.keyboard.AsKeyboardHandler;
 import dtb.terminalIO.events.keyboard.KeyEvent;
 import dtb.terminalIO.events.keyboard.KeyInputEventHandler;
 import dtb.terminalIO.events.keyboard.KeyboardHandler;
+import dtb.terminalIO.geom.Align;
 import dtb.terminalIO.geom.CanResize;
 import dtb.terminalIO.geom.Dimension;
 import dtb.terminalIO.geom.Rectangle;
@@ -70,6 +71,7 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
     private ScrollBarHorizontal hScrollBar;
     private WindowViewComponent viewer;
     private Component<?> footer;                               // null: none; else the last inner row(s), above the bottom border
+    private Component<?> footerOnBorder;                       // null: none; else on the bottom border line itself
 
     // its own handlers: scrolling with the scrollbars' keys, scroll-to-view requests
     private final ChainedEventHandler ownHandlers;
@@ -147,9 +149,10 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
     /**
      * Controls (or a status line) along the bottom of the window, inside the border: the window
      * grows by the footer's height, the footer takes the window's inner width, and the content
-     * keeps the rest. E.g. a plot's zoom and pan buttons.
+     * keeps the rest. E.g. a plot's zoom and pan buttons. For one row drawn on the border line
+     * itself, see setFooterOnBorder.
      */
-    public WindowFrame setFooter(Component<?> footer) {
+    public WindowFrame setFooterPanel(Component<?> footer) {
         int before = footerHeight();
         this.footer = footer;
         populateChildrenList();
@@ -162,7 +165,7 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
         return this;
     }
 
-    public Component<?> getFooter() {
+    public Component<?> getFooterPanel() {
         return footer;
     }
 
@@ -175,10 +178,40 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
         return new Position.Simple(this.height - 1 - footerHeight(), 1);
     }
 
-    /** the footer as wide as the window's inside */
+    /**
+     * One row on the window's bottom border line - a status line, a progress meter - from one in on
+     * the left (the corner shows) to just before the resize corner. The window doesn't grow, and the
+     * component (if it can resize) is kept as wide as that room as the window is resized:
+     * <pre>
+     *   |  ...content...                    |
+     *   +Copying  ######......  42%       ::+     (the resize corner at the right)
+     * </pre>
+     * null takes it off. It must be one row high; a component too wide for a small window isn't drawn.
+     */
+    public WindowFrame setFooterOnBorder(Component<?> footerOnBorder) {
+        if (footerOnBorder != null && footerOnBorder.getHeight() != 1) {
+            throw new IllegalArgumentException("A footer on the border is one row high, not " + footerOnBorder.getHeight()
+                    + " (" + HasName.UTIL.getName(footerOnBorder) + ")");
+        }
+        this.footerOnBorder = footerOnBorder;
+        this.border.setFooter(footerOnBorder, Align.LEFT);
+        fitFooter();
+        markAsDirty();
+        return this;
+    }
+
+    public Component<?> getFooterOnBorder() {
+        return footerOnBorder;
+    }
+
+    /** the footer as wide as the window's inside; the one on the border as wide as its line less the corners */
     private void fitFooter() {
         if (footer instanceof CanResize && footer.getWidth() != this.width - 2) {
             ((CanResize) footer).resize(new Dimension.Simple(footerHeight(), Math.max(1, this.width - 2)));
+        }
+        int room = this.width - 2 - this.resizeAnchor.getWidth();
+        if (footerOnBorder instanceof CanResize && footerOnBorder.getWidth() != room && room > 0) {
+            ((CanResize) footerOnBorder).resize(new Dimension.Simple(1, room));
         }
     }
 
@@ -281,6 +314,13 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
 
         if (this.resizeAnchor.containsPosition(offset)) {
             return this.resizeAnchor;
+        }
+
+        if (footerOnBorder != null) {                            // on the border line: the border knows where it is
+            Component<?> onBorder = this.border.getComponentAtOffset(offset.offsetAdd(this.border.getPostion_TopLeft().negate()));
+            if (onBorder != null && onBorder != this.border && onBorder != footerOnBorder.getParentContainer()) {
+                return onBorder;
+            }
         }
 
         if (this.vScrollBar != null && this.vScrollBar.containsPosition(offset)) {

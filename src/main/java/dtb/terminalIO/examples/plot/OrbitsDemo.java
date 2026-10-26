@@ -112,7 +112,7 @@ public class OrbitsDemo {
                     windowFooter.setTitle("Controls:");
 
                     WindowFrame window = new WindowFrame(Colors.Gre, "The inner planets and Jupiter (not to scale) - drag the corner to resize", plot);
-                    window.setFooter(windowFooter);
+                    window.setFooterPanel(windowFooter);
                     tApp.getMainApplicationPanel().add(2, 0, window);
                 })
                 .start();
