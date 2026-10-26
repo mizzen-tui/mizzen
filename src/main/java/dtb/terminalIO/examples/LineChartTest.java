@@ -253,7 +253,6 @@ public class LineChartTest {
         }
     }
 
-    private static Shown shown;
 
     /**
      * Line charts: the new one (sine and cosine, and a series fed live - click a line or its name,
@@ -275,22 +274,24 @@ public class LineChartTest {
             top.add(version);
             tApp.getMainApplicationPanel().add(0, 0, top);
 
-            show(tApp, renderNew(tApp));
+            Shown[] shown = { null };   // what this run shows - not a static: it would outlive the run (e.g. an app embedded twice)
+
+            show(tApp, shown, renderNew(tApp));
             version.onChange((te) -> {
-                show(tApp, "legacy".equals(version.getValue()) ? renderLegacy(tApp, startSize) : renderNew(tApp));
+                show(tApp, shown, "legacy".equals(version.getValue()) ? renderLegacy(tApp, startSize) : renderNew(tApp));
             });
         }).start();
     }
 
     /** takes off what was shown, puts on the new */
-    private static void show(TUIApp tApp, Shown next) {
-        if (shown != null) {
-            shown.stop.run();
-            for (Component<?> c : shown.components) {
+    private static void show(TUIApp tApp, Shown[] shown, Shown next) {
+        if (shown[0] != null) {
+            shown[0].stop.run();
+            for (Component<?> c : shown[0].components) {
                 tApp.getMainApplicationPanel().remove(c);
             }
         }
-        shown = next;
+        shown[0] = next;
     }
 
     /** the new chart: sine (filled), cosine, and a series fed a point every 200 ms (the latest 120 kept) */
