@@ -11,7 +11,6 @@ import dtb.terminalIO.components.AbstractComponent;
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.ClickableFocusableWrapper;
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.components.ComponentInspector;
 import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.WindowFrame;
@@ -258,16 +257,6 @@ public class WindowFrameTest {
 
             tApp.getMainApplicationPanel().add(13, 65, expandDownWindows);
 
-            ComponentInspector inspector = new ComponentInspector(Colors.BIGre, 
-                                                                  new Dimension.Simple(25,60), 
-                                                                  (Component<?>)tApp.getMainApplicationPanel(), 
-                                                                  tApp.getApplicationFocusManager());
-
-            AbstractComponent<?> wfInspector = makeWF(inspector.getColor(),"Components",inspector);
-
-            tApp.getEventBus().appendEventHandler( inspector.toggleViewEventHandler() );
-            tApp.getEventBus().appendEventHandler( inspector.refreshEventHandler() );
-
             HorizontalPanel statsPanel = new HorizontalPanel();
 
             statsPanel.add( new TextComponent("Current focus:"));
@@ -286,9 +275,8 @@ public class WindowFrameTest {
             tApp.getMainApplicationPanel().add(0,60, distributeStaggerButton);
             
             
-            // every 1/4 second we update ComponentInspector with current component hierarchy and focus data
+            // every 2 seconds: the component with the focus
             tApp.getEventBus().appendIdleEventHandler(new RepeatingInterval(2000, (te)->{
-                                                         inspector.refreshEventHandler().handle(te);
                                                          Object currentFocus = FocusManager.UTIL.findCurrentFocus(tApp.getApplicationFocusManager());
                                                          if (currentFocus == null) {
                                                              return;
@@ -296,7 +284,6 @@ public class WindowFrameTest {
                                                          stats.setTextAndResize(HasName.UTIL.getName(currentFocus));
                                                       }));
 
-            tApp.getMainApplicationPanel().add(22,44, wfInspector);
 
 
             tApp.getResizeAction().accept(tApp, TerminalDimensions.create());

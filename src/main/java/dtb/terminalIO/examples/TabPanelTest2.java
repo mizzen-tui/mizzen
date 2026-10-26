@@ -5,7 +5,6 @@ import java.io.IOException;
 import dtb.terminalIO.app.TUIApp;
 import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.Component;
-import dtb.terminalIO.components.ComponentInspector.InspectorButton;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.composite.HorizontalPanel;
@@ -107,9 +106,6 @@ public class TabPanelTest2 {
                 }
 
             });
-
-            InspectorButton inspectorButton = new InspectorButton(Colors.ICya, tApp);
-            tApp.getMainApplicationPanel().add(1,1, inspectorButton);
 
             tp.displayCurrentTab(tApp.getEventBus());
 
