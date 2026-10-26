@@ -2,13 +2,15 @@ package dtb.terminalIO.examples;
 
 import dtb.terminalIO.app.Embedding;
 import dtb.terminalIO.app.TUIApp;
-import dtb.terminalIO.components.BorderedComponent;
 import dtb.terminalIO.components.TextComponent;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.composite.HorizontalPanel;
 import dtb.terminalIO.components.composite.VerticalPanel;
-import dtb.terminalIO.components.input.Button;
+import dtb.terminalIO.components.input.tree.DefaultTreeNode;
+import dtb.terminalIO.components.input.tree.TreeView;
+import dtb.terminalIO.components.scroll.ScrollableComponent;
 import dtb.terminalIO.controlcodes.color.Colors;
+import dtb.terminalIO.events.TimedRequestedController;
 import dtb.terminalIO.examples.plot.OrbitsDemo;
 import dtb.terminalIO.examples.plot.PlotAreaDemo;
 import dtb.terminalIO.examples.plot.TestCube;
@@ -18,19 +20,36 @@ import dtb.terminalIO.examples.plot.image.FractalsViewer;
 import dtb.terminalIO.geom.Dimension;
 
 /**
- * Other examples running inside this one: pick one on the left and it runs on the right - its own
- * main, unchanged, through TUIApp.runEmbedded. Picking another, or Close, takes the running one out,
- * with everything it put on the event bus; the status line shows how many handlers that is.
+ * Other examples running inside this one: pick one in the tree on the left and it runs on the right -
+ * its own main, unchanged, through TUIApp.runEmbedded. The tree is the inventory: components by kind,
+ * then graphics; groups open and close, a leaf runs its example. Picking another takes the running
+ * one out, with everything it put on the event bus; the status line shows how many handlers that is.
  * <p/>
- * Things to try: TAB from the buttons into the embedded example and back; Button bar's F1 / F2 / F3
+ * Things to try: TAB from the tree into the embedded example and back; Button bar's F1 / F2 / F3
  * (its hot keys work wherever focus is, as they do when it runs alone); Fractals' timer stopping
- * when it is closed; resizing the terminal.
+ * when another example is picked; resizing the terminal.
  */
 public class EmbeddedAppTest {
 
-    //private static final int LEFT_WIDTH = 18;
+    private static final int TREE_WIDTH = 30;
 
     private static Embedding running;
+
+    /** a row in the tree: a group, or an example (launch: its main) */
+    private static class Demo {
+        final String name;
+        final Embedding.Launch launch;
+
+        Demo(String name, Embedding.Launch launch) {
+            this.name = name;
+            this.launch = launch;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+    }
 
     public static void main(String[] args) {
         new TUIApp(args)
@@ -38,59 +57,69 @@ public class EmbeddedAppTest {
         .setOnReadyStart((host) -> {
             Composite main = (Composite) host.getMainApplicationPanel();
 
-            VerticalPanel vPanel = new VerticalPanel();
-            HorizontalPanel hPanel = new HorizontalPanel();
-            
+            DefaultTreeNode<Demo> examples = group("Examples",
+                    group("Input",
+                            example("Text boxes", () -> TextBoxSimpleForm01Test.main(new String[0])),
+                            example("Multi-line text", () -> MultiLineTextInputTest.main(new String[0])),
+                            example("Dropdowns", () -> DropdownListBoxSimpleTest.main(new String[0])),
+                            example("Radio groups", () -> RadioGroupSimpleTest.main(new String[0]))),
+                    group("Lists and tables",
+                            example("List box", () -> ListBoxTest.main(new String[0])),
+                            example("Table", () -> Table01Test.main(new String[0])),
+                            example("Tree view", () -> TreeViewTest.main(new String[0]))),
+                    group("Menus and buttons",
+                            example("Menu bar", () -> MenuBarTest.main(new String[0])),
+                            example("Button bar", () -> ButtonBarTest.main(new String[0]))),
+                    group("Containers",
+                            example("Tab panel", () -> TabPanelTest2.main(new String[0])),
+                            example("Window frames", () -> WindowFrameTest.main(new String[0])),
+                            example("Splitters", () -> HorizontalSplitterTest.main(new String[0])),
+                            example("Scrolling", () -> ScrollableComponentTest.main(new String[0]))),
+                    group("Feedback",
+                            example("Progress meter", () -> ProgressMeterTest.main(new String[0]))),
+                    group("Charts",
+                            example("Bar chart", () -> BarChartTest.main(new String[0])),
+                            example("Line chart", () -> LineChartTest.main(new String[0])),
+                            example("Donut chart", () -> DonutChartTest.main(new String[0])),
+                            example("Sparkline", () -> SparklineTest.main(new String[0]))),
+                    group("Graphics",
+                            example("Plot area", () -> PlotAreaDemo.main(new String[0])),
+                            example("Shapes", () -> TestScale.main(new String[0])),
+                            example("3D shapes", () -> TestCube.main(new String[0])),
+                            example("Sprites", () -> TestSprites.main(new String[0])),
+                            example("Orbits", () -> OrbitsDemo.main(new String[0])),
+                            example("Fractals", () -> FractalsViewer.main(new String[0]))),
+                    group("Putting it together",
+                            example("Parts shop", () -> PartsShopDemo.main(new String[0]))));
+
+            TreeView<DefaultTreeNode<Demo>> tree = new TreeView<DefaultTreeNode<Demo>>(examples.asModel());
+            tree.expandAll();
+            ScrollableComponent treePane = new ScrollableComponent(Colors.IGre, new Dimension.Simple(10, TREE_WIDTH), tree);
+            treePane.setTitle(" Examples ");
+
             // right: where the examples run - the embedded app gets the inside of its border
             Composite slot = new Composite();
             slot.setBorder(true);
-            // vPanel.add(0, LEFT_WIDTH, slot);
-            // vPanel.onResizeExpandDownAndRight(slot);
-            
+
             TextComponent status = new TextComponent(new Colors.FGBGColors(Colors.BRed, Colors.On_Yel),
                                                      new Dimension.Simple(1, main.getWidth()));
-            
-            
-            vPanel.add(hPanel);
-            vPanel.add(status);            
-//            vPanel.onResizeExpandDownAndRight(hPanel);
-             vPanel.appendOnResize((size)->{
-                  // resize, not setBounds: resize also runs hPanel's own rules (slot)
-                  hPanel.resize(new Dimension.Simple(size.getHeight()-1, size.getWidth()));
-             });
-            vPanel.onResizeExpandRight(status);
+            status.setText(" Pick an example in the tree");
 
-            main.add(vPanel);
-            main.onResizeExpandDownAndRight(vPanel);
+            // the tree keeps its width, the slot takes the rest; the status line keeps its row at the bottom
+            HorizontalPanel panes = new HorizontalPanel();
+            panes.add(treePane);
+            panes.add(slot);
+            panes.onResizeExpandDown(treePane);
+            panes.onResizeExpandDownAndRight(slot);
 
+            VerticalPanel page = new VerticalPanel();
+            page.add(panes);
+            page.add(status);
+            page.onResizeExpandDownAndRight(panes);
+            page.onResizeExpandRight(status);
 
-            // left: the examples 
-            VerticalPanel picks = new VerticalPanel();
-            picks.setTitle(Colors.IGre, "Examples");
-            picks.add(pick("Dropdowns", host, slot, status, () -> DropdownListBoxSimpleTest.main(new String[0])));
-            picks.add(pick("TabPanel", host, slot, status, () -> TabPanelTest2.main(new String[0])));
-            picks.add(pick("Button bar", host, slot, status, () -> ButtonBarTest.main(new String[0])));
-            picks.add(pick("Fractals", host, slot, status, () -> FractalsViewer.main(new String[0])));
-            picks.add(pick("Sprites", host, slot, status, () -> TestSprites.main(new String[0])));
-            picks.add(pick("Shapes Testing", host, slot, status, () -> TestScale.main(new String[0])));
-            picks.add(pick("3D Shapes Testing", host, slot, status, () -> TestCube.main(new String[0])));
-            picks.add(pick("Window Frame", host, slot, status, () -> WindowFrameTest.main(new String[0])));
-            picks.add(pick("Plot-Area-Demo", host, slot, status, () -> PlotAreaDemo.main(new String[0])));
-            picks.add(pick("Orbits", host, slot, status, () -> OrbitsDemo.main(new String[0])));
-            picks.add(pick("Parts shop", host, slot, status, () -> PartsShopDemo.main(new String[0])));
-            picks.add(pick("TreeView", host, slot, status, () -> TreeViewTest.main(new String[0])));
-            Button close = new Button("Close");
-            close.onChange((te) -> {
-                closeRunning(status, "closed");
-            });
-            picks.add(new BorderedComponent(close));
-
-            hPanel.add(picks);
-            hPanel.add(slot);
-            hPanel.onResizeExpandDownAndRight(slot);
-
-
-            status.setText(" Pick an example on the left");
+            main.add(page);
+            main.onResizeExpandDownAndRight(page);
 
             slot.appendOnResize((size) -> {
                 if (running != null) {
@@ -98,27 +127,36 @@ public class EmbeddedAppTest {
                 }
             });
 
-            // the rules above run on a resize: run them once now, for the starting size
-            main.applyResizeRules();
-            
-
+            // a leaf runs its example - once the selection stops moving, so arrowing past examples doesn't start each one
+            TimedRequestedController runPicked = new TimedRequestedController((te) -> {
+                Demo picked = tree.getValue().getValue();
+                if (picked.launch != null) {
+                    run(picked, host, slot, status);
+                }
+            });
+            tree.onChange((te) -> runPicked.onRequest(te.getEventBus()));
         })
         .start();
     }
 
-    /** a button running the example's main inside slot */
-    private static BorderedComponent pick(String name, TUIApp host, Composite slot, TextComponent status, Embedding.Launch launch) {
-        Button button = new Button(name);
-        button.onChange((te) -> {
-            closeRunning(status, "closed");
-            Embedding embedding = TUIApp.runEmbedded(host, slot, launch);
-            running = embedding;
-            // its setup code runs next on the bus; count after it
-            host.getEventBus().asynch((after) -> {
-                status.setText(" Running " + name + " - its handlers on the bus: " + embedding.handlersOnHostBus());
-            });
+    @SafeVarargs
+    private static DefaultTreeNode<Demo> group(String name, DefaultTreeNode<Demo>... children) {
+        return DefaultTreeNode.of(new Demo(name, null), children);
+    }
+
+    private static DefaultTreeNode<Demo> example(String name, Embedding.Launch launch) {
+        return new DefaultTreeNode<Demo>(new Demo(name, launch));
+    }
+
+    /** run the example's main inside slot, in place of the one running */
+    private static void run(Demo demo, TUIApp host, Composite slot, TextComponent status) {
+        closeRunning(status, "closed");
+        Embedding embedding = TUIApp.runEmbedded(host, slot, demo.launch);
+        running = embedding;
+        // its setup code runs next on the bus; count after it
+        host.getEventBus().asynch((after) -> {
+            status.setText(" Running " + demo.name + " - its handlers on the bus: " + embedding.handlersOnHostBus());
         });
-        return new BorderedComponent(button);
     }
 
     private static void closeRunning(TextComponent status, String what) {
