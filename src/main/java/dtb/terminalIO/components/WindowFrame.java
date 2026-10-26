@@ -38,6 +38,10 @@ import dtb.terminalIO.util.Logging;
  * A window: a title bar to drag it by, a corner to resize it, a border, and its content - with
  * scrollbars when the content is bigger than the window.
  * <p/>
+ * A floating window, moved and resized by the user. In a split layout (a FrameSet's pane) the pane
+ * places and sizes it, so its title bar and corner can't work there: use a ScrollableComponent (or
+ * a BorderedComponent) instead.
+ * <p/>
  * Focus: when the content has focusable components, TAB moves among them; the window's border lights
  * while focus is anywhere in it, and it comes to the front. When the content can't take focus (an
  * image, text), the window itself is the TAB stop and the arrow keys scroll it. The title bar,

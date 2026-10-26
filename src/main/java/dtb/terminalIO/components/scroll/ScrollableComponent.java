@@ -301,6 +301,7 @@ public class ScrollableComponent  extends ComponentWithFocus<Composite, Scrollab
                                                      new Dimension.Simple(borderedComponent.getHeight() - 2, 1)));
         vScrollBar.markAsDirty();
 
+        fitFooterStatus();                               // first: the horizontal scrollbar gets what is left
         // borderedComponent.getWidth() - 2 - footerControls.getWidth()
         hScrollBar.setRectangle(new Rectangle.Simple(borderedComponent.getPostion_BottomLeft().offsetAdd(0, 1),
                                                       new Dimension.Simple(1,borderedComponent.getWidth() - 2 - footerControls.getWidth()) ));
@@ -354,6 +355,7 @@ public class ScrollableComponent  extends ComponentWithFocus<Composite, Scrollab
         if (!hasFooterControls) {
             return;
         }
+        fitFooterStatus();                               // a footer part grew or shrank (e.g. search): the status gives or takes the room
         footerControls.markAsDirty();
         int newHScrollBarWidth = (this.borderedComponent.getWidth() - 2) - footerControls.getWidth();
         this.hScrollBar.resize(new Dimension.Simple(1, newHScrollBarWidth > 0 ? newHScrollBarWidth : 0));
@@ -498,6 +500,56 @@ public class ScrollableComponent  extends ComponentWithFocus<Composite, Scrollab
     }
 
     private TextComponent footerText;
+    private Component<?> footerStatus;
+
+    /** the horizontal scrollbar keeps at least this much of the bottom line when a status is fitted */
+    private static final int MIN_HSCROLLBAR_WIDTH = 10;
+
+    /**
+     * A one-row status at the start of the footer, before the scroll buttons - e.g. a progress meter:
+     * <pre>
+     *   +-------------------------------------------------------------+
+     *   |  ...content...                                              |
+     *   +-----hscroll-----Copying ######......  42% | ^ | v | PgUp ...+
+     * </pre>
+     * If it can resize, it is kept as wide as the bottom line allows - the width less the scroll
+     * buttons and room for the horizontal scrollbar - as the pane is resized. Calling it again
+     * replaces the status; null removes it. Does nothing if the footer was removed.
+     */
+    public ScrollableComponent setFooterStatus(Component<?> status) {
+        if (footerControls == null) {
+            return this;
+        }
+        if (status != null && status.getHeight() != 1) {
+            throw new IllegalArgumentException("A footer status is one row high, not " + status.getHeight()
+                    + " (" + HasName.UTIL.getName(status) + ")");
+        }
+        if (footerStatus != null) {
+            footerControls.remove(footerStatus);
+        }
+        footerStatus = status;
+        if (status != null) {
+            footerControls.insertComponent(0, status);
+        }
+        resize((Dimension) this);                        // fit it, and re-fit the horizontal scrollbar
+        return this;
+    }
+
+    public Component<?> getFooterStatus() {
+        return footerStatus;
+    }
+
+    /** the status as wide as the bottom line allows, after the other footer parts and the scrollbar's minimum */
+    private void fitFooterStatus() {
+        if (!(footerStatus instanceof CanResize) || footerControls == null) {
+            return;
+        }
+        int others = footerControls.getWidth() - footerStatus.getWidth();
+        int room = borderedComponent.getWidth() - 2 - others - MIN_HSCROLLBAR_WIDTH;
+        if (room > 0 && room != footerStatus.getWidth()) {
+            ((CanResize) footerStatus).resize(new Dimension.Simple(1, room));
+        }
+    }
 
     /**
      * A short text in the footer, before the scroll buttons, e.g. "count: 42". Calling it again
