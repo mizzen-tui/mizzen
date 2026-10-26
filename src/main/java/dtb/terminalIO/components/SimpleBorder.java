@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.TreeSet;
 
 import dtb.terminalIO.controlcodes.color.Color;
 import dtb.terminalIO.geom.Align;
@@ -14,6 +15,8 @@ import dtb.terminalIO.geom.VAlign;
 import dtb.terminalIO.geom.position.Position;
 import dtb.terminalIO.geom.position.PositionRelativeFactory;
 import dtb.terminalIO.textsegments.IScreenLineSegmentsBuffer;
+import dtb.terminalIO.textsegments.ScreenLineSegment;
+import dtb.terminalIO.textsegments.ScreenLineSegment.SegmentImpl;
 
 /**
  * A component that draws a border with an optional title
@@ -85,6 +88,9 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>
         if (this.titleComponent != null && child == this.titleComponent && this.titlePosition != null) {
             return new Position.Simple(this.titlePosition); // return back a simple pos from a computed pos
         }
+        if (this.footerComponent != null && child == this.footerComponent && this.footerDrawnAt != null) {
+            return new Position.Simple(this.footerDrawnAt);     // where it was drawn (clipped: may start left of the border)
+        }
         if (this.footerComponent != null && child == this.footerComponent && this.footerPosition != null) {
             return new Position.Simple(this.footerPosition); // return back a simple pos from a computed pos
         }
@@ -132,15 +138,49 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>
             // need to do a "smart(slow) merge" here
             segments.mergeAt(titlePosition, titleComponent.getSegmentsBuffer());
         }
-        if (footerComponent != null && footerComponent.getWidth() <= this.getWidth() - 2) {   // only between the corners: a footer too wide for a narrow border isn't drawn
+        footerDrawnAt = null;
+        if (footerComponent != null) {
             if (footerPosition == null) {
                 // follows the border's size; LEFT starts one in, so the corner shows (RIGHT already ends one in)
                 int fromTheSide = Align.LEFT.equals(this.footerAlign) ? 1 : 0;
                 footerPosition = PositionRelativeFactory.fromAlign(VAlign.BOTTOM, 0, this.footerAlign, fromTheSide, this, footerComponent);
             }
-            // need to do a "smart(slow) merge" here
-            segments.mergeAt(footerPosition, footerComponent.getSegmentsBuffer());
+            if (footerComponent.getWidth() <= this.getWidth() - 2) {
+                footerDrawnAt = new Position.Simple(footerPosition);
+                // need to do a "smart(slow) merge" here
+                segments.mergeAt(footerDrawnAt, footerComponent.getSegmentsBuffer());
+            } else {
+                drawFooterClipped(segments);
+            }
         }
+    }
+
+    /** where the footer was drawn last (its first column may be left of the border when clipped); null: not drawn */
+    private Position footerDrawnAt;
+
+    /**
+     * A footer wider than the room between the corners: drawn ending one in from the right corner,
+     * as a right-aligned one would, and cut at the left corner - its right end (e.g. a search field
+     * the user just opened) stays in view.
+     */
+    private void drawFooterClipped(IScreenLineSegmentsBuffer segments) {
+        int row = this.getHeight() - 1;
+        int start = (this.getWidth() - 1) - footerComponent.getWidth();
+        footerDrawnAt = new Position.Simple(row, start);
+        TreeSet<ScreenLineSegment> clipped = ScreenLineSegment.UTIL.makeCollection(null);
+        for (ScreenLineSegment segment : footerComponent.getSegmentsBuffer().getSegments()) {
+            int col = start + segment.getCol();
+            String text = segment.getText();
+            if (col < 1) {
+                if (1 - col >= text.length()) {
+                    continue;                            // entirely left of the corner
+                }
+                text = text.substring(1 - col);
+                col = 1;
+            }
+            clipped.add(new SegmentImpl(segment.getColors(), new Position.Simple(row + segment.getRow(), col), text));
+        }
+        segments.merge(clipped);
     }
 
     public String getTitle() {
@@ -319,9 +359,9 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>
         if (titleComponent != null && titleComponent.containsPosition(offset.offsetAdd(titlePosition.negate()))) {
             return GetComponentAtOffset.UTIL.getComponentAtOffset(this.titleComponent, offset.offsetAdd(titlePosition.negate()));
         }
-        if (footerComponent != null && footerPosition != null && footerComponent.getWidth() <= this.getWidth() - 2   // shown
-                && footerComponent.containsPosition(offset.offsetAdd(footerPosition.negate()))) {
-            return GetComponentAtOffset.UTIL.getComponentAtOffset(this.footerComponent, offset.offsetAdd(footerPosition.negate()));
+        if (footerComponent != null && footerDrawnAt != null && offset.getCol() >= 1 && offset.getCol() <= this.getWidth() - 2
+                && footerComponent.containsPosition(offset.offsetAdd(footerDrawnAt.negate()))) {
+            return GetComponentAtOffset.UTIL.getComponentAtOffset(this.footerComponent, offset.offsetAdd(footerDrawnAt.negate()));
         }
         if (offset.getRow() == 0 || offset.getCol() == 0 || offset.getRow() == this.getBottomMostRow() || offset.getCol() == this.getRightMostCol()) {
             return GetComponentAtOffset.UTIL.getComponentAtOffset(this.border, offset);

@@ -193,6 +193,27 @@ public class SearchFunctionForScrollableComponent extends ComponentWithFocus<But
         return onViewCompResized;
     }
 
+    /** the search field never narrows below this */
+    static final int MIN_SEARCH_FIELD_WIDTH = 5;
+
+    /**
+     * Narrows the open search field by up to by columns (not below MIN_SEARCH_FIELD_WIDTH) - for a
+     * footer short of room; how many columns it gave (0 when the field isn't open).
+     */
+    int narrowSearchField(int by) {
+        if (findTextInput == null || by <= 0) {
+            return 0;
+        }
+        int width = findTextInput.getWidth();
+        int narrower = Math.max(MIN_SEARCH_FIELD_WIDTH, width - by);
+        if (narrower == width) {
+            return 0;
+        }
+        findTextInput.setLength(narrower);
+        getWrappedComponent().childResized(findTextInput);
+        return width - narrower;
+    }
+
     public void unHilite() {
         this.getWrappedComponent().unHilite();
         if (findTextInput != null) {

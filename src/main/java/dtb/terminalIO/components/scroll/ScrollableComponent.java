@@ -1,5 +1,7 @@
 package dtb.terminalIO.components.scroll;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 import dtb.terminalIO.components.ComponentWithFocus;
@@ -8,6 +10,7 @@ import dtb.terminalIO.components.ButtonBar;
 import dtb.terminalIO.components.Component;
 import dtb.terminalIO.components.HasName;
 import dtb.terminalIO.components.TextComponent;
+import dtb.terminalIO.components.input.Button;
 import dtb.terminalIO.components.composite.Composite;
 import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent.AsSearchableView;
 import dtb.terminalIO.components.scroll.SearchFunctionForScrollableComponent.SearchableView;
@@ -301,14 +304,9 @@ public class ScrollableComponent  extends ComponentWithFocus<Composite, Scrollab
                                                      new Dimension.Simple(borderedComponent.getHeight() - 2, 1)));
         vScrollBar.markAsDirty();
 
-        fitFooterStatus();                               // first: the horizontal scrollbar gets what is left
-        // borderedComponent.getWidth() - 2 - footerControls.getWidth()
-        hScrollBar.setRectangle(new Rectangle.Simple(borderedComponent.getPostion_BottomLeft().offsetAdd(0, 1),
-                                                      new Dimension.Simple(1,borderedComponent.getWidth() - 2 - footerControls.getWidth()) ));
-        hScrollBar.markAsDirty();
-
 //        positionFooterText();
         handleResizeDependants(d);
+        layOutFooter();                                  // after the resize rules: they may change footer parts (search)
 
         markAsDirty();
         this.componentBeingViewed.markAsDirty();
@@ -355,10 +353,84 @@ public class ScrollableComponent  extends ComponentWithFocus<Composite, Scrollab
         if (!hasFooterControls) {
             return;
         }
-        fitFooterStatus();                               // a footer part grew or shrank (e.g. search): the status gives or takes the room
-        footerControls.markAsDirty();
-        int newHScrollBarWidth = (this.borderedComponent.getWidth() - 2) - footerControls.getWidth();
-        this.hScrollBar.resize(new Dimension.Simple(1, newHScrollBarWidth > 0 ? newHScrollBarWidth : 0));
+        layOutFooter();                                  // a footer part grew or shrank (e.g. search)
+    }
+
+    private final List<Button> scrollButtons = new ArrayList<Button>();       // in SCROLL_ACTIONS order
+    private final List<Component<?>> addedFooterParts = new ArrayList<Component<?>>();   // by addFooterComponent (e.g. search)
+    /** dropped in pairs when the bottom line is short of room: « », then PgUp PgDn, then ^ v */
+    private static final int[][] SCROLL_BUTTONS_DROP_ORDER = { { 4, 5 }, { 2, 3 }, { 0, 1 } };
+    private boolean layingOutFooter;
+
+    /**
+     * The bottom line: the footer parts (status, text, scroll buttons, other components such as
+     * search) and the horizontal scrollbar in what is left. Short of room, in this order until it
+     * fits: the scrollbar gives up its reserved room; scroll buttons are dropped (« », then PgUp PgDn,
+     * then ^ v - their keys still work); the status shrinks to its smallest; an open search field
+     * narrows - search stays, the user asked for it. If it still doesn't fit, the border clips it,
+     * keeping its right end. With room again, everything comes back.
+     */
+    private void layOutFooter() {
+        if (footerControls == null || layingOutFooter) {
+            return;
+        }
+        layingOutFooter = true;
+        try {
+            int room = borderedComponent.getWidth() - 2;
+            showAllScrollButtons();
+            fitFooterStatus(room, MIN_HSCROLLBAR_WIDTH);
+            if (footerControls.getWidth() > room) {
+                fitFooterStatus(room, 0);
+            }
+            for (int[] pair : SCROLL_BUTTONS_DROP_ORDER) {
+                if (footerControls.getWidth() <= room) {
+                    break;
+                }
+                for (int i : pair) {
+                    hideScrollButton(i);
+                }
+                fitFooterStatus(room, 0);
+            }
+            if (footerControls.getWidth() > room) {
+                for (Component<?> part : addedFooterParts) {
+                    if (part instanceof SearchFunctionForScrollableComponent) {
+                        ((SearchFunctionForScrollableComponent) part).narrowSearchField(footerControls.getWidth() - room);
+                    }
+                }
+            }
+            footerControls.markAsDirty();
+            hScrollBar.setRectangle(new Rectangle.Simple(borderedComponent.getPostion_BottomLeft().offsetAdd(0, 1),
+                                                         new Dimension.Simple(1, Math.max(0, room - footerControls.getWidth()))));
+            hScrollBar.markAsDirty();
+        } finally {
+            layingOutFooter = false;
+        }
+    }
+
+    private void hideScrollButton(int i) {
+        Button button = scrollButtons.get(i);
+        if (footerControls.indexOf(button) >= 0) {
+            footerControls.remove(button);
+        }
+    }
+
+    /** each dropped scroll button back in its place: after the shown button before it, or after the status and text */
+    private void showAllScrollButtons() {
+        for (int i = 0; i < scrollButtons.size(); i++) {
+            Button button = scrollButtons.get(i);
+            if (footerControls.indexOf(button) >= 0) {
+                continue;
+            }
+            int at = (footerStatus != null ? 1 : 0) + (footerText != null ? 1 : 0);
+            for (int before = i - 1; before >= 0; before--) {
+                int index = footerControls.indexOf(scrollButtons.get(before));
+                if (index >= 0) {
+                    at = index + 1;
+                    break;
+                }
+            }
+            footerControls.insertComponent(at, button);
+        }
     }
     
     public ScrollableComponent removeFooterComponent() {
@@ -380,7 +452,7 @@ public class ScrollableComponent  extends ComponentWithFocus<Composite, Scrollab
         // or with focus on the pane itself, and don't move focus)
         footerControls.focus().skippedByTab();
         for (ScrollAction action : SCROLL_ACTIONS) {
-            footerControls.addButton(action.label, null, (te) -> emitViewOffsetChangedOnOperation(te, () -> action.scroll.accept(this)));
+            scrollButtons.add(footerControls.addButton(action.label, null, (te) -> emitViewOffsetChangedOnOperation(te, () -> action.scroll.accept(this))));
         }
 
         this.borderedComponent.setFooter(footerControls);
@@ -539,15 +611,15 @@ public class ScrollableComponent  extends ComponentWithFocus<Composite, Scrollab
         return footerStatus;
     }
 
-    /** the status as wide as the bottom line allows, after the other footer parts and the scrollbar's minimum */
-    private void fitFooterStatus() {
-        if (!(footerStatus instanceof CanResize) || footerControls == null) {
+    /** the status as wide as the line allows after the other footer parts and what the scrollbar keeps */
+    private void fitFooterStatus(int room, int keepForScrollbar) {
+        if (!(footerStatus instanceof CanResize)) {
             return;
         }
         int others = footerControls.getWidth() - footerStatus.getWidth();
-        int room = borderedComponent.getWidth() - 2 - others - MIN_HSCROLLBAR_WIDTH;
-        if (room > 0 && room != footerStatus.getWidth()) {
-            ((CanResize) footerStatus).resize(new Dimension.Simple(1, room));
+        int width = room - others - keepForScrollbar;
+        if (width > 0 && width != footerStatus.getWidth()) {
+            ((CanResize) footerStatus).resize(new Dimension.Simple(1, width));   // it may stop at its own smallest
         }
     }
 
@@ -575,6 +647,8 @@ public class ScrollableComponent  extends ComponentWithFocus<Composite, Scrollab
             throw new IllegalStateException("FooterControls object is null! Cannot add component control yet!");
         }
         footerControls.addComponent(componentForButtonBar);
+        addedFooterParts.add(componentForButtonBar);
+        layOutFooter();                                  // make room for it
     }
 
     public void up(int iLines) {
