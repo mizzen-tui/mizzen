@@ -417,8 +417,10 @@ public class ScrollableComponent  extends ComponentWithFocus<Composite, Scrollab
                 }
             }
             footerControls.markAsDirty();
+            // one row and no footer: that row is the title's line - no scrollbar on it
+            int hScrollWidth = borderedComponent.getHeight() < 2 && !footerShown ? 0 : Math.max(0, room - footerControls.getWidth());
             hScrollBar.setRectangle(new Rectangle.Simple(borderedComponent.getPostion_BottomLeft().offsetAdd(0, 1),
-                                                         new Dimension.Simple(1, Math.max(0, room - footerControls.getWidth()))));
+                                                         new Dimension.Simple(1, hScrollWidth)));
             hScrollBar.markAsDirty();
         } finally {
             layingOutFooter = false;

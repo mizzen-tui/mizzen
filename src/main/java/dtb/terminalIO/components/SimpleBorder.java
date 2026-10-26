@@ -124,8 +124,19 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>
         //segments.merge(this.border.getSegmentsBuffer());
         // do a fast add of border
         segments.getSegments().clear();
-        segments.getSegments().addAll( this.border.getSegmentsBuffer().getSegments() );
-        if (this.getTitle() != null || titleComponent != null) {
+        boolean oneRow = this.getHeight() == 1;
+        if (oneRow) {
+            // room for one line only: the bottom one if there is a footer (it carries live things - a
+            // meter, controls, a status), else the top one with the title
+            String line = footerComponent != null ? "└" + repeat('─', this.getWidth() - 2) + "┘"
+                                                  : "┌" + repeat('─', this.getWidth() - 2) + "┐";
+            if (this.getWidth() >= 2) {
+                segments.getSegments().add(new SegmentImpl(this.border.getColor(), new Position.Simple(0, 0), line));
+            }
+        } else {
+            segments.getSegments().addAll( this.border.getSegmentsBuffer().getSegments() );
+        }
+        if ((this.getTitle() != null || titleComponent != null) && !(oneRow && footerComponent != null)) {
             if (titleComponent == null) {
                 titleComponent = makeChildComponent(() -> new TextComponent(getTitleColor(), getTitle()));
                 if (titlePosition == null) {
@@ -153,6 +164,14 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>
                 drawFooterClipped(segments);
             }
         }
+    }
+
+    private static String repeat(char c, int count) {
+        StringBuilder line = new StringBuilder();
+        for (int i = 0; i < count; i++) {
+            line.append(c);
+        }
+        return line.toString();
     }
 
     /** where the footer was drawn last (its first column may be left of the border when clipped); null: not drawn */

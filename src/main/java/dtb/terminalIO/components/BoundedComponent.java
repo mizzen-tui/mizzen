@@ -140,9 +140,11 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
                 }
                 busyDrawingFLAG = true;
                 clear();
-                Color currentColor = getColor();
-                draw(currentColor, segments);
-                fillOnClear();
+                if (getHeight() > 0 && getWidth() > 0) {   // squeezed to no rows or no columns: nothing to draw into
+                    Color currentColor = getColor();
+                    draw(currentColor, this.segments);
+                    fillOnClear();
+                }
                 hasDrawn = true;
                 Component.UTIL.assertComponentSegmentsIntegrity(this);
             }
@@ -154,7 +156,7 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
     protected void fillOnClear() {
         if (fillPolicy.isFillOnClear()) {
             //Logging.info("fillOnClear() after draw !" + String.valueOf(this));
-            ScreenLineSegment.UTIL.fillEmptySpacesInRectWithChar(getEmptyColor(), getEmptyChar(), this, segments.getSegments());
+            ScreenLineSegment.UTIL.fillEmptySpacesInRectWithChar(getEmptyColor(), getEmptyChar(), this, this.segments.getSegments());
         }
     }
 

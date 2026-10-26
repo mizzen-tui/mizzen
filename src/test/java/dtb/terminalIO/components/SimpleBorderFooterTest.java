@@ -46,6 +46,52 @@ public class SimpleBorderFooterTest extends TestCase {
         assertTrue(bottomRow(wide), bottomRow(wide).contains("PgUp"));
     }
 
+    private static String row(Component<?> c, int r) {
+        StringBuilder row = new StringBuilder();
+        for (ScreenLineSegment s : c.getSegmentsBuffer().getSegments()) {
+            if (s.getRow() == r) {
+                row.append(s.getText());
+            }
+        }
+        return row.toString();
+    }
+
+    /** squeezed to one row there is room for one line: with no footer, the top one with its title */
+    public void testOneRowWithoutAFooterShowsTheTitleLine() {
+        SimpleBorder border = new SimpleBorder(Colors.Yel, new Dimension.Simple(1, 30));
+        border.setTitle("Output");
+        String line = row(border, 0);                                    // overlaps would throw (strict check)
+        assertTrue(line, line.startsWith("┌") && line.endsWith("┐") && line.contains("Output"));
+    }
+
+    /** ... and with a footer, the bottom one with the footer - it carries live things */
+    public void testOneRowWithAFooterShowsTheFooterLine() {
+        SimpleBorder border = new SimpleBorder(Colors.Yel, new Dimension.Simple(1, 30));
+        border.setTitle("Output");
+        border.setFooter(new TextComponent("42%"), Align.LEFT);
+        String line = row(border, 0);
+        assertTrue(line, line.startsWith("└42%") && line.endsWith("┘") && !line.contains("Output"));
+    }
+
+    public void testAScrollableSqueezedToOneRowShowsItsFooterLine() {
+        ScrollableComponent pane = new ScrollableComponent(Colors.Yel, new Dimension.Simple(10, 60), new MultiLineTextInput(Colors.IYel));
+        pane.setTitle(" Output ");
+        pane.getSegmentsBuffer();
+        pane.resize(new Dimension.Simple(1, 60));
+        String line = row(pane, 0);
+        assertTrue(line, line.startsWith("└") && line.endsWith("┘") && line.contains("PgUp"));
+    }
+
+    public void testAScrollableWithoutAFooterSqueezedToOneRowShowsItsTitleLine() {
+        ScrollableComponent pane = new ScrollableComponent(Colors.Yel, new Dimension.Simple(10, 60), new MultiLineTextInput(Colors.IYel));
+        pane.setTitle(" Output ");
+        pane.removeFooter();
+        pane.getSegmentsBuffer();
+        pane.resize(new Dimension.Simple(1, 60));
+        String line = row(pane, 0);
+        assertTrue(line, line.startsWith("┌") && line.contains("Output"));
+    }
+
     public void testALeftFooterStartsOneInSoTheCornerShows() {
         BorderedComponent box = new BorderedComponent(Colors.Yel, new TextComponent(new String(new char[30]).replace('\0', 'x')));
         box.setFooter(new TextComponent("status"), Align.LEFT);

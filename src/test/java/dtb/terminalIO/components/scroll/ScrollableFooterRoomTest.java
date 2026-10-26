@@ -69,6 +69,18 @@ public class ScrollableFooterRoomTest extends TestCase {
         assertTrue("in their order: " + bottom, bottom.indexOf("^") < bottom.indexOf("«") && bottom.indexOf("«") < bottom.indexOf("»"));
     }
 
+    /**
+     * squeezed to 2 rows, its content has no rows: the view and the vertical scrollbar draw nothing
+     * (they drew a row over the bottom line - the border and footer came out garbled)
+     */
+    public void testSqueezedToTwoRowsTheBottomLineStaysWhole() {
+        ScrollableComponent pane = new ScrollableComponent(Colors.Yel, new Dimension.Simple(10, 60), new dtb.terminalIO.components.StdoutViewer(Colors.BWhi));
+        pane.getSegmentsBuffer();
+        pane.resize(new Dimension.Simple(2, 60));
+        String bottom = bottomRow(pane);                                // overlapping segments would throw (strict check on)
+        assertTrue(bottom, bottom.startsWith("└") && bottom.endsWith("┘") && bottom.contains("PgUp"));
+    }
+
     public void testPastAllThatTheLineIsClippedKeepingItsRightEnd() {
         ScrollableComponent pane = pane(20);
         pane.addFooterComponent(new TextComponent("a long footer part ending in SEARCH"));
