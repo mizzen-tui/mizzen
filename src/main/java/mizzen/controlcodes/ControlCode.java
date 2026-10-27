@@ -241,7 +241,9 @@ public abstract class ControlCode implements Renderer, HasName<ControlCode> {
     
     // TODO - should this be moved to ControlCode class?
     public static Renderer CR = new CarriageReturn().setName("CR");
-    public static TextRenderer LF = new TextRenderer("\r");
+    // a carriage return (cursor to the start of the line), despite the name: cursor movement like the
+    // others, so it is left out with them when control codes are off (output to a String, a pipe)
+    public static ControlCode LF = new BaseTextControlCode("\r").setName("LF");
     
     protected static class CursorMovementWithCount extends BaseTextControlCode {
 
