@@ -176,6 +176,20 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
         segments.clearAndMerge(this.scrollableView.getSegmentsBuffer().getSegments());
     }
 
+    /**
+     * Its scroll pane is redrawn with it, as AbstractComponentWrappper does for what it wraps. draw()
+     * takes the pane's segments set itself (no copy, for speed), and that set is cleared before each
+     * redraw of this: redrawn alone - e.g. after show() - this would empty the pane's segments while the
+     * pane still counts as drawn, and show nothing.
+     */
+    @Override
+    public void markAsDirty() {
+        if (scrollableView != null && !scrollableView.isDirty()) {   // null: still in the constructor (setColor)
+            scrollableView.markAsDirty();
+        }
+        super.markAsDirty();
+    }
+
     public Component<?> getComponentAtOffset(Position offset) {
         Component<?> component = this.scrollableView.getComponentAtOffset(offset);
         if (component == this.scrollableView) {
