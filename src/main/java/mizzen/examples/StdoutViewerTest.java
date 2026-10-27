@@ -103,7 +103,7 @@ public class StdoutViewerTest {
 
                     Button populateLarge = new Button("Large Content");
                     populateLarge.onChange((te)->{
-                        populateTask.accept("dtbTerminal.log");
+                        populateTask.accept(Logging.getLogFile().toString());
                     });
 
                     Button populateSlowRunner = new Button("Slow Runnnert");
