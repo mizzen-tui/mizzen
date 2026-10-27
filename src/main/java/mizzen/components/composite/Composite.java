@@ -393,6 +393,26 @@ public class Composite extends AbstractComponent<Composite>
     }
 
     /**
+     * The child was sized by hand - a splitter's divider dragged: its percent rules (a share of this
+     * panel) take the new size as their share, so the next resize keeps it instead of putting the old
+     * share back. Call it before resizing the child: the resize runs the rules. Rules other than
+     * percent ones, and a child with none, are left as they are.
+     */
+    public void keepShareForSize(Component<?> component, Dimension size) {
+        ComponentWithOffset child = findChild(component);
+        CanResize rule = child == null || childToResizeRule == null ? null : childToResizeRule.get(child);
+        while (rule != null) {
+            CanResize one = rule instanceof CanResize.Chain ? ((CanResize.Chain) rule).getDelegate() : rule;
+            if (one instanceof ExpandDownByPercent) {
+                ((ExpandDownByPercent) one).setShareFromSize(size.getHeight());
+            } else if (one instanceof ExpandRightByPercent) {
+                ((ExpandRightByPercent) one).setShareFromSize(size.getWidth());
+            }
+            rule = rule instanceof CanResize.Chain ? ((CanResize.Chain) rule).getNext() : null;
+        }
+    }
+
+    /**
      * The child's rule: one per child, as the parent sees it. A rule for the other direction joins
      * the one there (a CanResize.Chain: a width rule and a height rule); one for the same direction
      * replaces it.

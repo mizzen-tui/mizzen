@@ -490,6 +490,8 @@ public class FrameSet extends BoundedComponent<FrameSet> implements HasTitleAndB
             }
             Dimension newSizeRight = new Dimension.Simple(right.getHeight(), right.getWidth() - numSpaces);
             Dimension newSizeLeft = new Dimension.Simple(left.getHeight(), left.getWidth() + numSpaces);
+            container.keepShareForSize(left, newSizeLeft);        // a percent rule keeps the dragged size (else it puts the old share back)
+            container.keepShareForSize(right, newSizeRight);
             ((CanResize)left).resize(newSizeLeft);
             ((CanResize)right).resize(newSizeRight);
             vDraggables.stream().filter(vd-> vd.vdivider == VerticalDivider.this).forEach(vd-> vd.markAsDirty());
@@ -510,6 +512,8 @@ public class FrameSet extends BoundedComponent<FrameSet> implements HasTitleAndB
             }
             Dimension newSizeLeft = new Dimension.Simple(left.getHeight(), left.getWidth() - numSpaces);
             Dimension newSizeRight = new Dimension.Simple(right.getHeight(), right.getWidth() + numSpaces);
+            container.keepShareForSize(left, newSizeLeft);        // a percent rule keeps the dragged size (else it puts the old share back)
+            container.keepShareForSize(right, newSizeRight);
             ((CanResize)left).resize(newSizeLeft);
             ((CanResize)right).resize(newSizeRight);
             vDraggables.stream().filter(vd-> vd.vdivider == this).forEach(vd-> vd.markAsDirty());
@@ -641,6 +645,8 @@ public class FrameSet extends BoundedComponent<FrameSet> implements HasTitleAndB
             }
             Dimension newSizeAbove = new Dimension.Simple(above.getHeight() - numSpaces, above.getWidth());
             Dimension newSizeBelow = new Dimension.Simple(below.getHeight() + numSpaces, below.getWidth());
+            container.keepShareForSize(above, newSizeAbove);        // a percent rule keeps the dragged size (else it puts the old share back)
+            container.keepShareForSize(below, newSizeBelow);
             ((CanResize)above).resize(newSizeAbove);
             ((CanResize)below).resize(newSizeBelow);
             hDraggables.stream().filter(hd-> hd.hdivider == this).forEach(hd-> hd.markAsDirty());
@@ -667,6 +673,8 @@ public class FrameSet extends BoundedComponent<FrameSet> implements HasTitleAndB
             }
             Dimension newSizeAbove = new Dimension.Simple(above.getHeight() + numSpaces, above.getWidth());
             Dimension newSizeBelow = new Dimension.Simple(below.getHeight() - numSpaces, below.getWidth());
+            container.keepShareForSize(above, newSizeAbove);        // a percent rule keeps the dragged size (else it puts the old share back)
+            container.keepShareForSize(below, newSizeBelow);
             ((CanResize)above).resize(newSizeAbove);
             ((CanResize)below).resize(newSizeBelow);
             hDraggables.stream().filter(hd-> hd.hdivider == this).forEach(hd-> hd.markAsDirty());

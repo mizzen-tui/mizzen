@@ -202,6 +202,12 @@ public interface CanResize {
      */
     public static abstract class ExpandOnResize  implements CanResize {
 
+        // the percent that gives size out of total: half a row (or column) more, so a percent rule's
+        // rounding down gives size back
+        protected static double shareFor(int size, int total, double unchanged) {
+            return total <= 0 ? unchanged : (size + 0.5d) * 100d / total;
+        }
+
         Rectangle anchorComponent;
         private Position  targetOffsetPosition;
         private Rectangle targetComponent;
@@ -300,7 +306,7 @@ public interface CanResize {
 
     public static class ExpandDownByPercent  extends ExpandOnResize {
 
-        int percent = 50;
+        double percent = 50;                             // a fraction of a percent too: see setShareFromSize
         
         public ExpandDownByPercent(Rectangle anchorComponent, 
                                    Position targetOffsetPosition, 
@@ -320,15 +326,24 @@ public interface CanResize {
 
         @Override
         public void resize(Dimension d) {
-            int byPercent = (int)(anchorComponent.getHeight()*((double)percent / 100d));
+            int byPercent = (int)(anchorComponent.getHeight()*(percent / 100d));
             resizeTarget(new Dimension.Simple(notUnderAtLeast(Math.min(heightToBottom(), byPercent)), getTargetComponent().getWidth()));
+        }
+
+        /**
+         * The share that gives this height now: the rule keeps a size the user chose (a splitter's
+         * divider dragged), and keeps it in proportion when the container resizes. E.g. dragged to 20
+         * of 40 rows, the share becomes 50%.
+         */
+        public void setShareFromSize(int height) {
+            percent = shareFor(height, anchorComponent.getHeight(), percent);
         }
 
     }
     
     public static class ExpandRightByPercent  extends ExpandOnResize {
 
-        int percent = 50;
+        double percent = 50;                             // a fraction of a percent too: see setShareFromSize
 
         public ExpandRightByPercent(Rectangle anchorComponent, 
                                     Position targetOffsetPosition, 
@@ -348,8 +363,13 @@ public interface CanResize {
 
         @Override
         public void resize(Dimension d) {
-            int byPercent = (int)(anchorComponent.getWidth()*((double)percent / 100d));
+            int byPercent = (int)(anchorComponent.getWidth()*(percent / 100d));
             resizeTarget(new Dimension.Simple(getTargetComponent().getHeight(), notUnderAtLeast(Math.min(widthToRight(), byPercent))));
+        }
+
+        /** as ExpandDownByPercent.setShareFromSize, for the width */
+        public void setShareFromSize(int width) {
+            percent = shareFor(width, anchorComponent.getWidth(), percent);
         }
 
     }
