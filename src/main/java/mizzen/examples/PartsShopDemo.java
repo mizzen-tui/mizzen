@@ -220,6 +220,7 @@ public class PartsShopDemo {
     private final TextComponent itemLine = new TextComponent(Colors.BWhi, "");
     private FormBinder<Sale> saleForm;
     private Button revertButton;
+    private final TextComponent notesLength = new TextComponent(Colors.IBla, "");   // under "Notes :", as you type
     private FormBinder<SaleItem> itemForm;
 
     PartsShopDemo(TUIApp tApp) {
@@ -302,7 +303,7 @@ public class PartsShopDemo {
         form.add(new HorizontalPanel().addText("Status   : ").add(status));
         form.add(new HorizontalPanel().addText("Payment  : ").add(payment));
         form.add(new HorizontalPanel().addText("Paid     : ").add(paid));
-        form.add(new HorizontalPanel().addText("Notes    : ").add(notesBox));
+        form.add(new HorizontalPanel().add(new VerticalPanel().addText("Notes    : ").add(notesLength)).add(notesBox));
         form.add(revertButton);
         form.appendOnResize((size) -> {                    // the notes take the room left - drag a divider and they follow
             int above = 4, revertRow = 1, label = 11;
@@ -315,6 +316,7 @@ public class PartsShopDemo {
         saleForm.bindAll(form);
         saleForm.<String>getFormBinderField("customer").withValidator((String c) -> c != null && !c.trim().isEmpty(), "A sale needs a customer");
         saleForm.withValidatorHandler(showProblem());
+        notes.onChange((te) -> showNotesLength());         // the app listens too - alongside the form's binding
         saleForm.onChange((te) -> {
             revertButton.show();
             salesTable.clearData();                        // the edit is in the sale already: show it
@@ -396,10 +398,16 @@ public class PartsShopDemo {
         revert = picked.snapshot();
         revertButton.hide();
         saleForm.setFormData(picked);
+        showNotesLength();
         itemsModel.setRows(picked.items);
         itemsTable.clearData();
         itemsTable.setSelectedRow(0);
         showItem(picked.items.get(0));
+    }
+
+    private void showNotesLength() {
+        int length = sale.notes == null ? 0 : sale.notes.length();
+        notesLength.setTextAndResize(String.format(" %3d chars", length));
     }
 
     private void showItem(SaleItem picked) {
