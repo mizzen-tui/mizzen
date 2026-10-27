@@ -34,7 +34,7 @@ import mizzen.textsegments.IScreenLineSegmentsBuffer;
 import mizzen.util.StringUtils;
 
 public class TextInput extends BoundedComponent<TextInput>
-                       implements SettableHasValueComponentMixen<TextInput,String>, 
+                       implements SettableHasValueComponentMixen<TextInput,String>, FormInput<String>, 
                                   ParentContainer, 
                                   Focusable  {
 

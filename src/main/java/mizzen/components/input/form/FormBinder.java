@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
+import java.util.function.Function;
 //import java.util.function.BiConsumer;
 //import java.util.function.BiFunction;
 //import java.util.function.BiPredicate;
@@ -14,10 +15,13 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import mizzen.components.Component;
 import mizzen.components.ComponentFinder;
 import mizzen.components.HasName;
+import mizzen.components.input.FormInput;
 import mizzen.components.input.HasValue;
 import mizzen.components.input.SettableHasValue;
+import mizzen.components.input.ToFormInput;
 import mizzen.events.EventBus;
 import mizzen.events.EventHandler;
 import mizzen.events.EventHandlerContainer;
@@ -42,6 +46,34 @@ public interface FormBinder<T> extends HasValue<T>{
     }
 
     public void bindAll(ComponentFinder componentFinder);
+
+    /**
+     * Binds the field to a component through the component's FormInput - given, registered, or its own
+     * (a FormInput, or a ToFormInput): FormInputs gives the order. The field's value shows in the
+     * component at once. Fails at once when the component has no FormInput.
+     * <pre>
+     *     binder.bind("country", countryDropdown);
+     *     binder.bind("colour", colourPicker);         // a ToFormInput: the binder calls asFormInput()
+     * </pre>
+     */
+    <FT> FormBinderField<FT, T> bind(String field, Object component);
+
+    /** as bind(field, component), the component's FormInput made by factory - for this field only */
+    default <C, FT> FormBinderField<FT, T> bind(String field, C component, Function<? super C, ? extends FormInput<FT>> factory) {
+        FormBinderField<FT, T> bound = bindInput(field, factory.apply(component));
+        bound.setComponentValue(bound.getFormValue());
+        return bound;
+    }
+
+    /** for this form only: components of this type bind through the FormInput the factory makes (FormInputs) */
+    <C> FormBinder<T> register(Class<C> type, Function<? super C, ? extends FormInput<?>> factory);
+
+    /** the field bound to a FormInput: values both ways; each change is checked, then copied into the object */
+    default <FT> FormBinderField<FT, T> bindInput(String field, FormInput<FT> input) {
+        FormBinderField<FT, T> formBinderField = bindField(field, new GetterSetter<FT>(input));
+        input.onChange(UTIL.changeHandler(formBinderField));
+        return formBinderField;
+    }
 
     public <FT> FormBinderField<FT, T> bindField(String name, GetterSetter<FT> getterSetterComponent, GetterSetter<FT> getterSetterFormField);
 
@@ -128,6 +160,7 @@ public interface FormBinder<T> extends HasValue<T>{
         T formData;
         List<FormBinderField<?,T>> formFields;
         FormErrorHandler<T> errorHandler = null; // TODO: default to catastrophic fail in order to force developer to set this value to something more reasonable.
+        private final FormInputs formInputs = FormInputs.forBinder();   // this form's registry, then the global one
 
         EventBus eventBus;
         EventHandlerContainer formPanelComponent;
@@ -233,15 +266,46 @@ public interface FormBinder<T> extends HasValue<T>{
             }
         }
 
+        /**
+         * Each of the object's fields bound to the component of the same name, if there is one: an
+         * input, a ToFormInput, or a component with a registered FormInput. Fields with
+         * no such component are left out.
+         */
         @Override
         public void bindAll(ComponentFinder componentFinder) {
             for (String fieldName : getFieldNames()) {
-                SettableHasValue<?> component = componentFinder.findComponentByName(fieldName, SettableHasValue.class);
+                Object component = componentFinder.findComponentByName(fieldName, SettableHasValue.class);
+                if (component == null) {
+                    component = componentFinder.findComponentByName(fieldName, ToFormInput.class);
+                }
+                if (component == null) {
+                    Component<?> named = componentFinder.findComponentByName(fieldName);
+                    component = named != null && formInputs.canResolve(named) ? named : null;
+                }
                 if (component != null) {
-                    this.bindField(fieldName, component);
+                    this.bind(fieldName, component);
                 }
             }
             setValuesOntoComponents();
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public <FT> FormBinderField<FT, T> bind(String field, Object component) {
+            FormBinderField<FT, T> bound;
+            if (!formInputs.canResolve(component) && component instanceof SettableHasValue) {
+                bound = bindField(field, (SettableHasValue<FT>) component);   // an input with no onChange: bound as it always was
+            } else {
+                bound = bindInput(field, (FormInput<FT>) formInputs.resolve(field, component));
+            }
+            setValueOntoComponent(field);
+            return bound;
+        }
+
+        @Override
+        public <C> FormBinder<T> register(Class<C> type, Function<? super C, ? extends FormInput<?>> factory) {
+            formInputs.add(type, factory);
+            return this;
         }
 
         @Override
@@ -480,41 +544,49 @@ public interface FormBinder<T> extends HasValue<T>{
             }
         }
 
+        /**
+         * What a field does when its input changes: check the input's value (the field's rules); if good,
+         * copy it into the object and say the field and the form changed; if not, hand the error to the
+         * error handler (the object keeps its last good value).
+         */
+        static <FT, T> EventHandler changeHandler(FormBinderField<FT, T> formBinderField) {
+            return (te) -> {
+                try {
+                    boolean prevFormInError = formBinderField.isInError();
+                    FT prevValue = formBinderField.getFormValue();
+                    formBinderField.assertValid();
+                    formBinderField.copyComponentValueToFormField();
+                    boolean postFormInError = formBinderField.isInError();
+                    if (prevFormInError && !postFormInError) {
+                        handleError(formBinderField.getFormBinder(), formBinderField, null);
+                    }
+                    FT postValue = formBinderField.getFormValue();
+                    if (postValue != prevValue) {
+                        EventBus eventBus = te.getEventBus();
+                        if ((postValue != null && !postValue.equals(prevValue)) || 
+                            (prevValue != null && !prevValue.equals(postValue))) {
+                            // signal field changed
+                            te.getEventBus().raiseEvent(new HasValue.ValueChangedEvent<>(formBinderField)
+                                    .then(()->{
+                                        // then signal form changed
+                                        eventBus.raiseEvent(new HasValue.ValueChangedEvent<>(formBinderField.getFormBinder()));
+                                    }));
+                        }
+                    }
+
+                } catch (FormValidatorException formError) {
+                    handleError(formBinderField.getFormBinder(), formBinderField, formError);
+                }
+            };
+        }
+
         static <FT, T> void bindToOnChange(FormBinderField<FT, T> formBinderField, String propertyName, SettableHasValue<FT> settableValue) {
 
             // Check if the widget has an onChange method
             try {
                 Method onChangeMethod = settableValue.getClass().getMethod("onChange", EventHandler.class);
 
-                EventHandler widget_onChangeHandler = (te) -> {
-                    try {
-                        boolean prevFormInError = formBinderField.isInError();
-                        FT prevValue = formBinderField.getFormValue();
-                        formBinderField.assertValid();
-                        formBinderField.copyComponentValueToFormField();
-                        boolean postFormInError = formBinderField.isInError();
-                        if (prevFormInError && !postFormInError) {
-                            handleError(formBinderField.getFormBinder(), formBinderField, null);
-                        }
-                        FT postValue = formBinderField.getFormValue();
-                        if (postValue != prevValue) {
-                            EventBus eventBus = te.getEventBus();
-                            if ((postValue != null && !postValue.equals(prevValue)) || 
-                                (prevValue != null && !prevValue.equals(postValue))) {
-                                // signal field changed
-                                te.getEventBus().raiseEvent(new HasValue.ValueChangedEvent<>(formBinderField)
-                                        .then(()->{
-                                            // then signal form changed
-                                            eventBus.raiseEvent(new HasValue.ValueChangedEvent<>(formBinderField.getFormBinder()));
-                                        }));
-                            }
-                        }
-
-                    } catch (FormValidatorException formError) {
-                        handleError(formBinderField.getFormBinder(), formBinderField, formError);
-                    }
-                };
-
+                EventHandler widget_onChangeHandler = changeHandler(formBinderField);
                 onChangeMethod.invoke(settableValue, widget_onChangeHandler);
 
             } catch (NoSuchMethodException | SecurityException e) {

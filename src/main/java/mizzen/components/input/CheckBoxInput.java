@@ -25,7 +25,7 @@ import mizzen.textsegments.IScreenLineSegmentsBuffer;
 import mizzen.util.StringUtils;
 
 public class CheckBoxInput extends BoundedComponent<CheckBoxInput> 
-             implements SettableHasValue<Boolean>, ParentContainer, ToFocusable, Clickable, AsKeyboardHandler   {
+             implements FormInput<Boolean>, ParentContainer, ToFocusable, Clickable, AsKeyboardHandler   {
 
     private TextComponent textRenderer;
 

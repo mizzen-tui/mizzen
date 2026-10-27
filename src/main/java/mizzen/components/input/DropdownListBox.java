@@ -37,7 +37,7 @@ import mizzen.util.Logging;
 import mizzen.util.StringUtils;
 
 public class DropdownListBox<T> extends AbstractComponentWrappper<VerticalPanel>
-                                implements SettableHasValueComponentMixen<AbstractComponentWrappper<VerticalPanel>, T>,
+                                implements SettableHasValueComponentMixen<AbstractComponentWrappper<VerticalPanel>, T>, FormInput<T>,
                                            HasTitleAndBorder<DropdownListBox<T>>,
                                            ToFocusable,
                                            Clickable,

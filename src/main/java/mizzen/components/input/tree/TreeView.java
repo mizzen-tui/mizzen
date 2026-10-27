@@ -17,6 +17,7 @@ import mizzen.components.ParentContainer;
 import mizzen.components.TextComponent;
 import mizzen.components.input.HasValue;
 import mizzen.components.input.LeafFocusBehaviour;
+import mizzen.components.input.FormInput;
 import mizzen.components.input.SettableHasValueComponentMixen;
 import mizzen.components.input.UnfocusedSelection;
 import mizzen.controlcodes.color.Color;
@@ -67,7 +68,7 @@ import mizzen.textsegments.IScreenLineSegmentsBuffer;
  * (default DIM: the selected colour, not inverted).
  */
 public class TreeView<N> extends BoundedComponent<TreeView<N>>
-                         implements SettableHasValueComponentMixen<TreeView<N>, N>, ToFocusable, AsKeyboardHandler,
+                         implements SettableHasValueComponentMixen<TreeView<N>, N>, FormInput<N>, ToFocusable, AsKeyboardHandler,
                                     Clickable, ParentContainer, GetComponentAtOffset {
 
     /** a node was expanded (true) or collapsed (false) by the user */

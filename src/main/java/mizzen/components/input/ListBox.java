@@ -54,7 +54,7 @@ import mizzen.util.StringUtils;
  * @param <T>
  */
 public class ListBox<T> extends AbstractComponent<ListBox<T>>  
-                                implements SettableHasValue<T>, 
+                                implements FormInput<T>, 
                                            ToFocusable, 
                                            ParentContainer, 
                                            GetComponentAtOffset,

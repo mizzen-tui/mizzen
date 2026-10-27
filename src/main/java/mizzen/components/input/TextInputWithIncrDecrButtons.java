@@ -12,7 +12,7 @@ import mizzen.events.EventHandler;
  * Its buttons and input are ordinary TAB stops; onChange hears every change, typed or stepped.
  */
 public abstract class TextInputWithIncrDecrButtons<T> extends ComponentWithFocus<HorizontalPanel, TextInputWithIncrDecrButtons<T>>
-                                                      implements SettableHasValue<T> {
+                                                      implements FormInput<T> {
 
     ChainedEventHandler chainedEventHandler;
     TextInputForType<T> input;

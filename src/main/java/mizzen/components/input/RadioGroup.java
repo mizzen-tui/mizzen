@@ -51,7 +51,7 @@ import mizzen.events.mouse.Clickable;
  * textBeforeMarker ("Small (•)").
  */
 public class RadioGroup<V> extends AbstractComponentWrappper<Composite>
-                           implements SettableHasValueComponentMixen<AbstractComponentWrappper<Composite>, V>,
+                           implements SettableHasValueComponentMixen<AbstractComponentWrappper<Composite>, V>, FormInput<V>,
                                       ToFocusable, AsKeyboardHandler, HasHotKey {
 
     private final List<Option> options = new ArrayList<Option>();

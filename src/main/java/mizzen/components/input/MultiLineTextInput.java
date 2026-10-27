@@ -47,7 +47,7 @@ import mizzen.util.Logging;
 import mizzen.util.StringUtils;
 
 public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
-                                implements SettableHasValue<String>, 
+                                implements FormInput<String>, 
                                            ParentContainer, 
                                            Focusable, 
                                            EventHandlerContainer,

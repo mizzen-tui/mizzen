@@ -20,7 +20,7 @@ import mizzen.geom.position.Position;
 import mizzen.textsegments.IScreenLineSegmentsBuffer;
 import mizzen.util.StringUtils;
 
-public class TextInputForType<T>  extends BoundedComponent<TextInputForType<T>> implements SettableHasValue<T>, ParentContainer, Focusable {
+public class TextInputForType<T>  extends BoundedComponent<TextInputForType<T>> implements FormInput<T>, ParentContainer, Focusable {
 
     private TextInput textInput;
     private Function<String,Boolean> validate;

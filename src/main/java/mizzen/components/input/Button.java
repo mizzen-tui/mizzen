@@ -35,7 +35,7 @@ import mizzen.geom.position.Position;
 import mizzen.textsegments.IScreenLineSegmentsBuffer;
 import mizzen.util.StringUtils;
 
-public class Button extends BoundedComponent<Button> implements SettableHasValue<Boolean>, 
+public class Button extends BoundedComponent<Button> implements FormInput<Boolean>, 
                                                                 Focusable, 
                                                                 HasHotKey, 
                                                                 Clickable, 
