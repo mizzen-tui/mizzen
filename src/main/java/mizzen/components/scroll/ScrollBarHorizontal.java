@@ -6,6 +6,7 @@ import mizzen.components.BoundedComponent;
 import mizzen.components.HasName;
 import mizzen.components.Hiliter;
 import mizzen.components.HorizontalLine;
+import mizzen.components.input.OnChangeListeners;
 import mizzen.components.input.DefaultFocusableBehaviour;
 import mizzen.components.input.HasValue;
 import mizzen.controlcodes.color.Color;
@@ -13,6 +14,7 @@ import mizzen.events.ChainedEventHandler;
 import mizzen.events.ConditionalEventHandler;
 import mizzen.events.EventBus;
 import mizzen.events.EventHandler;
+import mizzen.events.Registration;
 import mizzen.events.TerminalEvent;
 import mizzen.events.focus.FocusManager;
 import mizzen.events.focus.Focusable;
@@ -316,16 +318,14 @@ public class ScrollBarHorizontal extends BoundedComponent<ScrollBarVertical>
         return offset;
     }
 
-    HasValue.OnValueChangedEventHandler<Position> onChangeHandler;
-
-    public void onChange(EventHandler consumeChange) {
+    private final OnChangeListeners<Position> changeListeners = new OnChangeListeners<Position>(this);   // onChange: any number of listeners
+    public Registration onChange(EventHandler consumeChange) {
 
         if (eventHandlerContainer == null) {
             asFocusable(); // as a side-effect, asFocusable() will build eventHandlerContainer
         }
 
-        onChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, onChangeHandler,
-                eventHandlerContainer, consumeChange);
+        return changeListeners.add(eventHandlerContainer, consumeChange);
 
     }
 

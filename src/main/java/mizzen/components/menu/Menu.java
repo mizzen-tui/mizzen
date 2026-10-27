@@ -17,6 +17,7 @@ import mizzen.components.menu.MenuItem.LeftRightSelector;
 import mizzen.components.menu.MenuItem.SubMenu;
 import mizzen.controlcodes.color.Color;
 import mizzen.events.EventHandler;
+import mizzen.events.Registration;
 import mizzen.events.RequestUpdateCanvasEvent;
 import mizzen.events.TerminalEvent;
 import mizzen.events.focus.Focusable;
@@ -417,9 +418,9 @@ public class Menu implements HasName<Menu> , LeftRightSelector {
             return (MenuItem) getListBox().getSelected();
         }
 
-        public void onChange(EventHandler consumeChange) {
+        public Registration onChange(EventHandler consumeChange) {
             Logging.info("onChange()  idx = " +  getListBox().getSelectedIndex());
-            getListBox().onChange(consumeChange);
+            return getListBox().onChange(consumeChange);
         }
 
         public void setItems(List<DisplayableValue<Object>> menuItemsAsDisplayableItems, MenuTextComponentItemFactory menuTextComponentItemFactory) {

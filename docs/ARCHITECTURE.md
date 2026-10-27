@@ -143,7 +143,7 @@ children** too, stopping at the first claimer. (Before step 6 some managers - th
 them - delivered to **all** claimers; no example ever had more than one.)
 
 Components register many handlers on their **own internal chain**, not on the bus:
-`TextInput.onChange`, `Button.onChange` (via `HasValue.UTIL.bindConsumerAsOnValueChangedHandler`),
+`TextInput.onChange`, `Button.onChange` (via `OnChangeListeners`, which holds any number of listeners),
 a behaviour's `handleEvents(..)` (`TextInputWithIncrDecrButtons`, `MovingPicturesViewer`, `ScrollableComponent`). Example: `Button.onClick` raises a
 `ValueChangedEvent` on the bus; it reaches the button's `onChange` action **only through the
 focus tree**. The same route carries `VALUE_CHANGED`, `TABLE_ROW_SELECTED`/`TABLE_CELL_SELECTED`,
@@ -171,7 +171,7 @@ travelling down the focus tree. A redesign must keep delivering every row.
 | Event type | Registered by / where | What it does |
 |---|---|---|
 | KEYPRESS | ~50 `KeyInputEventHandler`s on component chains (TextInput, ListBox, Menu, ScrollBars, Table, MessageBox, ...) | per-component key bindings; they reach the component only while it (or an ancestor path) has focus |
-| VALUE_CHANGED | `onChange` on TextInput, MultiLineTextInput, TextInputForType, Button, RadioGroup, TabButtonComponent, ListBox, DropdownListBox, TextInputWithIncrDecrButtons, ScrollBars, ImageManipulationControls (`HasValue.UTIL.bindConsumerAsOnValueChangedHandler`) | component actions (a Button's action is a VALUE_CHANGED handler) |
+| VALUE_CHANGED | `onChange` on TextInput, MultiLineTextInput, TextInputForType, Button, RadioGroup, TabButtonComponent, ListBox, DropdownListBox, TextInputWithIncrDecrButtons, ScrollBars, ImageManipulationControls (`OnChangeListeners`: any number of listeners, each `onChange` returns a `Registration`) | component actions (a Button's action is a VALUE_CHANGED handler) |
 | VALUE_CHANGED (from children) | `FormBinder.onChange` on the **form panel** (ancestor) | form-level change handling: needs delivery through ancestors |
 | VIEW_OFFSET_CHANGED | `HasViewPortWindow` (`newOnChangedHandler`) | viewport scroll sync |
 | TABLE_ROW_SELECTED / TABLE_CELL_SELECTED | `TableComponent` (`rowSelectedHandler`, `cellSelectedHandler`) | table selection callbacks (row: clicks and, since Oct 2026, key moves) |

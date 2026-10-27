@@ -1,6 +1,7 @@
 package mizzen.components.input;
 
 import mizzen.events.EventHandler;
+import mizzen.events.Registration;
 
 /**
  * Something a form can bind to a field of a data object: its value read and written, and its changes
@@ -16,9 +17,10 @@ import mizzen.events.EventHandler;
 public interface FormInput<V> extends SettableHasValue<V> {
 
     /**
-     * handler runs when the user changes the value. One handler: a second call replaces it, as every
-     * input's onChange does - a form bound again (rebuilt, or another form) takes over instead of piling
-     * up handlers. A ToFormInput hands out the same FormInput each time, as asFocusable does.
+     * handler runs when the user changes the value - alongside any others (an app's, a form's): each
+     * call adds one (OnChangeListeners does it). The Registration takes this one out again; most
+     * listeners never need it, living as long as the component. null takes every listener out.
+     * A ToFormInput hands out the same FormInput each time, as asFocusable does.
      */
-    void onChange(EventHandler handler);
+    Registration onChange(EventHandler handler);
 }

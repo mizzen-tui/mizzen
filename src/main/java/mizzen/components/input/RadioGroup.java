@@ -18,6 +18,7 @@ import mizzen.controlcodes.color.Colors;
 import mizzen.events.ConditionalEventHandler;
 import mizzen.events.EventBus;
 import mizzen.events.EventHandler;
+import mizzen.events.Registration;
 import mizzen.events.RequestUpdateCanvasEvent;
 import mizzen.events.focus.Focusable;
 import mizzen.events.focus.ToFocusable;
@@ -63,8 +64,7 @@ public class RadioGroup<V> extends AbstractComponentWrappper<Composite>
     private String notChosenMarker;
     private boolean textBeforeMarker;
     private KeyStroke hotKey;
-    private OnValueChangedEventHandler<V> actionOnChangeHandler;
-
+    private final OnChangeListeners<V> changeListeners = new OnChangeListeners<V>(this);   // onChange: any number of listeners
     /** options one under the other; UP / DOWN move between them */
     @SafeVarargs
     public static <V> RadioGroup<V> vertical(DisplayableValue<V>... options) {
@@ -113,8 +113,8 @@ public class RadioGroup<V> extends AbstractComponentWrappper<Composite>
                                          .whenChildFocused((child, bus) -> choose(optionAt(child), bus))
                                          .handleKeys(new HotKeyChoosesNext())
                                          .handleEvents(new ConditionalEventHandler.Impl(
-                                                 (te) -> this.actionOnChangeHandler != null && this.actionOnChangeHandler.canHandle(te) != null,
-                                                 (te) -> this.actionOnChangeHandler.handle(te)));
+                                                 (te) -> changeListeners.canHandle(te) != null,
+                                                 (te) -> changeListeners.handle(te)));
         refresh();
     }
 
@@ -148,8 +148,8 @@ public class RadioGroup<V> extends AbstractComponentWrappper<Composite>
         return this;
     }
 
-    public void onChange(EventHandler handler) {
-        actionOnChangeHandler = HasValue.UTIL.wrapHandlerIntoOnValueChangedHandler(this, handler);
+    public Registration onChange(EventHandler handler) {
+        return changeListeners.add(handler);
     }
 
     // ---- looks ------------------------------------------------------------------------------

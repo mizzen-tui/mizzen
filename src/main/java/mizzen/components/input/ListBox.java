@@ -25,6 +25,7 @@ import mizzen.events.ChainedEventHandler;
 import mizzen.events.ConditionalEventHandler;
 import mizzen.events.EventBus;
 import mizzen.events.EventHandler;
+import mizzen.events.Registration;
 import mizzen.events.EventHandlerContainer;
 import mizzen.events.RequestUpdateCanvasEvent;
 import mizzen.events.focus.Focusable;
@@ -892,16 +893,15 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         raiseEventRequestShowSelected(eventBus);
     }
 
-    HasValue.OnValueChangedEventHandler<T> onChangeHandler;
-
+    private final OnChangeListeners<T> changeListeners = new OnChangeListeners<T>(this);   // onChange: any number of listeners
     /**
      * 
      * Use this method to detect selection changed events
      * 
      * @param consumeChange
      */
-    public void onChange(EventHandler consumeChange) {
-        onChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, onChangeHandler, getChainedEventHandler(), consumeChange);
+    public Registration onChange(EventHandler consumeChange) {
+        return changeListeners.add(getChainedEventHandler(), consumeChange);
 
     }
 

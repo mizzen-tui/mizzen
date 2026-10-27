@@ -18,6 +18,7 @@ import mizzen.components.TextComponent;
 import mizzen.components.input.HasValue;
 import mizzen.components.input.LeafFocusBehaviour;
 import mizzen.components.input.FormInput;
+import mizzen.components.input.OnChangeListeners;
 import mizzen.components.input.SettableHasValueComponentMixen;
 import mizzen.components.input.UnfocusedSelection;
 import mizzen.controlcodes.color.Color;
@@ -25,6 +26,7 @@ import mizzen.controlcodes.color.Colors;
 import mizzen.events.ConditionalEventHandler;
 import mizzen.events.EventBus;
 import mizzen.events.EventHandler;
+import mizzen.events.Registration;
 import mizzen.events.RequestScrollToView;
 import mizzen.events.RequestUpdateCanvasEvent;
 import mizzen.events.focus.Focusable;
@@ -107,7 +109,7 @@ public class TreeView<N> extends BoundedComponent<TreeView<N>>
     private boolean ascii = false;
     private int eventTriggerForValueChanged = HasValue.DEFAULT_TRIGGER_FOR_ONVALUE_CHANGED;
 
-    private HasValue.OnValueChangedEventHandler<N> actionOnChangeHandler;
+    private final OnChangeListeners<N> changeListeners = new OnChangeListeners<N>(this);   // onChange: any number of listeners
     private ExpansionListener<N> onExpansion = (node, isExpanded, bus) -> { };
     private BiConsumer<N, EventBus> onActivate = (node, bus) -> { };
 
@@ -118,8 +120,8 @@ public class TreeView<N> extends BoundedComponent<TreeView<N>>
             .whenFocusArrives(this::focusGained)
             .whenFocusLeaves(this::repaint)
             .handleEvents(new ConditionalEventHandler.Impl(
-                    (te) -> this.actionOnChangeHandler != null && this.actionOnChangeHandler.canHandle(te) != null,
-                    (te) -> this.actionOnChangeHandler.handle(te)));
+                    (te) -> changeListeners.canHandle(te) != null,
+                    (te) -> changeListeners.handle(te)));
 
     public TreeView(TreeViewModel<N> model) {
         this(Colors.DEFAULT_COLOR, new Dimension.Simple(1, 1));
@@ -245,8 +247,8 @@ public class TreeView<N> extends BoundedComponent<TreeView<N>>
         rebuild();
     }
 
-    public void onChange(EventHandler handler) {
-        actionOnChangeHandler = HasValue.UTIL.wrapHandlerIntoOnValueChangedHandler(this, handler);
+    public Registration onChange(EventHandler handler) {
+        return changeListeners.add(handler);
     }
 
     /** which selection moves fire onChange - HasValue.VALUE_CHANGED_ON_... flags (default: all) */

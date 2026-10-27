@@ -6,6 +6,7 @@ import mizzen.components.Hiliter;
 import mizzen.components.HorizontalLine;
 import mizzen.components.TextComponent;
 import mizzen.components.VerticalLine;
+import mizzen.components.input.OnChangeListeners;
 import mizzen.components.input.DefaultFocusableBehaviour;
 import mizzen.components.input.HasValue;
 import mizzen.components.input.SettableHasValue;
@@ -13,6 +14,7 @@ import mizzen.controlcodes.color.Color;
 import mizzen.events.ChainedEventHandler;
 import mizzen.events.EventBus;
 import mizzen.events.EventHandler;
+import mizzen.events.Registration;
 import mizzen.events.RequestUpdateCanvasEvent;
 import mizzen.events.TerminalEvent;
 import mizzen.events.focus.FocusManager;
@@ -296,11 +298,10 @@ public class TabButtonComponent extends BoundedComponent<TabButtonComponent> imp
     }
 
 
-    OnValueChangedEventHandler<Boolean> actionOnChangeHandler;
+    private final OnChangeListeners<Boolean> changeListeners = new OnChangeListeners<Boolean>(this);   // onChange: any number of listeners
+    public Registration onChange(EventHandler handler) {
 
-    public void onChange(EventHandler handler) {
-
-        actionOnChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, actionOnChangeHandler, getchainedHandler(), handler);
+        return changeListeners.add(getchainedHandler(), handler);
 
     }
 

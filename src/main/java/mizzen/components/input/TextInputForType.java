@@ -12,6 +12,7 @@ import mizzen.events.ChainedEventHandler;
 import mizzen.events.ConditionalEventHandler;
 import mizzen.events.EventBus;
 import mizzen.events.EventHandler;
+import mizzen.events.Registration;
 import mizzen.events.TerminalEvent;
 import mizzen.events.focus.FocusManager;
 import mizzen.events.focus.Focusable;
@@ -67,11 +68,10 @@ public class TextInputForType<T>  extends BoundedComponent<TextInputForType<T>> 
         this.textInput.setText(text);
     }
 
-    HasValue.OnValueChangedEventHandler<T> onChangeHandler;
+    private final OnChangeListeners<T> changeListeners = new OnChangeListeners<T>(this);   // onChange: any number of listeners
+    public Registration onChange(EventHandler consumeChange) {
 
-    public void onChange(EventHandler consumeChange) {
-
-        onChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, onChangeHandler, getChainedEventHandler(), consumeChange);
+        return changeListeners.add(getChainedEventHandler(), consumeChange);
 
     }
 

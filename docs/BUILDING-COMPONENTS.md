@@ -139,20 +139,24 @@ bus.raiseEvent(new RequestUpdateCanvasEvent(this));
 ```
 
 The event travels down through the focus tree to the component that raised it. Pass it to your
-`onChange` listener with `handleEvents(..)`:
+`onChange` listeners with `handleEvents(..)`. `OnChangeListeners` holds them: any number, each
+`onChange` call adds one and hands back a `Registration` that takes it out again.
 
 ```java
-private OnValueChangedEventHandler<Boolean> onChangeHandler;
+private final OnChangeListeners<Boolean> changeListeners = new OnChangeListeners<Boolean>(this);
 
-public void onChange(EventHandler handler) {
-    onChangeHandler = HasValue.UTIL.wrapHandlerIntoOnValueChangedHandler(this, handler);
+public Registration onChange(EventHandler handler) {
+    return changeListeners.add(handler);
 }
 
 ... LeafFocusBehaviour.of(this)
         .handleEvents(new ConditionalEventHandler.Impl(
-                (te) -> onChangeHandler != null && onChangeHandler.canHandle(te) != null,
-                (te) -> onChangeHandler.handle(te)));
+                (te) -> changeListeners.canHandle(te) != null,      // only while someone listens
+                (te) -> changeListeners.handle(te)));
 ```
+
+A component whose events reach its own handler chain instead adds the listeners there:
+`return changeListeners.add(getChainedEventHandler(), handler);`.
 
 ## 7. A control made of controls: extend `ComponentWithFocus`
 

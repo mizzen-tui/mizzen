@@ -13,6 +13,7 @@ import mizzen.components.plot.shape.Polygon;
 import mizzen.controlcodes.color.Color;
 import mizzen.controlcodes.color.Colors;
 import mizzen.events.EventHandler;
+import mizzen.events.Registration;
 import mizzen.events.keyboard.KeyEvent;
 import mizzen.events.keyboard.KeyboardHandler;
 import mizzen.events.keyboard.Keys;
@@ -97,8 +98,8 @@ public class BarChart<T> extends AbstractComponentWrappper<PlotArea> implements 
     }
 
     /** the selection changed (a click, an arrow key): getValue() is the bar now selected */
-    public void onChange(EventHandler handler) {
-        items.onChange(handler);
+    public Registration onChange(EventHandler handler) {
+        return items.onChange(handler);
     }
 
     /** the selected bar; null: none yet */

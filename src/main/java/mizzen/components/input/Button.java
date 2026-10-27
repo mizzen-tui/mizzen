@@ -17,6 +17,7 @@ import mizzen.events.ChainedEventHandler;
 import mizzen.events.ConditionalEventHandler;
 import mizzen.events.EventBus;
 import mizzen.events.EventHandler;
+import mizzen.events.Registration;
 import mizzen.events.EventHandlerContainer;
 import mizzen.events.RequestHideCursorEvent;
 import mizzen.events.RequestUpdateCanvasEvent;
@@ -259,11 +260,10 @@ public class Button extends BoundedComponent<Button> implements FormInput<Boolea
     }
 
 
-    OnValueChangedEventHandler<Boolean> actionOnChangeHandler;
+    private final OnChangeListeners<Boolean> changeListeners = new OnChangeListeners<Boolean>(this);   // onChange: any number of listeners
+    public Registration onChange(EventHandler handler) {
 
-    public void onChange(EventHandler handler) {
-
-        actionOnChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, actionOnChangeHandler, getchainedHandler(), handler);
+        return changeListeners.add(getchainedHandler(), handler);
 
     }
 

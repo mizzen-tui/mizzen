@@ -1,5 +1,6 @@
 package mizzen.components.plot.image;
 
+import mizzen.components.input.OnChangeListeners;
 import mizzen.components.AbstractComponentWithContainer;
 import mizzen.components.ChildComponentManager;
 import mizzen.components.composite.Composite;
@@ -13,6 +14,7 @@ import mizzen.controlcodes.color.Color;
 import mizzen.controlcodes.color.Colors;
 import mizzen.events.EventHandler;
 import mizzen.events.EventHandlerContainer;
+import mizzen.events.Registration;
 import mizzen.events.RequestUpdateCanvasEvent;
 import mizzen.events.TerminalEvent;
 
@@ -80,14 +82,11 @@ public class ImageManipulationControls extends AbstractComponentWithContainer<Co
         return this.rqst;
     }
 
-    OnValueChangedEventHandler<ImageRenderRequest> actionOnChangeHandler;
+    private final OnChangeListeners<ImageRenderRequest> changeListeners = new OnChangeListeners<ImageRenderRequest>(this);
 
-    public OnValueChangedEventHandler<ImageRenderRequest> onChange(EventHandler handler, EventHandlerContainer eventHandlerContainer) {
-
-        OnValueChangedEventHandler<ImageRenderRequest> onChangedHandler = actionOnChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, actionOnChangeHandler, eventHandlerContainer, handler);
-
-        return onChangedHandler;
-        
+    /** handler runs when the options change, heard through eventHandlerContainer; the Registration stops it */
+    public Registration onChange(EventHandler handler, EventHandlerContainer eventHandlerContainer) {
+        return changeListeners.add(eventHandlerContainer, handler);
     }
 
     public static Button popupOnClick(ImageRenderRequest rqst, ChildComponentManager<?> parentPanel, EventHandlerContainer mainFocusManager, EventHandler actionOnChangeHandler) {
@@ -111,8 +110,8 @@ public class ImageManipulationControls extends AbstractComponentWithContainer<Co
         EventHandler onDialogClosed = null;
 
         if (actionOnChangeHandler != null) {
-            OnValueChangedEventHandler<ImageRenderRequest> onChangedHandler = controls.onChange(actionOnChangeHandler,  eventHandlerContainer);
-            onDialogClosed = (te2) -> eventHandlerContainer.removeEventHandler(onChangedHandler);
+            Registration listening = controls.onChange(actionOnChangeHandler,  eventHandlerContainer);
+            onDialogClosed = (te2) -> listening.unregister();           // the dialog's listener goes with the dialog
         }
 
         MessageBox.showInfoDialog(te.getEventBus(), parentPanel, "Image Render options",  controls, onDialogClosed, onDialogClosed);

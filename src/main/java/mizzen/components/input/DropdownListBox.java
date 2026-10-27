@@ -20,6 +20,7 @@ import mizzen.controlcodes.color.Colors;
 import mizzen.events.ChainedEventHandler;
 import mizzen.events.EventBus;
 import mizzen.events.EventHandler;
+import mizzen.events.Registration;
 import mizzen.events.RequestUpdateCanvasEvent;
 import mizzen.events.focus.FocusManager;
 import mizzen.events.focus.Focusable;
@@ -635,10 +636,9 @@ public class DropdownListBox<T> extends AbstractComponentWrappper<VerticalPanel>
         }
     }
 
-    HasValue.OnValueChangedEventHandler<T> onChangeHandler;
-
-    public void onChange(EventHandler consumeChange) {
-        onChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, onChangeHandler, events, consumeChange);
+    private final OnChangeListeners<T> changeListeners = new OnChangeListeners<T>(this);   // onChange: any number of listeners
+    public Registration onChange(EventHandler consumeChange) {
+        return changeListeners.add(events, consumeChange);
     }
 
     @Override

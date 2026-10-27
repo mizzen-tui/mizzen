@@ -16,6 +16,7 @@ import mizzen.events.ChainedEventHandler;
 import mizzen.events.ConditionalEventHandler;
 import mizzen.events.EventBus;
 import mizzen.events.EventHandler;
+import mizzen.events.Registration;
 import mizzen.events.RequestHideCursorEvent;
 import mizzen.events.RequestUpdateCanvasEvent;
 import mizzen.events.TerminalEvent;
@@ -562,11 +563,10 @@ public class TextInput extends BoundedComponent<TextInput>
         return focusable;
     }
 
-    HasValue.OnValueChangedEventHandler<String> onChangeHandler;
+    private final OnChangeListeners<String> changeListeners = new OnChangeListeners<String>(this);   // onChange: any number of listeners
+    public Registration onChange(EventHandler consumeChange) {
 
-    public void onChange(EventHandler consumeChange) {
-
-        onChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, onChangeHandler, getChainedEventHandler(), consumeChange);
+        return changeListeners.add(getChainedEventHandler(), consumeChange);
 
     }
 

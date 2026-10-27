@@ -11,6 +11,7 @@ import mizzen.controlcodes.color.Colors;
 import mizzen.events.ConditionalEventHandler;
 import mizzen.events.EventBus;
 import mizzen.events.EventHandler;
+import mizzen.events.Registration;
 import mizzen.events.RequestUpdateCanvasEvent;
 import mizzen.events.focus.Focusable;
 import mizzen.events.focus.ToFocusable;
@@ -141,10 +142,9 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
         checkBoxPressed(eventBus);
     }
 
-    private OnValueChangedEventHandler<Boolean> actionOnChangeHandler;
-
-    public void onChange(EventHandler handler) {
-        actionOnChangeHandler = HasValue.UTIL.wrapHandlerIntoOnValueChangedHandler(this, handler);
+    private final OnChangeListeners<Boolean> changeListeners = new OnChangeListeners<Boolean>(this);   // onChange: any number of listeners
+    public Registration onChange(EventHandler handler) {
+        return changeListeners.add(handler);
     }
 
     /**
@@ -156,8 +156,8 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
             .handleKeys(AsKeyboardHandler.UTIL.toKeyboardHandler(
                     new KeyInputEventHandler((te) -> checkBoxPressed(te.getEventBus()), Keys.ENTER_KEYSTROKE, Keys.SPACE_KEYSTROKE)))
             .handleEvents(new ConditionalEventHandler.Impl(
-                    (te) -> this.actionOnChangeHandler != null && this.actionOnChangeHandler.canHandle(te) != null,
-                    (te) -> this.actionOnChangeHandler.handle(te)));
+                    (te) -> changeListeners.canHandle(te) != null,
+                    (te) -> changeListeners.handle(te)));
 
     @Override
     public Focusable asFocusable() {

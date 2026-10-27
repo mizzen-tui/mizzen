@@ -8,6 +8,7 @@ import mizzen.components.input.TextInput;
 import mizzen.components.input.ToFormInput;
 import mizzen.controlcodes.color.Colors;
 import mizzen.events.EventHandler;
+import mizzen.events.Registration;
 import mizzen.events.focus.RequestFocusEvent;
 import mizzen.events.focus.ToFocusable;
 import mizzen.events.keyboard.InputBytesEventParser;
@@ -54,8 +55,9 @@ public class FormInputBindingTest extends TestCase {
             swatch.setTextAndResize(value + "(" + tag + ")");
         }
 
-        public void onChange(EventHandler handler) {
+        public Registration onChange(EventHandler handler) {
             this.changed = handler;
+            return () -> this.changed = null;
         }
     }
 
@@ -75,7 +77,8 @@ public class FormInputBindingTest extends TestCase {
                     setTextAndResize(value);
                 }
 
-                public void onChange(EventHandler handler) {
+                public Registration onChange(EventHandler handler) {
+                    return Registration.NONE;
                 }
             };
         }

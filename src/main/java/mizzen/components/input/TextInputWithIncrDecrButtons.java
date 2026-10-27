@@ -6,6 +6,7 @@ import mizzen.components.composite.HorizontalPanel;
 import mizzen.controlcodes.color.Color;
 import mizzen.events.ChainedEventHandler;
 import mizzen.events.EventHandler;
+import mizzen.events.Registration;
 
 /**
  * "label  <-  value  ->": a text input for a value, with a button each side to step it down and up.
@@ -63,11 +64,10 @@ public abstract class TextInputWithIncrDecrButtons<T> extends ComponentWithFocus
     }
 
 
-    OnValueChangedEventHandler<T> actionOnChangeHandler;
+    private final OnChangeListeners<T> changeListeners = new OnChangeListeners<T>(this);   // onChange: any number of listeners
+    public Registration onChange(EventHandler handler) {
 
-    public void onChange(EventHandler handler) {
-
-        actionOnChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, actionOnChangeHandler, chainedEventHandler, handler);
+        return changeListeners.add(chainedEventHandler, handler);
 
     }
 

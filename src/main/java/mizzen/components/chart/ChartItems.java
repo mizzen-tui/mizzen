@@ -7,10 +7,12 @@ import java.util.function.ToDoubleFunction;
 
 import mizzen.components.Component;
 import mizzen.components.input.HasValue;
+import mizzen.components.input.OnChangeListeners;
 import mizzen.controlcodes.color.Color;
 import mizzen.controlcodes.color.Colors;
 import mizzen.events.EventBus;
 import mizzen.events.EventHandler;
+import mizzen.events.Registration;
 import mizzen.events.RequestUpdateCanvasEvent;
 
 /**
@@ -28,7 +30,7 @@ class ChartItems<T> {
     private Function<? super T, String> label = String::valueOf;
     private Color[] colors = PALETTE;
     private int selected = -1;                     // -1: none
-    private EventHandler onChange;
+    private final OnChangeListeners<ChartItem<T>> changeListeners = new OnChangeListeners<ChartItem<T>>(null);   // fired by hand: no source to claim events for
 
     void setItems(List<T> items) {
         this.items = items == null ? Collections.<T>emptyList() : items;
@@ -49,8 +51,8 @@ class ChartItems<T> {
         this.colors = colors == null || colors.length == 0 ? PALETTE : colors;
     }
 
-    void onChange(EventHandler onChange) {
-        this.onChange = onChange;
+    Registration onChange(EventHandler onChange) {
+        return changeListeners.add(onChange);
     }
 
     int count() {
@@ -109,10 +111,10 @@ class ChartItems<T> {
         if (bus == null) {
             return;
         }
-        if (onChange != null) {
+        if (!changeListeners.isEmpty()) {
             HasValue.ValueChangedEvent<ChartItem<T>> changed = new HasValue.ValueChangedEvent<ChartItem<T>>(chart);
             changed.setEventBus(bus);
-            onChange.handle(changed);
+            changeListeners.fire(changed);
         }
         bus.raiseEvent(new RequestUpdateCanvasEvent(chart));
     }

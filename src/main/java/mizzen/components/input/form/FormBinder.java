@@ -3,7 +3,9 @@ package mizzen.components.input.form;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -20,11 +22,13 @@ import mizzen.components.ComponentFinder;
 import mizzen.components.HasName;
 import mizzen.components.input.FormInput;
 import mizzen.components.input.HasValue;
+import mizzen.components.input.OnChangeListeners;
 import mizzen.components.input.SettableHasValue;
 import mizzen.components.input.ToFormInput;
 import mizzen.events.EventBus;
 import mizzen.events.EventHandler;
 import mizzen.events.EventHandlerContainer;
+import mizzen.events.Registration;
 import mizzen.util.ReflectionUtils;
 
 public interface FormBinder<T> extends HasValue<T>{
@@ -39,7 +43,7 @@ public interface FormBinder<T> extends HasValue<T>{
      */
     void setFormData(T formData);
 
-    void onChange(EventHandler consumeChange);
+    Registration onChange(EventHandler consumeChange);
 
     default T getValue() {
         return getFormData();
@@ -71,9 +75,18 @@ public interface FormBinder<T> extends HasValue<T>{
     /** the field bound to a FormInput: values both ways; each change is checked, then copied into the object */
     default <FT> FormBinderField<FT, T> bindInput(String field, FormInput<FT> input) {
         FormBinderField<FT, T> formBinderField = bindField(field, new GetterSetter<FT>(input));
-        input.onChange(UTIL.changeHandler(formBinderField));
+        listening(field, input.onChange(UTIL.changeHandler(formBinderField)));
         return formBinderField;
     }
+
+    /**
+     * The binder's own listener for a field, kept so it can be taken out: a field bound again replaces
+     * it (never a second one), unbind() takes them all out. The app's listeners are never touched.
+     */
+    void listening(String field, Registration registration);
+
+    /** every listener this binder put on its inputs taken out; the inputs and the object stay as they are */
+    void unbind();
 
     public <FT> FormBinderField<FT, T> bindField(String name, GetterSetter<FT> getterSetterComponent, GetterSetter<FT> getterSetterFormField);
 
@@ -150,7 +163,7 @@ public interface FormBinder<T> extends HasValue<T>{
 
         public void copyComponentValueToFormField();
 
-        public FormBinderField<FT, T> onChange(EventHandler consumeChange);
+        public Registration onChange(EventHandler consumeChange);
 
     }
 
@@ -177,6 +190,12 @@ public interface FormBinder<T> extends HasValue<T>{
                                                      GetterSetter<FT> getterSetterComponent,
                                                      GetterSetter<FT> getterSetterFormField) {
 
+            FormBinderField<FT, T> bound = getFormBinderField(name);
+            if (bound instanceof DefaultFormBinderField) {           // bound before: the same field, now on this component -
+                ((DefaultFormBinderField<FT, T>) bound).getterSetterComponent = getterSetterComponent;   // its rules and handlers kept
+                return bound;
+            }
+
             FormBinderField<FT, T> formBinderField = new DefaultFormBinderField<FT, T>(name, 
                                                                                        getterSetterComponent, 
                                                                                        getterSetterFormField, 
@@ -184,6 +203,24 @@ public interface FormBinder<T> extends HasValue<T>{
 
             this.formFields.add( formBinderField  );
             return formBinderField;
+        }
+
+        private final Map<String, Registration> listening = new HashMap<String, Registration>();   // the binder's own, per field
+
+        @Override
+        public void listening(String field, Registration registration) {
+            Registration before = listening.put(field, registration);
+            if (before != null) {
+                before.unregister();
+            }
+        }
+
+        @Override
+        public void unbind() {
+            for (Registration registration : listening.values()) {
+                registration.unregister();
+            }
+            listening.clear();
         }
 
         @Override
@@ -373,13 +410,12 @@ public interface FormBinder<T> extends HasValue<T>{
             return formPanelComponent;
         }
 
-        HasValue.OnValueChangedEventHandler<T> onChangeHandler;
+        private final OnChangeListeners<T> changeListeners = new OnChangeListeners<T>(this);
 
+        /** handler runs after any field's value went into the object - alongside any others */
         @Override
-        public void onChange(EventHandler consumeChange) {
-
-            onChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, onChangeHandler, this.formPanelComponent, consumeChange);
-
+        public Registration onChange(EventHandler consumeChange) {
+            return changeListeners.add(this.formPanelComponent, consumeChange);
         }
 
     }
@@ -510,14 +546,12 @@ public interface FormBinder<T> extends HasValue<T>{
             return inError;
         }
 
-        HasValue.OnValueChangedEventHandler<FT> onChangeHandler;
+        private final OnChangeListeners<FT> changeListeners = new OnChangeListeners<FT>(this);
 
+        /** handler runs after this field's value went into the object - alongside any others */
         @Override
-        public FormBinderField<FT, T> onChange(EventHandler consumeChange) {
-
-            onChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, onChangeHandler, getFormBinder().getEventHandlerContainerForForm(), consumeChange);
-
-            return this;
+        public Registration onChange(EventHandler consumeChange) {
+            return changeListeners.add(getFormBinder().getEventHandlerContainerForForm(), consumeChange);
         }
     }
 

@@ -11,6 +11,7 @@ import mizzen.components.composite.VerticalPanel;
 import mizzen.components.input.DropdownListBox;
 import mizzen.components.input.FloatInputWithIncrDecrButtons;
 import mizzen.components.input.HasValue;
+import mizzen.components.input.OnChangeListeners;
 import mizzen.components.input.RadioGroup;
 import mizzen.components.input.TextInputFloat;
 import mizzen.components.plot.PathPlotter.CirclePathPlotter;
@@ -31,6 +32,7 @@ import mizzen.controlcodes.color.Color;
 import mizzen.controlcodes.color.Colors;
 import mizzen.events.ChainedEventHandler;
 import mizzen.events.EventHandler;
+import mizzen.events.Registration;
 import mizzen.events.OnIdleEventEventHandler.RepeatingInterval;
 import mizzen.events.mouse.Draggable;
 import mizzen.geom.Dimension;
@@ -305,12 +307,11 @@ public class TestCube {
         }
 
 
-        OnValueChangedEventHandler<Plot2D> actionOnChangeHandler;
+        private final OnChangeListeners<Plot2D> changeListeners = new OnChangeListeners<Plot2D>(this);
 
-        public void onChange(EventHandler handler) {
+        public Registration onChange(EventHandler handler) {
 
-            actionOnChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, actionOnChangeHandler,
-                    chainedEventHandler, handler);
+            return changeListeners.add(chainedEventHandler, handler);
 
         }
 
@@ -390,12 +391,11 @@ public class TestCube {
 
 
 
-        OnValueChangedEventHandler<Plot2D> actionOnChangeHandler;
+        private final OnChangeListeners<Plot2D> changeListeners = new OnChangeListeners<Plot2D>(this);
 
-        public void onChange(EventHandler handler) {
+        public Registration onChange(EventHandler handler) {
 
-            actionOnChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, actionOnChangeHandler,
-                    chainedEventHandler, handler);
+            return changeListeners.add(chainedEventHandler, handler);
 
         }
 
@@ -475,12 +475,11 @@ public class TestCube {
         }
 
 
-        OnValueChangedEventHandler<Vec3<?>> actionOnChangeHandler;
+        private final OnChangeListeners<Vec3<?>> changeListeners = new OnChangeListeners<Vec3<?>>(this);
 
-        public void onChange(EventHandler handler) {
+        public Registration onChange(EventHandler handler) {
 
-            actionOnChangeHandler = HasValue.UTIL.bindConsumerAsOnValueChangedHandler(this, actionOnChangeHandler,
-                    chainedEventHandler, handler);
+            return changeListeners.add(chainedEventHandler, handler);
 
         }
 

@@ -7,6 +7,7 @@ import java.util.Map;
 
 import mizzen.components.AbstractComponentWrappper;
 import mizzen.components.input.HasValue;
+import mizzen.components.input.OnChangeListeners;
 import mizzen.components.plot.Pen;
 import mizzen.components.plot.PlotArea;
 import mizzen.components.plot.shape.ConnectedPoints;
@@ -16,6 +17,7 @@ import mizzen.controlcodes.color.Color;
 import mizzen.controlcodes.color.Colors;
 import mizzen.events.EventBus;
 import mizzen.events.EventHandler;
+import mizzen.events.Registration;
 import mizzen.events.RequestUpdateCanvasEvent;
 import mizzen.events.keyboard.KeyEvent;
 import mizzen.events.keyboard.KeyboardHandler;
@@ -97,7 +99,7 @@ public class LineChart extends AbstractComponentWrappper<PlotArea> implements Ha
     private final Map<String, Series> series = new LinkedHashMap<String, Series>();
     private Series selectedSeries;
     private int selectedIndex = -1;
-    private EventHandler onChange;
+    private final OnChangeListeners<Point> changeListeners = new OnChangeListeners<Point>(this);   // onChange: any number of listeners
 
     public LineChart(Color color, Dimension size) {
         super(color, new PlotArea(color, size));
@@ -200,8 +202,8 @@ public class LineChart extends AbstractComponentWrappper<PlotArea> implements Ha
     }
 
     /** the selection changed (a click, an arrow key): getValue() is the point now selected */
-    public void onChange(EventHandler handler) {
-        this.onChange = handler;
+    public Registration onChange(EventHandler handler) {
+        return changeListeners.add(handler);
     }
 
     /** the selected point; null: none yet */
@@ -320,10 +322,10 @@ public class LineChart extends AbstractComponentWrappper<PlotArea> implements Ha
         if (bus == null) {
             return;
         }
-        if (onChange != null) {
+        if (!changeListeners.isEmpty()) {
             ValueChangedEvent<Point> changed = new ValueChangedEvent<Point>(this);
             changed.setEventBus(bus);
-            onChange.handle(changed);
+            changeListeners.fire(changed);
         }
         bus.raiseEvent(new RequestUpdateCanvasEvent(this));
     }
