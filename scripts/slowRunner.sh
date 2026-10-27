@@ -41,7 +41,7 @@ echo "PARM 1 = $1"
 
 echo "slow runner : $(pwd)"
 
-$(pwd)/runDBG.sh NOCLEAR dtb.terminalIO.examples.StringOutputTest
+$(pwd)/runDBG.sh NOCLEAR mizzen.examples.StringOutputTest
 
 
 echo "sleeping for 5 seconds .. "
@@ -51,7 +51,7 @@ doWait 5 "Testing cursor handling"
 
 echo " "
 echo " .. "
-$(pwd)/runDBG.sh  NOCLEAR dtb.terminalIO.examples.SmallCanvasTest
+$(pwd)/runDBG.sh  NOCLEAR mizzen.examples.SmallCanvasTest
 
 
 doWait 10 "Let's wait for a bit"
@@ -88,7 +88,7 @@ printf "${RCol}"
 
 echo -e "\n\n BANNER \n\n"
 
-cat src/main/resources/dtb/terminalIO/examples/sampledata/colour-banner.txt
+cat src/main/resources/mizzen/examples/sampledata/colour-banner.txt
 
 
 cat scripts/*.sh

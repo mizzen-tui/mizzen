@@ -1,9 +1,0 @@
-Demo images
-
-earth-messenger.jpg
-    Earth seen by NASA's MESSENGER spacecraft during its Earth swingby, Aug. 2, 2005 (PIA10120).
-    Credit: NASA/Johns Hopkins University Applied Physics Laboratory/Carnegie Institution of Washington
-    Source: https://images.nasa.gov/details/PIA10120
-
-rocket-launch.gif, rocket-sprites.png, ketch.gif, shapes.gif, bouncing-ball.gif, solar-system.gif, ball-sprites.png
-    Drawn by dtb.terminalIO.examples.sampledata.DemoImageGenerator (with RocketLaunch and SailingKetch), part of this project.

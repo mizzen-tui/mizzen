@@ -1,4 +1,4 @@
-# dtbTerminalIO — Architecture Notes
+# Mizzen — Architecture Notes
 
 Working notes on how the library actually works, warts included. Written from
 reading the code (Sep 2026), not from original design intent — where intent is

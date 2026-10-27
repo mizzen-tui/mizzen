@@ -2,12 +2,12 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>dtb</groupId>
-	<artifactId>dtbTerminalIO</artifactId>
+	<groupId>io.github.mizzen-tui</groupId>
+	<artifactId>mizzen</artifactId>
 	<version>0.1.0</version>
 	<packaging>jar</packaging>
 
-	<name>dtbTerminalIO</name>
+	<name>Mizzen</name>
 	<url>http://maven.apache.org</url>
 
 	<properties>

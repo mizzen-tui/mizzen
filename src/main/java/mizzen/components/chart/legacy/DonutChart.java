@@ -1,0 +1,192 @@
+package mizzen.components.chart.legacy;
+
+import java.util.Collection;
+import java.util.Collections;
+
+import mizzen.components.AbstractComponent;
+import mizzen.components.Component;
+import mizzen.components.Hiliter;
+import mizzen.components.ParentContainer;
+import mizzen.components.TextComponent;
+import mizzen.components.plot.PointPlotter.PointPlot;
+import mizzen.components.plot.braille.BrailleGrid;
+import mizzen.components.plot.shape.Circle;
+import mizzen.components.plot.shape.CircleAlgorithm.DonutCircleAlgorithm;
+import mizzen.controlcodes.color.Color;
+import mizzen.geom.CanResize;
+import mizzen.geom.Dimension;
+import mizzen.geom.Rectangle;
+import mizzen.geom.position.Position;
+import mizzen.textsegments.IScreenLineSegmentsBuffer;
+
+public class DonutChart extends AbstractComponent<DonutChart> implements ParentContainer, CanResize, Hiliter {
+    
+
+    private BrailleGrid grid;
+    private TextComponent stats;
+    private int dataPoint;
+    private int maxValue;
+    private String message;
+    
+    public DonutChart(Color color, Dimension size) {
+        super(color);
+        this.grid = new BrailleGrid(color, size);
+        this.grid.setParentContainer(this);
+        stats = new TextComponent("    ");
+        this.grid.add(0,3,stats);
+        this.setData(100, 100, "100%");
+    }
+    
+    @Override
+    public DonutChart setColor(Color drawingcolor) {
+        super.setColor(drawingcolor);
+        this.grid.setColor(drawingcolor);
+        return this;
+    }
+    
+    
+    public DonutChart setPlottingColor(Color color) {
+        this.grid.setPlottingColor(color);
+        return this;
+     }
+    
+    public DonutChart setTextColor(Color drawingcolor) {
+       this.stats.setColor(drawingcolor);
+        return this;
+    }
+    
+    @Override
+    public void hilite() {
+        grid.hilite();
+    }
+
+    @Override
+    public void unHilite() {
+        grid.unHilite();
+    }
+
+    @Override
+    public int getCol() {
+        return grid.getCol();
+    }
+
+    @Override
+    public int getRow() {
+        return grid.getRow();
+    }
+
+    @Override
+    public int getWidth() {
+        return grid.getWidth();
+    }
+
+    @Override
+    public int getHeight() {
+        return grid.getHeight();
+    }
+
+    @Override
+    public void moveTo(int row, int col) {
+        grid.moveTo(row, col);
+    }
+
+    @Override
+    public void resize(Dimension d) {
+        grid.resize(d);
+    }
+
+
+    @Override
+    public Collection<? extends Component<?>> getChildren() {
+        return Collections.singleton(grid);
+    }
+
+
+    @Override
+    public Position getPositionRelativeToParent(Component<?> child) {
+        return Position.ZERO;
+    }
+
+
+    @Override
+    public void childResized(Component<?> child) {
+        markAsDirty();
+        if (this.getParentContainer() != null) {
+            this.getParentContainer().childResized(this);
+        }
+    }
+
+    int shift90(int angle) {
+      // shift 90 degrees
+      return (360+(angle - 90)) % 360;
+      //return angle;
+      //return (360 + (270 - angle))  % 360;
+    }
+    
+    
+    private int lastDataPoint = -1;
+    
+    @Override
+    protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
+        
+        // rotate clockwise
+        int startAngle =  (int)Math.round(((double)this.dataPoint / (double) this.maxValue  * 360.0 ));
+        int endAngle = 0;
+//        if (lastDataPoint >= 0 && lastDataPoint < this.dataPoint) {  // we are increasing
+//            endAngle = 360 - (int)Math.round(((double)this.lastDataPoint / (double) this.maxValue  * 360.0 ));
+//            lastDataPoint = this.dataPoint;
+//        } 
+//        lastDataPoint = this.dataPoint;
+        
+        startAngle = shift90(startAngle);  // now 0 is at 12 oclock ( 90 degrees )
+        endAngle = shift90(endAngle);
+//        startAngle = shift90(startAngle);  // now 0 is at 12 oclock ( 90 degrees )
+//        endAngle = shift90(endAngle);
+
+      //  DonutCircleAlgorithm donutPlotter = new DonutCircleAlgorithm(startAngle, endAngle);
+        DonutCircleAlgorithm donutPlotter = new DonutCircleAlgorithm(endAngle, startAngle);
+        
+        Rectangle gridRectangle = this.grid.getGridRectangle();
+
+        PointPlot centerOfGrid = new PointPlot(gridRectangle.centerPosition());
+        
+        int radius = Math.min(gridRectangle.getWidth(), gridRectangle.getHeight()) / 2;
+        
+        Circle circle = new Circle(centerOfGrid, radius).setAlgorithm(donutPlotter);
+        
+        this.clear();
+        
+        if (lastDataPoint < 0) {
+            this.grid.clearPlots();
+            this.grid.clear();
+        }
+        circle.draw(  this.grid.asPointPlotter()  );
+        
+        if (message != null) {
+            Position textPosition = this.grid.centered(this.stats, Position.ZERO);
+            this.grid.moveChildTo(textPosition, stats);
+        }
+        
+        segments.merge(this.grid.getSegmentsBuffer());
+    }
+
+
+    @Override
+    protected Rectangle getRectangleForClearAndFill() {
+        return grid;
+    }
+
+    public void markAsDirty() {
+        super.markAsDirty();
+        this.grid.markAsDirty();
+    }
+
+    public void setData(int dataPoint, int maxValue, String message) {
+        this.dataPoint = dataPoint;
+        this.maxValue = maxValue;
+        this.message = message;
+        this.stats.setTextAndResize(message);
+        markAsDirty();
+    }
+
+}

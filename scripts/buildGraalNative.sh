@@ -7,8 +7,8 @@ GRAAL_HOME=$JAVA_HOME
 
 PATH=$JAVA_HOME/bin:$PATH
 
-INIT_AT_BUILD_TIME=--initialize-at-build-time=dtb.terminalIO,sun.java2d.Disposer,com.sun.imageio.plugins.jpeg.JPEGImageReader,com.sun.imageio.plugins.png.PNGImageReader
-INIT_AT_BUILD_TIME=--initialize-at-build-time=dtb.terminalIO
+INIT_AT_BUILD_TIME=--initialize-at-build-time=mizzen,sun.java2d.Disposer,com.sun.imageio.plugins.jpeg.JPEGImageReader,com.sun.imageio.plugins.png.PNGImageReader
+INIT_AT_BUILD_TIME=--initialize-at-build-time=mizzen
 
 
 NATIVE_IMG=$JAVA_HOME/bin/native-image
@@ -19,7 +19,7 @@ $NATIVE_IMG    -H:+AllowIncompleteClasspath  \
                --static \
                $INIT_AT_BUILD_TIME  \
                -Djava.awt.headless=true  \
-               -cp "$(ls ./target/dtbTerminalIO-*.jar | grep -v sources | head -1)":.  \
+               -cp "$(ls ./target/mizzen-*.jar | grep -v sources | head -1)":.  \
                 $MAIN_CLASS  
                
 if [[ $? -ne 0 ]] ; then

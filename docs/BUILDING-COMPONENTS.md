@@ -220,7 +220,7 @@ bus.setRoot(root);
 bus.deliver(new KeyEvent("test", Keys.TAB_KEYSTROKE));
 ```
 
-To try it on screen, add it to an example under `dtb.terminalIO.examples` and run that example's `main`.
+To try it on screen, add it to an example under `mizzen.examples` and run that example's `main`.
 
 ## 10. Checklist
 

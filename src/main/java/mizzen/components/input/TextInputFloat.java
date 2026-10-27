@@ -1,0 +1,39 @@
+package mizzen.components.input;
+
+import mizzen.controlcodes.color.Color;
+import mizzen.controlcodes.color.Colors;
+
+public class TextInputFloat extends TextInputForType<Float> {
+
+    public TextInputFloat(Color color, int length) {
+        super(color, length, 
+             (s)-> validateText(s),
+             (s)-> toDesiredType(s),
+             (t)-> typeToString(t));
+    }
+
+    public TextInputFloat(int length) {
+          this(Colors.DEFAULT_COLOR, length);
+    }
+
+    static Float toDesiredType(String text) {
+        return Float.parseFloat(text);
+    }
+
+    static String typeToString(Float number) {
+        return String.valueOf(number);
+    }
+
+    static boolean validateText(String newText) {
+        try {
+            if (newText == null || newText.trim().length()==0) {
+                return true;
+            }
+            toDesiredType(newText);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+}

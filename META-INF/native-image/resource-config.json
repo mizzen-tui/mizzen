@@ -1,7 +1,7 @@
 {
   "resources":{
   "includes":[
-    {"pattern":"\\Qdtb/terminalIO/examples/sampledata/\\E.*"}
+    {"pattern":"\\Qmizzen/examples/sampledata/\\E.*"}
   ]},
   "bundles":[{"name":"sun.awt.resources.awt"}]
 }

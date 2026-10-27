@@ -1,0 +1,349 @@
+package mizzen.components;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import mizzen.controlcodes.color.Color;
+import mizzen.geom.Align;
+import mizzen.geom.CanResize;
+import mizzen.geom.Dimension;
+import mizzen.geom.Rectangle;
+import mizzen.geom.position.Position;
+import mizzen.textsegments.IScreenLineSegmentsBuffer;
+
+
+/**
+ * A Component that draws a border around itself and then has an inner BoundedComponent to
+ * render its contents
+ */
+public class BorderedComponent extends BoundedComponent<BorderedComponent> 
+                               implements Rectangle, 
+                                          HasTitleAndBorder<BorderedComponent>, 
+                                          CanResize, 
+                                          ParentContainer, 
+                                          GetComponentAtOffset {
+
+    private SimpleBorder      border;
+    private Component<?>      component;
+    private Position          componentPosition;
+    private boolean           showBorder;
+
+    public BorderedComponent(Color color, Component<?> component,  ParentContainer parentContainer) {
+        super(color, Rectangle.ZERO, parentContainer);
+        this.component = component;
+        this.component.setParentContainer(this);
+        this.componentPosition = Position.DOWN_BY_1_AND_RIGHT_BY_1;
+        Position.Simple p = new Position.Simple(component);
+        Rectangle bounds = new Rectangle.Simple(p, new Dimension.Simple(component.getHeight() + 2, component.getWidth() + 2));
+        this.border = new SimpleBorder(color, bounds);
+        this.border.setParentContainer(this);
+        showBorder = true;
+        this.setRectangle( bounds );
+        this.setFillOnClear(false);
+        
+        // debugging
+        //this.setFillOnClear(true);
+        //this.setEmptyColor(Colors.On_IYel);
+        //
+    }
+
+    @Override
+    public Position getPositionRelativeToParent(Component<?> child) {
+        if (child == this.border) {
+                return Position.ZERO;
+        }
+        return componentPosition;
+    }
+
+    @Override
+    public Component<?> getComponentAtOffset(Position offset) {
+        if ( ! this.containsPosition(offset)) {
+            return null;
+        }
+
+        Position offsetIntoComponent = offset.offsetAdd(componentPosition.negate());
+        if (this.component.containsPosition(offsetIntoComponent)) {
+            if (this.component instanceof GetComponentAtOffset) {
+                return ((GetComponentAtOffset)component).getComponentAtOffset(offsetIntoComponent);
+            }
+            return this.component;
+        }
+
+        if (this.border.containsPosition(offset)) {
+            Component<?> c = this.border.getComponentAtOffset(offset);
+            if (c != null) {
+                return c;
+            }
+        }
+
+        return this;
+    }
+
+    @Override
+    public void childResized(Component<?> child) {
+        if (child == this.border) {
+            if (this.border.isSameDimension(this)) {
+                // the box is the same size, but a part on its border (the title, a footer) changed size:
+                // tell the parent anyway - it may lay those parts out (e.g. a scrollable's bottom line)
+                if (this.getParentContainer() != null) {
+                    this.getParentContainer().childResized(this);
+                }
+                return;
+            }
+            super.resize( (Dimension)this.border );
+            return;
+        }
+        Dimension newSize = new Dimension.Simple(child.getHeight()+2, child.getWidth()+2);
+        if (newSize.isSameDimension(this)) {
+            return ; //  avoid infinite recursion
+        }
+        // adjust this container to be big enough for its child
+        this.border.resize(newSize);
+        super.resize(newSize);
+        if (this.getParentContainer()!=null) {
+            this.getParentContainer().childResized(this);
+        }
+    }
+
+    public BorderedComponent(Color color, Component<?> component) {
+        this(color, component, (ParentContainer)null);
+    }
+
+    public BorderedComponent(Component<?> component, ParentContainer parentContainer) {
+        this(component.getColor(), component, parentContainer);
+    }
+    
+
+    public BorderedComponent(Component<?> component) {
+        this(component, (ParentContainer)null);
+    }
+    
+    public BorderedComponent(String text, ParentContainer parentContainer) {
+        this(new TextComponent(text), parentContainer);
+    }
+
+    public BorderedComponent(String text) {
+        this(text, null);
+    }
+    
+    public Component<?>  getComponent() {
+        return this.component;
+    }
+
+    public BorderedComponent  setComponent(Component<?> component) {
+        if (this.component != null) {
+            this.component.setParentContainer(null);
+        }
+        this.component = component;
+        this.component.setParentContainer(this);
+        this.componentPosition = new Position.Simple(1,1);
+        Position.Simple p = new Position.Simple(component);
+        Rectangle bounds = new Rectangle.Simple(p, new Dimension.Simple(component.getHeight() + 2, component.getWidth() + 2));
+        this.border = new SimpleBorder(getColor(), bounds);
+        this.border.setParentContainer(this);
+        showBorder = true;
+        this.setRectangle( bounds );
+        this.setFillOnClear(this.isFillOnClear());
+        return this;
+    }
+
+    public void setShowBorder(boolean showBorder) {
+        this.showBorder = showBorder;
+        this.markAsDirty();
+    }
+
+    public boolean visibleBorder() {
+        return this.showBorder;
+    }
+
+    public void markAsDirty() {
+        super.markAsDirty();
+        
+      //  if (this.component != null) this.component.markAsDirty();
+        
+        if (this.border != null) this.border.markAsDirty();
+    }
+
+    public void resize(Dimension d) {
+        if (d.isSameDimension(this)) {
+            return;
+        }
+        super.resize(d);
+        Dimension sizeAfterSuperResize = sizeAfterSuperResize();       // not d: the parent's rules may have resized this again
+        this.border.resize(sizeAfterSuperResize);
+        if ( this.component instanceof CanResize)
+           ((CanResize)this.component).resize(new Dimension.Simple(sizeAfterSuperResize.getHeight()-2, sizeAfterSuperResize.getWidth()-2));
+    }
+
+
+    public BorderedComponent setEmptyChar(char emptyChar) {
+        BorderedComponent result = super.setEmptyChar(emptyChar);
+        border.setEmptyChar(emptyChar);
+        return result;
+    }
+
+    @Override
+    public int getCol() {
+        return this.border.getCol();
+    }
+
+    @Override
+    public int getRow() {
+        return this.border.getRow();
+    }
+
+    @Override
+    public int getWidth() {
+        return this.border.getWidth();
+    }
+
+    @Override
+    public int getHeight() {
+        return this.border.getHeight();
+    }
+
+    @Override
+    public void moveTo(int row, int col) {
+        this.border.moveTo(row, col);
+        this.component.moveTo(row + 1, col + 1);
+    }
+
+    @Override
+    public void moveDelta(int rowOffset, int colOffset) {
+        this.border.moveDelta(rowOffset, colOffset);
+        this.component.moveDelta(rowOffset, colOffset);
+    }
+
+    @Override
+    protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
+        if (componentPosition.isSameLocation(Position.ZERO)) {
+            // very fast merge (note this case probably does not come up)
+            segments.getSegments().clear();
+            segments.getSegments().addAll(this.component.getSegmentsBuffer().getSegments());
+        } else {
+            // (SLOW)segments.mergeAt(componentPosition.getRow(), componentPosition.getCol(), this.component.getSegmentsBuffer());
+            segments.getSegments().clear();
+            segments.getSegments().addAll( this.component.getSegmentsBuffer().getSegments().stream().map((s)->s.fromOffset(componentPosition)).collect(Collectors.toList())  );
+        }
+        if (showBorder) {
+            // because we know the border does not overlap we can leverage the fast add from treeSet rather than the slow merge
+            // from segments.merge() 
+            // (SLOW) segments.merge(this.border.getSegmentsBuffer());
+           segments.getSegments().addAll(this.border.getSegmentsBuffer().getSegments());
+        }
+    }
+
+    public String getTitle() {
+        return border.getTitle();
+    }
+
+    public BorderedComponent setTitle(Color titleColor, String title, Align titleAlign) {
+        border.setTitle(titleColor, title, titleAlign);
+        return this;
+    }
+
+    public BorderedComponent setTitle(Component<?> titleComponent, Align titleAlign) {
+        border.setTitle(titleComponent, titleAlign);
+        return this;
+    }
+
+    public BorderedComponent setTitle(Component<?> titleComponent) {
+        border.setTitle(titleComponent);
+        return this;
+    }
+
+    public BorderedComponent setTitle(String title) {
+        border.setTitle(title);
+        return this;
+    }
+
+    @Override
+    protected Rectangle getRectangleForClearAndFill() {
+        return this;
+    }
+
+    public boolean hasBorder() {
+        // see setBorder() below for reason for hard-coded true value
+        return true;
+    }
+
+    @Override
+    public BorderedComponent setBorder(boolean hasBorder) {
+        if (!hasBorder) 
+            throw new IllegalStateException("Cannnot turn off border");
+        return this;
+    }
+
+    @Override
+    public BorderedComponent setBorderColor(Color borderColors) {
+        this.border.setBorderColor(borderColors);
+        return this;
+    }
+
+    public Color getBorderColor() {
+        return border.getBorderColor();
+    }
+
+    @Override
+    public BorderedComponent setTitle(Color titleColors, String title) {
+        this.border.setTitle(titleColors, title);
+        return this;
+    }
+
+    public BorderedComponent removeFooterComponent() {
+        this.border.removeFooterComponent();
+        return this;
+    }
+    
+    public BorderedComponent setFooter(Component<?> footerComponent, Align footerAlign) {
+        this.border.setFooter(footerComponent, footerAlign);
+        return this;
+    }
+
+    public BorderedComponent setFooter(Component<?> footerComponent) {
+        this.border.setFooter(footerComponent);
+        return this;
+    }
+
+    public BorderedComponent setFooter(String footerText, Align titleAlign) {
+        this.border.setFooter(footerText, titleAlign);
+        return this;
+    }
+
+    public BorderedComponent setFooter(String footerText) {
+        this.border.setFooter( footerText );
+        return this;
+    }
+
+    @Override
+    public void hilite() {
+        border.hilite();
+        if ( this.component instanceof Hiliter)
+            ((Hiliter)this.component).hilite();
+    }
+
+    @Override
+    public void unHilite() {
+        border.unHilite();
+        if ( this.component instanceof Hiliter)
+            ((Hiliter)this.component).unHilite();
+    }
+
+    @Override
+    public Collection<? extends Component<?>> getChildren() {
+        List<Component<?>> children = new ArrayList<Component<?>>(2);
+        
+        if (this.border != null) {
+            children.add(this.border);
+        }
+
+        if (this.component != null) {
+            children.add(component);
+        }
+
+        return children;
+    }
+
+}

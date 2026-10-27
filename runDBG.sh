@@ -3,7 +3,7 @@
 
 cd $(dirname $0)
 
-CLASS_PKG=dtb.terminalIO.examples
+CLASS_PKG=mizzen.examples
 JAVA_OPTIONS="-cp ./target/classes"
 
 if [[ "$1" == "NOCLEAR" ]] ; then
@@ -32,4 +32,4 @@ fi
 java  -XX:+UnlockDiagnosticVMOptions $JAVA_OPTIONS $PERFORMANCE_MONITORING_FLAGS $@
 
 
-#   java java -Xdebug -Xrunjdwp:transport=dt_socket,address=8000,server=y,suspend=y -cp ./bin/ dtb.terminalIO.BootStrapTests
+#   java java -Xdebug -Xrunjdwp:transport=dt_socket,address=8000,server=y,suspend=y -cp ./bin/ mizzen.BootStrapTests
