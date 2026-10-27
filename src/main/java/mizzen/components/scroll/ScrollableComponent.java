@@ -99,11 +99,8 @@ public class ScrollableComponent  extends ComponentWithFocus<Composite, Scrollab
 
         vScrollBar.setViewedSize(new Rectangle.Delegate(componentBeingViewed), new Rectangle.Delegate(viewer));
 
-        vScrollBar.onChange(  (te) ->  {
-            Position curPos = this.getOffsetIntoSource();
-            Position vScrolPos = vScrollBar.getValue();
-            this.setViewOffset(vScrolPos.getRow(), curPos.getCol());
-        } );
+        vScrollBar.onChange((te) -> emitViewOffsetChangedOnOperation(te, () ->      // told like a key or footer scroll
+                this.setViewOffset(vScrollBar.getValue().getRow(), this.getOffsetIntoSource().getCol())));
 
         hScrollBar = new ScrollBarHorizontal(color,
                                              borderedComponent.getPostion_BottomLeft().offsetAdd(0, 1),
@@ -116,11 +113,8 @@ public class ScrollableComponent  extends ComponentWithFocus<Composite, Scrollab
 
         hScrollBar.setViewedSize(new Rectangle.Delegate(componentBeingViewed), new Rectangle.Delegate(viewer));
 
-        hScrollBar.onChange(  (te) ->  {
-            Position curPos = this.getOffsetIntoSource();
-            Position hScrolPos = hScrollBar.getValue();
-            this.setViewOffset(curPos.getRow(), hScrolPos.getCol());
-        } );
+        hScrollBar.onChange((te) -> emitViewOffsetChangedOnOperation(te, () ->
+                this.setViewOffset(this.getOffsetIntoSource().getRow(), hScrollBar.getValue().getCol())));
 
         this.getContainer().add(hScrollBar);
         this.getContainer().add(vScrollBar);
@@ -163,11 +157,17 @@ public class ScrollableComponent  extends ComponentWithFocus<Composite, Scrollab
                 return null;
             }});
 
-        if (this.componentBeingViewed instanceof HasViewPortWindow.OnChange) {
-            this.onViewPortChanged((te)-> {
-                ((HasViewPortWindow.OnChange)this.componentBeingViewed).onViewPortWindowChange(this, te);
-            });
-        }
+        // scrolled: the component shown hears of it if it wants to (a text input moves its caret), then
+        // the app's handler (onViewPortChanged). One handler for both - the chain runs only the first
+        // that claims the event - set up once, so changing what is shown keeps the app's handler
+        ownHandlers.appendEventHandler(HasViewPortWindow.UTIL.wrapHandler(this, (te) -> {
+            if (this.componentBeingViewed instanceof HasViewPortWindow.OnChange) {
+                ((HasViewPortWindow.OnChange) this.componentBeingViewed).onViewPortWindowChange(this, te);
+            }
+            if (viewPortChanged != null) {
+                viewPortChanged.handle(te);
+            }
+        }));
 
         // focus: inside the viewed component if it can take it, else on the pane itself; keys and other
         // events go to its own handlers
@@ -204,13 +204,6 @@ public class ScrollableComponent  extends ComponentWithFocus<Composite, Scrollab
         viewer.setViewSource(componentBeingViewed);
         vScrollBar.setViewedSize(new Rectangle.Delegate(componentBeingViewed), new Rectangle.Delegate(viewer));
         hScrollBar.setViewedSize(new Rectangle.Delegate(componentBeingViewed), new Rectangle.Delegate(viewer));
-        if (componentBeingViewed instanceof HasViewPortWindow.OnChange) {
-            this.onViewPortChanged((te)->{
-                ((HasViewPortWindow.OnChange)this.componentBeingViewed).onViewPortWindowChange(this, te);
-            });
-        } else {
-            this.onViewPortChanged(null);
-        }
     }
 
     public boolean setViewOffset(int r, int c) {
@@ -542,10 +535,18 @@ public class ScrollableComponent  extends ComponentWithFocus<Composite, Scrollab
         event.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(this) );     // show it (a key press repaints nothing else)
     }
 
-    OnViewPortWindowChangedEventHandler onViewPortWindowChangedEventHandler;
+    private EventHandler viewPortChanged;               // the app's, run after the shown component's own (see the constructor)
 
+    /**
+     * Runs on scrolling - by the keys, the footer buttons or the scroll bars - whatever component is
+     * shown, now or later. One handler: a second call replaces it, null removes it. E.g. two panes kept
+     * at the same line:
+     * <pre>
+     *     left.onViewPortChanged((te) -> right.setViewOffset(left.getOffsetIntoSource().getRow(), 0));
+     * </pre>
+     */
     public void onViewPortChanged(EventHandler consumeChange) {
-        onViewPortWindowChangedEventHandler = HasViewPortWindow.UTIL.bindConsumerAsOnViewPortWindowChangedEventHandler(this, onViewPortWindowChangedEventHandler, ownHandlers, consumeChange);
+        this.viewPortChanged = consumeChange;
     }
 
     /** the pane's border is its BorderedComponent's (the container around it has none) - hilite that one */
