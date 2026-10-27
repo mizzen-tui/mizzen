@@ -180,6 +180,20 @@ public class TextInputForType<T>  extends BoundedComponent<TextInputForType<T>> 
         mySegments.clearAndMerge(this.textInput.getSegmentsBuffer().getSegments());
     }
 
+    /**
+     * Its text input is redrawn with it, as AbstractComponentWrappper does for what it wraps. draw()
+     * takes the input's segments set itself (no copy, for speed), and that set is cleared before each
+     * redraw of this: redrawn alone - e.g. after show() - this would empty the input's segments while
+     * the input still counts as drawn, and show nothing.
+     */
+    @Override
+    public void markAsDirty() {
+        if (textInput != null && !textInput.isDirty()) {   // null: still in the constructor
+            textInput.markAsDirty();
+        }
+        super.markAsDirty();
+    }
+
     public String toStringDetails() {
         return "[value=" + StringUtils.truncate(String.valueOf(this.getValue()),10)+"]";
     }
