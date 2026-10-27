@@ -2,6 +2,7 @@ package mizzen.components;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.IntConsumer;
 
 import mizzen.components.scroll.ScrollableComponent;
 import mizzen.components.scroll.SearchFunctionForScrollableComponent;
@@ -138,6 +139,19 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
 
     /** start the program: its output goes, as it comes, through the parser into the view */
     public void invoke(EventBus eventBus) {
+        invoke(eventBus, (exitCode) -> {});
+    }
+
+    /**
+     * As invoke(eventBus), and when the program ends, finished gets its exit code - on the event
+     * thread, so it can update the screen. -1 if it could not run (the reason is shown in the view);
+     * not called if it was stopped (stopRequest). Nothing stays on the bus: each end hands over one
+     * one-time task (asynch).
+     * <pre>
+     *     viewer.invoke(bus, (exit) -> status.setTextAndResize(exit == 0 ? "Done" : "Failed: " + exit));
+     * </pre>
+     */
+    public void invoke(EventBus eventBus, IntConsumer finished) {
 
         synchronized (this) {
             if (!eventHandlersAdded) {
@@ -147,10 +161,14 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
 
         try {
             linuProcWatcher.invokeLongRunning(new TerminalStreamOutputParser(contentView),
-                                              (result) -> {},
-                                              (e) -> show("\n" + e + "\n"));
+                                              (exitCode) -> eventBus.asynch((te) -> finished.accept(exitCode)),
+                                              (e) -> {
+                                                  show("\n" + e + "\n");
+                                                  eventBus.asynch((te) -> finished.accept(-1));
+                                              });
         } catch (Exception e) {
             show(e.toString());
+            eventBus.asynch((te) -> finished.accept(-1));
         }
     }
 
