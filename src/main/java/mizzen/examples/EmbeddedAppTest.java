@@ -11,6 +11,8 @@ import mizzen.components.input.tree.TreeView;
 import mizzen.components.scroll.ScrollableComponent;
 import mizzen.controlcodes.color.Colors;
 import mizzen.events.TimedRequestedController;
+import mizzen.examples.form.FormTry;
+import mizzen.examples.form.FormTryByHand;
 import mizzen.examples.plot.OrbitsDemo;
 import mizzen.examples.plot.PlotAreaDemo;
 import mizzen.examples.plot.TestCube;
@@ -63,6 +65,9 @@ public class EmbeddedAppTest {
                             example("Multi-line text", () -> MultiLineTextInputTest.main(new String[0])),
                             example("Dropdowns", () -> DropdownListBoxSimpleTest.main(new String[0])),
                             example("Radio groups", () -> RadioGroupSimpleTest.main(new String[0]))),
+                    group("Forms",
+                            example("Form builder", () -> FormTry.main(new String[0])),
+                            example("Form by hand", () -> FormTryByHand.main(new String[0]))),
                     group("Lists and tables",
                             example("List box", () -> ListBoxTest.main(new String[0])),
                             example("Table", () -> Table01Test.main(new String[0])),

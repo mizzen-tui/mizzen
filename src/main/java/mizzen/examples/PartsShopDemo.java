@@ -1,9 +1,17 @@
 package mizzen.examples;
 
+import static mizzen.examples.Parts.BRACE;
+import static mizzen.examples.Parts.GEAR_12;
+import static mizzen.examples.Parts.GEAR_20;
+import static mizzen.examples.Parts.HEX_NUT;
+import static mizzen.examples.Parts.KNOB;
+import static mizzen.examples.Parts.SHED;
+import static mizzen.examples.Parts.SPRING;
+import static mizzen.examples.Parts.WASHER;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Supplier;
 
 import mizzen.app.TUIApp;
 import mizzen.components.Component;
@@ -24,18 +32,10 @@ import mizzen.components.input.TextInput;
 import mizzen.components.input.form.FormBinder;
 import mizzen.components.input.form.FormErrorHandler;
 import mizzen.components.plot.PlotArea;
-import mizzen.components.plot.shape.Shape;
-import mizzen.components.plot.shape.catalog.Gear;
-import mizzen.components.plot.shape.catalog.House;
-import mizzen.components.plot.shape.catalog.RegularPolygon;
-import mizzen.components.plot.shape.catalog.Ring;
-import mizzen.components.plot.shape.catalog.Spring;
-import mizzen.components.plot.shape.catalog.Star;
 import mizzen.components.scroll.ScrollableComponent;
 import mizzen.components.table.ObjectTableModel;
 import mizzen.components.table.TableComponent;
 import mizzen.components.table.TableComponent.TableLinesStyle;
-import mizzen.controlcodes.color.Color;
 import mizzen.controlcodes.color.Colors;
 import mizzen.geom.Dimension;
 
@@ -65,36 +65,12 @@ public class PartsShopDemo {
         }
     }
 
-    /** a part the shop sells, and how it looks (drawn round 0, 0, about 1 across, y up) */
-    static class Part {
-        final String name;
-        final float price;
-        final Color color;
-        final Supplier<Shape<?>> drawing;
-
-        Part(String name, float price, Color color, Supplier<Shape<?>> drawing) {
-            this.name = name;
-            this.price = price;
-            this.color = color;
-            this.drawing = drawing;
-        }
-    }
-
-    static final Part GEAR_12 = new Part("Gear, 12 teeth", 12.50f, Colors.BYel, () -> new Gear(0, 0, 12, 1).setHoleRadius(0.35f).setYUp(true).setFilled(true));
-    static final Part GEAR_20 = new Part("Gear, 20 teeth", 18.00f, Colors.Yel, () -> new Gear(0, 0, 20, 1).setRootRadius(0.86f).setYUp(true).setFilled(true));
-    static final Part HEX_NUT = new Part("Hex nut M8", 0.30f, Colors.BWhi, () -> new RegularPolygon(0, 0, 1, 6).setHoleRadius(0.5f).setYUp(true).setFilled(true));
-    static final Part WASHER = new Part("Washer M8", 0.10f, Colors.BCya, () -> new Ring(0, 0, 1, 0.45f).setYUp(true).setFilled(true));
-    static final Part SPRING = new Part("Spring, 40 mm", 1.20f, Colors.BGre, () -> new Spring(0, 0, 2, 0.7f, 5).setYUp(true));
-    static final Part KNOB = new Part("Star knob", 3.75f, Colors.BPur, () -> new Star(0, 0, 1, 0.45f).setYUp(true).setFilled(true));
-    static final Part BRACE = new Part("Corner brace", 2.40f, Colors.BBlu, () -> new RegularPolygon(0, 0, 1, 3).setHoleRadius(0.25f).setYUp(true).setFilled(true));
-    static final Part SHED = new Part("Garden shed kit", 899.00f, Colors.BRed, () -> new House(0, 0, 2, 1.9f).setYUp(true));
-
     /** a line of a sale; public fields, so a form binds them by name */
     public static class SaleItem {
-        public final Part part;
+        public final Parts.Part part;
         public Integer quantity;
 
-        SaleItem(Part part, int quantity) {
+        SaleItem(Parts.Part part, int quantity) {
             this.part = part;
             this.quantity = quantity;
         }
@@ -125,7 +101,7 @@ public class PartsShopDemo {
             this.notes = notes;
         }
 
-        Sale item(Part part, int quantity) {
+        Sale item(Parts.Part part, int quantity) {
             items.add(new SaleItem(part, quantity));
             return this;
         }
