@@ -119,7 +119,15 @@ public class ReflectionUtils {
 
         Field field = target.getClass().getField(fieldName);
         Class<?> fieldType = field.getType();
-        if (fieldType.isAssignableFrom(value.getClass())) {
+        if (value == null) {                            // "nothing": an object field takes it; a primitive one can't
+            if (fieldType.isPrimitive()) {
+                throw new IllegalArgumentException(target.getClass().getSimpleName() + "." + fieldName + " is a " + fieldType + ": it can't be set to null");
+            }
+            field.setAccessible(true);
+            field.set(target, null);
+            return;
+        }
+        if (fieldType.isAssignableFrom(value.getClass()) || boxed(fieldType) == value.getClass()) {   // an int field takes an Integer
             String setterName = "set" + capitalize(fieldName);
             Method setter = ReflectionUtils.getSetPropertyMethod(target, setterName, value == null? null: value.getClass());
             if (setter != null) {
@@ -129,6 +137,22 @@ public class ReflectionUtils {
                 field.set(target, value);
             }
         }
+    }
+
+    // the wrapper of a primitive type (int -> Integer); other types as they are
+    private static Class<?> boxed(Class<?> type) {
+        if (!type.isPrimitive()) {
+            return type;
+        }
+        if (type == int.class) return Integer.class;
+        if (type == long.class) return Long.class;
+        if (type == boolean.class) return Boolean.class;
+        if (type == double.class) return Double.class;
+        if (type == float.class) return Float.class;
+        if (type == short.class) return Short.class;
+        if (type == byte.class) return Byte.class;
+        if (type == char.class) return Character.class;
+        return type;
     }
 
     public static String gettName(String fieldName) {

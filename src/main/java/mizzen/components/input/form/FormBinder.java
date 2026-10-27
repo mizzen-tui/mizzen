@@ -114,11 +114,29 @@ public interface FormBinder<T> extends HasValue<T>{
 
     public boolean isInError();
 
+    /**
+     * Every field checked against its rules, as its input is now: good values go into the object,
+     * each error goes to the error displays (errorsTo). True when all are good - e.g. before saving.
+     */
+    boolean validateAll();
+
+    /** errors also show here - any number of displays; with one, an error is shown, not thrown */
+    FormBinder<T> errorsTo(FieldErrors display);
+
+    /** the displays given (errorsTo) */
+    List<FieldErrors> errorDisplays();
+
     public void save();
 
     public <FT> FormBinder<T> withValidatorHandler(FormErrorHandler<T> errorHandler);
 
     EventBus getEventBus();
+
+    /**
+     * The bus, if the binder was made without one (FormBinder.UTIL.get(data, container, null)): taken from
+     * the first event it handles - a form needn't be given one. A bus it already has stays.
+     */
+    void useEventBusIfNone(EventBus eventBus);
 
     EventHandlerContainer getEventHandlerContainerForForm();
 
@@ -206,6 +224,34 @@ public interface FormBinder<T> extends HasValue<T>{
         }
 
         private final Map<String, Registration> listening = new HashMap<String, Registration>();   // the binder's own, per field
+        private final List<FieldErrors> errorDisplays = new ArrayList<FieldErrors>();
+
+        @Override
+        public FormBinder<T> errorsTo(FieldErrors display) {
+            errorDisplays.add(display);
+            return this;
+        }
+
+        @Override
+        public List<FieldErrors> errorDisplays() {
+            return errorDisplays;
+        }
+
+        @Override
+        public boolean validateAll() {
+            boolean good = true;
+            for (FormBinderField<?, T> field : formFields) {
+                try {
+                    field.assertValid();
+                    field.copyComponentValueToFormField();
+                    UTIL.report(this, field, null);
+                } catch (FormValidatorException problem) {
+                    UTIL.report(this, field, problem);
+                    good = false;
+                }
+            }
+            return good;
+        }
 
         @Override
         public void listening(String field, Registration registration) {
@@ -406,6 +452,13 @@ public interface FormBinder<T> extends HasValue<T>{
         }
 
         @Override
+        public void useEventBusIfNone(EventBus eventBus) {
+            if (this.eventBus == null) {
+                this.eventBus = eventBus;
+            }
+        }
+
+        @Override
         public EventHandlerContainer getEventHandlerContainerForForm() {
             return formPanelComponent;
         }
@@ -566,15 +619,25 @@ public interface FormBinder<T> extends HasValue<T>{
             return new DefaultFormBinder<T>(formData, eventBus, eventBus);
         }
         
+        // the error (null: none now) to the binder's displays, by field name
+        static <FT, T> void report(FormBinder<T> formBinder, FormBinderField<FT, T> formBinderField, FormValidatorException formError) {
+            for (FieldErrors display : formBinder.errorDisplays()) {
+                display.show(formBinderField.getName(), formError == null ? null : formError.getMessage());
+            }
+        }
+
         static <FT, T> void handleError(FormBinder<T> formBinder, FormBinderField<FT, T> formBinderField, FormValidatorException formError) {
+            if (formBinderField != null) {
+                report(formBinder, formBinderField, formError);
+            }
             if (formBinderField != null && formBinderField.getErrorHandler() != null) {
                 formBinderField.getErrorHandler().handleError(formBinder.getEventBus(), formError, formBinder.getFormData());
                 return;
             }
             if (formBinder.getErrorHandler() != null) {
                 formBinder.getErrorHandler().handleError(formBinder.getEventBus(), formError, formBinder.getFormData());
-            } else {
-                throw formError;
+            } else if (formBinder.errorDisplays().isEmpty() && formError != null) {
+                throw formError;                         // nobody shows it: not lost silently
             }
         }
 
@@ -585,6 +648,7 @@ public interface FormBinder<T> extends HasValue<T>{
          */
         static <FT, T> EventHandler changeHandler(FormBinderField<FT, T> formBinderField) {
             return (te) -> {
+                formBinderField.getFormBinder().useEventBusIfNone(te.getEventBus());
                 try {
                     boolean prevFormInError = formBinderField.isInError();
                     FT prevValue = formBinderField.getFormValue();
