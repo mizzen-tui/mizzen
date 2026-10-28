@@ -21,6 +21,7 @@ import mizzen.controlcodes.color.Colors;
 import mizzen.events.ChainedEventHandler;
 import mizzen.events.ConditionalEventHandler;
 import mizzen.events.keyboard.KeyEvent;
+import mizzen.util.ReflectionUtils;
 
 /**
  * A form for an object: rows of labelled inputs, each bound to one of its fields by name - what is
@@ -242,12 +243,8 @@ public class Form<T> extends ComponentWithFocus<VerticalPanel, Form<T>> implemen
             byField.put(field, row);
             bindNamed(row.component);
             if (binder.getFormBinderField(field) == null) {
-                List<String> fields = new ArrayList<String>();
-                for (java.lang.reflect.Field f : data.getClass().getFields()) {
-                    fields.add(f.getName());
-                }
                 throw new IllegalArgumentException("\"" + field + "\": " + data.getClass().getSimpleName()
-                        + " has no public field of that name to bind (it has " + fields + ")");
+                        + " has no property of that name to bind - no public field, no getter (it has " + ReflectionUtils.getFieldNames(data) + ")");
             }
         }
         return row;
@@ -279,12 +276,7 @@ public class Form<T> extends ComponentWithFocus<VerticalPanel, Form<T>> implemen
 
     /** the options a choice wasn't given: an enum field's values; none - fails at once, saying what to do */
     List<Object> optionsOf(String field) {
-        Class<?> type;
-        try {
-            type = data.getClass().getField(field).getType();
-        } catch (NoSuchFieldException e) {
-            type = null;
-        }
+        Class<?> type = ReflectionUtils.getPropertyType(data, field);       // its getter's type, else its public field's
         if (type != null && type.isEnum()) {
             return Arrays.<Object>asList(type.getEnumConstants());
         }
