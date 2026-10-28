@@ -237,7 +237,13 @@ public class TreeView<N> extends BoundedComponent<TreeView<N>>
 
     /** select node, expanding the nodes above it */
     @Override
+    /** node selected (its ancestors expanded); null: nothing selected. A node not in the tree fails at once */
     public void setValue(N node) {
+        if (node == null) {
+            selected = null;
+            rebuild();
+            return;
+        }
         List<N> path = pathTo(node);
         if (path == null) {
             throw new IllegalArgumentException("TreeView(" + HasName.UTIL.getName(this) + ").setValue(" + node + "): not in the tree");
@@ -304,6 +310,10 @@ public class TreeView<N> extends BoundedComponent<TreeView<N>>
             }
             EventBus bus = ke.getEventBus();
             int index = selectedIndex();
+            if (index < 0) {                             // nothing selected: any key of the tree's selects the first row
+                select(0, HasValue.VALUE_CHANGED_ON_NEXT_KEYSTROKE, bus);
+                return true;
+            }
             Row row = rows.get(index);
             if (ke.isKeyStroke(Keys.UP_KEYSTROKE)) {
                 select(index - 1, HasValue.VALUE_CHANGED_ON_PREV_KEYSTROKE, bus);

@@ -243,8 +243,9 @@ public class Button extends BoundedComponent<Button> implements FormInput<Boolea
     }
 
     @Override
+    /** pressed (a toggle); null: not pressed */
     public void setValue(Boolean value) {
-        this.doSetValue(value);
+        this.doSetValue(Boolean.TRUE.equals(value));
     }
 
     public void onClick(EventBus eventBus) {

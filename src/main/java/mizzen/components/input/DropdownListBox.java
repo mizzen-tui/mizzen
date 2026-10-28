@@ -420,6 +420,7 @@ public class DropdownListBox<T> extends AbstractComponentWrappper<VerticalPanel>
            this.listBox.setSelectedValue(value);
            setSelectedOntoTextView();
         } else {
+            this.listBox.setValue(null);                 // the open list shows nothing selected either
             setDisplayableValueOntoTextView(null);
         }
     }

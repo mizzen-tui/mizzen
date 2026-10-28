@@ -167,7 +167,12 @@ public class TextInputForType<T>  extends BoundedComponent<TextInputForType<T>> 
     }
 
     @Override
+    /** the value as text; null: empty (getValue gives null back, not a made-up 0) */
     public void setValue(T value) {
+        if (value == null) {
+            setText("");
+            return;
+        }
         String currentText = translateFromType.apply(value);
         if (! this.validate.apply(currentText)) {
             return;

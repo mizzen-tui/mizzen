@@ -16,6 +16,10 @@ import mizzen.events.Registration;
  */
 public interface FormInput<V> extends SettableHasValue<V> {
 
+    // setValue(null) means "nothing": empty text, off, nothing selected - it never throws, and getValue
+    // gives null back (or "" for text, false for yes/no). A value the input can't show (not among its
+    // choices, not in the tree) still fails at once: that is a mistake, "nothing" isn't.
+
     /**
      * handler runs when the user changes the value - alongside any others (an app's, a form's): each
      * call adds one (OnChangeListeners does it). The Registration takes this one out again; most

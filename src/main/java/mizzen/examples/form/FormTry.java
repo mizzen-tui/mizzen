@@ -41,7 +41,7 @@ public class FormTry {
         public String city = "Toronto";
         public String street = "";
         public String postal = "";
-        public DefaultTreeNode<Object> part = Parts.CATALOGUE;   // a tree needs something picked: the whole catalogue to start
+        public DefaultTreeNode<Object> part;              // nothing picked to start
         public String notes = "";
 
         /** the picked part; null when a group is picked */

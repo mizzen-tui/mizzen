@@ -611,8 +611,26 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
     }
     
     @Override
+    /** the item with this value selected; null: none (a value not among the items still fails at once) */
     public void setValue(T value) {
+        if (value == null) {
+            clearSelection();
+            return;
+        }
         this.setSelectedValue(value);
+    }
+
+    // nothing selected
+    private void clearSelection() {
+        int curSelected = getSelectedIndex();
+        if (curSelected > -1) {
+            ItemComponent curSelectedComponent = getItemComponentAt(curSelected);
+            if (curSelectedComponent != null) {
+                curSelectedComponent.unSelect();
+            }
+        }
+        selected = -1;
+        this.markAsDirty();
     }
 
 
