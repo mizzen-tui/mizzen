@@ -7,7 +7,9 @@ import mizzen.components.Component;
 import mizzen.components.TextComponent;
 import mizzen.components.composite.HorizontalPanel;
 import mizzen.components.composite.VerticalPanel;
+import mizzen.components.input.LabelFor;
 import mizzen.controlcodes.color.Color;
+import mizzen.events.focus.ToFocusable;
 
 /**
  * Rows of label and input in a VerticalPanel, the labels padded to the longest so the inputs line up
@@ -35,13 +37,14 @@ class RowsPanel {
         return label;
     }
 
-    /** label | input - with the error line under the input - and its handle */
+    /** label | input - with the error line under the input - and its handle. A click on the label focuses the input (a view's label: nothing to focus). */
     FormRow place(Color labelColor, String field, String labelText, Component<?> shown, Object input, TextComponent error) {
         TextComponent label = label(labelColor, labelText);
         VerticalPanel inputAndError = new VerticalPanel();
         inputAndError.add(shown);
         inputAndError.add(error);
-        HorizontalPanel row = new HorizontalPanel(labelColor, GAP).add(label).add(inputAndError);
+        Component<?> labelShown = ToFocusable.UTIL.toFocusable(input) == null ? label : new LabelFor(label).focuses(input);
+        HorizontalPanel row = new HorizontalPanel(labelColor, GAP).add(labelShown).add(inputAndError);
         panel.add(row);
         FormRow handle = new FormRow(field, labelText, input, label, error);
         handle.component = row;

@@ -267,6 +267,24 @@ public class MouseEventOrchestrator {
                 return null;
             }
 
+            /**
+             * A click needs no focus either: the clickable between the component under the mouse and
+             * the first focusable one above it - one that hands out no focusable, e.g. a LabelFor that
+             * focuses its input. null: none (a focusable clickable is found the usual way, with focus).
+             */
+            private Clickable clickableBelowFocus(Component<?> c) {
+                while (c != null) {
+                    if (ToFocusable.UTIL.isFocusable(c)) {
+                        return null;
+                    }
+                    if (c instanceof Clickable && c.isEnabled()) {
+                        return (Clickable) c;
+                    }
+                    c = (Component<?>) c.getParentContainer();
+                }
+                return null;
+            }
+
             IS_Event_TYPE appMouseType = new IS_Event_TYPE(TYPE.APPLICATION_MOUSE);
             
             
@@ -319,6 +337,9 @@ public class MouseEventOrchestrator {
                         };
 
                 if (action == MOUSE_ACTION.DOWN_LEFT_DRAG && draggableBelowFocus(componentClicked) != null) {
+                    return true;
+                }
+                if (action == MOUSE_ACTION.DOWN_LEFT && clickableBelowFocus(componentClicked) != null) {
                     return true;
                 }
 
@@ -403,6 +424,14 @@ public class MouseEventOrchestrator {
                 if (appMouseEvent.getMouseAction() == MOUSE_ACTION.DOWN_LEFT_DRAG && currentDraggable == null) {
                     Draggable draggable = draggableBelowFocus(componentClicked);
                     if (draggable != null && checkHandleDragStart(draggable, appMouseEvent)) {
+                        return;
+                    }
+                }
+
+                if (appMouseEvent.getMouseAction() == MOUSE_ACTION.DOWN_LEFT) {
+                    Clickable clickable = clickableBelowFocus(componentClicked);
+                    if (clickable != null) {
+                        clickable.onClick(eventBus);
                         return;
                     }
                 }

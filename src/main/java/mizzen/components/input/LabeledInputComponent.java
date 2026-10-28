@@ -9,10 +9,7 @@ import mizzen.components.composite.HorizontalPanel;
 import mizzen.components.composite.VerticalPanel;
 import mizzen.controlcodes.color.Color;
 import mizzen.controlcodes.color.Colors;
-import mizzen.events.EventBus;
-import mizzen.events.focus.FocusBehaviour;
 import mizzen.events.focus.Focusable;
-import mizzen.events.focus.RequestFocusEvent;
 import mizzen.events.focus.ToFocusable;
 import mizzen.geom.Orientation;
 import mizzen.util.StringUtils;
@@ -21,7 +18,7 @@ public class LabeledInputComponent<V> extends AbstractComponentWithContainer<Com
         implements SettableHasValue<V> /* , ToFocusable */ {
 
     SettableHasValue<V> componentWithValue;
-    FocusableLabel label;
+    LabelFor label;
     TextComponent requiredMarker;
     TextComponent errorText;
     boolean isRequired = false;
@@ -35,10 +32,7 @@ public class LabeledInputComponent<V> extends AbstractComponentWithContainer<Com
             throw new IllegalArgumentException("LabeledInputComponent error:  component "
                     + HasName.UTIL.getName(component) + "parameter must be resolvable to a focusable");
         }
-        this.label = new FocusableLabel(color, textLabel);
-        label.setOnClickAction((evtBus) -> {
-            evtBus.raiseEvent(new RequestFocusEvent(ToFocusable.UTIL.toFocusable(component)));
-        });
+        this.label = new LabelFor(color, textLabel).focuses(component);     // a click on the label focuses the input
 //        label.setOnFocusAction( (focus, eventBus) -> {
 //            if (focus) {
 //                eventBus.raiseEvent(new RequestFocusEvent(ToFocusable.UTIL.toFocusable(component)));

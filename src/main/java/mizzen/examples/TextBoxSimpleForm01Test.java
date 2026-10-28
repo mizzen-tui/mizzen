@@ -9,7 +9,7 @@ import mizzen.components.input.Button;
 import mizzen.components.input.DropdownListBox;
 import mizzen.components.input.LabeledInputComponent;
 import mizzen.components.input.TextInput;
-import mizzen.components.input.form.NamedComponentsFormBinder;
+import mizzen.components.input.form.FormBinder;
 import mizzen.controlcodes.color.Colors;
 import mizzen.util.Logging;
 
@@ -41,11 +41,14 @@ public class TextBoxSimpleForm01Test {
 
                Button saveButton = new Button("Save");
 
-               NamedComponentsFormBinder<Address> form = NamedComponentsFormBinder.bindNamed(testForm, address );
+               // the inputs are named after Address's fields: the binder finds and binds them
+               FormBinder<Address> form = FormBinder.UTIL.get(address, tApp.getEventBus());
+               form.bindAll(testForm);
 
                saveButton.onChange((te)-> {
-                   form.validate();
-                   Logging.info("SAVE : " + address.toString());
+                   if (form.validateAll()) {
+                       Logging.info("SAVE : " + address.toString());
+                   }
                });
 
                testForm.add(saveButton);
@@ -55,7 +58,7 @@ public class TextBoxSimpleForm01Test {
            }).start();
     }
 
-    static class Address {
+    public static class Address {
         public String street;
         public String city;
         public String province;
