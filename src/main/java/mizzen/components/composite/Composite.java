@@ -63,6 +63,7 @@ public class Composite extends AbstractComponent<Composite>
         private Rectangle rectangleForLayout; // used only by layout managers ( Horizontal/VerticalPanels )
         private boolean hasShadow;
         private boolean visible = true;
+        private boolean keptOnTop;                      // above the others whatever is raised: keepOnTop
         ComponentWithOffset simpleComponentWithOffset;
 
         public ComponentWithOffset(Position offset, Component<?> component) {
@@ -374,7 +375,7 @@ public class Composite extends AbstractComponent<Composite>
         int childRight = child.getCol() + child.getWidth(), childBottom = child.getRow() + child.getHeight();
         int right = 0, below = 0;
         for (ComponentWithOffset sibling : getVisibleChildrenComponentsWithOffset()) {
-            if (sibling == child) {
+            if (sibling == child || sibling.keptOnTop) {         // one kept on top floats over the others: it takes no room
                 continue;
             }
             boolean moves = !(sibling.offset instanceof Position.Simple);
@@ -725,12 +726,14 @@ public class Composite extends AbstractComponent<Composite>
         clearComputedChildPositions();
         children.add(componentWithOffset);
         childrenInZOrder.add(componentWithOffset);
+        raiseKeptOnTop();
     }
 
     private void addChild(int index, ComponentWithOffset componentWithOffset) {
         clearComputedChildPositions();
         children.add(index, componentWithOffset);
         childrenInZOrder.add(componentWithOffset);
+        raiseKeptOnTop();
     }
 
     private void removeChild(ComponentWithOffset componentWithOffset) {
@@ -923,6 +926,37 @@ public class Composite extends AbstractComponent<Composite>
 
     // layering functions
 
+    /**
+     * component stays above its siblings, whatever is raised later - a child added after it, one brought
+     * to the front (focus raises what it reaches, and its parents) - e.g. a bar floating on a border, over
+     * a splitter that gets focus as its divider is dragged. Several kept on top keep their own order.
+     * It floats: a sibling that fills (onResizeExpand..) fills under it, leaving it no room.
+     * <pre>
+     *     area.add(new Position.Simple(0, 40), bar);
+     *     area.keepOnTop(bar);
+     * </pre>
+     */
+    public Composite keepOnTop(Component<?> component) {
+        findChildOrFail(component, "keepOnTop").keptOnTop = true;
+        raiseKeptOnTop();
+        markAsDirty();
+        return this;
+    }
+
+    // after any change to the order: the children kept on top go back to the top, in their own order
+    private void raiseKeptOnTop() {
+        List<ComponentWithOffset> kept = new ArrayList<ComponentWithOffset>();
+        for (ComponentWithOffset child : childrenInZOrder) {
+            if (child.keptOnTop) {
+                kept.add(child);
+            }
+        }
+        if (!kept.isEmpty()) {
+            childrenInZOrder.removeAll(kept);
+            childrenInZOrder.addAll(kept);
+        }
+    }
+
     public Composite moveUp(Component<?> component) {
         ComponentWithOffset child = findChildOrFail(component, "moveUp");
         int index = childrenInZOrder.indexOf(child);
@@ -931,6 +965,7 @@ public class Composite extends AbstractComponent<Composite>
         }
         childrenInZOrder.remove(child);
         childrenInZOrder.add(index + 1, child);
+        raiseKeptOnTop();
         markAsDirty();
         return this;
     }
@@ -943,6 +978,7 @@ public class Composite extends AbstractComponent<Composite>
         }
         childrenInZOrder.remove(child);
         childrenInZOrder.add(index - 1, child);
+        raiseKeptOnTop();
         markAsDirty();
         return this;
     }
@@ -959,6 +995,7 @@ public class Composite extends AbstractComponent<Composite>
         }
         childrenInZOrder.remove(child);
         childrenInZOrder.add(childrenInZOrder.size(), child);
+        raiseKeptOnTop();
         markAsDirty();
         return this;
     }
@@ -984,6 +1021,7 @@ public class Composite extends AbstractComponent<Composite>
         }
         childrenInZOrder.remove(child);
         childrenInZOrder.add(0, child);
+        raiseKeptOnTop();
         markAsDirty();
         return this;
     }
