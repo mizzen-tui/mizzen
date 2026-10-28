@@ -75,15 +75,15 @@ public class GridBrailleTest {
 
         public void resize(Dimension size) {
 
-            getBrailleComponent().setBounds(size.getHeight() - 4, size.getWidth() - 4);
+            getBrailleComponent().setBounds(Math.max(0, size.getHeight() - 4), Math.max(0, size.getWidth() - 4));   // none in a small window
 
             Dimension textHelpDim = Dimension.UTIL.stringToDimension(tc.getText());
 
-            tc.resize(new Dimension.Simple(Math.min(textHelpDim.getHeight(), size.getHeight() - 4),
+            tc.resize(new Dimension.Simple(Math.min(textHelpDim.getHeight(), Math.max(0, size.getHeight() - 4)),
                     Math.min(textHelpDim.getWidth(), size.getWidth() / 2)));
 
-            grid.resize(new Dimension.Simple(getBrailleComponent().getHeight() - 4,
-                                             getBrailleComponent().getWidth() - 4 - tc.getWidth()));
+            grid.resize(new Dimension.Simple(Math.max(0, getBrailleComponent().getHeight() - 4),           // the room beside the text;
+                                             Math.max(0, getBrailleComponent().getWidth() - 4 - tc.getWidth())));   // none when there is none
 
             getBrailleComponent().moveChildTo(new Position.Simple(2, tc.getWidth() + 2), grid);
 

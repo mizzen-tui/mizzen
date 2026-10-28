@@ -80,14 +80,8 @@ public class TestScale {
 
                    ListBox<Shape<?>> shapesChoiceComponent = shapeChooser();
 
-                   Supplier<Dimension> computeGridSize = ()-> {
-                       return new Dimension.Simple(Math.max(0, tApp.getMainApplicationPanel().getHeight()-15),          // what is left beside the controls:
-                                                   Math.max(0, tApp.getMainApplicationPanel().getWidth()-shapesChoiceComponent.getWidth()-48));   // none in a small terminal
-                   };
-
-                   Dimension gridSize = new Dimension.SupplierAsDimension(computeGridSize);
-
-                   BrailleGrid grid = new BrailleGrid(Colors.BGre, gridSize);
+                   // a start: the resize rules below give it the room it has (right and down)
+                   BrailleGrid grid = new BrailleGrid(Colors.BGre, new Dimension.Simple(MIN_GRID_ROWS, 40));
 
                    HorizontalPanel controlsInGrid = new HorizontalPanel();
                    controlsInGrid.setBorder(true);
@@ -243,13 +237,15 @@ public class TestScale {
                    vp.add(intervalFormContainer);
                    vp.add(msgArea);
 
-                   tApp.getMainApplicationPanel().add(vp);
+                   Composite main = (Composite) tApp.getMainApplicationPanel();
+                   main.setBorder(true);
+                   main.add(vp);
 
-                   tApp.appendOnResizeAction((tApp2, size)->{
-                       grid.resize(new Dimension.SupplierAsDimension(computeGridSize));
-                   });
-
-                   ((Composite)tApp.getMainApplicationPanel()).setBorder(true);
+                   // the shape's grid takes the room the controls leave - right and down - whatever the window's size
+                   main.onResizeExpandDownAndRight(vp);
+                   vp.onResizeExpandDownAndRight(hp);                    // leaving the two lines under it their rows
+                   hp.onResizeExpandDownAndRight(draggableGrid).atLeast(MIN_GRID_ROWS);
+                   tApp.appendOnResizeAction((tApp2, size) -> delayedDraw.onRequest(tApp2.getEventBus()));   // the shape drawn again to the new size
 
 
                }).start();
@@ -257,6 +253,9 @@ public class TestScale {
     }
     
     
+    // the grid's own controls are 3 high and sit 3 up from its bottom: a shorter grid would grow upward to hold them
+    static final int MIN_GRID_ROWS = 6;
+
     static Component<?> navButtonsPanel(EventHandler upAction,
             EventHandler downAction,
             EventHandler leftAction,

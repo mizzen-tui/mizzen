@@ -14,8 +14,6 @@ import mizzen.components.input.HasValue;
 import mizzen.components.input.OnChangeListeners;
 import mizzen.components.input.RadioGroup;
 import mizzen.components.input.TextInputFloat;
-import mizzen.components.plot.PathPlotter.CirclePathPlotter;
-import mizzen.components.plot.PathPlotter;
 import mizzen.components.plot.braille.BrailleGrid;
 import mizzen.components.plot.braille.BrailleUtils;
 import mizzen.components.plot.grid.DragRotate3DOnGrid;
@@ -55,9 +53,7 @@ public class TestCube {
 
                     float initialCubeDistanceFromCamera = 70f;
 
-                    Dimension gridSize = new Dimension.Simple(
-                            tApp.getMainApplicationPanel().getHeight() - 7,
-                            tApp.getMainApplicationPanel().getWidth() - 12);
+                    Dimension gridSize = gridSizeFor(tApp.getMainApplicationPanel());
 
                     VerticalPanel vpMainPanel = new VerticalPanel().setVerticalSpacer(1);
 
@@ -120,35 +116,14 @@ public class TestCube {
 
                     draggableGrid.setDraggable(mouseXYToGridXYDraggableBehaviour);
 
-                    int maxPanX = grid.getGridRectangle().getWidth() / 2;
-                    int maxPanY = grid.getGridRectangle().getHeight() / 2;
-
-                    Dimension viewerSize = new Dimension.Simple(
-                            grid.getGridRectangle().getHeight(),
-                            grid.getGridRectangle().getWidth());
-
-                    Dimension virtualPanSize = new Dimension.Simple(
-                            viewerSize.getHeight() + (2 * maxPanY),
-                            viewerSize.getWidth() + (2 * maxPanX));
-
-                    Position centerPanOffset = new Position.Simple(maxPanY, maxPanX);
-
-                    ScrollBarHorizontal panXScroll = new ScrollBarHorizontal(grid.getColor(), 0, 0,
-                            gridSize.getWidth() - 2);
-
-                    ScrollBarVertical panYScroll = new ScrollBarVertical(grid.getColor(), 0, 0,
-                            gridSize.getHeight() - 2);
-
-                    panXScroll.setViewedSize(virtualPanSize, viewerSize);
-                    panYScroll.setViewedSize(virtualPanSize, viewerSize);
-
-                    panXScroll.setOffset(centerPanOffset);
-                    panYScroll.setOffset(centerPanOffset);
+                    // the pan bars: as long as the grid's sides, ranging half the grid each way - set by fitToWindow
+                    ScrollBarHorizontal panXScroll = new ScrollBarHorizontal(grid.getColor(), 0, 0, 0);
+                    ScrollBarVertical panYScroll = new ScrollBarVertical(grid.getColor(), 0, 0, 0);
 
                     panXScroll.onChange((te) -> {
                         Position offset = panXScroll.getValue();
 
-                        float panX = maxPanX - offset.getCol();
+                        float panX = grid.getGridRectangle().getWidth() / 2 - offset.getCol();     // the middle: no pan
 
                         projection.setPanX(panX);
                         redrawShape.run();
@@ -157,7 +132,7 @@ public class TestCube {
                     panYScroll.onChange((te) -> {
                         Position offset = panYScroll.getValue();
 
-                        float panY = maxPanY - offset.getRow();
+                        float panY = grid.getGridRectangle().getHeight() / 2 - offset.getRow();
 
                         projection.setPanY(panY);
                         redrawShape.run();
@@ -180,7 +155,6 @@ public class TestCube {
                     vpMainPanel.add(hpPanX);
 
                     boolean[] simulationActive = new boolean[] { true };
-                    PathPlotter pp = new CirclePathPlotter(maxPanX, maxPanX, 300);
 
                     // tApp.getEventBus().appendIdleEventHandler(new RepeatingInterval(100, (te) -> {
                     //     if (!simulationActive[0]) {
@@ -241,9 +215,34 @@ public class TestCube {
 
                     tApp.getMainApplicationPanel().add(vpMainPanel);
 
-                    redrawShape.run();
+                    // everything sized by the window: the grid (what the controls leave), what the camera sees, the
+                    // pan bars - recentred; then the shapes drawn again. Now, and whenever the window changes.
+                    Runnable fitToWindow = () -> {
+                        grid.resize(gridSizeFor(tApp.getMainApplicationPanel()));
+                        int width = grid.getGridRectangle().getWidth(), height = grid.getGridRectangle().getHeight();
+                        projection.setWindowSize(width, height);
+                        projection.setPanX(0);
+                        projection.setPanY(0);
+                        Dimension viewer = new Dimension.Simple(height, width);
+                        Dimension panRange = new Dimension.Simple(2 * height, 2 * width);     // the viewer, and half again each way
+                        panXScroll.resize(new Dimension.Simple(1, Math.max(0, grid.getWidth() - 2)));    // between the corners
+                        panYScroll.resize(new Dimension.Simple(Math.max(0, grid.getHeight() - 2), 1));
+                        panXScroll.setViewedSize(panRange, viewer);
+                        panYScroll.setViewedSize(panRange, viewer);
+                        panXScroll.setOffset(new Position.Simple(height / 2, width / 2));
+                        panYScroll.setOffset(new Position.Simple(height / 2, width / 2));
+                        plot2DInputForm.refreshFromProjection();
+                        redrawShape.run();
+                    };
+                    fitToWindow.run();
+                    tApp.appendOnResizeAction((ta, size) -> fitToWindow.run());
 
                 }).start();
+    }
+
+    /** the grid: what the controls leave of the window - none in a small one */
+    static Dimension gridSizeFor(Dimension window) {
+        return new Dimension.Simple(Math.max(0, window.getHeight() - 7), Math.max(0, window.getWidth() - 12));
     }
 
     static class Plot2DConfigForm extends ComponentWithFocus<HorizontalPanel, Plot2DConfigForm>
