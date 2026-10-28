@@ -65,12 +65,13 @@ public class Table01Test {
 
                 removeComponents.run();
 
-                VerticalSplitter vs = new VerticalSplitter(Colors.BBlu, new Dimension.Simple(tApp.getDimensions().getHeight()-3, tApp.getDimensions().getWidth()-2));
+                // no sizes: the splitter sizes the tables - half each, as the top one has no height of its own
+                VerticalSplitter vs = new VerticalSplitter(Colors.BBlu);
 
-                TableComponent t1 = new TableComponent(Colors.Yel, new Dimension.Simple((tApp.getDimensions().getHeight()-4)/2, tApp.getDimensions().getWidth()-4), sampleData1());
+                TableComponent t1 = new TableComponent(Colors.Yel, sampleData1());
                 t1.setName("t1-vsView");
 
-                TableComponent t2 = new TableComponent(Colors.Cya, new Dimension.Simple((tApp.getDimensions().getHeight()-4)/2, tApp.getDimensions().getWidth()-4), sampleData2());
+                TableComponent t2 = new TableComponent(Colors.Cya, sampleData2());
                 t2.setName("t2-vsView");
 
                 vs.addComponent(t1);
@@ -82,6 +83,7 @@ public class Table01Test {
                 });
 
                 vs.addComponent(t2);
+                vs.resize(new Dimension.Simple(tApp.getDimensions().getHeight() - 4, tApp.getDimensions().getWidth()));
 
                 mainViewPanel.add(DropdownListBox.fromStrings(new String[]{"Option-1",
                                                                            "Option-2",
@@ -105,16 +107,19 @@ public class Table01Test {
 
                 removeComponents.run();
 
-                HorizontalSplitter hs = new HorizontalSplitter(Colors.BBlu, new Dimension.Simple(tApp.getDimensions().getHeight()-3, tApp.getDimensions().getWidth()-2));
+                // no sizes: the splitter sizes the tables - the left one 40% of the width, the right one the rest
+                HorizontalSplitter hs = new HorizontalSplitter(Colors.BBlu);
 
-                TableComponent t1 = new TableComponent(Colors.Yel, new Dimension.Simple((tApp.getDimensions().getHeight()-4), (tApp.getDimensions().getWidth()-4)/2), sampleData1());
+                TableComponent t1 = new TableComponent(Colors.Yel, sampleData1());
                 t1.setName("t1-hsView");
 
-                TableComponent t2 = new TableComponent(Colors.Cya, new Dimension.Simple((tApp.getDimensions().getHeight()-4), (tApp.getDimensions().getWidth()-4)/2), sampleData2());
+                TableComponent t2 = new TableComponent(Colors.Cya, sampleData2());
                 t2.setName("t2-hsView");
 
                 hs.addComponent(t1);
                 hs.addComponent(t2);
+                hs.onResizeExpandRight(t1, 40);
+                hs.resize(new Dimension.Simple(tApp.getDimensions().getHeight() - 4, tApp.getDimensions().getWidth()));
                 showEvents.accept(t1);
                 showEvents.accept(t2);
  

@@ -85,6 +85,11 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
                                                           (te) -> getEventHandler().handle(te)));
     TableCellAtPositions tableCellAtPositions;
 
+    /** sized by what holds it (a splitter's rules, a resize): it starts at no size */
+    public TableComponent(Color color, TableModel tableModel) {
+        this(color, Dimension.ZERO, tableModel);
+    }
+
     public TableComponent(Color color, Dimension d, TableModel tableModel) {
         super(color, d);
         this.headerColor = color.getBoldTransform().transform(color);

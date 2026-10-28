@@ -11,6 +11,11 @@ public class HorizontalSplitter extends AbstractComponentWrappper<FrameSet> impl
     Component<?> left; 
     Component<?> right;
 
+    /** sized by what holds it (a splitter's rules, a resize): it starts at no size */
+    public HorizontalSplitter(Color color) {
+        this(color, Dimension.ZERO);
+    }
+
     public HorizontalSplitter(Color color, Dimension dimension) {
         super(color);
         FrameSet frameSet = new FrameSet(color, dimension);
@@ -18,6 +23,11 @@ public class HorizontalSplitter extends AbstractComponentWrappper<FrameSet> impl
         this.setWrappedComponent(frameSet);
     }
 
+    /**
+     * Left pane first, then the right one. The left keeps its own width and the right takes the rest;
+     * a left pane with no width (made without a size) gets half - onResizeExpandRight(left, percent)
+     * sets another share.
+     */
     public HorizontalSplitter addComponent(Component<?> component) {
         if (this.right != null) {
             throw new IllegalStateException("Already added left and right components!");
@@ -26,6 +36,9 @@ public class HorizontalSplitter extends AbstractComponentWrappper<FrameSet> impl
             getWrappedComponent().add(component);
             this.left = component;
             getWrappedComponent().onResizeExpandDown(this.left);
+            if (component.getWidth() == 0) {
+                getWrappedComponent().onResizeExpandRight(this.left, 50);
+            }
             return this;
         }
         getWrappedComponent().addRight(component, this.left, true);  // true means draggable

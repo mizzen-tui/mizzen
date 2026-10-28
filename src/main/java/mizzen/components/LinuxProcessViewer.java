@@ -39,6 +39,11 @@ public class LinuxProcessViewer extends BoundedComponent<BoundedComponent<LinuxP
     LinuxProcessWatcher linuProcWatcher;
     OnTerminateEventHandler terminateHandler;
 
+    /** sized by what holds it (a splitter's rules, a resize): it starts at no size */
+    public LinuxProcessViewer(Color color) {
+        this(color, Dimension.ZERO);
+    }
+
     public LinuxProcessViewer(Color color, Dimension d) {
         super(color, d);
         this.contentView = new StdoutViewer(color);

@@ -101,6 +101,11 @@ public class LineChart extends AbstractComponentWrappper<PlotArea> implements Ha
     private int selectedIndex = -1;
     private final OnChangeListeners<Point> changeListeners = new OnChangeListeners<Point>(this);   // onChange: any number of listeners
 
+    /** sized by what holds it (a splitter's rules, a resize): it starts at no size */
+    public LineChart(Color color) {
+        this(color, Dimension.ZERO);
+    }
+
     public LineChart(Color color, Dimension size) {
         super(color, new PlotArea(color, size));
         plot().axes(true)

@@ -25,9 +25,11 @@ public class VerticalSplitterTest2 {
         .confirmOnExit()
         .setOnReadyStart((tApp)-> {
 
-            HorizontalSplitter hzp = new HorizontalSplitter(Colors.BCya, new Dimension.Simple(30, 100));
+            // no sizes: the outer splitter fills the screen, the inner one (left) gets half its width;
+            // the top text keeps its own height and the bottom one takes the rest
+            HorizontalSplitter hzp = new HorizontalSplitter(Colors.BCya);
 
-            VerticalSplitter vzp = new VerticalSplitter(Colors.BCya, new Dimension.Simple(30, 80));
+            VerticalSplitter vzp = new VerticalSplitter(Colors.BCya);
 
             vzp.addComponent(new TextComponent(Colors.IGre,"TOP\n This is the top part\nSo there!"));
             vzp.addComponent(new TextComponent("BOTTOM\n"+readLargeSampleFile(30)));
@@ -37,7 +39,9 @@ public class VerticalSplitterTest2 {
             hzp.addComponent(vzp);
             hzp.addComponent(new TextComponent(Colors.IGre,"RIGHT\n"+readLargeSampleFile(30)));
 
+            hzp.resize(new Dimension.Simple(tApp.getDimensions().getHeight() - 2, tApp.getDimensions().getWidth() - 2));
             tApp.getMainApplicationPanel().add(1,1,hzp);
+            tApp.appendOnResizeAction((ta, size) -> hzp.resize(new Dimension.Simple(size.getHeight() - 2, size.getWidth() - 2)));
 
         }).start();
     }

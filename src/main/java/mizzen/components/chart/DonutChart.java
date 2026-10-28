@@ -45,6 +45,11 @@ public class DonutChart<T> extends AbstractComponentWrappper<PlotArea> implement
     private final List<Polygon> slices = new ArrayList<Polygon>();
     private double hole = 0.55;                                     // the hole's radius, as a part of the donut's
 
+    /** sized by what holds it (a splitter's rules, a resize): it starts at no size */
+    public DonutChart(Color color) {
+        this(color, Dimension.ZERO);
+    }
+
     public DonutChart(Color color, Dimension size) {
         super(color, new PlotArea(color, size));
         plot().scaling(PlotArea.Scaling.EQUAL)

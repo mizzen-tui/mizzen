@@ -11,6 +11,11 @@ public class VerticalSplitter extends AbstractComponentWrappper<FrameSet> implem
     Component<?> above; 
     Component<?> below;
 
+    /** sized by what holds it (a splitter's rules, a resize): it starts at no size */
+    public VerticalSplitter(Color color) {
+        this(color, Dimension.ZERO);
+    }
+
     public VerticalSplitter(Color color, Dimension dimension) {
         super(color);
         FrameSet frameSet = new FrameSet(color, dimension);
@@ -18,6 +23,11 @@ public class VerticalSplitter extends AbstractComponentWrappper<FrameSet> implem
         this.setWrappedComponent(frameSet);
     }
 
+    /**
+     * The pane above first, then the one below. The one above keeps its own height and the one below
+     * takes the rest; a pane above with no height (made without a size) gets half -
+     * onResizeExpandDown(above, percent) sets another share.
+     */
     public VerticalSplitter addComponent(Component<?> component) {
         if (this.below != null) {
             throw new IllegalStateException("Already added above and below components!");
@@ -26,6 +36,9 @@ public class VerticalSplitter extends AbstractComponentWrappper<FrameSet> implem
             getWrappedComponent().add(component);
             this.above = component;
             getWrappedComponent().onResizeExpandRight(component);
+            if (component.getHeight() == 0) {
+                getWrappedComponent().onResizeExpandDown(this.above, 50);
+            }
             return this;
         }
         getWrappedComponent().addBelow(component, this.above, true); // true means draggable
