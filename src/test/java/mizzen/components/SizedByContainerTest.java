@@ -24,8 +24,8 @@ public class SizedByContainerTest extends TestCase {
         }
     }
 
-    private static TableComponent table() {
-        return new TableComponent(Colors.Cya, new ObjectTableModel<Row>().column("Name", (r) -> r.name).setRows(Arrays.asList(new Row("a"))));
+    private static TableComponent<Row> table() {
+        return new TableComponent<Row>(Colors.Cya, new ObjectTableModel<Row>().column("Name", (r) -> r.name).setRows(Arrays.asList(new Row("a"))));
     }
 
     private static void draw(Component<?> c) {
@@ -33,7 +33,7 @@ public class SizedByContainerTest extends TestCase {
     }
 
     public void testSideBySideNoSizesGetHalfEach() {
-        TableComponent left = table(), right = table();
+        TableComponent<Row> left = table(), right = table();
         HorizontalSplitter split = new HorizontalSplitter(Colors.BBlu).addComponent(left).addComponent(right);
         split.setBorder(false);
         split.resize(new Dimension.Simple(10, 81));
@@ -44,7 +44,7 @@ public class SizedByContainerTest extends TestCase {
     }
 
     public void testAShareGivenReplacesTheHalf() {
-        TableComponent left = table(), right = table();
+        TableComponent<Row> left = table(), right = table();
         HorizontalSplitter split = new HorizontalSplitter(Colors.BBlu).addComponent(left).addComponent(right);
         split.setBorder(false);
         split.onResizeExpandRight(left, 70);
@@ -55,7 +55,7 @@ public class SizedByContainerTest extends TestCase {
     }
 
     public void testAboveBelowNoSizesGetHalfEach() {
-        TableComponent above = table(), below = table();
+        TableComponent<Row> above = table(), below = table();
         VerticalSplitter split = new VerticalSplitter(Colors.BBlu).addComponent(above).addComponent(below);
         split.resize(new Dimension.Simple(41, 50));
         draw(split);
@@ -65,8 +65,8 @@ public class SizedByContainerTest extends TestCase {
     }
 
     public void testAFirstPaneMadeWithASizeKeepsIt() {
-        TableComponent left = new TableComponent(Colors.Cya, new Dimension.Simple(5, 30), new ObjectTableModel<Row>().column("Name", (r) -> r.name));
-        TableComponent right = table();
+        TableComponent<Row> left = new TableComponent<Row>(Colors.Cya, new Dimension.Simple(5, 30), new ObjectTableModel<Row>().column("Name", (r) -> r.name));
+        TableComponent<Row> right = table();
         HorizontalSplitter split = new HorizontalSplitter(Colors.BBlu).addComponent(left).addComponent(right);
         split.setBorder(false);
         split.resize(new Dimension.Simple(10, 81));

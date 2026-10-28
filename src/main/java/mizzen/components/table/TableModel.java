@@ -1,18 +1,31 @@
 package mizzen.components.table;
 
-public interface TableModel {
+/**
+ * What a TableComponent shows: rows of type T, each a number of columns. T is what a row is - your
+ * own objects (ObjectTableModel&lt;Sale&gt;), an Object[] (DefaultTableModel: columns only known at run
+ * time), a Map, ...
+ * <p/>
+ * getRow gives the row itself: what a table hands to onPick. A model that can't give it (one written
+ * before it existed) still shows - picking a row as an object then fails at once.
+ */
+public interface TableModel<T> {
 
     public int getRowCount();
     public int getColumnCount();
     public String getColumnName(int columnIndex);
     public Object getValueAt(int rowIndex, int columnIndex);
 
+    /** the row itself, e.g. the Sale behind row 3 */
+    public default T getRow(int rowIndex) {
+        throw new UnsupportedOperationException(getClass().getName()
+                + " gives no row objects: implement getRow(rowIndex) to pick its rows as objects (onPick, pick, getPicked)");
+    }
 
-    public static class Delegate implements TableModel {
+    public static class Delegate<T> implements TableModel<T> {
 
-        TableModel delegate;
+        TableModel<T> delegate;
 
-        public Delegate(TableModel delegate) {
+        public Delegate(TableModel<T> delegate) {
             super();
             this.delegate = delegate;
         }
@@ -37,5 +50,9 @@ public interface TableModel {
             return delegate.getValueAt(rowIndex,columnIndex);
         }
 
+        @Override
+        public T getRow(int rowIndex) {
+            return delegate.getRow(rowIndex);
+        }
     }
 }

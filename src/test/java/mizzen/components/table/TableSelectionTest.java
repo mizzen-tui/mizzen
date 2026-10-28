@@ -31,7 +31,7 @@ public class TableSelectionTest extends TestCase {
     private final CompositeWithFocusManager root = new CompositeWithFocusManager();   // as TUIApp builds it
     private final TextInput before = new TextInput(Colors.IYel, 10);
     private final TextInput after = new TextInput(Colors.IYel, 10);
-    private TableComponent table;
+    private TableComponent<Object[]> table;
     private final List<String> heard = new ArrayList<String>();
 
     @Override
@@ -40,7 +40,7 @@ public class TableSelectionTest extends TestCase {
         for (int i = 1; i <= 20; i++) {
             rows.add(new Object[] { i, "name" + i });
         }
-        table = new TableComponent(Colors.Yel, new Dimension.Simple(8, 30), new DefaultTableModel(Arrays.asList("ID", "Name"), rows));
+        table = new TableComponent<Object[]>(Colors.Yel, new Dimension.Simple(8, 30), new DefaultTableModel(Arrays.asList("ID", "Name"), rows));
         table.setName("table");
         before.setName("before");
         after.setName("after");

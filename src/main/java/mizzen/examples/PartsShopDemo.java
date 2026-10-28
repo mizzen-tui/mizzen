@@ -189,8 +189,8 @@ public class PartsShopDemo {
             .column("Qty", (i) -> i.quantity)
             .column("Price", (i) -> money(i.part.price))
             .column("Total", (i) -> money(i.total()));
-    private TableComponent salesTable;
-    private TableComponent itemsTable;
+    private TableComponent<Sale> salesTable;
+    private TableComponent<SaleItem> itemsTable;
     private DonutChart<Status> shipped;
     private PlotArea drawing;
     private final TextComponent itemLine = new TextComponent(Colors.BWhi, "");
@@ -210,7 +210,7 @@ public class PartsShopDemo {
         int bottomHeight = Math.max(0, height - topHeight - 1), formWidth = 46;   // none in a terminal too short for the top
 
         salesModel.setRows(sales);
-        salesTable = new TableComponent(Colors.Cya, new Dimension.Simple(topHeight - 2, Math.max(0, width - chartWidth - 3)), salesModel);   // none in a terminal narrower than the chart
+        salesTable = new TableComponent<Sale>(Colors.Cya, new Dimension.Simple(topHeight - 2, Math.max(0, width - chartWidth - 3)), salesModel);   // none in a terminal narrower than the chart
         salesTable.setName("sales");
         salesTable.setLinesStyle(TableLinesStyle.HEADER_ALL_AND_BORDER);
         shipped = new DonutChart<Status>(Colors.Gre, new Dimension.Simple(topHeight - 2, chartWidth))
@@ -244,13 +244,13 @@ public class PartsShopDemo {
 
         tApp.appendOnResizeAction((ta, size) -> screenSplit.resize(new Dimension.Simple(size.getHeight() - 3, size.getWidth() - 1)));
 
-        salesTable.onRowSelected((te) -> {
-            showSale(sales.get(te.getRowSelected().getTableRow()));
+        salesTable.onPick((picked, te) -> {
+            showSale(picked);
             message.setColor(Colors.IGre);
             message.setTextAndResize(" Sale " + sale.number + " - edit it below; the table, chart and totals follow");
         });
-        itemsTable.onRowSelected((te) -> {
-            showItem(sale.items.get(te.getRowSelected().getTableRow()));
+        itemsTable.onPick((picked, te) -> {
+            showItem(picked);
         });
 
         salesTable.setSelectedRow(0);
@@ -314,7 +314,7 @@ public class PartsShopDemo {
     /** the sale's items; under them the picked one - drawn, and its quantity to change */
     private Component<?> itemsPanel(int height, int width) {
         int tableHeight = Math.max(5, height / 2);
-        itemsTable = new TableComponent(Colors.Yel, new Dimension.Simple(tableHeight, width), itemsModel);
+        itemsTable = new TableComponent<SaleItem>(Colors.Yel, new Dimension.Simple(tableHeight, width), itemsModel);
         itemsTable.setName("items");
         itemsTable.setLinesStyle(TableLinesStyle.HEADER_ALL_AND_BORDER);
 

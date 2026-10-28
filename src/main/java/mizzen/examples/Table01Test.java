@@ -1,9 +1,6 @@
 package mizzen.examples;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -17,10 +14,9 @@ import mizzen.components.frameset.VerticalSplitter;
 import mizzen.components.input.DropdownListBox;
 import mizzen.components.input.RadioGroup;
 import mizzen.components.input.TextInput;
-import mizzen.components.table.DefaultTableModel;
 import mizzen.components.table.TableComponent;
-import mizzen.components.table.TableModel;
 import mizzen.controlcodes.color.Colors;
+import mizzen.examples.People.Person;
 import mizzen.controlcodes.color.Colors.FGBGColors;
 import mizzen.geom.Dimension;
 import mizzen.util.Logging;
@@ -42,9 +38,9 @@ public class Table01Test {
             // the tables' selection events: UP/DOWN/HOME/END/PgUp/PgDn select, ENTER or a click on the selected row activates
             TextComponent status = new TextComponent(Colors.IGre, "arrows select a row, ENTER activates");
             topBanner.add(status);
-            Consumer<TableComponent> showEvents = (table) -> {
-                table.onRowSelected((te) -> {
-                    status.setTextAndResize(table.getName() + ": selected row " + te.getRowSelected().getTableRow());
+            Consumer<TableComponent<Person>> showEvents = (table) -> {
+                table.onPick((person, te) -> {
+                    status.setTextAndResize(table.getName() + ": picked " + person);
                 });
                 table.onRowActivated((row, eventBus) -> {
                     status.setTextAndResize(table.getName() + ": ACTIVATED row " + row);
@@ -68,10 +64,10 @@ public class Table01Test {
                 // no sizes: the splitter sizes the tables - half each, as the top one has no height of its own
                 VerticalSplitter vs = new VerticalSplitter(Colors.BBlu);
 
-                TableComponent t1 = new TableComponent(Colors.Yel, sampleData1());
+                TableComponent<Person> t1 = new TableComponent<Person>(Colors.Yel, People.fewColumns(People.TEN));
                 t1.setName("t1-vsView");
 
-                TableComponent t2 = new TableComponent(Colors.Cya, sampleData2());
+                TableComponent<Person> t2 = new TableComponent<Person>(Colors.Cya, People.allColumns(People.many(100)));
                 t2.setName("t2-vsView");
 
                 vs.addComponent(t1);
@@ -110,10 +106,10 @@ public class Table01Test {
                 // no sizes: the splitter sizes the tables - the left one 40% of the width, the right one the rest
                 HorizontalSplitter hs = new HorizontalSplitter(Colors.BBlu);
 
-                TableComponent t1 = new TableComponent(Colors.Yel, sampleData1());
+                TableComponent<Person> t1 = new TableComponent<Person>(Colors.Yel, People.fewColumns(People.TEN));
                 t1.setName("t1-hsView");
 
-                TableComponent t2 = new TableComponent(Colors.Cya, sampleData2());
+                TableComponent<Person> t2 = new TableComponent<Person>(Colors.Cya, People.allColumns(People.many(100)));
                 t2.setName("t2-hsView");
 
                 hs.addComponent(t1);
@@ -149,47 +145,6 @@ public class Table01Test {
 
         }).start();
 
-    }
-
-    public static TableModel sampleData1() {
-
-        List<String> columnNames1 = Arrays.asList("ID", "Name", "Age", "Occupation", "Description");
-
-        List<Object[]> sample01 = Arrays.asList(
-                new Object[] {  1, "Alice",   30, "Engineer", "Enjoys hiking and outdoor activities." },
-                new Object[] {  2, "Bob",     25, "Designer", "Loves painting and digital art." },
-                new Object[] {  3, "Charlie", 35, "Teacher", "Passionate about education and learning." },
-                new Object[] {  4, "Diana",   28, "Doctor", "Works in a busy hospital." },
-                new Object[] {  5, "Eve",     40, "Chef", "Specializes in Italian cuisine." },
-                new Object[] {  6, "Frank",   22, "Student", "Studying computer science." },
-                new Object[] {  7, "Grace",   33, "Writer", "Writes novels and short stories." },
-                new Object[] {  8, "Hank",    29, "Musician", "Plays the guitar and piano." },
-                new Object[] {  9, "Ivy",     31, "Photographer", "Enjoys capturing nature and wildlife." },
-                new Object[] { 10, "Jack",    27, "Architect", "Designs modern buildings and structures." });
-
-        return new DefaultTableModel(columnNames1, sample01);
-    }
-
-    public static TableModel sampleData2() {
-        
-        List<String> columnNames2 = Arrays.asList("ID", "FirstName", "LastName", "Age", "Occupation", "City", "Country", "Email", "Phone", "Bio");
-        List<Object[]> sample02 = new ArrayList<>();
-        for (int i = 1; i <= 100; i++) {
-            sample02.add(new Object[]{
-                i,
-                "FirstName" + i,
-                "LastName" + i,
-                20 + (i % 30),
-                "Occupation" + i,
-                "City" + i,
-                "Country" + i,
-                "email" + i + "@example.com",
-                "123-456-789" + i,
-                "This is a longer text that might need to be word wrapped. It contains more detailed information about the person with ID " + i + "."
-            });
-        }
-        return new DefaultTableModel(columnNames2, sample02);
-       
     }
 
 }

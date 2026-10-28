@@ -13,14 +13,15 @@ import java.util.function.Function;
  *             .column("Name",   Device::getName)
  *             .column("Status", Device::getStatus)
  *             .setRows(devices);
- *     TableComponent table = new TableComponent(color, size, model);
+ *     TableComponent&lt;Device&gt; table = new TableComponent&lt;Device&gt;(color, model);
+ *     table.onPick((device, te) -&gt; show(device));
  * </pre>
- * getRow(index) gives back the object behind a row - e.g. the selected one.
+ * getRow(index) gives back the object behind a row; the table's onPick hands you the picked one.
  * <p/>
  * After setRows on a model a TableComponent already shows, call the table's clearData() so it
  * measures the new values.
  */
-public class ObjectTableModel<T> implements TableModel {
+public class ObjectTableModel<T> implements TableModel<T> {
 
     private final List<String> columnNames = new ArrayList<String>();
     private final List<Function<? super T, ?>> columnValues = new ArrayList<Function<? super T, ?>>();
@@ -44,6 +45,7 @@ public class ObjectTableModel<T> implements TableModel {
     }
 
     /** the object shown in row rowIndex */
+    @Override
     public T getRow(int rowIndex) {
         return rows.get(rowIndex);
     }

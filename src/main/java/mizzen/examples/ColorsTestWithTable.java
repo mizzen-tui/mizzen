@@ -77,7 +77,7 @@ public class ColorsTestWithTable {
 
             DefaultTableModel tModel = new DefaultTableModel();
 
-            TableComponent combinedColorsTable = new TableComponent(Colors.Gre, new Dimension.Simple(40*3+1,16*8+20),tModel);
+            TableComponent<Object[]> combinedColorsTable = new TableComponent<Object[]>(Colors.Gre, new Dimension.Simple(40*3+1,16*8+20),tModel);
             combinedColorsTable.setFillOnClear(false);
             combinedColorsTable.setFillOnClear(true);
             combinedColorsTable.setFillOnClear(false);

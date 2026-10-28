@@ -3,7 +3,8 @@ package mizzen.components.table;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DefaultTableModel implements TableModel {
+/** rows as Object[] - for columns only known at run time (a query result, a file); getRow gives a row's array */
+public class DefaultTableModel implements TableModel<Object[]> {
 
     List<String> columnNames;
     List<Object[]> data;
@@ -59,6 +60,11 @@ public class DefaultTableModel implements TableModel {
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         return this.data.get(rowIndex)[columnIndex];
+    }
+
+    @Override
+    public Object[] getRow(int rowIndex) {
+        return this.data.get(rowIndex);
     }
     
     private void appendRow() {

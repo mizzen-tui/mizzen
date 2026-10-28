@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.BiConsumer;
@@ -13,6 +14,7 @@ import java.util.function.Predicate;
 
 import mizzen.components.BlockChars;
 import mizzen.components.BoundedComponent;
+import mizzen.components.HasName;
 import mizzen.components.input.DisplayableValue.SimpleDisplayValue;
 import mizzen.components.input.LeafFocusBehaviour;
 import mizzen.components.input.UnfocusedSelection;
@@ -21,6 +23,7 @@ import mizzen.controlcodes.color.Colors;
 import mizzen.events.ChainedEventHandler;
 import mizzen.events.ConditionalEventHandler;
 import mizzen.events.EventBus;
+import mizzen.events.Registration;
 import mizzen.events.RequestUpdateCanvasEvent;
 import mizzen.events.TerminalEvent;
 import mizzen.events.TerminalEvent.IS_Event_TYPE;
@@ -48,16 +51,25 @@ import mizzen.util.ElapsedTime;
  * <p/>
  * One TAB stop. A selected row: UP / DOWN, HOME / END, PgUp / PgDn move it (the table scrolls to
  * keep it on screen); a click selects a row; ENTER - or a click on the selected row - activates it
- * (onRowActivated, e.g. "open this file"). onRowSelected hears every selection move (keys and
- * clicks); onCellSelected hears clicks on a cell.
+ * (onRowActivated, e.g. "open this file"). onPick hears every selection move (keys and clicks) and
+ * hands over the row itself; onRowSelected hears the same as a row number; onCellSelected hears clicks
+ * on a cell. pick(row) picks by code, as a click would.
+ * <p/>
+ * T is what a row is - the model's: a Sale (ObjectTableModel&lt;Sale&gt;), an Object[] (DefaultTableModel,
+ * columns only known at run time), ...
+ * <pre>
+ *     TableComponent&lt;Sale&gt; sales = new TableComponent&lt;Sale&gt;(Colors.Cya, salesModel);
+ *     sales.onPick((sale, te) -&gt; saleForm.show(sale));
+ * </pre>
  * <p/>
  * The selected row is hilited while the table has focus (setSelectedColor, inverted); without focus
  * it shows in the setUnfocusedSelection style (DIM by default, or NONE).
  */
-public class TableComponent extends BoundedComponent<TableComponent> implements ToFocusable, AsKeyboardHandler, Clickable {
+public class TableComponent<T> extends BoundedComponent<TableComponent<T>> implements ToFocusable, AsKeyboardHandler, Clickable {
 
 
     TableModelWidthData tableModel;
+    TableModel<T> rows;                       // the model as given: its rows are T (tableModel measures and caches its cells)
     // List<TableColumn> tableColumns;
     boolean hasBorder = true;
     Color headerColor;
@@ -86,19 +98,21 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
     TableCellAtPositions tableCellAtPositions;
 
     /** sized by what holds it (a splitter's rules, a resize): it starts at no size */
-    public TableComponent(Color color, TableModel tableModel) {
+    public TableComponent(Color color, TableModel<T> tableModel) {
         this(color, Dimension.ZERO, tableModel);
     }
 
-    public TableComponent(Color color, Dimension d, TableModel tableModel) {
+    public TableComponent(Color color, Dimension d, TableModel<T> tableModel) {
         super(color, d);
         this.headerColor = color.getBoldTransform().transform(color);
+        this.rows = tableModel;
         this.tableModel = new TableModelWidthData(tableModel);
         this.tableCellAtPositions = new TableCellAtPositions(this.tableModel);
     }
 
-    public void setTableModel(TableModel tableModel) {
+    public void setTableModel(TableModel<T> tableModel) {
         clearData();
+        this.rows = tableModel;
         this.tableModel = new TableModelWidthData(tableModel);
         this.tableCellAtPositions = new TableCellAtPositions(this.tableModel);
     }
@@ -588,7 +602,7 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
      * true (the default): a blank line under each row - easier to read; false: rows one under the
      * other, twice as many on show. With lines between rows (ALL) there is always the line.
      */
-    public TableComponent setSpacedRows(boolean spacedRows) {
+    public TableComponent<T> setSpacedRows(boolean spacedRows) {
         this.spacedRows = spacedRows;
         clearData();
         return this;
@@ -663,7 +677,7 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
 	}
 
 
-    static class TableModelWidthData extends TableModel.Delegate {
+    static class TableModelWidthData extends TableModel.Delegate<Object> {
 
         List<IScreenLineSegmentsBuffer> headerData;
         Integer maxHeaderHeight;
@@ -672,8 +686,9 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
         List<Integer> maxHeights;
         List<TableColumnWithDataAndWidths> tableColumns;
 
-        public TableModelWidthData(TableModel delegate) {
-            super(delegate);
+        @SuppressWarnings("unchecked")
+        public TableModelWidthData(TableModel<?> delegate) {
+            super((TableModel<Object>) delegate);           // only its cells are read here, as Objects
             headerData = new ArrayList<IScreenLineSegmentsBuffer>();
             data = new ArrayList<List<IScreenLineSegmentsBuffer>>();
             maxWidths = new ArrayList<Integer>();
@@ -1053,9 +1068,9 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
 
     static class TableColumnDataBuilderDropColumnsWhenNeeded implements TableColumnDataBuilder {
 
-        TableComponent tableComponent;
+        TableComponent<?> tableComponent;
 
-        public TableColumnDataBuilderDropColumnsWhenNeeded(TableComponent tableComponent) {
+        public TableColumnDataBuilderDropColumnsWhenNeeded(TableComponent<?> tableComponent) {
             super();
             this.tableComponent = tableComponent;
         }
@@ -1200,14 +1215,68 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
         getChainedEventHandler().appendEventHandler(cellSelectedHandler);
     }
 
-    private RowSelectedEventHandler rowSelectedHandler = null;
+    // everyone told of a row selection - onRowSelected's and onPick's listeners, side by side: one
+    // handler on the table's chain claims the event and runs them all (a chain runs only the first
+    // handler that claims an event)
+    private final ChainedEventHandler rowSelectedListeners = ChainedEventHandler.useHandleAllStrategy("rowSelected");
+    private boolean rowSelectedListenersOnChain = false;
 
-    public void onRowSelected(RowSelectedCustomHandler handler) {
-        if (rowSelectedHandler != null) {
-            getChainedEventHandler().removeEventHandler(rowSelectedHandler);
+    private Registration addRowSelectedListener(RowSelectedCustomHandler handler) {
+        if (!rowSelectedListenersOnChain) {
+            rowSelectedListenersOnChain = true;
+            getChainedEventHandler().appendEventHandler(new RowSelectedEventHandler(this, rowSelectedListeners::handle));
         }
-        rowSelectedHandler = new RowSelectedEventHandler(this, handler);
-        getChainedEventHandler().appendEventHandler(rowSelectedHandler);
+        ConditionalEventHandler listener = new ConditionalEventHandler.Impl((te) -> true, (te) -> handler.handle((RowSelectedEvent) te));
+        rowSelectedListeners.appendEventHandler(listener);
+        return () -> rowSelectedListeners.removeEventHandler(listener);
+    }
+
+    /** handler hears every selection move as a row number - alongside any others; the Registration takes it out again */
+    public Registration onRowSelected(RowSelectedCustomHandler handler) {
+        return addRowSelectedListener(handler);
+    }
+
+    /**
+     * picked hears every selection move (keys, clicks, pick) with the row itself - alongside any
+     * others; the Registration takes it out again. It needs a model that gives its rows (getRow):
+     * ObjectTableModel, DefaultTableModel; one that doesn't fails here, not at the first pick.
+     * <pre>
+     *     sales.onPick((sale, te) -&gt; saleForm.show(sale));
+     * </pre>
+     */
+    public Registration onPick(BiConsumer<T, TerminalEvent<?>> picked) {
+        if (rows.getRowCount() > 0) {
+            rows.getRow(0);                                  // fail now if the model gives no rows
+        }
+        return addRowSelectedListener((te) -> picked.accept(rows.getRow(te.getRowSelected().getTableRow()), te));
+    }
+
+    /**
+     * Pick row by code: selected, scrolled to, and onPick / onRowSelected told - as a click would. It
+     * must be one of the rows (as equals finds it); one that isn't fails. setSelectedRow moves the
+     * selection without telling anyone.
+     */
+    public TableComponent<T> pick(T row, EventBus bus) {
+        int index = indexOf(row);
+        if (index < 0) {
+            throw new IllegalArgumentException(HasName.UTIL.getName(this) + ": pick(" + row + ") - not one of the table's rows");
+        }
+        select(index, bus);
+        return this;
+    }
+
+    /** the picked row; null if none */
+    public T getPicked() {
+        return selectedRow < 0 ? null : rows.getRow(selectedRow);
+    }
+
+    private int indexOf(T row) {
+        for (int i = 0; i < rows.getRowCount(); i++) {
+            if (Objects.equals(rows.getRow(i), row)) {
+                return i;
+            }
+        }
+        return -1;
     }
     
     public static class CellSelected {
@@ -1264,7 +1333,7 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
 
     public static class CellSelectedEvent extends TerminalEvent<CellSelected> {
         private static final long serialVersionUID = -6811173196070099896L;
-        public CellSelectedEvent(TableComponent tableComponent, CellSelected cellSelected) {
+        public CellSelectedEvent(TableComponent<?> tableComponent, CellSelected cellSelected) {
             super(tableComponent, TerminalEvent.TYPE.TABLE_CELL_SELECTED, cellSelected);
         }
         public CellSelected getCellSelected() {
@@ -1275,7 +1344,7 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
     public static class RowSelectedEvent extends TerminalEvent<RowSelected> {
         private static final long serialVersionUID = -7941222548975911844L;
 
-        public RowSelectedEvent(TableComponent tableComponent, RowSelected rowSelected) {
+        public RowSelectedEvent(TableComponent<?> tableComponent, RowSelected rowSelected) {
             super(tableComponent, TerminalEvent.TYPE.TABLE_ROW_SELECTED, rowSelected);
         }
         public RowSelected getRowSelected() {
@@ -1284,7 +1353,7 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
     }
 
     public static class CellSelectedEventHandler extends ConditionalEventHandler.Impl {
-        public CellSelectedEventHandler(TableComponent src, CellSelectedCustomHandler cellSelectedCustomHandler) {
+        public CellSelectedEventHandler(TableComponent<?> src, CellSelectedCustomHandler cellSelectedCustomHandler) {
             super(canHandle_TABLE_CELL_SELECTED.and((te)-> te.getSource() == src), 
                     (te) -> {
                         cellSelectedCustomHandler.handle((CellSelectedEvent)te);
@@ -1293,7 +1362,7 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
     }
 
     public static class RowSelectedEventHandler extends ConditionalEventHandler.Impl {
-        public RowSelectedEventHandler(TableComponent src, RowSelectedCustomHandler rowSelectedCustomHandler) {
+        public RowSelectedEventHandler(TableComponent<?> src, RowSelectedCustomHandler rowSelectedCustomHandler) {
             super(canHandle_TABLE_ROW_SELECTED.and((te)-> te.getSource() == src), 
                     (te) -> {
                         rowSelectedCustomHandler.handle((RowSelectedEvent)te);
@@ -1314,7 +1383,7 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
         return complexKeyHandler;
     }
 
-    private TableComponent appendEventHandler(ConditionalEventHandler eventHandler) {
+    private TableComponent<T> appendEventHandler(ConditionalEventHandler eventHandler) {
         this.getChainedEventHandler().appendEventHandler(eventHandler);
         return this;
     }
@@ -1359,7 +1428,7 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
     }
 
     /** select row (by code: onRowSelected is not told); the table scrolls to show it */
-    public TableComponent setSelectedRow(int row) {
+    public TableComponent<T> setSelectedRow(int row) {
         if (row >= -1 && row < tableModel.getRowCount()) {
             selectedRow = row;
             scrollToSelectedRow();
@@ -1369,21 +1438,21 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
     }
 
     /** the colour of the selected row (inverted while the table has focus) */
-    public TableComponent setSelectedColor(Color selectedColor) {
+    public TableComponent<T> setSelectedColor(Color selectedColor) {
         this.selectedColor = selectedColor;
         markAsDirty();
         return this;
     }
 
     /** how the selected row shows without focus: DIM (default) or NONE (BRACKETS / ARROW show as DIM) */
-    public TableComponent setUnfocusedSelection(UnfocusedSelection unfocusedSelection) {
+    public TableComponent<T> setUnfocusedSelection(UnfocusedSelection unfocusedSelection) {
         this.unfocusedSelection = unfocusedSelection;
         markAsDirty();
         return this;
     }
 
     /** ENTER, or a click on the selected row: (row, eventBus) */
-    public TableComponent onRowActivated(BiConsumer<Integer, EventBus> onRowActivated) {
+    public TableComponent<T> onRowActivated(BiConsumer<Integer, EventBus> onRowActivated) {
         this.onRowActivated = onRowActivated;
         return this;
     }
@@ -1487,6 +1556,9 @@ public class TableComponent extends BoundedComponent<TableComponent> implements 
             focus.requestFocus(bus);
             if (cell != null) {
                 bus.raiseEvent(new CellSelectedEvent(this, new CellSelected(cell)));
+                if (cell.isHeader()) {
+                    return;                                         // a heading: not a row to select or activate
+                }
                 if (cell.tableRow == selectedRow) {
                     onRowActivated.accept(selectedRow, bus);     // a click on the selected row activates it
                 } else {

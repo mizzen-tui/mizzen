@@ -14,6 +14,7 @@ import mizzen.components.input.RadioGroup;
 import mizzen.components.table.TableComponent;
 import mizzen.components.table.TableComponent.TableLinesStyle;
 import mizzen.controlcodes.color.Colors;
+import mizzen.examples.People.Person;
 import mizzen.geom.Dimension;
 
 public class TableResizeTest {
@@ -30,7 +31,7 @@ public class TableResizeTest {
            // HorizontalPanel controls = new HorizontalPanel().setHorizontalSpacer(2);
             controls.add(new TextComponent("TEST TABLE RESIZE"));
 
-            RadioGroup<Boolean> rb = RadioGroup.onOff("Table Data", "sampleData1", "sampleData2", true).setColor(Colors.IWhi);
+            RadioGroup<Boolean> rb = RadioGroup.onOff("Table Data", "ten people", "a hundred", true).setColor(Colors.IWhi);
 
             controls.add(rb);
 
@@ -48,7 +49,7 @@ public class TableResizeTest {
                 return vsDim;
             };
 
-            TableComponent t1 = new TableComponent(Colors.Yel, new Dimension.Simple((tApp.getDimensions().getHeight()-4), (tApp.getDimensions().getWidth()-4)), Table01Test.sampleData1());
+            TableComponent<Person> t1 = new TableComponent<Person>(Colors.Yel, new Dimension.Simple((tApp.getDimensions().getHeight()-4), (tApp.getDimensions().getWidth()-4)), People.fewColumns(People.TEN));
             t1.setName("t1");
 
             //   Color color, String title, Component<?> child
@@ -68,9 +69,9 @@ public class TableResizeTest {
 
             rb.onChange((te) -> {
                 if (rb.getValue()) {
-                    t1.setTableModel(Table01Test.sampleData1());
+                    t1.setTableModel(People.fewColumns(People.TEN));
                 } else {
-                    t1.setTableModel(Table01Test.sampleData2());
+                    t1.setTableModel(People.allColumns(People.many(100)));
                 }
             });
 
