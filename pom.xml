@@ -27,6 +27,18 @@
 
 
   <build>
+	  <resources>
+		  <resource>
+			  <directory>src/main/resources</directory>
+		  </resource>
+		  <!-- the examples' own .java in the jar too: the examples' desktop shows them (SourceFiles) -->
+		  <resource>
+			  <directory>src/main/java</directory>
+			  <includes>
+				  <include>mizzen/examples/**/*.java</include>
+			  </includes>
+		  </resource>
+	  </resources>
 	  <plugins>
 	    <plugin>
 		<groupId>org.apache.maven.plugins</groupId>
