@@ -1,11 +1,15 @@
 package mizzen.examples;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import mizzen.app.Embedding;
 import mizzen.app.TUIApp;
 import mizzen.components.Component;
+import mizzen.components.HasName;
+import mizzen.components.ParentContainer;
 import mizzen.components.TextComponent;
 import mizzen.components.composite.Composite;
 import mizzen.components.composite.HorizontalPanel;
@@ -19,7 +23,11 @@ import mizzen.components.plot.braille.BrailleGrid;
 import mizzen.components.plot.shape.DotMatrixText;
 import mizzen.components.input.tree.TreeView;
 import mizzen.components.scroll.ScrollableComponent;
+import mizzen.components.tab.TabAction;
+import mizzen.components.tab.TabPanel;
+import mizzen.components.tab.TabPanel.TabContext;
 import mizzen.controlcodes.color.Colors;
+import mizzen.events.EventBus;
 import mizzen.events.TimedRequestedController;
 import mizzen.examples.form.FormTry;
 import mizzen.examples.form.FormTryByHand;
@@ -33,6 +41,7 @@ import mizzen.geom.Dimension;
 import mizzen.geom.position.Position;
 import mizzen.geom.position.PositionTransform;
 import mizzen.util.SourceFiles;
+import mizzen.util.StringUtils;
 import mizzen.util.formatters.JavaSyntaxHilighterTextFormatter;
 import mizzen.util.formatters.TextLineFormatter;
 
@@ -41,10 +50,11 @@ import mizzen.util.formatters.TextLineFormatter;
  * its own main, unchanged, through TUIApp.runEmbedded. The tree is the inventory: components by kind,
  * then graphics; groups open and close, a leaf runs its example. Picking another takes the running
  * one out, with everything it put on the event bus; the status line shows how many handlers that is.
- * Source puts the example's code under it, coloured, a divider between them (drag it: the example is
- * told its new size and lays itself out again); Source again takes the code away. While it shows, picking
- * another example shows that one's code too. SourceFiles finds the code: in the jar, or under
- * src/main/java - when there is none, the status line says so.
+ * Learn shows the learning panel with it - tabs: its code, coloured; its components, a tree of what it
+ * is made of (pick one and it is framed in the running example) - below it, to its right, or alone: the
+ * bar on the top border says where. Drag the divider and the example lays itself out again; the divider
+ * is remembered. While it shows, picking another example shows that one's. SourceFiles finds the code:
+ * in the jar, or under src/main/java.
  * <p/>
  * Things to try: TAB from the tree into the embedded example and back; Button bar's F1 / F2 / F3
  * (its hot keys work wherever focus is, as they do when it runs alone); Fractals' timer stopping
@@ -125,20 +135,21 @@ public class EmbeddedAppTest {
             tree.expandAll();
             ScrollableComponent treePane = new ScrollableComponent(Colors.IGre, new Dimension.Simple(10, TREE_WIDTH), tree);
             treePane.setTitle(" Examples ");
-            Button sourceButton = new Button(Colors.IGre, "Source", true);   // a toggle: pressed, the picked example's code shows under it
+            Button learnButton = new Button(Colors.IGre, "Learn", true);   // a toggle: pressed, the learning panel shows
             VerticalPanel left = new VerticalPanel();
             left.add(treePane);
-            left.add(sourceButton);
+            left.add(learnButton);
             left.onResizeExpandDown(treePane);
 
-            // right: where the examples run - the embedded app gets the inside of its border - and, with Source,
-            // its code: below it, to its right, or the code only - the bar on the top border says where
+            // right: where the examples run - the embedded app gets the inside of its border - and, with Learn,
+            // the learning panel (its code, its components): below it, to its right, or alone - the bar on the
+            // top border says where
             Composite slot = new Composite();
             slot.setBorder(true);
             greeting = new Greeting();                     // until the first example runs
             slot.add(greeting.panel);
             slot.onResizeExpandDownAndRight(greeting.panel);
-            RadioGroup<String> where = RadioGroup.horizontal("Below", "Right", "Code only");
+            RadioGroup<String> where = RadioGroup.horizontal("Below", "Right", "Learn only");
             where.setColor(Colors.IGre);
             RightSide right = new RightSide(slot, where);
 
@@ -173,22 +184,22 @@ public class EmbeddedAppTest {
                 Demo picked = tree.getValue().getValue();
                 if (picked.type != null) {
                     run(picked, host, slot, status);
-                    if (sourceButton.getValue()) {
-                        showCode(picked, right, status);        // the new one's code in place of the last one's
+                    if (learnButton.getValue()) {
+                        showLearning(picked, right, slot, status, te.getEventBus());   // the new one's, in place of the last one's
                     }
                 }
             });
             tree.onChange((te) -> runPicked.onRequest(te.getEventBus()));
-            sourceButton.onChange((te) -> {
+            learnButton.onChange((te) -> {
                 DefaultTreeNode<Demo> picked = tree.getValue();
-                if (!sourceButton.getValue()) {
-                    right.showCode(null);
-                    status.setText(" The code put away - Source shows it again");
+                if (!learnButton.getValue()) {
+                    right.showLearning(null);
+                    status.setText(" The learning panel put away - Learn shows it again");
                 } else if (picked == null || picked.getValue().type == null) {
-                    sourceButton.setValue(false);
-                    status.setText(" Pick an example first - then Source shows its code");
+                    learnButton.setValue(false);
+                    status.setText(" Pick an example first - then Learn shows its code and its components");
                 } else {
-                    showCode(picked.getValue(), right, status);
+                    showLearning(picked.getValue(), right, slot, status, te.getEventBus());
                 }
             });
             where.onChange((te) -> right.place(where.getValue()));
@@ -235,7 +246,7 @@ public class EmbeddedAppTest {
         final Composite panel = new Composite();
         private final BrailleGrid letters = new BrailleGrid(Colors.BCya, new Dimension.Simple(1, 1));
         private final DotMatrixText name = new DotMatrixText(NAME, Colors.BCya);
-        private final TextComponent line = new TextComponent(Colors.IGre, "Pick an example in the tree  -  Source shows its code");
+        private final TextComponent line = new TextComponent(Colors.IGre, "Pick an example in the tree  -  Learn shows its code and its components");
 
         Greeting() {
             panel.add(letters);
@@ -263,26 +274,91 @@ public class EmbeddedAppTest {
         }
     }
 
-    /** the example's code, coloured as Java, where the bar says - in place of any code shown */
-    private static void showCode(Demo demo, RightSide right, TextComponent status) {
+    /**
+     * The learning panel for an example, where the bar says, in place of the last one: tabs - its code,
+     * coloured as Java, and its components, a tree of what the running example is made of.
+     */
+    private static void showLearning(Demo demo, RightSide right, Composite slot, TextComponent status, EventBus bus) {
         String code = SourceFiles.find(demo.type);
-        if (code == null) {
-            status.setText(" No source to show for " + demo.name + " (not in the jar, not under src/main/java)");
-            return;
-        }
-        TextComponent text = new TextComponent(Colors.Whi, TextLineFormatter.UTIL.format(code, new JavaSyntaxHilighterTextFormatter()));
-        ScrollableComponent view = new ScrollableComponent(Colors.IGre, text);
-        view.setTitle(" " + demo.type.getSimpleName() + ".java ");
-        right.showCode(view);
-        status.setText(" " + demo.name + " and its code - drag the divider; the bar on top moves it; Source again puts it away");
+        TextComponent text = new TextComponent(Colors.Whi, code != null
+                ? TextLineFormatter.UTIL.format(code, new JavaSyntaxHilighterTextFormatter())
+                : " No source to show for " + demo.name + " (not in the jar, not under src/main/java)");
+        ScrollableComponent codeView = new ScrollableComponent(Colors.IGre, text);
+        codeView.setTitle(" " + demo.type.getSimpleName() + ".java ");
+
+        TabPanel learning = new TabPanel(Colors.IGre);
+        learning.addTab("Code", codeView);
+        learning.addTab("Components", null, new ComponentsTab(slot, right));
+        right.showLearning(learning);
+        learning.displayCurrentTab(bus);
+        status.setText(" " + demo.name + " - its code, and Components: pick one and it is framed in the example");
     }
 
     /**
-     * The right side: the running example, in its slot, and its code if shown - below it, to its right,
-     * or the code only (the example runs on, out of sight). The slot sits in a holder it never leaves, so
-     * the example runs on whatever happens around it; each change builds the arrangement afresh (a
-     * splitter can't give back a pane), taking the holder and the code out of the old one first. The bar
-     * floats on the top border, at its right end - over whichever border is there - while the code shows.
+     * What the running example is made of: a tree of its components - kind, name, size - built afresh
+     * each time the tab is chosen (no timer: a still picture to explore). Pick one and it is framed in
+     * the example - drawn over it, the example itself untouched.
+     */
+    private static class ComponentsTab extends TabAction<ScrollableComponent> {
+
+        private final Composite slot;
+        private final RightSide right;
+        private final TreeView<DefaultTreeNode<Component<?>>> tree =
+                new TreeView<DefaultTreeNode<Component<?>>>(Colors.Whi, new Dimension.Simple(1, 1), (node) -> describe(node.getValue()));
+
+        ComponentsTab(Composite slot, RightSide right) {
+            this.slot = slot;
+            this.right = right;
+            tree.onChange((te) -> right.frame(tree.getValue() == null ? null : tree.getValue().getValue()));
+        }
+
+        @Override
+        protected ScrollableComponent getComponent(TabContext tabContext) {
+            ScrollableComponent view = new ScrollableComponent(Colors.IGre, tree);
+            view.setTitle(" The example's components ");
+            return view;
+        }
+
+        @Override
+        public void activateComponent(EventBus eventBus, TabContext tabContext, ScrollableComponent view) {
+            tree.setModel(treeOf(slot).asModel());
+            tree.expandAll();
+        }
+
+        @Override
+        public void deactivateComponent(EventBus eventBus, TabContext tabContext, ScrollableComponent view) {
+            right.frame(null);
+        }
+
+        private static DefaultTreeNode<Component<?>> treeOf(Component<?> component) {
+            DefaultTreeNode<Component<?>> node = new DefaultTreeNode<Component<?>>(component);
+            if (component instanceof ParentContainer) {
+                for (Component<?> child : ((ParentContainer) component).getChildren()) {
+                    node.add(treeOf(child));
+                }
+            }
+            return node;
+        }
+
+        // e.g. TableComponent "sales"  9x70 - an anonymous class by what it extends
+        private static String describe(Component<?> component) {
+            Class<?> type = component.getClass();
+            while (type.isAnonymousClass()) {
+                type = type.getSuperclass();
+            }
+            String name = component instanceof HasName ? ((HasName<?>) component).getName() : null;
+            String named = name == null || name.isEmpty() || name.length() > 30 ? "" : " \"" + name + "\"";
+            return type.getSimpleName() + named + "  " + component.getHeight() + "x" + component.getWidth();
+        }
+    }
+
+    /**
+     * The right side: the running example, in its slot, and the learning panel if shown - below it, to
+     * its right, or alone (the example runs on, out of sight). The slot sits in a holder it never leaves,
+     * so the example runs on whatever happens around it; each change builds the arrangement afresh (a
+     * splitter can't give back a pane), taking the holder and the panel out of the old one first. The bar
+     * floats on the top border, at its right end - over whichever border is there - while the panel shows.
+     * A component picked in the panel is framed: four lines over the holder, kept on top.
      */
     private static class RightSide {
 
@@ -290,7 +366,9 @@ public class EmbeddedAppTest {
         private final Composite holder = new Composite();  // the slot's one parent, for good
         private final Component<?> bar;
         private Component<?> arrangement;
-        private ScrollableComponent code;                 // null: none shown
+        private Component<?> code;                        // the learning panel; null: none shown
+        private Component<?> framed;                      // the component picked in it, framed in the example
+        private final List<TextComponent> frameLines = new ArrayList<TextComponent>();
         private String where = "Below";
         private final Map<String, Integer> shares = new HashMap<String, Integer>();   // the example's share, per placement - kept as dragged
 
@@ -301,16 +379,52 @@ public class EmbeddedAppTest {
             area.add(bar);                                // first: the arrangement, added after it, leaves it no room
             area.keepOnTop(bar);                          // above the arrangement - whatever focus raises in it
             area.appendOnResize((size) -> barToTheRightEnd());
+            holder.appendOnResize((size) -> placeFrame());   // the example resized: the frame follows its component
             rebuild();
         }
 
-        /** code shown where the bar says; null: none - the example alone */
-        void showCode(ScrollableComponent code) {
-            this.code = code;
+        /** the learning panel shown where the bar says; null: none - the example alone */
+        void showLearning(Component<?> panel) {
+            this.code = panel;
+            frame(null);
             rebuild();
         }
 
-        /** where the code goes: Below, Right, Code only */
+        /** a frame around component, over the running example; null: none */
+        void frame(Component<?> component) {
+            framed = component;
+            placeFrame();
+        }
+
+        // four lines around the framed component - one cell outside it, so it stays readable - where it is
+        // now, kept on top of the example
+        private void placeFrame() {
+            for (TextComponent line : frameLines) {
+                holder.remove(line);
+            }
+            frameLines.clear();
+            Position at = framed == null ? null : Component.UTIL.getCanvasOffsetFor(framed);
+            Position origin = Component.UTIL.getCanvasOffsetFor(holder);
+            if (at == null || origin == null || framed.getHeight() < 1 || framed.getWidth() < 1) {
+                return;
+            }
+            int top = at.getRow() - origin.getRow() - 1, left = at.getCol() - origin.getCol() - 1;
+            int high = framed.getHeight(), wide = framed.getWidth();
+            String side = StringUtils.repeat("┃\n", high);
+            frameLine(top, left, "┏" + StringUtils.repeat("━", wide) + "┓");
+            frameLine(top + 1, left, side.substring(0, side.length() - 1));
+            frameLine(top + 1, left + wide + 1, side.substring(0, side.length() - 1));
+            frameLine(top + high + 1, left, "┗" + StringUtils.repeat("━", wide) + "┛");
+        }
+
+        private void frameLine(int row, int col, String text) {
+            TextComponent line = new TextComponent(Colors.BPur, text);
+            holder.add(new Position.Simple(Math.max(0, row), Math.max(0, col)), line);
+            holder.keepOnTop(line);
+            frameLines.add(line);
+        }
+
+        /** where the panel goes: Below, Right, Learn only */
         void place(String where) {
             this.where = where;
             rebuild();
@@ -368,7 +482,7 @@ public class EmbeddedAppTest {
                     split.onResizeExpandRight(holder, share("Right"));
                     return split;
                 }
-                case "Code only":
+                case "Learn only":
                     return code;                          // the example runs on, out of sight
                 default: {
                     VerticalSplitter split = new VerticalSplitter(Colors.IGre).addComponent(holder).addComponent(code);
