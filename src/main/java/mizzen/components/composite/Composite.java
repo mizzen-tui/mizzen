@@ -230,6 +230,7 @@ public class Composite extends AbstractComponent<Composite>
             fullrecalcDim();
             return this;
         }
+        Dimension.UTIL.failIfNegative(HasName.UTIL.getName(this), d.getHeight(), d.getWidth());   // names this panel: d may be worked out lazily (a delegate)
         Dimension previousDimension = new Rectangle.Simple(this);
         this.bounds = new Rectangle.Simple(d);
         this.boundsFixed = true;
@@ -1384,7 +1385,8 @@ public class Composite extends AbstractComponent<Composite>
                 offsetForBorder = Position.ZERO.offsetToRowCol(1, 1);
                 // children stay inside the border - fixed size or growing: a child placed relative to
                 // the composite itself (e.g. top-right) can reach the border even when it grows
-                clippedArea = new Rectangle.Simple(clippedArea.getRow()+1, clippedArea.getCol()+1, clippedArea.getHeight()-2, clippedArea.getWidth()-2);
+                clippedArea = new Rectangle.Simple(clippedArea.getRow()+1, clippedArea.getCol()+1,
+                                                   Math.max(0, clippedArea.getHeight()-2), Math.max(0, clippedArea.getWidth()-2));   // squeezed to 1 row, the border leaves nothing inside
             } else {
                 offsetForBorder = Position.ZERO;
             }

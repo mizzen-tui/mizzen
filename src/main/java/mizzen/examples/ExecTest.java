@@ -89,12 +89,12 @@ public class ExecTest {
         Dimension sizeOfWindow = new Dimension() {
             @Override
             public int getWidth() {
-                return app.getCanvas().getWidth() / 2 - 6;
+                return Math.max(0, app.getCanvas().getWidth() / 2 - 6);       // none in a narrow terminal
             }
 
             @Override
             public int getHeight() {
-                return app.getCanvas().getHeight() - 17;
+                return Math.max(0, app.getCanvas().getHeight() - 17);         // none in a short one
             }
         };
 

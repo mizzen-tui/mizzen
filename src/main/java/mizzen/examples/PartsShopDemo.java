@@ -207,10 +207,10 @@ public class PartsShopDemo {
         Dimension screen = tApp.getDimensions();
         int height = screen.getHeight() - 3, width = screen.getWidth() - 1;
         int topHeight = Math.max(9, height * 2 / 5), chartWidth = 44;
-        int bottomHeight = height - topHeight - 1, formWidth = 46;
+        int bottomHeight = Math.max(0, height - topHeight - 1), formWidth = 46;   // none in a terminal too short for the top
 
         salesModel.setRows(sales);
-        salesTable = new TableComponent(Colors.Cya, new Dimension.Simple(topHeight - 2, width - chartWidth - 3), salesModel);
+        salesTable = new TableComponent(Colors.Cya, new Dimension.Simple(topHeight - 2, Math.max(0, width - chartWidth - 3)), salesModel);   // none in a terminal narrower than the chart
         salesTable.setName("sales");
         salesTable.setLinesStyle(TableLinesStyle.HEADER_ALL_AND_BORDER);
         shipped = new DonutChart<Status>(Colors.Gre, new Dimension.Simple(topHeight - 2, chartWidth))
@@ -227,8 +227,8 @@ public class PartsShopDemo {
 
         HorizontalSplitter bottom = new HorizontalSplitter(Colors.BBlu, new Dimension.Simple(bottomHeight, width));
         bottom.setBorder(false);
-        bottom.addComponent(saleFormPanel(bottomHeight - 2, formWidth));
-        bottom.addComponent(itemsPanel(bottomHeight - 2, width - formWidth - 3));
+        bottom.addComponent(saleFormPanel(Math.max(0, bottomHeight - 2), formWidth));
+        bottom.addComponent(itemsPanel(Math.max(0, bottomHeight - 2), Math.max(0, width - formWidth - 3)));
 
         VerticalSplitter screenSplit = new VerticalSplitter(Colors.BBlu, new Dimension.Simple(height, width));
         screenSplit.setBorder(true);
@@ -318,7 +318,7 @@ public class PartsShopDemo {
         itemsTable.setName("items");
         itemsTable.setLinesStyle(TableLinesStyle.HEADER_ALL_AND_BORDER);
 
-        drawing = new PlotArea(Colors.Gre, new Dimension.Simple(height - tableHeight - 1, Math.min(30, width / 2)))
+        drawing = new PlotArea(Colors.Gre, new Dimension.Simple(Math.max(0, height - tableHeight - 1), Math.min(30, width / 2)))   // none when the items table takes the height
                 .showing(-1.3, 1.3, -1.3, 1.3)
                 .scaling(PlotArea.Scaling.EQUAL)
                 .axes(false)

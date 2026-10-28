@@ -174,7 +174,8 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
         Dimension sizeAfterSuperResize = sizeAfterSuperResize();       // not d: the parent's rules may have resized this again
         this.border.resize(sizeAfterSuperResize);
         if ( this.component instanceof CanResize)
-           ((CanResize)this.component).resize(new Dimension.Simple(sizeAfterSuperResize.getHeight()-2, sizeAfterSuperResize.getWidth()-2));
+           ((CanResize)this.component).resize(new Dimension.Simple(Math.max(0, sizeAfterSuperResize.getHeight()-2),     // the border takes 2:
+                                                                   Math.max(0, sizeAfterSuperResize.getWidth()-2)));    // squeezed to 1 row, nothing is left inside
     }
 
 

@@ -62,6 +62,11 @@ public class ScrollableComponent  extends ComponentWithFocus<Composite, Scrollab
     private ViewPortNavigable navigator;
 
 
+    /** sized by what holds it (a splitter's rules, a resize): it starts at no size */
+    public ScrollableComponent(Color color, Component<?> componentBeingViewed) {
+        this(color, Dimension.ZERO, componentBeingViewed);
+    }
+
     public ScrollableComponent(Color color, Dimension d, Component<?> componentBeingViewed)  {
         super(color, new Composite());
         
@@ -72,7 +77,7 @@ public class ScrollableComponent  extends ComponentWithFocus<Composite, Scrollab
         this.componentBeingViewed = componentBeingViewed;
 
         viewer = new WindowViewComponent(color,
-                                         new Dimension.Simple(d.getHeight() - 2, d.getWidth() - 2),
+                                         new Dimension.Simple(Math.max(0, d.getHeight() - 2), Math.max(0, d.getWidth() - 2)),   // inside the border; nothing at no size
                                          this.componentBeingViewed);
 
         borderedComponent = new BorderedComponent(color, viewer);
@@ -104,7 +109,7 @@ public class ScrollableComponent  extends ComponentWithFocus<Composite, Scrollab
 
         hScrollBar = new ScrollBarHorizontal(color,
                                              borderedComponent.getPostion_BottomLeft().offsetAdd(0, 1),
-                                             borderedComponent.getWidth() - 3 - footerControls.getWidth()).enableKeyEvents(false)
+                                             Math.max(0, borderedComponent.getWidth() - 3 - footerControls.getWidth())).enableKeyEvents(false)   // a start: layOutFooter sizes it; a box narrower than its footer leaves it none
                                            .setTabStop(false);   // mouse controls, like the footer: not a TAB stop
 
         HasName.UTIL.decorateWithParentsNamePrefix(hScrollBar, this);
@@ -118,6 +123,7 @@ public class ScrollableComponent  extends ComponentWithFocus<Composite, Scrollab
 
         this.getContainer().add(hScrollBar);
         this.getContainer().add(vScrollBar);
+        scrollBarsInPanel = true;
 
         ownHandlers.appendEventHandler(new  WindowViewComponent.ScrollToViewHandler(()->this.viewer, this));
 
@@ -302,7 +308,7 @@ public class ScrollableComponent  extends ComponentWithFocus<Composite, Scrollab
         borderedComponent.resize(d);
 
         vScrollBar.setRectangle(new Rectangle.Simple(borderedComponent.getPostion_TopRight().offsetAdd(1, 0),
-                                                     new Dimension.Simple(borderedComponent.getHeight() - 2, 1)));
+                                                     new Dimension.Simple(Math.max(0, borderedComponent.getHeight() - 2), 1)));   // between the corners; a 1-row box has none
         vScrollBar.markAsDirty();
 
 //        positionFooterText();
@@ -322,9 +328,13 @@ public class ScrollableComponent  extends ComponentWithFocus<Composite, Scrollab
         super.draw(color, segments);
     }
 
+    // set once both scroll bars are in the panel: until then (while the constructor runs) there is
+    // nothing to bring to front - a resize during construction marks this dirty before they are added
+    private boolean scrollBarsInPanel = false;
+
     public void markAsDirty() {
         super.markAsDirty();
-        if (vScrollBar != null) {
+        if (scrollBarsInPanel) {
             vScrollBar.markAsDirty();
             hScrollBar.markAsDirty();
             // following is a hack because need to always ensure on top - but it is expensive

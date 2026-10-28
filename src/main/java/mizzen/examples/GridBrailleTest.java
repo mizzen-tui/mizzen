@@ -101,7 +101,7 @@ public class GridBrailleTest {
 
             getBrailleComponent().clearAndRemoveAllChildren();
 
-            getBrailleComponent().setBounds(bounds.getHeight() - 4, bounds.getWidth() - 4);
+            getBrailleComponent().setBounds(Math.max(0, bounds.getHeight() - 4), Math.max(0, bounds.getWidth() - 4));   // none in a small window
             getBrailleComponent().setBorder(false);
             getBrailleComponent().setName("brailleComponent");
 
@@ -128,8 +128,9 @@ public class GridBrailleTest {
             getBrailleComponent().add(tcBrailleChars);
             getBrailleComponent().add(2, 0, tc);
 
-            grid = new BrailleGrid(Colors.DEFAULT_COLOR, new Dimension.Simple(getBrailleComponent().getHeight() - 4,
-                    getBrailleComponent().getWidth() - 4 - tc.getWidth()));
+            // the room beside the text; a window too small for both leaves the drawing none
+            grid = new BrailleGrid(Colors.DEFAULT_COLOR, new Dimension.Simple(Math.max(0, getBrailleComponent().getHeight() - 4),
+                    Math.max(0, getBrailleComponent().getWidth() - 4 - tc.getWidth())));
             grid.setPlottingColor(new Colors.FGBGColors(Colors.Yel));
 
             getBrailleComponent().add(new Position.Simple(2, tc.getWidth() + 2), grid);

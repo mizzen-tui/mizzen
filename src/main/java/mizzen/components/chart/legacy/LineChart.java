@@ -163,7 +163,7 @@ public class LineChart extends Composite {
     }
 
     private static Dimension __brailleGridSizeFromLineChartSize(Dimension lineChartSize) {
-          return new Dimension.Simple(lineChartSize.getHeight() - 3, lineChartSize.getWidth() - 3);
+          return new Dimension.Simple(Math.max(0, lineChartSize.getHeight() - 3), Math.max(0, lineChartSize.getWidth() - 3));   // inside the axes and labels; none in a chart too small for them
     }
     
     public LineChart(Color color, Dimension d) {
@@ -460,7 +460,7 @@ public class LineChart extends Composite {
         this.axisWidth = inner.getWidth() - this.labelYSpace;
         calcLabelX();
         grid.setEmptyChar(' ');
-        grid.resize(new Dimension.Simple(axisHeight, axisWidth - 1));
+        grid.resize(new Dimension.Simple(Math.max(0, axisHeight), Math.max(0, axisWidth - 1)));   // what the axes and labels leave; none in a chart too small for them
         grid.setBorder(false);
         this.moveChildTo(new Position.Simple(0, this.labelYSpace + 1), grid);
 

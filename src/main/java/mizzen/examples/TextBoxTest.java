@@ -112,7 +112,7 @@ public class TextBoxTest {
 
             topPanel.add(2,1, horizontalPanel);
 
-            ScrollableComponent sc_1 = new ScrollableComponent(Colors.Blu, new Dimension.Simple(Math.min(tApp.getCanvas().getHeight()-15, panel1.getHeight()+2), 50), panel1);
+            ScrollableComponent sc_1 = new ScrollableComponent(Colors.Blu, new Dimension.Simple(Math.max(0, Math.min(tApp.getCanvas().getHeight()-15, panel1.getHeight()+2)), 50), panel1);   // none in a short terminal
 
             sc_1.setTitle("Scrollable with form");
 

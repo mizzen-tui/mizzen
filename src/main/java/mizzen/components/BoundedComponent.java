@@ -98,6 +98,9 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
         if (d != null && d.isSameDimension(this)) {
             return;
         }
+        if (d != null) {
+            Dimension.UTIL.failIfNegative(HasName.UTIL.getName(this), d.getHeight(), d.getWidth());   // names this component: d may be worked out lazily (a delegate)
+        }
         //Dimension previousDimension = new Dimension.Simple(this);
         setRectangle(new Rectangle.Simple(this.getPostion_TopLeft(), d));
         if (this.getParentContainer()!=null /* && ! previousDimension.isSameDimension(this)*/) {

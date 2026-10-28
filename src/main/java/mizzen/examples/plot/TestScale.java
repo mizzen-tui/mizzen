@@ -81,8 +81,8 @@ public class TestScale {
                    ListBox<Shape<?>> shapesChoiceComponent = shapeChooser();
 
                    Supplier<Dimension> computeGridSize = ()-> {
-                       return new Dimension.Simple(tApp.getMainApplicationPanel().getHeight()-15,
-                                                   tApp.getMainApplicationPanel().getWidth()-shapesChoiceComponent.getWidth()-48);
+                       return new Dimension.Simple(Math.max(0, tApp.getMainApplicationPanel().getHeight()-15),          // what is left beside the controls:
+                                                   Math.max(0, tApp.getMainApplicationPanel().getWidth()-shapesChoiceComponent.getWidth()-48));   // none in a small terminal
                    };
 
                    Dimension gridSize = new Dimension.SupplierAsDimension(computeGridSize);

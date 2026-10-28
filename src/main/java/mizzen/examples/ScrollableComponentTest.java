@@ -67,7 +67,7 @@ public class ScrollableComponentTest {
             sc1.setName("ScrollableComponent-sc1");
             SearchFunctionForScrollableComponent.addFinderToScrollable(sc1.asSearchableView());  
 
-            Composite brailleContainer = new Composite(Colors.Blu).setBounds(tApp.getCanvas().getHeight()-7, tApp.getCanvas().getWidth()/2 -2);
+            Composite brailleContainer = new Composite(Colors.Blu).setBounds(Math.max(0, tApp.getCanvas().getHeight()-7), Math.max(0, tApp.getCanvas().getWidth()/2 -2));   // none in a small terminal
             brailleDemoSetup(brailleContainer, tApp.getEventBus());
             ScrollableComponent sc2 = new ScrollableComponent(Colors.Blu, calcScrollableDimension.get(), brailleContainer);
             sc2.setName("ScrollableComponent-sc2");
@@ -152,7 +152,8 @@ public class ScrollableComponentTest {
     private static void lineChartDemoSetup(Composite container, EventBus eventBus) {
 
         LineChartDemo lineChartDemo = new LineChartDemo();
-        Supplier<Rectangle> clippedAreaForLinechart = ()-> new Rectangle.Simple(Position.ZERO, new Dimension.Simple(container.getHeight()-2, container.getWidth()-2));
+        // nothing until the container is sized: its resize rule (below) sizes the chart
+        Supplier<Rectangle> clippedAreaForLinechart = ()-> new Rectangle.Simple(Position.ZERO, new Dimension.Simple(Math.max(0, container.getHeight()-2), Math.max(0, container.getWidth()-2)));
         lineChartDemo.setUpDemo(eventBus, clippedAreaForLinechart.get());
         container.add(lineChartDemo.getLineChartPanelComponent());
 

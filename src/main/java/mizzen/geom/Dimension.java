@@ -126,8 +126,15 @@ public interface Dimension {
 
         public Simple(int height, int width) {
             super();
+            UTIL.failIfNegative(whose(), height, width);
             this.width = width;
             this.height = height;
+        }
+
+        // for a size that fails: "Rectangle.Simple", "Dimension.Simple" - the class being made, even in a subclass's constructor
+        private String whose() {
+            String name = getClass().getName();
+            return name.substring(name.lastIndexOf('.') + 1).replace('$', '.');
         }
 
         public Simple(Dimension d) {
@@ -139,7 +146,7 @@ public interface Dimension {
         }
 
         public void setWidth(int width) {
-
+            UTIL.failIfNegative(whose(), 0, width);
             this.width = width;
         }
 
@@ -148,6 +155,7 @@ public interface Dimension {
         }
 
         public void setHeight(int height) {
+            UTIL.failIfNegative(whose(), height, 0);
             this.height = height;
         }
 
@@ -164,6 +172,23 @@ public interface Dimension {
     // UTILITIES ..
 
     public static class UTIL {
+
+        /**
+         * A size below zero is always a mistake: it fails where it is made, not later where it would
+         * draw wrongly. The code that worked it out (next down the stack) took away more than there was -
+         * e.g. a border's 2 rows from a box 1 row high. Where running out of room is expected, that code
+         * floors it at 0 (nothing left). whose: what the size is for - a class, or a component's name.
+         * <pre>
+         *     Dimension.UTIL.failIfNegative(HasName.UTIL.getName(this), d.getHeight(), d.getWidth());
+         * </pre>
+         */
+        public static void failIfNegative(String whose, int height, int width) {
+            if (height < 0 || width < 0) {
+                throw new IllegalArgumentException(whose + ": a size can't be below zero: height=" + height + ", width=" + width
+                        + " - the code that worked it out (next down the stack) took away more than there was;"
+                        + " if running out of room is expected there, floor it at 0");
+            }
+        }
         
         public static String shortStr(Dimension d) {
             return d==null?"<NULL>" : "["+d.getHeight()+","+d.getWidth()+"]";

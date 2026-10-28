@@ -56,11 +56,16 @@ public class TabPanel extends ComponentWithFocus<Composite, TabPanel>
     KeyStroke nextTabHotKey = null;
 
     
+    /** sized by what holds it (a splitter's rules, a resize): it starts at no size */
+    public TabPanel(Color color) {
+        this(color, Dimension.ZERO);
+    }
+
     public TabPanel(Color color, Dimension bounds) {
         super(color, new Composite(color));
         getWrappedComponent().setBounds(bounds);
 
-        border = new SimpleBorder(getColor(), new Dimension.Simple(bounds.getHeight()-2, bounds.getWidth()));
+        border = new SimpleBorder(getColor(), new Dimension.Simple(Math.max(0, bounds.getHeight()-2), bounds.getWidth()));   // below the tab strip; nothing at no size
         getWrappedComponent().add(workAreaPosition.addRows(-1).addCols(-1), border);
 
         // tab strip: arrows move between tabs (wrapping) and show them, focus stays on the strip;
@@ -126,7 +131,7 @@ public class TabPanel extends ComponentWithFocus<Composite, TabPanel>
         
         super.resize(size);
         Dimension sizeAfterSuperResize = new Dimension.Simple(this);   // not size: the parent's rules may have resized this again
-        this.border.resize(new Dimension.Simple(sizeAfterSuperResize.getHeight()-2, sizeAfterSuperResize.getWidth()));
+        this.border.resize(new Dimension.Simple(Math.max(0, sizeAfterSuperResize.getHeight()-2), sizeAfterSuperResize.getWidth()));   // below the tab strip
         if (current != null) {
             current.tabAction.resize(getTabContext());
         }
@@ -259,7 +264,7 @@ public class TabPanel extends ComponentWithFocus<Composite, TabPanel>
             @Override
             public Rectangle getBounds() {
                 // Fragile .. 
-                return new Rectangle.Simple(Position.ZERO, new Dimension.Simple(TabPanel.this.getHeight()-4, TabPanel.this.getWidth()-2));
+                return new Rectangle.Simple(Position.ZERO, new Dimension.Simple(Math.max(0, TabPanel.this.getHeight()-4), Math.max(0, TabPanel.this.getWidth()-2)));   // the work area: none when the panel is too small for one
             }
 
             @Override

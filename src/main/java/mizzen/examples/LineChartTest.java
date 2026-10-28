@@ -54,7 +54,7 @@ public class LineChartTest {
         }
 
         private Dimension calc_lc_bounds(Dimension containingDimension) {
-            return new Dimension.Simple(containingDimension.getHeight() - 1, containingDimension.getWidth());
+            return new Dimension.Simple(Math.max(0, containingDimension.getHeight() - 1), containingDimension.getWidth());   // a row for the menu bar; none until the container is sized
         }
 
         public Composite getLineChartPanelComponent() {
@@ -114,6 +114,9 @@ public class LineChartTest {
                 @Override
                 public void accept(Integer j) {
                     int width = lc.getGridRectangle().getWidth();
+                    if (width == 0) {
+                        return;                                 // the chart isn't sized yet: no room, nothing to add
+                    }
                     j = j % width;
                     for (int i = j; i < (width + j); i++) {
                         double d = Math.sin(((float) i) / 5) * 10 + 30;
@@ -126,6 +129,9 @@ public class LineChartTest {
                 @Override
                 public void accept(Integer j) {
                     int width = lc.getGridRectangle().getWidth();
+                    if (width == 0) {
+                        return;                                 // the chart isn't sized yet: no room, nothing to add
+                    }
                     j = j % width;
                     for (int i = j; i < (width + j); i++) {
                         double d = Math.cos(((float) i) / 5) * 30 + 60;

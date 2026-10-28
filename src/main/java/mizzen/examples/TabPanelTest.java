@@ -158,7 +158,7 @@ public class TabPanelTest {
                 imageRequest.setColorMap(ImageViewerFactory.rgbColorMapDIRECT);     // full colour blocks (as the dropdowns show)
                 imageRequest.setToPlotOrNot(ImageViewerFactory.PLOT_ALWAYS);
                 imageRequest.setImageRenderType(ImageViewerFactory.IMAGE_RENDER_TYPE.BLOCK);
-                Function<Dimension, Dimension> imgSizeCalculator = (size)-> new Dimension.Simple(tabContext.getBounds().getHeight()-2, tabContext.getBounds().getWidth());
+                Function<Dimension, Dimension> imgSizeCalculator = (size)-> new Dimension.Simple(Math.max(0, tabContext.getBounds().getHeight()-2), tabContext.getBounds().getWidth());   // none in a short tab
                 imageRequest.setDesiredImgSizeInCharacters(imgSizeCalculator.apply(tabContext.getBounds()));
                 try {
                     BufferedImage img = ImageIO.read(this.getClass().getResource("/mizzen/examples/sampledata/images/rocket-sprites.png"));
