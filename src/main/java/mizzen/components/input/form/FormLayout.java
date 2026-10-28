@@ -147,6 +147,17 @@ public interface FormLayout<T, B extends FormLayout<T, B>> {
         return self();
     }
 
+    /**
+     * A line of text worked out from the object - shown, not edited; worked out again after each change.
+     * <pre>
+     *     .view("Part", (i) -&gt; i.part.name + " at " + money(i.part.price))
+     * </pre>
+     */
+    default B view(String label, Function<T, String> text) {
+        TextComponent shown = new TextComponent(form().labelColor, "");
+        return view(label, shown, (o) -> shown.setTextAndResize(text.apply(o)));
+    }
+
     // ---- about the row just added
 
     /** the row just added must have a value: not empty */

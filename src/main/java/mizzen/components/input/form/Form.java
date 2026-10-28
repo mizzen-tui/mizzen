@@ -41,7 +41,7 @@ import mizzen.events.keyboard.KeyEvent;
  */
 public class Form<T> extends ComponentWithFocus<VerticalPanel, Form<T>> implements FormLayout<T, Form<T>> {
 
-    final T data;
+    T data;                                              // the object edited now: show(..) changes it
     private final FormBinder<T> binder;
     private final RowsPanel rows;
     private final Map<String, FormRow> byField = new LinkedHashMap<String, FormRow>();
@@ -144,8 +144,34 @@ public class Form<T> extends ComponentWithFocus<VerticalPanel, Form<T>> implemen
         return binder;
     }
 
+    /** the object the form edits now */
     public T data() {
         return data;
+    }
+
+    /**
+     * Edit another object: its fields show in the inputs and edits go into it; labels, options and
+     * views follow it; errors from the one before are gone. Showing the object it has again reads it
+     * afresh - after the program changed it (e.g. Revert put old values back).
+     * <pre>
+     *     salesTable.onPick((sale, te) -&gt; saleForm.show(sale));
+     * </pre>
+     * It must be an object of the class the form was made for (its fields are bound by name).
+     */
+    public Form<T> show(T object) {
+        if (object == null) {
+            throw new NullPointerException("Form.show(null): a form edits an object - give it one");
+        }
+        data = object;
+        refreshRows(false);                              // its options first: its values must be among them
+        binder.setFormData(object);                      // its values into the inputs (they repaint themselves)
+        for (Consumer<T> view : views) {
+            view.accept(object);
+        }
+        for (FormRow row : all) {
+            row.clearError();
+        }
+        return this;
     }
 
     /**
@@ -268,13 +294,15 @@ public class Form<T> extends ComponentWithFocus<VerticalPanel, Form<T>> implemen
 
     /** after a change: labels and options that come from the object asked again, views brought up to date */
     void refresh() {
-        refreshRows();
+        refreshRows(true);
         for (Consumer<T> view : views) {
             view.accept(data);
         }
     }
 
-    private void refreshRows() {
+    // clearUnlisted: a value no longer among its field's options is cleared - after an edit, not in
+    // show(..), where the binder still holds the object before
+    private void refreshRows(boolean clearUnlisted) {
         for (FormRow row : all) {
             if (row.labelFrom != null) {
                 String label = row.labelFrom.apply(data);
@@ -286,6 +314,9 @@ public class Form<T> extends ComponentWithFocus<VerticalPanel, Form<T>> implemen
                 List<?> options = row.optionsFrom.apply(data);
                 if (!options.equals(row.shownOptions)) {
                     row.options(options);
+                    if (!clearUnlisted) {
+                        continue;
+                    }
                     FormBinderField<Object, T> field = binder.getFormBinderField(row.field);
                     Object value = field.getFormValue();
                     if (value != null && !options.contains(value)) {     // no longer one of them: cleared
