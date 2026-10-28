@@ -51,6 +51,7 @@ public class DropdownListBox<T> extends AbstractComponentWrappper<VerticalPanel>
     private T value;
 
     private int maxItemWidth = 10;  // arbitrary default.
+    private boolean showArrow = true;                    // [v] after the chosen item: it is a dropdown
     // true while focus is being handed back from the open list to this dropdown
     // (item selected, ENTER/ESC, TAB/SHIFT-TAB) - receiving that focus must not reopen the list
     boolean returningFocusFromListBox = false;
@@ -276,7 +277,7 @@ public class DropdownListBox<T> extends AbstractComponentWrappper<VerticalPanel>
     public static DropdownListBox<Boolean> trueFalseDropDown(Color color) {
         return new DropdownListBox<Boolean>(color, 
                 new BooleanDisplayValue[] {new BooleanDisplayValue(true),
-                                           new BooleanDisplayValue(false)});
+                                           new BooleanDisplayValue(false)}).withoutArrow();
     }
 
     public static DropdownListBox<Boolean> trueFalseDropDown() {
@@ -286,7 +287,7 @@ public class DropdownListBox<T> extends AbstractComponentWrappper<VerticalPanel>
     public static DropdownListBox<Boolean> yesNoDropDown(Color color) {
         return new DropdownListBox<Boolean>(color, 
                 new BooleanDisplayValue[] {new BooleanDisplayValue("yes", true),
-                                           new BooleanDisplayValue("no", false)}).setName("Yes-No-ddlb");
+                                           new BooleanDisplayValue("no", false)}).withoutArrow().setName("Yes-No-ddlb");
     }
 
     public static DropdownListBox<Boolean> yesNoDropDown() {
@@ -393,14 +394,31 @@ public class DropdownListBox<T> extends AbstractComponentWrappper<VerticalPanel>
         setSelectedOntoTextView();
     }
 
+    /** new items: the button takes their width */
     public void setItems(List<DisplayableValue<T>> displayableItems) {
         this.listBox.setItems(displayableItems);
         this.button.resize( new Dimension.Simple(this.button.getHeight(), this.listBox.getWidth()) );
+        calcAndSetMaxItemWidth(displayableItems);
     }
 
     public void setItems( List<DisplayableValue<T>> displayableItems , ComponentItemFactory<T> displayItemToComponent) {
         this.listBox.setItems(displayableItems, displayItemToComponent);
         this.button.resize( new Dimension.Simple(this.button.getHeight(),  this.listBox.getWidth()) );
+        calcAndSetMaxItemWidth(displayableItems);
+    }
+
+    /**
+     * No [v] after the chosen item - for a choice that is plainly a choice and best kept narrow, e.g.
+     * yes / no (yesNoDropDown and trueFalseDropDown come without it).
+     * <pre>
+     *     DropdownListBox&lt;Boolean&gt; paid = DropdownListBox.yesNoDropDown();          // [no ]
+     *     DropdownListBox&lt;Size&gt; size = new DropdownListBox&lt;Size&gt;(sizes).withoutArrow();
+     * </pre>
+     */
+    public DropdownListBox<T> withoutArrow() {
+        showArrow = false;
+        setSelectedOntoTextView();
+        return this;
     }
 
     public Rectangle getPreferredRectangleForLayout() {
@@ -447,11 +465,11 @@ public class DropdownListBox<T> extends AbstractComponentWrappper<VerticalPanel>
         // so we pad text to avoid this
         String buttonText;
         char emptyCH = '_';
-        if (maxItemWidth < 8) {
+        if (!showArrow) {                                // as wide as the items, no [v]
             if (selected == null) {
-                buttonText = String.format("%-"+(5)+"s", StringUtils.repeat(emptyCH, 5));
+                buttonText = StringUtils.repeat(emptyCH, maxItemWidth);
             } else {
-                buttonText = String.format("%-"+(5)+"s", StringUtils.truncate((selected.getDisplayValue()),5));
+                buttonText = String.format("%-"+(maxItemWidth)+"s", StringUtils.truncate((selected.getDisplayValue()),maxItemWidth));
             }
         } else {
             boolean hasFocus = hasFocus();

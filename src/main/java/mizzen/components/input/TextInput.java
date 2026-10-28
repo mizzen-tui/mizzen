@@ -101,7 +101,7 @@ public class TextInput extends BoundedComponent<TextInput>
 
     public TextInput setAsPassword() {
         this.align = Align.LEFT;
-        this.textDisplayFormatter = (t,s) -> Align.UTIL.formatToAlignedData(StringUtils.repeat("*", s.length()), t.getWidth(), Align.LEFT, t.getWidth(), true);
+        this.textDisplayFormatter = (t,s) -> StringUtils.repeat("*", s.length());   // the rest filled with the empty-char, as for any text
         this.setText(getText());
         return this;
     }
