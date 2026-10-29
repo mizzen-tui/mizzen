@@ -29,7 +29,7 @@ public class Table01Test {
 
         new TUIApp(args).setDefaultMainApplicationPanel().setOnReadyStart((tApp) -> {
 
-            RadioGroup<Boolean> splitterView = RadioGroup.onOff("Splitter View", "Vertical", "Horizontal", true).setColor(Colors.BIPur);
+            RadioGroup<Boolean> splitterView = RadioGroup.onOff("Splitter View", "Vertical", "Horizontal", false).setColor(Colors.BIPur);
             HorizontalPanel topBanner = new HorizontalPanel().setHorizontalSpacer(3);
 
             topBanner.t("Table Tester 01");
@@ -130,15 +130,16 @@ public class Table01Test {
 
             };
 
-            splitterView.onChange((te)->{
+            // the view the radio shows - at the start, and on each change
+            Runnable showChosenView = () -> {
                 if (splitterView.getValue()) {
                     vsView.run();
                 } else {
                     hsView.run();
                 }
-            });
-
-            hsView.run();
+            };
+            splitterView.onChange((te) -> showChosenView.run());
+            showChosenView.run();
 
             tApp.getMainApplicationPanel().add(topBanner);
             tApp.getMainApplicationPanel().add(2,0, mainViewPanel);

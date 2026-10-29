@@ -25,13 +25,35 @@ public class ObjectTableModel<T> implements TableModel<T> {
 
     private final List<String> columnNames = new ArrayList<String>();
     private final List<Function<? super T, ?>> columnValues = new ArrayList<Function<? super T, ?>>();
+    private final List<Integer> columnDroppable = new ArrayList<Integer>();          // per column; null: never dropped
     private List<T> rows = Collections.emptyList();
 
     /** a column: its heading, and its value for a row's object (e.g. Device::getName) */
     public ObjectTableModel<T> column(String name, Function<? super T, ?> value) {
         columnNames.add(name);
         columnValues.add(value);
+        columnDroppable.add(null);
         return this;
+    }
+
+    /**
+     * The column just added may be dropped when the table is too narrow - order: lower first (then right
+     * to left). Columns are wrapped and truncated first; one not marked is never dropped.
+     * <pre>
+     *     .column("Bio", (p) -&gt; p.bio).droppable(1)        // the first to go
+     * </pre>
+     */
+    public ObjectTableModel<T> droppable(int order) {
+        if (columnDroppable.isEmpty()) {
+            throw new IllegalStateException("droppable(" + order + ") goes after a column(..)");
+        }
+        columnDroppable.set(columnDroppable.size() - 1, order);
+        return this;
+    }
+
+    @Override
+    public Integer getColumnDroppable(int columnIndex) {
+        return columnDroppable.get(columnIndex);
     }
 
     /** the objects to show, one per row, in this order (the list is used as is, not copied) */

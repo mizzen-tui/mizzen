@@ -15,6 +15,14 @@ public interface TableModel<T> {
     public String getColumnName(int columnIndex);
     public Object getValueAt(int rowIndex, int columnIndex);
 
+    /**
+     * When the table is too narrow: whether column columnIndex may be dropped, and in what order - lower
+     * first (then right to left); null: never dropped (the default). Wrapping and truncating are tried first.
+     */
+    public default Integer getColumnDroppable(int columnIndex) {
+        return null;
+    }
+
     /** the row itself, e.g. the Sale behind row 3 */
     public default T getRow(int rowIndex) {
         throw new UnsupportedOperationException(getClass().getName()
@@ -53,6 +61,11 @@ public interface TableModel<T> {
         @Override
         public T getRow(int rowIndex) {
             return delegate.getRow(rowIndex);
+        }
+
+        @Override
+        public Integer getColumnDroppable(int columnIndex) {
+            return delegate.getColumnDroppable(columnIndex);
         }
     }
 }

@@ -216,7 +216,7 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
                     }
                 }
                 TableColumnRenderer renderer = tc.getHeaderRenderer();
-                IScreenLineSegmentsBuffer cellSegmentsBuffer = tableModel.getOrSetHeaderSegmentsDataAt(col, cellHeight, cellWidth, renderer);
+                IScreenLineSegmentsBuffer cellSegmentsBuffer = tableModel.getOrSetHeaderSegmentsDataAt(col, tc, cellHeight, cellWidth, renderer);
                 int segmentHeight = cellSegmentsBuffer.getHeight();
                 maxRowHeight = Math.max(segmentHeight, maxRowHeight);
                 int curWidth = Math.max(cellSegmentsBuffer.getWidth(), cellWidth);
@@ -250,7 +250,7 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
                     }
                 }
                 TableColumnRenderer renderer = tc.getRenderer();
-                IScreenLineSegmentsBuffer cellSegmentsBuffer = tableModel.getOrSetSegmentsDataAt(row, col, cellHeight, cellWidth, renderer);
+                IScreenLineSegmentsBuffer cellSegmentsBuffer = tableModel.getOrSetSegmentsDataAt(row, col, tc, cellHeight, cellWidth, renderer);
                 int segmentHeight = cellSegmentsBuffer.getHeight();
                 maxRowHeight = Math.max(segmentHeight, maxRowHeight);
                 int curWidth = Math.max(cellSegmentsBuffer.getWidth(), cellWidth);
@@ -285,7 +285,7 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
                 maxCol--;
                 offset = maxCol == 0 ? 0 : colToWidthNeeded.apply(maxCol - 1);
             }
-            TableColumnWithDataAndWidths tc = (TableColumnWithDataAndWidths) this.tableModel.getTableColumnAt(maxCol);
+            TableColumnWithDataAndWidths tc = columnsForOutput.visibleColumnDataList.get(maxCol);
             TableColumnRenderer renderer = tc.getRenderer();
             int cellWidth = tc.getSizeToAlignCellData();
             if (tableComponentWidth < (cellWidth + offset + 1)) {
@@ -295,7 +295,7 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
                 } else {
                     for (int row = topRow; row < maxRow; row++) {
                         int rowHeight = tableModel.getMaxHeightForRow(row);
-                        tableModel.getOrSetSegmentsDataAt(row, maxCol, rowHeight, cellWidth, renderer);
+                        tableModel.getOrSetSegmentsDataAt(row, maxCol, tc, rowHeight, cellWidth, renderer);
                     }
                 }
             }
@@ -716,6 +716,11 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
             }
         }
         
+        /** every column in the model - getColumnCount() stops at the columns drawn since the last clearData */
+        int getModelColumnCount() {
+            return super.getColumnCount();
+        }
+
         @Override
         public int getColumnCount() {
             int count = super.getColumnCount();
@@ -826,14 +831,19 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
             return sum;
         }
 
-        public IScreenLineSegmentsBuffer getOrSetSegmentsDataAt(int row, int col, int desiredHeight, int desiredWidth,
-                TableColumnRenderer renderer) {
+        /**
+         * The cell at row and col, rendered (or cached) at the size asked for. col is where the cell is
+         * drawn - with columns dropped, not the model's column: column says which model column it shows.
+         * <p/>
+         * For example, with Bio and Email dropped, Phone is drawn at col 7 and column is Phone (model 8).
+         */
+        public IScreenLineSegmentsBuffer getOrSetSegmentsDataAt(int row, int col, TableColumn column, int desiredHeight,
+                int desiredWidth, TableColumnRenderer renderer) {
             IScreenLineSegmentsBuffer segmentsBufferAtRowCol = getSegmentsDataAt(row, col);
             if (segmentsBufferAtRowCol == null || (segmentsBufferAtRowCol.getHeight() != desiredHeight
                     || segmentsBufferAtRowCol.getWidth() != desiredWidth)) {
-                Object cellValue = this.getValueAt(row, col);
-                TableColumn tc = this.getTableColumnAt(col);
-                IScreenLineSegmentsBuffer segmentsBufferForRowCol = renderer.render(tc, cellValue, desiredWidth, desiredHeight, tc.getAlign());
+                Object cellValue = this.getValueAt(row, column.getPosition());
+                IScreenLineSegmentsBuffer segmentsBufferForRowCol = renderer.render(column, cellValue, desiredWidth, desiredHeight, column.getAlign());
                 // making a copy because renderer does not preserve its segments object ( and is not thread safe )
                 IScreenLineSegmentsBuffer segmentsCopy = new ScreenLineSegmentsBuffer();
                 segmentsCopy
@@ -864,13 +874,14 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
             }
         }
 
-        public IScreenLineSegmentsBuffer getOrSetHeaderSegmentsDataAt(int col, int desiredHeight, int desiredWidth,
-                TableColumnRenderer renderer) {
+        /** the header drawn at col - column says which model column it heads (see getOrSetSegmentsDataAt) */
+        public IScreenLineSegmentsBuffer getOrSetHeaderSegmentsDataAt(int col, TableColumn column, int desiredHeight,
+                int desiredWidth, TableColumnRenderer renderer) {
             IScreenLineSegmentsBuffer segmentsBufferAtRowCol = getHeaderSegmentsDataAt(col);
             if (segmentsBufferAtRowCol == null || (segmentsBufferAtRowCol.getHeight() != desiredHeight
                     || segmentsBufferAtRowCol.getWidth() != desiredWidth)) {
-                String cellValue = this.getColumnName(col);
-                IScreenLineSegmentsBuffer segmentsBufferForRowCol = renderer.renderHeader(this.getTableColumnAt(col), cellValue, desiredWidth, desiredHeight);
+                String cellValue = this.getColumnName(column.getPosition());
+                IScreenLineSegmentsBuffer segmentsBufferForRowCol = renderer.renderHeader(column, cellValue, desiredWidth, desiredHeight);
                 // making a copy because renderer does not preserve its segments object ( and
                 // not thread safe )
                 IScreenLineSegmentsBuffer segmentsCopy = new ScreenLineSegmentsBuffer();
@@ -1083,7 +1094,7 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
         public ColumnsForOutput getColumnData(TableModelWidthData tableModel) {
 
             List<TableColumnWithDataAndWidths> columnData = new ArrayList<TableColumnWithDataAndWidths>();
-            for (int colIdx = 0; colIdx < tableModel.getColumnCount(); colIdx++) {
+            for (int colIdx = 0; colIdx < tableModel.getModelColumnCount(); colIdx++) {
                 columnData.add( (TableColumnWithDataAndWidths) tableModel.getTableColumnAt(colIdx) );
             }
 
@@ -1131,70 +1142,53 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
                 }
             }
 
-            // At this point table does not fit in terminal, let's try to truncate columns
-            // if allowed
-            // let's try to find table columns that we can truncate
-            List<TableColumnWithDataAndWidths> truncatebleCandidates = new ArrayList<TableColumnWithDataAndWidths>(
-                    columnData.size());
-            for (TableColumnWithDataAndWidths col : columnData) {
-                if (col.isTruncationAllowed()) {
-                    truncatebleCandidates.add(col);
-                }
-            }
-
-            if (truncatebleCandidates.size() > 0) {
-                // truncate from right to left
-                Collections.reverse(truncatebleCandidates);
-                // truncateColSizeByOneIfPossible()
-                // Now squeeze the columns
-                lastTableWidth = Integer.MAX_VALUE;
-                currentTableDataWidth = calcTableWidthFromColumns(columnData);
-                while (lastTableWidth != currentTableDataWidth) // we terminate loop when we can't truncate anymore
-                {
-                    lastTableWidth = currentTableDataWidth;
-                    int desiredCharacterCountToTruncate = currentTableDataWidth - componentWidth;
-                    for (TableColumnWithDataAndWidths columnToTruncate : truncatebleCandidates) {
-                        // TODO:: when does the actual truncate occur?.. Right after the wrapping code?
-                        // -- look below
-                        columnToTruncate.truncateIfPossible(desiredCharacterCountToTruncate);
-                        currentTableDataWidth = calcTableWidthFromColumns(columnData);
-                        if (currentTableDataWidth <= componentWidth) {
-                            // we were able to truncate columns enough that
-                            // all columns fit onto the terminal - well all right!
-                            return new ColumnsForOutput(columnData);
-                        }
-                    }
-                }
-            }
-
+            // Still too wide: drop the droppable columns, in their order, until it fits - before
+            // truncating, so a column is cut only when dropping all that may go isn't enough
             List<TableColumnWithDataAndWidths> removalCandidates = new ArrayList<TableColumnWithDataAndWidths>();
             for (TableColumnWithDataAndWidths col : columnData) {
                 if (col.isColumnDroppable()) {
                     removalCandidates.add(col);
                 }
             }
-
-            if (removalCandidates.size() < 1) {
-                return new ColumnsForOutput(columnData);  // no candidate columns are droppable
-                                                          // return original columnData
-            }
-
             Collections.sort(removalCandidates, TableColumn.SORT_IN_ORDER_COLUMNS_SHOULD_BE_DROPPED);
 
-            List<TableColumnWithDataAndWidths> trimmedcolumnData = new ArrayList<TableColumnWithDataAndWidths>(columnData);
+            List<TableColumnWithDataAndWidths> visibleColumns = new ArrayList<TableColumnWithDataAndWidths>(columnData);
             List<TableColumnWithDataAndWidths> hiddenColumns = new ArrayList<TableColumnWithDataAndWidths>();
-
-            // Now remove columns
-            for (TableColumnWithDataAndWidths columnToRemove : removalCandidates)
-            {
-                trimmedcolumnData.remove( columnToRemove );
-                hiddenColumns.add( columnToRemove);
-                if ( calcTableWidthFromColumns(trimmedcolumnData) <= componentWidth )
-                {
-                    return new ColumnsForOutput(trimmedcolumnData, hiddenColumns);
+            for (TableColumnWithDataAndWidths columnToRemove : removalCandidates) {
+                visibleColumns.remove(columnToRemove);
+                hiddenColumns.add(columnToRemove);
+                int visibleWidth = calcTableWidthFromColumns(visibleColumns);
+                if (visibleWidth <= componentWidth) {
+                    return new ColumnsForOutput(visibleColumns, hiddenColumns).expandColumnsToFitTableWidth(visibleWidth, componentWidth);
                 }
             }
-            return new ColumnsForOutput(trimmedcolumnData, hiddenColumns);
+
+            // Still too wide: truncate the columns that allow it, from right to left
+            List<TableColumnWithDataAndWidths> truncatebleCandidates = new ArrayList<TableColumnWithDataAndWidths>(
+                    visibleColumns.size());
+            for (TableColumnWithDataAndWidths col : visibleColumns) {
+                if (col.isTruncationAllowed()) {
+                    truncatebleCandidates.add(col);
+                }
+            }
+            Collections.reverse(truncatebleCandidates);
+            lastTableWidth = Integer.MAX_VALUE;
+            currentTableDataWidth = calcTableWidthFromColumns(visibleColumns);
+            while (lastTableWidth != currentTableDataWidth) // we terminate loop when we can't truncate anymore
+            {
+                lastTableWidth = currentTableDataWidth;
+                int desiredCharacterCountToTruncate = currentTableDataWidth - componentWidth;
+                for (TableColumnWithDataAndWidths columnToTruncate : truncatebleCandidates) {
+                    // TODO:: when does the actual truncate occur?.. Right after the wrapping code?
+                    // -- look below
+                    columnToTruncate.truncateIfPossible(desiredCharacterCountToTruncate);
+                    currentTableDataWidth = calcTableWidthFromColumns(visibleColumns);
+                    if (currentTableDataWidth <= componentWidth) {
+                        return new ColumnsForOutput(visibleColumns, hiddenColumns);
+                    }
+                }
+            }
+            return new ColumnsForOutput(visibleColumns, hiddenColumns);  // too wide still: the draw cuts it at the border
         }
 
         public static int calcTableWidthFromColumns(List<? extends TableColumn> colData) {

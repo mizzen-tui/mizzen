@@ -99,7 +99,7 @@ public final class People {
                 .setRows(people);
     }
 
-    /** every column */
+    /** every column - in a narrow table, the bio is dropped first, then the email */
     public static ObjectTableModel<Person> allColumns(List<Person> people) {
         return new ObjectTableModel<Person>()
                 .column("ID", (p) -> p.id)
@@ -109,9 +109,9 @@ public final class People {
                 .column("Occupation", (p) -> p.occupation)
                 .column("City", (p) -> p.city)
                 .column("Country", (p) -> p.country)
-                .column("Email", (p) -> p.email)
+                .column("Email", (p) -> p.email).droppable(2)
                 .column("Phone", (p) -> p.phone)
-                .column("Bio", (p) -> p.bio)
+                .column("Bio", (p) -> p.bio).droppable(1)
                 .setRows(people);
     }
 }

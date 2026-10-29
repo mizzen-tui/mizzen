@@ -170,7 +170,7 @@ public class TableColumnImpl implements TableColumn {
             maxWidth =  headerText.length();
         }
         Align align = (columnIsNumber != null && columnIsNumber) ? Align.RIGHT : Align.LEFT;
-        Integer columnDroppable = null;
+        Integer columnDroppable = tableModel.getColumnDroppable(colIdx);     // the model says (ObjectTableModel.droppable); null: never
         Boolean             wordWrap            = (align == Align.LEFT);
         Boolean             truncationAllowed   = columnIsNumber == null || columnIsNumber == false;
 
