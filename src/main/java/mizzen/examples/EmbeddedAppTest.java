@@ -28,6 +28,7 @@ import mizzen.components.tab.TabPanel;
 import mizzen.components.tab.TabPanel.TabContext;
 import mizzen.controlcodes.color.Colors;
 import mizzen.events.EventBus;
+import mizzen.events.OnIdleEventEventHandler.RepeatingIntervalWhileCond;
 import mizzen.events.TimedRequestedController;
 import mizzen.examples.form.FormTry;
 import mizzen.examples.form.FormTryByHand;
@@ -295,9 +296,10 @@ public class EmbeddedAppTest {
     }
 
     /**
-     * What the running example is made of: a tree of its components - kind, name, size - built afresh
-     * each time the tab is chosen (no timer: a still picture to explore). Pick one and it is framed in
-     * the example - drawn over it, the example itself untouched.
+     * What the running example is made of: a tree of its components - kind, name, size. While the tab
+     * shows, it looks once a second (on the event thread - never during a redraw) and builds the tree
+     * again only when components came or went, keeping what was open and what was picked. Pick one and
+     * it is framed in the example - drawn over it, the example itself untouched.
      */
     private static class ComponentsTab extends TabAction<ScrollableComponent> {
 
@@ -319,15 +321,92 @@ public class EmbeddedAppTest {
             return view;
         }
 
+        private DefaultTreeNode<Component<?>> root;
+        private List<Component<?>> shown = new ArrayList<Component<?>>();   // the components in the tree: changed, it is built again
+        private int showing;                                                // which showing of the tab a timer belongs to
+
         @Override
         public void activateComponent(EventBus eventBus, TabContext tabContext, ScrollableComponent view) {
-            tree.setModel(treeOf(slot).asModel());
-            tree.expandAll();
+            rebuild();
+            int mine = ++showing;
+            eventBus.appendIdleEventHandler(new RepeatingIntervalWhileCond(1000,
+                    () -> mine == showing && Component.UTIL.getCanvasOffsetFor(view) != null,   // this showing, still on screen
+                    (te) -> {
+                        if (!everyComponent(slot).equals(shown)) {
+                            rebuild();
+                        }
+                    }));
         }
 
         @Override
         public void deactivateComponent(EventBus eventBus, TabContext tabContext, ScrollableComponent view) {
+            showing++;                                    // its timer stops
             right.frame(null);
+        }
+
+        // the tree again, from the example as it is now - what was open stays open, what was picked stays picked
+        private void rebuild() {
+            Component<?> picked = tree.getValue() == null ? null : tree.getValue().getValue();
+            List<Component<?>> open = new ArrayList<Component<?>>();
+            if (root != null) {
+                collectOpen(root, open);
+            }
+            root = treeOf(slot);
+            tree.setModel(root.asModel());
+            reopen(root, open, root == null || open.isEmpty());
+            DefaultTreeNode<Component<?>> again = find(root, picked);
+            if (again != null) {
+                tree.setValue(again);
+            }
+            right.frame(again == null ? null : picked);
+            shown = everyComponent(slot);
+        }
+
+        private void collectOpen(DefaultTreeNode<Component<?>> node, List<Component<?>> open) {
+            if (tree.isExpanded(node)) {
+                open.add(node.getValue());
+            }
+            for (DefaultTreeNode<Component<?>> child : node.getChildren()) {
+                collectOpen(child, open);
+            }
+        }
+
+        // the first time (nothing open yet), everything
+        private void reopen(DefaultTreeNode<Component<?>> node, List<Component<?>> open, boolean all) {
+            if (all || open.contains(node.getValue())) {
+                tree.expand(node);
+            }
+            for (DefaultTreeNode<Component<?>> child : node.getChildren()) {
+                reopen(child, open, all);
+            }
+        }
+
+        private static DefaultTreeNode<Component<?>> find(DefaultTreeNode<Component<?>> node, Component<?> component) {
+            if (component == null) {
+                return null;
+            }
+            if (node.getValue() == component) {
+                return node;
+            }
+            for (DefaultTreeNode<Component<?>> child : node.getChildren()) {
+                DefaultTreeNode<Component<?>> found = find(child, component);
+                if (found != null) {
+                    return found;
+                }
+            }
+            return null;
+        }
+
+        // every component under the slot, in order - the same list: nothing came or went
+        private static List<Component<?>> everyComponent(Component<?> component) {
+            List<Component<?>> all = new ArrayList<Component<?>>();
+            all.add(component);
+            if (component instanceof ParentContainer) {
+                for (Component<?> child : ((ParentContainer) component).getChildren()) {
+                    all.addAll(everyComponent(child));
+                }
+            }
+            return all;
         }
 
         private static DefaultTreeNode<Component<?>> treeOf(Component<?> component) {
