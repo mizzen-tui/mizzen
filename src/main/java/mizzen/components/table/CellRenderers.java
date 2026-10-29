@@ -32,7 +32,8 @@ public final class CellRenderers {
 
     /**
      * What draw draws for a value, in x from xMin to xMax and y from yMin to yMax, kept in
-     * proportion (braille: a character is 2 dots wide, 4 high) - from least to most wide.
+     * proportion (braille: a character is 2 dots wide, 4 high) - from least to most wide; framed when
+     * its row is selected.
      */
     public static <V> ComponentCellRenderer<V> drawing(BiConsumer<V, Pen> draw, double xMin, double xMax, double yMin,
             double yMax, int least, int most) {
@@ -47,7 +48,7 @@ public final class CellRenderers {
                     area.resize(size);
                     area.redraw();                          // a cell the same size as the last: drawn again for this value
                     return area;
-                });
+                }).framedWhenSelected();
     }
 
     /** a value's image, in coloured blocks, kept in proportion - from least to most wide */
@@ -64,7 +65,7 @@ public final class CellRenderers {
                     } catch (Exception e) {
                         throw new IllegalStateException("could not draw the image of " + value, e);
                     }
-                });
+                }).framedWhenSelected();                                      // selected: the picture as it is, framed
     }
 
     /** a value's fraction done, 0 to 1, as a one-row progress meter - its percentage after the bar */

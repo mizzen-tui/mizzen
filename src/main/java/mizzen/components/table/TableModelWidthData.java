@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import mizzen.controlcodes.color.Color;
 import mizzen.geom.Align;
 import mizzen.geom.Dimension;
 import mizzen.textsegments.IScreenLineSegmentsBuffer;
@@ -126,6 +127,12 @@ class TableModelWidthData extends TableModel.Delegate<Object> {
             cells.put(key, drawn);
         }
         return drawn.segments;
+    }
+
+    /** column c's cell in row drawn as the selected row's, in selected - drawn each time: one row, and the colour changes with focus */
+    IScreenLineSegmentsBuffer selectedCell(int row, int c, int width, int height, Color selected) {
+        TableColumn column = getTableColumnAt(c);
+        return copy(column.getRenderer().renderSelected(valueAt(row, c), new Dimension.Simple(height, width), column.getAlign(), selected));
     }
 
     /** column c's header, drawn width x height */

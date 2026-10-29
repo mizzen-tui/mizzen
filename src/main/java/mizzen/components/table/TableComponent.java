@@ -127,9 +127,8 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
         clearData();
     }
 
-    /** the cell's segments within width x height (the border or the bottom can cut a cell), moved to offset - in color if given */
-    private TreeSet<ScreenLineSegment> copyCellSegments(IScreenLineSegmentsBuffer cellSegmentsBuffer, Position offset, Color color,
-            int width, int height) {
+    /** the cell's segments within width x height (the border or the bottom can cut a cell), moved to offset */
+    private TreeSet<ScreenLineSegment> copyCellSegments(IScreenLineSegmentsBuffer cellSegmentsBuffer, Position offset, int width, int height) {
         ScreenLineSegmentsBuffer within = new ScreenLineSegmentsBuffer();
         for (ScreenLineSegment segment : cellSegmentsBuffer.getSegments()) {
             if (segment.getRow() < height && segment.getCol() < width) {
@@ -138,22 +137,8 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
                         : new SegmentImpl(segment.getColors(), new Position.Simple(segment.getRow(), segment.getCol()), text.substring(0, width - segment.getCol())));
             }
         }
-        return copyCellSegments(within, offset, color);
-    }
-
-    /** the cell's segments moved to offset - in color if given (the selected row), else as they are */
-    private TreeSet<ScreenLineSegment> copyCellSegments(IScreenLineSegmentsBuffer cellSegmentsBuffer, Position offset, Color color) {
-
-        //ElapsedTime elapsedTime = new ElapsedTime();
-
         TreeSet<ScreenLineSegment> destination = ScreenLineSegment.UTIL.makeCollection(null);
-
-        cellSegmentsBuffer.getSegments().stream().map(s -> s.fromOffset(offset))
-                          .map(s -> color == null ? s : new SegmentImpl(color, new Position.Simple(s.getRow(), s.getCol()), s.getId(), s.getText()))
-                          .forEach(s -> destination.add(s));
-
-        //Logging.info("cell copied " + elapsedTime + "   count " + destination.size());
-
+        within.getSegments().stream().map(s -> s.fromOffset(offset)).forEach(s -> destination.add(s));
         return destination;
     }
 
@@ -206,7 +191,7 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
         for (int i = 0; i < layout.columnCount(); i++) {
             Position at = new Position.Simple(1, layout.columnStart(i));
             IScreenLineSegmentsBuffer header = tableModel.header(layout.columns.get(i), layout.fitted[i], layout.headerHeight);
-            mySegments.merge(copyCellSegments(header, at, null, layout.shown[i], layout.headerHeight));
+            mySegments.merge(copyCellSegments(header, at, layout.shown[i], layout.headerHeight));
             tableCellAtPositions.addHeaderCell(at, tableModel.modelColumn(layout.columns.get(i)), layout.shown[i], layout.headerHeight);
         }
         int lastRow = -1;
@@ -219,8 +204,10 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
             }
             for (int i = 0; i < layout.columnCount(); i++) {
                 Position at = new Position.Simple(row.top, layout.columnStart(i));
-                IScreenLineSegmentsBuffer cell = tableModel.cell(row.row, layout.columns.get(i), layout.fitted[i], row.height);
-                mySegments.merge(copyCellSegments(cell, at, rowColor, layout.shown[i], linesShown));
+                IScreenLineSegmentsBuffer cell = rowColor == null                     // the selected row: each renderer shows it its own way
+                        ? tableModel.cell(row.row, layout.columns.get(i), layout.fitted[i], row.height)
+                        : tableModel.selectedCell(row.row, layout.columns.get(i), layout.fitted[i], row.height, rowColor);
+                mySegments.merge(copyCellSegments(cell, at, layout.shown[i], linesShown));
                 tableCellAtPositions.addDataCell(at, row.row, tableModel.modelColumn(layout.columns.get(i)), layout.shown[i], linesShown);
             }
             lastRow = row.row;

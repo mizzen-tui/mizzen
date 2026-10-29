@@ -18,7 +18,7 @@ import junit.framework.TestCase;
 /**
  * Every cell renderer keeps to its rectangle: drawn at any width from its cut to past its most (a
  * column widened to fill the table), at the height it says for that width, no segment falls
- * outside - text, a drawing, an image, a meter, a sparkline. And each draws something: a renderer that
+ * outside, drawn plain or as the selected row's - text, a drawing, an image, a meter, a sparkline. And each draws something: a renderer that
  * draws nothing would keep to any rectangle.
  */
 public class CellRenderersTest extends TestCase {
@@ -38,6 +38,14 @@ public class CellRenderersTest extends TestCase {
                         segment.getRow() >= 0 && segment.getRow() < height && segment.getCol() >= 0
                                 && segment.getCol() + segment.getText().length() <= width);
                 drewSomething |= !segment.getText().trim().isEmpty();
+            }
+            // and as the selected row's cell - a frame drawn around a picture stays inside too
+            for (ScreenLineSegment segment : renderer.renderSelected(value, new Dimension.Simple(height, width), Align.LEFT,
+                    new Colors.FGBGColors(Colors.IYel).invert()).getSegments()) {
+                assertTrue(what + " drawn selected " + height + " x " + width + " has a segment outside it: " + segment.getRow()
+                        + "," + segment.getCol() + " [" + segment.getText() + "]",
+                        segment.getRow() >= 0 && segment.getRow() < height && segment.getCol() >= 0
+                                && segment.getCol() + segment.getText().length() <= width);
             }
         }
         if (value != null && !"".equals(value)) {
@@ -74,7 +82,7 @@ public class CellRenderersTest extends TestCase {
         for (Part part : Arrays.asList(Parts.GEAR_12, Parts.HEX_NUT, Parts.SPRING)) {
             assertKeepsToItsRectangle(part.name, drawing, part);
         }
-        assertEquals("a square, in braille: half as many rows as columns", 5, drawing.heightAt(Parts.GEAR_12, 10));
+        assertEquals("a square in braille, half as many rows as columns - 8 wide inside its margin: 4 rows, and 2 for the margin", 6, drawing.heightAt(Parts.GEAR_12, 10));
     }
 
     public void testImage() throws Exception {

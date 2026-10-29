@@ -1,8 +1,13 @@
 package mizzen.components.table;
 
+import mizzen.controlcodes.color.Color;
 import mizzen.geom.Align;
 import mizzen.geom.Dimension;
+import mizzen.geom.position.Position;
 import mizzen.textsegments.IScreenLineSegmentsBuffer;
+import mizzen.textsegments.ScreenLineSegment;
+import mizzen.textsegments.ScreenLineSegment.SegmentImpl;
+import mizzen.textsegments.ScreenLineSegmentsBuffer;
 
 /**
  * How a column's cells are drawn, and the room they take. A cell is a rectangle: the table asks how
@@ -30,4 +35,23 @@ public interface CellRenderer {
 
     /** value drawn in exactly size - no segment outside it; align: where in it, if it is narrower */
     IScreenLineSegmentsBuffer render(Object value, Dimension size, Align align);
+
+    /**
+     * value drawn as a cell of the selected row, in selected (the table's selection colour, focused or
+     * not). By default as render draws it with every segment in selected - right for text. A
+     * component keeps its own colours (ComponentCellRenderer.renderSelected): an image or a drawing
+     * framed, a meter or a sparkline as it is.
+     */
+    default IScreenLineSegmentsBuffer renderSelected(Object value, Dimension size, Align align, Color selected) {
+        return inColor(render(value, size, align), selected);
+    }
+
+    /** every segment of drawn in color */
+    static IScreenLineSegmentsBuffer inColor(IScreenLineSegmentsBuffer drawn, Color color) {
+        IScreenLineSegmentsBuffer colored = new ScreenLineSegmentsBuffer();
+        for (ScreenLineSegment segment : drawn.getSegments()) {
+            colored.add(new SegmentImpl(color, new Position.Simple(segment.getRow(), segment.getCol()), segment.getId(), segment.getText()));
+        }
+        return colored;
+    }
 }
