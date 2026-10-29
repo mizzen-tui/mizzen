@@ -56,6 +56,7 @@ public class TableResizeTest {
             WindowFrame wf = new WindowFrame(Colors.Blu, "Table Resize Test", t1);
 
             mainWorkArea.add(wf);
+            mainWorkArea.onResizeExpandDownAndRight(wf);       // the point of this test: the window - and the table in it - follow the terminal
 
             mainWorkArea.resize(mainWorkAreaResizeDimensionCalculator.apply(tApp, tApp.getDimensions()));
             vpMain.add(mainWorkArea);
