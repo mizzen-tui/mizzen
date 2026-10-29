@@ -110,15 +110,16 @@ public interface TableColumn {
         }
     };
 
-    void setColumnRenderer(TableColumnRenderer renderer);
+    /** how the column's cells are drawn and measured - e.g. new TextCellRenderer(), CellRenderers.meter(..) */
+    void setColumnRenderer(CellRenderer renderer);
 
+    CellRenderer getRenderer();
 
-    TableColumnRenderer getRenderer();
+    /** how its header is drawn; by default as its cells are */
+    void setHeaderRenderer(CellRenderer renderer);
 
-    void setHeaderRenderer(TableColumnRenderer renderer);
-
-    default TableColumnRenderer getHeaderRenderer() {
-        return TableColumnRenderer.DEFAULT;
+    default CellRenderer getHeaderRenderer() {
+        return getRenderer();
     }
 
     public static class Delegate implements TableColumn {
@@ -171,22 +172,22 @@ public interface TableColumn {
         }
 
         @Override
-        public void setColumnRenderer(TableColumnRenderer renderer) {
+        public void setColumnRenderer(CellRenderer renderer) {
             delegate.setColumnRenderer(renderer);
         }
 
         @Override
-        public TableColumnRenderer getRenderer() {
+        public CellRenderer getRenderer() {
             return delegate.getRenderer();
         }
         
         @Override
-        public void setHeaderRenderer(TableColumnRenderer renderer) {
+        public void setHeaderRenderer(CellRenderer renderer) {
             delegate.setHeaderRenderer(renderer);
         }
 
         @Override
-        public TableColumnRenderer getHeaderRenderer() {
+        public CellRenderer getHeaderRenderer() {
             return delegate.getHeaderRenderer();
         }
     }

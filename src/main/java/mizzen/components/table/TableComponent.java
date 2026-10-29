@@ -37,6 +37,7 @@ import mizzen.events.keyboard.Keys;
 import mizzen.events.mouse.ApplicationMouseEvent;
 import mizzen.events.mouse.Clickable;
 import mizzen.events.mouse.MOUSE_ACTION;
+import mizzen.geom.Align;
 import mizzen.geom.Dimension;
 import mizzen.geom.Rectangle;
 import mizzen.geom.position.Position;
@@ -215,7 +216,7 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
                         break;
                     }
                 }
-                TableColumnRenderer renderer = tc.getHeaderRenderer();
+                CellRenderer renderer = tc.getHeaderRenderer();
                 IScreenLineSegmentsBuffer cellSegmentsBuffer = tableModel.getOrSetHeaderSegmentsDataAt(col, tc, cellHeight, cellWidth, renderer);
                 int segmentHeight = cellSegmentsBuffer.getHeight();
                 maxRowHeight = Math.max(segmentHeight, maxRowHeight);
@@ -249,7 +250,7 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
                         break;
                     }
                 }
-                TableColumnRenderer renderer = tc.getRenderer();
+                CellRenderer renderer = tc.getRenderer();
                 IScreenLineSegmentsBuffer cellSegmentsBuffer = tableModel.getOrSetSegmentsDataAt(row, col, tc, cellHeight, cellWidth, renderer);
                 int segmentHeight = cellSegmentsBuffer.getHeight();
                 maxRowHeight = Math.max(segmentHeight, maxRowHeight);
@@ -286,7 +287,7 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
                 offset = maxCol == 0 ? 0 : colToWidthNeeded.apply(maxCol - 1);
             }
             TableColumnWithDataAndWidths tc = columnsForOutput.visibleColumnDataList.get(maxCol);
-            TableColumnRenderer renderer = tc.getRenderer();
+            CellRenderer renderer = tc.getRenderer();
             int cellWidth = tc.getSizeToAlignCellData();
             if (tableComponentWidth < (cellWidth + offset + 1)) {
                 cellWidth = tableComponentWidth - (offset + 1);
@@ -838,12 +839,12 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
          * For example, with Bio and Email dropped, Phone is drawn at col 7 and column is Phone (model 8).
          */
         public IScreenLineSegmentsBuffer getOrSetSegmentsDataAt(int row, int col, TableColumn column, int desiredHeight,
-                int desiredWidth, TableColumnRenderer renderer) {
+                int desiredWidth, CellRenderer renderer) {
             IScreenLineSegmentsBuffer segmentsBufferAtRowCol = getSegmentsDataAt(row, col);
             if (segmentsBufferAtRowCol == null || (segmentsBufferAtRowCol.getHeight() != desiredHeight
                     || segmentsBufferAtRowCol.getWidth() != desiredWidth)) {
                 Object cellValue = this.getValueAt(row, column.getPosition());
-                IScreenLineSegmentsBuffer segmentsBufferForRowCol = renderer.render(column, cellValue, desiredWidth, desiredHeight, column.getAlign());
+                IScreenLineSegmentsBuffer segmentsBufferForRowCol = renderer.render(cellValue, cellSize(desiredHeight, desiredWidth), column.getAlign());
                 // making a copy because renderer does not preserve its segments object ( and is not thread safe )
                 IScreenLineSegmentsBuffer segmentsCopy = new ScreenLineSegmentsBuffer();
                 segmentsCopy
@@ -876,12 +877,12 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
 
         /** the header drawn at col - column says which model column it heads (see getOrSetSegmentsDataAt) */
         public IScreenLineSegmentsBuffer getOrSetHeaderSegmentsDataAt(int col, TableColumn column, int desiredHeight,
-                int desiredWidth, TableColumnRenderer renderer) {
+                int desiredWidth, CellRenderer renderer) {
             IScreenLineSegmentsBuffer segmentsBufferAtRowCol = getHeaderSegmentsDataAt(col);
             if (segmentsBufferAtRowCol == null || (segmentsBufferAtRowCol.getHeight() != desiredHeight
                     || segmentsBufferAtRowCol.getWidth() != desiredWidth)) {
                 String cellValue = this.getColumnName(column.getPosition());
-                IScreenLineSegmentsBuffer segmentsBufferForRowCol = renderer.renderHeader(column, cellValue, desiredWidth, desiredHeight);
+                IScreenLineSegmentsBuffer segmentsBufferForRowCol = renderer.render(cellValue, cellSize(desiredHeight, desiredWidth), Align.CENTER);
                 // making a copy because renderer does not preserve its segments object ( and
                 // not thread safe )
                 IScreenLineSegmentsBuffer segmentsCopy = new ScreenLineSegmentsBuffer();
@@ -891,6 +892,11 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
                 return segmentsBufferForRowCol;
             }
             return segmentsBufferAtRowCol;
+        }
+
+        // a cell's rectangle: the room left below the last row shown can come out negative - nothing fits there
+        private static Dimension cellSize(int height, int width) {
+            return new Dimension.Simple(Math.max(0, height), Math.max(0, width));
         }
 
         public void setHeaderSegmentsDataAt(int col, IScreenLineSegmentsBuffer cellSegmentsBuffer) {

@@ -14,8 +14,8 @@ public class TableColumnImpl implements TableColumn {
     protected Integer             columnDroppable     = null;
     protected Boolean             wordWrap            = null;
     protected Boolean             truncationAllowed   = null;
-    private TableColumnRenderer   renderer;
-    private TableColumnRenderer   headerRenderer;
+    private CellRenderer          renderer;
+    private CellRenderer          headerRenderer;
 
     public TableColumnImpl(String headerText, Integer preferredWidth, String columnName, Integer position,
                            Align align, Integer columnDroppable, Boolean wordWrap, Boolean truncationAllowed) {
@@ -106,7 +106,7 @@ public class TableColumnImpl implements TableColumn {
     }
 
     @Override
-    public void setColumnRenderer(TableColumnRenderer renderer) {
+    public void setColumnRenderer(CellRenderer renderer) {
         this.renderer = renderer;
         if (this.headerRenderer == null) {
             // default to normal renderer
@@ -115,18 +115,19 @@ public class TableColumnImpl implements TableColumn {
     }
 
     @Override
-    public TableColumnRenderer getRenderer() {
+    /** none set: text, wrapped and cut as this column says (TextCellRenderer.forColumn) */
+    public CellRenderer getRenderer() {
         if (this.renderer == null) {
-            return TableColumnRenderer.DEFAULT;
+            this.renderer = TextCellRenderer.forColumn(this);
         }
         return renderer;
     }
 
-    public void setHeaderRenderer(TableColumnRenderer renderer) {
+    public void setHeaderRenderer(CellRenderer renderer) {
         this.headerRenderer = renderer;
     }
     @Override
-    public TableColumnRenderer getHeaderRenderer() {
+    public CellRenderer getHeaderRenderer() {
         if (this.headerRenderer == null) {
             return getRenderer();
         }
@@ -142,11 +143,11 @@ public class TableColumnImpl implements TableColumn {
     }
 
     public static TableColumn makeDefaultColumnFromTable(int colIdx, TableModel tableModel) {
-        return makeDefaultColumnFromTable(colIdx, tableModel, TableColumnRenderer.DEFAULT);
+        return makeDefaultColumnFromTable(colIdx, tableModel, null);
     }
 
-    // TableColumnRenderer    renderer = TableColumnRenderer.DEFAULT;
-    public static TableColumn makeDefaultColumnFromTable(int colIdx, TableModel tableModel, TableColumnRenderer renderer) {
+    /** renderer: how its cells are drawn; null: text, as the column says (getRenderer) */
+    public static TableColumn makeDefaultColumnFromTable(int colIdx, TableModel tableModel, CellRenderer renderer) {
         if (colIdx >= tableModel.getColumnCount()) {
             throw new IllegalStateException("Error in call to makeColumnFromTable()! Number of columns in the tablemodel ("+tableModel.getColumnCount()+") does not match request column index ("+colIdx+")");
         }
@@ -183,8 +184,9 @@ public class TableColumnImpl implements TableColumn {
                                    wordWrap, 
                                    truncationAllowed);
         
-        tc.setColumnRenderer(renderer);
- 
+        if (renderer != null) {
+            tc.setColumnRenderer(renderer);
+        }
         return tc; 
     }
 

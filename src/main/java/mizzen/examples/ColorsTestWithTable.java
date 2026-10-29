@@ -5,17 +5,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import mizzen.app.TUIApp;
-import mizzen.components.Component;
 import mizzen.components.TextComponent;
 import mizzen.components.composite.Composite;
 import mizzen.components.composite.HorizontalPanel;
 import mizzen.components.input.Button;
 import mizzen.components.scroll.ScrollableComponent;
 import mizzen.components.table.DefaultTableModel;
-import mizzen.components.table.TableColumn;
 import mizzen.components.table.TableColumnImpl;
-import mizzen.components.table.TableColumnRenderer;
-import mizzen.components.table.TableColumnRenderer.TableColumnRendererFromTextComponent;
+import mizzen.components.table.CellRenderer;
+import mizzen.components.table.TextCellRenderer;
 import mizzen.components.table.TableComponent;
 import mizzen.controlcodes.color.Color;
 import mizzen.controlcodes.color.Colors;
@@ -23,7 +21,6 @@ import mizzen.controlcodes.color.Colors.FGBGColors;
 import mizzen.examples.sampledata.ReadSampleFiles;
 import mizzen.geom.Align;
 import mizzen.geom.Dimension;
-import mizzen.util.ElapsedTime;
 import mizzen.util.Logging;
 
 public class ColorsTestWithTable {
@@ -82,13 +79,17 @@ public class ColorsTestWithTable {
             combinedColorsTable.setFillOnClear(true);
             combinedColorsTable.setFillOnClear(false);
 
-            TableColumnRenderer renderer = new ColorAndTextRenderer();
+            // each cell's text in its colour; the headers (plain strings) in green
+            CellRenderer renderer = new TextCellRenderer()
+                    .text((v) -> v instanceof ColorAndText ? ((ColorAndText) v).text : String.valueOf(v))
+                    .color((v) -> v instanceof ColorAndText ? ((ColorAndText) v).color : Colors.IGre)
+                    .wraps(false);
 
             int columnCount = Colors.getBackgroundColorNames().size();
             List<String> columnNames= new ArrayList<String>();
             for (int c=0; c<columnCount; c++) {
                 int preferredWidth = Math.max(2, new Double(Math.random() * 20).intValue());
-                TableColumnImpl tc = new TableColumnImpl("C"+c,preferredWidth,"C"+c, 0, Align.CENTER, -1, false, true);
+                TableColumnImpl tc = new TableColumnImpl("C"+c,preferredWidth,"C"+c, c, Align.CENTER, -1, false, true);   // position c: the model column it shows
                 tc.setPreferredHeight(3);
                 tc.setColumnRenderer(renderer);
                 combinedColorsTable.addColumn(tc);
@@ -151,21 +152,6 @@ public class ColorsTestWithTable {
             super();
             this.text = text;
             this.color = color;
-        }
-    }
-
-    static class ColorAndTextRenderer  extends TableColumnRendererFromTextComponent  {
-
-        protected void renderObjectOntoComponent(Component<?> componentForRendering2, TableColumn tableColumn, Object cellValue, int preferredWidth, int maxCellHeight, Align align) {
-            ColorAndText colorAndText = (ColorAndText) cellValue;
-            setCellColor(colorAndText.color);
-            Logging.info(" setCellText() : " + ElapsedTime.onRunOf(()-> setCellText(colorAndText.text, preferredWidth, maxCellHeight)));
-        }
-
-        @Override
-        protected void renderHeaderOntoComponent(Component<?> componentForRendering2, TableColumn tableColumn, String cellValue, int preferredWidth, int maxCellHeight, Align align) {
-            ColorAndText colorAndText = new ColorAndText(Colors.IGre, cellValue);
-            renderObjectOntoComponent(componentForRendering2, tableColumn, colorAndText, preferredWidth, maxCellHeight, align);
         }
     }
 
