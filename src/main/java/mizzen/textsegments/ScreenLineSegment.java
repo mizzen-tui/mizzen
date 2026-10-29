@@ -880,6 +880,27 @@ public interface ScreenLineSegment extends Rectangle, CleanString  {
             return s;
         }
 
+        /**
+         * text as segments, from bounds' top-left, clipped to bounds: several lines; colour codes in it
+         * honoured, the rest in color. What a TextComponent draws - for a component that draws text itself
+         * (rows of a tree) without a component per piece.
+         * <pre>
+         *     segments.merge(ScreenLineSegment.UTIL.segmentsOf(rowText, rowColor, new Rectangle.Simple(row, 0, 1, width)));
+         * </pre>
+         */
+        public static TreeSet<ScreenLineSegment> segmentsOf(String text, Color color, Rectangle bounds) {
+            return segmentsOf(text, ColorParsingUtils.hasColorCodes(text), color, bounds);
+        }
+
+        /** as segmentsOf(text, color, bounds), told whether text has colour codes (e.g. known already, kept by its maker) */
+        public static TreeSet<ScreenLineSegment> segmentsOf(String text, boolean hasColorCodes, Color color, Rectangle bounds) {
+            SegmentsFromStringResult result = hasColorCodes
+                    ? textSegmentsFromStringWithEmbeddedColor(text, 0, 0, bounds,
+                            (textColor, p, txt) -> new SegmentImpl(textColor != null ? textColor : color, p, -1, txt))
+                    : textSegmentsFromString(text, 0, 0, bounds, (p, txt) -> new SegmentImpl(color, p, -1, txt));
+            return makeCollection(result.ts);
+        }
+
         public static class SegmentsFromStringResult {
             public Position pos = Position.ZERO;
             public Collection<ScreenLineSegment> ts;

@@ -7,12 +7,9 @@ import mizzen.controlcodes.color.ColorParsingUtils;
 import mizzen.controlcodes.color.Colors;
 import mizzen.geom.Dimension;
 import mizzen.geom.Rectangle;
-import mizzen.geom.position.Position;
 import mizzen.textsegments.CleanString;
 import mizzen.textsegments.IScreenLineSegmentsBuffer;
 import mizzen.textsegments.ScreenLineSegment;
-import mizzen.textsegments.ScreenLineSegment.SegmentImpl;
-import mizzen.textsegments.ScreenLineSegment.UTIL.SegmentsFromStringResult;
 import mizzen.util.StringUtils;
 
 /**
@@ -112,30 +109,24 @@ public class TextComponent extends BoundedComponent<TextComponent> {
 
     @Override
     public void draw(Color color, IScreenLineSegmentsBuffer segments) {
-        
-        SegmentsFromStringResult result;
-        
+
+        TreeSet<ScreenLineSegment> textSegments;
+
         if (parsedSegments == null) {
-            if (this.hasColorCodes) {
-                result = ScreenLineSegment.UTIL.textSegmentsFromStringWithEmbeddedColor(this.text, 0, 0, this,
-                                                                                        (strColor, p, txt) -> new SegmentImpl( strColor != null ? strColor : color, p, -1, txt));
-            }  else {
-                result = ScreenLineSegment.UTIL.textSegmentsFromString(this.getText(), 0, 0, this,  // TODO: more efficient way!
-            	                                                       (p,s)->new SegmentImpl(color, p, -1, s));
-            }
+            textSegments = ScreenLineSegment.UTIL.segmentsOf(this.getText(), this.hasColorCodes, color, this);
             // keeping a copy around to avoid having to reparse the text on
             // subsequent draw requests.  parsedSegments null'd if text is changed which causes parseSegments to be rebuilt.
-            parsedSegments = ScreenLineSegment.UTIL.makeCollection(result.ts);
+            parsedSegments = ScreenLineSegment.UTIL.makeCollection(textSegments);
         } else {
-            result = new SegmentsFromStringResult(ScreenLineSegment.UTIL.makeCollection(parsedSegments));
+            textSegments = ScreenLineSegment.UTIL.makeCollection(parsedSegments);
         }
 
-        if (result.ts.size()!=0) {
+        if (textSegments.size()!=0) {
             if ( this.isFillOnClear()) {
                 this.clear();
-                segments.merge(result.ts);
+                segments.merge(textSegments);
             } else {
-                segments.clearAndMerge(result.ts);
+                segments.clearAndMerge(textSegments);
             }
         }
     }
@@ -191,54 +182,6 @@ public class TextComponent extends BoundedComponent<TextComponent> {
     }
 
     
-    // an experiment
-    private  void appendText(String text) {
-        if (this.text == null || parsedSegments == null) {
-            if (this.text == null ) {
-                text = this.text + text;
-            }
-            setTextAndResize(text);
-            return;
-        }
-
-        // we want this next bit of code to be very fast
-        // so we just append to existing non-null parsedSegments
-
-        // TODO:  this code does not handle embedded color codes - need to fix that
-
-        String[] lines = text.split("\n", -1);
-        if (lines == null || lines.length == 0) {
-            return;
-        }
-
-        int newWidth = this.getWidth();
-        int newHeight = this.getHeight();
-
-        Position nextPosition = parsedSegments.last().getPostion_BottomRight().addCols(1);
-        ScreenLineSegment segment = new SegmentImpl(getColor(), nextPosition, -1, lines[0]) ;
-        parsedSegments.add( segment );
-        newWidth = Math.max(newWidth, segment.getRightMostCol()+1);
-        nextPosition = new Position.Simple(nextPosition.getRow()+1, 0);
-        for (int i=1;i<lines.length;i++) {
-            segment = new SegmentImpl(getColor(), nextPosition, -1, lines[i]);
-            newWidth = Math.max(newWidth, segment.getRightMostCol()+1);
-            newHeight = Math.max(newHeight, segment.getBottomMostRow()+1);
-            parsedSegments.add( segment );
-            nextPosition = nextPosition.addRows(1);
-        }
-
-        Dimension newDim = new Dimension.Simple(newHeight, newWidth);
-        if (! newDim.isSameDimension(this)) {
-            TreeSet<ScreenLineSegment> savedParsedSegments = parsedSegments;
-            // resize nulls out parsedSegments ( in this case, we dont want that - so this hack)
-            this.resize(newDim);
-            parsedSegments = savedParsedSegments; 
-        }
-
-        this.markAsDirty();
-
-    }
-
     public String toStringDetails() {
         return "["+StringUtils.truncate(getText(),10)+"]";
     }
