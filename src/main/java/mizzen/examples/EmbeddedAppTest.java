@@ -107,6 +107,7 @@ public class EmbeddedAppTest {
                     group("Lists and tables",
                             example("List box", ListBoxTest.class),
                             example("Table", Table01Test.class),
+                            example("Table cells", TableCellsDemo.class),
                             example("Tree view", TreeViewTest.class)),
                     group("Menus and buttons",
                             example("Menu bar", MenuBarTest.class),

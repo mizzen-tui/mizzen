@@ -108,10 +108,6 @@ public class TableColumnImpl implements TableColumn {
     @Override
     public void setColumnRenderer(CellRenderer renderer) {
         this.renderer = renderer;
-        if (this.headerRenderer == null) {
-            // default to normal renderer
-            this.headerRenderer = renderer;
-        }
     }
 
     @Override
@@ -127,9 +123,10 @@ public class TableColumnImpl implements TableColumn {
         this.headerRenderer = renderer;
     }
     @Override
+    /** none set: text, as this column says - a heading is text, whatever the cells are */
     public CellRenderer getHeaderRenderer() {
         if (this.headerRenderer == null) {
-            return getRenderer();
+            this.headerRenderer = TextCellRenderer.forColumn(this);
         }
         return headerRenderer;
     }
@@ -152,8 +149,8 @@ public class TableColumnImpl implements TableColumn {
     /**
      * A column for the model's column colIdx: numbers (all of the first SAMPLED_ROWS rows) right
      * aligned, never wrapped or cut; text left aligned, wrapped, may be cut. No width: the table
-     * measures the rows it shows. renderer: how its cells are drawn; null: text, as the column says
-     * (getRenderer).
+     * measures the rows it shows. renderer: how its cells are drawn; null: the model's
+     * (getColumnRenderer), else text, as the column says (getRenderer).
      */
     public static TableColumn makeDefaultColumnFromTable(int colIdx, TableModel tableModel, CellRenderer renderer) {
         if (colIdx >= tableModel.getColumnCount()) {
@@ -184,8 +181,9 @@ public class TableColumnImpl implements TableColumn {
                                    wordWrap, 
                                    truncationAllowed);
         
-        if (renderer != null) {
-            tc.setColumnRenderer(renderer);
+        CellRenderer drawnBy = renderer != null ? renderer : tableModel.getColumnRenderer(colIdx);
+        if (drawnBy != null) {
+            tc.setColumnRenderer(drawnBy);
         }
         return tc; 
     }

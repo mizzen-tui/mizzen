@@ -92,6 +92,7 @@ public class ColorsTestWithTable {
                 TableColumnImpl tc = new TableColumnImpl("C"+c,preferredWidth,"C"+c, c, Align.CENTER, -1, false, true);   // position c: the model column it shows
                 tc.setPreferredHeight(3);
                 tc.setColumnRenderer(renderer);
+                tc.setHeaderRenderer(renderer);         // the headings in green too
                 combinedColorsTable.addColumn(tc);
                 columnNames.add("C"+c);
             }

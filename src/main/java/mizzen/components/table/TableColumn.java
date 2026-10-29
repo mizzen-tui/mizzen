@@ -114,11 +114,11 @@ public interface TableColumn {
 
     CellRenderer getRenderer();
 
-    /** how its header is drawn; by default as its cells are */
+    /** how its header is drawn; by default as text, whatever its cells are */
     void setHeaderRenderer(CellRenderer renderer);
 
     default CellRenderer getHeaderRenderer() {
-        return getRenderer();
+        return TextCellRenderer.forColumn(this);
     }
 
     public static class Delegate implements TableColumn {

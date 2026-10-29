@@ -23,6 +23,11 @@ public interface TableModel<T> {
         return null;
     }
 
+    /** how column columnIndex's cells are drawn and measured (CellRenderer); null: as text (the default) */
+    public default CellRenderer getColumnRenderer(int columnIndex) {
+        return null;
+    }
+
     /** the row itself, e.g. the Sale behind row 3 */
     public default T getRow(int rowIndex) {
         throw new UnsupportedOperationException(getClass().getName()
@@ -66,6 +71,11 @@ public interface TableModel<T> {
         @Override
         public Integer getColumnDroppable(int columnIndex) {
             return delegate.getColumnDroppable(columnIndex);
+        }
+
+        @Override
+        public CellRenderer getColumnRenderer(int columnIndex) {
+            return delegate.getColumnRenderer(columnIndex);
         }
     }
 }

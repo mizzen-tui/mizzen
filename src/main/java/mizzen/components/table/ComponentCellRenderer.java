@@ -41,8 +41,9 @@ public class ComponentCellRenderer<V> implements CellRenderer {
                     return new CellWidths(least, least, most);      // drawn smaller, never clipped
                 }
 
+                // no taller than at most: a column widened past it (to fill the table) leaves room around the value, not a bigger value
                 public int heightAt(V value, int width) {
-                    return Math.max(1, (int) Math.round(width * rowsPerColumn.apply(value)));
+                    return Math.max(1, (int) Math.round(Math.min(width, most) * rowsPerColumn.apply(value)));
                 }
             };
         }

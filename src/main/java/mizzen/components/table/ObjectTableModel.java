@@ -12,6 +12,7 @@ import java.util.function.Function;
  *     ObjectTableModel&lt;Device&gt; model = new ObjectTableModel&lt;Device&gt;()
  *             .column("Name",   Device::getName)
  *             .column("Status", Device::getStatus)
+ *             .column("Load",   Device::getLoad).renderer(CellRenderers.meter(Colors.Gre, Device::getLoad))
  *             .setRows(devices);
  *     TableComponent&lt;Device&gt; table = new TableComponent&lt;Device&gt;(color, model);
  *     table.onPick((device, te) -&gt; show(device));
@@ -26,6 +27,7 @@ public class ObjectTableModel<T> implements TableModel<T> {
     private final List<String> columnNames = new ArrayList<String>();
     private final List<Function<? super T, ?>> columnValues = new ArrayList<Function<? super T, ?>>();
     private final List<Integer> columnDroppable = new ArrayList<Integer>();          // per column; null: never dropped
+    private final List<CellRenderer> columnRenderers = new ArrayList<CellRenderer>();  // per column; null: text
     private List<T> rows = Collections.emptyList();
 
     /** a column: its heading, and its value for a row's object (e.g. Device::getName) */
@@ -33,6 +35,7 @@ public class ObjectTableModel<T> implements TableModel<T> {
         columnNames.add(name);
         columnValues.add(value);
         columnDroppable.add(null);
+        columnRenderers.add(null);
         return this;
     }
 
@@ -54,6 +57,26 @@ public class ObjectTableModel<T> implements TableModel<T> {
     @Override
     public Integer getColumnDroppable(int columnIndex) {
         return columnDroppable.get(columnIndex);
+    }
+
+    /**
+     * How the column just added draws its cells - a drawing, an image, a meter (CellRenderers), or text
+     * of your own (TextCellRenderer). Its heading stays text.
+     * <pre>
+     *     .column("Stock", (p) -&gt; p).renderer(CellRenderers.meter(Colors.Gre, (Part p) -&gt; p.stockFraction()))
+     * </pre>
+     */
+    public ObjectTableModel<T> renderer(CellRenderer renderer) {
+        if (columnRenderers.isEmpty()) {
+            throw new IllegalStateException("renderer(..) goes after a column(..)");
+        }
+        columnRenderers.set(columnRenderers.size() - 1, renderer);
+        return this;
+    }
+
+    @Override
+    public CellRenderer getColumnRenderer(int columnIndex) {
+        return columnRenderers.get(columnIndex);
     }
 
     /** the objects to show, one per row, in this order (the list is used as is, not copied) */

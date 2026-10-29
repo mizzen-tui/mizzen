@@ -56,7 +56,7 @@ public final class CellRenderers {
                 .byAspect((v) -> 0.5 * imageOf.apply(v).getHeight() / imageOf.apply(v).getWidth(), least, most),
                 (value, size) -> {
                     ImageRenderRequest request = new ImageRenderRequest().setImageToView(imageOf.apply(value))
-                            .setDesiredImgSizeInCharacters(size).setColorMap(ImageViewerFactory.rgbColorMapRCol)
+                            .setDesiredImgSizeInCharacters(size).setColorMap(ImageViewerFactory.rgbColorMapDIRECT)
                             .setToPlotOrNot(ImageViewerFactory.PLOT_ALWAYS);
                     request.setImageRenderType(IMAGE_RENDER_TYPE.BLOCK);
                     try {
@@ -71,7 +71,7 @@ public final class CellRenderers {
     public static <V> ComponentCellRenderer<V> meter(Color color, Function<V, Double> fraction) {
         ProgressMeter meter = new ProgressMeter(color, 1).setLayout(ProgressMeter.Layout.ONE_ROW);
         int least = meter.getWidth();                       // narrower, it would not fit its percentage
-        return new ComponentCellRenderer<V>(ComponentCellRenderer.SizeRule.fixedHeight(1, least, 40), (value, size) -> {
+        return new ComponentCellRenderer<V>(ComponentCellRenderer.SizeRule.fixedHeight(1, least, least * 2), (value, size) -> {
             meter.setProgress(fraction.apply(value));
             meter.resize(size);
             return meter;
