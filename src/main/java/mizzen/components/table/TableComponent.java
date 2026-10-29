@@ -81,6 +81,7 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
     ChainedEventHandler chainedEventHandler;
     int selectedRow = -1;                     // -1: no row selected yet
     int topRow = 0;                           // the first data row on screen
+    final List<Integer> rowEnds = new ArrayList<Integer>();   // where each data row drawn ends on screen - the line under it goes there
     Rectangle selectedRowArea;                // where the selected row was painted (for scrolling it into view)
     Color selectedColor = new Colors.FGBGColors(Colors.IYel);     // as ListBox / TreeView
     UnfocusedSelection unfocusedSelection = UnfocusedSelection.DIM;
@@ -336,8 +337,10 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
         }
 
         this.selectedRowArea = null;
+        rowEnds.clear();
         for (int row = topRow; row <= maxRow; row++) {
             int rowHeight = tableModel.getMaxHeightForRow(row);
+            rowEnds.add(rowpos + rowHeight);
             Color rowColor = row == selectedRow ? selectedRowColor() : null;
             if (row == selectedRow) {
                 selectedRowArea = new Rectangle.Simple(rowpos, 0, Math.max(1, rowHeight), getWidth());
@@ -518,7 +521,6 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
             Rectangle.Simple meAsRectangle = new Rectangle.Simple(TableComponent.this);
 
             Function<Integer, Integer> colVerticalLineOffset = (col) -> TableComponent.this.tableModel.getWidthColumnForRange(0, col) + col + 1;
-            Function<Integer, Integer> rowHorizontalLineOffset = (row) -> TableComponent.this.tableModel.getHeightRowForRange(0, row) + row + 3;
             meAsRectangle.setWidth(Math.min(meAsRectangle.getWidth(), colVerticalLineOffset.apply(maxColRendered) + 1));
 
             Color borderColor = getColor();
@@ -551,8 +553,10 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
                                  BlockChars.NICE.getINTERSECT(), 
                                  BlockChars.NICE.getVERTICAL_LEFT() });
 
-            for (int r = 0; r < maxRowRendered; r++) {
-                drawHorizontalLine.accept(rowHorizontalLineOffset.apply(r),
+            // a line under each row drawn but the last - where the drawing put that row's end (rows drawn from topRow,
+            // each as high as its tallest cell), so a line never lands inside a row
+            for (int r = 0; r < rowEnds.size() - 1; r++) {
+                drawHorizontalLine.accept(rowEnds.get(r),
                         new char[] { BlockChars.NICE.getVERTICAL_RIGHT(), 
                                      BlockChars.NICE.getHORIZONTAL_LINE(),
                                      BlockChars.NICE.getINTERSECT(), 
