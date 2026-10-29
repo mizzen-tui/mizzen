@@ -2,10 +2,9 @@ package mizzen.components.input.tree;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TreeMap;
 
-import mizzen.components.Component;
 import mizzen.components.CompositeWithFocusManager;
-import mizzen.components.TextComponent;
 import mizzen.components.input.CheckBoxInput;
 import mizzen.components.input.HasValue;
 import mizzen.components.input.TextInput;
@@ -19,6 +18,7 @@ import mizzen.events.keyboard.KeyStroke;
 import mizzen.events.keyboard.Keys;
 import mizzen.supportfortesting.CanvasForTesting;
 import mizzen.supportfortesting.SyncEventLoop;
+import mizzen.textsegments.ScreenLineSegment;
 import junit.framework.TestCase;
 
 /**
@@ -65,10 +65,19 @@ public class TreeViewBehaviourTest extends TestCase {
         }
     }
 
+    /** the rows as the tree draws them: its segments, row by row, the fill after each row's text left off */
     private List<String> rows() {
+        TreeMap<Integer, StringBuilder> byRow = new TreeMap<Integer, StringBuilder>();
+        for (ScreenLineSegment segment : tree.getSegmentsBuffer().getSegments()) {
+            StringBuilder row = byRow.computeIfAbsent(segment.getRow(), (r) -> new StringBuilder());
+            while (row.length() < segment.getCol()) {
+                row.append(' ');
+            }
+            row.replace(segment.getCol(), Math.min(row.length(), segment.getCol() + segment.getText().length()), segment.getText());
+        }
         List<String> rows = new ArrayList<String>();
-        for (Component<?> row : tree.getChildren()) {
-            rows.add(((TextComponent) row).getText());
+        for (StringBuilder row : byRow.values()) {
+            rows.add(row.toString().replaceAll("\\s+$", ""));
         }
         return rows;
     }

@@ -1,6 +1,7 @@
 package mizzen.components.input.tree;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -14,7 +15,6 @@ import mizzen.components.Component;
 import mizzen.components.GetComponentAtOffset;
 import mizzen.components.HasName;
 import mizzen.components.ParentContainer;
-import mizzen.components.TextComponent;
 import mizzen.components.input.HasValue;
 import mizzen.components.input.LeafFocusBehaviour;
 import mizzen.components.input.FormInput;
@@ -43,6 +43,7 @@ import mizzen.geom.Dimension;
 import mizzen.geom.Rectangle;
 import mizzen.geom.position.Position;
 import mizzen.textsegments.IScreenLineSegmentsBuffer;
+import mizzen.textsegments.ScreenLineSegment;
 
 /**
  * A tree of nodes you can expand, collapse and select - one TAB stop that draws its own rows.
@@ -99,7 +100,20 @@ public class TreeView<N> extends BoundedComponent<TreeView<N>>
     private Function<N, String> nodeText;
     private final Set<N> expanded = new HashSet<N>();
     private final List<Row> rows = new ArrayList<Row>();
-    private final List<TextComponent> rowComponents = new ArrayList<TextComponent>();
+    private final List<Line> lines = new ArrayList<Line>();   // what each visible row draws - text, not a component per row
+
+    /** a row as drawn: its text (colour codes allowed), its colour, its size - drawn straight as segments */
+    private static class Line {
+        final String text;
+        final Color color;
+        final Dimension size;
+
+        Line(String text, Color color) {
+            this.text = text;
+            this.color = color;
+            this.size = Dimension.UTIL.stringToDimension(text);
+        }
+    }
     private N selected;
 
     private Color selectedColor = new Colors.FGBGColors(Colors.IYel);     // as ListBox
@@ -432,7 +446,7 @@ public class TreeView<N> extends BoundedComponent<TreeView<N>>
     /** work out the visible rows again and redraw them (selected row in its colours) */
     private void rebuild() {
         rows.clear();
-        rowComponents.clear();
+        lines.clear();
         if (model != null && model.getRoot() != null) {
             addRows(model.getRoot(), null, "", true, true);
         }
@@ -445,10 +459,9 @@ public class TreeView<N> extends BoundedComponent<TreeView<N>>
             boolean isSelected = row.node == selected;
             String text = isSelected ? selectedText(row) : row.text;
             Color color = isSelected ? selectedRowColor() : getColor();
-            int rowIndex = i;
-            TextComponent component = makeChildComponent(() -> new TextComponent(color, rowIndex, 0, text));
-            rowComponents.add(component);
-            width = Math.max(width, component.getWidth());
+            Line line = new Line(text, color);
+            lines.add(line);
+            width = Math.max(width, line.size.getWidth());
         }
         resize(new Dimension.Simple(Math.max(1, rows.size()), width));
         markAsDirty();
@@ -576,18 +589,20 @@ public class TreeView<N> extends BoundedComponent<TreeView<N>>
         return getBlockChars();
     }
 
-    // ---- drawing and children (the row components) ------------------------------------------
+    // ---- drawing: each row's text, as segments - as a TextComponent would draw it, with no component per row
 
     @Override
     public void draw(Color color, IScreenLineSegmentsBuffer segments) {
-        for (Component<?> row : rowComponents) {
-            segments.merge(row.getSegmentsBuffer());
+        for (int i = 0; i < lines.size(); i++) {
+            Line line = lines.get(i);
+            segments.merge(ScreenLineSegment.UTIL.segmentsOf(line.text, line.color, new Rectangle.Simple(i, 0, line.size)));
         }
     }
 
+    /** none: the rows are drawn, not components */
     @Override
     public Collection<? extends Component<?>> getChildren() {
-        return rowComponents;
+        return Collections.<Component<?>>emptyList();
     }
 
     @Override
