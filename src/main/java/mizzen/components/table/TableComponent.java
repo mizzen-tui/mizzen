@@ -1026,6 +1026,12 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
             return visibleColumnDataList == null ? 0 : visibleColumnDataList.size();
         }
 
+        /**
+         * Widens the columns to fill the table, in proportion to their widths. Only for this size: it
+         * sets each column's size to use (cleared on resize), never its preferred width - that is what
+         * its data measured, and the next resize fits from it again. Widening the preferred width made
+         * columns grow with every wide draw: Email 28 wide for its data, then 33, then 35.
+         */
         public ColumnsForOutput expandColumnsToFitTableWidth(int currentTableDataWidth, int tableComponentInnerWidth) {
 
             int visibleColumnCount = getVisibleColumnCount(); 
@@ -1054,13 +1060,13 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
                     continue;
                 }
                 allDataWidthMinusSpacers = allDataWidthMinusSpacers - currentPreferredWidth + newPrefrerredColWidth;
-                tc.setPreferredWidth(newPrefrerredColWidth);
+                tc.setColumnSizeToUse(newPrefrerredColWidth);
             }
 
             while (allDataWidthMinusSpacers < allMaxDataWidthMinusSpacers) {
                 for (int c = (visibleColumnCount-1); c>=0 && allDataWidthMinusSpacers < allMaxDataWidthMinusSpacers; c--) {
                     TableColumnWithDataAndWidths tc = this.visibleColumnDataList.get(c);
-                    tc.setPreferredWidth(  tc.getPreferredWidth() + 1 );
+                    tc.setColumnSizeToUse(tc.getPreferredWidth() + 1);
                     allDataWidthMinusSpacers++;
                 }
             }

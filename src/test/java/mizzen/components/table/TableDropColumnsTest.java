@@ -93,6 +93,16 @@ public class TableDropColumnsTest extends TestCase {
         assertEquals(heading, 70, heading.trim().length());
     }
 
+    /** drawn wide and back again, the columns are as wide as before - widening doesn't stick */
+    public void testWideningDoesNotStick() {
+        TableComponent<People.Person> table = table(110);
+        String before = screen(table).get(1);
+        table.resize(new Dimension.Simple(12, 250));
+        screen(table);
+        table.resize(new Dimension.Simple(12, 110));
+        assertEquals(before, screen(table).get(1));
+    }
+
     /** redrawn without a resize (a new selection), the same columns show - wider, narrower, wider */
     public void testRedrawnAfterResizesTheSameColumnsShow() {
         TableComponent<People.Person> table = table(70);

@@ -12,8 +12,8 @@ import mizzen.components.composite.VerticalPanel;
 import mizzen.components.frameset.HorizontalSplitter;
 import mizzen.components.frameset.VerticalSplitter;
 import mizzen.components.input.DropdownListBox;
-import mizzen.components.input.RadioGroup;
 import mizzen.components.input.TextInput;
+import mizzen.components.input.form.Form;
 import mizzen.components.table.TableComponent;
 import mizzen.controlcodes.color.Colors;
 import mizzen.examples.People.Person;
@@ -23,17 +23,39 @@ import mizzen.util.Logging;
 
 public class Table01Test {
 
+    /** the two tables, one above the other or side by side */
+    public enum View {
+        VERTICAL("Vertical"), HORIZONTAL("Horizontal");
+
+        private final String label;
+
+        View(String label) {
+            this.label = label;
+        }
+
+        @Override
+        public String toString() {
+            return label;
+        }
+    }
+
+    /** what the options at the top choose - a form edits it */
+    public static class Options {
+        public View view = View.HORIZONTAL;
+    }
+
     public static void main(String[] args) throws IOException {
 
         Logging.setEnabledFromArgs(args);
 
         new TUIApp(args).setDefaultMainApplicationPanel().setOnReadyStart((tApp) -> {
 
-            RadioGroup<Boolean> splitterView = RadioGroup.onOff("Splitter View", "Vertical", "Horizontal", false).setColor(Colors.BIPur);
+            Options options = new Options();
+            Form<Options> optionsForm = Form.of(options).inline((r) -> r.radio("Splitter View", "view"));
             HorizontalPanel topBanner = new HorizontalPanel().setHorizontalSpacer(3);
 
             topBanner.t("Table Tester 01");
-            topBanner.add(splitterView);
+            topBanner.add(optionsForm);
 
             // the tables' selection events: UP/DOWN/HOME/END/PgUp/PgDn select, ENTER or a click on the selected row activates
             TextComponent status = new TextComponent(Colors.IGre, "arrows select a row, ENTER activates");
@@ -130,15 +152,15 @@ public class Table01Test {
 
             };
 
-            // the view the radio shows - at the start, and on each change
+            // the view the options show - at the start, and on each change
             Runnable showChosenView = () -> {
-                if (splitterView.getValue()) {
+                if (options.view == View.VERTICAL) {
                     vsView.run();
                 } else {
                     hsView.run();
                 }
             };
-            splitterView.onChange((te) -> showChosenView.run());
+            optionsForm.binder().onChange((te) -> showChosenView.run());
             showChosenView.run();
 
             tApp.getMainApplicationPanel().add(topBanner);

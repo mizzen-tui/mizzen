@@ -4,10 +4,12 @@ import mizzen.components.Component;
 import mizzen.components.TextComponent;
 import mizzen.components.composite.HorizontalPanel;
 import mizzen.components.composite.VerticalPanel;
+import mizzen.components.input.LabelFor;
+import mizzen.events.focus.ToFocusable;
 
 /**
  * Rows side by side, on one line of a form - the same rows as the form's (FormLayout), each label
- * just before its input.
+ * just before its input; a click on the label focuses the input, as in the form's own rows.
  * <pre>
  *     .inline(r -&gt; r.text("City", "city").text("Postal", "postal"))      City [_____] Postal [___]
  * </pre>
@@ -40,7 +42,8 @@ public class Inline<T> implements FormLayout<T, Inline<T>> {
         VerticalPanel inputAndError = new VerticalPanel();
         inputAndError.add(shown);
         inputAndError.add(error);
-        HorizontalPanel pair = new HorizontalPanel(form.labelColor, RowsPanel.GAP).add(label).add(inputAndError);
+        Component<?> labelShown = ToFocusable.UTIL.toFocusable(input) == null ? label : new LabelFor(label).focuses(input);
+        HorizontalPanel pair = new HorizontalPanel(form.labelColor, RowsPanel.GAP).add(labelShown).add(inputAndError);
         panel.add(pair);
         FormRow row = new FormRow(field, labelText, input, label, error);
         row.component = pair;
