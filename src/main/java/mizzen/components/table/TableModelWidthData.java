@@ -92,8 +92,8 @@ class TableModelWidthData extends TableModel.Delegate<Object> {
         return tableColumns.get(colIdx);
     }
 
-    // the model column a column shows
-    private int modelColumn(int c) {
+    /** the model column table column c shows - what getValueAt takes; the same as c unless a column was given a position */
+    int modelColumn(int c) {
         Integer position = getTableColumnAt(c).getPosition();
         return position == null ? c : position;
     }

@@ -207,7 +207,7 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
             Position at = new Position.Simple(1, layout.columnStart(i));
             IScreenLineSegmentsBuffer header = tableModel.header(layout.columns.get(i), layout.fitted[i], layout.headerHeight);
             mySegments.merge(copyCellSegments(header, at, null, layout.shown[i], layout.headerHeight));
-            tableCellAtPositions.addHeaderCell(at, i, layout.shown[i], layout.headerHeight);
+            tableCellAtPositions.addHeaderCell(at, tableModel.modelColumn(layout.columns.get(i)), layout.shown[i], layout.headerHeight);
         }
         int lastRow = -1;
         for (TableLayout.Row row : layout.rows) {
@@ -221,7 +221,7 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
                 Position at = new Position.Simple(row.top, layout.columnStart(i));
                 IScreenLineSegmentsBuffer cell = tableModel.cell(row.row, layout.columns.get(i), layout.fitted[i], row.height);
                 mySegments.merge(copyCellSegments(cell, at, rowColor, layout.shown[i], linesShown));
-                tableCellAtPositions.addDataCell(at, row.row, i, layout.shown[i], linesShown);
+                tableCellAtPositions.addDataCell(at, row.row, tableModel.modelColumn(layout.columns.get(i)), layout.shown[i], linesShown);
             }
             lastRow = row.row;
         }
@@ -610,6 +610,7 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
             return cell.tableRow;
         }
 
+        /** the model's column - with getTableRow, what getValueAt takes, whatever columns were dropped */
         public int getTableCol() {
             return cell.tableColumn;
         }
@@ -926,7 +927,7 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
         int height;
         boolean header;
 
-        /** tableColumn: the column as drawn (columns dropped don't count) */
+        /** a cell on screen, by the model's row and column (what getValueAt takes) - wherever scrolling and dropped columns put it */
         public TableDataCellAtPosition(Position positionOnView, int tableRow, int tableColumn, int width, int height, boolean isHeader) {
             this.positionOnView = positionOnView;
             this.tableRow = tableRow;
