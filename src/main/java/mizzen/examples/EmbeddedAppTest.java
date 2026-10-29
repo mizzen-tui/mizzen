@@ -41,6 +41,7 @@ import mizzen.examples.plot.image.FractalsViewer;
 import mizzen.geom.Dimension;
 import mizzen.geom.position.Position;
 import mizzen.geom.position.PositionTransform;
+import mizzen.textsegments.CleanString;
 import mizzen.util.SourceFiles;
 import mizzen.util.StringUtils;
 import mizzen.util.formatters.JavaSyntaxHilighterTextFormatter;
@@ -419,7 +420,7 @@ public class EmbeddedAppTest {
             return node;
         }
 
-        // e.g. TableComponent "sales"  9x70 - an anonymous class by what it extends
+        // e.g. TableComponent "sales"  9x70, or TextComponent 'Text boxes'  1x10 - an anonymous class by what it extends
         private static String describe(Component<?> component) {
             Class<?> type = component.getClass();
             while (type.isAnonymousClass()) {
@@ -427,7 +428,21 @@ public class EmbeddedAppTest {
             }
             String name = component instanceof HasName ? ((HasName<?>) component).getName() : null;
             String named = name == null || name.isEmpty() || name.length() > 30 ? "" : " \"" + name + "\"";
-            return type.getSimpleName() + named + "  " + component.getHeight() + "x" + component.getWidth();
+            String text = component instanceof TextComponent ? " '" + shown(((TextComponent) component).getText()) + "'" : "";
+            return type.getSimpleName() + named + text + "  " + component.getHeight() + "x" + component.getWidth();
+        }
+
+        // a text as one short line: colour codes out, its first line only, cut to 30 - "…" says there is more
+        private static String shown(String text) {
+            String plain = text == null ? "" : CleanString.UTIL.clean(text).trim();
+            int lineEnd = plain.indexOf('\n');
+            boolean more = lineEnd >= 0;
+            String line = more ? plain.substring(0, lineEnd).trim() : plain;
+            if (line.length() > 30) {
+                line = line.substring(0, 30);
+                more = true;
+            }
+            return more ? line + "…" : line;
         }
     }
 
