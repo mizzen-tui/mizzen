@@ -146,7 +146,15 @@ public class TableColumnImpl implements TableColumn {
         return makeDefaultColumnFromTable(colIdx, tableModel, null);
     }
 
-    /** renderer: how its cells are drawn; null: text, as the column says (getRenderer) */
+    /** rows looked at to tell a column of numbers from one of text - never the whole model, which may be huge */
+    static final int SAMPLED_ROWS = 100;
+
+    /**
+     * A column for the model's column colIdx: numbers (all of the first SAMPLED_ROWS rows) right
+     * aligned, never wrapped or cut; text left aligned, wrapped, may be cut. No width: the table
+     * measures the rows it shows. renderer: how its cells are drawn; null: text, as the column says
+     * (getRenderer).
+     */
     public static TableColumn makeDefaultColumnFromTable(int colIdx, TableModel tableModel, CellRenderer renderer) {
         if (colIdx >= tableModel.getColumnCount()) {
             throw new IllegalStateException("Error in call to makeColumnFromTable()! Number of columns in the tablemodel ("+tableModel.getColumnCount()+") does not match request column index ("+colIdx+")");
@@ -155,20 +163,12 @@ public class TableColumnImpl implements TableColumn {
         if (headerText == null) {
             throw new IllegalStateException("tableModel.getColumnName("+colIdx+") returns null!");
         }
-        int maxWidth = -1; //headerText.length();
         Boolean columnIsNumber = null;
-        for (int row=0; row<tableModel.getRowCount(); row++) {
+        for (int row = 0; row < Math.min(SAMPLED_ROWS, tableModel.getRowCount()); row++) {
              Object value = tableModel.getValueAt(row, colIdx);
-             if (value != null) {
-                 String valueAsString = String.valueOf(value);
-                 maxWidth = Math.max(maxWidth, valueAsString.trim().length());
-                 if (columnIsNumber == null || columnIsNumber == true) {
-                     columnIsNumber = StringUtils.isNumber(valueAsString);
-                 }
+             if (value != null && (columnIsNumber == null || columnIsNumber)) {
+                 columnIsNumber = StringUtils.isNumber(String.valueOf(value));
              }
-        }
-        if (maxWidth <  headerText.length()) {
-            maxWidth =  headerText.length();
         }
         Align align = (columnIsNumber != null && columnIsNumber) ? Align.RIGHT : Align.LEFT;
         Integer columnDroppable = tableModel.getColumnDroppable(colIdx);     // the model says (ObjectTableModel.droppable); null: never
@@ -176,7 +176,7 @@ public class TableColumnImpl implements TableColumn {
         Boolean             truncationAllowed   = columnIsNumber == null || columnIsNumber == false;
 
         TableColumnImpl tc = new TableColumnImpl(headerText, 
-                                   maxWidth, 
+                                   null, 
                                    tableModel.getColumnName(colIdx), 
                                    colIdx, 
                                    align, 

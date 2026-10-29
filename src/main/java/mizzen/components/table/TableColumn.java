@@ -4,7 +4,6 @@ import java.util.Comparator;
 
 import mizzen.geom.Align;
 import mizzen.util.CompareUtil;
-import mizzen.util.StringUtils;
 
 
 /** 
@@ -189,32 +188,6 @@ public interface TableColumn {
         @Override
         public CellRenderer getHeaderRenderer() {
             return delegate.getHeaderRenderer();
-        }
-    }
-
-
-    public static class UTIL {
-
-        public  static String padAndAlignColumnData(TableColumn columnDataItem, String displayString, int allowedDataWidth, Align align ) 
-        {
-            String str = displayString;
-            if (columnDataItem.isWordWrappable())
-            {
-                str = StringUtils.wrap(str, columnDataItem.getPreferredWidth(), "\n", false, columnDataItem.getPreferredHeight());
-            }
-//            if (columnDataItem.isTruncationAllowed() && StringUtils.strWidth(str)>allowedDataWidth)
-//            {
-//                str = StringUtils.truncate(str, columnDataItem.getPreferredWidth());
-//            }
-            String[] sArray = str.split("\n");
-            for (int i = 0; i < sArray.length ; i++) 
-            {
-                String s = sArray[i];
-                sArray[i] = Align.UTIL.formatToAlignedData(s, columnDataItem.getPreferredWidth(), align, allowedDataWidth, columnDataItem.isTruncationAllowed());
-            }
-
-            String result = String.join("\n", sArray);
-            return result;
         }
     }
 }
