@@ -95,7 +95,7 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
             .handleEvents(new ConditionalEventHandler.Impl((te) -> getEventHandler().canHandle(te) != null,
                                                           (te) -> getEventHandler().handle(te)));
     TableCellAtPositions tableCellAtPositions;
-    TableLayout layout = new TableLayout(new ArrayList<Integer>(), new int[0], new int[0], 0, 0);   // what the last draw showed: the lines and clicks read it
+    TableLayout layout = new TableLayout(new ArrayList<Integer>(), new int[0], new int[0], 0, 0, 1);   // what the last draw showed: the lines and clicks read it
 
     /** sized by what holds it (a splitter's rules, a resize): it starts at no size */
     public TableComponent(Color color, TableModel<T> tableModel) {
@@ -180,7 +180,7 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
     protected void __draw(Color color, IScreenLineSegmentsBuffer mySegments) {
         this.clear();
         boolean bottomBorder = TableLinesStyle.ALL.equals(linesStyle) || TableLinesStyle.HEADER_ALL_AND_BORDER.equals(linesStyle);
-        layout = tableModel.layOut(getWidth(), getHeight(), topRow, selectedRow, rowGap(), bottomBorder);
+        layout = tableModel.layOut(getWidth(), getHeight(), topRow, selectedRow, rowGap(), edge(), bottomBorder);
         topRow = layout.topRow;
         rowsDisplayed = layout.rowsWhole;
         int bottom = bottomBorder ? getHeight() - 1 : getHeight();
@@ -189,10 +189,10 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
         rowEnds.clear();
         selectedRowArea = null;
         for (int i = 0; i < layout.columnCount(); i++) {
-            Position at = new Position.Simple(1, layout.columnStart(i));
+            Position at = new Position.Simple(layout.edge, layout.columnStart(i));
             IScreenLineSegmentsBuffer header = tableModel.header(layout.columns.get(i), layout.fitted[i], layout.headerHeight);
             mySegments.merge(copyCellSegments(header, at, layout.shown[i], layout.headerHeight));
-            tableCellAtPositions.addHeaderCell(at, tableModel.modelColumn(layout.columns.get(i)), layout.shown[i], layout.headerHeight);
+            tableCellAtPositions.addHeaderCell(at, tableModel.modelColumn(layout.columns.get(i)), layout.shown[i], layout.headerHeight, layout.fitted[i]);
         }
         int lastRow = -1;
         for (TableLayout.Row row : layout.rows) {
@@ -208,7 +208,7 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
                         ? tableModel.cell(row.row, layout.columns.get(i), layout.fitted[i], row.height)
                         : tableModel.selectedCell(row.row, layout.columns.get(i), layout.fitted[i], row.height, rowColor);
                 mySegments.merge(copyCellSegments(cell, at, layout.shown[i], linesShown));
-                tableCellAtPositions.addDataCell(at, row.row, tableModel.modelColumn(layout.columns.get(i)), layout.shown[i], linesShown);
+                tableCellAtPositions.addDataCell(at, row.row, tableModel.modelColumn(layout.columns.get(i)), layout.shown[i], linesShown, layout.fitted[i], row.height);
             }
             lastRow = row.row;
         }
@@ -354,6 +354,32 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
 
     }
 
+    /** lines between the columns and under the heading, no border - as a table in a document: A │ B */
+    class DrawLines_INNER implements TableLineDraw {
+        public void drawLines(IScreenLineSegmentsBuffer mySegments, int maxRowRendered, int maxColRendered) {
+            Color lineColor = getColor();
+            int underHeading = layout.headerHeight;
+            StringBuilder line = new StringBuilder();
+            for (int c = 0; c <= maxColRendered; c++) {
+                for (int j = 0; j < layout.widthOf(c); j++) {
+                    line.append(BlockChars.NICE.getHORIZONTAL_LINE());
+                }
+                if (c < maxColRendered) {
+                    line.append(BlockChars.NICE.getINTERSECT());
+                }
+            }
+            mySegments.add(new SegmentImpl(lineColor, new Position.Simple(underHeading, 0), line.toString()));
+            String vertical = BlockChars.NICE.getVERTICAL_LINE() + "";
+            for (int row = 0; row < getHeight(); row++) {
+                if (row != underHeading) {
+                    for (int c = 0; c < maxColRendered; c++) {
+                        mySegments.add(new SegmentImpl(lineColor, new Position.Simple(row, layout.columnStart(c + 1) - 1), vertical));
+                    }
+                }
+            }
+        }
+    }
+
     class DrawLines_ALL implements TableLineDraw {
         public void drawLines(IScreenLineSegmentsBuffer mySegments, int maxRowRendered, int maxColRendered) {
             Rectangle.Simple meAsRectangle = new Rectangle.Simple(TableComponent.this);
@@ -431,6 +457,31 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
 
     }
     
+    // what the border takes on each side: nothing in the style with none
+    private int edge() {
+        return TableLinesStyle.INNER.equals(linesStyle) ? 0 : 1;
+    }
+
+    /** the width that shows the whole of every row's cells, lines included, from all the rows - for a small table sized by its content */
+    public int widthNeeded() {
+        return tableModel.tableWidths(edge()).most;
+    }
+
+    /** how tall the table is at width with every row showing, lines included, from all the rows - for a small table sized by its content */
+    public int heightAt(int width) {
+        return tableModel.tableHeightAt(width, rowGap(), edge());
+    }
+
+    /**
+     * The cell at position on the table, as the last draw showed it - or null if there is none there.
+     * What a click on it would report; for one who has the position without a click (a table drawn
+     * inside something else).
+     */
+    public CellSelected cellAt(Position position) {
+        TableDataCellAtPosition cell = tableCellAtPositions.findDataCellFromPosition(position);
+        return cell == null ? null : new CellSelected(cell, position);
+    }
+
     /** the line under each data row: the line drawn there (ALL), else a blank line unless rows are packed */
     int rowGap() {
         return TableLinesStyle.ALL.equals(getLinesStyle()) || spacedRows ? 1 : 0;
@@ -456,6 +507,9 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
         }
         if ( TableLinesStyle.ALL.equals(this.getLinesStyle()) ) {
             return new DrawLines_ALL();
+        }
+        if ( TableLinesStyle.INNER.equals(this.getLinesStyle()) ) {
+            return new DrawLines_INNER();
         }
         if ( TableLinesStyle.HEADER_FULL.equals(this.getLinesStyle()) ) {
             return new DrawLines_HEADER_ONLY_ALL();
@@ -588,9 +642,11 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
     public static class CellSelected {
 
         TableDataCellAtPosition cell;
+        Position position;
 
-        public CellSelected(TableDataCellAtPosition cell) {
+        CellSelected(TableDataCellAtPosition cell, Position position) {
             this.cell = cell;
+            this.position = position;
         }
         
         public int getTableRow() {
@@ -605,7 +661,19 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
         public boolean isHeader() {
             return cell.isHeader();
         }
-        
+
+        /**
+         * Where in the cell it landed, from the cell's top-left. With getCellSize, enough to work out
+         * what is there: which link in a cell of text, which bar of a chart.
+         */
+        public Position getOffsetInCell() {
+            return new Position.Simple(position.getRow() - cell.getRow(), position.getCol() - cell.getCol());
+        }
+
+        /** the size the cell was drawn at - its renderer's rectangle, even if the border or the bottom cuts what shows of it */
+        public Dimension getCellSize() {
+            return new Dimension.Simple(cell.drawnHeight, cell.drawnWidth);
+        }
     }
 
     public static class RowSelected {
@@ -815,7 +883,7 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
         }
         selectedRow = row;
         scrollToSelectedRow();
-        bus.raiseEvent(new RowSelectedEvent(this, new RowSelected(new TableDataCellAtPosition(Position.ZERO, row, -1, 0, 0, false))));
+        bus.raiseEvent(new RowSelectedEvent(this, new RowSelected(new TableDataCellAtPosition(Position.ZERO, row, -1, 0, 0, 0, 0, false))));
         repaint(bus);
     }
 
@@ -861,7 +929,7 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
             EventBus bus = appMouseEvent.getEventBus();
             focus.requestFocus(bus);
             if (cell != null) {
-                bus.raiseEvent(new CellSelectedEvent(this, new CellSelected(cell)));
+                bus.raiseEvent(new CellSelectedEvent(this, new CellSelected(cell, positionWithinTableComponent)));
                 if (cell.isHeader()) {
                     return;                                         // a heading: not a row to select or activate
                 }
@@ -887,12 +955,12 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
             return new TreeSet<TableDataCellAtPosition>(Position.UTIL.POS_COMPARE);
         }
 
-        void addHeaderCell(Position cellOffset, int col, int width, int height) {
-            this.cellPositions.add(new TableDataCellAtPosition(cellOffset, -1, col, width, height, true));
+        void addHeaderCell(Position cellOffset, int col, int width, int height, int drawnWidth) {
+            this.cellPositions.add(new TableDataCellAtPosition(cellOffset, -1, col, width, height, drawnWidth, height, true));
         }
 
-        void addDataCell(Position cellOffset, int row, int col, int width, int height) {
-            this.cellPositions.add(new TableDataCellAtPosition(cellOffset, row, col, width, height, false));
+        void addDataCell(Position cellOffset, int row, int col, int width, int height, int drawnWidth, int drawnHeight) {
+            this.cellPositions.add(new TableDataCellAtPosition(cellOffset, row, col, width, height, drawnWidth, drawnHeight, false));
         }
 
         public TableDataCellAtPosition findDataCellFromPosition(Position positionOnTable) {
@@ -910,17 +978,21 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
         Position positionOnView;
         int tableRow;
         int tableColumn;
-        int width;
+        int width;                                   // what shows of it
         int height;
+        int drawnWidth;                              // what it was drawn at
+        int drawnHeight;
         boolean header;
 
         /** a cell on screen, by the model's row and column (what getValueAt takes) - wherever scrolling and dropped columns put it */
-        public TableDataCellAtPosition(Position positionOnView, int tableRow, int tableColumn, int width, int height, boolean isHeader) {
+        public TableDataCellAtPosition(Position positionOnView, int tableRow, int tableColumn, int width, int height, int drawnWidth, int drawnHeight, boolean isHeader) {
             this.positionOnView = positionOnView;
             this.tableRow = tableRow;
             this.tableColumn = tableColumn;
             this.width = width;
             this.height = height;
+            this.drawnWidth = drawnWidth;
+            this.drawnHeight = drawnHeight;
             this.header = isHeader;
         }
 
@@ -965,7 +1037,9 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
         NONE,
         HEADER_FULL,
         HEADER_ALL_AND_BORDER,
-        ALL
+        ALL,
+        /** no border: lines between the columns and under the heading - as a table in a document */
+        INNER
     }
 
     public static class TableLinesStyleOption extends SimpleDisplayValue<TableLinesStyle> {
@@ -980,6 +1054,7 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
                 new TableLinesStyleOption("Lines - HEADER" , TableLinesStyle.HEADER_FULL),
                 new TableLinesStyleOption("Lines - HEADER+BORDER" , TableLinesStyle.HEADER_ALL_AND_BORDER),
                 new TableLinesStyleOption("Lines - ALL" , TableLinesStyle.ALL),
+                new TableLinesStyleOption("Lines - INNER" , TableLinesStyle.INNER),
         };
         return options;
     }

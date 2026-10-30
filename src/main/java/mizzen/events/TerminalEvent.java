@@ -45,6 +45,7 @@ public class TerminalEvent<T> extends EventObject {
         CUSTOM_APPLICATION_EVENT,
         TABLE_ROW_SELECTED,
         TABLE_CELL_SELECTED,
+        LINK_CLICKED,
     }
     
     public static enum Q_FULL_POLICY {

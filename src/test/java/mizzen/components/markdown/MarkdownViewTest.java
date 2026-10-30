@@ -57,9 +57,9 @@ public class MarkdownViewTest extends TestCase {
 
     public void testTable() {
         List<String> table = at("| A | B |\n|---|---|\n| one | two |", 20);
-        assertEquals("A   │ B", table.get(0));
-        assertEquals("────┼────", table.get(1));
-        assertEquals("one │ two", table.get(2));
+        assertEquals(" A   │ B", table.get(0));
+        assertEquals("─────┼─────", table.get(1));
+        assertEquals(" one │ two", table.get(2));
     }
 
     public void testATableNarrowerThanItsTextWraps() {

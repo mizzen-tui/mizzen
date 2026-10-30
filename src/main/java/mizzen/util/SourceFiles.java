@@ -33,6 +33,12 @@ public final class SourceFiles {
         return fromJar != null ? fromJar : fromFile(new File("src/main/java", path));
     }
 
+    /** a text file by its path from the project's top, e.g. docs/ARCHITECTURE.md: from the jar, else that file; null if there is neither */
+    public static String findText(String path) {
+        String fromJar = fromResource(SourceFiles.class, "/" + path);
+        return fromJar != null ? fromJar : fromFile(new File(path));
+    }
+
     private static String fromResource(Class<?> type, String path) {
         try (InputStream in = type.getResourceAsStream(path)) {
             if (in == null) {

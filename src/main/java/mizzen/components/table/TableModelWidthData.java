@@ -157,30 +157,31 @@ class TableModelWidthData extends TableModel.Delegate<Object> {
     /**
      * What a table width x height shows from topRow: the columns fitted to its width, the rows that
      * fit under the header - moved down, if need be, so selectedRow shows whole. rowGap: lines
-     * between rows; bottomBorder: the last line is the border's.
+     * between rows; edge: what the border takes on each side, 1 or 0; bottomBorder: the last line is
+     * the border's.
      */
-    TableLayout layOut(int width, int height, int topRow, int selectedRow, int rowGap, boolean bottomBorder) {
+    TableLayout layOut(int width, int height, int topRow, int selectedRow, int rowGap, int edge, boolean bottomBorder) {
         int rowCount = getRowCount();
         int bottom = bottomBorder ? height - 1 : height;
         int top = Math.max(0, Math.min(topRow, rowCount - 1));
-        TableLayout layout = layOutFrom(top, width, height, rowGap, bottom);
+        TableLayout layout = layOutFrom(top, width, height, rowGap, edge, bottom);
         if (selectedRow >= top && selectedRow < rowCount && !layout.showsWhole(selectedRow)) {
             int showing = topToShow(selectedRow, layout, rowGap, bottom);
             if (showing != top) {
-                layout = layOutFrom(showing, width, height, rowGap, bottom);
+                layout = layOutFrom(showing, width, height, rowGap, edge, bottom);
             }
         }
         forgetOutside(layout.topRow, layout.topRow + height);
         return layout;
     }
 
-    private TableLayout layOutFrom(int top, int width, int height, int rowGap, int bottom) {
+    private TableLayout layOutFrom(int top, int width, int height, int rowGap, int edge, int bottom) {
         int last = Math.min(getRowCount(), top + Math.max(0, height));     // a row is a line or more: no more than this can show
         List<ColumnFitting.Column> toFit = new ArrayList<ColumnFitting.Column>();
         for (int c = 0; c < getColumnCount(); c++) {
             toFit.add(new ColumnFitting.Column(c, widthsOf(c, top, last), getTableColumnAt(c).getColumnDroppable()));
         }
-        int room = width - 2;                                               // inside the border
+        int room = width - 2 * edge;                                        // inside the border
         ColumnFitting.Fit fit = ColumnFitting.fit(toFit, room, dropped);
         dropped.addAll(fit.dropped);                                        // held until clearData
 
@@ -205,7 +206,7 @@ class TableModelWidthData extends TableModel.Delegate<Object> {
             int c = columns.get(i);
             headerHeight = Math.max(headerHeight, capped(c, getTableColumnAt(c).getHeaderRenderer().heightAt(headerOf(c), fitted[i])));
         }
-        TableLayout layout = new TableLayout(columns, fitted, shown, headerHeight, top);
+        TableLayout layout = new TableLayout(columns, fitted, shown, headerHeight, top, edge);
 
         int tallest = Math.max(1, bottom - layout.dataTop());                // a row taller than the room is cut to it
         int line = layout.dataTop();
@@ -223,8 +224,8 @@ class TableModelWidthData extends TableModel.Delegate<Object> {
     }
 
     /** how wide the whole table can be, border and lines included, from all its rows - for a small table drawn in a cell */
-    CellWidths tableWidths() {
-        int around = 2 + Math.max(0, getColumnCount() - 1);
+    CellWidths tableWidths(int edge) {
+        int around = 2 * edge + Math.max(0, getColumnCount() - 1);
         int cut = around, least = around, most = around;
         for (int c = 0; c < getColumnCount(); c++) {
             CellWidths column = widthsOf(c, 0, getRowCount());
@@ -236,13 +237,13 @@ class TableModelWidthData extends TableModel.Delegate<Object> {
     }
 
     /** how tall the whole table is this wide, border included, every row shown - rowGap: lines between rows */
-    int tableHeightAt(int width, int rowGap) {
-        TableLayout layout = layOutFrom(0, width, getRowCount(), rowGap, Integer.MAX_VALUE / 2);
+    int tableHeightAt(int width, int rowGap, int edge) {
+        TableLayout layout = layOutFrom(0, width, getRowCount(), rowGap, edge, Integer.MAX_VALUE / 2);
         if (layout.rows.isEmpty()) {
-            return layout.dataTop() + 1;
+            return layout.dataTop() + edge;
         }
         TableLayout.Row last = layout.rows.get(layout.rows.size() - 1);
-        return last.top + last.height + 1;
+        return last.top + last.height + edge;
     }
 
     // how wide column c can be in rows from to last: its cells' widths, never narrower than its header's least

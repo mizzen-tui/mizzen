@@ -8,8 +8,9 @@ import java.util.List;
  * wide), the header's height, and the rows (which, where, how tall). TableModelWidthData.layOut
  * makes it; the table draws from it and nothing else.
  * <p/>
- * Positions are on the table: column 0 and row 0 are its border (or blank); the header starts at
- * row 1, column 1, and one column (a line, or blank) parts each column from the next.
+ * Positions are on the table: edge is what its border takes on each side - 1, or 0 for a style with
+ * no border. The header starts at row edge, column edge, and one column (a line, or blank) parts each
+ * column from the next.
  */
 final class TableLayout {
 
@@ -33,18 +34,20 @@ final class TableLayout {
     /** each one's width on the table: the fitted width, less what the border cuts off the last */
     final int[] shown;
     final int headerHeight;
+    final int edge;
     final List<Row> rows = new ArrayList<Row>();
     /** the first row shown - moved down, if need be, so the selected row shows whole */
     final int topRow;
     /** rows shown whole: the last can be cut off at the bottom */
     int rowsWhole = 0;
 
-    TableLayout(List<Integer> columns, int[] fitted, int[] shown, int headerHeight, int topRow) {
+    TableLayout(List<Integer> columns, int[] fitted, int[] shown, int headerHeight, int topRow, int edge) {
         this.columns = columns;
         this.fitted = fitted;
         this.shown = shown;
         this.headerHeight = headerHeight;
         this.topRow = topRow;
+        this.edge = edge;
     }
 
     int columnCount() {
@@ -67,12 +70,12 @@ final class TableLayout {
 
     /** where column c starts on the table */
     int columnStart(int c) {
-        return 1 + widthUpTo(c - 1) + c;
+        return edge + widthUpTo(c - 1) + c;
     }
 
     /** the first line of the rows, under the header and its line */
     int dataTop() {
-        return 1 + headerHeight + 1;
+        return edge + headerHeight + 1;
     }
 
     boolean showsWhole(int row) {

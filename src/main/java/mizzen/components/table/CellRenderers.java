@@ -89,11 +89,11 @@ public final class CellRenderers {
     public static <V> ComponentCellRenderer<V> table(Color color, Function<V, TableModel<?>> modelOf) {
         ComponentCellRenderer.SizeRule<V> asItMeasures = new ComponentCellRenderer.SizeRule<V>() {
             public CellWidths widths(V value) {
-                return new TableModelWidthData(modelOf.apply(value)).tableWidths();
+                return new TableModelWidthData(modelOf.apply(value)).tableWidths(1);
             }
 
             public int heightAt(V value, int width) {
-                return new TableModelWidthData(modelOf.apply(value)).tableHeightAt(width, 0);
+                return new TableModelWidthData(modelOf.apply(value)).tableHeightAt(width, 0, 1);
             }
         };
         return new ComponentCellRenderer<V>(asItMeasures, (value, size) -> {
