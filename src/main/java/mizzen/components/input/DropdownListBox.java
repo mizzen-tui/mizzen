@@ -394,16 +394,14 @@ public class DropdownListBox<T> extends AbstractComponentWrappper<VerticalPanel>
         setSelectedOntoTextView();
     }
 
-    /** new items: the button takes their width */
+    /** new items: the button takes their width - through its text, which sizes it (setMaxItemWidth) */
     public void setItems(List<DisplayableValue<T>> displayableItems) {
         this.listBox.setItems(displayableItems);
-        this.button.resize( new Dimension.Simple(this.button.getHeight(), this.listBox.getWidth()) );
         calcAndSetMaxItemWidth(displayableItems);
     }
 
     public void setItems( List<DisplayableValue<T>> displayableItems , ComponentItemFactory<T> displayItemToComponent) {
         this.listBox.setItems(displayableItems, displayItemToComponent);
-        this.button.resize( new Dimension.Simple(this.button.getHeight(),  this.listBox.getWidth()) );
         calcAndSetMaxItemWidth(displayableItems);
     }
 
