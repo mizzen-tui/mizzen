@@ -96,6 +96,7 @@ public class EmbeddedAppTest {
             Composite main = (Composite) host.getMainApplicationPanel();
 
             DefaultTreeNode<Demo> examples = group("Examples",
+                    example("Read me", ReadMe.class),
                     group("Input",
                             example("Text boxes", TextBoxSimpleForm01Test.class),
                             example("Multi-line text", MultiLineTextInputTest.class),

@@ -31,6 +31,13 @@
 		  <resource>
 			  <directory>src/main/resources</directory>
 		  </resource>
+		  <!-- the README in the jar: the examples' desktop shows it (ReadMe) -->
+		  <resource>
+			  <directory>.</directory>
+			  <includes>
+				  <include>README.md</include>
+			  </includes>
+		  </resource>
 		  <!-- the examples' own .java in the jar too: the examples' desktop shows them (SourceFiles) -->
 		  <resource>
 			  <directory>src/main/java</directory>
