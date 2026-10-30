@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 import mizzen.app.Embedding;
 import mizzen.app.TUIApp;
@@ -26,7 +25,6 @@ import mizzen.components.plot.shape.DotMatrixText;
 import mizzen.components.input.tree.TreeView;
 import mizzen.components.scroll.ScrollableComponent;
 import mizzen.components.tab.TabAction;
-import mizzen.components.markdown.LinkClickedEvent;
 import mizzen.components.markdown.MarkdownView;
 import mizzen.components.tab.TabPanel;
 import mizzen.components.tab.TabPanel.TabContext;
@@ -56,14 +54,16 @@ import mizzen.util.formatters.TextLineFormatter;
  * its own main, unchanged, through TUIApp.runEmbedded. The tree is the inventory: components by kind,
  * then graphics; groups open and close, a leaf runs its example. Picking another takes the running
  * one out, with everything it put on the event bus; the status line shows how many handlers that is.
- * Learn shows the learning panel with it - tabs: its code, coloured; its components, a tree of what it
- * is made of (pick one and it is framed in the running example) - below it, to its right, or alone: the
+ * Learn shows the learning panel with it - tabs: the docs; its code, coloured; its components, a tree of
+ * what it is made of (pick one and it is framed in the running example) - below it, to its right, or alone: the
  * bar on the top border says where. Drag the divider and the example lays itself out again; the divider
  * is remembered. While it shows, picking another example shows that one's. SourceFiles finds the code:
  * in the jar, or under src/main/java.
  * <p/>
- * A leaf can be a document instead (Read me): the desktop shows it itself, in a MarkdownView, and hears
- * its links as any app would (onLink): a link to the source of an example in the tree runs that example.
+ * A leaf can be a document instead (Read me): the Docs tab shows it, in a MarkdownView, and the desktop
+ * hears its links as any app would (onLink): a link to the source of an example in the tree runs that
+ * example beside it, the document staying where it is. One learning panel lives as long as the desktop,
+ * so picking another example changes its code and leaves its tabs and focus alone.
  * <p/>
  * Things to try: TAB from the tree into the embedded example and back; Button bar's F1 / F2 / F3
  * (its hot keys work wherever focus is, as they do when it runs alone); Fractals' timer stopping
@@ -198,39 +198,53 @@ public class EmbeddedAppTest {
             });
 
             // a leaf runs its example - once the selection stops moving, so arrowing past examples doesn't start each one
-            Consumer<EventBus> showPicked = new Consumer<EventBus>() {
-                @Override
-                public void accept(EventBus bus) {
-                    Demo picked = tree.getValue().getValue();
-                    if (picked.document != null) {
-                        if (learnButton.getValue()) {                  // a document has no code or components to show
-                            learnButton.setValue(false);
-                            right.showLearning(null);
-                        }
-                        showDocument(picked, slot, status, (te) -> {   // a link to an example: the tree follows, and it runs
-                            tree.setValue(exampleLinkedTo(examples, te.getTarget()));
-                            accept(te.getEventBus());
-                        }, (target) -> exampleLinkedTo(examples, target) != null);
-                    } else if (picked.type != null) {
-                        run(picked, host, slot, status);
-                        if (learnButton.getValue()) {
-                            showLearning(picked, right, slot, status, bus);    // the new one's, in place of the last one's
-                        }
-                    }
+            // the learning panel: one, for as long as the desktop runs - the docs keep their place, the tab stays the one chosen
+            MarkdownView docsView = new MarkdownView("README.md", SourceFiles::findText);
+            ScrollableComponent docs = MarkdownView.inScrollPane(Colors.IGre, docsView);
+            ScrollableComponent codeView = new ScrollableComponent(Colors.IGre, new TextComponent(Colors.Whi, " Pick an example: its code shows here"));
+            TabPanel learning = new TabPanel(Colors.IGre);
+            learning.addTab("Docs", docs);
+            learning.addTab("Code", codeView);
+            learning.addTab("Components", null, new ComponentsTab(slot, right));
+            boolean[] learningShownBefore = { false };
+
+            Consumer<EventBus> showLearning = (bus) -> {
+                right.showLearning(learning);
+                if (!learningShownBefore[0]) {
+                    learningShownBefore[0] = true;
+                    learning.displayCurrentTab(bus);
                 }
             };
+
+            Consumer<EventBus> showPicked = (bus) -> {
+                Demo picked = tree.getValue().getValue();
+                if (picked.document != null) {
+                    docsView.open(picked.document);
+                    if (!learnButton.getValue()) {
+                        learnButton.setValue(true);
+                        showLearning.accept(bus);
+                    }
+                    learning.showTab("Docs", bus);
+                    status.setText(" " + picked.name + " - a link to an example runs it beside the document");
+                } else if (picked.type != null) {
+                    run(picked, host, slot, status);
+                    showCode(picked, codeView);
+                    right.frame(null);
+                }
+            };
+            docsView.onLink((target) -> exampleLinkedTo(examples, target) != null, (te) -> {   // the tree follows, and it runs
+                tree.setValue(exampleLinkedTo(examples, te.getTarget()));
+                showPicked.accept(te.getEventBus());
+            });
             TimedRequestedController runPicked = new TimedRequestedController((te) -> showPicked.accept(te.getEventBus()));
             tree.onChange((te) -> runPicked.onRequest(te.getEventBus()));
             learnButton.onChange((te) -> {
-                DefaultTreeNode<Demo> picked = tree.getValue();
                 if (!learnButton.getValue()) {
                     right.showLearning(null);
                     status.setText(" The learning panel put away - Learn shows it again");
-                } else if (picked == null || picked.getValue().type == null) {
-                    learnButton.setValue(false);
-                    status.setText(" Pick an example first - then Learn shows its code and its components");
                 } else {
-                    showLearning(picked.getValue(), right, slot, status, te.getEventBus());
+                    showLearning.accept(te.getEventBus());
+                    status.setText(" Docs, the example's code, and its components: pick one and it is framed in the example");
                 }
             });
             where.onChange((te) -> right.place(where.getValue()));
@@ -276,28 +290,11 @@ public class EmbeddedAppTest {
         return null;
     }
 
-    private static ScrollableComponent documentShown;
-
-    /** the document in slot, in place of what is there: links wanted goes to onLink, its other .md links open in it */
-    private static void showDocument(Demo demo, Composite slot, TextComponent status, Consumer<LinkClickedEvent> onLink, Predicate<String> wanted) {
-        clearSlot(slot, status);
-        MarkdownView view = new MarkdownView(demo.document, SourceFiles::findText);
-        view.onLink(wanted, onLink);
-        documentShown = MarkdownView.inScrollPane(Colors.IGre, view);
-        slot.add(documentShown);
-        slot.onResizeExpandDownAndRight(documentShown);
-        status.setText(" " + demo.name + " - a link to an example runs it");
-    }
-
-    // nothing in the slot: no welcome, no document, no example running
+    // nothing in the slot: no welcome, no example running
     private static void clearSlot(Composite slot, TextComponent status) {
         if (greeting != null) {
             slot.remove(greeting.panel);
             greeting = null;
-        }
-        if (documentShown != null) {
-            slot.remove(documentShown);
-            documentShown = null;
         }
         closeRunning(status, "closed");
     }
@@ -356,24 +353,14 @@ public class EmbeddedAppTest {
         }
     }
 
-    /**
-     * The learning panel for an example, where the bar says, in place of the last one: tabs - its code,
-     * coloured as Java, and its components, a tree of what the running example is made of.
-     */
-    private static void showLearning(Demo demo, RightSide right, Composite slot, TextComponent status, EventBus bus) {
+    /** the Code tab shows the example's source, coloured as Java, from its top */
+    private static void showCode(Demo demo, ScrollableComponent codeView) {
         String code = SourceFiles.find(demo.type);
-        TextComponent text = new TextComponent(Colors.Whi, code != null
+        codeView.setComponentBeingViewed(new TextComponent(Colors.Whi, code != null
                 ? TextLineFormatter.UTIL.format(code, new JavaSyntaxHilighterTextFormatter())
-                : " No source to show for " + demo.name + " (not in the jar, not under src/main/java)");
-        ScrollableComponent codeView = new ScrollableComponent(Colors.IGre, text);
+                : " No source to show for " + demo.name + " (not in the jar, not under src/main/java)"));
         codeView.setTitle(" " + demo.type.getSimpleName() + ".java ");
-
-        TabPanel learning = new TabPanel(Colors.IGre);
-        learning.addTab("Code", codeView);
-        learning.addTab("Components", null, new ComponentsTab(slot, right));
-        right.showLearning(learning);
-        learning.displayCurrentTab(bus);
-        status.setText(" " + demo.name + " - its code, and Components: pick one and it is framed in the example");
+        codeView.setViewOffset(0, 0);
     }
 
     /**

@@ -156,6 +156,15 @@ public class MarkdownView extends BoundedComponent<MarkdownView> implements ToFo
         return pane;
     }
 
+    /** the document at path, from source, with Back to what showed before; already showing it: nothing moves */
+    public MarkdownView open(String newPath) {
+        if (!newPath.equals(path)) {
+            history.push(path);
+            show(newPath);
+        }
+        return this;
+    }
+
     /**
      * handler hears each link clicked whose target (as the document wrote it) wanted accepts - the
      * newest wanting it, and it alone. The Registration takes it out again.

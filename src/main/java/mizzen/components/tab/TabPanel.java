@@ -1,6 +1,8 @@
 package mizzen.components.tab;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import mizzen.components.ButtonBar;
 import mizzen.components.Component;
@@ -57,6 +59,8 @@ public class TabPanel extends ComponentWithFocus<Composite, TabPanel>
 
     
     /** sized by what holds it (a splitter's rules, a resize): it starts at no size */
+    private final List<TabButtonComponent> tabButtons = new ArrayList<TabButtonComponent>();
+
     public TabPanel(Color color) {
         this(color, Dimension.ZERO);
     }
@@ -225,6 +229,8 @@ public class TabPanel extends ComponentWithFocus<Composite, TabPanel>
         });
 
         tabsButtonBar.addComponent(tabButton);
+        tabButton.setName(tabText);                      // for showTab: stays when the button's text changes
+        tabButtons.add(tabButton);
 
         return this;
 
@@ -283,6 +289,19 @@ public class TabPanel extends ComponentWithFocus<Composite, TabPanel>
             }
 
         };
+    }
+
+    /** the tab of this name - the text it was added with - as if clicked: focus goes into its content. No such tab fails at once */
+    public TabPanel showTab(String name, EventBus eventBus) {
+        List<String> names = new ArrayList<String>();
+        for (TabButtonComponent button : tabButtons) {
+            if (name.equals(button.getName())) {
+                button.onClick(eventBus);
+                return this;
+            }
+            names.add(button.getName());
+        }
+        throw new IllegalArgumentException("showTab(\"" + name + "\"): the tabs are " + names);
     }
 
     public boolean displayCurrentTab(EventBus eventBus) {

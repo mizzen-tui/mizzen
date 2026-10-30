@@ -138,6 +138,15 @@ public class MarkdownLinksTest extends TestCase {
         assertEquals("no Back on the first", "arch", firstLine());
     }
 
+    public void testOpenByCode() {
+        view.open("docs/B.md");
+        assertEquals("<< Back", firstLine());
+        assertEquals("B", view.lines.get(2).get(0).text);
+        view.open("docs/B.md");
+        clickLink(MarkdownView.BACK);
+        assertEquals("already showing it added no Back to itself", "arch", firstLine());
+    }
+
     public void testUpAFolder() {
         clickLink("docs/A.md");
         clickLink("../README.md");
