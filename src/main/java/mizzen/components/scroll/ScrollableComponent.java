@@ -748,12 +748,12 @@ public class ScrollableComponent  extends ComponentWithFocus<Composite, Scrollab
     }
 
     public void pagedown() {
-        int pageHeight = viewer.getHeight();
-        int delta = pageHeight;
-        if (ScrollableComponent.this.getOffsetIntoSource().getRow() + delta > componentBeingViewed.getBottomMostRow() + 1) {
-            delta = (componentBeingViewed.getBottomMostRow() + 1) - ScrollableComponent.this.getOffsetIntoSource().getRow();
-        }
-        down(delta);
+        down(viewer.getHeight());
+    }
+
+    // the furthest down a key or button scrolls: the last line at the bottom of the view, as editors and browsers stop
+    private int lastTopRow() {
+        return Math.max(0, componentBeingViewed.getBottomMostRow() + 1 - viewer.getHeight());
     }
 
     class DefaultViewPortNavigableImpl implements ViewPortNavigable {
@@ -763,7 +763,8 @@ public class ScrollableComponent  extends ComponentWithFocus<Composite, Scrollab
         }
 
         public void down(int iLines) {
-            ScrollableComponent.this.setViewOffset(ScrollableComponent.this.getOffsetIntoSource().getRow() + iLines, ScrollableComponent.this.getOffsetIntoSource().getCol());
+            int row = ScrollableComponent.this.getOffsetIntoSource().getRow();
+            ScrollableComponent.this.setViewOffset(Math.min(row + iLines, Math.max(row, lastTopRow())), ScrollableComponent.this.getOffsetIntoSource().getCol());
         }
 
         public void left(int iCols) {
