@@ -28,6 +28,7 @@ import mizzen.examples.Parts.Part;
  *     Price      text                  a number: never wrapped or cut
  *     Shelf      a meter               how full its shelf is
  *     Sold       a sparkline           a column a week
+ *     By region  a small table         a table of its own in each row
  *     Picture    an image              kept in proportion
  * </pre>
  * Make the terminal narrower: the drawings and pictures shrink, rows get shorter; PgUp / PgDn scroll.
@@ -61,6 +62,8 @@ public class TableCellsDemo {
                         .renderer(CellRenderers.meter(Colors.Gre, (Stock s) -> (double) s.onShelf / s.shelfHolds))
                 .column("Sold, by week", (s) -> s.soldByWeek)
                         .renderer(CellRenderers.sparkline(Colors.BCya, (List<Integer> sold) -> sold))
+                .column("By region", (s) -> s)
+                        .renderer(CellRenderers.table(Colors.Cya, (Stock s) -> s.byRegion()))
                 .setRows(STOCK);
         TableComponent<Stock> stock = new TableComponent<Stock>(Colors.Yel, stockColumns);
         stock.setLinesStyle(TableLinesStyle.ALL);
@@ -78,7 +81,7 @@ public class TableCellsDemo {
         both.onResizeExpandDown(stock, 60);
 
         VerticalPanel panel = new VerticalPanel();
-        panel.add(new TextComponent(Colors.BWhi, " Each column draws its cells its own way - text, drawings, meters, sparklines, images"));
+        panel.add(new TextComponent(Colors.BWhi, " Each column draws its cells its own way - text, drawings, meters, sparklines, tables, images"));
         panel.add(both);
         panel.onResizeExpandDownAndRight(both);
         return panel;
@@ -100,9 +103,31 @@ public class TableCellsDemo {
             this.soldByWeek = Arrays.asList(soldByWeek);
         }
 
+        /** what it sold, by region: a small table of its own */
+        ObjectTableModel<RegionSales> byRegion() {
+            int sold = soldByWeek.stream().mapToInt(Integer::intValue).sum();
+            int north = sold / 2, south = sold * 3 / 10;
+            return new ObjectTableModel<RegionSales>()
+                    .column("Region", (r) -> r.region)
+                    .column("Sold", (r) -> r.sold)
+                    .setRows(Arrays.asList(new RegionSales("North", north), new RegionSales("South", south),
+                                           new RegionSales("West", sold - north - south)));
+        }
+
         @Override
         public String toString() {
             return part.name;
+        }
+    }
+
+    /** how many of a part a region bought */
+    public static class RegionSales {
+        public final String region;
+        public final int sold;
+
+        RegionSales(String region, int sold) {
+            this.region = region;
+            this.sold = sold;
         }
     }
 

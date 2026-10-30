@@ -23,6 +23,7 @@ import mizzen.geom.Dimension;
  *     CellRenderers.image((photo) -&gt; photo.image, 6, 30)
  *     CellRenderers.meter(color, (part) -&gt; part.inStock / 100.0)
  *     CellRenderers.sparkline(color, (part) -&gt; part.salesByWeek)
+ *     CellRenderers.table(color, (sale) -&gt; sale.itemsModel())
  * </pre>
  */
 public final class CellRenderers {
@@ -77,6 +78,34 @@ public final class CellRenderers {
             meter.resize(size);
             return meter;
         });
+    }
+
+    /**
+     * A small table of a value's own, every row showing, framed when its row is selected - sized by
+     * what its cells measure. A table of its own for each cell, so nothing carries over from one to
+     * the next. A picture of a table: no scrolling or picking inside it, and all its rows are read,
+     * so keep it small.
+     */
+    public static <V> ComponentCellRenderer<V> table(Color color, Function<V, TableModel<?>> modelOf) {
+        ComponentCellRenderer.SizeRule<V> asItMeasures = new ComponentCellRenderer.SizeRule<V>() {
+            public CellWidths widths(V value) {
+                return new TableModelWidthData(modelOf.apply(value)).tableWidths();
+            }
+
+            public int heightAt(V value, int width) {
+                return new TableModelWidthData(modelOf.apply(value)).tableHeightAt(width, 0);
+            }
+        };
+        return new ComponentCellRenderer<V>(asItMeasures, (value, size) -> {
+            int width = Math.min(size.getWidth(), asItMeasures.widths(value).most);    // a wider cell leaves room around it
+            int height = Math.min(size.getHeight(), asItMeasures.heightAt(value, width));
+            @SuppressWarnings("unchecked")
+            TableComponent<Object> table = new TableComponent<Object>(color, new Dimension.Simple(height, width),
+                    (TableModel<Object>) modelOf.apply(value));
+            table.setLinesStyle(TableComponent.TableLinesStyle.HEADER_ALL_AND_BORDER);
+            table.setSpacedRows(false);
+            return table;
+        }).framedWhenSelected();
     }
 
     /** a value's numbers as a one-row sparkline, one column each - cut to the cell if narrower */

@@ -99,6 +99,14 @@ public class CellRenderersTest extends TestCase {
         assertEquals("never narrower than its bar and percentage", 12, meter.widths(0.4).least);
     }
 
+    public void testATableInACell() {
+        CellRenderer table = CellRenderers.table(Colors.Cya, (List<String> names) -> new ObjectTableModel<String>()
+                .column("Name", (n) -> n).setRows(names));
+        assertKeepsToItsRectangle("a small table", table, Arrays.asList("gear", "nut", "a spring"));
+        assertEquals("margin 2, border 2, \"a spring\": 8", 12, table.widths(Arrays.asList("gear", "nut", "a spring")).most);
+        assertEquals("margin 2; top, heading, line, 3 rows, bottom", 9, table.heightAt(Arrays.asList("gear", "nut", "a spring"), 12));
+    }
+
     public void testSparkline() {
         CellRenderer sparkline = CellRenderers.sparkline(Colors.Gre, (List<Integer> values) -> values);
         assertKeepsToItsRectangle("sparkline", sparkline, Arrays.asList(3, 5, 2, 8, 6, 9, 4, 7, 1, 5));

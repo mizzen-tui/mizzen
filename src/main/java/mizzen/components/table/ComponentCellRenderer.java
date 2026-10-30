@@ -86,9 +86,9 @@ public class ComponentCellRenderer<V> implements CellRenderer {
      * selection's colour - a line along its edges (renderSelected). For a picture - an image, a
      * drawing - whose row should show it is selected.
      * <pre>
-     *     ▗▄▄▄▄▄▄▖
+     *     ▄▄▄▄▄▄▄▄
      *     ▐ pic  ▌     the picture where it always is; the frame only when its row is selected
-     *     ▝▀▀▀▀▀▀▘
+     *     ▀▀▀▀▀▀▀▀
      * </pre>
      */
     public ComponentCellRenderer<V> framedWhenSelected() {
@@ -132,7 +132,7 @@ public class ComponentCellRenderer<V> implements CellRenderer {
     }
 
     // the frame's pieces: top-left, top, top-right, left, right, bottom-left, bottom, bottom-right
-    private static final String SOLID = "▗▄▖▐▌▝▀▘";      // half blocks: a focused selection - a line hugging the picture
+    private static final String SOLID = "▄▄▄▐▌▀▀▀";      // half blocks: a focused selection - a line hugging the picture; corners too, as many fonts lack quarter blocks
     private static final String THIN = "┌─┐││└─┘";       // the selection kept while the table hasn't focus: dimmed, as its text is
     private static final char BLANK_BRAILLE = '\u2800';  // a drawing's empty space: no dots
 

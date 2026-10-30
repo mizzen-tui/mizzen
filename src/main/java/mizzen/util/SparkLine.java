@@ -12,14 +12,11 @@ import java.util.StringJoiner;
 
 public class SparkLine {
 
-    private static final List<Character> ticks = Arrays.asList('\u2581', 
-                                                               '\u2582', 
-                                                               '\u2583', 
-                                                               '\u2584', 
-                                                               '\u2585',
-                                                               '\u2586', 
-                                                               '\u2587', 
-                                                               '\u2588');
+    // braille, rising in both dot columns: terminal fonts draw it where many lack the eighth blocks (PuTTY's default)
+    private static final List<Character> ticks = Arrays.asList('\u28C0',    // two dots high
+                                                               '\u28E4',    // four
+                                                               '\u28F6',    // six
+                                                               '\u28FF');   // all eight
 
     private static final int ticks_maxIndex = ticks.size() - 1;
     
@@ -94,13 +91,9 @@ public class SparkLine {
             
             char[] asciiChars = new char[ticks_maxIndex+1];
             asciiChars[0] = '_';
-            asciiChars[1] = '.';
-            asciiChars[2] = ';';
-            asciiChars[3] = ':';
-            asciiChars[4] = 'i';
-            asciiChars[5] = '1';
-            asciiChars[6] = 'I';
-            asciiChars[7] = '#';
+            asciiChars[1] = ':';
+            asciiChars[2] = 'I';
+            asciiChars[3] = '#';
             
             
             for (int i=0; i< asciiChars.length; i++) {

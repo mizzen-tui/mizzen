@@ -222,6 +222,29 @@ class TableModelWidthData extends TableModel.Delegate<Object> {
         return layout;
     }
 
+    /** how wide the whole table can be, border and lines included, from all its rows - for a small table drawn in a cell */
+    CellWidths tableWidths() {
+        int around = 2 + Math.max(0, getColumnCount() - 1);
+        int cut = around, least = around, most = around;
+        for (int c = 0; c < getColumnCount(); c++) {
+            CellWidths column = widthsOf(c, 0, getRowCount());
+            cut += column.cut;
+            least += column.least;
+            most += column.most;
+        }
+        return new CellWidths(cut, least, most);
+    }
+
+    /** how tall the whole table is this wide, border included, every row shown - rowGap: lines between rows */
+    int tableHeightAt(int width, int rowGap) {
+        TableLayout layout = layOutFrom(0, width, getRowCount(), rowGap, Integer.MAX_VALUE / 2);
+        if (layout.rows.isEmpty()) {
+            return layout.dataTop() + 1;
+        }
+        TableLayout.Row last = layout.rows.get(layout.rows.size() - 1);
+        return last.top + last.height + 1;
+    }
+
     // how wide column c can be in rows from to last: its cells' widths, never narrower than its header's least
     private CellWidths widthsOf(int c, int from, int last) {
         TableColumn column = getTableColumnAt(c);
