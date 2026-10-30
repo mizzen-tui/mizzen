@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import mizzen.app.Embedding;
 import mizzen.app.TUIApp;
@@ -24,6 +26,8 @@ import mizzen.components.plot.shape.DotMatrixText;
 import mizzen.components.input.tree.TreeView;
 import mizzen.components.scroll.ScrollableComponent;
 import mizzen.components.tab.TabAction;
+import mizzen.components.markdown.LinkClickedEvent;
+import mizzen.components.markdown.MarkdownView;
 import mizzen.components.tab.TabPanel;
 import mizzen.components.tab.TabPanel.TabContext;
 import mizzen.controlcodes.color.Colors;
@@ -58,6 +62,9 @@ import mizzen.util.formatters.TextLineFormatter;
  * is remembered. While it shows, picking another example shows that one's. SourceFiles finds the code:
  * in the jar, or under src/main/java.
  * <p/>
+ * A leaf can be a document instead (Read me): the desktop shows it itself, in a MarkdownView, and hears
+ * its links as any app would (onLink): a link to the source of an example in the tree runs that example.
+ * <p/>
  * Things to try: TAB from the tree into the embedded example and back; Button bar's F1 / F2 / F3
  * (its hot keys work wherever focus is, as they do when it runs alone); Fractals' timer stopping
  * when another example is picked; resizing the terminal.
@@ -68,14 +75,20 @@ public class EmbeddedAppTest {
 
     private static Embedding running;
 
-    /** a row in the tree: a group (no type), or an example - its class: what runs (its main), and its source */
+    /** a row in the tree: a group (no type, no document), an example - its class: what runs (its main), and its source - or a document */
     private static class Demo {
         final String name;
         final Class<?> type;
+        final String document;                          // a markdown file's path, from the project's top
 
         Demo(String name, Class<?> type) {
+            this(name, type, null);
+        }
+
+        Demo(String name, Class<?> type, String document) {
             this.name = name;
             this.type = type;
+            this.document = document;
         }
 
         /** its main, with no arguments */
@@ -96,7 +109,7 @@ public class EmbeddedAppTest {
             Composite main = (Composite) host.getMainApplicationPanel();
 
             DefaultTreeNode<Demo> examples = group("Examples",
-                    example("Read me", ReadMe.class),
+                    document("Read me", "README.md"),
                     group("Input",
                             example("Text boxes", TextBoxSimpleForm01Test.class),
                             example("Multi-line text", MultiLineTextInputTest.class),
@@ -133,7 +146,8 @@ public class EmbeddedAppTest {
                             example("Orbits", OrbitsDemo.class),
                             example("Fractals", FractalsViewer.class)),
                     group("Putting it together",
-                            example("Parts shop", PartsShopDemo.class)));
+                            example("Parts shop", PartsShopDemo.class),
+                            example("Markdown view", ReadMe.class)));
 
             TreeView<DefaultTreeNode<Demo>> tree = new TreeView<DefaultTreeNode<Demo>>(examples.asModel());
             tree.expandAll();
@@ -184,15 +198,28 @@ public class EmbeddedAppTest {
             });
 
             // a leaf runs its example - once the selection stops moving, so arrowing past examples doesn't start each one
-            TimedRequestedController runPicked = new TimedRequestedController((te) -> {
-                Demo picked = tree.getValue().getValue();
-                if (picked.type != null) {
-                    run(picked, host, slot, status);
-                    if (learnButton.getValue()) {
-                        showLearning(picked, right, slot, status, te.getEventBus());   // the new one's, in place of the last one's
+            Consumer<EventBus> showPicked = new Consumer<EventBus>() {
+                @Override
+                public void accept(EventBus bus) {
+                    Demo picked = tree.getValue().getValue();
+                    if (picked.document != null) {
+                        if (learnButton.getValue()) {                  // a document has no code or components to show
+                            learnButton.setValue(false);
+                            right.showLearning(null);
+                        }
+                        showDocument(picked, slot, status, (te) -> {   // a link to an example: the tree follows, and it runs
+                            tree.setValue(exampleLinkedTo(examples, te.getTarget()));
+                            accept(te.getEventBus());
+                        }, (target) -> exampleLinkedTo(examples, target) != null);
+                    } else if (picked.type != null) {
+                        run(picked, host, slot, status);
+                        if (learnButton.getValue()) {
+                            showLearning(picked, right, slot, status, bus);    // the new one's, in place of the last one's
+                        }
                     }
                 }
-            });
+            };
+            TimedRequestedController runPicked = new TimedRequestedController((te) -> showPicked.accept(te.getEventBus()));
             tree.onChange((te) -> runPicked.onRequest(te.getEventBus()));
             learnButton.onChange((te) -> {
                 DefaultTreeNode<Demo> picked = tree.getValue();
@@ -220,13 +247,64 @@ public class EmbeddedAppTest {
         return new DefaultTreeNode<Demo>(new Demo(name, type));
     }
 
-    /** run the example's main inside slot, in place of the one running */
-    private static void run(Demo demo, TUIApp host, Composite slot, TextComponent status) {
+    private static DefaultTreeNode<Demo> document(String name, String path) {
+        return new DefaultTreeNode<Demo>(new Demo(name, null, path));
+    }
+
+    /** the class a link to a source file names: src/main/java/mizzen/examples/Table01Test.java is mizzen.examples.Table01Test; null if it names none */
+    static String classLinkedTo(String target) {
+        String root = "src/main/java/";
+        int start = target.indexOf(root);
+        if (start < 0 || !target.endsWith(".java")) {
+            return null;
+        }
+        return target.substring(start + root.length(), target.length() - ".java".length()).replace('/', '.');
+    }
+
+    // the example in the tree that target links to; null: none
+    private static DefaultTreeNode<Demo> exampleLinkedTo(DefaultTreeNode<Demo> node, String target) {
+        Class<?> type = node.getValue().type;
+        if (type != null && type.getName().equals(classLinkedTo(target))) {
+            return node;
+        }
+        for (DefaultTreeNode<Demo> child : node.getChildren()) {
+            DefaultTreeNode<Demo> found = exampleLinkedTo(child, target);
+            if (found != null) {
+                return found;
+            }
+        }
+        return null;
+    }
+
+    private static ScrollableComponent documentShown;
+
+    /** the document in slot, in place of what is there: links wanted goes to onLink, its other .md links open in it */
+    private static void showDocument(Demo demo, Composite slot, TextComponent status, Consumer<LinkClickedEvent> onLink, Predicate<String> wanted) {
+        clearSlot(slot, status);
+        MarkdownView view = new MarkdownView(demo.document, SourceFiles::findText);
+        view.onLink(wanted, onLink);
+        documentShown = MarkdownView.inScrollPane(Colors.IGre, view);
+        slot.add(documentShown);
+        slot.onResizeExpandDownAndRight(documentShown);
+        status.setText(" " + demo.name + " - a link to an example runs it");
+    }
+
+    // nothing in the slot: no welcome, no document, no example running
+    private static void clearSlot(Composite slot, TextComponent status) {
         if (greeting != null) {
             slot.remove(greeting.panel);
             greeting = null;
         }
+        if (documentShown != null) {
+            slot.remove(documentShown);
+            documentShown = null;
+        }
         closeRunning(status, "closed");
+    }
+
+    /** run the example's main inside slot, in place of what is there */
+    private static void run(Demo demo, TUIApp host, Composite slot, TextComponent status) {
+        clearSlot(slot, status);
         Embedding embedding = TUIApp.runEmbedded(host, slot, demo.launch());
         running = embedding;
         // its setup code runs next on the bus; count after it
