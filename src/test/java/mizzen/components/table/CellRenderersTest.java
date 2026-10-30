@@ -53,6 +53,18 @@ public class CellRenderersTest extends TestCase {
         }
     }
 
+    // a one-line cell's text
+    private static String lineOf(IScreenLineSegmentsBuffer drawn) {
+        StringBuilder line = new StringBuilder();
+        for (ScreenLineSegment segment : drawn.getSegments()) {
+            while (line.length() < segment.getCol() + segment.getText().length()) {
+                line.append(' ');
+            }
+            line.replace(segment.getCol(), segment.getCol() + segment.getText().length(), segment.getText());
+        }
+        return line.toString();
+    }
+
     public void testText() {
         TextCellRenderer text = new TextCellRenderer();
         for (Object value : Arrays.asList("Ben is a pilot in Lyon, France.", "ben.brennan1@example.com", "", null,
@@ -96,7 +108,12 @@ public class CellRenderersTest extends TestCase {
         for (double fraction : new double[] { 0, 0.4, 1 }) {
             assertKeepsToItsRectangle("meter at " + fraction, meter, fraction);
         }
-        assertEquals("never narrower than its bar and percentage", 12, meter.widths(0.4).least);
+        assertEquals("never narrower than its bar and percentage (12), and a column each side", 14, meter.widths(0.4).least);
+        assertEquals("a line high, selected or not", 1, meter.heightAt(0.4, 20));
+        String selected = lineOf(meter.renderSelected(0.4, new Dimension.Simple(1, 20), Align.LEFT, new Colors.FGBGColors(Colors.IYel).invert()));
+        assertTrue("between solid bars: " + selected, selected.contains("▌") && selected.contains("▐"));
+        String kept = lineOf(meter.renderSelected(0.4, new Dimension.Simple(1, 20), Align.LEFT, new Colors.FGBGColors(Colors.IYel)));
+        assertTrue("the selection only kept, without focus - thin: " + kept, kept.startsWith("│") || kept.trim().startsWith("│"));
     }
 
     public void testATableInACell() {

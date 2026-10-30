@@ -74,7 +74,8 @@ public class ComponentCellRenderer<V> implements CellRenderer {
 
     private final SizeRule<V> rule;
     private final Drawing<V> drawing;
-    private boolean framed = false;
+    private int marginAcross = 0;                        // columns kept each side, for the frame or bars
+    private int marginDown = 0;                          // lines kept above and below
 
     public ComponentCellRenderer(SizeRule<V> rule, Drawing<V> drawing) {
         this.rule = rule;
@@ -87,65 +88,75 @@ public class ComponentCellRenderer<V> implements CellRenderer {
      * drawing - whose row should show it is selected.
      * <pre>
      *     ▄▄▄▄▄▄▄▄
-     *     ▐ pic  ▌     the picture where it always is; the frame only when its row is selected
+     *     ▌ pic  ▐     the picture where it always is; the frame only when its row is selected
      *     ▀▀▀▀▀▀▀▀
      * </pre>
      */
     public ComponentCellRenderer<V> framedWhenSelected() {
-        this.framed = true;
+        this.marginAcross = 1;
+        this.marginDown = 1;
         return this;
     }
 
-    private int margin() {
-        return framed ? 1 : 0;
+    /**
+     * The sides of the frame only: a column kept each side, no lines above or below - for what is a
+     * line high (a meter, a sparkline), which a whole frame would make three.
+     * <pre>
+     *     ▌██████░░░░  68%▐
+     * </pre>
+     */
+    public ComponentCellRenderer<V> barsWhenSelected() {
+        this.marginAcross = 1;
+        this.marginDown = 0;
+        return this;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public CellWidths widths(Object value) {
         CellWidths picture = rule.widths((V) value);
-        int around = 2 * margin();
+        int around = 2 * marginAcross;
         return new CellWidths(picture.cut + around, picture.least + around, picture.most + around);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public int heightAt(Object value, int width) {
-        return rule.heightAt((V) value, Math.max(1, width - 2 * margin())) + 2 * margin();
+        return rule.heightAt((V) value, Math.max(1, width - 2 * marginAcross)) + 2 * marginDown;
     }
 
-    /** value's component at size, inside the margin if framed; a null value: an empty cell */
+    /** value's component at size, inside any margin; a null value: an empty cell */
     @SuppressWarnings("unchecked")
     @Override
     public IScreenLineSegmentsBuffer render(Object value, Dimension size, Align align) {
-        int height = size.getHeight() - 2 * margin(), width = size.getWidth() - 2 * margin();
+        int height = size.getHeight() - 2 * marginDown, width = size.getWidth() - 2 * marginAcross;
         if (value == null || height <= 0 || width <= 0) {
             return new ScreenLineSegmentsBuffer();
         }
         IScreenLineSegmentsBuffer drawn = drawing.draw((V) value, new Dimension.Simple(height, width)).getSegmentsBuffer();
-        if (!framed) {
+        if (marginAcross == 0 && marginDown == 0) {
             return drawn;
         }
         IScreenLineSegmentsBuffer inside = new ScreenLineSegmentsBuffer();
-        drawn.getSegments().stream().map((segment) -> segment.fromOffset(new Position.Simple(1, 1))).forEach(inside::add);
+        drawn.getSegments().stream().map((segment) -> segment.fromOffset(new Position.Simple(marginDown, marginAcross))).forEach(inside::add);
         return inside;
     }
 
     // the frame's pieces: top-left, top, top-right, left, right, bottom-left, bottom, bottom-right
-    private static final String SOLID = "▄▄▄▐▌▀▀▀";      // half blocks: a focused selection - a line hugging the picture; corners too, as many fonts lack quarter blocks
+    private static final String SOLID = "▄▄▄▌▐▀▀▀";      // half blocks: a focused selection; the sides on the outer half of their column, flush with the corners (many fonts lack quarter blocks)
     private static final String THIN = "┌─┐││└─┘";       // the selection kept while the table hasn't focus: dimmed, as its text is
     private static final char BLANK_BRAILLE = '\u2800';  // a drawing's empty space: no dots
 
     /**
      * Selected, a component keeps its own colours - painted over in the selection colour a picture
-     * turns to stripes, a meter loses its bar. Framed (framedWhenSelected), the margin frames it:
-     * solid while the table has focus, thin while the selection is only kept (dimmed). Otherwise it
-     * shows as it is, and the row's other cells show the selection.
+     * turns to stripes, a meter loses its bar. Its margin shows the selection instead - a frame
+     * (framedWhenSelected) or bars (barsWhenSelected): solid while the table has focus, thin while the
+     * selection is only kept (dimmed). With no margin it shows as it is.
      */
     @Override
     public IScreenLineSegmentsBuffer renderSelected(Object value, Dimension size, Align align, Color selected) {
         IScreenLineSegmentsBuffer drawn = render(value, size, align);
-        if (!framed || drawn.getSegments().isEmpty()) {
+        if (marginAcross == 0 || drawn.getSegments().isEmpty()) {
             return drawn;
         }
         int top = Integer.MAX_VALUE, left = Integer.MAX_VALUE, bottom = -1, right = -1;      // the picture's edges: what shows
@@ -169,8 +180,10 @@ public class ComponentCellRenderer<V> implements CellRenderer {
         IScreenLineSegmentsBuffer withFrame = new ScreenLineSegmentsBuffer();
         drawn.getSegments().forEach(withFrame::add);
         String across = new String(new char[right - left + 1]);
-        withFrame.add(new SegmentImpl(line, new Position.Simple(top - 1, left - 1), frame.charAt(0) + across.replace('\0', frame.charAt(1)) + frame.charAt(2)));
-        withFrame.add(new SegmentImpl(line, new Position.Simple(bottom + 1, left - 1), frame.charAt(5) + across.replace('\0', frame.charAt(6)) + frame.charAt(7)));
+        if (marginDown > 0) {
+            withFrame.add(new SegmentImpl(line, new Position.Simple(top - 1, left - 1), frame.charAt(0) + across.replace('\0', frame.charAt(1)) + frame.charAt(2)));
+            withFrame.add(new SegmentImpl(line, new Position.Simple(bottom + 1, left - 1), frame.charAt(5) + across.replace('\0', frame.charAt(6)) + frame.charAt(7)));
+        }
         for (int row = top; row <= bottom; row++) {
             withFrame.add(new SegmentImpl(line, new Position.Simple(row, left - 1), String.valueOf(frame.charAt(3))));
             withFrame.add(new SegmentImpl(line, new Position.Simple(row, right + 1), String.valueOf(frame.charAt(4))));

@@ -40,7 +40,7 @@ public interface CellRenderer {
      * value drawn as a cell of the selected row, in selected (the table's selection colour, focused or
      * not). By default as render draws it with every segment in selected - right for text. A
      * component keeps its own colours (ComponentCellRenderer.renderSelected): an image or a drawing
-     * framed, a meter or a sparkline as it is.
+     * framed, a meter or a sparkline between bars.
      */
     default IScreenLineSegmentsBuffer renderSelected(Object value, Dimension size, Align align, Color selected) {
         return inColor(render(value, size, align), selected);

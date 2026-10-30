@@ -77,7 +77,7 @@ public final class CellRenderers {
             meter.setProgress(fraction.apply(value));
             meter.resize(size);
             return meter;
-        });
+        }).barsWhenSelected();
     }
 
     /**
@@ -125,6 +125,6 @@ public final class CellRenderers {
             line.renderPoints(values.apply(value));
             line.resize(new Dimension.Simple(1, size.getWidth()));
             return line;
-        });
+        }).barsWhenSelected();
     }
 }
