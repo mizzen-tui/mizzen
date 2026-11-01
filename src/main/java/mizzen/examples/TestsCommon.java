@@ -2,8 +2,7 @@ package mizzen.examples;
 
 import java.util.function.Consumer;
 
-import mizzen.components.BlockChars;
-import mizzen.components.plot.braille.BrailleUtils;
+import mizzen.core.TextSnapshot;
 import mizzen.core.Canvas;
 import mizzen.core.ScreenCanvasBackend;
 import mizzen.core.ScreenCanvasBackend.UpdateStrategy;
@@ -17,7 +16,6 @@ import mizzen.events.keyboard.Keys;
 import mizzen.geom.Dimension;
 import mizzen.util.MapChars;
 import mizzen.util.OSType;
-import mizzen.util.SparkLine;
 import mizzen.util.TerminalDimensions;
 
 public class TestsCommon {
@@ -48,23 +46,7 @@ public class TestsCommon {
     }
 
     public static MapChars buildNOGraphicsMapChar() {
-        MapChars mapChars = new MapChars();
-        mapChars.mapAll(BlockChars.UTIL.getNICE_TO_BASIC());
-        mapChars.mapAll(BrailleUtils.getBrailleToAsciiMapChars());
-
-        mapChars.mapAll(SparkLine.UTIL.getSparklineToAsciiMapChars());
-
-        mapChars.map('┈', '~');
-        mapChars.map('┊', '!');
-        mapChars.map('░', '#');
-        mapChars.map('▒', '=');
-        mapChars.map('▫', 'o');
-        mapChars.map('■', '*');
-        mapChars.map('◍', '*');
-        mapChars.map('□', 'o');
-        mapChars.map('◌', 'o');
-
-        return mapChars;
+        return TextSnapshot.asciiMap();
     }
 
     public static TerminalScreen getNoGraphicsTerminalScreenForTesting(String[] args) {
