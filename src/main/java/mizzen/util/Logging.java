@@ -41,6 +41,7 @@ public class Logging {
     static boolean enabled = false;
     static Object mutex = new Object();
     private static Backend backend;              // null until the first line, then the default file
+    private static volatile boolean fileErrorsQuiet = false;
     private static boolean closeOnExit;                  // the shutdown hook that closes it is in
 
     static {
@@ -54,6 +55,7 @@ public class Logging {
      *     mizzen.log.enabled = true | false                   setEnabled(..)
      *     mizzen.log.file    = a path (a name alone: in the   setLogFile(..)
      *                          folder the app runs in)
+     *     mizzen.log.fileErrors = show | quiet                setFileErrorsQuiet(..)
      *     mizzen.log.backend = file | java | log4j | slf4j    setBackend(file(..) / javaLogging() / log4j() / slf4j())
      *
      *     java -Dmizzen.log.enabled=true -Dmizzen.log.backend=slf4j -jar app.jar
@@ -67,6 +69,19 @@ public class Logging {
         String enabledValue = System.getProperty("mizzen.log.enabled");
         if (enabledValue != null) {
             setEnabled(Boolean.parseBoolean(enabledValue.trim()));
+        }
+        String fileErrors = System.getProperty("mizzen.log.fileErrors");
+        if (fileErrors != null) {
+            switch (fileErrors.trim()) {
+            case "show":
+                setFileErrorsQuiet(false);
+                break;
+            case "quiet":
+                setFileErrorsQuiet(true);
+                break;
+            default:
+                throw new IllegalArgumentException("mizzen.log.fileErrors must be show or quiet: " + fileErrors);
+            }
         }
         String file = System.getProperty("mizzen.log.file");
         String backendName = System.getProperty("mizzen.log.backend");
@@ -174,6 +189,21 @@ public class Logging {
         }
     }
 
+    /**
+     * When the log file can't be written, the default backend says so on stdout, in the developer's
+     * face: false (the default). true: it says nothing - for an app whose stdout is its output, e.g.
+     * a report from a cron job, where a log line in it would do harm.
+     */
+    public static void setFileErrorsQuiet(boolean quiet) {
+        fileErrorsQuiet = quiet;
+    }
+
+    private static void fileError(IOException e) {
+        if (!fileErrorsQuiet) {
+            System.out.println(e.toString());
+        }
+    }
+
     public static void setEnabled(boolean enabled) {
         Logging.enabled = enabled;
     }
@@ -237,8 +267,7 @@ public class Logging {
                 log.write(thread + ":  " + msg + "\n");
                 log.flush();
             } catch (IOException e) {
-                // exception handling left as an exercise for the reader
-                System.out.println(e.toString());
+                fileError(e);
             }
         }
 
@@ -249,7 +278,7 @@ public class Logging {
                     log.close();
                 }
             } catch (IOException e) {
-                System.out.println(e.toString());
+                fileError(e);
             }
             log = null;
         }
