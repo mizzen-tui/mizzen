@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
+import mizzen.components.BorderedComponent;
 import mizzen.components.Component;
 import mizzen.components.TextComponent;
 import mizzen.components.chart.BarChart;
@@ -23,12 +24,13 @@ import mizzen.components.table.TableComponent;
 import mizzen.controlcodes.color.Colors;
 import mizzen.core.TextSnapshot;
 import mizzen.components.plot.shape.catalog.Ring;
+import mizzen.geom.CanResize;
 import mizzen.geom.Dimension;
 import mizzen.util.VeryBasicArgsHelper;
 
 /**
  * A report with no terminal, as a cron job makes one: one of each kind of component as text (TextSnapshot),
- * in the three styles, to the file named, or to stdout. No TUIApp, no event loop; main just returns.
+ * in the three styles, to the file named, or to stdout. No TUIApp, no event loop; main just returns (it could call System.exit last, to set an exit code).
  * <pre>
  *     java -cp mizzen.jar mizzen.examples.SnapshotReportDemo
  *     java -cp mizzen.jar mizzen.examples.SnapshotReportDemo /tmp/report.txt
@@ -56,11 +58,19 @@ public class SnapshotReportDemo {
         }
         StringBuilder report = new StringBuilder();
         for (Section section : SECTIONS) {
-            report.append("=== ").append(section.name).append(' ').append(section.height).append('x').append(section.width).append('\n');
-            report.append(new TextSnapshot(section.height, section.width).render(section.make())).append('\n');
-            report.append("=== ascii ").append(section.name).append(' ').append(section.height).append('x').append(section.width).append('\n');
-            report.append(new TextSnapshot(section.height, section.width).asciiOnly().render(section.make())).append('\n');
+            report.append("=== ").append(section.name).append('\n'); //.append(section.height).append('x').append(section.width).append('\n');
+            if (section.hasGraphics) {
+                report.append(new TextSnapshot()
+                         .render( sideBySide(section) ))
+                         .append('\n');
+            } else {
+                report.append(new TextSnapshot(section.height, section.width)
+                         .render( section.make()))
+                         .append('\n');
+            }
+            report.append('\n');
         }
+        report.append("=== ascii only\n").append(new TextSnapshot(12, 48).asciiOnly().render(shapes())).append('\n');
         report.append("=== colours table\n").append(new TextSnapshot(8, 40).ansiColors().render(table())).append('\n');
         byte[] utf8 = report.toString().getBytes(StandardCharsets.UTF_8);      // as UTF-8 whatever the JVM's default: cron's may not be
         if (args.length > 0) {
@@ -96,12 +106,17 @@ public class SnapshotReportDemo {
         public final int height;
         public final int width;
         final Maker maker;
+        public boolean hasGraphics;
 
-        Section(String name, int height, int width, Maker maker) {
+        Section(String name, int height, int width, Maker maker, boolean hasGraphics) {
             this.name = name;
             this.height = height;
             this.width = width;
             this.maker = maker;
+            this.hasGraphics = hasGraphics;
+        }
+        Section(String name, int height, int width, Maker maker) {
+            this(name, height, width, maker, true);
         }
 
         public Component<?> make() {
@@ -110,22 +125,22 @@ public class SnapshotReportDemo {
     }
 
     public static final List<Section> SECTIONS = Arrays.asList(
-            new Section("text", 2, 40, () -> new TextComponent(Colors.Whi, "Weekly status\nAll regions reporting")),
-            new Section("panels", 4, 60, SnapshotReportDemo::panels),
+            new Section("text", -1, -1, () -> new TextComponent(Colors.Whi, "Weekly status\nAll regions reporting"), false),
+            new Section("panels", 30, 40, SnapshotReportDemo::panels),
             new Section("table", 8, 40, SnapshotReportDemo::table),
             new Section("braille shapes", 12, 48, SnapshotReportDemo::shapes),
-            new Section("line chart", 12, 60, SnapshotReportDemo::lineChart),
+            new Section("line chart", 18, 80, SnapshotReportDemo::lineChart),
             new Section("bar chart", 12, 60, SnapshotReportDemo::barChart),
             new Section("donut chart", 12, 60, SnapshotReportDemo::donut),
             new Section("sparkline", 1, 20, SnapshotReportDemo::sparkline),
             new Section("progress meter", 1, 40, SnapshotReportDemo::meter));
 
-    static VerticalPanel panels() {
+    public static VerticalPanel panels() {
         HorizontalPanel row = new HorizontalPanel().setHorizontalSpacer(2);
-        row.add(new TextComponent(Colors.Whi, "left"));
-        row.add(new TextComponent(Colors.Cya, "right"));
+        row.add(new BorderedComponent(new TextComponent(Colors.Whi, "left component")));
+        row.add(new BorderedComponent(new TextComponent(Colors.Cya, "right component")));
         VerticalPanel panel = new VerticalPanel();
-        panel.add(new TextComponent(Colors.BWhi, "Above"));
+        panel.add(new BorderedComponent(new TextComponent(Colors.BWhi, "Above")));
         panel.add(row);
         return panel;
     }
@@ -139,11 +154,31 @@ public class SnapshotReportDemo {
 
     /** braille from the plot: a gear inside a ring, in the plot's own units, kept in proportion */
     public static PlotArea shapes() {
-        return new PlotArea(Colors.Gre).showing(-1.3, 1.3, -1.3, 1.3).scaling(PlotArea.Scaling.EQUAL).axes(false)
+        PlotArea plotted = new PlotArea(Colors.Gre).showing(-1.3, 1.3, -1.3, 1.3)
+                .scaling(PlotArea.Scaling.EQUAL).axes(false)
                 .onDraw((pen) -> {
                     pen.color(Colors.BCya).draw(new Ring(0, 0, 1.25f, 1.15f).setYUp(true).setFilled(true));
                     pen.color(Colors.BYel).draw(Parts.GEAR_12.drawing.get());
                 });
+        return plotted;
+    }
+
+    /** a horizontal panel: the drawing in braille, and beside it its own 7-bit snapshot as text - a snapshot is just a String */
+    static VerticalPanel sideBySide(Section section) {
+        Maker componentMaker = section.maker;
+        Component<?> component = componentMaker.make();
+        if (component instanceof CanResize && section.height>-1 && section.width > -1) {
+            ((CanResize)component).resize(new Dimension.Simple(section.height,section.width));
+        }
+        String ascii = new TextSnapshot().asciiOnly().render(component);
+        component.clear(); // <-- wipes current segments, forcing a redraw which removes ascii variant
+        HorizontalPanel both = new HorizontalPanel().setHorizontalSpacer(2);
+        both.add(new BorderedComponent(component).setTitle("GRAPHICS Version"));
+        both.add(new BorderedComponent(new TextComponent(Colors.Whi, ascii)).setTitle("ASCII version"));
+        VerticalPanel panel = new VerticalPanel();
+        //panel.add(new TextComponent(Colors.BWhi, "Braille" + new String(new char[wide - 5]).replace('\0', ' ') + "ASCII"));
+        panel.add(both);
+        return panel;
     }
 
     public static LineChart lineChart() {
@@ -168,7 +203,7 @@ public class SnapshotReportDemo {
         return line;
     }
 
-    static ProgressMeter meter() {
+    public static ProgressMeter meter() {
         ProgressMeter meter = new ProgressMeter(Colors.Gre, 20).setLayout(ProgressMeter.Layout.ONE_ROW);
         meter.setProgress(0.68);
         return meter;

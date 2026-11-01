@@ -27,17 +27,16 @@ def check(ok, what):
     bad += 0 if ok else 1
 plain = [s for s in sections if not s.startswith(b'colours')]
 check(all(b'\x1b' not in s for s in plain), "no 0x1B in the default output (R8)")
-sizes_ok = True
+rectangular = True
 for s in plain:
     head, _, body = s.partition(b'\n')
-    h, w = map(int, head.rsplit(b' ', 1)[1].split(b'x'))
-    lines = body.decode('utf-8').rstrip('\n').split('\n') if body.strip(b'\n') else []
-    if len(lines) != h or any(len(l) != w for l in lines):
-        sizes_ok = False; print("        wrong size:", head)
-check(sizes_ok, "every section exactly height x width (R10)")
+    lines = body.decode('utf-8').rstrip('\n').split('\n')
+    if not lines or len(set(len(l) for l in lines)) != 1:
+        rectangular = False; print("        not rectangular:", head)
+check(rectangular, "every section's lines the same width (R10; exact sizes: TextSnapshotTest)")
 check(any(0x2800 < ord(c) <= 0x28FF for c in data.decode('utf-8')), "braille survives with no locale (R9)")
-ascii_ok = all(max(s.partition(b'\n')[2] or b' ') < 128 for s in plain if s.startswith(b'ascii'))
-check(ascii_ok, "ascii sections only 7-bit (R9)")
+ascii_only = [s for s in sections if s.startswith(b'ascii only')][0].partition(b'\n')[2]
+check(max(ascii_only) < 128 and any(c > 32 for c in ascii_only), "ascii section only 7-bit, and not blank (R9)")
 colours = [s for s in sections if s.startswith(b'colours')][0]
 check(b'\x1b' in colours and b'\x1b' not in re.sub(rb'\x1b\[[0-9;]*m', b'', colours), "colour section: colour codes only (R8)")
 sys.exit(1 if bad else 0)
