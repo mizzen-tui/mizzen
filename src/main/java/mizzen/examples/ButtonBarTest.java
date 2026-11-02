@@ -6,7 +6,7 @@ import mizzen.app.TUIApp;
 import mizzen.components.BorderedComponent;
 import mizzen.components.ButtonBar;
 import mizzen.components.TextComponent;
-import mizzen.components.modal.MessageBox;
+import mizzen.components.modal.Dialog;
 import mizzen.controlcodes.color.Colors;
 import mizzen.events.keyboard.KeyInputEventHandler;
 import mizzen.events.keyboard.Keys;
@@ -57,9 +57,7 @@ public class ButtonBarTest {
 
                     tApp.getEventBus().appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE,
                             (te) ->  {
-                                MessageBox.showInfoDialog(te.getEventBus(), 
-                                        tApp.getMainApplicationPanel(), 
-                                        "Exit app using "+ Keys.CTRL_C_KEYSTROKE.getName()+ " ");
+                                Dialog.info("Exit app using "+ Keys.CTRL_C_KEYSTROKE.getName()+ " ").ok().show(tApp);
                                 tApp.doRefreshCanvasIfModified();
                             }));
 

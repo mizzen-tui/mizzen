@@ -6,8 +6,6 @@ import java.util.StringJoiner;
 import mizzen.components.CompositeWithFocusManager;
 import mizzen.components.HasName;
 import mizzen.components.input.TextInput;
-import mizzen.components.modal.DialogComponent.ButtonSpec;
-import mizzen.components.modal.DialogComponent.IconStyle;
 import mizzen.controlcodes.color.Colors;
 import mizzen.events.focus.FocusManager;
 import mizzen.events.focus.Focusable;
@@ -21,15 +19,15 @@ import mizzen.supportfortesting.SyncEventLoop;
 import junit.framework.TestCase;
 
 /**
- * Keyboard focus inside a real MessageBox (a modal dialog): it gets keys before the application's
+ * Keyboard focus inside a real Dialog (a modal one): it gets keys before the application's
  * root, so TAB / SHIFT-TAB must work inside it on their own, and never reach the rest of the screen.
- * Layout: root[outside, dialog[Yes, No]]. A failure means "behaviour changed".
+ * Layout: root[outside, dialog[yes, no]] - buttons by name. A failure means "behaviour changed".
  *
  * TODAY "outside" (focused before the dialog opened) keeps its own focus flag while the dialog is
- * open, so two components show focus ("outside+Yes"). Parked with the modal work: the dialog should
+ * open, so two components show focus ("outside+yes"). Parked with the modal work: the dialog should
  * take focus from it, and give it back when it closes.
  */
-public class MessageBoxFocusCharacterisationTest extends TestCase {
+public class DialogFocusCharacterisationTest extends TestCase {
 
     private final SyncEventLoop bus = new SyncEventLoop();
     private CompositeWithFocusManager root;
@@ -45,10 +43,10 @@ public class MessageBoxFocusCharacterisationTest extends TestCase {
         bus.setRoot(root);
         bus.deliver(new RequestFocusEvent(ToFocusable.UTIL.toFocusable(outside)));
 
-        ButtonSpec[] buttons = {
-            new ButtonSpec("Yes", Keys.F1_KEYSTROKE, (close, te) -> { }, false),
-            new ButtonSpec("No",  Keys.F2_KEYSTROKE, (close, te) -> { }, false) };
-        MessageBox.simpleDialog(IconStyle.QUESTION, "Question", buttons, bus, root, "Sure?", null);
+        Dialog.question("Sure?").title("Question")
+                .button("yes", "Yes").key(Keys.F1_KEYSTROKE)
+                .button("no", "No").key(Keys.F2_KEYSTROKE)
+                .show(bus, root);
         bus.drain();
     }
 
@@ -58,7 +56,7 @@ public class MessageBoxFocusCharacterisationTest extends TestCase {
 
     /**
      * Which components show focus (their own hasFocus flag - what the user sees hilited), e.g.
-     * "Yes", or "Yes+outside" if two claim it. Buttons by label, others by name.
+     * "yes", or "yes+outside" if two claim it. By name.
      */
     private String focused() {
         StringJoiner names = new StringJoiner("+");
@@ -78,7 +76,7 @@ public class MessageBoxFocusCharacterisationTest extends TestCase {
     }
 
     public void testDialogOpensWithFocusOnItsFirstButton() {
-        assertEquals("outside+Yes", focused());
+        assertEquals("outside+yes", focused());
     }
 
     /**
@@ -92,6 +90,6 @@ public class MessageBoxFocusCharacterisationTest extends TestCase {
             seq.append(' ').append(focused());
         }
 
-        assertEquals("outside+Yes outside+No outside+Yes outside+No outside+Yes", seq.toString());
+        assertEquals("outside+yes outside+no outside+yes outside+no outside+yes", seq.toString());
     }
 }

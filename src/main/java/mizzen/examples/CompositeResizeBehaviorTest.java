@@ -7,7 +7,7 @@ import mizzen.components.ButtonBar;
 import mizzen.components.TextComponent;
 import mizzen.components.composite.Composite;
 import mizzen.components.input.Button;
-import mizzen.components.modal.MessageBox;
+import mizzen.components.modal.Dialog;
 import mizzen.controlcodes.color.Colors;
 import mizzen.geom.Dimension;
 import mizzen.util.Logging;
@@ -121,10 +121,9 @@ public class CompositeResizeBehaviorTest {
 
                 infoButton.setEnabled(true, tApp.getEventBus());
                 infoButton.onChange((te)->{
-                    MessageBox.showInfoDialog(te.getEventBus(), tApp.getMainApplicationPanel(), 
-                                               "Testing resize of child\n"+
-                                               "components to ensure parent \n"+
-                                               "components resize as well.");
+                    Dialog.info("Testing resize of child\n"+
+                                "components to ensure parent \n"+
+                                "components resize as well.").ok().show(tApp);
                 });
 
             }).start();

@@ -6,7 +6,6 @@ import mizzen.app.TUIApp;
 import mizzen.components.AbstractComponentWrappper;
 import mizzen.components.BorderedComponent;
 import mizzen.components.ButtonBar;
-import mizzen.components.ChildComponentManager;
 import mizzen.components.CollapsiblePanel;
 import mizzen.components.Component;
 import mizzen.components.TextComponent;
@@ -14,7 +13,7 @@ import mizzen.components.composite.HorizontalPanel;
 import mizzen.components.composite.VerticalPanel;
 import mizzen.components.input.Button;
 import mizzen.components.input.DefaultFocusableBehaviour;
-import mizzen.components.modal.MessageBox;
+import mizzen.components.modal.Dialog;
 import mizzen.controlcodes.color.Color;
 import mizzen.controlcodes.color.Colors;
 import mizzen.events.EventBus;
@@ -110,7 +109,7 @@ public class HideShowTest {
 
         @Override
         public void onClick(EventBus eventBus) {
-            MessageBox.showInfoDialog(eventBus, (ChildComponentManager<?>) Component.UTIL.getRootPanelOf(this)  , this.text + " ClickableRectangle clicked!!");
+            Dialog.info(this.text + " ClickableRectangle clicked!!").ok().show(this);
         }
 
         @Override

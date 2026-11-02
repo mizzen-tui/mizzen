@@ -8,7 +8,7 @@ import mizzen.components.composite.VerticalPanel;
 import mizzen.components.input.Button;
 import mizzen.components.input.DropdownListBox;
 import mizzen.components.input.HasValue;
-import mizzen.components.modal.MessageBox;
+import mizzen.components.modal.Dialog;
 import mizzen.components.plot.image.ImageViewerFactory.ImageRenderRequest;
 import mizzen.controlcodes.color.Color;
 import mizzen.controlcodes.color.Colors;
@@ -107,14 +107,11 @@ public class ImageManipulationControls extends AbstractComponentWithContainer<Co
 
         ImageManipulationControls controls = new ImageManipulationControls(new Colors.FGBGColors(Colors.Bla,Colors.On_Whi), rqst);
 
-        EventHandler onDialogClosed = null;
-
-        if (actionOnChangeHandler != null) {
-            Registration listening = controls.onChange(actionOnChangeHandler,  eventHandlerContainer);
-            onDialogClosed = (te2) -> listening.unregister();           // the dialog's listener goes with the dialog
-        }
-
-        MessageBox.showInfoDialog(te.getEventBus(), parentPanel, "Image Render options",  controls, onDialogClosed, onDialogClosed);
+        Registration listening = actionOnChangeHandler == null ? Registration.NONE
+                : controls.onChange(actionOnChangeHandler, eventHandlerContainer);
+        Dialog.info("Image Render options").add(controls).ok()
+              .onClose(listening::unregister)                                   // the dialog's listener goes with the dialog
+              .show(te.getEventBus(), parentPanel);
 
     }
 

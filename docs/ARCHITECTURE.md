@@ -170,7 +170,7 @@ travelling down the focus tree. A redesign must keep delivering every row.
 
 | Event type | Registered by / where | What it does |
 |---|---|---|
-| KEYPRESS | ~50 `KeyInputEventHandler`s on component chains (TextInput, ListBox, Menu, ScrollBars, Table, MessageBox, ...) | per-component key bindings; they reach the component only while it (or an ancestor path) has focus |
+| KEYPRESS | ~50 `KeyInputEventHandler`s on component chains (TextInput, ListBox, Menu, ScrollBars, Table, Dialog, ...) | per-component key bindings; they reach the component only while it (or an ancestor path) has focus |
 | VALUE_CHANGED | `onChange` on TextInput, MultiLineTextInput, TextInputForType, Button, RadioGroup, TabButtonComponent, ListBox, DropdownListBox, TextInputWithIncrDecrButtons, ScrollBars, ImageManipulationControls (`OnChangeListeners`: any number of listeners, each `onChange` returns a `Registration`) | component actions (a Button's action is a VALUE_CHANGED handler) |
 | VALUE_CHANGED (from children) | `FormBinder.onChange` on the **form panel** (ancestor) | form-level change handling: needs delivery through ancestors |
 | VIEW_OFFSET_CHANGED | `HasViewPortWindow` (`newOnChangedHandler`) | viewport scroll sync |
@@ -678,7 +678,7 @@ expected to fail when the redesign fixes them.
 | `components/FocusSideEffectsCharacterisationTest` | frame hilite on click and TAB (frame TAB order: title, content, resize anchor), TextInput recolour, scroll-to-view request |
 | `components/input/form/FormChangeCharacterisationTest` | typing -> data -> field `onChange` -> form `onChange` through the form panel |
 | `components/input/DropdownListBoxCharacterisationTest` | open on focus, hand-off into the list, TAB / SHIFT-TAB / ENTER in the list, click elsewhere closes, DOWN opens a closed list, arrows at the ends |
-| `components/modal/MessageBoxFocusCharacterisationTest` | TAB / SHIFT-TAB inside a real modal dialog (TRAP: wraps, never leaves); the field focused before keeps its flag (TODAY) |
+| `components/modal/DialogFocusCharacterisationTest` | TAB / SHIFT-TAB inside a real modal dialog (TRAP: wraps, never leaves); the field focused before keeps its flag (TODAY) |
 | `components/DynamicStructureCharacterisationTest` | fields added / removed / hidden after the screen is built, inside nested panels - no rebuild calls |
 | `components/input/DropdownPopupCharacterisationTest` | the dropdown's list as a popup: drawn on the root panel, container keeps its size, TAB carries on after the dropdown, keys reach it inside a dialog |
 | `components/menu/MenuFocusCharacterisationTest` | menus: open, DOWN / RIGHT / ENTER / ESC / TAB / SHIFT-TAB inside, focus back on the button, click elsewhere |

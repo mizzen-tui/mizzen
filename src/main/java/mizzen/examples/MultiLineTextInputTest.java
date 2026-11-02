@@ -9,7 +9,7 @@ import mizzen.components.TextComponent;
 import mizzen.components.composite.HorizontalPanel;
 import mizzen.components.input.Button;
 import mizzen.components.input.MultiLineTextInput;
-import mizzen.components.modal.MessageBox;
+import mizzen.components.modal.Dialog;
 import mizzen.components.scroll.ScrollableComponent;
 import mizzen.components.scroll.SearchFunctionForScrollableComponent;
 import mizzen.controlcodes.color.Colors;
@@ -84,20 +84,17 @@ public class MultiLineTextInputTest {
             
             
             infoButton.onChange((te)->{
-                MessageBox.showInfoDialog(te.getEventBus(), 
-                                          tApp.getMainApplicationPanel(), 
-                                                  "   Part of the Mizzen Library\n"+
-                                                  "   --------------------------\n"+
-                                                  "\n"+
-                                                  "This mini application is used to test\n"+
-                                                  "MultiLineTextInput component in conjunction\n"+
-                                                  "with the ScrollableComponent and also \n"+
-                                                  "with the external findText button.\n"+
-                                                  "---------------------------------------------------- \n"+
-                                                  "Cursor management (positioning) should be maintained\n"+
-                                                  "event when paging/scrolling up down with controls\n"+
-                                                  "of the ScrollableComponent"
-                                          );
+                Dialog.info("   Part of the Mizzen Library\n"+
+                            "   --------------------------\n"+
+                            "\n"+
+                            "This mini application is used to test\n"+
+                            "MultiLineTextInput component in conjunction\n"+
+                            "with the ScrollableComponent and also \n"+
+                            "with the external findText button.\n"+
+                            "---------------------------------------------------- \n"+
+                            "Cursor management (positioning) should be maintained\n"+
+                            "event when paging/scrolling up down with controls\n"+
+                            "of the ScrollableComponent").ok().show(tApp);
             });
             
             Consumer<EventBus> wrapIfRequest = (evtBus) ->{

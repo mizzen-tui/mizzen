@@ -5,6 +5,7 @@ import java.util.List;
 
 import mizzen.components.Component;
 import mizzen.components.TextComponent;
+import mizzen.components.composite.Composite;
 import mizzen.components.composite.HorizontalPanel;
 import mizzen.components.composite.VerticalPanel;
 import mizzen.components.input.LabelFor;
@@ -40,11 +41,11 @@ class RowsPanel {
     /** label | input - with the error line under the input - and its handle. A click on the label focuses the input (a view's label: nothing to focus). */
     FormRow place(Color labelColor, String field, String labelText, Component<?> shown, Object input, TextComponent error) {
         TextComponent label = label(labelColor, labelText);
-        VerticalPanel inputAndError = new VerticalPanel();
+        VerticalPanel inputAndError = filled(new VerticalPanel(labelColor), labelColor);
         inputAndError.add(shown);
         inputAndError.add(error);
         Component<?> labelShown = ToFocusable.UTIL.toFocusable(input) == null ? label : new LabelFor(label).focuses(input);
-        HorizontalPanel row = new HorizontalPanel(labelColor, GAP).add(labelShown).add(inputAndError);
+        HorizontalPanel row = filled(new HorizontalPanel(labelColor, GAP), labelColor).add(labelShown).add(inputAndError);
         panel.add(row);
         FormRow handle = new FormRow(field, labelText, input, label, error);
         handle.component = row;
@@ -54,7 +55,16 @@ class RowsPanel {
 
     /** a line starting where the inputs start - a hint under an input */
     void note(Color color, String text) {
-        panel.add(new HorizontalPanel(color, GAP).add(label(color, "")).add(new TextComponent(color, text)));
+        panel.add(filled(new HorizontalPanel(color, GAP), color).add(label(color, "")).add(new TextComponent(color, text)));
+    }
+
+    // what no child covers - under a label beside a two-line input, after a short error - in the row's colour, not
+    // the terminal's: a form on a coloured background (a dialog) shows no dark patches. On the default background
+    // it looks as before.
+    private static <P extends Composite> P filled(P panel, Color color) {
+        panel.setFillOnClear(true);
+        panel.setEmptyColor(color);
+        return panel;
     }
 
     void add(Component<?> component) {

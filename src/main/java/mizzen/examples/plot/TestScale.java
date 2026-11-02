@@ -101,7 +101,7 @@ public class TestScale {
                    grid.add(controlsInGridPosition, controlsInGrid);
 //                   grid.onClickHandler = (te) -> {
 //                       ApplicationMouseEvent appMouseEvent = (ApplicationMouseEvent) te;
-//                       MessageBox.showInfoDialog(te.getEventBus(), tApp.getMainApplicationPanel()  , "click at");
+//                       Dialog.info("click at").ok().show(tApp);
 //                   };
 
                    grid.setTitle(Colors.BPur, " Shape : pick one - then drag it with the mouse ");

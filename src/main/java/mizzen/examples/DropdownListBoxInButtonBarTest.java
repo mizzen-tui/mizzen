@@ -7,7 +7,7 @@ import mizzen.components.composite.Composite;
 import mizzen.components.composite.HorizontalPanel;
 import mizzen.components.composite.VerticalPanel;
 import mizzen.components.input.DropdownListBox;
-import mizzen.components.modal.MessageBox;
+import mizzen.components.modal.Dialog;
 import mizzen.controlcodes.color.Colors;
 import mizzen.events.keyboard.Keys;
 import mizzen.util.Logging;
@@ -37,11 +37,11 @@ public class DropdownListBoxInButtonBarTest {
             bbar.addComponent( new TextComponent("A LABEL") );
 
             bbar.addButton("POPUP", Keys.CTRL_F_KEYSTROKE, (te)->{
-                MessageBox.showInfoDialog(te.getEventBus(), tApp.getMainApplicationPanel(), "b1 popup msg");
+                Dialog.info("b1 popup msg").ok().show(tApp);
             });
 
             bbar.addButton("POPUP2", Keys.CTRL_G_KEYSTROKE, (te)->{
-                MessageBox.showInfoDialog(te.getEventBus(), tApp.getMainApplicationPanel(), "b2 popup msg");
+                Dialog.info("b2 popup msg").ok().show(tApp);
             });
 
             DropdownListBox<String> ddlb = DropdownListBox.fromStrings(new String[] {"Test1","Test2","Test3"}).setName("Test123-ddlb");

@@ -9,11 +9,31 @@ public class ApplicationMouseEvent extends AbstractMouseEvent {
 
     private static final long serialVersionUID = 7172651125203610138L;
 
+    private boolean onADialog;                           // a modal dialog has let it through: it is on that dialog
+
     // leave constructor as package private
     ApplicationMouseEvent(Object source, MOUSE_ACTION action, Position eventData) {
         super(source, TYPE.APPLICATION_MOUSE, action, eventData);
     }
-    
+
+    /**
+     * true: the modal dialog on top found this on itself and let it through - dialogs under it let it
+     * through too, without judging it. A modal dialog sees the mouse first (its handler is in front on
+     * the bus), stops what lands anywhere else, and marks what lands on it.
+     * <p/>
+     * The whole scheme - why a mark, how stacked dialogs use it, what each handler does - is in the
+     * class comment of {@link mizzen.components.modal.ModalEventHandler}; the mark is set in
+     * {@link mizzen.components.modal.ModalEventHandler#stopsMouseOutside(java.util.function.Supplier)}'s
+     * check. The test DialogMouseTest (src/test) shows it working.
+     */
+    public boolean isOnADialog() {
+        return onADialog;
+    }
+
+    public void markOnADialog() {
+        this.onADialog = true;
+    }
+
     public static ApplicationMouseEvent asRelativeToComponent(ApplicationMouseEvent appMouseEventRelativeToCanvas, Component<?> component) {
         Position positionOfComponentOnCanvas = Component.UTIL.getCanvasOffsetFor(component);
         Position mousePositionOffsetIntoFrameSet =  appMouseEventRelativeToCanvas.getEventData().offsetAdd(positionOfComponentOnCanvas.negate());

@@ -3,7 +3,6 @@ package mizzen.examples;
 import mizzen.app.TUIApp;
 import mizzen.components.BoundedComponent.DONOTHING;
 import mizzen.components.ButtonBar;
-import mizzen.components.ChildComponentManager;
 import mizzen.components.Component;
 import mizzen.components.ComponentInspector;
 import mizzen.components.TextComponent;
@@ -13,7 +12,7 @@ import mizzen.components.input.Button;
 import mizzen.components.input.DefaultFocusableBehaviour;
 import mizzen.components.input.RadioGroup;
 import mizzen.components.input.TextInput;
-import mizzen.components.modal.MessageBox;
+import mizzen.components.modal.Dialog;
 import mizzen.controlcodes.color.Color;
 import mizzen.controlcodes.color.Colors;
 import mizzen.core.Canvas;
@@ -197,7 +196,7 @@ public class OnOffTogglesTest {
         @Override
         public void onClick(EventBus eventBus) {
             ((Composite)getParentContainer()).bringToBack(this);
-            MessageBox.showInfoDialog(eventBus, (ChildComponentManager<?>)getParentContainer(), "Mouse Clicked");
+            Dialog.info("Mouse Clicked").ok().show(this);
            
         }
         

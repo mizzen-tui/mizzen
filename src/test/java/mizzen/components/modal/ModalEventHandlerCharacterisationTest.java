@@ -9,7 +9,7 @@ import mizzen.supportfortesting.SyncEventLoop;
 import junit.framework.TestCase;
 
 /**
- * Characterisation test for the existing modal trap (ModalEventHandler, used by MessageBox):
+ * Characterisation test for the existing modal trap (ModalEventHandler, used by Dialog):
  * it prepends itself to its parent container, lets its own handlers take their keys, and
  * swallows every other key (keyboard sinkhole). It is separate from the focus managers and must
  * keep working through the focus redesign (docs/ARCHITECTURE.md §4.4).

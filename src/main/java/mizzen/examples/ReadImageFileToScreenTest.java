@@ -23,7 +23,7 @@ import mizzen.components.composite.HorizontalPanel;
 import mizzen.components.input.Button;
 import mizzen.components.input.DropdownListBox;
 import mizzen.components.input.TextInput;
-import mizzen.components.modal.MessageBox;
+import mizzen.components.modal.Dialog;
 import mizzen.components.plot.image.ImageViewerFactory;
 import mizzen.components.plot.image.ImageViewerFactory.IMAGE_RENDER_TYPE;
 import mizzen.components.plot.image.ImageViewerFactory.RGBPlotPredicate;
@@ -257,9 +257,9 @@ public class ReadImageFileToScreenTest {
                         new File(filename).delete();
                     }
                     Files.write( Paths.get(filename), content.getBytes(), StandardOpenOption.CREATE_NEW);
-                    MessageBox.showInfoDialog(te.getEventBus(), tApp.getMainApplicationPanel(), "Saved to file:\n\n"+outputFileName(args)+" ");
+                    Dialog.info("Saved to file:\n\n"+outputFileName(args)+" ").ok().show(tApp);
                 } catch (IOException e) {
-                    MessageBox.showErrorDialog(te.getEventBus(), tApp.getMainApplicationPanel(), "EXCEPTION:\n"+e);
+                    Dialog.error("EXCEPTION:\n"+e).ok().show(tApp);
                 }
             };
             
@@ -283,9 +283,9 @@ public class ReadImageFileToScreenTest {
                         new File(filename).delete();
                     }
                     Files.write( Paths.get(filename), content.getBytes(), StandardOpenOption.CREATE_NEW);
-                    MessageBox.showInfoDialog(te.getEventBus(), tApp.getMainApplicationPanel(), "Saved to file:\n\n"+outputFileName(args)+" ");
+                    Dialog.info("Saved to file:\n\n"+outputFileName(args)+" ").ok().show(tApp);
                 } catch (IOException e) {
-                    MessageBox.showErrorDialog(te.getEventBus(), tApp.getMainApplicationPanel(), "EXCEPTION:\n"+e);
+                    Dialog.error("EXCEPTION:\n"+e).ok().show(tApp);
                 }
             };
             

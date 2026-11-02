@@ -20,7 +20,7 @@ import mizzen.events.TerminalEvent;
  * <p/>
  * Each handler goes on the host's bus inside a forwarder that, while the handler runs, makes this
  * bus the event's bus (te.getEventBus()). So what a handler adds through the event - a dialog's
- * handler, say: MessageBox.show..(te.getEventBus(), ..) - is remembered too, and a handler that
+ * handler, say: Dialog...show(te.getEventBus(), ..) - is remembered too, and a handler that
  * removes itself (a one-shot task once it ran, a dialog when it closes) is forgotten here as it goes.
  * <p/>
  * Not covered: events the host hands to the app's components directly - keys by focus (KeyRouter),
@@ -104,7 +104,7 @@ final class RecordingEventBus extends EventBus.Delegate {
      * its own bus back.
      * <p/>
      * Why: an event carries the bus it was raised on, the host's. Handlers commonly use that bus to
-     * add more handlers - MessageBox.showInfoDialog(te.getEventBus(), ..) puts the dialog's handler
+     * add more handlers - Dialog...show(te.getEventBus(), ..) puts the dialog's handler
      * on it. Done on the host's bus directly, we would never see it, and close() would leave it
      * behind: an orphaned dialog handler swallowing every key in the host. While the app's handler
      * runs, te.getEventBus() is this bus instead, so what it adds is recorded like everything else -

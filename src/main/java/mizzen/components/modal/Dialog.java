@@ -1,0 +1,537 @@
+package mizzen.components.modal;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
+
+import mizzen.app.TUIApp;
+import mizzen.components.BorderedComponent;
+import mizzen.components.ChildComponentManager;
+import mizzen.components.Component;
+import mizzen.components.HasName;
+import mizzen.components.TextComponent;
+import mizzen.components.composite.HorizontalPanel;
+import mizzen.components.composite.VerticalPanel;
+import mizzen.components.input.Button;
+import mizzen.components.input.TextInput;
+import mizzen.components.input.form.Form;
+import mizzen.controlcodes.color.Color;
+import mizzen.controlcodes.color.Colors;
+import mizzen.events.ConditionalEventHandler;
+import mizzen.events.EventBus;
+import mizzen.events.EventHandler;
+import mizzen.events.RequestUpdateCanvasEvent;
+import mizzen.events.TerminalEvent;
+import mizzen.events.focus.RequestFocusEvent;
+import mizzen.events.focus.ToFocusable;
+import mizzen.events.keyboard.KeyInputEventHandler;
+import mizzen.events.keyboard.KeyStroke;
+import mizzen.events.keyboard.Keys;
+import mizzen.geom.Dimension;
+import mizzen.geom.Rectangle;
+import mizzen.geom.position.Position;
+import mizzen.traverse.HasChildrenAdapter;
+import mizzen.util.StringUtils;
+
+/**
+ * A modal dialog: an icon and a message at the top, anything in the middle (inputs, a Form), buttons
+ * at the bottom. Built step by step, then shown; while it is open, the keys are its own.
+ * <pre>
+ *     Dialog.info("Saved 3 files.").ok().show(bus, parent);
+ *
+ *     Dialog.question("Delete 3 backups?").title("Delete")
+ *             .button("delete", "Delete", (d) -&gt; deleteBackups())
+ *             .cancel()
+ *             .show(bus, parent);
+ * </pre>
+ * A button closes the dialog once its action has run - unless the action calls d.showError(..) (the
+ * message shows and it stays open), a submit button finds a Form in it invalid, or the button was
+ * marked staysOpen() (a Reset). A disabled button (enabledWhen) can't be pressed.
+ * <pre>
+ *     TextInput word = new TextInput(Colors.IYel, 10);
+ *     Dialog.warning("Runs on the live server.").title("Back up production")
+ *             .add("Type BACKUP to continue: ", word)
+ *             .button("run", "Run", (d) -&gt; startBackup())
+ *                 .enabledWhen(() -&gt; "BACKUP".equals(word.getText()))
+ *             .cancel()
+ *             .show(bus, parent);
+ * </pre>
+ * Buttons have a name and a label: the name finds one (d.button("run")) and never changes; the label
+ * may be translated. The first button is the dialog's own: Enter in a text field of the dialog presses
+ * it. cancel() is Esc. Focus starts in the first text field, else on the first button.
+ */
+public class Dialog {
+
+    public enum Icon { QUESTION, INFO, WARNING, ERROR }
+
+    /** a button to make when the dialog is shown */
+    private static final class ButtonPlan {
+        final String name;
+        final String label;
+        final Consumer<Dialog> action;
+        final boolean submit;
+        KeyStroke key;
+        BooleanSupplier enabledWhen;
+        boolean staysOpen;
+
+        ButtonPlan(String name, String label, Consumer<Dialog> action, boolean submit) {
+            this.name = name;
+            this.label = label;
+            this.action = action;
+            this.submit = submit;
+        }
+    }
+
+    private static final Consumer<Dialog> NOTHING = (d) -> { };
+    private static final String CANCEL = "cancel";
+    private static final Color ERROR_COLOR = new Colors.FGBGColors(Colors.BRed, Colors.On_Whi);
+
+    private final Icon icon;
+    private final String message;
+    private String title = "";
+    private final List<Component<?>> middle = new ArrayList<Component<?>>();
+    private final List<ButtonPlan> plans = new ArrayList<ButtonPlan>();
+    private Runnable onClose = () -> { };
+
+    // once shown
+    private final Color color = dialogColor();
+    private final List<Button> buttons = new ArrayList<Button>();
+    private ModalPanel panel;
+    private VerticalPanel layout;
+    private TextComponent errorLine;
+    private ChildComponentManager<?> parent;
+    private ModalEventHandler modalEvents;
+    private EventBus bus;
+    private boolean errorRaised;
+    private boolean closed;
+
+    private Dialog(Icon icon, String message) {
+        this.icon = icon;
+        this.message = message;
+    }
+
+    public static Dialog info(String message) {
+        return new Dialog(Icon.INFO, message).title("Info");
+    }
+
+    public static Dialog warning(String message) {
+        return new Dialog(Icon.WARNING, message).title("Warning");
+    }
+
+    public static Dialog error(String message) {
+        return new Dialog(Icon.ERROR, message).title("Error");
+    }
+
+    public static Dialog question(String message) {
+        return new Dialog(Icon.QUESTION, message);
+    }
+
+    /** the words on its top border; none by default for a question, the kind of dialog for the others */
+    public Dialog title(String title) {
+        this.title = title == null ? "" : title;
+        return this;
+    }
+
+    /** a component in the middle, under the message - an input, a panel, a Form */
+    public Dialog add(Component<?> component) {
+        middle.add(component);
+        return this;
+    }
+
+    /** label and input on one line in the middle: add("Name: ", nameInput) */
+    public Dialog add(String label, Component<?> input) {
+        HorizontalPanel line = new HorizontalPanel(color);
+        line.add(new TextComponent(color, label));
+        line.add(input);
+        return add(line);
+    }
+
+    /**
+     * a Form for data in the middle, in the dialog's colours - rows adds its rows. A submit button checks
+     * it before its action runs.
+     * <pre>
+     *     .form(login, (f) -&gt; f.text("User", "user").required().password("Password", "password").required())
+     * </pre>
+     * A Form made elsewhere can go in with add(form): it keeps its own colours.
+     */
+    public <T> Dialog form(T data, Consumer<Form<T>> rows) {
+        Form<T> form = Form.of(data)
+                .labelColor(color)
+                .noteColor(new Colors.FGBGColors(Colors.IBla, Colors.On_Whi))
+                .headingColor(new Colors.FGBGColors(Colors.Blu, Colors.On_Whi))
+                .errorColor(ERROR_COLOR);
+        rows.accept(form);
+        return add(form);
+    }
+
+    /** a button: action runs when it is pressed, then the dialog closes (see the class comment) */
+    public Dialog button(String name, String label, Consumer<Dialog> action) {
+        plans.add(new ButtonPlan(name, label, action, false));
+        return this;
+    }
+
+    /** a button that only closes the dialog */
+    public Dialog button(String name, String label) {
+        return button(name, label, NOTHING);
+    }
+
+    /** a button that checks each Form in the middle first: its action runs only if they are all valid */
+    public Dialog submit(String name, String label, Consumer<Dialog> action) {
+        plans.add(new ButtonPlan(name, label, action, true));
+        return this;
+    }
+
+    /** an OK button, named "ok", that closes the dialog */
+    public Dialog ok() {
+        return button("ok", "OK");
+    }
+
+    /** a Cancel button, named "cancel": Esc presses it */
+    public Dialog cancel() {
+        return cancel("Cancel", NOTHING);
+    }
+
+    public Dialog cancel(Consumer<Dialog> action) {
+        return cancel("Cancel", action);
+    }
+
+    /** a cancel button with another label, e.g. cancel("No", ..) */
+    public Dialog cancel(String label, Consumer<Dialog> action) {
+        button(CANCEL, label, action);
+        return key(Keys.ESC_KEYSTROKE);
+    }
+
+    /** the button just added is also pressed by key, e.g. key(KeyStroke.caseInsensitive('y')) */
+    public Dialog key(KeyStroke key) {
+        lastPlan("key").key = key;
+        return this;
+    }
+
+    /** the button just added can be pressed only while condition is true - checked after each key in the dialog */
+    public Dialog enabledWhen(BooleanSupplier condition) {
+        lastPlan("enabledWhen").enabledWhen = condition;
+        return this;
+    }
+
+    /** the button just added leaves the dialog open after its action, e.g. a Reset */
+    public Dialog staysOpen() {
+        lastPlan("staysOpen").staysOpen = true;
+        return this;
+    }
+
+    /** runs once the dialog has closed, however it closed */
+    public Dialog onClose(Runnable onClose) {
+        this.onClose = onClose;
+        return this;
+    }
+
+    private ButtonPlan lastPlan(String setting) {
+        if (plans.isEmpty()) {
+            throw new IllegalStateException(setting + "(..) goes after a button(..)");
+        }
+        return plans.get(plans.size() - 1);
+    }
+
+    // ---- while it is open
+
+    /** the button named name; fails if there is none */
+    public Button button(String name) {
+        for (int i = 0; i < plans.size(); i++) {
+            if (plans.get(i).name.equals(name) && i < buttons.size()) {
+                return buttons.get(i);
+            }
+        }
+        throw new IllegalArgumentException("the dialog has no button named " + name + " (it has " + names() + ")");
+    }
+
+    /** shows text in red above the buttons; called from a button's action, it keeps the dialog open */
+    public Dialog showError(String text) {
+        errorRaised = true;
+        if (errorLine == null) {
+            errorLine = new TextComponent(ERROR_COLOR, text);
+            layout.insert(layout.getChildren().size() - 1, Position.ZERO, errorLine);   // just above the buttons
+        } else {
+            errorLine.setTextAndResize(text);
+        }
+        return this;
+    }
+
+    public boolean isOpen() {
+        return panel != null && !closed;
+    }
+
+    /** closes it; nothing happens if it is already closed */
+    public void close() {
+        if (closed || panel == null) {
+            return;
+        }
+        closed = true;
+        parent.remove(panel);
+        panel.asFocusable().setFocus(false, bus);
+        bus.removeEventHandler(modalEvents);
+        bus.raiseEvent(new RequestUpdateCanvasEvent(panel));
+        onClose.run();
+    }
+
+    // ---- showing it
+
+    /**
+     * builds it and shows it over the screen of the app that component is on - its main panel, centred -
+     * with the keys and the mouse its own until it closes. Any component on that screen will do: it only
+     * says which app (for an embedded app, its own panel, not the host's).
+     * <pre>
+     *     Dialog.error("Can't read " + file).ok().show(saveButton);
+     * </pre>
+     * Fails if component is on no app's screen yet.
+     */
+    public Dialog show(Component<?> component) {
+        TUIApp app = TUIApp.of(component);
+        if (app == null) {
+            throw new IllegalStateException("Dialog.show(component): " + HasName.UTIL.getName(component)
+                    + " is on no TUIApp's screen - add it first, or use show(app)");
+        }
+        return show(app);
+    }
+
+    /** builds it and shows it over app's main panel, centred - for app code with no component at hand */
+    public Dialog show(TUIApp app) {
+        return show(app.getEventBus(), app.getMainApplicationPanel());
+    }
+
+    /**
+     * builds it and shows it over parent, centred, with the keys its own until it closes. parent is
+     * normally the app's main panel - show(component) and show(app) find it. Another panel clips the
+     * dialog to itself, may grow to hold it, and lays it out if it is a Vertical/HorizontalPanel.
+     */
+    public Dialog show(EventBus bus, ChildComponentManager<?> parent) {
+        if (panel != null) {
+            throw new IllegalStateException("a Dialog is shown once: build another");
+        }
+        if (plans.isEmpty()) {
+            throw new IllegalStateException("a dialog needs a button to close it - e.g. ok() or cancel()");
+        }
+        this.bus = bus;
+        this.parent = parent;
+        panel = new ModalPanel(color);
+        panel.setBorderColor(iconColor(icon));
+        panel.setBorder(true);
+        if (!title.isEmpty()) {
+            panel.setTitle(iconColor(icon), " " + title + " ");
+        }
+        panel.setFillOnClear(true);
+        panel.setEmptyColor(color);
+        panel.setName("dialog");
+
+        layout = new VerticalPanel(color).setVerticalSpacer(1);
+        layout.add(messageWithIcon());
+        for (Component<?> component : middle) {
+            layout.add(component);
+        }
+        layout.add(buttonRow());
+        panel.add(new Position.Simple(1, 1), layout);
+
+        Position at = parent instanceof Rectangle ? ((Rectangle) parent).centered(panel, Position.ZERO) : Position.ZERO;
+        parent.add(at, panel);
+        parent.setDropShadow(true, panel);
+
+        modalEvents = new ModalEventHandler(bus).stopsMouseOutside(this::onCanvas);
+        modalEvents.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, (te) -> escape()));
+        modalEvents.appendEventHandler(thenRefresh(panel.asEventHandler()));
+        for (TextInput field : textFields()) {
+            field.onEnter((te) -> pressDefault());
+        }
+        refreshEnabled();
+
+        List<TextInput> fields = textFields();
+        bus.raiseEvent(new RequestUpdateCanvasEvent(panel));
+        bus.raiseEvent(new RequestFocusEvent(ToFocusable.UTIL.toFocusable(fields.isEmpty() ? firstEnabledButton() : fields.get(0))));
+        return this;
+    }
+
+    // where the dialog is on the canvas now - null while it isn't on it
+    private Rectangle onCanvas() {
+        Position at = Component.UTIL.getCanvasOffsetFor(panel);
+        return at == null ? null : new Rectangle.Simple(at, new Dimension.Simple(panel.getHeight(), panel.getWidth()));
+    }
+
+    private Component<?> messageWithIcon() {
+        String shown = Dimension.UTIL.stringToDimension(message).getHeight() == 1 ? "\n" + message : message;   // level with the icon's middle
+        HorizontalPanel top = new HorizontalPanel(color).setHorizontalSpacer(2);
+        top.setFillOnClear(true);
+        top.setEmptyColor(color);
+        top.add(iconComponent(icon));
+        TextComponent text = new TextComponent(color, shown);
+        text.setFillOnClear(true);
+        text.setEmptyColor(color);
+        top.add(text);
+        return top;
+    }
+
+    private Component<?> buttonRow() {
+        HorizontalPanel row = new HorizontalPanel(color).setHorizontalSpacer(3);
+        row.setFillOnClear(true);
+        row.setEmptyColor(color);
+        row.setName("dialog.buttons");
+        TextComponent leftPadding = new TextComponent(color, "");
+        row.add(leftPadding);
+        for (ButtonPlan plan : plans) {
+            Button button = new Button(color, plan.label);
+            button.setName(plan.name);
+            button.setBorder(true);
+            if (plan.key != null) {
+                button.setHotKey(plan.key);
+            }
+            button.onChange((te) -> press(plan));
+            buttons.add(button);
+            row.add(button);
+        }
+        int widest = 0;                                    // centred under what is above
+        for (Component<?> component : middle) {
+            widest = Math.max(widest, component.getWidth());
+        }
+        widest = Math.max(widest, messageWidth());
+        int padding = (widest - row.getWidth()) / 2;
+        if (padding > 0) {
+            leftPadding.setTextAndResize(StringUtils.repeat(" ", padding));
+        }
+        return row;
+    }
+
+    private int messageWidth() {
+        return Dimension.UTIL.stringToDimension(message).getWidth() + 7;   // the icon and its gap
+    }
+
+    // a button pressed: its action, then close - unless it reported an error, a form is invalid, or it stays open
+    private void press(ButtonPlan plan) {
+        if (closed) {
+            return;
+        }
+        if (plan.submit && !formsValid()) {
+            return;
+        }
+        errorRaised = false;
+        plan.action.accept(this);
+        if (!errorRaised && !plan.staysOpen) {
+            close();
+        }
+    }
+
+    private boolean formsValid() {
+        boolean valid = true;
+        for (Component<?> component : middle) {
+            if (component instanceof Form) {
+                Form<?> form = (Form<?>) component;
+                form.binder().useEventBusIfNone(bus);
+                valid &= form.validateAll();
+            }
+        }
+        return valid;
+    }
+
+    // Esc: the cancel button, if there is one - its action runs; else just close
+    private void escape() {
+        for (int i = 0; i < plans.size(); i++) {
+            if (CANCEL.equals(plans.get(i).name)) {
+                press(plans.get(i));
+                return;
+            }
+        }
+        close();
+    }
+
+    // Enter in a text field: the first button, if it can be pressed
+    private void pressDefault() {
+        if (!buttons.isEmpty() && buttons.get(0).isEnabled()) {
+            press(plans.get(0));
+        }
+    }
+
+    // the dialog's own handling, then the buttons' enabledWhen checked again - a key may have changed what they test
+    private ConditionalEventHandler thenRefresh(ConditionalEventHandler handler) {
+        return new ConditionalEventHandler() {
+            @Override
+            public EventHandler canHandle(TerminalEvent<?> te) {
+                return handler.canHandle(te) != null ? this : null;
+            }
+
+            @Override
+            public void handle(TerminalEvent<?> te) {
+                handler.handle(te);
+                refreshEnabled();
+            }
+        };
+    }
+
+    private void refreshEnabled() {
+        for (int i = 0; i < plans.size(); i++) {
+            BooleanSupplier condition = plans.get(i).enabledWhen;
+            Button button = buttons.get(i);
+            if (condition != null && condition.getAsBoolean() != button.isEnabled()) {
+                button.setEnabled(condition.getAsBoolean(), bus);
+            }
+        }
+    }
+
+    private Button firstEnabledButton() {
+        for (Button button : buttons) {
+            if (button.isEnabled()) {
+                return button;
+            }
+        }
+        return buttons.get(0);
+    }
+
+    private List<TextInput> textFields() {
+        List<TextInput> fields = new ArrayList<TextInput>();
+        for (Component<?> component : middle) {
+            collectTextFields(component, fields);
+        }
+        return fields;
+    }
+
+    private static void collectTextFields(Component<?> component, List<TextInput> fields) {
+        if (component instanceof TextInput) {
+            fields.add((TextInput) component);
+            return;
+        }
+        for (Component<?> child : new HasChildrenAdapter.Simple<Component<?>>().asHasChildren(component).getChildren()) {
+            collectTextFields(child, fields);
+        }
+    }
+
+    private String names() {
+        List<String> names = new ArrayList<String>();
+        for (ButtonPlan plan : plans) {
+            names.add(plan.name);
+        }
+        return names.toString();
+    }
+
+    // ---- looks
+
+    private static Color dialogColor() {
+        Color color = new Colors.FGBGColors(Colors.Bla, Colors.On_Whi);
+        color.setBoldTransform((c) -> new Colors.FGBGColors(Colors.BIWhi, Colors.On_Bla));
+        color.setInvertTransform((c) -> new Colors.FGBGColors(Colors.BIWhi, Colors.On_Bla));
+        return color;
+    }
+
+    static Color iconColor(Icon icon) {
+        switch (icon) {
+            case QUESTION: return new Colors.FGBGColors(Colors.BIBla, Colors.On_IGre);
+            case INFO:     return new Colors.FGBGColors(Colors.BIBla, Colors.On_IPur);
+            case WARNING:  return new Colors.FGBGColors(Colors.BIBla, Colors.On_Yel);
+            case ERROR:    return new Colors.FGBGColors(Colors.BIWhi, Colors.On_IRed);
+            default:       throw new IllegalArgumentException("no colour for " + icon);
+        }
+    }
+
+    private static Component<?> iconComponent(Icon icon) {
+        char mark = icon == Icon.QUESTION ? '?' : icon == Icon.INFO ? 'i' : icon == Icon.WARNING ? '!' : 'X';
+        Color color = iconColor(icon);
+        BorderedComponent box = new BorderedComponent(color, new TextComponent(color, " " + mark + " "));
+        box.setName("icon-" + mark);
+        return box;
+    }
+}

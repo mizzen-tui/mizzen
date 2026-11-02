@@ -6,8 +6,11 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import mizzen.components.ChildComponentManager;
 import mizzen.components.Component;
+import mizzen.components.TextComponent;
 import mizzen.components.composite.Composite;
+import mizzen.components.modal.Dialog;
 import mizzen.events.ConditionalEventHandler;
 import mizzen.events.EventBus;
 import mizzen.events.EventHandlerContainer;
@@ -230,6 +233,49 @@ public class EmbeddedAppTest extends TestCase {
             fail("expected a failure: " + messagePart);
         } catch (IllegalStateException e) {
             assertTrue(e.getMessage(), e.getMessage().contains(messagePart));
+        }
+    }
+
+    /** of(component): the app whose main panel is first above it - an embedded app's own, inside the host's */
+    public void testOfFindsTheAppAComponentIsOn() {
+        Composite hostPanel = new Composite(new Dimension.Simple(20, 60));
+        hostPanel.add(slot);
+        host.setMainApplicationPanel(hostPanel);
+        TextComponent onTheHost = new TextComponent("host's");
+        hostPanel.add(onTheHost);
+        Embedding embedding = TUIApp.runEmbedded(host, slot, () -> new TUIApp().setDefaultMainApplicationPanel().start());
+        TextComponent onTheExample = new TextComponent("example's");
+        embedding.tuiApp().getMainApplicationPanel().add(onTheExample);
+
+        assertSame(embedding.tuiApp(), TUIApp.of(onTheExample));
+        assertSame(host, TUIApp.of(onTheHost));
+        assertNull("on no screen", TUIApp.of(new TextComponent("nowhere")));
+    }
+
+    /** Dialog.show(component): over the embedded app's own panel, on its own bus - so closing it takes the dialog too */
+    public void testADialogShownFromAComponentBelongsToItsApp() {
+        Embedding embedding = TUIApp.runEmbedded(host, slot, () -> new TUIApp().setDefaultMainApplicationPanel().start());
+        hostBus.idle();
+        TextComponent onTheExample = new TextComponent("example's");
+        ChildComponentManager<?> examplePanel = embedding.tuiApp().getMainApplicationPanel();
+        examplePanel.add(onTheExample);
+        int before = embedding.handlersOnHostBus();
+
+        Dialog dialog = Dialog.info("Saved.").ok().show(onTheExample);
+        assertTrue(dialog.isOpen());
+        assertEquals("its modal handler is the example's", before + 1, embedding.handlersOnHostBus());
+        assertNotNull("it is on the example's panel", examplePanel.findComponentByName("dialog"));
+
+        embedding.close();
+        assertTrue("nothing of it left on the host's bus", hostBus.handlers.isEmpty());
+    }
+
+    public void testShowFromAComponentOnNoScreenFails() {
+        try {
+            Dialog.info("Saved.").ok().show(new TextComponent("nowhere"));
+            fail("on no screen");
+        } catch (IllegalStateException expected) {
+            assertTrue(expected.getMessage(), expected.getMessage().contains("show(app)"));
         }
     }
 }

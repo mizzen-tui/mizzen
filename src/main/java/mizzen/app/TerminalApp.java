@@ -12,7 +12,7 @@ import mizzen.components.CompositeWithFocusManager;
 import mizzen.components.HasName;
 import mizzen.components.WindowFrame;
 import mizzen.components.composite.Composite;
-import mizzen.components.modal.MessageBox;
+import mizzen.components.modal.Dialog;
 import mizzen.components.scroll.FindScrollToViewHandler;
 import mizzen.controlcodes.ControlCode;
 import mizzen.controlcodes.color.Color;
@@ -399,10 +399,10 @@ final class TerminalApp implements TUIAppInterface {
         EventHandler raiseTerminateEvent = (e)-> e.getEventBus().raiseEvent(new TerminalEvent<Void>(e.getEventBus(), TYPE.TERMINATE, null));
         if (this.confirmApplicationExitMessage != null) {
             // confirm application exit
-            MessageBox.showYesNoDialog(te.getEventBus(), 
-                                       this.mainApplicationPanel, 
-                                       this.confirmApplicationExitMessage, 
-                                       raiseTerminateEvent);
+            Dialog.question(this.confirmApplicationExitMessage).title(" Yes / No ")
+                  .button("yes", "Yes", (d) -> raiseTerminateEvent.handle(te)).key(KeyStroke.caseInsensitive('y'))
+                  .cancel("No", (d) -> { }).key(KeyStroke.caseInsensitive('n'))      // Esc says No too
+                  .show(te.getEventBus(), this.mainApplicationPanel);
         } else {
             // kill the app by signaling to interested handlers that we are going down
             raiseTerminateEvent.handle(te);

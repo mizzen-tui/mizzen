@@ -1,5 +1,8 @@
 package mizzen.app;
 
+import java.lang.ref.WeakReference;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -54,6 +57,50 @@ public class TUIApp implements TUIAppInterface {
 
     // set only while runEmbedded runs its launch code, on that thread: a TUIApp made then is embedded
     private static final ThreadLocal<Embedding> EMBEDDING = new ThreadLocal<>();
+
+    // every TUIApp made, weakly: of(component) finds a component's app through its main panel. Weak: an app
+    // nothing else holds goes, and so does its entry
+    private static final List<WeakReference<TUIApp>> APPS = new CopyOnWriteArrayList<WeakReference<TUIApp>>();
+    {
+        APPS.add(new WeakReference<TUIApp>(this));
+    }
+
+    private ChildComponentManager<?> mainPanel;          // as set: of(component) compares against it
+    private boolean defaultMainPanel;                    // set by setDefaultMainApplicationPanel: asked for when of(..) needs it
+                                                         // (each call here reaches the implementation once - TUIAppDelegationTest)
+
+    /**
+     * The TUIApp whose screen component is on: the first main panel found going up from it - for an
+     * embedded app, its own panel, inside the host's. null: none (not added yet, or added to a panel that
+     * is no app's).
+     * <pre>
+     *     TUIApp app = TUIApp.of(saveButton);
+     * </pre>
+     * Used by Dialog.show(component), so a dialog needs no bus or panel from the code that opens it.
+     */
+    public static TUIApp of(Component<?> component) {
+        Object at = component;
+        while (at != null) {
+            for (WeakReference<TUIApp> ref : APPS) {
+                TUIApp app = ref.get();
+                if (app == null) {
+                    APPS.remove(ref);
+                } else if (app.mainPanel() == at) {
+                    return app;
+                }
+            }
+            at = at instanceof Component ? ((Component<?>) at).getParentContainer() : null;
+        }
+        return null;
+    }
+
+    // its main panel for of(..): as set, or the default one asked for once; null: none set yet
+    private ChildComponentManager<?> mainPanel() {
+        if (mainPanel == null && defaultMainPanel) {
+            mainPanel = app.getMainApplicationPanel();
+        }
+        return mainPanel;
+    }
 
     /** a TUIApp forwarding to the given implementation (tests) */
     TUIApp(TUIAppInterface app) {
@@ -171,12 +218,16 @@ public class TUIApp implements TUIAppInterface {
     @Override
     public TUIApp setMainApplicationPanel(ChildComponentManager<?> mainApplicationPanel) {
         app.setMainApplicationPanel(mainApplicationPanel);
+        this.mainPanel = mainApplicationPanel;
+        this.defaultMainPanel = false;
         return this;
     }
 
     @Override
     public TUIApp setDefaultMainApplicationPanel() {
         app.setDefaultMainApplicationPanel();
+        this.mainPanel = null;
+        this.defaultMainPanel = true;
         return this;
     }
 
