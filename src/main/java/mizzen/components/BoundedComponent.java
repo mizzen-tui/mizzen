@@ -2,8 +2,10 @@ package mizzen.components;
 
 import java.util.Collection;
 import java.util.TreeSet;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
 import mizzen.controlcodes.color.Colors;
 import mizzen.events.EventBus;
@@ -28,15 +30,19 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
                                                                                  FillOnClearPolicy.Provider, 
                                                                                  CanResize, 
                                                                                  EmptyAttributes<T> ,
-                                                                                 HasName<T> {
+                                                                                 HasName<T>, Theme.HasOwnTheme {
 
     protected IScreenLineSegmentsBuffer segments   = createSegmentsBuffer();
 
     private boolean                     hasDrawn   = false;
-    private Color                       color      = Colors.DEFAULT_COLOR;
+    private Color                     color;                // its own: from the constructor or setColor; null - its theme's (getColor)
+    private Color                     colorWhileEnabled;    // its own colour, kept while setEnabled(false) shows the disabled one
+    private boolean                   showingDisabled;
+    private Theme                     ownTheme;             // set on this component: for it and what it holds (setTheme)
+    private Theme                     theme;                // the theme that applies here, as last looked up (getTheme)
+    private int                       themeVersion;
+    private Function<Theme, Color>    colorFromTheme;       // setThemeColor: which theme colour, when it has none of its own
     private BlockChars                  blockChars = BlockChars.DEFAULT;
-
-    private Color                     originalColor = Colors.DEFAULT_COLOR;  // used only in setEnabled() scenarios
     private boolean enabled = true;
 
     private FillOnClearPolicy<T>    fillPolicy = new FillOnClearPolicy.AbstractImpl<T>(this) {
@@ -153,7 +159,7 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
     // making final to ensure behavior
     final protected void drawIfNeeded() {
         try {
-            if (isDirty()) {
+            if (isDirty() || (!busyDrawingFLAG && themeChanged())) {
                 if (busyDrawingFLAG) {
                     throw new IllegalStateException("Already in the draw function.  Recursive call!");
                 }
@@ -189,9 +195,9 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
 
     @Override
     public T setColor(Color drawingcolor) {
-        this.color = drawingcolor == null ? Colors.FGBGColors.NO_COLOR_SPECIFIED : drawingcolor;
-        if (this.enabled) {
-            originalColor = this.color;
+        this.color = ownColor(drawingcolor);
+        if (!showingDisabled) {
+            colorWhileEnabled = this.color;
         }
         this.markAsDirty();
         return (T) this;
@@ -206,8 +212,88 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
         return (T) this;
     }
 
+    /** the colour it draws with: its own if one was given (constructor, setColor), else its theme's */
     public Color getColor() {
+        if (color != null) {
+            return color;
+        }
+        return colorFromTheme != null ? colorFromTheme.apply(getTheme()) : themeColor();
+    }
+
+    /**
+     * the colour it was given (constructor, setColor); null: none - it takes its theme's. Hand this, not
+     * getColor(), to the parts a component makes: getColor() is the theme's colour resolved now, and given to
+     * a part it would become the part's own - fixed, deaf to later theme changes (and looked up before the
+     * component has a parent, so possibly the wrong theme).
+     */
+    public Color getOwnColor() {
         return color;
+    }
+
+    /**
+     * which of its theme's colours it draws with, whichever theme applies - it has no colour of its own then
+     * <pre>
+     *     status.setThemeColor(Theme::errorColor);
+     * </pre>
+     */
+    @SuppressWarnings("unchecked")
+    public T setThemeColor(Function<Theme, Color> colorFromTheme) {
+        this.colorFromTheme = colorFromTheme;
+        this.color = null;
+        if (!showingDisabled) {
+            colorWhileEnabled = null;
+        }
+        markAsDirty();
+        return (T) this;
+    }
+
+    // a colour given: Colors.DEFAULT_COLOR (also NO_COLOR_SPECIFIED) or null means none - the theme's
+    private static Color ownColor(Color given) {
+        return given == Colors.DEFAULT_COLOR ? null : given;
+    }
+
+    /** its colour when it was given none: text, unless a component is some other kind of thing (overrides this) */
+    protected Color themeColor() {
+        return getTheme().textColor();
+    }
+
+    // it has looked its theme up, and a theme was set (or it moved) since: it draws again, its parts too (they check the same
+    // as they draw) - no walk over the tree, so parts a component keeps to itself are covered. Looked up again here, so
+    // one with its own colours doesn't stay "changed".
+    private boolean themeChanged() {
+        if (theme == null || themeVersion == Theme.version()) {
+            return false;
+        }
+        getTheme();
+        return true;
+    }
+
+    /** the theme that applies here: the nearest one set on this component or an ancestor, else the app's, else the default */
+    public Theme getTheme() {
+        if (theme == null || themeVersion != Theme.version()) {   // looked up once; again only after a theme change or a move
+            theme = Theme.lookUp(this);
+            themeVersion = Theme.version();
+        }
+        return theme;
+    }
+
+    /** the theme for this component and what it holds; null: none - an ancestor's, the app's or the default applies */
+    @SuppressWarnings("unchecked")
+    public T setTheme(Theme theme) {
+        this.ownTheme = theme;
+        Theme.changed();
+        Theme.repaint(this);
+        return (T) this;
+    }
+
+    @Override
+    public Theme getOwnTheme() {
+        return ownTheme;
+    }
+
+    @Override
+    public void forgetTheme() {
+        theme = null;
     }
 
     public FillOnClearPolicy getFillOnClearPolicy() {
@@ -253,6 +339,9 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
             throw new IllegalStateException("Parent("+HasName.UTIL.getName(this.getParentContainer())+") container already set to another component");
         }
 
+        if (theme != null && parentContainer != this.parentContainer) {
+            Theme.forget(this);                            // its ancestors change: it, and what it holds, look again
+        }
         this.parentContainer = parentContainer;
 
         Component.UTIL.markParentDirtyIfChildDirty(this);
@@ -330,20 +419,17 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
         // because setColor looks at this flag
         this.enabled = enabled;
 
-        // Preserve the original color when disabling
+        // disabled: shown in the theme's disabled colour; enabled again: its own colour back (none, if it had none)
         if (!enabled) {
-            if (originalColor == null) {
-                originalColor = getColor();
+            if (!showingDisabled) {
+                showingDisabled = true;
+                Color own = colorWhileEnabled;
+                this.setColor(getTheme().disabledColor());
+                colorWhileEnabled = own;
             }
-            // Apply the disabled color using the new asDisabled() method
-            //this.setColor(getColor().asDisabled());
-            this.setColor(Colors.IBla);
-        } else {
-            // Restore the original color when re-enabling
-            if (originalColor != null) {
-                this.setColor(originalColor);
-                originalColor = null;
-            }
+        } else if (showingDisabled) {
+            showingDisabled = false;
+            this.setColor(colorWhileEnabled);
         }
 
         this.markAsDirty();

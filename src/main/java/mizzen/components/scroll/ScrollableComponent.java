@@ -67,6 +67,11 @@ public class ScrollableComponent  extends ComponentWithFocus<Composite, Scrollab
         this(color, Dimension.ZERO, componentBeingViewed);
     }
 
+    /** in its theme's colours */
+    public ScrollableComponent(Dimension d, Component<?> componentBeingViewed) {
+        this(null, d, componentBeingViewed);
+    }
+
     public ScrollableComponent(Color color, Dimension d, Component<?> componentBeingViewed)  {
         super(color, new Composite());
         

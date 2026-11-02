@@ -102,15 +102,15 @@ public class TreeView<N> extends BoundedComponent<TreeView<N>>
     private final List<Row> rows = new ArrayList<Row>();
     private final List<Line> lines = new ArrayList<Line>();   // what each visible row draws - text, not a component per row
 
-    /** a row as drawn: its text (colour codes allowed), its colour, its size - drawn straight as segments */
+    /** a row as drawn: its text (colour codes allowed), whether it is the selected one, its size - drawn straight as segments */
     private static class Line {
         final String text;
-        final Color color;
+        final boolean selected;                          // its colour is worked out as it is drawn: a theme can change meanwhile
         final Dimension size;
 
-        Line(String text, Color color) {
+        Line(String text, boolean selected) {
             this.text = text;
-            this.color = color;
+            this.selected = selected;
             this.size = Dimension.UTIL.stringToDimension(text);
         }
     }
@@ -458,8 +458,7 @@ public class TreeView<N> extends BoundedComponent<TreeView<N>>
             Row row = rows.get(i);
             boolean isSelected = row.node == selected;
             String text = isSelected ? selectedText(row) : row.text;
-            Color color = isSelected ? selectedRowColor() : getColor();
-            Line line = new Line(text, color);
+            Line line = new Line(text, isSelected);
             lines.add(line);
             width = Math.max(width, line.size.getWidth());
         }
@@ -595,7 +594,8 @@ public class TreeView<N> extends BoundedComponent<TreeView<N>>
     public void draw(Color color, IScreenLineSegmentsBuffer segments) {
         for (int i = 0; i < lines.size(); i++) {
             Line line = lines.get(i);
-            segments.merge(ScreenLineSegment.UTIL.segmentsOf(line.text, line.color, new Rectangle.Simple(i, 0, line.size)));
+            segments.merge(ScreenLineSegment.UTIL.segmentsOf(line.text, line.selected ? selectedRowColor() : color,
+                                                             new Rectangle.Simple(i, 0, line.size)));
         }
     }
 

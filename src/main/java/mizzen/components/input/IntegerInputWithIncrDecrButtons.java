@@ -8,9 +8,14 @@ public class IntegerInputWithIncrDecrButtons extends TextInputWithIncrDecrButton
         super(color, labelText, downButtonText, upButtonText);
     }
 
+    /** in its theme's colours */
+    public IntegerInputWithIncrDecrButtons(String labelText, String downButtonText, String upButtonText) {
+        this(null, labelText, downButtonText, upButtonText);
+    }
+
     @Override
     protected TextInputForType<Integer> buildTextInputForType() {
-        return new TextInputInteger(this.getColor(),3);
+        return new TextInputInteger(this.getOwnColor(), 3);       // none given: it stays themed too
     }
 
     @Override

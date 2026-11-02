@@ -36,6 +36,7 @@ public class TextComponent extends BoundedComponent<TextComponent> {
     private CleanString cleanText;  // will be null if we have color control codes.
     private boolean hasColorCodes = false;
     private TreeSet<ScreenLineSegment> parsedSegments;
+    private Color parsedIn;                              // the colour parsedSegments were made in
 
     public TextComponent(Color color, String text) {
         super(color, calcDimentionOfText(text));
@@ -112,7 +113,8 @@ public class TextComponent extends BoundedComponent<TextComponent> {
 
         TreeSet<ScreenLineSegment> textSegments;
 
-        if (parsedSegments == null) {
+        if (parsedSegments == null || color != parsedIn) {   // its colour can change without setColor: its theme's, or disabled
+            parsedIn = color;
             textSegments = ScreenLineSegment.UTIL.segmentsOf(this.getText(), this.hasColorCodes, color, this);
             // keeping a copy around to avoid having to reparse the text on
             // subsequent draw requests.  parsedSegments null'd if text is changed which causes parseSegments to be rebuilt.

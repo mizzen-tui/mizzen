@@ -24,6 +24,11 @@ public class HorizontalPanel extends Composite {
         super(color);
     }
 
+    /** in its theme's colours, horizontalSpacer columns between its children */
+    public HorizontalPanel(int horizontalSpacer) {
+        this(null, horizontalSpacer);
+    }
+
     public HorizontalPanel(Color color, int horizontalSpacer) {
         super(color);
         this.setHorizontalSpacer(horizontalSpacer);

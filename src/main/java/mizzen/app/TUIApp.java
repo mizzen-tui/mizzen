@@ -10,6 +10,7 @@ import java.util.function.Function;
 import mizzen.components.ChildComponentManager;
 import mizzen.components.Component;
 import mizzen.components.composite.Composite;
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
 import mizzen.core.Canvas;
 import mizzen.core.TerminalScreen;
@@ -92,6 +93,27 @@ public class TUIApp implements TUIAppInterface {
             at = at instanceof Component ? ((Component<?>) at).getParentContainer() : null;
         }
         return null;
+    }
+
+    private Theme theme;                                 // null: the default (Theme.getDefault)
+    private boolean emptyColorsGiven;                    // setEmptyColors was called: the app's own, whatever the theme
+
+    /** the theme for this app's components that have none from an ancestor; null: the default */
+    public TUIApp setTheme(Theme theme) {
+        this.theme = theme;
+        Theme.changed();
+        if (!emptyColorsGiven && !(app instanceof EmbeddedApp)) {   // its screen's empty parts: the theme's background
+            app.setEmptyColors(theme == null ? null : theme.backgroundColor());   // (an embedded app's screen is its host's)
+        }
+        if (mainPanel() instanceof Component) {
+            Theme.repaint((Component<?>) mainPanel());     // a running app redraws in it
+        }
+        return this;
+    }
+
+    /** the theme set for this app; null: none - the default applies */
+    public Theme getTheme() {
+        return theme;
     }
 
     // its main panel for of(..): as set, or the default one asked for once; null: none set yet
@@ -342,6 +364,7 @@ public class TUIApp implements TUIAppInterface {
 
     @Override
     public TUIApp setEmptyColors(Color emptyColor) {
+        emptyColorsGiven = emptyColor != null;
         app.setEmptyColors(emptyColor);
         return this;
     }

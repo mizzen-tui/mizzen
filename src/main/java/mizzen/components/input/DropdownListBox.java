@@ -67,6 +67,7 @@ public class DropdownListBox<T> extends AbstractComponentWrappper<VerticalPanel>
         getWrappedComponent().setName("vertical-Panel-ddlb");
 
         this.button = new Button(color, "");
+        this.button.setThemeColor((theme) -> getColor());            // the button shows the dropdown's colour: an input's, unless given one
         getWrappedComponent().add(this.button);
 
         
@@ -105,6 +106,7 @@ public class DropdownListBox<T> extends AbstractComponentWrappper<VerticalPanel>
                 });
             }
         };
+        this.listBox.setThemeColor((theme) -> getColor());          // the open list too
 
         this.listBox.setBorder(true);
 
@@ -665,4 +667,9 @@ public class DropdownListBox<T> extends AbstractComponentWrappper<VerticalPanel>
         return sb.toString();
     }
 
+    /** given no colour: the theme's input colour - it is an input */
+    @Override
+    protected Color themeColor() {
+        return getTheme().inputColor();
+    }
 }

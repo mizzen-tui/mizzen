@@ -20,7 +20,7 @@ import mizzen.components.input.tree.DefaultTreeNode;
 import mizzen.components.input.tree.TreeView;
 import mizzen.components.plot.PlotArea;
 import mizzen.components.scroll.ScrollableComponent;
-import mizzen.controlcodes.color.Colors;
+import mizzen.components.theme.Theme;
 import mizzen.examples.Parts;
 import mizzen.examples.form.FormTry.Order;
 import mizzen.examples.form.FormTry.Size;
@@ -35,6 +35,8 @@ import mizzen.geom.Dimension;
  *     3. bind: binder.bindAll(panel) finds the named inputs, wherever they sit
  *     4. rules and where errors show: the binder's (here: one status line)
  *     5. what follows what: the binder's field onChange
+ *
+ * No colour is given anywhere: every component takes its theme's, and the Theme list switches it.
  *
  *     ./runDBG.sh form.FormTryByHand
  * </pre>
@@ -52,14 +54,14 @@ public class FormTryByHand {
                     TextInput customer = text("customer");
                     TextInput pin = text("pin");
                     pin.setAsPassword();
-                    IntegerInputWithIncrDecrButtons quantity = new IntegerInputWithIncrDecrButtons(Colors.IYel, "", "-", "+");
+                    IntegerInputWithIncrDecrButtons quantity = new IntegerInputWithIncrDecrButtons("", "-", "+");
                     quantity.setName("quantity");
-                    CheckBoxInput giftWrap = new CheckBoxInput(Colors.IYel);
+                    CheckBoxInput giftWrap = new CheckBoxInput();
                     giftWrap.setName("giftWrap");
                     RadioGroup<Size> size = RadioGroup.horizontal(choices(java.util.Arrays.asList(Size.values())));
                     size.setName("size");
                     DropdownListBox<String> country = dropdown("country", FormTry.COUNTRIES);
-                    TextComponent regionLabel = new TextComponent(Colors.BWhi, "Province ");
+                    TextComponent regionLabel = new TextComponent("Province ");
                     DropdownListBox<String> region = dropdown("region", FormTry.of(FormTry.REGIONS, order.country));
                     DropdownListBox<String> city = dropdown("city", FormTry.of(FormTry.CITIES, order.region));
                     TextInput street = text("street");
@@ -68,36 +70,36 @@ public class FormTryByHand {
                     catalogue.expandAll();
                     catalogue.setName("part");
                     PlotArea picture = FormTry.preview(order);
-                    MultiLineTextInput notes = new MultiLineTextInput(Colors.IYel);
+                    MultiLineTextInput notes = new MultiLineTextInput();
                     notes.setName("notes");
-                    ScrollableComponent notesBox = new ScrollableComponent(Colors.IYel, new Dimension.Simple(5, 26), notes);
+                    ScrollableComponent notesBox = new ScrollableComponent(new Dimension.Simple(5, 26), notes);
                     notesBox.removeFooter();
-                    TextComponent status = new TextComponent(Colors.BIRed, " ");
-                    TextComponent result = new TextComponent(Colors.IGre, " Laid out by hand, bound by traversal");
-                    Button orderButton = new Button(Colors.BWhi, "Order");
-                    Button showButton = new Button(Colors.BWhi, "Show the object");
+                    TextComponent status = new TextComponent(" ").setThemeColor(Theme::errorColor);
+                    TextComponent result = new TextComponent(" Laid out by hand, bound by traversal").setThemeColor(Theme::successColor);
+                    Button orderButton = new Button("Order");
+                    Button showButton = new Button("Show the object");
 
                     // 2. the layout, by hand - labels padded to line up
-                    VerticalPanel ship = new VerticalPanel(Colors.BWhi);
+                    VerticalPanel ship = new VerticalPanel();
                     ship.setBorder(true);
                     ship.setTitle(" Ship to ");
                     ship.add(row("Country  ", country));
-                    ship.add(new HorizontalPanel(Colors.BWhi, 1).add(regionLabel).add(region));
+                    ship.add(new HorizontalPanel(1).add(regionLabel).add(region));
                     ship.add(row("City     ", city));
-                    ship.add(new HorizontalPanel(Colors.BWhi, 2).add(row("Street", street)).add(row("Postal", postal)));
+                    ship.add(new HorizontalPanel(2).add(row("Street", street)).add(row("Postal", postal)));
 
                     VerticalPanel panel = new VerticalPanel();
-                    panel.add(new TextComponent(Colors.BYel, "Order (by hand)"));
+                    panel.add(new TextComponent("Order (by hand)").setThemeColor(Theme::headingColor));
                     panel.add(row("Customer ", customer));
                     panel.add(row("PIN      ", pin));
                     panel.add(row("Quantity ", quantity));
                     panel.add(row("Gift wrap", giftWrap));
                     panel.add(row("Size     ", size));
                     panel.add(ship);
-                    panel.add(new HorizontalPanel(Colors.BWhi, 2).add(row("Part", catalogue)).add(picture));
+                    panel.add(new HorizontalPanel(2).add(row("Part", catalogue)).add(picture));
                     panel.add(row("Notes    ", notesBox));
                     panel.add(status);
-                    panel.add(new HorizontalPanel(Colors.BWhi, 2).add(orderButton).add(showButton));
+                    panel.add(new HorizontalPanel(2).add(orderButton).add(showButton));
                     panel.add(result);
 
                     // 3. binding: the traversal finds the named inputs, wherever they sit
@@ -128,25 +130,32 @@ public class FormTryByHand {
                     showButton.onChange((te) -> result.setTextAndResize(" Now: " + order));
 
                     tApp.getMainApplicationPanel().add(1, 1, panel);
+
+                    // not part of the form: the theme, from the ones the library offers - no colour above is given,
+                    // so everything follows it
+                    DropdownListBox<Theme> theme = new DropdownListBox<Theme>(choices(Theme.standard()));
+                    theme.setValue(Theme.getDefault());
+                    theme.onChange((te) -> tApp.setTheme(theme.getValue()));
+                    tApp.getMainApplicationPanel().add(1, 60, new HorizontalPanel(1).addText("Theme").add(theme));
                 })
                 .start();
     }
 
     private static TextInput text(String field) {
-        TextInput input = new TextInput(Colors.IYel, 24);
+        TextInput input = new TextInput(24);
         input.setName(field);
         input.setEmptyChar('_');
         return input;
     }
 
     private static DropdownListBox<String> dropdown(String field, List<String> options) {
-        DropdownListBox<String> dropdown = new DropdownListBox<String>(Colors.IYel, choices(options));
+        DropdownListBox<String> dropdown = new DropdownListBox<String>(choices(options));
         dropdown.setName(field);
         return dropdown;
     }
 
     private static HorizontalPanel row(String label, mizzen.components.Component<?> input) {
-        return new HorizontalPanel(Colors.BWhi, 1).addText(label).add(input);
+        return new HorizontalPanel(1).addText(label).add(input);
     }
 
     @SuppressWarnings("unchecked")

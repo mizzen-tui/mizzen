@@ -653,12 +653,15 @@ public class Composite extends AbstractComponent<Composite>
         return border != null;
     }
 
+    // made again as the size changes: it keeps the colours given to it, never resolved ones (those would be fixed in the
+    // new border, deaf to a later theme); given none, it follows this panel
     protected void rebuildBorder(Rectangle borderSize) {
-        Color tColor = border != null ? border.getTitleColor() : this.getColor();
-        Color sbColor = border != null ? border.getColor() : this.getColor();
-        Color bColor = border != null ? border.getBorderColor() : this.getColor();
+        Color tColor = border != null ? border.getOwnTitleColor() : null;
+        Color sbColor = border != null ? border.getOwnColor() : this.getOwnColor();
+        Color bColor = border != null ? border.getOwnBorderColor() : this.getOwnColor();
         String title = border != null ? border.getTitle() : null;
         this.border = new SimpleBorder(sbColor, borderSize);
+        this.border.setThemeColor((theme) -> getColor());
         this.border.setBorderColor(bColor);
         this.border.setParentContainer(this);
         this.border.setTitle(tColor, title);
@@ -1513,4 +1516,9 @@ public class Composite extends AbstractComponent<Composite>
 
     }
 
+    /** given no colour: the theme's background colour - a panel: what it leaves empty is the background */
+    @Override
+    protected Color themeColor() {
+        return getTheme().backgroundColor();
+    }
 }

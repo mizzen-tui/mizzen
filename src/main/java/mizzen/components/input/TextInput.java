@@ -160,9 +160,10 @@ public class TextInput extends BoundedComponent<TextInput>
         this.caret = new Position.Simple(0, 0);
         this.setFillOnClear(true);
         this.maxTextWidth = this.getWidth();
-        this.textRenderer = makeChildComponent(() -> new TextComponent(TextInput.this.getColor(),
+        this.textRenderer = makeChildComponent(() -> new TextComponent(TextInput.this.getOwnColor(),   // own, not resolved: see getOwnColor
                                                                        TextInput.this.getRectangle(), 
                                                                        TextInput.this.buffer.toString()));
+        this.textRenderer.setThemeColor((theme) -> TextInput.this.getColor());   // given none: the input's colour, not text's
     }
 
     @Override
@@ -668,5 +669,9 @@ public class TextInput extends BoundedComponent<TextInput>
                 + getRightMostCol() + " width=" + getWidth() + ", height=" + getHeight() + "]";
     }
 
-
+    /** given no colour: the theme's input colour - an input */
+    @Override
+    protected Color themeColor() {
+        return getTheme().inputColor();
+    }
 }

@@ -125,7 +125,8 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
     }
 
     protected void init() {
-        this.textRenderer = new TextComponent(this.getColor(), this.getRectangle(), buildRenderText());
+        this.textRenderer = new TextComponent(this.getOwnColor(), this.getRectangle(), buildRenderText());   // own, not resolved: see getOwnColor
+        this.textRenderer.setThemeColor((theme) -> CheckBoxInput.this.getColor());   // given none: the check box's colour
         this.textRenderer.setParentContainer(this);
     }
     
@@ -174,4 +175,9 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
         return Collections.singleton(this.textRenderer);
     }
 
+    /** given no colour: the theme's input colour - an input */
+    @Override
+    protected Color themeColor() {
+        return getTheme().inputColor();
+    }
 }

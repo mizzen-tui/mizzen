@@ -48,6 +48,7 @@ public class Button extends BoundedComponent<Button> implements FormInput<Boolea
     String buttonText;
     Composite container;  // <-- having a composite for something as simple as a button seems a bit heavy
     TextComponent renderedText;
+    private Color textBuiltIn;                          // the colour renderedText's text was built in
     String leftSelectedBracket = "[";
     String rightSelectedBracket = "]";
     Boolean pressed = false;
@@ -71,6 +72,8 @@ public class Button extends BoundedComponent<Button> implements FormInput<Boolea
         this.buttonText = buttonText;
         this.renderedText = new TextComponent(color, "");
         this.container = new Composite(color);
+        this.renderedText.setThemeColor((theme) -> getColor());      // parts in the button's colour: its own, its theme's button colour, or disabled
+        this.container.setThemeColor((theme) -> getColor());
         this.container.add(renderedText);
         this.container.setParentContainer(this);
         this.setButtonTextAndResize(buttonText);
@@ -401,6 +404,11 @@ public class Button extends BoundedComponent<Button> implements FormInput<Boolea
 
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer mySegments) {
+        Color now = this.renderedText.getColor();
+        if (now != textBuiltIn) {                       // its text carries colour codes (getTextForRendering): rebuilt in today's
+            textBuiltIn = now;                          // colour - its theme's may have changed. Same text, same size
+            this.renderedText.setText(getTextForRendering(hasFocus()));
+        }
         if (this.getPostion_TopLeft().isSameLocation(Position.ZERO)) {
             // fast
            mySegments.getSegments().clear();
@@ -464,5 +472,11 @@ public class Button extends BoundedComponent<Button> implements FormInput<Boolea
     @Override
     public EventHandlerContainer removeEventHandler(ConditionalEventHandler eventHandler) {
         return getchainedHandler().removeEventHandler(eventHandler);
+    }
+
+    /** given no colour: the theme's button colour - a button */
+    @Override
+    protected Color themeColor() {
+        return getTheme().buttonColor();
     }
 }

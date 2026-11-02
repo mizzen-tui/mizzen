@@ -1027,5 +1027,9 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
         
     }
 
-
+    /** given no colour: the theme's input colour - an input */
+    @Override
+    protected Color themeColor() {
+        return getTheme().inputColor();
+    }
 }

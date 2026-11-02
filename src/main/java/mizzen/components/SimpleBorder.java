@@ -48,6 +48,7 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>
         super(color, rect);
         this.border = new RectangleComponent(color, rect);
         this.border.setParentContainer(this);
+        this.border.setThemeColor((theme) -> getColor());          // the line, given no colour: the border's
         setFillOnClear(false);
     }
 
@@ -55,6 +56,7 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>
         super(color, position, d);
         this.border = new RectangleComponent(color, position, d);
         this.border.setParentContainer(this);
+        this.border.setThemeColor((theme) -> getColor());          // the line, given no colour: the border's
         setFillOnClear(false);
     }
 
@@ -62,6 +64,7 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>
         super(color, d);
         this.border = new RectangleComponent(color, Position.ZERO, d);
         this.border.setParentContainer(this);
+        this.border.setThemeColor((theme) -> getColor());          // the line, given no colour: the border's
         setFillOnClear(false);
     }
 
@@ -138,7 +141,8 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>
         }
         if ((this.getTitle() != null || titleComponent != null) && !(oneRow && footerComponent != null)) {
             if (titleComponent == null) {
-                titleComponent = makeChildComponent(() -> new TextComponent(getTitleColor(), getTitle()));
+                titleComponent = makeChildComponent(() -> new TextComponent((Color) null, getTitle())
+                                                               .setThemeColor((theme) -> getTitleColor()));   // follows: no colour baked in
                 if (titlePosition == null) {
                     titlePosition = PositionRelativeFactory.fromAlign(this.titleAlign, this, titleComponent, 1);
                 }
@@ -206,17 +210,17 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>
         return title;
     }
 
+    /** the title's colour as drawn: its own (on the border's background, if it has none), else the border's */
     public Color getTitleColor() {
-        Color tColor = titleColor != null ? titleColor : getColor();
+        Color tColor = titleColor != null ? titleColor.mergeWith(getColor()) : getColor();
         if (hilited) {
             tColor = tColor.bold();
         }
         return tColor;
     }
 
+    /** titleColor: its own colour; null: the border's - worked out as it is drawn (getTitleColor), so it follows a theme */
     public SimpleBorder setTitle(Color titleColor, String title, Align titleAlign) {
-        titleColor = titleColor != null ? titleColor : getColor();
-        titleColor = titleColor.mergeWith(getColor());
         this.titleColor = titleColor;
 
         this.title = title;
@@ -238,15 +242,7 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>
     }
     
     public SimpleBorder setTitle(Color titleColor, String title) {
-        // Color tColor = titleColor != null ? titleColor : getColor();
-        if (titleColor != null) {
-            if ( ! Color.hasBackgroundColor(titleColor)) {
-                titleColor = titleColor.mergeWith(getColor());
-            }
-        } else {
-            titleColor = this.titleColor !=null? this.titleColor : getColor();
-        }
-        setTitle(titleColor, title, titleAlign == null ? Align.LEFT : titleAlign);
+        setTitle(titleColor != null ? titleColor : this.titleColor, title, titleAlign == null ? Align.LEFT : titleAlign);
         return this;
     }
 
@@ -303,11 +299,7 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>
     }
 
     public SimpleBorder setFooter(String footerText, Align titleAlign) {
-        Color footerColor = titleColor;
-        if (footerColor == null) {
-            footerColor = getColor();
-        }
-        setFooter( new TextComponent(footerColor, footerText), titleAlign);
+        setFooter( new TextComponent((Color) null, footerText).setThemeColor((theme) -> getTitleColor()), titleAlign);   // as the title
         return this;
     }
 
@@ -324,6 +316,15 @@ public class SimpleBorder extends BoundedComponent<SimpleBorder>
 
     public Color getBorderColor() {
         return border.getColor();
+    }
+
+    /** the colours given to it (none: they follow) - for a border made again, so it keeps what was given, not what was resolved */
+    public Color getOwnTitleColor() {
+        return titleColor;
+    }
+
+    public Color getOwnBorderColor() {
+        return border.getOwnColor();
     }
 
     @Override

@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.TreeSet;
+import java.util.function.Supplier;
 
 import mizzen.components.Component;
 import mizzen.controlcodes.color.Color;
@@ -49,7 +50,15 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
     private int              sc_current_id    = 0;
 
     private char             emptyChar        = '░';
-    private Color            emptyColor       = Colors.DEFAULT_COLOR;
+    private Color            emptyColor       = null;      // null: the default's (setDefaultEmptyColor) - a theme's background
+
+    // what a canvas with no empty colour of its own shows where nothing is drawn; Theme.setDefault sets it to its background
+    private static volatile Supplier<Color> defaultEmptyColor = () -> Colors.DEFAULT_COLOR;
+
+    /** where nothing is drawn, on a canvas given no empty colour: e.g. the default theme's background */
+    public static void setDefaultEmptyColor(Supplier<Color> emptyColor) {
+        defaultEmptyColor = emptyColor;
+    }
     private static final int EMPTY_SEGMENT_ID = -67233;
 
     public void setEmptyChar(char emptyChar) {
@@ -379,7 +388,7 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
     }
 
     private ScreenLineSegment blankSegment(int row, int col, int len) {
-        return ScreenLineSegment.UTIL.blankScreenObject(emptyColor, emptyChar, row, col, EMPTY_SEGMENT_ID, len);
+        return ScreenLineSegment.UTIL.blankScreenObject(getEmptyColor(), emptyChar, row, col, EMPTY_SEGMENT_ID, len);
     }
 
     private void outputBlankLines(int lowRow, int highRow) {
@@ -447,8 +456,9 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
         return this;
     }
 
+    /** where nothing is drawn: its own empty colour, else the default's */
     public Color getEmptyColor() {
-        return this.emptyColor;
+        return this.emptyColor != null ? this.emptyColor : defaultEmptyColor.get();
     }
 
     public char getEmptyChar() {
