@@ -265,6 +265,7 @@ public class LineChart extends AbstractComponentWrappper<PlotArea> implements Ha
         this.xLabelsBelow = xLabelsBelow;
         if (!xLabelsBelow) {
             plot().xAxisAt(Double.NaN);
+            plot().xLabelAtCrossing(false);
         }
         return refit();
     }
@@ -317,6 +318,7 @@ public class LineChart extends AbstractComponentWrappper<PlotArea> implements Ha
         if (xLabelsBelow && rows > 2) {
             below = bottom - (top - bottom) / (rows - 1);          // a character row's worth under the axis, for the labels
             plot().xAxisAt(bottom);
+            plot().xLabelAtCrossing(true);                         // that row is the labels' own: the first point's label fits there too
         }
         plot().showing(x0 - mx, x1 + mx, below, top);
     }

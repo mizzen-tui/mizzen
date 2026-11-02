@@ -39,6 +39,22 @@ public class LineChartReportSettingsTest extends TestCase {
         assertTrue("nothing but labels: " + labels, labels.chars().noneMatch((c) -> c >= 0x2800 && c <= 0x28FF));
     }
 
+    /** data from x 0: the axes cross on the first point, and in their own row its label fits */
+    public void testLabelsBelowLabelTheFirstPoint() {
+        String[] below = page(chart().xLabelsBelow(true).axisOverhang(false).xLabel((x) -> "d" + (int) x));
+        assertTrue(below[below.length - 1], below[below.length - 1].contains("d0"));
+        String[] numbers = page(chart().xLabelsBelow(true).axisOverhang(false));
+        assertTrue(numbers[numbers.length - 1], numbers[numbers.length - 1].matches(".*\\b0\\b.*"));
+    }
+
+    /** labels inside the plot: the y axis labels that corner, as before - also after turning below off again */
+    public void testLabelsInsideLeaveTheCorner() {
+        assertFalse(String.join("\n", page(chart().xLabel((x) -> "d" + (int) x))).contains("d0"));
+        LineChart off = chart().xLabelsBelow(true);
+        page(off);
+        assertFalse(String.join("\n", page(off.xLabelsBelow(false).xLabel((x) -> "d" + (int) x))).contains("d0"));
+    }
+
     public void testNoLabels() {
         String[] lines = page(chart().xLabels(false));
         assertFalse(lines[8], lines[8].matches(".*\\b5\\b.*"));

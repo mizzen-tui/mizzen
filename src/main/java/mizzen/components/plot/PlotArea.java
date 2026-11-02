@@ -90,6 +90,7 @@ public class PlotArea extends AbstractComponentWrappper<Component<?>> implements
     private Consumer<Click> onClick = null;
     private boolean xTickLabels = true;
     private boolean axisOverhang = true;
+    private boolean xLabelAtCrossing = false;
     private DoubleFunction<String> xTickLabel = null;
     private double yAxisX = Double.NaN;                        // NaN: automatic (x 0, else the left edge)
     private double xAxisY = Double.NaN;                        // NaN: automatic (y 0, else the bottom)
@@ -266,6 +267,16 @@ public class PlotArea extends AbstractComponentWrappper<Component<?>> implements
     /** the text of an x tick, from its x (null: no label there) - e.g. a date; null: the number, the default. Ticks stay at round x's */
     public PlotArea xTickLabel(DoubleFunction<String> xTickLabel) {
         this.xTickLabel = xTickLabel;
+        redraw();
+        return this;
+    }
+
+    /**
+     * true: an x tick where the axes cross gets its label too. For x labels in a row of their own, where
+     * the first point's label would otherwise go missing. false (the default): the y axis labels that corner.
+     */
+    public PlotArea xLabelAtCrossing(boolean xLabelAtCrossing) {
+        this.xLabelAtCrossing = xLabelAtCrossing;
         redraw();
         return this;
     }
@@ -601,7 +612,7 @@ public class PlotArea extends AbstractComponentWrappper<Component<?>> implements
         int axisCellRow = cellRow(toGrid(0, axisY).getRow());
         int xLabelRow = axisCellRow + 1 < cellsHigh ? axisCellRow + 1 : axisCellRow - 1;
         for (double x = Math.ceil(xMin / xStep) * xStep; xTickLabels && x <= xMax + xStep / 1e6; x += xStep) {
-            if (Math.abs(x - axisX) < xStep / 1e6) {
+            if (!xLabelAtCrossing && Math.abs(x - axisX) < xStep / 1e6) {
                 continue;                                         // the corner: the y axis labels it
             }
             if (!axisOverhang && x < axisX) {
