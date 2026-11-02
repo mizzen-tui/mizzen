@@ -2,6 +2,8 @@ package mizzen.components.input;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
@@ -26,6 +28,7 @@ import mizzen.events.focus.RequestFocusEvent;
 import mizzen.events.focus.RequestReleaseFocusEvent;
 import mizzen.events.keyboard.KeyEvent;
 import mizzen.events.keyboard.KeyInputEventHandler;
+import mizzen.events.keyboard.KeyStroke;
 import mizzen.events.keyboard.Keys;
 import mizzen.geom.Align;
 import mizzen.geom.Dimension;
@@ -367,12 +370,19 @@ public class TextInput extends BoundedComponent<TextInput>
             // Compensating for a bug in defaultFocusManager/TUIApp 
             requestFocus(te);
         }
-        getEventHandler().handle(te);
+        if (getEventHandler().canHandle(te) != null) {
+            getEventHandler().handle(te);
+        }
+        for (KeyListener listener : keyListeners) {
+            if (listener.hears(te)) {
+                te.getEventBus().asynch(listener.handler);        // after this key: a listener may close what holds the field
+            }
+        }
     }
 
     @Override
     public EventHandler canHandle(TerminalEvent<?> te) {
-        if (getEventHandler().canHandle(te) == null) {
+        if (getEventHandler().canHandle(te) == null && !hearsKey(te)) {
             return null;
         }
         return this;
@@ -568,6 +578,64 @@ public class TextInput extends BoundedComponent<TextInput>
 
         return changeListeners.add(getChainedEventHandler(), consumeChange);
 
+    }
+
+    // TODO: KeyListener - check whether it is reusable elsewhere (other inputs, components)
+    /** a key and who hears it */
+    private static final class KeyListener {
+        final KeyStroke key;
+        final EventHandler handler;
+
+        KeyListener(KeyStroke key, EventHandler handler) {
+            this.key = key;
+            this.handler = handler;
+        }
+
+        boolean hears(TerminalEvent<?> te) {
+            return te instanceof KeyEvent && ((KeyEvent) te).isKeyStroke(key);
+        }
+    }
+
+    private final List<KeyListener> keyListeners = new CopyOnWriteArrayList<KeyListener>();
+
+    private boolean hearsKey(TerminalEvent<?> te) {
+        for (KeyListener listener : keyListeners) {
+            if (listener.hears(te)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * listener hears key pressed in the field, once the field has done its own work with it - Enter still
+     * raises onChange, a letter is still typed. A key the field has no use for (F5) is then the field's: it
+     * no longer goes on to the parents, or to a button's hot key. Keys handled before the field never
+     * arrive: in a dialog, Esc closes it.
+     * <pre>
+     *     name.onKeyStroke(Keys.F5_KEYSTROKE, (te) -&gt; lookUp(name.getText()));
+     * </pre>
+     */
+    public Registration onKeyStroke(KeyStroke key, EventHandler listener) {
+        KeyListener added = new KeyListener(key, listener);
+        keyListeners.add(added);
+        return () -> keyListeners.remove(added);
+    }
+
+    /** see onKeyStroke(KeyStroke, EventHandler): e.g. onKeyStroke('?', (te) -&gt; showHelp()) */
+    public Registration onKeyStroke(char key, EventHandler listener) {
+        return onKeyStroke(new KeyStroke(key), listener);
+    }
+
+    /**
+     * listener hears Enter pressed in the field (see onKeyStroke) - onChange hears every key, so it can't
+     * tell Enter apart. For a field that means "go": in a dialog, Enter in it as its main button.
+     * <pre>
+     *     word.onEnter((te) -&gt; runIfTyped(word.getText(), te));
+     * </pre>
+     */
+    public Registration onEnter(EventHandler listener) {
+        return onKeyStroke(Keys.ENTER_KEYSTROKE, listener);
     }
 
     @Override

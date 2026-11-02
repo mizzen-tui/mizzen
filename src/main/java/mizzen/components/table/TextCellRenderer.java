@@ -32,6 +32,7 @@ public class TextCellRenderer implements CellRenderer {
     private Function<Object, Color> color = null;          // null: the text component's own
     private BooleanSupplier wraps = () -> true;
     private BooleanSupplier mayBeCut = () -> true;
+    private boolean ellipsis = false;
 
     // draws the text: one, reused - the table copies what it draws
     private final TextComponent drawn = new TextComponent(new CleanString.Simple(""));
@@ -63,6 +64,18 @@ public class TextCellRenderer implements CellRenderer {
 
     public TextCellRenderer mayBeCut(boolean mayBeCut) {
         this.mayBeCut = () -> mayBeCut;
+        return this;
+    }
+
+    /**
+     * true: a line that is cut ends in an ellipsis, so it doesn't read as whole. Default false: cut with no
+     * mark. With wraps(false), a name stays on one line: "ig-linode-2026-11-02T03…"
+     * <pre>
+     *     .column("Backup", (b) -&gt; b.name).renderer(new TextCellRenderer().wraps(false).ellipsis(true))
+     * </pre>
+     */
+    public TextCellRenderer ellipsis(boolean ellipsis) {
+        this.ellipsis = ellipsis;
         return this;
     }
 
@@ -106,6 +119,9 @@ public class TextCellRenderer implements CellRenderer {
         }
         String[] lines = shown.split("\n");
         for (int i = 0; i < lines.length; i++) {
+            if (ellipsis && lines[i].length() > width && mayBeCut.getAsBoolean()) {
+                lines[i] = lines[i].substring(0, width - 1) + "…";
+            }
             lines[i] = Align.UTIL.formatToAlignedData(lines[i], width, align, width, mayBeCut.getAsBoolean());
         }
         String aligned = String.join("\n", lines);

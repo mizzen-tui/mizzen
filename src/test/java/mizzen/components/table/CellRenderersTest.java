@@ -75,6 +75,17 @@ public class CellRenderersTest extends TestCase {
         assertKeepsToItsRectangle("cut, not wrapped", new TextCellRenderer().wraps(false), "Ben is a pilot in Lyon");
     }
 
+    /** a cut line ends in an ellipsis, on one line; whole text has none, nor does a cut by default */
+    public void testEllipsis() {
+        TextCellRenderer name = new TextCellRenderer().wraps(false).ellipsis(true);
+        assertEquals("ig-linode…", lineOf(name.render("ig-linode-2026-11-02.tar.gz", new Dimension.Simple(1, 10), Align.LEFT)));
+        assertEquals(1, name.heightAt("ig-linode-2026-11-02.tar.gz", 10));
+        assertEquals("short     ", lineOf(name.render("short", new Dimension.Simple(1, 10), Align.LEFT)));
+        assertEquals("by default, no mark", "ig-linode-", lineOf(new TextCellRenderer().wraps(false)
+                .render("ig-linode-2026-11-02.tar.gz", new Dimension.Simple(1, 10), Align.LEFT)));
+        assertKeepsToItsRectangle("cut with an ellipsis", name, "ig-linode-2026-11-02.tar.gz");
+    }
+
     /** text's widths and height, as a table measures them */
     public void testTextMeasures() {
         TextCellRenderer text = new TextCellRenderer();
