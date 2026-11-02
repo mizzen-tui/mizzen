@@ -48,6 +48,11 @@ public interface TableColumn {
 
     Align getAlign();
 
+    /** how its heading is aligned; by default centred */
+    default Align getHeaderAlign() {
+        return Align.CENTER;
+    }
+
     Integer getColumnDroppable();
     Boolean isWordWrappable();
     Boolean isTruncationAllowed();
@@ -188,6 +193,11 @@ public interface TableColumn {
         @Override
         public CellRenderer getHeaderRenderer() {
             return delegate.getHeaderRenderer();
+        }
+
+        @Override
+        public Align getHeaderAlign() {
+            return delegate.getHeaderAlign();
         }
     }
 }

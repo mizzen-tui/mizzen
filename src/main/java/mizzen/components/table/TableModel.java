@@ -1,5 +1,7 @@
 package mizzen.components.table;
 
+import mizzen.geom.Align;
+
 /**
  * What a TableComponent shows: rows of type T, each a number of columns. T is what a row is - your
  * own objects (ObjectTableModel&lt;Sale&gt;), an Object[] (DefaultTableModel: columns only known at run
@@ -25,6 +27,16 @@ public interface TableModel<T> {
 
     /** how column columnIndex's cells are drawn and measured (CellRenderer); null: as text (the default) */
     public default CellRenderer getColumnRenderer(int columnIndex) {
+        return null;
+    }
+
+    /** how column columnIndex's cells are aligned; null: from its data - numbers right, text left (the default) */
+    public default Align getColumnAlign(int columnIndex) {
+        return null;
+    }
+
+    /** how column columnIndex's heading is aligned; null: centred (the default) */
+    public default Align getColumnHeaderAlign(int columnIndex) {
         return null;
     }
 
@@ -71,6 +83,16 @@ public interface TableModel<T> {
         @Override
         public Integer getColumnDroppable(int columnIndex) {
             return delegate.getColumnDroppable(columnIndex);
+        }
+
+        @Override
+        public Align getColumnAlign(int columnIndex) {
+            return delegate.getColumnAlign(columnIndex);
+        }
+
+        @Override
+        public Align getColumnHeaderAlign(int columnIndex) {
+            return delegate.getColumnHeaderAlign(columnIndex);
         }
 
         @Override

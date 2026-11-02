@@ -139,7 +139,7 @@ class TableModelWidthData extends TableModel.Delegate<Object> {
     IScreenLineSegmentsBuffer header(int c, int width, int height) {
         Drawn drawn = headers.get(c);
         if (drawn == null || drawn.width != width || drawn.height != height) {
-            drawn = new Drawn(width, height, copy(getTableColumnAt(c).getHeaderRenderer().render(headerOf(c), new Dimension.Simple(height, width), Align.CENTER)));
+            drawn = new Drawn(width, height, copy(getTableColumnAt(c).getHeaderRenderer().render(headerOf(c), new Dimension.Simple(height, width), getTableColumnAt(c).getHeaderAlign())));
             headers.put(c, drawn);
         }
         return drawn.segments;

@@ -14,6 +14,7 @@ public class TableColumnImpl implements TableColumn {
     protected Integer             columnDroppable     = null;
     protected Boolean             wordWrap            = null;
     protected Boolean             truncationAllowed   = null;
+    private Align                 headerAlign         = Align.CENTER;
     private CellRenderer          renderer;
     private CellRenderer          headerRenderer;
 
@@ -42,6 +43,7 @@ public class TableColumnImpl implements TableColumn {
              base.isTruncationAllowed());
         this.setColumnRenderer( base.getRenderer() );
         this.setPreferredHeight( base.getPreferredHeight() );
+        this.setHeaderAlign( base.getHeaderAlign() );
     }
 
     public String getHeaderText() {
@@ -71,6 +73,15 @@ public class TableColumnImpl implements TableColumn {
     public Align getAlign() {
         return align;
     }
+    @Override
+    public Align getHeaderAlign() {
+        return headerAlign;
+    }
+
+    public void setHeaderAlign(Align headerAlign) {
+        this.headerAlign = headerAlign;
+    }
+
     public void setAlign(Align align) {
         this.align = align;
     }
@@ -181,6 +192,12 @@ public class TableColumnImpl implements TableColumn {
                                    wordWrap, 
                                    truncationAllowed);
         
+        if (tableModel.getColumnAlign(colIdx) != null) {
+            tc.setAlign(tableModel.getColumnAlign(colIdx));
+        }
+        if (tableModel.getColumnHeaderAlign(colIdx) != null) {
+            tc.setHeaderAlign(tableModel.getColumnHeaderAlign(colIdx));
+        }
         CellRenderer drawnBy = renderer != null ? renderer : tableModel.getColumnRenderer(colIdx);
         if (drawnBy != null) {
             tc.setColumnRenderer(drawnBy);

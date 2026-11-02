@@ -6,6 +6,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.DoubleFunction;
 
 import mizzen.components.AbstractComponentWrappper;
 import mizzen.components.Component;
@@ -88,6 +89,8 @@ public class PlotArea extends AbstractComponentWrappper<Component<?>> implements
     private Consumer<Pen> onDraw = (pen) -> { };
     private Consumer<Click> onClick = null;
     private boolean xTickLabels = true;
+    private boolean axisOverhang = true;
+    private DoubleFunction<String> xTickLabel = null;
     private double yAxisX = Double.NaN;                        // NaN: automatic (x 0, else the left edge)
     private double xAxisY = Double.NaN;                        // NaN: automatic (y 0, else the bottom)
 
@@ -245,6 +248,24 @@ public class PlotArea extends AbstractComponentWrappper<Component<?>> implements
     /** where the x axis runs (a y in your numbers, kept within the window); NaN: automatic - at y 0, else along the bottom */
     public PlotArea xAxisAt(double y) {
         this.xAxisY = y;
+        redraw();
+        return this;
+    }
+
+    /**
+     * false: each axis starts where the axes cross, with nothing of it on the far side. For data on one side
+     * of the crossing, where that part only runs through the window's margin - under the y axis's labels.
+     * true (the default): each axis crosses the whole window, as a plot through zero wants.
+     */
+    public PlotArea axisOverhang(boolean axisOverhang) {
+        this.axisOverhang = axisOverhang;
+        redraw();
+        return this;
+    }
+
+    /** the text of an x tick, from its x (null: no label there) - e.g. a date; null: the number, the default. Ticks stay at round x's */
+    public PlotArea xTickLabel(DoubleFunction<String> xTickLabel) {
+        this.xTickLabel = xTickLabel;
         redraw();
         return this;
     }
@@ -547,17 +568,27 @@ public class PlotArea extends AbstractComponentWrappper<Component<?>> implements
     private void drawAxes(Pen pen) {
         double axisY = axisY(), axisX = axisX();
         pen.color(axesColor);
-        pen.line(xMin, axisY, xMax, axisY);
-        pen.line(axisX, yMin, axisX, yMax);
+        pen.line(axisOverhang ? xMin : axisX, axisY, xMax, axisY);
+        pen.line(axisX, axisOverhang ? yMin : axisY, axisX, yMax);
         double xStep = xStep(), yStep = yStep();
         for (double x = Math.ceil(xMin / xStep) * xStep; x <= xMax + xStep / 1e6; x += xStep) {
+            if (!axisOverhang && x < axisX) {
+                continue;
+            }
             Position at = toGrid(x, axisY);
             pen.dot(at.getCol(), at.getRow() - 1);
-            pen.dot(at.getCol(), at.getRow() + 1);
+            if (axisOverhang) {
+                pen.dot(at.getCol(), at.getRow() + 1);             // under the axis: the far side
+            }
         }
         for (double y = Math.ceil(yMin / yStep) * yStep; y <= yMax + yStep / 1e6; y += yStep) {
+            if (!axisOverhang && y < axisY) {
+                continue;
+            }
             Position at = toGrid(axisX, y);
-            pen.dot(at.getCol() - 1, at.getRow());
+            if (axisOverhang) {
+                pen.dot(at.getCol() - 1, at.getRow());             // left of the axis: the far side
+            }
             pen.dot(at.getCol() + 1, at.getRow());
         }
     }
@@ -573,10 +604,19 @@ public class PlotArea extends AbstractComponentWrappper<Component<?>> implements
             if (Math.abs(x - axisX) < xStep / 1e6) {
                 continue;                                         // the corner: the y axis labels it
             }
-            textInCell(xLabelRow, cellCol(toGrid(x, axisY).getCol()), label(x, xStep), axesColor);
+            if (!axisOverhang && x < axisX) {
+                continue;
+            }
+            String text = xTickLabel != null ? xTickLabel.apply(x) : label(x, xStep);
+            if (text != null) {
+                textInCell(xLabelRow, cellCol(toGrid(x, axisY).getCol()), text, axesColor);
+            }
         }
         int yLabelCol = cellCol(toGrid(axisX, 0).getCol()) + 1;
         for (double y = Math.ceil(yMin / yStep) * yStep; y <= yMax + yStep / 1e6; y += yStep) {
+            if (!axisOverhang && y < axisY) {
+                continue;
+            }
             textInCell(cellRow(toGrid(axisX, y).getRow()), yLabelCol, label(y, yStep), axesColor);
         }
     }

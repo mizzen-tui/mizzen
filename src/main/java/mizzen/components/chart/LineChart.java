@@ -3,6 +3,7 @@ package mizzen.components.chart;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.function.DoubleFunction;
 import java.util.Map;
 
 import mizzen.components.AbstractComponentWrappper;
@@ -43,6 +44,15 @@ import mizzen.geom.position.Vec2;
  *     chart.onChange((te) -&gt; status.setText(chart.getValue().series() + ": " + chart.getValue().y()));
  * </pre>
  * Points are kept in the order added; for a time series add them in x order.
+ * <p/>
+ * In a printed report (TextSnapshot) nothing can be clicked, and these tidy the page:
+ * <pre>
+ *     chart.legendCheckBoxes(false)        // names only; or legend(false), for a single series
+ *          .xLabelsBelow(true)             // a row of their own, so a line along the bottom clears them
+ *          .axisOverhang(false)            // the axes start where they cross
+ *          .yRange(0.0, null)              // from zero, the top fitted: size in proportion
+ *          .xLabel((x) -&gt; dates[(int) x]);
+ * </pre>
  */
 public class LineChart extends AbstractComponentWrappper<PlotArea> implements HasValue<LineChart.Point>, KeyboardHandler {
 
@@ -102,6 +112,12 @@ public class LineChart extends AbstractComponentWrappper<PlotArea> implements Ha
     private final OnChangeListeners<Point> changeListeners = new OnChangeListeners<Point>(this);   // onChange: any number of listeners
 
     /** sized by what holds it (a splitter's rules, a resize): it starts at no size */
+    private boolean legend = true;
+    private boolean legendCheckBoxes = true;
+    private boolean xLabelsBelow = false;
+    private Double yRangeMin = null;                               // null: fitted to the data
+    private Double yRangeMax = null;
+
     public LineChart(Color color) {
         this(color, Dimension.ZERO);
     }
@@ -232,6 +248,79 @@ public class LineChart extends AbstractComponentWrappper<PlotArea> implements Ha
         refit();
     }
 
+    /** false: no legend at all - e.g. a single series. Default on. A hidden series can then only be shown again by code */
+    public LineChart legend(boolean legend) {
+        this.legend = legend;
+        return refit();
+    }
+
+    /** false: legend lines without their check boxes - the names only, for a page nothing can click. Default on */
+    public LineChart legendCheckBoxes(boolean legendCheckBoxes) {
+        this.legendCheckBoxes = legendCheckBoxes;
+        return refit();
+    }
+
+    /** true: the x axis along the data's bottom and its labels in a row of their own under it, so a line along the bottom clears them; it costs that row. Default off */
+    public LineChart xLabelsBelow(boolean xLabelsBelow) {
+        this.xLabelsBelow = xLabelsBelow;
+        if (!xLabelsBelow) {
+            plot().xAxisAt(Double.NaN);
+        }
+        return refit();
+    }
+
+    /** false: no labels on the x axis. Default on */
+    public LineChart xLabels(boolean xLabels) {
+        plot().xTickLabels(xLabels);
+        return this;
+    }
+
+    /** the text of an x tick, from its x (null: no label there) - e.g. a date. Ticks stay at round x's: yours to map. null: the number, the default */
+    public LineChart xLabel(DoubleFunction<String> xLabel) {
+        plot().xTickLabel(xLabel);
+        return this;
+    }
+
+    /** see PlotArea.axisOverhang. false: the axes start where they cross. Default true */
+    public LineChart axisOverhang(boolean axisOverhang) {
+        plot().axisOverhang(axisOverhang);
+        return this;
+    }
+
+    /** the y window: from min to max; a null end fits the data, as both do by default - yRange(0.0, null) keeps size in proportion */
+    public LineChart yRange(Double min, Double max) {
+        if (min != null && max != null && min >= max) {
+            throw new IllegalArgumentException("yRange: min " + min + " must be below max " + max);
+        }
+        this.yRangeMin = min;
+        this.yRangeMax = max;
+        return refit();
+    }
+
+    // the window when a setting changes it from a plain fit: the same margins, what was asked for instead of them
+    private void showWithSettings(List<Vec2<?>> all) {
+        double x0 = Double.MAX_VALUE, x1 = -Double.MAX_VALUE, y0 = Double.MAX_VALUE, y1 = -Double.MAX_VALUE;
+        for (Vec2<?> p : all) {
+            x0 = Math.min(x0, p.getX());
+            x1 = Math.max(x1, p.getX());
+            y0 = Math.min(y0, p.getY());
+            y1 = Math.max(y1, p.getY());
+        }
+        double mx = Math.max((x1 - x0) / 20, 1e-9), my = Math.max((y1 - y0) / 20, 1e-9);
+        double bottom = yRangeMin != null ? yRangeMin : y0 - my;
+        double top = yRangeMax != null ? yRangeMax : y1 + my;
+        if (bottom >= top) {
+            top = bottom + 1;                                      // all the data is outside the range asked for
+        }
+        double below = bottom;
+        int rows = getHeight();
+        if (xLabelsBelow && rows > 2) {
+            below = bottom - (top - bottom) / (rows - 1);          // a character row's worth under the axis, for the labels
+            plot().xAxisAt(bottom);
+        }
+        plot().showing(x0 - mx, x1 + mx, below, top);
+    }
+
     private LineChart refit() {
         if (plot() == null) {
             return this;                                           // still being built
@@ -247,6 +336,8 @@ public class LineChart extends AbstractComponentWrappper<PlotArea> implements Ha
         }
         if (all.isEmpty()) {
             plot().redraw();
+        } else if (xLabelsBelow || yRangeMin != null || yRangeMax != null) {
+            showWithSettings(all);
         } else {
             plot().fitTo(all);
         }
@@ -414,17 +505,23 @@ public class LineChart extends AbstractComponentWrappper<PlotArea> implements Ha
      * colour (click: make it the current series, marked ">"); a hidden one is grey and unticked.
      */
     private void legend(Pen pen) {
+        if (!legend) {
+            return;
+        }
         double w = plot().characterWidth(), h = plot().characterHeight();
+        int box = legendCheckBoxes ? 4 : 0;
         int widest = 0;
         for (Series s : series.values()) {
-            widest = Math.max(widest, 4 + nameText(s).length());
+            widest = Math.max(widest, box + nameText(s).length());
         }
         double x = plot().getXMax() - (widest + 1) * w;
         double y = plot().getYMax() - h / 2;
         for (Series s : series.values()) {
             Color color = s.visible ? s.color : Colors.BBla;
-            pen.color(color).text(x, y, s.visible ? "[x]" : "[ ]", s.legendBox);
-            pen.color(color).text(x + 4 * w, y, nameText(s), s.legendLine);
+            if (legendCheckBoxes) {
+                pen.color(color).text(x, y, s.visible ? "[x]" : "[ ]", s.legendBox);
+            }
+            pen.color(color).text(x + box * w, y, nameText(s), s.legendLine);
             y -= h;
         }
     }

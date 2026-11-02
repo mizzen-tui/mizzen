@@ -90,7 +90,7 @@ public class TextSnapshotTest extends TestCase {
 
     public void testATableWorksOutWhatItLeavesOut() {
         String[] natural = TextSnapshot.of(SnapshotReportDemo.table()).split("\n");
-        assertEquals("top, heading, its line, 3 rows with a line between each, bottom", 9, natural.length);
+        assertEquals("top, heading, its line, 3 rows, bottom", 7, natural.length);
         assertTrue(natural[3], TextSnapshot.of(SnapshotReportDemo.table()).contains("West"));
         String[] narrow = TextSnapshot.of(SnapshotReportDemo.table(), 16).split("\n");
         assertEquals(16, narrow[0].length());

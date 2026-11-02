@@ -25,6 +25,7 @@ import mizzen.controlcodes.color.Colors;
 import mizzen.core.TextSnapshot;
 import mizzen.components.plot.shape.catalog.Ring;
 import mizzen.geom.CanResize;
+import mizzen.geom.Align;
 import mizzen.geom.Dimension;
 import mizzen.util.VeryBasicArgsHelper;
 
@@ -130,6 +131,7 @@ public class SnapshotReportDemo {
             new Section("table", 8, 40, SnapshotReportDemo::table),
             new Section("braille shapes", 12, 48, SnapshotReportDemo::shapes),
             new Section("line chart", 18, 80, SnapshotReportDemo::lineChart),
+            new Section("line chart for a report", 18, 80, SnapshotReportDemo::reportChart),
             new Section("bar chart", 12, 60, SnapshotReportDemo::barChart),
             new Section("donut chart", 12, 60, SnapshotReportDemo::donut),
             new Section("sparkline", 1, 20, SnapshotReportDemo::sparkline),
@@ -147,7 +149,11 @@ public class SnapshotReportDemo {
 
     public static TableComponent<Sale> table() {
         TableComponent<Sale> table = new TableComponent<Sale>(Colors.Yel,
-                new ObjectTableModel<Sale>().column("Region", (s) -> s.region).column("Sold", (s) -> s.sold).setRows(SALES));
+                new ObjectTableModel<Sale>()
+                        .column("Region", (s) -> s.region).headerAlign(Align.LEFT)
+                        .column("Sold", (s) -> s.sold).headerAlign(Align.RIGHT)
+                        .setRows(SALES));
+        table.setLinesStyle(TableComponent.TableLinesStyle.HEADER_ALL_AND_BORDER);   // setSpacedRows does nothing in the default, ALL
         table.setSpacedRows(false);
         return table;
     }
@@ -179,6 +185,12 @@ public class SnapshotReportDemo {
         //panel.add(new TextComponent(Colors.BWhi, "Braille" + new String(new char[wide - 5]).replace('\0', ' ') + "ASCII"));
         panel.add(both);
         return panel;
+    }
+
+    /** a chart for the page: nothing to click, labels clear of the line, and the scale from zero */
+    public static LineChart reportChart() {
+        return lineChart().legend(false).xLabelsBelow(true).axisOverhang(false).yRange(0.0, null)
+                .xLabel((x) -> "W" + (int) x);
     }
 
     public static LineChart lineChart() {

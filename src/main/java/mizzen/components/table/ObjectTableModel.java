@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 
+import mizzen.geom.Align;
+
 /**
  * A table of objects: each row is one object, each column a name and how to get its value from the
  * object - no converting the objects to Object[] rows by hand.
@@ -28,6 +30,8 @@ public class ObjectTableModel<T> implements TableModel<T> {
     private final List<Function<? super T, ?>> columnValues = new ArrayList<Function<? super T, ?>>();
     private final List<Integer> columnDroppable = new ArrayList<Integer>();          // per column; null: never dropped
     private final List<CellRenderer> columnRenderers = new ArrayList<CellRenderer>();  // per column; null: text
+    private final List<Align> columnAligns = new ArrayList<Align>();                 // per column; null: from its data
+    private final List<Align> columnHeaderAligns = new ArrayList<Align>();           // per column; null: centred
     private List<T> rows = Collections.emptyList();
 
     /** a column: its heading, and its value for a row's object (e.g. Device::getName) */
@@ -36,6 +40,8 @@ public class ObjectTableModel<T> implements TableModel<T> {
         columnValues.add(value);
         columnDroppable.add(null);
         columnRenderers.add(null);
+        columnAligns.add(null);
+        columnHeaderAligns.add(null);
         return this;
     }
 
@@ -77,6 +83,34 @@ public class ObjectTableModel<T> implements TableModel<T> {
     @Override
     public CellRenderer getColumnRenderer(int columnIndex) {
         return columnRenderers.get(columnIndex);
+    }
+
+    /** how the cells of the column just added are aligned; by default from its data: numbers right, text left */
+    public ObjectTableModel<T> align(Align align) {
+        if (columnAligns.isEmpty()) {
+            throw new IllegalStateException("align(..) goes after a column(..)");
+        }
+        columnAligns.set(columnAligns.size() - 1, align);
+        return this;
+    }
+
+    /** how the heading of the column just added is aligned; by default centred */
+    public ObjectTableModel<T> headerAlign(Align align) {
+        if (columnHeaderAligns.isEmpty()) {
+            throw new IllegalStateException("headerAlign(..) goes after a column(..)");
+        }
+        columnHeaderAligns.set(columnHeaderAligns.size() - 1, align);
+        return this;
+    }
+
+    @Override
+    public Align getColumnAlign(int columnIndex) {
+        return columnAligns.get(columnIndex);
+    }
+
+    @Override
+    public Align getColumnHeaderAlign(int columnIndex) {
+        return columnHeaderAligns.get(columnIndex);
     }
 
     /** the objects to show, one per row, in this order (the list is used as is, not copied) */

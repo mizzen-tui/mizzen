@@ -493,7 +493,12 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
 
     /**
      * true (the default): a blank line under each row - easier to read; false: rows one under the
-     * other, twice as many on show. With lines between rows (ALL) there is always the line.
+     * other, twice as many on show. It does nothing in the style with lines between rows (ALL, the
+     * default), which always has the line: for rows one under the other, also choose another style.
+     * <pre>
+     *     table.setLinesStyle(TableLinesStyle.HEADER_ALL_AND_BORDER);
+     *     table.setSpacedRows(false);
+     * </pre>
      */
     public TableComponent<T> setSpacedRows(boolean spacedRows) {
         this.spacedRows = spacedRows;
