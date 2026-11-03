@@ -3,6 +3,8 @@ package mizzen.components.markdown;
 import java.util.ArrayList;
 import java.util.List;
 
+import mizzen.geom.Align;
+
 /**
  * Markdown once it is read: a list of blocks, each with runs of styled text. Nothing here knows about
  * width or the screen - MarkdownParser makes it, MarkdownView lays it out.
@@ -39,6 +41,8 @@ public final class MarkdownDocument {
         public List<Run> runs = new ArrayList<Run>();                          // HEADING, PARAGRAPH, LIST_ITEM, QUOTE
         public final List<String> codeLines = new ArrayList<String>();        // CODE
         public final List<List<List<Run>>> tableRows = new ArrayList<List<List<Run>>>();   // TABLE: rows of cells, the heading row first
+        public final List<Align> tableAlign = new ArrayList<Align>();         // TABLE: each column's, from the --- row (---: right)
+        public String alert = "";                                              // QUOTE: a GitHub alert's kind - "TIP" for > [!TIP]
 
         Block(BlockKind kind) {
             this.kind = kind;

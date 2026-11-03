@@ -18,7 +18,6 @@ import mizzen.components.composite.VerticalPanel;
 import mizzen.components.frameset.HorizontalSplitter;
 import mizzen.components.frameset.VerticalSplitter;
 import mizzen.components.input.Button;
-import mizzen.components.input.DisplayableValue;
 import mizzen.components.input.DropdownListBox;
 import mizzen.components.input.RadioGroup;
 import mizzen.components.input.tree.DefaultTreeNode;
@@ -152,7 +151,8 @@ public class EmbeddedAppTest {
                             example("Fractals", FractalsViewer.class)),
                     group("Putting it together",
                             example("Parts shop", PartsShopDemo.class),
-                            example("Markdown view", ReadMe.class)));
+                            example("Markdown view", ReadMe.class),
+                            example("Markdown report", MarkdownReport.class)));
 
             TreeView<DefaultTreeNode<Demo>> tree = new TreeView<DefaultTreeNode<Demo>>(examples.asModel());
             tree.expandAll();
@@ -160,9 +160,7 @@ public class EmbeddedAppTest {
             treePane.setTitle(" Examples ");
             Button learnButton = new Button("Learn", true);   // a toggle: pressed, the learning panel shows
             // the theme: the desktop's - an example that gives no colours takes it too (its app has none of its own)
-            DropdownListBox<Theme> theme = new DropdownListBox<Theme>(themes()).skippedByTab(true);   // focus starts in the tree, not here
-            theme.setValue(Theme.getDefault());
-            theme.onChange((te) -> host.setTheme(theme.getValue()));
+            DropdownListBox<Theme> theme = ThemeList.of(host::setTheme).skippedByTab(true);   // focus starts in the tree, not here
             VerticalPanel left = new VerticalPanel();
             left.add(new HorizontalPanel(1).addText("Theme").add(theme));   // at the top: its list opens down, over the tree
             left.add(treePane);
@@ -681,13 +679,4 @@ public class EmbeddedAppTest {
     }
 
     // the themes that come with the library, for a list
-    @SuppressWarnings("unchecked")
-    private static DisplayableValue<Theme>[] themes() {
-        List<Theme> themes = Theme.standard();
-        DisplayableValue<Theme>[] choices = new DisplayableValue[themes.size()];
-        for (int i = 0; i < choices.length; i++) {
-            choices[i] = new DisplayableValue.SimpleDisplayValue<Theme>(themes.get(i).name(), themes.get(i));
-        }
-        return choices;
-    }
 }

@@ -9,6 +9,7 @@ import mizzen.components.markdown.MarkdownDocument.Block;
 import mizzen.components.markdown.MarkdownDocument.BlockKind;
 import mizzen.components.markdown.MarkdownDocument.Run;
 import mizzen.components.markdown.MarkdownDocument.RunStyle;
+import mizzen.geom.Align;
 
 /**
  * Reads the markdown people write in a README: headings, paragraphs, lists, quotes, fenced code, pipe
@@ -27,6 +28,7 @@ public final class MarkdownParser {
     private static final Pattern NUMBERED = Pattern.compile("^(\\s*)(\\d+)[.)]\\s+(.*)$");
     private static final Pattern QUOTE = Pattern.compile("^\\s*>\\s?(.*)$");
     private static final Pattern TABLE_LINE = Pattern.compile("^\\s*\\|?\\s*:?-+:?\\s*(\\|\\s*:?-+:?\\s*)*\\|?\\s*$");
+    private static final Pattern ALERT = Pattern.compile("^\\s*\\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\\]\\s*(.*)$", Pattern.CASE_INSENSITIVE);
     private static final Pattern HTML_TAG = Pattern.compile("^</?[a-zA-Z][^>]*>");
 
     private MarkdownParser() {
@@ -61,16 +63,23 @@ public final class MarkdownParser {
             } else if (isTableStart(lines, i)) {
                 Block table = new Block(BlockKind.TABLE);
                 table.tableRows.add(cells(lines[i]));
+                table.tableAlign.addAll(alignments(lines[i + 1]));
                 for (i += 2; i < lines.length && lines[i].contains("|"); i++) {
                     table.tableRows.add(cells(lines[i]));
                 }
                 document.blocks.add(table);
             } else if (QUOTE.matcher(line).matches()) {
                 StringBuilder text = new StringBuilder();
+                Block quote = new Block(BlockKind.QUOTE);
                 for (; i < lines.length && (m = QUOTE.matcher(lines[i])).matches(); i++) {
+                    Matcher alert = ALERT.matcher(m.group(1));
+                    if (text.length() == 0 && quote.alert.isEmpty() && alert.matches()) {   // > [!TIP]: GitHub's alert
+                        quote.alert = alert.group(1).toUpperCase();
+                        text.append(alert.group(2)).append(' ');
+                        continue;
+                    }
                     text.append(m.group(1)).append(' ');
                 }
-                Block quote = new Block(BlockKind.QUOTE);
                 quote.runs = runs(text.toString().trim());
                 document.blocks.add(quote);
             } else if (BULLET.matcher(line).matches() || NUMBERED.matcher(line).matches()) {
@@ -125,6 +134,20 @@ public final class MarkdownParser {
     private static boolean isTableStart(String[] lines, int i) {
         return lines[i].contains("|") && i + 1 < lines.length && lines[i + 1].contains("-") && lines[i + 1].contains("|")
                 && TABLE_LINE.matcher(lines[i + 1]).matches();
+    }
+
+    // the --- row: ---: right, :---: centre, --- or :--- left
+    private static List<Align> alignments(String line) {
+        String row = line.trim();
+        row = row.startsWith("|") ? row.substring(1) : row;
+        row = row.endsWith("|") ? row.substring(0, row.length() - 1) : row;
+        List<Align> aligns = new ArrayList<Align>();
+        for (String cell : row.split("\\|", -1)) {
+            String c = cell.trim();
+            boolean left = c.startsWith(":"), right = c.endsWith(":");
+            aligns.add(left && right ? Align.CENTER : right ? Align.RIGHT : Align.LEFT);
+        }
+        return aligns;
     }
 
     private static List<List<Run>> cells(String line) {

@@ -3,21 +3,26 @@ package mizzen.components.markdown;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import mizzen.components.AbstractComponent;
 import mizzen.components.BoundedComponent;
+import mizzen.components.Component;
 import mizzen.components.input.LeafFocusBehaviour;
 import mizzen.components.markdown.MarkdownDocument.Block;
 import mizzen.components.markdown.MarkdownDocument.BlockKind;
 import mizzen.components.markdown.MarkdownDocument.Run;
 import mizzen.components.scroll.ScrollableComponent;
 import mizzen.components.table.TableColumnImpl;
-import mizzen.components.table.TableComponent;
 import mizzen.components.table.TableComponent.CellSelected;
+import mizzen.components.table.TableComponent;
 import mizzen.components.table.TableModel;
 import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
@@ -34,6 +39,7 @@ import mizzen.events.mouse.ApplicationMouseEvent;
 import mizzen.events.mouse.Clickable;
 import mizzen.events.mouse.MOUSE_ACTION;
 import mizzen.geom.Align;
+import mizzen.geom.CanResize;
 import mizzen.geom.Dimension;
 import mizzen.geom.Rectangle;
 import mizzen.geom.position.Position;
@@ -88,6 +94,7 @@ public class MarkdownView extends BoundedComponent<MarkdownView> implements ToFo
     private Theme laidOutIn;                                                   // the theme the lines were laid out in
     private final ChainedEventHandler linkHandlers = ChainedEventHandler.useChainOfResponsibilityStrategy("MarkdownView-links");
     private final List<TableShown> tables = new ArrayList<TableShown>();
+    private final Map<String, BiFunction<Block, Integer, Component<?>>> embeds = new HashMap<String, BiFunction<Block, Integer, Component<?>>>();
     private Function<String, String> source = null;                            // a document's text from its path; null: none to open
     private String path = "";                                                  // the document showing, when it came from source
     private final Deque<String> history = new ArrayDeque<String>();            // the paths Back goes to
@@ -102,15 +109,16 @@ public class MarkdownView extends BoundedComponent<MarkdownView> implements ToFo
             .handleEvents(linkHandlers.asConditionalEventHandler());
 
     private final StyledTextCellRenderer cells = new StyledTextCellRenderer(() -> null, this::getTheme);
-    private final StyledTextCellRenderer headings = new StyledTextCellRenderer(() -> getTheme().strongColor(), this::getTheme);
 
     /** a table in the document, and the line it starts on */
     private static final class TableShown {
         final TableComponent<Object> table;
         final TableModel<Object> model;
         final int top;
+        final List<Align> aligns;                        // each column's, as the document set them
 
-        TableShown(TableComponent<Object> table, TableModel<Object> model, int top) {
+        TableShown(TableComponent<Object> table, TableModel<Object> model, int top, List<Align> aligns) {
+            this.aligns = aligns;
             this.table = table;
             this.model = model;
             this.top = top;
@@ -173,6 +181,41 @@ public class MarkdownView extends BoundedComponent<MarkdownView> implements ToFo
     }
 
     /**
+     * A fenced block in language is drawn by a component the app makes from it - a chart from the numbers in the block.
+     * component gets the block (its codeLines) and the width the document has, and returns a component no wider (a
+     * height of its own, or none: one row). Like a table, it is a picture of the component: it takes no clicks. Made
+     * again when the document is laid out again (a new width, a theme - it is given the view's). A language not
+     * registered stays text, so the same Markdown elsewhere (an email) reads as its data.
+     * <pre>
+     *     view.embed("chart", (block, width) -&gt; chartFrom(block.codeLines, width));
+     * </pre>
+     */
+    public MarkdownView embed(String language, BiFunction<Block, Integer, Component<?>> component) {
+        embeds.put(language.toLowerCase(), component);
+        if (laidOutTo > 0) {
+            int width = laidOutTo;
+            laidOutTo = -1;
+            fitTo(width);
+        }
+        return this;
+    }
+
+    /**
+     * New text in the same view - a report refreshed. The scroll pane holding it stays where it was when it can (a
+     * shorter document: as far down as there is); open(..) and a new view start at the top.
+     * <pre>
+     *     report.setMarkdown(statusMarkdown());
+     * </pre>
+     */
+    public MarkdownView setMarkdown(String markdown) {
+        document = MarkdownParser.parse(markdown);
+        int width = laidOutTo;
+        laidOutTo = -1;
+        fitTo(width);
+        return this;
+    }
+
+    /**
      * handler hears each link clicked whose target (as the document wrote it) wanted accepts - the
      * newest wanting it, and it alone. The Registration takes it out again.
      */
@@ -221,8 +264,12 @@ public class MarkdownView extends BoundedComponent<MarkdownView> implements ToFo
         for (TableShown shown : tables) {
             if (row >= shown.top && row < shown.top + shown.table.getHeight()) {
                 CellSelected cell = shown.table.cellAt(new Position.Simple(row - shown.top, col));
-                return cell == null || cell.isHeader() ? null : cells.linkAt(
-                        shown.model.getValueAt(cell.getTableRow(), cell.getTableCol()), cell.getCellSize(), cell.getOffsetInCell());
+                if (cell == null || cell.isHeader()) {
+                    return null;
+                }
+                int c = cell.getTableCol();
+                return cells.linkAt(shown.model.getValueAt(cell.getTableRow(), c), cell.getCellSize(), cell.getOffsetInCell(),
+                                    c < shown.aligns.size() ? shown.aligns.get(c) : Align.LEFT);
             }
         }
         return targetIn(lines.get(row), col);
@@ -333,13 +380,14 @@ public class MarkdownView extends BoundedComponent<MarkdownView> implements ToFo
                 layOutListItem(block, width);
                 break;
             case QUOTE:
-                for (List<Piece> line : wrapped(block.runs, width, 2, 2, getTheme().dimColor(), getTheme())) {
-                    line.add(0, new Piece(0, "│", getTheme().dimColor(), null));
-                    lines.add(line);
-                }
+                layOutQuote(block, width);
                 break;
             case CODE:
-                layOutCode(block);
+                if (embeds.containsKey(block.language.toLowerCase())) {
+                    layOutEmbedded(block, width);
+                } else {
+                    layOutCode(block);
+                }
                 break;
             case TABLE:
                 layOutTable(block, width);
@@ -367,6 +415,33 @@ public class MarkdownView extends BoundedComponent<MarkdownView> implements ToFo
         }
     }
 
+    // a quote: a bar down its left side. A GitHub alert (> [!TIP]): its kind on the first line, bar and kind in the
+    // kind's colour - note link, tip success, important heading, warning, caution error
+    private void layOutQuote(Block block, int width) {
+        Theme theme = getTheme();
+        Color bar = block.alert.isEmpty() ? theme.dimColor() : alertColor(block.alert, theme);
+        if (!block.alert.isEmpty()) {
+            String kind = block.alert.charAt(0) + block.alert.substring(1).toLowerCase();
+            List<Piece> heading = line(new Piece(0, "│", bar, null));
+            heading.add(new Piece(2, kind, bar, null));
+            lines.add(heading);
+        }
+        for (List<Piece> line : wrapped(block.runs, width, 2, 2, block.alert.isEmpty() ? theme.dimColor() : null, theme)) {
+            line.add(0, new Piece(0, "│", bar, null));
+            lines.add(line);
+        }
+    }
+
+    private static Color alertColor(String kind, Theme theme) {
+        switch (kind) {
+            case "NOTE":      return theme.linkColor();
+            case "TIP":       return theme.successColor();
+            case "IMPORTANT": return theme.headingColor();
+            case "WARNING":   return theme.warningColor();
+            default:          return theme.errorColor();           // CAUTION
+        }
+    }
+
     private void layOutListItem(Block block, int width) {
         int indent = block.level * 2;
         List<List<Piece>> item = wrapped(block.runs, width, indent + block.marker.length(), indent + block.marker.length(), null, getTheme());
@@ -385,6 +460,33 @@ public class MarkdownView extends BoundedComponent<MarkdownView> implements ToFo
         }
     }
 
+    // an app's component for the block (embed), drawn off to one side; its segments become this view's lines
+    private void layOutEmbedded(Block block, int width) {
+        Component<?> component = embeds.get(block.language.toLowerCase()).apply(block, width);
+        if (component instanceof Theme.HasOwnTheme && ((Theme.HasOwnTheme) component).getOwnTheme() == null) {
+            if (component instanceof BoundedComponent) {                   // drawn off the tree: it takes the view's theme
+                ((BoundedComponent<?>) component).setTheme(getTheme());
+            } else if (component instanceof AbstractComponent) {
+                ((AbstractComponent<?>) component).setTheme(getTheme());
+            }
+        }
+        int wide = Math.min(width, component.getWidth() > 0 ? component.getWidth() : width);
+        int high = Math.max(1, component.getHeight());
+        if ((component.getWidth() != wide || component.getHeight() != high) && component instanceof CanResize) {
+            ((CanResize) component).resize(new Dimension.Simple(high, wide));
+        }
+        int top = lines.size();
+        for (int row = 0; row < high; row++) {
+            lines.add(new ArrayList<Piece>());
+        }
+        for (ScreenLineSegment segment : component.getSegmentsBuffer().getSegments()) {
+            int row = segment.getRow() - component.getRow();
+            if (row >= 0 && row < high) {
+                lines.get(top + row).add(new Piece(segment.getCol() - component.getCol(), segment.getText(), segment.getColors(), null));
+            }
+        }
+    }
+
     // ---- tables: a real TableComponent draws each, off to one side; its segments become this view's lines
 
     private void layOutTable(Block block, int width) {
@@ -393,21 +495,36 @@ public class MarkdownView extends BoundedComponent<MarkdownView> implements ToFo
         table.setLinesStyle(TableComponent.TableLinesStyle.INNER);
         table.setSpacedRows(false);
         for (int c = 0; c < model.getColumnCount(); c++) {
-            TableColumnImpl column = new TableColumnImpl(model.getColumnName(c), null, model.getColumnName(c), c, Align.LEFT, null, true, false);
+            Align align = c < block.tableAlign.size() ? block.tableAlign.get(c) : Align.LEFT;      // ---: right, :---: centre
+            TableColumnImpl column = new TableColumnImpl(model.getColumnName(c), null, model.getColumnName(c), c, align, null, true, false);
             column.setColumnRenderer(cells);
-            column.setHeaderRenderer(headings);
+            column.setHeaderRenderer(new StyledTextCellRenderer(() -> getTheme().strongColor(), this::getTheme, align));   // as its column
             table.addColumn(column);
         }
         int wide = Math.min(width, table.widthNeeded());
         table.resize(new Dimension.Simple(table.heightAt(wide), wide));
-        int top = lines.size();
-        for (int row = 0; row < table.getHeight(); row++) {
+        int skipped = noHeadings(model) ? HEADING_ROWS : 0;              // every heading empty: a key / value list, no heading row
+        int top = lines.size() - skipped;
+        for (int row = skipped; row < table.getHeight(); row++) {
             lines.add(new ArrayList<Piece>());
         }
         for (ScreenLineSegment segment : table.getSegmentsBuffer().getSegments()) {
-            lines.get(top + segment.getRow()).add(new Piece(segment.getCol(), segment.getText(), segment.getColors(), null));
+            if (segment.getRow() >= skipped) {
+                lines.get(top + segment.getRow()).add(new Piece(segment.getCol(), segment.getText(), segment.getColors(), null));
+            }
         }
-        tables.add(new TableShown(table, model, top));
+        tables.add(new TableShown(table, model, top, block.tableAlign));
+    }
+
+    private static final int HEADING_ROWS = 2;          // a table's heading row and the rule under it (one-line headings)
+
+    private static boolean noHeadings(TableModel<Object> model) {
+        for (int c = 0; c < model.getColumnCount(); c++) {
+            if (!model.getColumnName(c).trim().isEmpty()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     // the block's rows as a model: the first are the headings, each cell's value its runs
@@ -448,6 +565,14 @@ public class MarkdownView extends BoundedComponent<MarkdownView> implements ToFo
 
     /** runs as lines ending before column end; the first starts at firstCol, the rest at nextCol. forced: every plain word in this colour */
     static List<List<Piece>> wrapped(List<Run> runs, int end, int firstCol, int nextCol, Color forced, Theme theme) {
+        return wrapped(runs, end, firstCol, nextCol, forced, theme, false);
+    }
+
+    /**
+     * as wrapped(..); cut: a word wider than a whole line is cut with … instead of broken onto the next lines - for a
+     * table cell, where "wp_backup_2026.tar.gz" or a checksum broken mid-word reads as two values
+     */
+    static List<List<Piece>> wrapped(List<Run> runs, int end, int firstCol, int nextCol, Color forced, Theme theme, boolean cut) {
         List<List<Piece>> wrapped = new ArrayList<List<Piece>>();
         List<Piece> line = new ArrayList<Piece>();
         int col = firstCol;
@@ -474,6 +599,14 @@ public class MarkdownView extends BoundedComponent<MarkdownView> implements ToFo
                         continue;
                     }
                     int fits = Math.max(1, Math.min(word.length(), end - start));   // a word wider than the line: broken
+                    if (cut && fits < word.length()) {                                // ... or cut, ending in …
+                        String shown = fits > 1 ? word.substring(0, fits - 1) + "…" : "…";
+                        add(line, start, spaceOwed, shown, color, run.target);
+                        col = start + shown.length();
+                        spaceOwed = false;
+                        word = "";
+                        continue;
+                    }
                     add(line, start, spaceOwed, word.substring(0, fits), color, run.target);
                     col = start + fits;
                     spaceOwed = false;

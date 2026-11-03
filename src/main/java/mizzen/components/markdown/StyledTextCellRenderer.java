@@ -1,5 +1,6 @@
 package mizzen.components.markdown;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
@@ -31,10 +32,16 @@ final class StyledTextCellRenderer implements CellRenderer {
 
     private final Supplier<Color> forced;                // plain text in this colour; null from it: the document's
     private final Supplier<Theme> theme;                 // the document's: asked as cells are drawn, so they follow it
+    private final Align align;                           // null: as the table says; else always this (a heading: its column's)
 
     StyledTextCellRenderer(Supplier<Color> forced, Supplier<Theme> theme) {
+        this(forced, theme, null);
+    }
+
+    StyledTextCellRenderer(Supplier<Color> forced, Supplier<Theme> theme, Align align) {
         this.forced = forced;
         this.theme = theme;
+        this.align = align;
     }
 
     @SuppressWarnings("unchecked")
@@ -42,8 +49,24 @@ final class StyledTextCellRenderer implements CellRenderer {
         return value instanceof String ? Collections.singletonList(new Run((String) value, RunStyle.PLAIN, null)) : (List<Run>) value;
     }
 
-    private List<List<Piece>> lines(Object value, int width) {
-        return MarkdownView.wrapped(runsOf(value), width - ROOM, ROOM, ROOM, forced.get(), theme.get());
+    // wrapped at spaces, a word too wide for the cell cut with …; then each line placed by align in the cell
+    private List<List<Piece>> lines(Object value, int width, Align align) {
+        List<List<Piece>> lines = MarkdownView.wrapped(runsOf(value), width - ROOM, ROOM, ROOM, forced.get(), theme.get(), true);
+        if (align == null || align == Align.LEFT) {
+            return lines;
+        }
+        List<List<Piece>> placed = new ArrayList<List<Piece>>();
+        for (List<Piece> line : lines) {
+            Piece last = line.get(line.size() - 1);
+            int free = Math.max(0, width - ROOM - (last.col + last.text.length()));
+            int shift = align == Align.RIGHT ? free : free / 2;
+            List<Piece> moved = new ArrayList<Piece>();
+            for (Piece piece : line) {
+                moved.add(new Piece(piece.col + shift, piece.text, piece.color, piece.target));
+            }
+            placed.add(moved);
+        }
+        return placed;
     }
 
     @Override
@@ -63,13 +86,13 @@ final class StyledTextCellRenderer implements CellRenderer {
 
     @Override
     public int heightAt(Object value, int width) {
-        return Math.max(1, lines(value, width).size());
+        return Math.max(1, lines(value, width, Align.LEFT).size());
     }
 
     @Override
     public IScreenLineSegmentsBuffer render(Object value, Dimension size, Align align) {
         IScreenLineSegmentsBuffer drawn = new ScreenLineSegmentsBuffer();
-        List<List<Piece>> lines = lines(value, size.getWidth());
+        List<List<Piece>> lines = lines(value, size.getWidth(), this.align != null ? this.align : align);
         for (int row = 0; row < lines.size() && row < size.getHeight(); row++) {
             for (Piece piece : lines.get(row)) {
                 drawn.add(new SegmentImpl(piece.color, new Position.Simple(row, piece.col), piece.text));
@@ -79,8 +102,8 @@ final class StyledTextCellRenderer implements CellRenderer {
     }
 
     /** the link at offset in a cell of this value drawn at size: its target; null: no link there */
-    String linkAt(Object value, Dimension size, Position offset) {
-        List<List<Piece>> lines = lines(value, size.getWidth());
+    String linkAt(Object value, Dimension size, Position offset, Align align) {
+        List<List<Piece>> lines = lines(value, size.getWidth(), align);
         if (offset.getRow() < 0 || offset.getRow() >= lines.size()) {
             return null;
         }

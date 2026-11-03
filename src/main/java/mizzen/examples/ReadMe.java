@@ -1,10 +1,8 @@
 package mizzen.examples;
 
-import java.util.List;
 
 import mizzen.app.TUIApp;
 import mizzen.components.composite.Composite;
-import mizzen.components.input.DisplayableValue;
 import mizzen.components.input.DropdownListBox;
 import mizzen.components.markdown.MarkdownView;
 import mizzen.components.scroll.ScrollableComponent;
@@ -35,21 +33,11 @@ public class ReadMe {
                     tApp.appendOnResizeAction((ta, size) -> readme.resize(size));
 
                     // on the top border, at its right end: the theme
-                    DropdownListBox<Theme> theme = new DropdownListBox<Theme>(choices(Theme.standard()));
-                    theme.setValue(Theme.getDefault());
-                    theme.onChange((te) -> tApp.setTheme(theme.getValue()));
+                    DropdownListBox<Theme> theme = ThemeList.of(tApp);
                     screen.add(PositionRelativeFactory.fromAlign(VAlign.TOP, 0, Align.RIGHT, 2, screen, theme), theme);
                     screen.keepOnTop(theme);
                 })
                 .start();
     }
 
-    @SuppressWarnings("unchecked")
-    private static <V> DisplayableValue<V>[] choices(List<V> values) {
-        DisplayableValue<V>[] choices = new DisplayableValue[values.size()];
-        for (int i = 0; i < choices.length; i++) {
-            choices[i] = new DisplayableValue.SimpleDisplayValue<V>(String.valueOf(values.get(i)), values.get(i));
-        }
-        return choices;
-    }
 }
