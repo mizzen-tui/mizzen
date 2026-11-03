@@ -17,6 +17,7 @@ import mizzen.components.ParentContainer;
 import mizzen.components.TextComponent;
 import mizzen.components.scroll.HasViewPortWindow;
 import mizzen.components.scroll.ViewPortNavigable;
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
 import mizzen.controlcodes.color.Colors;
 import mizzen.events.TimedRequestedController;
@@ -54,6 +55,10 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
                                            EventHandlerContainer,
                                            Clickable,
                                            HasViewPortWindow.OnChange {
+
+    {
+        defaultThemeColor(Theme::inputColor);                // given no colour: the theme's - an input
+    }
 
     private TextComponent textRenderer;
     private boolean textRendererNeedsUpdate = false;
@@ -1027,9 +1032,4 @@ public class MultiLineTextInput extends AbstractComponent<MultiLineTextInput>
         
     }
 
-    /** given no colour: the theme's input colour - an input */
-    @Override
-    protected Color themeColor() {
-        return getTheme().inputColor();
-    }
 }

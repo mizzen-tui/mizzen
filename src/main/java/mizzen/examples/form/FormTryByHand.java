@@ -36,7 +36,7 @@ import mizzen.geom.Dimension;
  *     4. rules and where errors show: the binder's (here: one status line)
  *     5. what follows what: the binder's field onChange
  *
- * No colour is given anywhere: every component takes its theme's, and the Theme list switches it.
+ * No colour is given anywhere: every component takes its theme's - in the examples' desktop, its Theme list.
  *
  *     ./runDBG.sh form.FormTryByHand
  * </pre>
@@ -130,13 +130,6 @@ public class FormTryByHand {
                     showButton.onChange((te) -> result.setTextAndResize(" Now: " + order));
 
                     tApp.getMainApplicationPanel().add(1, 1, panel);
-
-                    // not part of the form: the theme, from the ones the library offers - no colour above is given,
-                    // so everything follows it
-                    DropdownListBox<Theme> theme = new DropdownListBox<Theme>(choices(Theme.standard()));
-                    theme.setValue(Theme.getDefault());
-                    theme.onChange((te) -> tApp.setTheme(theme.getValue()));
-                    tApp.getMainApplicationPanel().add(1, 60, new HorizontalPanel(1).addText("Theme").add(theme));
                 })
                 .start();
     }

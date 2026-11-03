@@ -11,6 +11,17 @@ public class HorizontalSplitter extends AbstractComponentWrappper<FrameSet> impl
     Component<?> left; 
     Component<?> right;
 
+    /** as the constructor with a colour first, in its theme's colours */
+    public HorizontalSplitter() {
+        this((Color) null);
+    }
+
+    /** as the constructor with a colour first, in its theme's colours */
+    public HorizontalSplitter(Dimension dimension) {
+        this((Color) null, dimension);
+    }
+
+
     /** sized by what holds it (a splitter's rules, a resize): it starts at no size */
     public HorizontalSplitter(Color color) {
         this(color, Dimension.ZERO);

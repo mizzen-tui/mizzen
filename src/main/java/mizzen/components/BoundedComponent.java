@@ -41,7 +41,7 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
     private Theme                     ownTheme;             // set on this component: for it and what it holds (setTheme)
     private Theme                     theme;                // the theme that applies here, as last looked up (getTheme)
     private int                       themeVersion;
-    private Function<Theme, Color>    colorFromTheme;       // setThemeColor: which theme colour, when it has none of its own
+    private Function<Theme, Color>    colorFromTheme = Theme::textColor;   // which theme colour, when it has none of its own
     private BlockChars                  blockChars = BlockChars.DEFAULT;
     private boolean enabled = true;
 
@@ -217,7 +217,7 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
         if (color != null) {
             return color;
         }
-        return colorFromTheme != null ? colorFromTheme.apply(getTheme()) : themeColor();
+        return colorFromTheme.apply(getTheme());
     }
 
     /**
@@ -231,10 +231,12 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
     }
 
     /**
-     * which of its theme's colours it draws with, whichever theme applies - it has no colour of its own then
+     * which of its theme's colours it draws with, whichever theme applies - and it has no colour of its own then
+     * (what it was given goes). The theme can change later: it follows.
      * <pre>
-     *     status.setThemeColor(Theme::errorColor);
+     *     TextComponent note = new TextComponent("No action picked").setThemeColor(Theme::emphasisColor);
      * </pre>
+     * Not new TextComponent(Theme.getDefault().emphasisColor(), ..): that is one colour, fixed - it won't follow.
      */
     @SuppressWarnings("unchecked")
     public T setThemeColor(Function<Theme, Color> colorFromTheme) {
@@ -252,9 +254,18 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
         return given == Colors.DEFAULT_COLOR ? null : given;
     }
 
-    /** its colour when it was given none: text, unless a component is some other kind of thing (overrides this) */
-    protected Color themeColor() {
-        return getTheme().textColor();
+    /** which of its theme's colours it draws with when it has none of its own: Theme::textColor, unless set (setThemeColor) */
+    public Function<Theme, Color> getThemeColor() {
+        return colorFromTheme;
+    }
+
+    /**
+     * the theme colour this kind of component takes by default - for a component class, in an instance initializer,
+     * so every constructor has it: { defaultThemeColor(Theme::inputColor); }. Unlike setThemeColor, a colour given
+     * to the constructor stays.
+     */
+    protected void defaultThemeColor(Function<Theme, Color> colorFromTheme) {
+        this.colorFromTheme = colorFromTheme;
     }
 
     // it has looked its theme up, and a theme was set (or it moved) since: it draws again, its parts too (they check the same

@@ -11,6 +11,7 @@ import mizzen.components.Component;
 import mizzen.components.TextComponent;
 import mizzen.components.composite.Composite;
 import mizzen.components.modal.Dialog;
+import mizzen.components.theme.Theme;
 import mizzen.events.ConditionalEventHandler;
 import mizzen.events.EventBus;
 import mizzen.events.EventHandlerContainer;
@@ -276,6 +277,24 @@ public class EmbeddedAppTest extends TestCase {
             fail("on no screen");
         } catch (IllegalStateException expected) {
             assertTrue(expected.getMessage(), expected.getMessage().contains("show(app)"));
+        }
+    }
+
+    /** an embedded app with no theme of its own: its components take the host's - its theme crosses into what it runs */
+    public void testAnEmbeddedAppTakesItsHostsTheme() {
+        Composite hostPanel = new Composite(new Dimension.Simple(20, 60));
+        hostPanel.add(slot);
+        host.setMainApplicationPanel(hostPanel);
+        host.setTheme(Theme.CLASSIC);
+        Embedding embedding = TUIApp.runEmbedded(host, slot, () -> new TUIApp().setDefaultMainApplicationPanel().start());
+        TextComponent onTheExample = new TextComponent("example's");
+        embedding.tuiApp().getMainApplicationPanel().add(onTheExample);
+        try {
+            assertSame(Theme.CLASSIC, onTheExample.getTheme());
+            embedding.tuiApp().setTheme(Theme.LIGHT);
+            assertSame("its own, once it has one", Theme.LIGHT, onTheExample.getTheme());
+        } finally {
+            host.setTheme(null);
         }
     }
 }

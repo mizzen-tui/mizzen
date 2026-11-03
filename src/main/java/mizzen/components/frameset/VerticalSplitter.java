@@ -11,6 +11,17 @@ public class VerticalSplitter extends AbstractComponentWrappper<FrameSet> implem
     Component<?> above; 
     Component<?> below;
 
+    /** as the constructor with a colour first, in its theme's colours */
+    public VerticalSplitter() {
+        this((Color) null);
+    }
+
+    /** as the constructor with a colour first, in its theme's colours */
+    public VerticalSplitter(Dimension dimension) {
+        this((Color) null, dimension);
+    }
+
+
     /** sized by what holds it (a splitter's rules, a resize): it starts at no size */
     public VerticalSplitter(Color color) {
         this(color, Dimension.ZERO);

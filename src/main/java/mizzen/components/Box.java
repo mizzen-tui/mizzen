@@ -11,4 +11,9 @@ public class Box extends RectangleComponent {
     public Box(Colors.FGBGColors color, int length) {
         super(color,length, length);
     }
+
+    /** in its theme's colours */
+    public Box(int length) {
+        this((Colors.FGBGColors) null, length);
+    }
 }

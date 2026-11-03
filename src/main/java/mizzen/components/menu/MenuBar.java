@@ -26,6 +26,12 @@ public class MenuBar extends ComponentWithFocus<ButtonBar, MenuBar> implements L
     MenuBarButton currentMenuButton = null;
     List<MenuBarButton> menuBarItems = new ArrayList<MenuBarButton>();
 
+    /** as the constructor with a colour first, in its theme's colours */
+    public MenuBar() {
+        this((Color) null);
+    }
+
+
     public MenuBar(Color color) {
         super(color, new ButtonBar(color));
         getPanel().setNoBorderChars();

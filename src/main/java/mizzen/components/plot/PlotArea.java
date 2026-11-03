@@ -144,6 +144,27 @@ public class PlotArea extends AbstractComponentWrappper<Component<?>> implements
         }
     }
 
+    /** as the constructor with a colour first, in its theme's colours */
+    public PlotArea() {
+        this((Color) null);
+    }
+
+    /** as the constructor with a colour first, in its theme's colours */
+    public PlotArea(GRID_TYPE gridType) {
+        this((Color) null, gridType);
+    }
+
+    /** as the constructor with a colour first, in its theme's colours */
+    public PlotArea(Dimension size) {
+        this((Color) null, size);
+    }
+
+    /** as the constructor with a colour first, in its theme's colours */
+    public PlotArea(Dimension size, GRID_TYPE gridType) {
+        this((Color) null, size, gridType);
+    }
+
+
     /** a Braille grid; sized by what holds it (a splitter's rules, a resize): it starts at no size */
     public PlotArea(Color color) {
         this(color, Dimension.ZERO);

@@ -15,6 +15,17 @@ public class CollapsiblePanel extends AbstractComponentWrappper<VerticalPanel>  
 
     ButtonBar titleBanner;
     Component<?> panelToHide;
+
+    /** as the constructor with a colour first, in its theme's colours */
+    public CollapsiblePanel(Component<?> titleComponent, Component<?> panelToHide) {
+        this((Color) null, titleComponent, panelToHide);
+    }
+
+    /** as the constructor with a colour first, in its theme's colours */
+    public CollapsiblePanel(String titleLabel, Component<?> panelToHide) {
+        this((Color) null, titleLabel, panelToHide);
+    }
+
     
     public CollapsiblePanel(Color color, Color borderColor, Component<?> titleComponent, Component<?> panelToHide) {
         

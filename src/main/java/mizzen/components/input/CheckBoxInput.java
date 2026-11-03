@@ -6,6 +6,7 @@ import mizzen.components.BoundedComponent;
 import mizzen.components.Component;
 import mizzen.components.ParentContainer;
 import mizzen.components.TextComponent;
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
 import mizzen.controlcodes.color.Colors;
 import mizzen.events.ConditionalEventHandler;
@@ -27,6 +28,10 @@ import mizzen.util.StringUtils;
 
 public class CheckBoxInput extends BoundedComponent<CheckBoxInput> 
              implements FormInput<Boolean>, ParentContainer, ToFocusable, Clickable, AsKeyboardHandler   {
+
+    {
+        defaultThemeColor(Theme::inputColor);                // given no colour: the theme's - an input
+    }
 
     private TextComponent textRenderer;
 
@@ -175,9 +180,4 @@ public class CheckBoxInput extends BoundedComponent<CheckBoxInput>
         return Collections.singleton(this.textRenderer);
     }
 
-    /** given no colour: the theme's input colour - an input */
-    @Override
-    protected Color themeColor() {
-        return getTheme().inputColor();
-    }
 }

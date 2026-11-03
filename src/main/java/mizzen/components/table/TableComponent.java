@@ -70,7 +70,6 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
     TableModel<T> rows;                       // the model as given: its rows are T (tableModel measures and caches its cells)
     // List<TableColumn> tableColumns;
     boolean hasBorder = true;
-    Color headerColor;
     int rowsDisplayed = 0;
     TableLinesStyle linesStyle = TableLinesStyle.ALL;
     boolean spacedRows = true;
@@ -97,6 +96,17 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
     TableCellAtPositions tableCellAtPositions;
     TableLayout layout = new TableLayout(new ArrayList<Integer>(), new int[0], new int[0], 0, 0, 1);   // what the last draw showed: the lines and clicks read it
 
+    /** as the constructor with a colour first, in its theme's colours */
+    public TableComponent(TableModel<T> tableModel) {
+        this((Color) null, tableModel);
+    }
+
+    /** as the constructor with a colour first, in its theme's colours */
+    public TableComponent(Dimension d, TableModel<T> tableModel) {
+        this((Color) null, d, tableModel);
+    }
+
+
     /** sized by what holds it (a splitter's rules, a resize): it starts at no size */
     public TableComponent(Color color, TableModel<T> tableModel) {
         this(color, Dimension.ZERO, tableModel);
@@ -104,7 +114,6 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
 
     public TableComponent(Color color, Dimension d, TableModel<T> tableModel) {
         super(color, d);
-        this.headerColor = color.getBoldTransform().transform(color);
         this.rows = tableModel;
         this.tableModel = new TableModelWidthData(tableModel);
         this.tableCellAtPositions = new TableCellAtPositions();

@@ -25,6 +25,12 @@ public class MovingPicturesViewer extends ComponentWithFocus<Composite, MovingPi
     ImageAnimatorComponent animatorComponent;
     Composite imageViewer;
 
+    /** as the constructor with a colour first, in its theme's colours */
+    public MovingPicturesViewer(ImageIterator imageIterator, ImageRenderRequest rqst) {
+        this((Color) null, imageIterator, rqst);
+    }
+
+
     public MovingPicturesViewer(Color color, ImageIterator imageIterator, ImageRenderRequest rqst) {
 
         super(color, new Composite(color));

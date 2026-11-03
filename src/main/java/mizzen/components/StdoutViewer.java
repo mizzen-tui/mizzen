@@ -48,6 +48,12 @@ public class StdoutViewer extends AbstractComponent<StdoutViewer>  implements Te
 
     /** lines kept by default - like a terminal's scrollback; the oldest go past this */
     public static final int DEFAULT_MAX_LINES = 10_000;
+
+    /** as the constructor with a colour first, in its theme's colours */
+    public StdoutViewer() {
+        this((Color) null);
+    }
+
     
     public StdoutViewer(Color color) {
         super(color);

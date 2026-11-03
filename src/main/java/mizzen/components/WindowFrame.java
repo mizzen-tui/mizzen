@@ -81,6 +81,12 @@ public class WindowFrame extends AbstractComponent<WindowFrame> implements Paren
     private final ChainedEventHandler ownHandlers;
     private final ParentFocusBehaviour focus;
 
+    /** as the constructor with a colour first, in its theme's colours */
+    public WindowFrame(String title, Component<?> child) {
+        this((Color) null, title, child);
+    }
+
+
 
     public WindowFrame(Color color, String title, Component<?> child) {
         super(color);

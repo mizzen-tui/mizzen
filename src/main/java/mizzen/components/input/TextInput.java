@@ -12,6 +12,7 @@ import mizzen.components.Component;
 import mizzen.components.HasName;
 import mizzen.components.ParentContainer;
 import mizzen.components.TextComponent;
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
 import mizzen.controlcodes.color.Colors;
 import mizzen.events.ChainedEventHandler;
@@ -41,6 +42,10 @@ public class TextInput extends BoundedComponent<TextInput>
                        implements SettableHasValueComponentMixen<TextInput,String>, FormInput<String>, 
                                   ParentContainer, 
                                   Focusable  {
+
+    {
+        defaultThemeColor(Theme::inputColor);                // given no colour: the theme's - an input
+    }
 
     private TextComponent textRenderer;
     private StringBuilder buffer;
@@ -669,9 +674,4 @@ public class TextInput extends BoundedComponent<TextInput>
                 + getRightMostCol() + " width=" + getWidth() + ", height=" + getHeight() + "]";
     }
 
-    /** given no colour: the theme's input colour - an input */
-    @Override
-    protected Color themeColor() {
-        return getTheme().inputColor();
-    }
 }

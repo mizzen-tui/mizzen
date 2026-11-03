@@ -4,6 +4,12 @@ import mizzen.controlcodes.color.Color;
 
 public class FloatInputWithIncrDecrButtons extends TextInputWithIncrDecrButtons<Float> {
 
+    /** as the constructor with a colour first, in its theme's colours */
+    public FloatInputWithIncrDecrButtons(String labelText, String downButtonText, String upButtonText) {
+        this((Color) null, labelText, downButtonText, upButtonText);
+    }
+
+
     public FloatInputWithIncrDecrButtons(Color color, String labelText, String downButtonText, String upButtonText) {
         super(color, labelText, downButtonText, upButtonText);
     }

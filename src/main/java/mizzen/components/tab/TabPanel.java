@@ -61,6 +61,17 @@ public class TabPanel extends ComponentWithFocus<Composite, TabPanel>
     /** sized by what holds it (a splitter's rules, a resize): it starts at no size */
     private final List<TabButtonComponent> tabButtons = new ArrayList<TabButtonComponent>();
 
+    /** as the constructor with a colour first, in its theme's colours */
+    public TabPanel() {
+        this((Color) null);
+    }
+
+    /** as the constructor with a colour first, in its theme's colours */
+    public TabPanel(Dimension bounds) {
+        this((Color) null, bounds);
+    }
+
+
     public TabPanel(Color color) {
         this(color, Dimension.ZERO);
     }

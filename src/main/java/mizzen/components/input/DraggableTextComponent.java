@@ -22,6 +22,32 @@ public class DraggableTextComponent extends TextComponent implements Focusable ,
     Boolean hasColorInText;
     boolean dragging;
 
+    /** as the constructor with a colour first, in its theme's colours */
+    public DraggableTextComponent(String text, Color draggingColor, String draggingText, Draggable draggableBehaviour) {
+        this((Color) null, text, draggingColor, draggingText, draggableBehaviour);
+    }
+
+    /** as the constructor with a colour first, in its theme's colours */
+    public DraggableTextComponent(String text, Color draggingColor, String draggingText, Component<?> componentToDrag) {
+        this((Color) null, text, draggingColor, draggingText, componentToDrag);
+    }
+
+    /** as the constructor with a colour first, in its theme's colours */
+    public DraggableTextComponent(String text, Color draggingColor, String draggingText) {
+        this((Color) null, text, draggingColor, draggingText);
+    }
+
+    /** as the constructor with a colour first, in its theme's colours */
+    public DraggableTextComponent(String text) {
+        this((Color) null, text);
+    }
+
+    /** as the constructor with a colour first, in its theme's colours */
+    public DraggableTextComponent(String text, Component<?> componentToDrag) {
+        this((Color) null, text, componentToDrag);
+    }
+
+
     public DraggableTextComponent(Color color, String text, Color draggingColor, String draggingText, Draggable draggableBehaviour) {
         super(color, text);
         this.nonDraggingColor = color;

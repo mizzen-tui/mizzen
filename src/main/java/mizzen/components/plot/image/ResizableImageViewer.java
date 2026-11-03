@@ -36,6 +36,27 @@ public class ResizableImageViewer extends AbstractComponentWrappper<ImageRendere
     EventHandler onImageLoaded;
     Object drawMutex = new Object();
 
+    /** as the constructor with a colour first, in its theme's colours */
+    public ResizableImageViewer(BufferedImageProvider imageToView) {
+        this((Color) null, imageToView);
+    }
+
+    /** as the constructor with a colour first, in its theme's colours */
+    public ResizableImageViewer(BufferedImage imageToView) {
+        this((Color) null, imageToView);
+    }
+
+    /** as the constructor with a colour first, in its theme's colours */
+    public ResizableImageViewer(Dimension d, BufferedImageProvider imageToView) {
+        this((Color) null, d, imageToView);
+    }
+
+    /** as the constructor with a colour first, in its theme's colours */
+    public ResizableImageViewer(Dimension d, BufferedImage imageToView) {
+        this((Color) null, d, imageToView);
+    }
+
+
     /** sized by what holds it (a splitter's rules, a resize): it starts at no size */
     public ResizableImageViewer(Color color, BufferedImageProvider imageToView) {
         this(color, Dimension.ZERO, imageToView);

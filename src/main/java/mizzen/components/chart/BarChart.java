@@ -43,6 +43,17 @@ public class BarChart<T> extends AbstractComponentWrappper<PlotArea> implements 
     private final List<Polygon> bars = new ArrayList<Polygon>();
     private Color selectedColor = Colors.BYel;
 
+    /** as the constructor with a colour first, in its theme's colours */
+    public BarChart() {
+        this((Color) null);
+    }
+
+    /** as the constructor with a colour first, in its theme's colours */
+    public BarChart(Dimension size) {
+        this((Color) null, size);
+    }
+
+
     /** sized by what holds it (a splitter's rules, a resize): it starts at no size */
     public BarChart(Color color) {
         this(color, Dimension.ZERO);

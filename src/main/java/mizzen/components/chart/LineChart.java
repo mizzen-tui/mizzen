@@ -118,6 +118,17 @@ public class LineChart extends AbstractComponentWrappper<PlotArea> implements Ha
     private Double yRangeMin = null;                               // null: fitted to the data
     private Double yRangeMax = null;
 
+    /** as the constructor with a colour first, in its theme's colours */
+    public LineChart() {
+        this((Color) null);
+    }
+
+    /** as the constructor with a colour first, in its theme's colours */
+    public LineChart(Dimension size) {
+        this((Color) null, size);
+    }
+
+
     public LineChart(Color color) {
         this(color, Dimension.ZERO);
     }

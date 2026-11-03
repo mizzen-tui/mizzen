@@ -18,6 +18,8 @@ import mizzen.components.composite.VerticalPanel;
 import mizzen.components.frameset.HorizontalSplitter;
 import mizzen.components.frameset.VerticalSplitter;
 import mizzen.components.input.Button;
+import mizzen.components.input.DisplayableValue;
+import mizzen.components.input.DropdownListBox;
 import mizzen.components.input.RadioGroup;
 import mizzen.components.input.tree.DefaultTreeNode;
 import mizzen.components.plot.braille.BrailleGrid;
@@ -28,6 +30,8 @@ import mizzen.components.tab.TabAction;
 import mizzen.components.markdown.MarkdownView;
 import mizzen.components.tab.TabPanel;
 import mizzen.components.tab.TabPanel.TabContext;
+import mizzen.components.theme.Theme;
+import mizzen.controlcodes.color.Color;
 import mizzen.controlcodes.color.Colors;
 import mizzen.events.EventBus;
 import mizzen.events.OnIdleEventEventHandler.RepeatingIntervalWhileCond;
@@ -152,10 +156,15 @@ public class EmbeddedAppTest {
 
             TreeView<DefaultTreeNode<Demo>> tree = new TreeView<DefaultTreeNode<Demo>>(examples.asModel());
             tree.expandAll();
-            ScrollableComponent treePane = new ScrollableComponent(Colors.IGre, new Dimension.Simple(10, TREE_WIDTH), tree);
+            ScrollableComponent treePane = new ScrollableComponent(new Dimension.Simple(10, TREE_WIDTH), tree);
             treePane.setTitle(" Examples ");
-            Button learnButton = new Button(Colors.IGre, "Learn", true);   // a toggle: pressed, the learning panel shows
+            Button learnButton = new Button("Learn", true);   // a toggle: pressed, the learning panel shows
+            // the theme: the desktop's - an example that gives no colours takes it too (its app has none of its own)
+            DropdownListBox<Theme> theme = new DropdownListBox<Theme>(themes());
+            theme.setValue(Theme.getDefault());
+            theme.onChange((te) -> host.setTheme(theme.getValue()));
             VerticalPanel left = new VerticalPanel();
+            left.add(new HorizontalPanel(1).addText("Theme").add(theme));   // at the top: its list opens down, over the tree
             left.add(treePane);
             left.add(learnButton);
             left.onResizeExpandDown(treePane);
@@ -169,11 +178,10 @@ public class EmbeddedAppTest {
             slot.add(greeting.panel);
             slot.onResizeExpandDownAndRight(greeting.panel);
             RadioGroup<String> where = RadioGroup.horizontal("Below", "Right", "Learn only");
-            where.setColor(Colors.IGre);
             RightSide right = new RightSide(slot, where);
 
-            TextComponent status = new TextComponent(new Colors.FGBGColors(Colors.BRed, Colors.On_Yel),
-                                                     new Dimension.Simple(1, main.getWidth()));
+            TextComponent status = new TextComponent((Color) null, new Dimension.Simple(1, main.getWidth()))
+                                       .setThemeColor(Theme::selectedColor);   // a bar: it stands out from the text
             status.setText(" Pick an example in the tree");
 
             // the tree keeps its width, the slot takes the rest; the status line keeps its row at the bottom
@@ -201,9 +209,9 @@ public class EmbeddedAppTest {
             // a leaf runs its example - once the selection stops moving, so arrowing past examples doesn't start each one
             // the learning panel: one, for as long as the desktop runs - the docs keep their place, the tab stays the one chosen
             MarkdownView docsView = new MarkdownView("README.md", SourceFiles::findText);
-            ScrollableComponent docs = MarkdownView.inScrollPane(Colors.IGre, docsView);
-            ScrollableComponent codeView = new ScrollableComponent(Colors.IGre, new TextComponent(Colors.Whi, " Pick an example: its code shows here"));
-            TabPanel learning = new TabPanel(Colors.IGre);
+            ScrollableComponent docs = MarkdownView.inScrollPane((Color) null, docsView);
+            ScrollableComponent codeView = new ScrollableComponent((Color) null, new TextComponent(" Pick an example: its code shows here"));
+            TabPanel learning = new TabPanel();
             learning.addTab("Docs", docs);
             learning.addTab("Code", codeView);
             learning.addTab("Components", null, new ComponentsTab(slot, right));
@@ -324,11 +332,13 @@ public class EmbeddedAppTest {
         private static final int NAME_DOTS_WIDE = NAME.length() * 7 - 2, NAME_DOTS_HIGH = 7;   // 5x7 letters, 2 apart
 
         final Composite panel = new Composite();
-        private final BrailleGrid letters = new BrailleGrid(Colors.BCya, new Dimension.Simple(1, 1));
-        private final DotMatrixText name = new DotMatrixText(NAME, Colors.BCya);
-        private final TextComponent line = new TextComponent(Colors.IGre, "Pick an example in the tree  -  Learn shows its code and its components");
+        private final BrailleGrid letters = new BrailleGrid((Color) null, new Dimension.Simple(1, 1));
+        private final DotMatrixText name = new DotMatrixText(NAME);                 // no colour: the letters' (the theme's heading)
+        private final TextComponent line = new TextComponent("Pick an example in the tree  -  Learn shows its code and its components")
+                                               .setThemeColor(Theme::subheadingColor);
 
         Greeting() {
+            letters.setThemeColor(Theme::headingColor);      // the big letters: the theme's heading colour
             panel.add(letters);
             panel.add(line);
             panel.appendOnResize(this::fit);
@@ -357,7 +367,7 @@ public class EmbeddedAppTest {
     /** the Code tab shows the example's source, coloured as Java, from its top */
     private static void showCode(Demo demo, ScrollableComponent codeView) {
         String code = SourceFiles.find(demo.type);
-        codeView.setComponentBeingViewed(new TextComponent(Colors.Whi, code != null
+        codeView.setComponentBeingViewed(new TextComponent((Color) null, code != null
                 ? TextLineFormatter.UTIL.format(code, new JavaSyntaxHilighterTextFormatter())
                 : " No source to show for " + demo.name + " (not in the jar, not under src/main/java)"));
         codeView.setTitle(" " + demo.type.getSimpleName() + ".java ");
@@ -375,7 +385,7 @@ public class EmbeddedAppTest {
         private final Composite slot;
         private final RightSide right;
         private final TreeView<DefaultTreeNode<Component<?>>> tree =
-                new TreeView<DefaultTreeNode<Component<?>>>(Colors.Whi, new Dimension.Simple(1, 1), (node) -> describe(node.getValue()));
+                new TreeView<DefaultTreeNode<Component<?>>>((Color) null, new Dimension.Simple(1, 1), (node) -> describe(node.getValue()));
 
         ComponentsTab(Composite slot, RightSide right) {
             this.slot = slot;
@@ -385,7 +395,7 @@ public class EmbeddedAppTest {
 
         @Override
         protected ScrollableComponent getComponent(TabContext tabContext) {
-            ScrollableComponent view = new ScrollableComponent(Colors.IGre, tree);
+            ScrollableComponent view = new ScrollableComponent((Color) null, tree);
             view.setTitle(" The example's components ");
             return view;
         }
@@ -639,7 +649,7 @@ public class EmbeddedAppTest {
             }
             switch (where) {
                 case "Right": {
-                    HorizontalSplitter split = new HorizontalSplitter(Colors.IGre).addComponent(holder).addComponent(code);
+                    HorizontalSplitter split = new HorizontalSplitter().addComponent(holder).addComponent(code);
                     split.setBorder(false);
                     split.onResizeExpandRight(holder, share("Right"));
                     return split;
@@ -647,7 +657,7 @@ public class EmbeddedAppTest {
                 case "Learn only":
                     return code;                          // the example runs on, out of sight
                 default: {
-                    VerticalSplitter split = new VerticalSplitter(Colors.IGre).addComponent(holder).addComponent(code);
+                    VerticalSplitter split = new VerticalSplitter().addComponent(holder).addComponent(code);
                     split.onResizeExpandDown(holder, share("Below"));
                     return split;
                 }
@@ -668,5 +678,16 @@ public class EmbeddedAppTest {
         running.close();
         status.setText(" " + what + ": took " + handlers + " handlers off the bus, " + running.handlersOnHostBus() + " left");
         running = null;
+    }
+
+    // the themes that come with the library, for a list
+    @SuppressWarnings("unchecked")
+    private static DisplayableValue<Theme>[] themes() {
+        List<Theme> themes = Theme.standard();
+        DisplayableValue<Theme>[] choices = new DisplayableValue[themes.size()];
+        for (int i = 0; i < choices.length; i++) {
+            choices[i] = new DisplayableValue.SimpleDisplayValue<Theme>(themes.get(i).name(), themes.get(i));
+        }
+        return choices;
     }
 }

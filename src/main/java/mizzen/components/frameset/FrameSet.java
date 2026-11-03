@@ -37,6 +37,17 @@ public class FrameSet extends BoundedComponent<FrameSet> implements HasTitleAndB
 
     List<VerticalDraggable> vDraggables = new ArrayList<VerticalDraggable>();
     List<HorizontalDraggable> hDraggables = new ArrayList<HorizontalDraggable>();
+
+    /** as the constructor with a colour first, in its theme's colours */
+    public FrameSet() {
+        this((Color) null);
+    }
+
+    /** as the constructor with a colour first, in its theme's colours */
+    public FrameSet(Dimension d) {
+        this((Color) null, d);
+    }
+
  
     /** sized by what holds it (a splitter's rules, a resize): it starts at no size */
     public FrameSet(Color color) {

@@ -151,8 +151,9 @@ public class Plotter extends BoundedComponent<Plotter> {
                 continue;
             }
             
+            Color plotColor = plot.plotColor != null ? plot.plotColor : getColor();   // no colour of its own: the plotter's (its theme's)
             if (lastRow != plotPosRow     || 
-                !plot.plotColor.equals(lastColor)||
+                !plotColor.equals(lastColor)||
                 plotPosCol != lastCol+1) {
                 if (lastText.length() != 0) {
                     lastSegment = new SegmentImpl(lastColor, lastSegmentPosition, -1, lastText.toString());
@@ -160,7 +161,7 @@ public class Plotter extends BoundedComponent<Plotter> {
                     lastSegment = null;
                     lastText = new StringBuilder();
                 }
-                lastColor = plot.plotColor;
+                lastColor = plotColor;
                 lastRow = plotPosRow;
                 lastSegmentPosition = plot.pos;
             }

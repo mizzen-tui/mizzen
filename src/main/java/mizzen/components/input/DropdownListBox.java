@@ -15,6 +15,7 @@ import mizzen.components.input.DisplayableValue.StringDisplayValue;
 import mizzen.components.input.ListBox.ComponentItemFactory;
 import mizzen.components.input.ListBox.TextComponentItemFactory;
 import mizzen.components.scroll.ScrollableComponent;
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
 import mizzen.controlcodes.color.Colors;
 import mizzen.events.ChainedEventHandler;
@@ -43,6 +44,10 @@ public class DropdownListBox<T> extends AbstractComponentWrappper<VerticalPanel>
                                            ToFocusable,
                                            Clickable,
                                            KeyboardHandler {
+
+    {
+        defaultThemeColor(Theme::inputColor);                // given no colour: the theme's - an input
+    }
 
     private ListBox<T> listBox;
     private ScrollableComponent listBoxScrollPane;
@@ -667,9 +672,4 @@ public class DropdownListBox<T> extends AbstractComponentWrappper<VerticalPanel>
         return sb.toString();
     }
 
-    /** given no colour: the theme's input colour - it is an input */
-    @Override
-    protected Color themeColor() {
-        return getTheme().inputColor();
-    }
 }

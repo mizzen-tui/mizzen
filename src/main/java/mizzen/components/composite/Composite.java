@@ -22,6 +22,7 @@ import mizzen.components.HasTitleAndBorder;
 import mizzen.components.MultiCharComponent;
 import mizzen.components.SimpleBorder;
 import mizzen.components.TextComponent;
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
 import mizzen.controlcodes.color.Colors;
 import mizzen.geom.CanResize;
@@ -47,6 +48,10 @@ public class Composite extends AbstractComponent<Composite>
                                   HasTitleAndBorder<Composite>, 
                                   CanResize, 
                                   GetComponentAtOffset {
+
+    {
+        defaultThemeColor(Theme::backgroundColor);                // given no colour: the theme's - a panel: what it leaves empty is the background
+    }
 
     private SimpleBorder border;
     protected boolean boundsFixed = false;
@@ -1516,9 +1521,4 @@ public class Composite extends AbstractComponent<Composite>
 
     }
 
-    /** given no colour: the theme's background colour - a panel: what it leaves empty is the background */
-    @Override
-    protected Color themeColor() {
-        return getTheme().backgroundColor();
-    }
 }

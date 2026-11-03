@@ -16,6 +16,17 @@ public class VerticalLine extends BoundedComponent<VerticalLine> {
 
     private char verticalLineChar = 0;
 
+    /** as the constructor with a colour first, in its theme's colours */
+    public VerticalLine(Position pos, int len) {
+        this((Color) null, pos, len);
+    }
+
+    /** as the constructor with a colour first, in its theme's colours */
+    public VerticalLine(int row, int col, int len) {
+        this((Color) null, row, col, len);
+    }
+
+
     public VerticalLine(Color color, Position pos, int len) {
         super(color, pos, new Dimension.Simple(len, 1));
     }

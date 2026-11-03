@@ -101,9 +101,10 @@ public class TUIApp implements TUIAppInterface {
     public TUIApp setTheme(Theme theme) {
         this.theme = theme;
         Theme.changed();
-        if (!(app instanceof EmbeddedApp)) {             // its screen's empty parts: the theme's background, unless the app set
-            app.getCanvas().setThemeEmptyColor(theme == null ? null : theme.backgroundColor());   // its own (an embedded
-        }                                                // app's screen is its host's)
+        Canvas canvas = app instanceof EmbeddedApp ? null : app.getCanvas();   // an embedded app's screen is its host's
+        if (canvas != null) {                            // its screen's empty parts: the theme's background, unless the app set its own
+            canvas.setThemeEmptyColor(theme == null ? null : theme.backgroundColor());
+        }
         if (mainPanel() instanceof Component) {
             Theme.repaint((Component<?>) mainPanel());     // a running app redraws in it
         }

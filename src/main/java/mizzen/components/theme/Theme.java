@@ -23,7 +23,8 @@ import mizzen.traverse.HasChildrenAdapter;
  *     new TextComponent(" ").setThemeColor(Theme::errorColor); // the theme's error colour, whichever theme
  * </pre>
  * Which theme applies to a component, nearest first: one set on it or an ancestor (setTheme), else its
- * app's (TUIApp.setTheme), else the default (Theme.setDefault). The colours carry the theme's background,
+ * app's (TUIApp.setTheme) - or, for an app with none that runs inside another (TUIApp.runEmbedded), that
+ * one's - else the default (Theme.setDefault). The colours carry the theme's background,
  * so what a component leaves empty is the theme's background too.
  * <pre>
  *     Theme.setDefault(Theme.CLASSIC);                         // the whole program
@@ -264,9 +265,15 @@ public final class Theme {
             }
             at = at instanceof Component ? ((Component<?>) at).getParentContainer() : null;
         }
+        // its app's theme; an app with none: the app it is embedded in (a desktop running examples), and so on outward
         TUIApp app = TUIApp.of(component);
-        if (app != null && app.getTheme() != null) {
-            return app.getTheme();
+        while (app != null) {
+            if (app.getTheme() != null) {
+                return app.getTheme();
+            }
+            Object panel = app.getMainApplicationPanel();
+            Object outside = panel instanceof Component ? ((Component<?>) panel).getParentContainer() : null;
+            app = outside instanceof Component ? TUIApp.of((Component<?>) outside) : null;
         }
         return defaultTheme;
     }

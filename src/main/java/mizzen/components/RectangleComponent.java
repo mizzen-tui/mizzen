@@ -4,7 +4,6 @@ import java.util.TreeSet;
 
 import mizzen.components.BlockChars.BlockHiliter;
 import mizzen.controlcodes.color.Color;
-import mizzen.controlcodes.color.Colors;
 import mizzen.geom.Dimension;
 import mizzen.geom.Rectangle;
 import mizzen.geom.position.Position;
@@ -19,6 +18,22 @@ public class RectangleComponent extends BoundedComponent<RectangleComponent> imp
     private boolean hilited = false;
     private ColorHiliter colorHiliter;
     private BlockHiliter blockHiliter = new BlockChars.BlockHiliter();
+
+    /** as the constructor with a colour first, in its theme's colours */
+    public RectangleComponent(int height, int width) {
+        this((Color) null, height, width);
+    }
+
+    /** as the constructor with a colour first, in its theme's colours */
+    public RectangleComponent(Position p, Dimension d) {
+        this((Color) null, p, d);
+    }
+
+    /** as the constructor with a colour first, in its theme's colours */
+    public RectangleComponent(Rectangle r) {
+        this((Color) null, r);
+    }
+
 
     public RectangleComponent(Color color, int height, int width) {
         super(color, new Dimension.Simple(height, width));

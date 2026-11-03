@@ -11,6 +11,7 @@ import mizzen.components.Hiliter;
 import mizzen.components.ParentContainer;
 import mizzen.components.TextComponent;
 import mizzen.components.composite.Composite;
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
 import mizzen.controlcodes.color.Colors;
 import mizzen.events.ChainedEventHandler;
@@ -44,6 +45,10 @@ public class Button extends BoundedComponent<Button> implements FormInput<Boolea
                                                                 ParentContainer, 
                                                                 GetComponentAtOffset,
                                                                 EventHandlerContainer{
+
+    {
+        defaultThemeColor(Theme::buttonColor);                // given no colour: the theme's - a button
+    }
 
     String buttonText;
     Composite container;  // <-- having a composite for something as simple as a button seems a bit heavy
@@ -474,9 +479,4 @@ public class Button extends BoundedComponent<Button> implements FormInput<Boolea
         return getchainedHandler().removeEventHandler(eventHandler);
     }
 
-    /** given no colour: the theme's button colour - a button */
-    @Override
-    protected Color themeColor() {
-        return getTheme().buttonColor();
-    }
 }

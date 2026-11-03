@@ -27,6 +27,17 @@ public class SparkLineComponent extends AbstractComponent<SparkLineComponent> im
     int currentMax = Integer.MIN_VALUE;
     int currentMin = Integer.MAX_VALUE;
     boolean trackingMinMax = false;
+
+    /** as the constructor with a colour first, in its theme's colours */
+    public SparkLineComponent() {
+        this((Color) null);
+    }
+
+    /** as the constructor with a colour first, in its theme's colours */
+    public SparkLineComponent(Dimension size) {
+        this((Color) null, size);
+    }
+
     
     public SparkLineComponent(Color color) {
         super(color);
