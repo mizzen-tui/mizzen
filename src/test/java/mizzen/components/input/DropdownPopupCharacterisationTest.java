@@ -121,4 +121,20 @@ public class DropdownPopupCharacterisationTest extends TestCase {
 
         assertNotNull(empty);
     }
+
+    /**
+     * Focus arrives at a dropdown (it opens its list and asks for focus in it) and moves on before that request
+     * is handled: the list has closed, so the late request is ignored - it used to throw ("has not been first
+     * added") from the focus manager, as the closed list still counted as the dropdown's popup.
+     */
+    public void testFocusMovingOnBeforeTheListTakesItIsHarmless() throws UnsupportedEncodingException {
+        dropdownInPanel();
+        TextInput after = (TextInput) root.findComponentByName("after");
+        bus.raiseEvent(new RequestFocusEvent(ToFocusable.UTIL.toFocusable(dropdown)));
+        bus.raiseEvent(new RequestFocusEvent(ToFocusable.UTIL.toFocusable(after)));
+        bus.drain();                                    // the dropdown's own request for its list comes last
+
+        assertFalse("the list closed", dropdown.listBoxVisible());
+        assertEquals("after", focusedName());
+    }
 }

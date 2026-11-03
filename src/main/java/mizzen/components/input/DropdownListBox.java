@@ -170,6 +170,16 @@ public class DropdownListBox<T> extends AbstractComponentWrappper<VerticalPanel>
     }
 
     /**
+     * true: TAB / SHIFT-TAB pass it by, and it never takes focus first when a screen opens - a dropdown opens its
+     * list when focus arrives, so a list off to the side (a theme picker) would otherwise open by itself. A click
+     * still opens it. Default false.
+     */
+    public DropdownListBox<T> skippedByTab(boolean skipped) {
+        focus.skippedByTab(skipped);
+        return this;
+    }
+
+    /**
      * Keys the button or the open list didn't use: ESC keeps the selection and closes the list
      * (focus back on the button); UP / DOWN while the list is closed open it.
      */
@@ -599,6 +609,9 @@ public class DropdownListBox<T> extends AbstractComponentWrappper<VerticalPanel>
             return;
         }
         Logging.info("hideListBox()");
+        // no longer part of this dropdown for focus: a request still queued for the list (focus arrived, then moved
+        // on before it was handled) finds no path to it, and the focus manager ignores it
+        Component.UTIL.setPopupOwner(this.getListBoxOrItsScrollPane(), null);
         this.getListBoxParent().remove(this.getListBoxOrItsScrollPane());
         if (this.listBoxScrollPane != null) {
             this.listBox.setParentContainer(null);

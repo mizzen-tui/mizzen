@@ -160,7 +160,7 @@ public class EmbeddedAppTest {
             treePane.setTitle(" Examples ");
             Button learnButton = new Button("Learn", true);   // a toggle: pressed, the learning panel shows
             // the theme: the desktop's - an example that gives no colours takes it too (its app has none of its own)
-            DropdownListBox<Theme> theme = new DropdownListBox<Theme>(themes());
+            DropdownListBox<Theme> theme = new DropdownListBox<Theme>(themes()).skippedByTab(true);   // focus starts in the tree, not here
             theme.setValue(Theme.getDefault());
             theme.onChange((te) -> host.setTheme(theme.getValue()));
             VerticalPanel left = new VerticalPanel();

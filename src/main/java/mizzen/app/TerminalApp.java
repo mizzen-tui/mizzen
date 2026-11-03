@@ -399,10 +399,12 @@ final class TerminalApp implements TUIAppInterface {
         EventHandler raiseTerminateEvent = (e)-> e.getEventBus().raiseEvent(new TerminalEvent<Void>(e.getEventBus(), TYPE.TERMINATE, null));
         if (this.confirmApplicationExitMessage != null) {
             // confirm application exit
+            // the bus taken now: te (the CTRL-C) is over by the time Yes is pressed, and an event over has no bus
+            EventBus bus = te.getEventBus();
             Dialog.question(this.confirmApplicationExitMessage).title(" Yes / No ")
-                  .button("yes", "Yes", (d) -> raiseTerminateEvent.handle(te)).key(KeyStroke.caseInsensitive('y'))
+                  .button("yes", "Yes", (d) -> bus.raiseEvent(new TerminalEvent<Void>(bus, TYPE.TERMINATE, null))).key(KeyStroke.caseInsensitive('y'))
                   .cancel("No", (d) -> { }).key(KeyStroke.caseInsensitive('n'))      // Esc says No too
-                  .show(te.getEventBus(), this.mainApplicationPanel);
+                  .show(bus, this.mainApplicationPanel);
         } else {
             // kill the app by signaling to interested handlers that we are going down
             raiseTerminateEvent.handle(te);
