@@ -994,12 +994,16 @@ public interface ScreenLineSegment extends Rectangle, CleanString  {
                                                      CreateSegmentWithColor createSegment) {
             int[] curlengthCreated = new int[] { 0 };
             Color[] lastColor = new Color[] { initialColor == null ?  Colors.DEFAULT_COLOR : initialColor};
+            // the colour in effect as the line ends - for the next line. Not lastColor: that changes only when text
+            // follows a code, so a code ending the line (the reset after a // comment) would be lost
+            Color[] colorInEffect = new Color[] { lastColor[0] };
             CleanString[] lastSimpleText = new CleanString[] {null};
 
-            ColorParsingUtils.parseColorsAndBuildResult(initialColor, colorCodedOneLineStr, new ColorParsingUtils.ColorColorSegmentBuilder() {
+            Color endColor = ColorParsingUtils.parseColorsAndBuildResult(initialColor, colorCodedOneLineStr, new ColorParsingUtils.ColorColorSegmentBuilder() {
                 @Override
                 public boolean newColorSegment(Color color, CleanString simpleText) {
                     color = color == null ? lastColor[0] : color;
+                    colorInEffect[0] = color;
                     if (simpleText == null) {
                         simpleText = CleanString.UTIL.EMPTY_CLEAN_STRING;
                     }
@@ -1056,7 +1060,10 @@ public interface ScreenLineSegment extends Rectangle, CleanString  {
                 ts.add(segment);
             }
 
-            return new ClippedOneLineColorResult( lastColor[0],curlengthCreated[0]);
+            if (endColor != null) {
+                colorInEffect[0] = endColor;                // includes a code ending the line, with no text after it
+            }
+            return new ClippedOneLineColorResult( colorInEffect[0],curlengthCreated[0]);
         }
 
         public static SegmentsFromStringResult textSegmentsFromStringWithEmbeddedColor(String multiLineString,

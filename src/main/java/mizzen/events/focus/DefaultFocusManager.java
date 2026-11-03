@@ -518,7 +518,8 @@ public class DefaultFocusManager implements FocusManager,
                 return focusableOther;
             }
             Collection<KeyStroke> hotKeys = HasHotKey.UTIL.getAllHotKeys(focusableOther);
-            if (hotKeys.contains(pressedKey)) {
+            // the hot key's equals, not the pressed key's: only a hot key knows it is case insensitive (N and n)
+            if (hotKeys.stream().anyMatch((hotKey) -> hotKey.equals(pressedKey))) {
                 Focusable foundFocusable = HasHotKey.UTIL.getFocusableFromHotKey(focusableOther, pressedKey);
                 if (foundFocusable == null) {
                     continue;   // not usable here - another child may still have it
@@ -542,7 +543,8 @@ public class DefaultFocusManager implements FocusManager,
         }
         Object above = ((Component<?>) child).getParentContainer();
         while (above instanceof Component && !ToFocusable.UTIL.isFocusable(above)) {
-            if (above instanceof HasHotKey && key.equals(((HasHotKey) above).getHotKey())) {
+            KeyStroke hotKey = above instanceof HasHotKey ? ((HasHotKey) above).getHotKey() : null;
+            if (hotKey != null && hotKey.equals(key)) {          // the hot key's equals: it may be case insensitive
                 return true;
             }
             above = ((Component<?>) above).getParentContainer();

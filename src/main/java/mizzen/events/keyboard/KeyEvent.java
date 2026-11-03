@@ -14,10 +14,8 @@ public class KeyEvent extends TerminalEvent<KeyStroke> {
     }
 
     public boolean isKeyStroke(KeyStroke keyStroke) {
-	if (getKeyStroke().equals(keyStroke)) {
-	    return true;
-	}
-        return false;
+        // either side's equals: a case insensitive key (KeyStroke.caseInsensitive) knows N and n, a typed key doesn't
+        return keyStroke != null && (keyStroke.equals(getKeyStroke()) || getKeyStroke().equals(keyStroke));
     }
 
     public String getKeyName() {

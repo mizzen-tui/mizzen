@@ -48,8 +48,10 @@ public interface HasHotKey {
                 @Override
                 public int visit(Object c) {
                     
-                    // equals, not ==: a key typed on the keyboard is a new KeyStroke object
-                    if (c instanceof HasHotKey && hotKey.equals(((HasHotKey)c).getHotKey())) {
+                    // equals, not ==: a key typed on the keyboard is a new KeyStroke object; and the component's
+                    // key's equals, not the typed one's: only it knows it is case insensitive (N and n)
+                    KeyStroke own = c instanceof HasHotKey ? ((HasHotKey) c).getHotKey() : null;
+                    if (own != null && own.equals(hotKey)) {
                         if (c instanceof Focusable) {
                             foundFocusable.add((Focusable)c);
                             return Traverser.STOP_TRAVERSE;

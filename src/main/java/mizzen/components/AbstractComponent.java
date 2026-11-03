@@ -26,8 +26,7 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
     private IScreenLineSegmentsBuffer segments   = new ScreenLineSegmentsBuffer();
 
     private Color                     color;                // its own: from the constructor or setColor; null - its theme's (getColor)
-    private Color                     colorWhileEnabled;    // its own colour, kept while setEnabled(false) shows the disabled one
-    private boolean                   showingDisabled;
+    private boolean                   showingDisabled;      // setEnabled(false): getColor is its theme's disabled colour
     private Theme                     ownTheme;             // set on this component: for it and what it holds (setTheme)
     private Theme                     theme;                // the theme that applies here, as last looked up (getTheme)
     private int                       themeVersion;
@@ -60,7 +59,6 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
 
     protected AbstractComponent(Color color) {
         this.color = ownColor(color);                      // none: its theme's
-        this.colorWhileEnabled = this.color;
         this.setEmptyColor(this.color);
     }
 
@@ -148,15 +146,15 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
     @Override
     public T setColor(Color drawingcolor) {
         this.color = ownColor(drawingcolor);
-        if (!showingDisabled) {
-            colorWhileEnabled = this.color;
-        }
         this.markAsDirty();
         return (T) this;
     }
 
     /** the colour it draws with: its own if one was given (constructor, setColor), else its theme's */
     public Color getColor() {
+        if (showingDisabled) {
+            return getTheme().disabledColor();      // worked out as it is drawn: a later theme reaches it too
+        }
         if (color != null) {
             return color;
         }
@@ -185,9 +183,6 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
     public T setThemeColor(Function<Theme, Color> colorFromTheme) {
         this.colorFromTheme = colorFromTheme;
         this.color = null;
-        if (!showingDisabled) {
-            colorWhileEnabled = null;
-        }
         markAsDirty();
         return (T) this;
     }
@@ -342,18 +337,8 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
         // because setColor looks at this flag
         this.enabled = enabled;
 
-        // disabled: shown in the theme's disabled colour; enabled again: its own colour back (none, if it had none)
-        if (!enabled) {
-            if (!showingDisabled) {
-                showingDisabled = true;
-                Color own = colorWhileEnabled;
-                this.setColor(getTheme().disabledColor());
-                colorWhileEnabled = own;
-            }
-        } else if (showingDisabled) {
-            showingDisabled = false;
-            this.setColor(colorWhileEnabled);
-        }
+        // disabled: getColor is the theme's disabled colour, worked out as it is drawn; its own colour is kept as it is
+        showingDisabled = !enabled;
 
         this.markAsDirty();
     }

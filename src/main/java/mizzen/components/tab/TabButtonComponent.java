@@ -62,7 +62,7 @@ public class TabButtonComponent extends BoundedComponent<TabButtonComponent> imp
     private boolean hilited = false;
     boolean active = false;
     CleanString tabText;
-    Color textActiveTabColor;
+    Color textActiveTabColor;                   // null: the tab's colour in bold, worked out as it is drawn
     TabAction<?> tabAction;
     Focusable meAsFocusable;
     KeyStroke hotKey;
@@ -72,7 +72,6 @@ public class TabButtonComponent extends BoundedComponent<TabButtonComponent> imp
         super(color, new Dimension.Simple(3, tabText.length() + 4));
         this.active = active;
         this.tabText = new CleanString.Simple(tabText);
-        this.textActiveTabColor = color.bold();
         this.tabAction = tabAction;
         this.hotKey = hotKey;
     }
@@ -108,7 +107,7 @@ public class TabButtonComponent extends BoundedComponent<TabButtonComponent> imp
             segments.merge(bottomLine.getSegmentsBuffer());
         }
 
-        TextComponent tc = new TextComponent(active ? textActiveTabColor : tabColor, 1, 2, this.tabText);
+        TextComponent tc = new TextComponent(active && textActiveTabColor != null ? textActiveTabColor : tabColor, 1, 2, this.tabText);
         segments.merge(tc.getSegmentsBuffer());
 
         segments.merge(makeChildComponent(

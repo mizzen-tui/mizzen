@@ -192,6 +192,12 @@ public class ColorParsingUtils {
             
         }
 
+        if (PARSE_STATE == PARSE_COLOR_END) {           // a code ending the string (the reset after a // comment): it
+            int[] codes = new int[codesBufferLen];       // is only built on the next character, and there is none
+            System.arraycopy(codesBuffer, 0, codes, 0, codesBufferLen);
+            color = Colors.ColorFromCodes.instance(codes);
+        }
+
         if (sb.length() > 0) {
             colorColorSegmentBuilder.newColorSegment(color, new CleanString.Simple(sb.toString()));
         }

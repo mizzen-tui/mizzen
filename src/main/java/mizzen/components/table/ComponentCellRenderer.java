@@ -196,8 +196,10 @@ public class ComponentCellRenderer<V> implements CellRenderer {
      * foreground: the background colour as a foreground, read from its codes - background 40-47 is
      * foreground 30-37, 100-107 is 90-97. null: the colour has no background - the selection is only
      * kept (dimmed), its colour a foreground already.
+     * A theme's 24-bit or 256-colour background is read the same way.
      * <pre>
      *     ESC[0;30;103m (black on bright yellow)    ESC[93m (bright yellow)
+     *     ESC[0;38;2;36;41;47;48;2;221;244;255m     ESC[38;2;221;244;255m (Light's row, as a foreground)
      *     ESC[93m (bright yellow)                   null
      * </pre>
      */
@@ -207,11 +209,22 @@ public class ComponentCellRenderer<V> implements CellRenderer {
         if (start < 0 || end < start) {
             return null;
         }
-        for (String code : codes.substring(start + 1, end).split(";")) {
+        String[] parts = codes.substring(start + 1, end).split(";");
+        for (int i = 0; i < parts.length; i++) {
             try {
-                int value = Integer.parseInt(code);
+                int value = Integer.parseInt(parts[i]);
                 if (value >= 40 && value <= 47 || value >= 100 && value <= 107) {
                     return Colors.FgColor.instance(value - 10);
+                }
+                if (value == 48 && i + 4 < parts.length && "2".equals(parts[i + 1])) {        // 24-bit: 48;2;r;g;b
+                    return Colors.ColorFromCodes.instance(new int[] { 38, 2, Integer.parseInt(parts[i + 2]),
+                            Integer.parseInt(parts[i + 3]), Integer.parseInt(parts[i + 4]) });
+                }
+                if (value == 48 && i + 2 < parts.length && "5".equals(parts[i + 1])) {        // 256 colours: 48;5;n
+                    return Colors.ColorFromCodes.instance(new int[] { 38, 5, Integer.parseInt(parts[i + 2]) });
+                }
+                if (value == 38) {
+                    i += i + 1 < parts.length && "5".equals(parts[i + 1]) ? 2 : 4;          // a foreground's numbers: skip them
                 }
             } catch (NumberFormatException notACode) {
                 return null;

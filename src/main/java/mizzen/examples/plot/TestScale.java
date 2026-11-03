@@ -44,6 +44,7 @@ import mizzen.components.plot.shape.catalog.Smiley;
 import mizzen.components.plot.shape.catalog.Spirograph;
 import mizzen.components.plot.shape.catalog.Spring;
 import mizzen.components.plot.shape.catalog.Star;
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Colors;
 import mizzen.events.TimedRequestedController;
 import mizzen.events.EventBus;
@@ -260,7 +261,8 @@ public class TestScale {
             EventHandler downAction,
             EventHandler leftAction,
             EventHandler rightAction) {
-        return new NavButtonsPanel(Colors.DEFAULT_COLOR, upAction, downAction, leftAction, rightAction);
+        return new NavButtonsPanel(Colors.DEFAULT_COLOR, upAction, downAction, leftAction, rightAction)
+                .setButtonThemeColor(Theme::textColor);              // big bordered buttons: an outline, quieter than a fill
     }
     
 

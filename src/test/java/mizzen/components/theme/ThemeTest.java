@@ -115,6 +115,18 @@ public class ThemeTest extends TestCase {
         assertSame("still themed: it had no colour of its own", Colors.BCya, themed.getColor());
     }
 
+    public void testDisabledFollowsATheme() {
+        EventBus bus = new EventBus.STUBBED();
+        Composite panel = new Composite(new Dimension.Simple(2, 20));
+        panel.setTheme(YELLOW_TEXT.withDisabledColor(Colors.IBla));
+        TextComponent own = new TextComponent(Colors.BRed, "own");
+        panel.add(own);
+        own.setEnabled(false, bus);
+        panel.setTheme(CYAN_TEXT.withDisabledColor(Colors.Bla));
+        assertSame("the new theme's disabled colour", Colors.Bla, own.getColor());
+        assertSame("its own colour kept while disabled", Colors.BRed, own.getOwnColor());
+    }
+
     // the colour of the first segment with a background - what a field or button shows
     private static Color firstColor(mizzen.components.Component<?> component) {
         for (ScreenLineSegment segment : component.getSegmentsBuffer().getSegments()) {

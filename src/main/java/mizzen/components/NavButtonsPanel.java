@@ -1,11 +1,13 @@
 package mizzen.components;
 
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import mizzen.components.composite.Composite;
 import mizzen.components.input.ArrowKeys;
 import mizzen.components.input.Button;
 import mizzen.components.input.ParentFocusBehaviour.Entry;
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
 import mizzen.events.EventHandler;
 import mizzen.events.keyboard.Keys;
@@ -62,6 +64,22 @@ public class NavButtonsPanel extends ComponentWithFocus<Composite, NavButtonsPan
                     (te)-> clickDirection.accept( new Vec2.BaseVec2(-1,  0)),  // left
                     (te)-> clickDirection.accept( new Vec2.BaseVec2( 1,  0))   // right
                 );
+    }
+
+    /**
+     * Which of its theme's colours the four buttons take - by default a button's (Theme::buttonColor). Its bordered
+     * buttons are big: an outline, text and frame with no fill, is quieter on a light or coloured screen:
+     * <pre>
+     *     nav.setButtonThemeColor(Theme::textColor);
+     * </pre>
+     */
+    public NavButtonsPanel setButtonThemeColor(Function<Theme, Color> colorFromTheme) {
+        up.setThemeColor(colorFromTheme);
+        down.setThemeColor(colorFromTheme);
+        left.setThemeColor(colorFromTheme);
+        right.setThemeColor(colorFromTheme);
+        this.markAsDirty();
+        return this;
     }
 
     public NavButtonsPanel setDisplayHotKey(boolean displayHotKey) {

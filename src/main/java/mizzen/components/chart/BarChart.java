@@ -11,7 +11,6 @@ import mizzen.components.plot.Pen;
 import mizzen.components.plot.PlotArea;
 import mizzen.components.plot.shape.Polygon;
 import mizzen.controlcodes.color.Color;
-import mizzen.controlcodes.color.Colors;
 import mizzen.events.EventHandler;
 import mizzen.events.Registration;
 import mizzen.events.keyboard.KeyEvent;
@@ -41,7 +40,7 @@ public class BarChart<T> extends AbstractComponentWrappper<PlotArea> implements 
 
     private final ChartItems<T> items = new ChartItems<T>();
     private final List<Polygon> bars = new ArrayList<Polygon>();
-    private Color selectedColor = Colors.BYel;
+    private Color selectedColor;                               // null: its theme's selected colour
 
     /** as the constructor with a colour first, in its theme's colours */
     public BarChart() {
@@ -101,6 +100,11 @@ public class BarChart<T> extends AbstractComponentWrappper<PlotArea> implements 
     public BarChart<T> colors(Color... colors) {
         items.colors(colors);
         return redraw();
+    }
+
+    // its own selected colour, else its theme's - worked out as it is drawn
+    private Color selectedBarColor() {
+        return selectedColor != null ? selectedColor : getTheme().selectedColor();
     }
 
     public BarChart<T> selectedColor(Color selectedColor) {
@@ -183,13 +187,13 @@ public class BarChart<T> extends AbstractComponentWrappper<PlotArea> implements 
             bar.setName(items.label(i));
             bars.add(bar);
             boolean selected = i == items.selected();
-            pen.color(selected ? selectedColor : items.color(i, getTheme())).draw(bar);
+            pen.color(selected ? selectedBarColor() : items.color(i, getTheme())).draw(bar);
 
             String name = items.label(i);
             if (name.length() > nameChars) {
                 name = name.substring(0, nameChars);
             }
-            pen.color(selected ? selectedColor : getColor()).text(i - name.length() * charWidth / 2, -charHeight * 0.75, name, bar);   // its name clicks as the bar
+            pen.color(selected ? selectedBarColor() : getColor()).text(i - name.length() * charWidth / 2, -charHeight * 0.75, name, bar);   // its name clicks as the bar
             if (selected) {
                 String shown = ChartItems.format(value);
                 pen.text(i - shown.length() * charWidth / 2, value + charHeight, shown);

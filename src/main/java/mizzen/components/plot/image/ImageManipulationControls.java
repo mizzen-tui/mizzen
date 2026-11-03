@@ -3,7 +3,10 @@ package mizzen.components.plot.image;
 import mizzen.components.input.OnChangeListeners;
 import mizzen.components.AbstractComponentWithContainer;
 import mizzen.components.ChildComponentManager;
+import mizzen.components.Component;
+import mizzen.components.TextComponent;
 import mizzen.components.composite.Composite;
+import mizzen.components.composite.HorizontalPanel;
 import mizzen.components.composite.VerticalPanel;
 import mizzen.components.input.Button;
 import mizzen.components.input.DropdownListBox;
@@ -23,7 +26,7 @@ public class ImageManipulationControls extends AbstractComponentWithContainer<Co
     private ImageRenderRequest rqst;
 
     public ImageManipulationControls(Color color, ImageRenderRequest rqst) {
-        super(color, new VerticalPanel().setVerticalSpacer(2));
+        super(color, new VerticalPanel());
 
         this.rqst = rqst;
 
@@ -40,7 +43,7 @@ public class ImageManipulationControls extends AbstractComponentWithContainer<Co
             te.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(ImageManipulationControls.this));
         });
 
-        controls.add(imageRendererTypeDDLB);
+        controls.add(labelled("Render as  ", imageRendererTypeDDLB));
 
         DropdownListBox<ImageViewerFactory.RGBToAnsiColorControlCode> colorMapDDLB = new DropdownListBox<ImageViewerFactory.RGBToAnsiColorControlCode>(ImageViewerFactory.colorMap());
         colorMapDDLB.setName("colorMapDDLB");
@@ -53,7 +56,7 @@ public class ImageManipulationControls extends AbstractComponentWithContainer<Co
 
         colorMapDDLB.setColor(color);
 
-        controls.add(colorMapDDLB);
+        controls.add(labelled("Colours    ", colorMapDDLB));
 
         DropdownListBox<ImageViewerFactory.RGBPlotPredicate> plotPredicatesDDLB = new DropdownListBox<ImageViewerFactory.RGBPlotPredicate>(ImageViewerFactory.plotPointPredicateOptions());
 
@@ -69,7 +72,7 @@ public class ImageManipulationControls extends AbstractComponentWithContainer<Co
         });
         plotPredicatesDDLB.setColor(color);
 
-        controls.add(plotPredicatesDDLB);
+        controls.add(labelled("Plot       ", plotPredicatesDDLB));
 
     }
 
@@ -99,13 +102,12 @@ public class ImageManipulationControls extends AbstractComponentWithContainer<Co
             // TODO - need to handle multiple calls and suppress - while existing active 
             showAsDialog(rqst, te, parentPanel, eventHandlerContainer, actionOnChangeHandler); 
         });
-        popControlsButton.setColor(Colors.Yel);
         return popControlsButton;
     }
 
     public static void showAsDialog(ImageRenderRequest rqst, TerminalEvent<?> te, ChildComponentManager<?> parentPanel, EventHandlerContainer eventHandlerContainer, EventHandler actionOnChangeHandler) {
 
-        ImageManipulationControls controls = new ImageManipulationControls(new Colors.FGBGColors(Colors.Bla,Colors.On_Whi), rqst);
+        ImageManipulationControls controls = new ImageManipulationControls(rqst);   // no colour: the dialog's theme
 
         Registration listening = actionOnChangeHandler == null ? Registration.NONE
                 : controls.onChange(actionOnChangeHandler, eventHandlerContainer);
@@ -116,4 +118,8 @@ public class ImageManipulationControls extends AbstractComponentWithContainer<Co
     }
 
 
+    // a label to the left of input, on one line
+    private static HorizontalPanel labelled(String label, Component<?> input) {
+        return new HorizontalPanel().add(new TextComponent(label)).add(input);
+    }
 }

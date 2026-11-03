@@ -188,10 +188,40 @@ public class TUIApp implements TUIAppInterface {
         return (TerminalApp) app;
     }
 
+    /**
+     * Reads the arguments the program was started with. Among them, theme=NAME picks the theme (case does not matter) -
+     * as Theme.setDefault, so an app that sets a theme in code still has its own:
+     * <pre>
+     *     java -cp mizzen.jar mizzen.examples.EmbeddedAppTest theme=Dark
+     * </pre>
+     * Fails, listing the names there are, if no theme has that name. Arguments it doesn't know are left for the app.
+     */
     @Override
     public TUIApp initFromArgs(String[] args) {
         app.initFromArgs(args);
+        Theme fromArgs = themeFromArgs(args);
+        if (fromArgs != null) {
+            Theme.setDefault(fromArgs);
+        }
         return this;
+    }
+
+    // theme=NAME among args; null: none given
+    static Theme themeFromArgs(String[] args) {
+        if (args == null) {
+            return null;
+        }
+        for (String arg : args) {
+            if (arg != null && arg.regionMatches(true, 0, "theme=", 0, 6)) {
+                String name = arg.substring(6);
+                Theme theme = Theme.named(name);
+                if (theme == null) {
+                    throw new IllegalArgumentException("no theme named '" + name + "' - there are " + Theme.standard());
+                }
+                return theme;
+            }
+        }
+        return null;
     }
 
     @Override

@@ -383,6 +383,16 @@ public final class Theme {
         return STANDARD;
     }
 
+    /** the theme with that name, case aside - e.g. from the command line (theme=Dark); null: none */
+    public static Theme named(String name) {
+        for (Theme theme : STANDARD) {
+            if (theme.name().equalsIgnoreCase(name)) {
+                return theme;
+            }
+        }
+        return null;
+    }
+
     /** the theme for components with none from an ancestor or their app */
     public static Theme getDefault() {
         return defaultTheme;
