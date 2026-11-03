@@ -126,7 +126,7 @@ public class BarChartTest {
                         .setDefaultMainApplicationPanel()
                         .confirmOnExit()
                         .setOnReadyStart((tApp) -> {
-                            Button quit = new Button(Colors.BIGre, "Quit");
+                            Button quit = new Button("Quit");
                             quit.setHotKey(Keys.CTRL_C_KEYSTROKE);
                             quit.onChange((te) -> tApp.getTerminateAppHotKeyEventHandler().handle(te));
 
@@ -167,7 +167,7 @@ public class BarChartTest {
         }
 
         Composite appPanel = (Composite) tApp.getMainApplicationPanel();
-        BarChart<Sale> bars = new BarChart<Sale>(Colors.Cya, chartSize(appPanel))
+        BarChart<Sale> bars = new BarChart<Sale>(chartSize(appPanel))
                 .barSize((sale) -> sale.amount)
                 .barLabel((sale) -> sale.region)
                 .setItems(sales);
@@ -211,7 +211,6 @@ public class BarChartTest {
     static Shown renderLegacy(TUIApp tApp) {
         Composite main = (Composite) tApp.getMainApplicationPanel();
         BarChartRandomDataDemo barChartDemo = new BarChartRandomDataDemo(new Dimension.Simple(main.getHeight() - 3, main.getWidth()));
-        barChartDemo.setEmptyColor(Colors.On_Gre);
         main.add(2, 0, barChartDemo);
         barChartDemo.setupTimer(tApp.getEventBus());
         return new Shown(Arrays.<Component<?>>asList(barChartDemo), () -> barChartDemo.tearDownTimer(tApp.getEventBus()));

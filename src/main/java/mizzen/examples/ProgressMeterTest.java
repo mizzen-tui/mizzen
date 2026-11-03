@@ -15,6 +15,7 @@ import mizzen.components.progressmeter.ProgressMeter;
 import mizzen.components.progressmeter.ProgressMeter.Layout;
 import mizzen.components.progressmeter.ProgressMeter.Status;
 import mizzen.components.progressmeter.ProgressMeterParser;
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Colors;
 import mizzen.events.EventBus;
 
@@ -34,33 +35,28 @@ public class ProgressMeterTest {
             .confirmOnExit()
             .setOnReadyStart((tApp) -> {
 
-                Composite panel = new Composite(Colors.DEFAULT_COLOR);
+                Composite panel = new Composite();
                 panel.setBorder(true);
-                panel.setBorderColor(Colors.ICya);
-                panel.setTitle(Colors.ICya, "Progress Meter Test ");
+                panel.setTitle("Progress Meter Test ");
 
-                TextComponent heading = new TextComponent(
-                    Colors.IYel, "Simulated website backup");
+                TextComponent heading = new TextComponent("Simulated website backup").setThemeColor(Theme::statusColor);
 
                 ProgressMeter meter = new ProgressMeter(
                     Colors.DEFAULT_COLOR, BAR_WIDTH);
 
-                TextComponent result = new TextComponent(
-                    Colors.ICya, "Waiting to start...     ");
+                TextComponent result = new TextComponent("Waiting to start...     ").setThemeColor(Theme::emphasisColor);
 
                 panel.add(1, 2, heading);
                 panel.add(3, 2, meter);
                 panel.add(7, 2, result);
 
-                ButtonBar buttonBar = new ButtonBar(Colors.DEFAULT_COLOR)
+                ButtonBar buttonBar = new ButtonBar()
                     .setLeftMostBorderChar((char) 0)
                     .setRightMostBorderChar((char) 0);
 
-                Button directButton = new Button(
-                    Colors.IGre, "Direct API");
+                Button directButton = new Button("Direct API");
 
-                Button parserButton = new Button(
-                    Colors.ICya, "Via Parser");
+                Button parserButton = new Button("Via Parser");
 
                 buttonBar.add(directButton);
                 buttonBar.add(parserButton);

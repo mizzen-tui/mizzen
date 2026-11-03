@@ -52,7 +52,7 @@ public class SparklineTest {
         bannerPanel.setNoBorderChars();
         bannerPanel.addComponent(new TextComponent("Demonstrate Sparkline Component:    "));
         if (terminateAppHotKeyEventHandler != null) {
-            bannerPanel.addButton(Colors.IGre,"CTRL-C",Keys.CTRL_C_KEYSTROKE, (te) -> terminateAppHotKeyEventHandler.handle(te)  );
+            bannerPanel.addButton("CTRL-C",Keys.CTRL_C_KEYSTROKE, (te) -> terminateAppHotKeyEventHandler.handle(te)  );
             bannerPanel.addComponent(new TextComponent(" to quit "));
         }
         EventHandler increase = (te) -> {
@@ -67,9 +67,9 @@ public class SparklineTest {
                 sparkLine1Label.setText("Sparkline : \nheight="+ hiliteSparklineHeight.apply(sparkLine1.getHeight()));
             }
         };
-        bannerPanel.addButton(Colors.IGre,"UP increase", null, increase);
+        bannerPanel.addButton("UP increase", null, increase);
         bannerPanel.addComponent(new TextComponent("/"));
-        bannerPanel.addButton(Colors.IGre,"DOWN decrease", null, decrease);
+        bannerPanel.addButton("DOWN decrease", null, decrease);
         // UP and DOWN only while focus is in this bar - as hot keys they would take the arrows
         // from every other component on the screen (e.g. a text box in another window)
         bannerPanel.focus().handleKeys(AsKeyboardHandler.UTIL.toKeyboardHandler(new KeyInputEventHandler(

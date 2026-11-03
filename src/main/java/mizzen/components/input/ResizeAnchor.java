@@ -19,7 +19,7 @@ public class ResizeAnchor  extends TextComponent implements Focusable , Draggabl
     ChainedEventHandler chainedHandler;
     String baseText;
     String draggingText;
-    Color nonDraggingColor;
+    Color nonDraggingColor;                              // as given: null - its theme's
     Color draggingColor;
     Draggable draggableBehaviour;
     boolean dragging;
@@ -30,7 +30,7 @@ public class ResizeAnchor  extends TextComponent implements Focusable , Draggabl
         this.nonDraggingColor = color;
         this.baseText = text;
         this.draggingText = draggingText;
-        this.draggingColor = draggingColor != null ? draggingColor : color.bold();
+        this.draggingColor = draggingColor;              // null: its colour at the time, in bold (worked out as a drag starts)
         this.draggableBehaviour = draggableBehaviour;
         this.setFillOnClear(false);
     }
@@ -41,7 +41,7 @@ public class ResizeAnchor  extends TextComponent implements Focusable , Draggabl
         this.nonDraggingColor = color;
         this.baseText = text;
         this.draggingText = draggingText;
-        this.draggingColor = draggingColor != null ? draggingColor : color.bold();
+        this.draggingColor = draggingColor;              // null: its colour at the time, in bold (worked out as a drag starts)
         draggableBehaviour = new DragAndResizeComponentBehaviour(componentToResize, this);
         this.setFillOnClear(false);
     }
@@ -92,7 +92,7 @@ public class ResizeAnchor  extends TextComponent implements Focusable , Draggabl
 
     private void setDisplayAttributesOnDragState() {
         if (dragging) {
-            this.setColor(draggingColor);
+            this.setColor(draggingColor != null ? draggingColor : getColor().bold());
             this.setText(draggingText);
         } else {
             this.setColor(nonDraggingColor);

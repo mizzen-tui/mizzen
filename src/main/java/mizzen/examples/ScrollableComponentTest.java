@@ -12,8 +12,6 @@ import mizzen.components.frameset.HorizontalSplitter;
 import mizzen.components.frameset.VerticalSplitter;
 import mizzen.components.scroll.ScrollableComponent;
 import mizzen.components.scroll.SearchFunctionForScrollableComponent;
-import mizzen.controlcodes.color.Color;
-import mizzen.controlcodes.color.Colors;
 import mizzen.events.EventBus;
 import mizzen.events.TimedRequestedController;
 import mizzen.events.keyboard.Keys;
@@ -45,11 +43,10 @@ public class ScrollableComponentTest {
                 return new Dimension.Simple( ((int)(tApp.getCanvas().getHeight()*.7)), tApp.getCanvas().getWidth()/2 -3);
             };
             
-            TextComponent largeTextComponent = new TextViewer().getComponent(Colors.Gre, tApp.getCanvas().getWidth()-2);
+            TextComponent largeTextComponent = new TextViewer().getComponent(tApp.getCanvas().getWidth()-2);
             String originalLargeText = largeTextComponent.getText();
    
-            ScrollableComponent sc1 = new ScrollableComponent(Colors.Gre, 
-                                                                calcScrollableDimension.get(), 
+            ScrollableComponent sc1 = new ScrollableComponent(calcScrollableDimension.get(), 
                                                                 largeTextComponent);
 
             TimedRequestedController resizeWordWrapThrottler = new TimedRequestedController((te)->{
@@ -67,15 +64,15 @@ public class ScrollableComponentTest {
             sc1.setName("ScrollableComponent-sc1");
             SearchFunctionForScrollableComponent.addFinderToScrollable(sc1.asSearchableView());  
 
-            Composite brailleContainer = new Composite(Colors.Blu).setBounds(Math.max(0, tApp.getCanvas().getHeight()-7), Math.max(0, tApp.getCanvas().getWidth()/2 -2));   // none in a small terminal
+            Composite brailleContainer = new Composite().setBounds(Math.max(0, tApp.getCanvas().getHeight()-7), Math.max(0, tApp.getCanvas().getWidth()/2 -2));   // none in a small terminal
             brailleDemoSetup(brailleContainer, tApp.getEventBus());
-            ScrollableComponent sc2 = new ScrollableComponent(Colors.Blu, calcScrollableDimension.get(), brailleContainer);
+            ScrollableComponent sc2 = new ScrollableComponent(calcScrollableDimension.get(), brailleContainer);
             sc2.setName("ScrollableComponent-sc2");
             sc2.appendOnResizeRule((newSize)->{
                 brailleContainer.resize(newSize);
             });
 
-            Composite  lineChart = new Composite(Colors.Cya);
+            Composite  lineChart = new Composite();
             lineChart.setBorder(false);
             lineChartDemoSetup(lineChart, tApp.getEventBus());
 
@@ -87,23 +84,23 @@ public class ScrollableComponentTest {
                 return new Dimension.Simple( ((int)(tApp.getCanvas().getHeight() - calcScrollableDimension.get().getHeight()  )), sc2.getWidth());
             };
 
-            BarChartRandomDataDemo  barChart = new BarChartRandomDataDemo(Colors.Cya, barChartDim.get()).setupTimer(tApp.getEventBus());
+            BarChartRandomDataDemo  barChart = new BarChartRandomDataDemo(barChartDim.get()).setupTimer(tApp.getEventBus());
 
             lineChart.resize(lineChartDim.get());
             barChart.resize(barChartDim.get());
 
             Dimension frameSetSizeCalculator = new Dimension.SupplierAsDimension(()-> new Dimension.Simple( tApp.getDimensions()));
-            HorizontalSplitter horizontalSplitterTop = new HorizontalSplitter(Colors.Blu, new Dimension.Simple(frameSetSizeCalculator.getHeight()/2, frameSetSizeCalculator.getWidth() )).setBorder(false);
+            HorizontalSplitter horizontalSplitterTop = new HorizontalSplitter(new Dimension.Simple(frameSetSizeCalculator.getHeight()/2, frameSetSizeCalculator.getWidth() )).setBorder(false);
 
             horizontalSplitterTop.addComponent(sc1);
             horizontalSplitterTop.addComponent(sc2);
 
-            HorizontalSplitter horizontalSplitterBottom = new HorizontalSplitter(Colors.Blu, new Dimension.Simple(frameSetSizeCalculator.getHeight()/2, frameSetSizeCalculator.getWidth() )).setBorder(false);
+            HorizontalSplitter horizontalSplitterBottom = new HorizontalSplitter(new Dimension.Simple(frameSetSizeCalculator.getHeight()/2, frameSetSizeCalculator.getWidth() )).setBorder(false);
 
             horizontalSplitterBottom.addComponent(lineChart);
             horizontalSplitterBottom.addComponent(barChart);
 
-            VerticalSplitter vSplitter = new VerticalSplitter(Colors.Blu, frameSetSizeCalculator);
+            VerticalSplitter vSplitter = new VerticalSplitter(frameSetSizeCalculator);
             vSplitter.addComponent(horizontalSplitterTop);
             vSplitter.addComponent(horizontalSplitterBottom);
 
@@ -165,8 +162,8 @@ public class ScrollableComponentTest {
     
     static class TextViewer {
 
-        public TextComponent getComponent(Color color, int width) {
-            TextComponent viewable = new TextComponent(color, readLargeSampleFile(width));
+        public TextComponent getComponent(int width) {
+            TextComponent viewable = new TextComponent(readLargeSampleFile(width));
             return viewable;
         }
 //

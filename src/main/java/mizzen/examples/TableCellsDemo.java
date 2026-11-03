@@ -16,6 +16,7 @@ import mizzen.components.table.CellRenderers;
 import mizzen.components.table.ObjectTableModel;
 import mizzen.components.table.TableComponent;
 import mizzen.components.table.TableComponent.TableLinesStyle;
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Colors;
 import mizzen.examples.Parts.Part;
 
@@ -65,7 +66,7 @@ public class TableCellsDemo {
                 .column("By region", (s) -> s)
                         .renderer(CellRenderers.table(Colors.Cya, (Stock s) -> s.byRegion()))
                 .setRows(STOCK);
-        TableComponent<Stock> stock = new TableComponent<Stock>(Colors.Yel, stockColumns);
+        TableComponent<Stock> stock = new TableComponent<Stock>(stockColumns);
         stock.setLinesStyle(TableLinesStyle.ALL);
 
         ObjectTableModel<Picture> pictureColumns = new ObjectTableModel<Picture>()
@@ -74,14 +75,14 @@ public class TableCellsDemo {
                 .column("Name", (p) -> p.name)
                 .column("Size", (p) -> p.image.getWidth() + " x " + p.image.getHeight() + " pixels")
                 .setRows(pictures());
-        TableComponent<Picture> pictures = new TableComponent<Picture>(Colors.Cya, pictureColumns);
+        TableComponent<Picture> pictures = new TableComponent<Picture>(pictureColumns);
         pictures.setLinesStyle(TableLinesStyle.ALL);
 
         VerticalSplitter both = PartsShopDemo.aboveBelowWithSplitter(stock, pictures);
         both.onResizeExpandDown(stock, 60);
 
         VerticalPanel panel = new VerticalPanel();
-        panel.add(new TextComponent(Colors.BWhi, " Each column draws its cells its own way - text, drawings, meters, sparklines, tables, images"));
+        panel.add(new TextComponent(" Each column draws its cells its own way - text, drawings, meters, sparklines, tables, images").setThemeColor(Theme::strongColor));
         panel.add(both);
         panel.onResizeExpandDownAndRight(both);
         return panel;

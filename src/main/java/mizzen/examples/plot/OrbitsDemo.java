@@ -68,7 +68,7 @@ public class OrbitsDemo {
 
                     TextComponent status = new TextComponent(" Click a planet (or its name)");
 
-                    PlotArea plot = new PlotArea(Colors.Gre, new Dimension.Simple(24, 80))
+                    PlotArea plot = new PlotArea(new Dimension.Simple(24, 80))
                             .showing(-5, 5, -5, 5)
                             .scaling(PlotArea.Scaling.EQUAL)
                             .onDraw((pen) -> drawSystem(pen, time[0], displayName[0]));
@@ -106,12 +106,12 @@ public class OrbitsDemo {
                     HorizontalPanel controlsPanel = new HorizontalPanel();
                     controlsPanel.add(new TextComponent(" Orbits: "));
                     controlsPanel.add(controls);
-                    VerticalPanel windowFooter = new VerticalPanel(Colors.IBla);
+                    VerticalPanel windowFooter = new VerticalPanel();
                     windowFooter.add(controlsPanel);
                     windowFooter.add(status);
                     windowFooter.setTitle("Controls:");
 
-                    WindowFrame window = new WindowFrame(Colors.Gre, "The inner planets and Jupiter (not to scale) - drag the corner to resize", plot);
+                    WindowFrame window = new WindowFrame("The inner planets and Jupiter (not to scale) - drag the corner to resize", plot);
                     window.setFooterPanel(windowFooter);
                     tApp.getMainApplicationPanel().add(2, 0, window);
                 })

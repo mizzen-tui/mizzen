@@ -9,6 +9,7 @@ import mizzen.components.composite.VerticalPanel;
 import mizzen.components.input.Button;
 import mizzen.components.input.TextInput;
 import mizzen.components.modal.Dialog;
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Colors;
 import mizzen.events.keyboard.KeyStroke;
 import mizzen.geom.Dimension;
@@ -33,7 +34,7 @@ public class DialogDemo {
     }
 
     private final TUIApp app;
-    private final TextComponent outcome = new TextComponent(Colors.IGre, "Nothing yet");
+    private final TextComponent outcome = new TextComponent("Nothing yet").setThemeColor(Theme::statusColor);
 
     public static void main(String[] args) throws IOException {
         new DialogDemo(new TUIApp(args)).start();
@@ -46,7 +47,7 @@ public class DialogDemo {
     void start() {
         app.setDefaultMainApplicationPanel().confirmOnExit().setOnReadyStart((tApp) -> {
             VerticalPanel page = new VerticalPanel().setVerticalSpacer(1);
-            page.add(new TextComponent(Colors.BYel, "Dialogs - pick one (TAB or arrows, then Enter)"));
+            page.add(new TextComponent("Dialogs - pick one (TAB or arrows, then Enter)").setThemeColor(Theme::headingColor));
             VerticalPanel choices = new VerticalPanel();
             choices.add(button("1  Alert", this::alert));
             choices.add(button("2  Error", this::error));
@@ -86,7 +87,7 @@ public class DialogDemo {
 
     /** a field in the middle: focus starts there, and Enter in it presses OK */
     private void yourName() {
-        TextInput name = new TextInput(Colors.IYel, 20);
+        TextInput name = new TextInput(20);
         show(Dialog.question("What's your name?").title("Welcome")
                 .add("Name: ", name)
                 .button("ok", "OK", (d) -> say("Hello " + name.getText()))
@@ -95,7 +96,7 @@ public class DialogDemo {
 
     /** Run can't be pressed until the word is typed */
     private void typeToConfirm() {
-        TextInput word = new TextInput(Colors.IYel, 10);
+        TextInput word = new TextInput(10);
         String command = "sudo -n /opt/wp-ops/bin/wp_backup_server.sh FORCE --progress";
         show(Dialog.warning("Runs on the live server and takes about 3 minutes.\nIt can't be cancelled once started.\n\n  " + command)
                 .title("Back up production")
@@ -124,7 +125,7 @@ public class DialogDemo {
 
     /** Reset clears the field and the dialog stays open */
     private void withReset() {
-        TextInput note = new TextInput(Colors.IYel, 30);
+        TextInput note = new TextInput(30);
         note.setText("type here, then Reset");
         show(Dialog.question("A note for the log").title("Note")
                 .add("Note: ", note)
@@ -135,7 +136,7 @@ public class DialogDemo {
 
     /** any component in the middle - here a chart, with buttons that change it and leave it open */
     private void chartTool() {
-        LineChart chart = new LineChart(Colors.Cya, new Dimension.Simple(10, 56)).series("size", Colors.BCya).legend(false);
+        LineChart chart = new LineChart(new Dimension.Simple(10, 56)).series("size", Colors.BCya).legend(false);
         for (int day = 0; day < 30; day++) {
             chart.add("size", day, 1.9 + day * day * 0.0001);
         }
@@ -150,7 +151,7 @@ public class DialogDemo {
     // ---- helpers
 
     private Button button(String label, Runnable opens) {
-        Button button = new Button(Colors.BWhi, label);
+        Button button = new Button(label);
         button.onChange((te) -> opens.run());
         return button;
     }

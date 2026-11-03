@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import mizzen.app.TUIApp;
+import mizzen.components.theme.Theme;
 import mizzen.examples.Parts;
 import mizzen.examples.Parts.Part;
 import mizzen.components.TextComponent;
@@ -15,7 +16,6 @@ import mizzen.components.input.form.Form;
 import mizzen.components.input.tree.DefaultTreeNode;
 import mizzen.components.input.tree.TreeView;
 import mizzen.components.plot.PlotArea;
-import mizzen.controlcodes.color.Colors;
 import mizzen.geom.Dimension;
 
 /**
@@ -75,7 +75,7 @@ public class FormTry {
 
     /** where a picked part is drawn: a plot that draws the order's part, or nothing for a group */
     static PlotArea preview(Order order) {
-        return new PlotArea(Colors.Gre, new Dimension.Simple(9, 24))
+        return new PlotArea(new Dimension.Simple(9, 24))
                 .showing(-1.3, 1.3, -1.3, 1.3)
                 .scaling(PlotArea.Scaling.EQUAL)
                 .axes(false)
@@ -93,7 +93,7 @@ public class FormTry {
                 .setDefaultMainApplicationPanel()
                 .setOnReadyStart((tApp) -> {
                     Order order = new Order();
-                    TextComponent result = new TextComponent(Colors.IGre, " Fill it in, then Order");
+                    TextComponent result = new TextComponent(" Fill it in, then Order").setThemeColor(Theme::statusColor);
                     TreeView<DefaultTreeNode<Object>> catalogue = new TreeView<DefaultTreeNode<Object>>(Parts.CATALOGUE.asModel());
                     catalogue.expandAll();
                     PlotArea picture = preview(order);

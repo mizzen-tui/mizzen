@@ -26,6 +26,7 @@ import mizzen.components.plot.PlotArea;
 import mizzen.components.table.ObjectTableModel;
 import mizzen.components.table.TableComponent;
 import mizzen.components.table.TableComponent.TableLinesStyle;
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Colors;
 import mizzen.geom.Dimension;
 
@@ -67,17 +68,17 @@ public class PartsShopDemo {
 
         // ---- the parts
 
-        TextComponent summary = new TextComponent(Colors.BWhi, "");
+        TextComponent summary = new TextComponent("").setThemeColor(Theme::strongColor);
 
         ObjectTableModel<Sale> salesModel = salesColumns().setRows(sales);
-        TableComponent<Sale> salesTable = new TableComponent<Sale>(Colors.Cya, salesModel);
+        TableComponent<Sale> salesTable = new TableComponent<Sale>(salesModel);
         salesTable.setLinesStyle(TableLinesStyle.HEADER_ALL_AND_BORDER);
 
         ObjectTableModel<SaleItem> itemsModel = itemsColumns();
-        TableComponent<SaleItem> itemsTable = new TableComponent<SaleItem>(Colors.Yel, itemsModel);
+        TableComponent<SaleItem> itemsTable = new TableComponent<SaleItem>(itemsModel);
         itemsTable.setLinesStyle(TableLinesStyle.HEADER_ALL_AND_BORDER);
 
-        DonutChart<Status> shippedChart = new DonutChart<Status>(Colors.Gre)
+        DonutChart<Status> shippedChart = new DonutChart<Status>()
                 .sliceSize((s) -> s == Status.SHIPPED ? count(sales, true) : count(sales, false))
                 .sliceLabel((s) -> s == Status.SHIPPED ? "Shipped" : "Not shipped")
                 .colors(Colors.BGre, Colors.BYel)
@@ -88,7 +89,7 @@ public class PartsShopDemo {
                 .view("Part", (i) -> i.part.name + "  at " + money(i.part.price))
                 .number("Quantity", "quantity").validate((Integer q) -> q != null && q >= 1, "1 or more");
 
-        PlotArea drawing = new PlotArea(Colors.Gre)
+        PlotArea drawing = new PlotArea()
                 .showing(-1.3, 1.3, -1.3, 1.3)                  // x and y from -1.3 to 1.3: a part, about 1 from its middle, fits
                 .scaling(PlotArea.Scaling.EQUAL)
                 .axes(false)
@@ -160,7 +161,7 @@ public class PartsShopDemo {
     // ---- helpers: no state
 
     static HorizontalSplitter sideBySideWithSplitter(Component<?> left, Component<?> right) {
-        HorizontalSplitter split = new HorizontalSplitter(Colors.BBlu);
+        HorizontalSplitter split = new HorizontalSplitter();
         split.setBorder(false);
         split.addComponent(left);
         split.addComponent(right);
@@ -168,7 +169,7 @@ public class PartsShopDemo {
     }
 
     static VerticalSplitter aboveBelowWithSplitter(Component<?> upper, Component<?> lower) {
-        VerticalSplitter split = new VerticalSplitter(Colors.BBlu);
+        VerticalSplitter split = new VerticalSplitter();
         split.addComponent(upper);
         split.addComponent(lower);
         return split;

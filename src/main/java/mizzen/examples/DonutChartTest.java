@@ -92,7 +92,7 @@ public class DonutChartTest {
                                          new Disk("/opt", 80), new Disk("/data", 410));
 
         Composite appPanel = (Composite) tApp.getMainApplicationPanel();
-        DonutChart<Disk> donut = new DonutChart<Disk>(Colors.Gre, chartSize(appPanel))
+        DonutChart<Disk> donut = new DonutChart<Disk>(chartSize(appPanel))
                 .sliceSize((d) -> d.usedGb)
                 .sliceLabel((d) -> d.mount)
                 .setItems(disks);
@@ -131,7 +131,7 @@ public class DonutChartTest {
 
         HorizontalPanel userControls = new HorizontalPanel().setHorizontalSpacer(3);
         userControls.setEmptyChar('░');
-        Button stopButton = new Button(Colors.BGre,"Stop");
+        Button stopButton = new Button("Stop");
         stopButton.setHotKey(Keys.CTRL_C_KEYSTROKE).setDisplayHotKey(true);
         stopButton.onChange( tApp.getTerminateAppHotKeyEventHandler()  );
         TextInputInteger dataPointTextBox = new TextInputInteger(3);

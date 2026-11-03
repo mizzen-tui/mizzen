@@ -8,7 +8,6 @@ import mizzen.components.input.DropdownListBox;
 import mizzen.components.input.ListBox;
 import mizzen.components.input.TextInput;
 import mizzen.components.scroll.ScrollableComponent;
-import mizzen.controlcodes.color.Colors;
 import mizzen.geom.Dimension;
 import mizzen.geom.Rectangle.Simple;
 import mizzen.util.Logging;
@@ -27,8 +26,7 @@ public class DropdownListBoxSimpleTest {
         .setOnReadyStart((tApp)-> {
 
             VerticalPanel vp = new VerticalPanel();
-            vp.setTitle(Colors.IGre, "Title");
-            vp.setBorderColor(Colors.IRed);
+            vp.setTitle("Title");
             vp.setVerticalSpacer(0);
 
             HorizontalPanel hpText = new HorizontalPanel();
@@ -39,7 +37,6 @@ public class DropdownListBoxSimpleTest {
             
             HorizontalPanel hpLists = new HorizontalPanel();
             hpLists.setBorder(true);
-            hpLists.setBorderColor(Colors.BCya);
 
             hpLists.add(new TextComponent("Here is a test of dropdown listboxes"));
 
@@ -50,11 +47,11 @@ public class DropdownListBoxSimpleTest {
 
             vp.add(hpLists);
             ListBox<String> lb1 = ListBox.fromStrings( new String[] {"AAAAAAAAA","B","C","D","E"});
-            ScrollableComponent lb1_sc = new ScrollableComponent(Colors.DEFAULT_COLOR, new Dimension.Simple(4, lb1.getWidth()), lb1).removeFooter();
+            ScrollableComponent lb1_sc = new ScrollableComponent(new Dimension.Simple(4, lb1.getWidth()), lb1).removeFooter();
             vp.add(lb1_sc);
             vp.add(new TextInput("A TextInput Component"));
-            vp.add(DropdownListBox.fromStrings(COLOURS).setTitle(Colors.BIYel, "Colours"));
-            vp.add(ListBox.fromStrings(PLANETS).setTitle(Colors.IBlu, "Planets"));
+            vp.add(DropdownListBox.fromStrings(COLOURS).setTitle("Colours"));
+            vp.add(ListBox.fromStrings(PLANETS).setTitle("Planets"));
 
             tApp.getMainApplicationPanel().add(vp);
 

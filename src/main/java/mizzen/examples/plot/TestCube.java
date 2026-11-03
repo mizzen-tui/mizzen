@@ -57,7 +57,7 @@ public class TestCube {
 
                     VerticalPanel vpMainPanel = new VerticalPanel().setVerticalSpacer(1);
 
-                    BrailleGrid grid = new BrailleGrid(Colors.BGre, gridSize);
+                    BrailleGrid grid = new BrailleGrid(gridSize);
                     // Cube3D cube3D = new Cube3D(50, Vec3.ZERO, Colors.BYel, Colors.BBlu);
                     // Sphere3D sphere3D = new Sphere3D(30, Vec3.ZERO, 15, Colors.IYel);
                     Cube3D cube3D = new Cube3D(50, new Vec3.BaseVec3(-60, 0, 0), Colors.BYel, Colors.BBlu);

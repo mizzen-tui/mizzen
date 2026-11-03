@@ -41,7 +41,8 @@ public final class Theme {
             Colors.DEFAULT_COLOR, Colors.DEFAULT_COLOR, Colors.DEFAULT_COLOR, Colors.DEFAULT_COLOR,
             Colors.DEFAULT_DISABLED_COLOR, Colors.BIRed, Colors.IGre, new Colors.FGBGColors(Colors.IYel))
             .withSubheadingColor(Colors.BCya).withMinorHeadingColor(Colors.BGre).withStrongColor(Colors.BWhi)
-            .withEmphasisColor(Colors.Cya).withLinkColor(Colors.UCya).withCodeColor(Colors.Yel).withDimColor(Colors.IBla);
+            .withEmphasisColor(Colors.Cya).withLinkColor(Colors.UCya).withCodeColor(Colors.Yel).withDimColor(Colors.IBla)
+            .withStatusColor(Colors.IGre);
 
     // The themes below are 24-bit colour (most terminals today: PuTTY 0.71+, xterm, Windows Terminal, iTerm2). Each is low
     // contrast between its blocks: a background that is not pure black, white or blue; fields one step off it; buttons
@@ -56,7 +57,8 @@ public final class Theme {
             0x545D68, 0x636E7B,                                          // border, disabled
             0xF47067, 0x8DDB8C,                                          // error, success
             0xCDD9E5, 0x2E4A6E)                                          // selected: text on row
-            .documents(0x22272E, 0x96D0FF, 0xCDD9E5, 0xCDD9E5, 0xDCBDFB, 0x6CB6FF, 0xF69D50, 0x2D333B, 0x768390);
+            .documents(0x22272E, 0x96D0FF, 0xCDD9E5, 0xCDD9E5, 0xDCBDFB, 0x6CB6FF, 0xF69D50, 0x2D333B, 0x768390)
+            .withStatusColor(rgb(0x6BC9A7, 0x22272E));
 
     /** paper: dark text on off-white, blue accent, fields and buttons a shade or two darker */
     public static final Theme LIGHT = rgbTheme("Light", 0xF6F8FA,
@@ -67,7 +69,8 @@ public final class Theme {
             0xAFB8C1, 0x8C959F,
             0xCF222E, 0x1A7F37,
             0x24292F, 0xDDF4FF)
-            .documents(0xF6F8FA, 0x0550AE, 0x24292F, 0x1F2328, 0x8250DF, 0x0969DA, 0x953800, 0xEAEEF2, 0x6E7781);
+            .documents(0xF6F8FA, 0x0550AE, 0x24292F, 0x1F2328, 0x8250DF, 0x0969DA, 0x953800, 0xEAEEF2, 0x6E7781)
+            .withStatusColor(rgb(0x1B7C83, 0xF6F8FA));
 
     /** the classic blue screen, softened: navy, warm yellow headings, fields a lighter blue, green buttons */
     public static final Theme CLASSIC = rgbTheme("Classic", 0x1D3268,
@@ -78,7 +81,8 @@ public final class Theme {
             0x7A8CC4, 0x7F8BB0,
             0xFF8A80, 0x9BE29B,
             0xFFFFFF, 0x34539E)
-            .documents(0x1D3268, 0x9FD3FF, 0xFFFFFF, 0xFFFFFF, 0xC9B8FF, 0x8FD6FF, 0xF2D06B, 0x2A4585, 0x8E9CC9);
+            .documents(0x1D3268, 0x9FD3FF, 0xFFFFFF, 0xFFFFFF, 0xC9B8FF, 0x8FD6FF, 0xF2D06B, 0x2A4585, 0x8E9CC9)
+            .withStatusColor(rgb(0x8FE3C2, 0x1D3268));
 
     private static final List<Theme> STANDARD = Collections.unmodifiableList(Arrays.asList(LEGACY, DARK, LIGHT, CLASSIC));
 
@@ -100,6 +104,7 @@ public final class Theme {
     private Color disabledColor;
     private Color errorColor;
     private Color successColor;
+    private Color statusColor;          // what just happened: a status line, a result
     private Color selectedColor;        // the picked row of a list, tree or table
 
     // documents (markdown, help text): each falls back to a colour above when a theme leaves it out
@@ -172,6 +177,7 @@ public final class Theme {
     public Color disabledColor()       { return disabledColor; }
     public Color errorColor()          { return errorColor; }
     public Color successColor()        { return successColor; }
+    public Color statusColor()         { return statusColor != null ? statusColor : successColor; }
     public Color selectedColor()       { return selectedColor; }
     public Color subheadingColor()     { return subheadingColor != null ? subheadingColor : headingColor; }
     public Color minorHeadingColor()   { return minorHeadingColor != null ? minorHeadingColor : headingColor; }
@@ -199,6 +205,7 @@ public final class Theme {
     public Theme withDisabledColor(Color color)        { return with((t) -> t.disabledColor = color); }
     public Theme withErrorColor(Color color)           { return with((t) -> t.errorColor = color); }
     public Theme withSuccessColor(Color color)         { return with((t) -> t.successColor = color); }
+    public Theme withStatusColor(Color color)          { return with((t) -> t.statusColor = color); }
     public Theme withSelectedColor(Color color)        { return with((t) -> t.selectedColor = color); }
     public Theme withSubheadingColor(Color color)      { return with((t) -> t.subheadingColor = color); }
     public Theme withMinorHeadingColor(Color color)    { return with((t) -> t.minorHeadingColor = color); }
@@ -218,6 +225,7 @@ public final class Theme {
         copy.linkColor = linkColor;
         copy.codeColor = codeColor;
         copy.dimColor = dimColor;
+        copy.statusColor = statusColor;
         change.accept(copy);
         return copy;
     }

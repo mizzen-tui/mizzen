@@ -83,7 +83,7 @@ public class LineChartTest {
             lc.setSeriesColor("cos", Colors.Blu);
             lc.setTitle(" Line Chart Demo's ");
 
-            menuButtonBar = new ButtonBar(Colors.BIBla);
+            menuButtonBar = new ButtonBar();
             menuButtonBar.setNoBorderChars();
 
             getLineChartPanelComponent().add(lc);
@@ -303,7 +303,7 @@ public class LineChartTest {
     /** the new chart: sine (filled), cosine, and a series fed a point every 200 ms (the latest 120 kept) */
     static Shown renderNew(TUIApp tApp) {
         Composite appPanel = (Composite) tApp.getMainApplicationPanel();
-        LineChart chart = new LineChart(Colors.Gre, new Dimension.Simple(Math.max(10, appPanel.getHeight() - 4), appPanel.getWidth()))
+        LineChart chart = new LineChart(new Dimension.Simple(Math.max(10, appPanel.getHeight() - 4), appPanel.getWidth()))
                 .series("sine", Colors.Blu)
                 .series("cosine", Colors.BYel)
                 .series("live", Colors.BRed);

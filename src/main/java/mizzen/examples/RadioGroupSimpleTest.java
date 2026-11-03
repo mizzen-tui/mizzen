@@ -7,7 +7,7 @@ import mizzen.components.TextComponent;
 import mizzen.components.composite.VerticalPanel;
 import mizzen.components.input.RadioGroup;
 import mizzen.components.input.TextInput;
-import mizzen.controlcodes.color.Colors;
+import mizzen.components.theme.Theme;
 import mizzen.events.keyboard.Keys;
 
 /**
@@ -28,8 +28,8 @@ public class RadioGroupSimpleTest {
                RadioGroup<String> colour = RadioGroup.horizontal("Red", "Green", "Blue").setLabel("Colour");
                RadioGroup<Boolean> wifi = RadioGroup.onOff("Wifi", true).setHotKey(Keys.F2_KEYSTROKE);
                RadioGroup<String> plain = RadioGroup.horizontal("Yes", "No").setLabel("ASCII").asciiStyle();
-               TextInput name = new TextInput(Colors.IYel, 15);
-               TextComponent values = new TextComponent(Colors.IGre, "");
+               TextInput name = new TextInput(15);
+               TextComponent values = new TextComponent("").setThemeColor(Theme::statusColor);
 
                Runnable showValues = () -> values.setTextAndResize("size=" + size.getValue() + "  colour=" + colour.getValue()
                                                                    + "  wifi=" + wifi.getValue() + "  ascii=" + plain.getValue());
@@ -40,7 +40,7 @@ public class RadioGroupSimpleTest {
                plain.onChange((te) -> showValues.run());
 
                VerticalPanel form = new VerticalPanel();
-               form.add(new TextComponent(Colors.ICya, "TAB between groups, arrows choose, F2 toggles Wifi, F5 cycles Size, CTRL-C quits"));
+               form.add(new TextComponent("TAB between groups, arrows choose, F2 toggles Wifi, F5 cycles Size, CTRL-C quits").setThemeColor(Theme::emphasisColor));
                form.add(new TextComponent(""));
                form.add(new TextComponent("Size"));
                form.add(size);

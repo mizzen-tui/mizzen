@@ -11,7 +11,6 @@ import mizzen.components.frameset.FrameSet;
 import mizzen.components.input.Button;
 import mizzen.components.input.CheckBoxInput;
 import mizzen.components.input.MultiLineTextInput;
-import mizzen.controlcodes.color.Colors;
 import mizzen.events.EventHandler;
 import mizzen.events.keyboard.Keys;
 import mizzen.geom.Dimension;
@@ -31,11 +30,10 @@ public class HorizontalSplitterTest {
         .confirmOnExit()
         .setOnReadyStart((tApp)-> {
 
-            ButtonBar controls = new ButtonBar(Colors.BCya, "controls").setNoBorderChars();
+            ButtonBar controls = new ButtonBar("controls").setNoBorderChars();
 
-            FrameSet fs = new FrameSet(Colors.BIWhi, new Dimension.Simple(30,70));
+            FrameSet fs = new FrameSet(new Dimension.Simple(30,70));
             fs.setBorder(true);
-            fs.setEmptyColor(Colors.On_IBla);
             fs.setFillOnClear(true);
 
             Composite first = new VerticalPanel(); //new TextComponent("ABC-123");
@@ -54,7 +52,6 @@ public class HorizontalSplitterTest {
             third.add(2,1, cb_1);
             third.add(3,1, new MultiLineTextInput());
 
-            third.setEmptyColor(Colors.On_Yel);
             third.setFillOnClear(true);
 
             fs.addRight(third, second, true);
@@ -79,7 +76,7 @@ public class HorizontalSplitterTest {
                 fs.moveRight(1, second, third);
             };         
 
-            WindowFrame wf = new WindowFrame(Colors.IBlu, "A test of frames", fs);
+            WindowFrame wf = new WindowFrame("A test of frames", fs);
 
             controls.addComponent(new TextComponent("Horizontal Splitter Test"));
             controls.addComponent(new TextComponent("  Splitter-1 "));

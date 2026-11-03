@@ -7,7 +7,8 @@ import mizzen.components.BorderedComponent;
 import mizzen.components.ButtonBar;
 import mizzen.components.TextComponent;
 import mizzen.components.modal.Dialog;
-import mizzen.controlcodes.color.Colors;
+import mizzen.components.theme.Theme;
+import mizzen.controlcodes.color.Color;
 import mizzen.events.keyboard.KeyInputEventHandler;
 import mizzen.events.keyboard.Keys;
 import mizzen.geom.Dimension;
@@ -24,10 +25,10 @@ public class ButtonBarTest {
                 .confirmOnExit()
                 .setOnReadyStart((tApp) -> {
 
-                    TextComponent statusMSGs = new TextComponent(new Colors.FGBGColors(Colors.BRed, Colors.On_Yel),
-                            new Dimension.Simple(1, tApp.getMainApplicationPanel().getWidth()));
+                    TextComponent statusMSGs = new TextComponent((Color) null, new Dimension.Simple(1, tApp.getMainApplicationPanel().getWidth()))
+                            .setThemeColor(Theme::selectedColor);   // a bar: it stands out
 
-                    ButtonBar bbar1 = new ButtonBar(Colors.IGre);
+                    ButtonBar bbar1 = new ButtonBar();
                     bbar1.setNoBorderChars();
 
                     tApp.getMainApplicationPanel().add(1, 1, bbar1);

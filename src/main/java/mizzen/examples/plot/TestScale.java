@@ -81,7 +81,7 @@ public class TestScale {
                    ListBox<Shape<?>> shapesChoiceComponent = shapeChooser();
 
                    // a start: the resize rules below give it the room it has (right and down)
-                   BrailleGrid grid = new BrailleGrid(Colors.BGre, new Dimension.Simple(MIN_GRID_ROWS, 40));
+                   BrailleGrid grid = new BrailleGrid(new Dimension.Simple(MIN_GRID_ROWS, 40));
 
                    HorizontalPanel controlsInGrid = new HorizontalPanel();
                    controlsInGrid.setBorder(true);
@@ -104,7 +104,7 @@ public class TestScale {
 //                       Dialog.info("click at").ok().show(tApp);
 //                   };
 
-                   grid.setTitle(Colors.BPur, " Shape : pick one - then drag it with the mouse ");
+                   grid.setTitle(" Shape : pick one - then drag it with the mouse ");
 
                    PointPlotter pp = grid; //.asPointPlotter();
 

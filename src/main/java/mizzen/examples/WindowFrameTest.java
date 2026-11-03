@@ -26,6 +26,7 @@ import mizzen.components.plot.image.ImageViewerFactory.IMAGE_RENDER_TYPE;
 import mizzen.components.plot.image.ImageViewerFactory.RGBPlotPredicate;
 import mizzen.components.plot.image.ImageViewerFactory.RGBToAnsiColorControlCode;
 import mizzen.components.plot.image.ResizableImageViewer;
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
 import mizzen.controlcodes.color.Colors;
 import mizzen.controlcodes.color.Colors.FGBGColors;
@@ -133,7 +134,6 @@ public class WindowFrameTest {
         new TUIApp(args)
         //.setCanvasSize(24, 100)
         .setEmptyChar(' ')
-        .setEmptyColors(Colors.On_Blu)
         .setCanvasSize(40, 130)
         .setDefaultMainApplicationPanel()
         .confirmOnExit()
@@ -142,22 +142,19 @@ public class WindowFrameTest {
             MultiLineTextInput mTextBox = new MultiLineTextInput(); 
             mTextBox.setText("Silly Sally sold\nSeaShells at the seashore\nWhat a silly thing to do!");
 
-            mTextBox.setColor(  new Colors.FGBGColors( Colors.BBlu, Colors.On_Bla  )  );
 
             // mTextBox.resize(new Dimension.Simple(20,50));
 
-            AbstractComponent<?> wf1 = makeWF(Colors.Whi, "Test Window1", mTextBox); 
-            wf1.setEmptyColor(Colors.On_IBla);
+            AbstractComponent<?> wf1 = makeWF("Test Window1", mTextBox); 
 
-            AbstractComponent<?> wf2 = makeWF(Colors.Whi, "Test Window2", ListBox.fromStrings(new String[] {"Silly Sally",
+            AbstractComponent<?> wf2 = makeWF("Test Window2", ListBox.fromStrings(new String[] {"Silly Sally",
                                                                                                             "Sold sea shells",
                                                                                                             "at the sea shore"}));
-            wf2.setEmptyColor(Colors.On_Bla);
 
             Composite sparkLineContainer = new Composite().setBorder(false);
             sparkLineContainer.resize(new Dimension.Simple(24,100));
             SparklineTest.buildSparklineTest(tApp.getEventBus(), sparkLineContainer, null);
-            WindowFrame wfSparkline = new WindowFrame(Colors.Blu, "SparkLine Demo", ClickableFocusableWrapper.wrappedIfNeeded( sparkLineContainer));
+            WindowFrame wfSparkline = new WindowFrame("SparkLine Demo", ClickableFocusableWrapper.wrappedIfNeeded( sparkLineContainer));
 
             Button toggleDrawType = new Button(Composite.DRAW_VIA_PARTS ? "Drawing via Parts" : "Drawing traditional");
             toggleDrawType.setHotKey(Keys.CTRL_V_KEYSTROKE);
@@ -170,11 +167,11 @@ public class WindowFrameTest {
 
             Composite windowContainer = new Composite();
 
-            Component<?> wfFruit = makeWF(Colors.Whi, "Fruit", ListBox.fromStrings(new String[] {"Apples",
+            Component<?> wfFruit = makeWF("Fruit", ListBox.fromStrings(new String[] {"Apples",
                                                                                                  "Pears",
                                                                                                  "Plums"}));
 
-            Component<?> wfVegatables = makeWF(Colors.Whi, "Fruit", ListBox.fromStrings(new String[] {"Tomotoes",
+            Component<?> wfVegatables = makeWF("Fruit", ListBox.fromStrings(new String[] {"Tomotoes",
                                                                                                       "Lettuce",
                                                                                                       "Cucumber",
                                                                                                       "Kale",
@@ -189,9 +186,9 @@ public class WindowFrameTest {
             windowContainer.add(4, 10, wfFruit);
             windowContainer.add(8, 14, wfVegatables);
 
-            Component<?> nestedWindows = makeWF(Colors.Whi, "Nested Windows", ClickableFocusableWrapper.wrappedIfNeeded(windowContainer));
+            Component<?> nestedWindows = makeWF("Nested Windows", ClickableFocusableWrapper.wrappedIfNeeded(windowContainer));
 
-            AbstractComponent<?> wfSimpleText = makeWF(Colors.Whi, "Test WindowX", ClickableFocusableWrapper.wrappedIfNeeded(new TextComponent("Water is\nwet.\nExcept when its\nVery hot\nor\nvery cold!")));
+            AbstractComponent<?> wfSimpleText = makeWF("Test WindowX", ClickableFocusableWrapper.wrappedIfNeeded(new TextComponent("Water is\nwet.\nExcept when its\nVery hot\nor\nvery cold!")));
             //wfSimpleText.setEmptyColor(Colors.On_Bla);
             
             
@@ -204,13 +201,13 @@ public class WindowFrameTest {
 
             BufferedImageProvider image = imgFilePath == null ? new BufferedImageProvider.FromResource(DEFAULT_IMAGE)
                                                               : new BufferedImageProvider.FromFilePath(imgFilePath);
-            ResizableImageViewer imageViewer = new ResizableImageViewer (Colors.Whi, new Dimension.Simple(25,50), image);
+            ResizableImageViewer imageViewer = new ResizableImageViewer(new Dimension.Simple(25,50), image);
 
             imageViewer.setPlotPredicate(plotPredicate);
             imageViewer.setColorMapping(colorMapping);
             imageViewer.setImageRenderType(renderType);
             
-            WindowFrame imageContainerWF = new WindowFrame(Colors.IPur, "Image", ClickableFocusableWrapper.wrappedIfNeeded(imageViewer)) {
+            WindowFrame imageContainerWF = new WindowFrame("Image", ClickableFocusableWrapper.wrappedIfNeeded(imageViewer)) {
                 @Override
                 protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
                     Logging.info("WindowFrame.img draw called!" + String.valueOf(this));
@@ -253,7 +250,7 @@ public class WindowFrameTest {
             expandDownContainer.onResizeExpandDownAndRight(green);
 
 
-            AbstractComponent<?> expandDownWindows = makeWF(Colors.Whi, "Expand down tests", expandDownContainer);
+            AbstractComponent<?> expandDownWindows = makeWF("Expand down tests", expandDownContainer);
 
             tApp.getMainApplicationPanel().add(13, 65, expandDownWindows);
 
@@ -262,7 +259,7 @@ public class WindowFrameTest {
             statsPanel.add( new TextComponent("Current focus:"));
             TextComponent stats = new TextComponent("None");
             statsPanel.add(stats);
-            stats.setColor(Colors.IYel);
+            stats.setThemeColor(Theme::statusColor);
 
             Position statsPosition = PositionRelativeFactory.fromAlign(VAlign.BOTTOM, Align.LEFT,  tApp.getMainApplicationPanel(), statsPanel);
             tApp.getMainApplicationPanel().add(statsPosition, statsPanel);
@@ -314,8 +311,8 @@ public class WindowFrameTest {
 
     }
 
-    static AbstractComponent<?> makeWF(Color color, String title, Component<?> child) {
-        return new WindowFrame(color, title, child);
+    static AbstractComponent<?> makeWF(String title, Component<?> child) {
+        return new WindowFrame(title, child);
     }
 
 }

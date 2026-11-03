@@ -9,7 +9,6 @@ import mizzen.components.TextComponent;
 import mizzen.components.input.TextInput;
 import mizzen.components.menu.Menu;
 import mizzen.components.menu.MenuBar;
-import mizzen.controlcodes.color.Colors;
 import mizzen.events.TerminalEvent;
 import mizzen.util.Logging;
 
@@ -26,7 +25,7 @@ public class MenuBarTest {
         .setOnReadyStart((tApp)-> {
 
             TextComponent textView = new TextComponent("Here is where\ntext will be viewed.");
-            BorderedComponent bc = new BorderedComponent(Colors.IGre, textView);
+            BorderedComponent bc = new BorderedComponent(textView);
 
             tApp.getMainApplicationPanel().add(10, 10, bc);
 
@@ -64,7 +63,7 @@ public class MenuBarTest {
                     .addItem("Surf",(te)-> displayText.accept("OK let's go surfing!", te))
                     .addItem("Sleep!!",(te)-> displayText.accept("Sleep?  Now yer talking!", te));
 
-            MenuBar mBar = new MenuBar(Colors.IBlu);
+            MenuBar mBar = new MenuBar();
             mBar.addDropDownMenu("File", menu1);
             mBar.addDropDownMenu("Edit", menu2);
             mBar.addDropDownMenu("Misc", new Menu("Menu-1-1-2")

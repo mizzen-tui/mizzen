@@ -62,11 +62,11 @@ public class TestSprites {
 
         Dimension gridSize = computeGridSize.get();
 
-        BrailleGrid grid = new BrailleGrid(Colors.BGre, gridSize);
+        BrailleGrid grid = new BrailleGrid(gridSize);
         //BlocksGrid grid = new BlocksGrid(Colors.BGre, gridSize);
 
         if (includeTitle) {
-          grid.setTitle(Colors.BPur, "Space Invaders");
+          grid.setTitle("Space Invaders");
         }
 
         parentPanel.add(grid);

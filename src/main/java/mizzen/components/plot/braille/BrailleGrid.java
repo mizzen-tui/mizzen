@@ -3,13 +3,11 @@ package mizzen.components.plot.braille;
 import mizzen.components.composite.Composite;
 import mizzen.components.plot.Plotter;
 import mizzen.components.plot.Plotter.Plot;
-import mizzen.components.plot.blocks.BlocksGrid;
 import mizzen.components.plot.PointPlotter;
 import mizzen.controlcodes.color.Color;
 import mizzen.events.EventBus;
 import mizzen.events.EventHandler;
 import mizzen.events.mouse.ApplicationMouseEvent;
-import mizzen.events.mouse.Clickable;
 import mizzen.events.mouse.MOUSE_ACTION;
 import mizzen.geom.Dimension;
 import mizzen.geom.Rectangle;
@@ -22,6 +20,11 @@ public class BrailleGrid extends Composite implements PointPlotter {
 
     Plotter plotter;
     Rectangle gridRectangle;
+
+    /** in its theme's colours: dots drawn with no colour of their own take its colour */
+    public BrailleGrid(Dimension dimensionInCharacters) {
+        this((Color) null, dimensionInCharacters);
+    }
 
     public BrailleGrid(Color color, Dimension dimensionInCharacters) {
         super(color);

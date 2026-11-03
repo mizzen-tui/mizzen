@@ -15,9 +15,8 @@ import mizzen.components.input.DropdownListBox;
 import mizzen.components.input.TextInput;
 import mizzen.components.input.form.Form;
 import mizzen.components.table.TableComponent;
-import mizzen.controlcodes.color.Colors;
+import mizzen.components.theme.Theme;
 import mizzen.examples.People.Person;
-import mizzen.controlcodes.color.Colors.FGBGColors;
 import mizzen.geom.Dimension;
 import mizzen.util.Logging;
 
@@ -58,7 +57,7 @@ public class Table01Test {
             topBanner.add(optionsForm);
 
             // the tables' selection events: UP/DOWN/HOME/END/PgUp/PgDn select, ENTER or a click on the selected row activates
-            TextComponent status = new TextComponent(Colors.IGre, "arrows select a row, ENTER activates");
+            TextComponent status = new TextComponent("arrows select a row, ENTER activates").setThemeColor(Theme::statusColor);
             topBanner.add(status);
             Consumer<TableComponent<Person>> showEvents = (table) -> {
                 table.onPick((person, te) -> {
@@ -84,12 +83,12 @@ public class Table01Test {
                 removeComponents.run();
 
                 // no sizes: the splitter sizes the tables - half each, as the top one has no height of its own
-                VerticalSplitter vs = new VerticalSplitter(Colors.BBlu);
+                VerticalSplitter vs = new VerticalSplitter();
 
-                TableComponent<Person> t1 = new TableComponent<Person>(Colors.Yel, People.fewColumns(People.TEN));
+                TableComponent<Person> t1 = new TableComponent<Person>(People.fewColumns(People.TEN));
                 t1.setName("t1-vsView");
 
-                TableComponent<Person> t2 = new TableComponent<Person>(Colors.Cya, People.allColumns(People.many(100)));
+                TableComponent<Person> t2 = new TableComponent<Person>(People.allColumns(People.many(100)));
                 t2.setName("t2-vsView");
 
                 vs.addComponent(t1);
@@ -126,12 +125,12 @@ public class Table01Test {
                 removeComponents.run();
 
                 // no sizes: the splitter sizes the tables - the left one 40% of the width, the right one the rest
-                HorizontalSplitter hs = new HorizontalSplitter(Colors.BBlu);
+                HorizontalSplitter hs = new HorizontalSplitter();
 
-                TableComponent<Person> t1 = new TableComponent<Person>(Colors.Yel, People.fewColumns(People.TEN));
+                TableComponent<Person> t1 = new TableComponent<Person>(People.fewColumns(People.TEN));
                 t1.setName("t1-hsView");
 
-                TableComponent<Person> t2 = new TableComponent<Person>(Colors.Cya, People.allColumns(People.many(100)));
+                TableComponent<Person> t2 = new TableComponent<Person>(People.allColumns(People.many(100)));
                 t2.setName("t2-hsView");
 
                 hs.addComponent(t1);
@@ -141,7 +140,7 @@ public class Table01Test {
                 showEvents.accept(t1);
                 showEvents.accept(t2);
  
-                mainViewPanel.add(new TextInput(new FGBGColors(Colors.BWhi, Colors.On_IBla), 20).setEmptyChar('_').setEmptyColor(new FGBGColors(Colors.BWhi, Colors.On_IBla)));
+                mainViewPanel.add(new TextInput(20).setEmptyChar('_'));
                 mainViewPanel.add(hs);
 
                 tApp.setOnResizeAction((ta, newSize)->{

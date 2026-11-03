@@ -12,7 +12,7 @@ import mizzen.components.input.MultiLineTextInput;
 import mizzen.components.modal.Dialog;
 import mizzen.components.scroll.ScrollableComponent;
 import mizzen.components.scroll.SearchFunctionForScrollableComponent;
-import mizzen.controlcodes.color.Colors;
+import mizzen.components.theme.Theme;
 import mizzen.events.EventBus;
 import mizzen.events.focus.FocusManager;
 import mizzen.events.keyboard.Keys;
@@ -35,32 +35,32 @@ public class MultiLineTextInputTest {
 
             HorizontalPanel hp = new HorizontalPanel().setHorizontalSpacer(0);
 
-            hp.add(new TextComponent(Colors.ICya,  "MultiLineTextInput tester "));
+            hp.add(new TextComponent("MultiLineTextInput tester ").setThemeColor(Theme::emphasisColor));
 
-            Button infoButton = new Button(Colors.ICya, "(?)");
+            Button infoButton = new Button("(?)");
             hp.add(infoButton);
 
-            Button quitButton = new Button(Colors.ICya, "Quit");
+            Button quitButton = new Button("Quit");
             hp.add(quitButton);
             quitButton.setHotKey(Keys.CTRL_C_KEYSTROKE);
             quitButton.setDisplayHotKey(true);
             quitButton.onChange(tApp.getTerminateAppHotKeyEventHandler());
 
-            hp.add(new TextComponent(Colors.IBla," ⣿⣿⣿⣿"));
+            hp.add(new TextComponent(" ⣿⣿⣿⣿").setThemeColor(Theme::dimColor));
 
-            Button wordWrapButton = new Button(Colors.IGre, "(Word-wrap)", true); // true mean toggle button
+            Button wordWrapButton = new Button("(Word-wrap)", true); // true mean toggle button
             hp.add(wordWrapButton);
 
-            Button loadSmallText = new Button(Colors.IGre, "(Small Text)");
+            Button loadSmallText = new Button("(Small Text)");
             hp.add(loadSmallText);
 
-            Button loadLoremIpSumSmall = new Button(Colors.IGre, "(Small LoremIpSum)");
+            Button loadLoremIpSumSmall = new Button("(Small LoremIpSum)");
             hp.add(loadLoremIpSumSmall);
 
-            Button loadLoremIpSumMedium = new Button(Colors.IGre, "(Medium LoremIpSum)");
+            Button loadLoremIpSumMedium = new Button("(Medium LoremIpSum)");
             hp.add(loadLoremIpSumMedium);
 
-            Button loadLoremIpSumLarge = new Button(Colors.IGre, "(Large LoremIpSum)");
+            Button loadLoremIpSumLarge = new Button("(Large LoremIpSum)");
             hp.add(loadLoremIpSumLarge);
 
             String smallText = "Silly Sally sold\nSeaShells at the seashore\nWhat a Silly Sally thing to do!";
@@ -68,10 +68,8 @@ public class MultiLineTextInputTest {
             MultiLineTextInput mTextBox = new MultiLineTextInput(); 
             mTextBox.setText(smallText);
 
-            mTextBox.setColor(  new Colors.FGBGColors( Colors.BBlu, Colors.On_Bla  )  );
 
-            ScrollableComponent sc = new ScrollableComponent(Colors.Yel, 
-                                                               (Dimension)tApp.getMainApplicationPanel(), 
+            ScrollableComponent sc = new ScrollableComponent((Dimension)tApp.getMainApplicationPanel(), 
                                                                 mTextBox);
             sc.setFillOnClear(true);
             sc.setEmptyChar('.');

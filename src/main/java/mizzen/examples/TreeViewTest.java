@@ -32,6 +32,7 @@ import mizzen.components.plot.shape.Shape;
 import mizzen.components.plot.shape.Triangle;
 import mizzen.components.scroll.ScrollableComponent;
 import mizzen.components.scroll.SearchFunctionForScrollableComponent;
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Colors;
 import mizzen.events.EventBus;
 import mizzen.events.TimedRequestedController;
@@ -85,17 +86,16 @@ public class TreeViewTest {
 
                TreeView<DefaultTreeNode<DemoNode>> tree = new TreeView<DefaultTreeNode<DemoNode>>(sampleTree.asModel());
                Dimension viewSize = viewSize(tApp.getCanvas());
-               ScrollableComponent treePane = new ScrollableComponent(Colors.BIGre, new Dimension.Simple(viewSize.getHeight(), TREE_WIDTH), tree);
+               ScrollableComponent treePane = new ScrollableComponent(new Dimension.Simple(viewSize.getHeight(), TREE_WIDTH), tree);
                treePane.setTitle(" Sample Tree ");
 
                // the right-hand side: shows the selected node's view - like a tab panel's content
                Composite detail = new Composite(viewSize);
                NodeView[] shown = { null };
 
-               TextComponent help = new TextComponent(Colors.ICya,
-                       "UP/DOWN select  RIGHT/LEFT expand/collapse  ENTER toggle/activate  click row, ▸/▾  TAB  CTRL-C quits");
-               TextComponent status = new TextComponent(Colors.IGre, "");
-               TextInput note = new TextInput(Colors.IYel, 30);
+               TextComponent help = new TextComponent("UP/DOWN select  RIGHT/LEFT expand/collapse  ENTER toggle/activate  click row, ▸/▾  TAB  CTRL-C quits").setThemeColor(Theme::emphasisColor);
+               TextComponent status = new TextComponent("").setThemeColor(Theme::statusColor);
+               TextInput note = new TextInput(30);
 
                String[] lastExpansion = { "-" };
                String[] activated = { "-" };
@@ -269,8 +269,8 @@ public class TreeViewTest {
 
     /** the Braille drawing for node, filling size */
     private static BrailleGrid drawing(DefaultTreeNode<DemoNode> node, Dimension size) {
-        BrailleGrid grid = new BrailleGrid(Colors.BGre, inside(size));      // the size given is inside its border
-        grid.setTitle(Colors.BPur, " " + node + " ");
+        BrailleGrid grid = new BrailleGrid(inside(size));      // the size given is inside its border
+        grid.setTitle(" " + node + " ");
         List<DefaultTreeNode<DemoNode>> children = node.getChildren();
         if (!children.isEmpty() && !children.get(0).getChildren().isEmpty()) {
             for (int i = 0; i < children.size(); i++) {
@@ -306,7 +306,7 @@ public class TreeViewTest {
             MovingPicturesViewer viewer = new MovingPicturesViewer(Colors.DEFAULT_COLOR, new AnimatedGifImageIterator(gif.getPath()), request);
             Composite frame = new Composite(new Dimension.Simple(size));
             frame.setBorder(true);
-            frame.setTitle(Colors.BPur, " " + image.name + " ");
+            frame.setTitle(" " + image.name + " ");
             frame.add(viewer);
             frame.appendOnResize((newSize) -> request.setDesiredImgSizeInCharacters(fit(firstFrame, inside(newSize))));   // next frame: the new size
             return new NodeView() {
@@ -344,7 +344,7 @@ public class TreeViewTest {
     private static NodeView fractalView(DemoNode fractal, Dimension size) {
         Composite frame = new Composite(new Dimension.Simple(size));
         frame.setBorder(true);
-        frame.setTitle(Colors.BPur, " " + fractal.name + " ");
+        frame.setTitle(" " + fractal.name + " ");
         FractalAnimation fractals = new FractalAnimation(inside(size), 1000);
         frame.add(fractals.component());
         frame.appendOnResize((newSize) -> fractals.resize(inside(newSize)));
@@ -371,7 +371,7 @@ public class TreeViewTest {
         try {
             String content = ReadSampleFiles.readSampleFile(text.file);
             content = StringUtils.addLineNumbers(StringUtils.wrap(content, size.getWidth() - 9));     // room for the border, line numbers, scroll bar
-            ScrollableComponent pane = new ScrollableComponent(Colors.Gre, new Dimension.Simple(size), new TextComponent(Colors.Gre, content));
+            ScrollableComponent pane = new ScrollableComponent(new Dimension.Simple(size), new TextComponent(content).setThemeColor(Theme::statusColor));
             pane.setTitle(" " + text.name + " ");
             SearchFunctionForScrollableComponent.addFinderToScrollable(pane.asSearchableView());
             return () -> pane;
@@ -385,7 +385,7 @@ public class TreeViewTest {
         Dimension imageSize = fit(picture, inside(size));
         Composite frame = new Composite(new Dimension.Simple(size));
         frame.setBorder(true);
-        frame.setTitle(Colors.BPur, title);
+        frame.setTitle(title);
         ResizableImageViewer viewer = new ResizableImageViewer(Colors.DEFAULT_COLOR, imageSize, new BufferedImageProvider.Simple(picture));
         viewer.setImageRenderType(ImageViewerFactory.IMAGE_RENDER_TYPE.BLOCK);
         viewer.setColorMapping(ImageViewerFactory.rgbColorMapDIRECT);

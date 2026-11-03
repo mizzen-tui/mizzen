@@ -10,7 +10,6 @@ import mizzen.components.input.DropdownListBox;
 import mizzen.components.input.LabeledInputComponent;
 import mizzen.components.input.TextInput;
 import mizzen.components.input.form.FormBinder;
-import mizzen.controlcodes.color.Colors;
 import mizzen.util.Logging;
 
 public class TextBoxSimpleForm01Test {
@@ -27,16 +26,16 @@ public class TextBoxSimpleForm01Test {
 
                Composite testForm = new VerticalPanel().setName("Address");
 
-               testForm.add(new LabeledInputComponent<String>("Street   : ",new TextInput(Colors.IYel, 15).setName("street")));
+               testForm.add(new LabeledInputComponent<String>("Street   : ",new TextInput(15).setName("street")));
 
-               testForm.add(new LabeledInputComponent<String>("City     : ", new TextInput(Colors.IYel, 15).setName("city")));
+               testForm.add(new LabeledInputComponent<String>("City     : ", new TextInput(15).setName("city")));
 
                testForm.add(new LabeledInputComponent<String>("Province :", DropdownListBox.fromStrings(new String[]{"Ontario", 
                                                                                                "Quebec",
                                                                                                "Sask",
                                                                                                "Alberta",
                                                                                                "British Columbia"})
-                                                                       .setName("province").setColor(Colors.IYel)));
+                                                                       .setName("province")));
 
 
                Button saveButton = new Button("Save");

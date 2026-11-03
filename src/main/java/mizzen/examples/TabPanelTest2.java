@@ -15,7 +15,7 @@ import mizzen.components.input.form.FormBinder;
 import mizzen.components.tab.TabAction;
 import mizzen.components.tab.TabPanel;
 import mizzen.components.tab.TabPanel.TabContext;
-import mizzen.controlcodes.color.Colors;
+import mizzen.components.theme.Theme;
 import mizzen.core.ScreenCanvasBackend;
 import mizzen.core.ScreenCanvasBackend.UpdateStrategy;
 import mizzen.events.EventBus;
@@ -38,7 +38,7 @@ public class TabPanelTest2 {
             // ScreenCanvasBackend canvasBackend = ((ScreenCanvasBackend)tApp.getCanvas().getCanvasBackend());
             // canvasBackend.setUpdateStrategy(UpdateStrategy.UPDATE_FULL);
 
-            TabPanel tp = new TabPanel(Colors.IGre, new Dimension.Simple(24, 96));
+            TabPanel tp = new TabPanel(new Dimension.Simple(24, 96));
             tp.setName("MyTest2TabPanel");
 
             tApp.getMainApplicationPanel().add(4, 0, tp);
@@ -68,7 +68,7 @@ public class TabPanelTest2 {
                 TextInput firstName;
                 @Override
                 public Component<?> getComponent(TabContext tabContext) {
-                    firstName = new TextInput(Colors.IYel, 10).setName("firstName");
+                    firstName = new TextInput(10).setName("firstName");
                     return firstName;
                 }
                 public void resize(TabContext tabContext) {
@@ -82,12 +82,12 @@ public class TabPanelTest2 {
                 public Component<?> getComponent(TabContext tabContext) {
                     if (testFormVP == null) {
                         testFormVP = new VerticalPanel();
-                        TextInput strnum = new TextInput(Colors.IYel, 30).setName("street");
-                        TextInput city = new TextInput(Colors.IYel, 30).setName("city");
-                        TextInput province = new TextInput(Colors.IYel, 30).setName("province");
-                        TextInput unknown = new TextInput(Colors.IYel, 30).setName("unknown");
+                        TextInput strnum = new TextInput(30).setName("street");
+                        TextInput city = new TextInput(30).setName("city");
+                        TextInput province = new TextInput(30).setName("province");
+                        TextInput unknown = new TextInput(30).setName("unknown");
 
-                        TextComponent addressAsStr = new TextComponent(Colors.IYel, formBinder.getFormData().toString());
+                        TextComponent addressAsStr = new TextComponent(formBinder.getFormData().toString()).setThemeColor(Theme::statusColor);
 
                         testFormVP.add(new HorizontalPanel().addText("Street   : ").add(strnum));
                         testFormVP.add(new HorizontalPanel().addText("City     : ").add(city));

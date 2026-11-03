@@ -14,7 +14,6 @@ import mizzen.components.input.ListBox;
 import mizzen.components.input.ListBox.TextComponentItemFactory;
 import mizzen.components.scroll.ScrollableComponent;
 import mizzen.components.scroll.SearchFunctionForScrollableComponent;
-import mizzen.controlcodes.color.Colors;
 import mizzen.events.RequestUpdateCanvasEvent;
 import mizzen.geom.Dimension;
 
@@ -41,13 +40,12 @@ public class ListBoxTest {
         .confirmOnExit()
         .setOnReadyStart((tApp) -> {
 
-            ListBox<String> longList = ListBox.fromStrings(Colors.IGre, longListItems(), new TextComponentItemFactory<String>());
+            ListBox<String> longList = ListBox.fromStrings(longListItems(), new TextComponentItemFactory<String>());
             longList.setBorder(false);
-            ScrollableComponent longListPane = new ScrollableComponent(Colors.Blu,
-                    new Dimension.Simple(Math.min(15, longList.getHeight() - 5), longList.getWidth() + 20), longList);
+            ScrollableComponent longListPane = new ScrollableComponent(new Dimension.Simple(Math.min(15, longList.getHeight() - 5), longList.getWidth() + 20), longList);
             SearchFunctionForScrollableComponent.addFinderToScrollable(longListPane);
 
-            ListBox<String> childList = new ListBox<String>(Colors.IGre, ONE_RED_SHOE, new TextComponentItemFactory<String>());
+            ListBox<String> childList = new ListBox<String>(ONE_RED_SHOE, new TextComponentItemFactory<String>());
             childList.setTitle("Child list");
 
             DropdownListBox<String> tests = DropdownListBox.fromStrings(

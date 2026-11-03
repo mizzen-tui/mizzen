@@ -42,10 +42,9 @@ public class PlotAreaDemo {
                             .setFilled(true);
                     star.setName("star");
 
-                    PlotArea plot = new PlotArea(Colors.Gre, new Dimension.Simple(22, 90))
+                    PlotArea plot = new PlotArea(new Dimension.Simple(22, 90))
                             .showing(0, 2 * Math.PI, -1.5, 1.5)
                             .axes(true)
-                            .axesColor(Colors.BBla)
                             .onDraw((pen) -> pen
                                     .color(Colors.Blu).fillUnder(Math::sin, 0, Math.PI)
                                     .color(Colors.BCya).function(Math::sin)
@@ -61,7 +60,7 @@ public class PlotAreaDemo {
                     });
 
                     // the window's border and title, and its corner to resize it: the plot redraws at the new size
-                    WindowFrame window = new WindowFrame(Colors.Gre, "PlotArea: your numbers, y up - drag the corner to resize", plot);
+                    WindowFrame window = new WindowFrame("PlotArea: your numbers, y up - drag the corner to resize", plot);
                     window.setFooterPanel(plot.navigationControls());    // scaling, zoom and pan along the window's bottom
 
                     // straight on the main panel (the terminal's size): a panel around the window would cut it off as it grows
