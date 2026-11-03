@@ -38,6 +38,7 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
         Position.Simple p = new Position.Simple(component);
         Rectangle bounds = new Rectangle.Simple(p, new Dimension.Simple(component.getHeight() + 2, component.getWidth() + 2));
         this.border = new SimpleBorder(color, bounds);
+        this.border.setThemeColor((theme) -> getColor());     // the line, given no colour: the box's
         this.border.setParentContainer(this);
         showBorder = true;
         this.setRectangle( bounds );
@@ -111,8 +112,10 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
         this(color, component, (ParentContainer)null);
     }
 
+    // given no colour: the component's, worked out as it is drawn - not now, before it is on a screen with a theme
     public BorderedComponent(Component<?> component, ParentContainer parentContainer) {
-        this(component.getColor(), component, parentContainer);
+        this((Color) null, component, parentContainer);
+        setThemeColor((theme) -> component.getColor());
     }
     
 

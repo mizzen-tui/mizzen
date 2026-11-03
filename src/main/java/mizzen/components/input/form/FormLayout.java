@@ -16,6 +16,7 @@ import mizzen.components.input.MultiLineTextInput;
 import mizzen.components.input.RadioGroup;
 import mizzen.components.input.TextInput;
 import mizzen.components.scroll.ScrollableComponent;
+import mizzen.components.theme.Theme;
 import mizzen.geom.Dimension;
 
 /**
@@ -49,7 +50,7 @@ public interface FormLayout<T, B extends FormLayout<T, B>> {
     B add(Component<?> component);
 
     default B heading(String text) {
-        return add(new TextComponent(form().headingColor, text));
+        return add(Form.text(form().headingColor, Theme::headingColor, text));
     }
 
     default B text(String label, String field) {

@@ -1,5 +1,6 @@
 package mizzen.components.theme;
 
+import mizzen.components.BorderedComponent;
 import mizzen.components.TextComponent;
 import mizzen.components.input.Button;
 import mizzen.components.input.TextInput;
@@ -7,6 +8,7 @@ import mizzen.components.composite.Composite;
 import mizzen.components.composite.VerticalPanel;
 import mizzen.controlcodes.color.Color;
 import mizzen.controlcodes.color.Colors;
+import mizzen.components.modal.ModalPanel;
 import mizzen.events.EventBus;
 import mizzen.geom.Dimension;
 import mizzen.textsegments.ScreenLineSegment;
@@ -141,5 +143,43 @@ public class ThemeTest extends TestCase {
         panel.add(input);
         panel.setTheme(Theme.CLASSIC);
         assertSame(Colors.IYel, firstColor(input));
+    }
+    public void testAPanelsChildrenLookAgainWhenThePanelMoves() {
+        Composite yellow = new VerticalPanel();
+        yellow.setTheme(YELLOW_TEXT);
+        Composite middle = new VerticalPanel();          // never looks a theme up itself
+        TextComponent text = new TextComponent((Color) null, "hello");
+        middle.add(text);
+        assertSame(Theme.LEGACY.textColor(), text.getColor());   // looked up before middle is anywhere
+        yellow.add(middle);
+        assertSame(Colors.BYel, text.getColor());
+    }
+
+    public void testABoxGivenNoColourFollowsWhatItHolds() {
+        Composite panel = new VerticalPanel();
+        BorderedComponent box = new BorderedComponent(new TextComponent((Color) null, "i"));   // made off screen
+        panel.add(box);
+        panel.setTheme(YELLOW_TEXT);
+        assertSame("not the colour it had when made", Colors.BYel, box.getColor());
+    }
+
+    public void testInADialogTextIsOnTheDialogsColour() {
+        Theme dialog = Theme.DARK.dialogTheme();
+        assertSame(Theme.DARK.dialogColor(), dialog.backgroundColor());
+        assertEquals("text, on the dialog's colour", "\u001b[0;38;2;173;186;199;48;2;45;51;59m", dialog.textColor().asString());
+        assertSame("a field keeps its own colour", Theme.LIGHT.inputColor(), Theme.LIGHT.dialogTheme().inputColor());
+        assertSame("Legacy: text with no colour takes the dialog's", Theme.LEGACY.dialogColor(), Theme.LEGACY.dialogTheme().textColor());
+    }
+
+    public void testADialogsInsideFollowsTheThemeOfTheScreen() {
+        Composite screen = new VerticalPanel();
+        ModalPanel panel = new ModalPanel();
+        TextComponent text = new TextComponent((Color) null, "Saved.");
+        panel.add(text);
+        screen.add(panel);
+        screen.setTheme(Theme.DARK);
+        assertSame(Theme.DARK.dialogTheme().textColor(), text.getColor());
+        screen.setTheme(Theme.LIGHT);
+        assertSame("a theme set later reaches it", Theme.LIGHT.dialogTheme().textColor(), text.getColor());
     }
 }

@@ -5,6 +5,7 @@ import mizzen.components.TextComponent;
 import mizzen.components.composite.HorizontalPanel;
 import mizzen.components.composite.VerticalPanel;
 import mizzen.components.input.LabelFor;
+import mizzen.components.theme.Theme;
 import mizzen.events.focus.ToFocusable;
 
 /**
@@ -52,7 +53,7 @@ public class Inline<T> implements FormLayout<T, Inline<T>> {
 
     @Override
     public Inline<T> note(String text) {
-        panel.add(new TextComponent(form.noteColor, text));
+        panel.add(Form.text(form.noteColor, Theme::dimColor, text));
         return this;
     }
 

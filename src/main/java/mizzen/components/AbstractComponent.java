@@ -374,7 +374,7 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
                                                ".setParentContainer(): Parent container cannot be assigned to itself!");
         }
 
-        if (theme != null && parentContainer != this.parentContainer) {
+        if (parentContainer != this.parentContainer) {   // even with none of its own: what it holds may have looked one up
             Theme.forget(this);                            // its ancestors change: it, and what it holds, look again
         }
         this.parentContainer = parentContainer;

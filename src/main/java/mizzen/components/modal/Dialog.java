@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import mizzen.app.TUIApp;
 import mizzen.components.BorderedComponent;
@@ -16,8 +17,8 @@ import mizzen.components.composite.VerticalPanel;
 import mizzen.components.input.Button;
 import mizzen.components.input.TextInput;
 import mizzen.components.input.form.Form;
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
-import mizzen.controlcodes.color.Colors;
 import mizzen.events.ConditionalEventHandler;
 import mizzen.events.EventBus;
 import mizzen.events.EventHandler;
@@ -49,7 +50,7 @@ import mizzen.util.StringUtils;
  * message shows and it stays open), a submit button finds a Form in it invalid, or the button was
  * marked staysOpen() (a Reset). A disabled button (enabledWhen) can't be pressed.
  * <pre>
- *     TextInput word = new TextInput(Colors.IYel, 10);
+ *     TextInput word = new TextInput(10);
  *     Dialog.warning("Runs on the live server.").title("Back up production")
  *             .add("Type BACKUP to continue: ", word)
  *             .button("run", "Run", (d) -&gt; startBackup())
@@ -85,7 +86,6 @@ public class Dialog {
 
     private static final Consumer<Dialog> NOTHING = (d) -> { };
     private static final String CANCEL = "cancel";
-    private static final Color ERROR_COLOR = new Colors.FGBGColors(Colors.BRed, Colors.On_Whi);
 
     private final Icon icon;
     private final String message;
@@ -95,7 +95,6 @@ public class Dialog {
     private Runnable onClose = () -> { };
 
     // once shown
-    private final Color color = dialogColor();
     private final List<Button> buttons = new ArrayList<Button>();
     private ModalPanel panel;
     private VerticalPanel layout;
@@ -141,14 +140,14 @@ public class Dialog {
 
     /** label and input on one line in the middle: add("Name: ", nameInput) */
     public Dialog add(String label, Component<?> input) {
-        HorizontalPanel line = new HorizontalPanel(color);
-        line.add(new TextComponent(color, label));
+        HorizontalPanel line = new HorizontalPanel();
+        line.add(new TextComponent(label));
         line.add(input);
         return add(line);
     }
 
     /**
-     * a Form for data in the middle, in the dialog's colours - rows adds its rows. A submit button checks
+     * a Form for data in the middle, in the dialog theme's colours - rows adds its rows. A submit button checks
      * it before its action runs.
      * <pre>
      *     .form(login, (f) -&gt; f.text("User", "user").required().password("Password", "password").required())
@@ -156,11 +155,7 @@ public class Dialog {
      * A Form made elsewhere can go in with add(form): it keeps its own colours.
      */
     public <T> Dialog form(T data, Consumer<Form<T>> rows) {
-        Form<T> form = Form.of(data)
-                .labelColor(color)
-                .noteColor(new Colors.FGBGColors(Colors.IBla, Colors.On_Whi))
-                .headingColor(new Colors.FGBGColors(Colors.Blu, Colors.On_Whi))
-                .errorColor(ERROR_COLOR);
+        Form<T> form = Form.of(data).labelColor(null).inputColor(null).noteColor(null).headingColor(null).errorColor(null);
         rows.accept(form);
         return add(form);
     }
@@ -249,7 +244,7 @@ public class Dialog {
     public Dialog showError(String text) {
         errorRaised = true;
         if (errorLine == null) {
-            errorLine = new TextComponent(ERROR_COLOR, text);
+            errorLine = new TextComponent(text).setThemeColor(Theme::errorColor);
             layout.insert(layout.getChildren().size() - 1, Position.ZERO, errorLine);   // just above the buttons
         } else {
             errorLine.setTextAndResize(text);
@@ -313,17 +308,16 @@ public class Dialog {
         }
         this.bus = bus;
         this.parent = parent;
-        panel = new ModalPanel(color);
-        panel.setBorderColor(iconColor(icon));
+        panel = new ModalPanel();                          // colours: the dialog theme (ModalPanel), so nothing here gives one
+        panel.setThemeColor(Theme::textColor);             // the frame and title: text on the dialog's colour
         panel.setBorder(true);
         if (!title.isEmpty()) {
-            panel.setTitle(iconColor(icon), " " + title + " ");
+            panel.setTitle(" " + title + " ");
         }
         panel.setFillOnClear(true);
-        panel.setEmptyColor(color);
         panel.setName("dialog");
 
-        layout = new VerticalPanel(color).setVerticalSpacer(1);
+        layout = new VerticalPanel().setVerticalSpacer(1);
         layout.add(messageWithIcon());
         for (Component<?> component : middle) {
             layout.add(component);
@@ -357,26 +351,23 @@ public class Dialog {
 
     private Component<?> messageWithIcon() {
         String shown = Dimension.UTIL.stringToDimension(message).getHeight() == 1 ? "\n" + message : message;   // level with the icon's middle
-        HorizontalPanel top = new HorizontalPanel(color).setHorizontalSpacer(2);
+        HorizontalPanel top = new HorizontalPanel().setHorizontalSpacer(2);
         top.setFillOnClear(true);
-        top.setEmptyColor(color);
         top.add(iconComponent(icon));
-        TextComponent text = new TextComponent(color, shown);
+        TextComponent text = new TextComponent(shown);
         text.setFillOnClear(true);
-        text.setEmptyColor(color);
         top.add(text);
         return top;
     }
 
     private Component<?> buttonRow() {
-        HorizontalPanel row = new HorizontalPanel(color).setHorizontalSpacer(3);
+        HorizontalPanel row = new HorizontalPanel().setHorizontalSpacer(3);
         row.setFillOnClear(true);
-        row.setEmptyColor(color);
         row.setName("dialog.buttons");
-        TextComponent leftPadding = new TextComponent(color, "");
+        TextComponent leftPadding = new TextComponent("");
         row.add(leftPadding);
         for (ButtonPlan plan : plans) {
-            Button button = new Button(color, plan.label);
+            Button button = new Button(plan.label);
             button.setName(plan.name);
             button.setBorder(true);
             if (plan.key != null) {
@@ -510,27 +501,22 @@ public class Dialog {
 
     // ---- looks
 
-    private static Color dialogColor() {
-        Color color = new Colors.FGBGColors(Colors.Bla, Colors.On_Whi);
-        color.setBoldTransform((c) -> new Colors.FGBGColors(Colors.BIWhi, Colors.On_Bla));
-        color.setInvertTransform((c) -> new Colors.FGBGColors(Colors.BIWhi, Colors.On_Bla));
-        return color;
-    }
-
-    static Color iconColor(Icon icon) {
+    // the icon's colour: what kind of message it is, in the dialog theme
+    static Function<Theme, Color> iconColor(Icon icon) {
         switch (icon) {
-            case QUESTION: return new Colors.FGBGColors(Colors.BIBla, Colors.On_IGre);
-            case INFO:     return new Colors.FGBGColors(Colors.BIBla, Colors.On_IPur);
-            case WARNING:  return new Colors.FGBGColors(Colors.BIBla, Colors.On_Yel);
-            case ERROR:    return new Colors.FGBGColors(Colors.BIWhi, Colors.On_IRed);
+            case QUESTION: return Theme::headingColor;
+            case INFO:     return Theme::linkColor;
+            case WARNING:  return Theme::warningColor;
+            case ERROR:    return Theme::errorColor;
             default:       throw new IllegalArgumentException("no colour for " + icon);
         }
     }
 
     private static Component<?> iconComponent(Icon icon) {
         char mark = icon == Icon.QUESTION ? '?' : icon == Icon.INFO ? 'i' : icon == Icon.WARNING ? '!' : 'X';
-        Color color = iconColor(icon);
-        BorderedComponent box = new BorderedComponent(color, new TextComponent(color, " " + mark + " "));
+        Function<Theme, Color> color = iconColor(icon);
+        BorderedComponent box = new BorderedComponent(new TextComponent(" " + mark + " ").setThemeColor(color));
+        box.setThemeColor(color);
         box.setName("icon-" + mark);
         return box;
     }

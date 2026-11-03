@@ -6,6 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import mizzen.components.Component;
@@ -16,6 +17,7 @@ import mizzen.components.TextComponent;
 import mizzen.components.composite.VerticalPanel;
 import mizzen.components.input.TextInput;
 import mizzen.components.input.form.FormBinder.FormBinderField;
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
 import mizzen.controlcodes.color.Colors;
 import mizzen.events.ChainedEventHandler;
@@ -85,7 +87,7 @@ public class Form<T> extends ComponentWithFocus<VerticalPanel, Form<T>> implemen
         });
     }
 
-    // ---- looks: for the rows added after
+    // ---- looks: for the rows added after. null: the theme's - text, input, dim, heading, error (a Dialog's form)
 
     public Form<T> labelColor(Color color) {
         labelColor = color;
@@ -110,6 +112,12 @@ public class Form<T> extends ComponentWithFocus<VerticalPanel, Form<T>> implemen
     public Form<T> errorColor(Color color) {
         errorColor = color;
         return this;
+    }
+
+    // text in color; none (null): in the theme's themeColor, following the theme as it changes
+    static TextComponent text(Color color, Function<Theme, Color> themeColor, String text) {
+        TextComponent shown = new TextComponent(color, text);
+        return color == null ? shown.setThemeColor(themeColor) : shown;
     }
 
     /** how wide text inputs are */
@@ -234,7 +242,7 @@ public class Form<T> extends ComponentWithFocus<VerticalPanel, Form<T>> implemen
         if (field != null) {
             ((HasName<?>) input).setName(field);
         }
-        TextComponent error = new TextComponent(errorColor, " ");
+        TextComponent error = text(errorColor, Theme::errorColor, " ");
         FormRow row = layout.placeRow(field, label, shown, input, error);
         error.hide();
         all.add(row);

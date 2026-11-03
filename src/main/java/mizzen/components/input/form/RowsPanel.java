@@ -9,6 +9,7 @@ import mizzen.components.composite.Composite;
 import mizzen.components.composite.HorizontalPanel;
 import mizzen.components.composite.VerticalPanel;
 import mizzen.components.input.LabelFor;
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
 import mizzen.events.focus.ToFocusable;
 
@@ -55,7 +56,7 @@ class RowsPanel {
 
     /** a line starting where the inputs start - a hint under an input */
     void note(Color color, String text) {
-        panel.add(filled(new HorizontalPanel(color, GAP), color).add(label(color, "")).add(new TextComponent(color, text)));
+        panel.add(filled(new HorizontalPanel(color, GAP), color).add(label(color, "")).add(Form.text(color, Theme::dimColor, text)));
     }
 
     // what no child covers - under a label beside a two-line input, after a short error - in the row's colour, not

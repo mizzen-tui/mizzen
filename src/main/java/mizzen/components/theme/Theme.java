@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import mizzen.app.TUIApp;
 import mizzen.components.Component;
@@ -42,7 +43,12 @@ public final class Theme {
             Colors.DEFAULT_DISABLED_COLOR, Colors.BIRed, Colors.IGre, new Colors.FGBGColors(Colors.IYel))
             .withSubheadingColor(Colors.BCya).withMinorHeadingColor(Colors.BGre).withStrongColor(Colors.BWhi)
             .withEmphasisColor(Colors.Cya).withLinkColor(Colors.UCya).withCodeColor(Colors.Yel).withDimColor(Colors.IBla)
-            .withStatusColor(Colors.IGre);
+            .withStatusColor(Colors.IGre).withWarningColor(Colors.Yel).withDialogColor(legacyDialogColor())
+            .dialogs((d) -> d.withHeadingColor(new Colors.FGBGColors(Colors.Blu, Colors.On_Whi))   // BYel can't be read on white
+                    .withLinkColor(new Colors.FGBGColors(Colors.Pur, Colors.On_Whi))
+                    .withWarningColor(new Colors.FGBGColors(Colors.BIBla, Colors.On_Yel))   // filled: a yellow line is lost on the grey
+                    .withErrorColor(new Colors.FGBGColors(Colors.BRed, Colors.On_Whi))
+                    .withInputColor(new Colors.FGBGColors(Colors.Bla, Colors.On_IWhi)));   // a white field on the grey
 
     // The themes below are 24-bit colour (most terminals today: PuTTY 0.71+, xterm, Windows Terminal, iTerm2). Each is low
     // contrast between its blocks: a background that is not pure black, white or blue; fields one step off it; buttons
@@ -58,7 +64,9 @@ public final class Theme {
             0xF47067, 0x8DDB8C,                                          // error, success
             0xCDD9E5, 0x2E4A6E)                                          // selected: text on row
             .documents(0x22272E, 0x96D0FF, 0xCDD9E5, 0xCDD9E5, 0xDCBDFB, 0x6CB6FF, 0xF69D50, 0x2D333B, 0x768390)
-            .withStatusColor(rgb(0x6BC9A7, 0x22272E));
+            .withStatusColor(rgb(0x6BC9A7, 0x22272E)).withWarningColor(rgb(0xDAAA3F, 0x22272E))
+            .withDialogColor(rgb(0xADBAC7, 0x2D333B))
+            .dialogs((d) -> d.withInputColor(rgb(0xCDD9E5, 0x22272E)));    // fields sunk to the screen's shade: the dialog has theirs
 
     /** paper: dark text on off-white, blue accent, fields and buttons a shade or two darker */
     public static final Theme LIGHT = rgbTheme("Light", 0xF6F8FA,
@@ -70,7 +78,8 @@ public final class Theme {
             0xCF222E, 0x1A7F37,
             0x24292F, 0xDDF4FF)
             .documents(0xF6F8FA, 0x0550AE, 0x24292F, 0x1F2328, 0x8250DF, 0x0969DA, 0x953800, 0xEAEEF2, 0x6E7781)
-            .withStatusColor(rgb(0x1B7C83, 0xF6F8FA));
+            .withStatusColor(rgb(0x1B7C83, 0xF6F8FA)).withWarningColor(rgb(0x9A6700, 0xF6F8FA))
+            .withDialogColor(rgb(0x24292F, 0xFFFFFF));
 
     /** the classic blue screen, softened: navy, warm yellow headings, fields a lighter blue, green buttons */
     public static final Theme CLASSIC = rgbTheme("Classic", 0x1D3268,
@@ -82,7 +91,9 @@ public final class Theme {
             0xFF8A80, 0x9BE29B,
             0xFFFFFF, 0x34539E)
             .documents(0x1D3268, 0x9FD3FF, 0xFFFFFF, 0xFFFFFF, 0xC9B8FF, 0x8FD6FF, 0xF2D06B, 0x2A4585, 0x8E9CC9)
-            .withStatusColor(rgb(0x8FE3C2, 0x1D3268));
+            .withStatusColor(rgb(0x8FE3C2, 0x1D3268)).withWarningColor(rgb(0xFFB86B, 0x1D3268))
+            .withDialogColor(rgb(0xD7DCE8, 0x2A4585))
+            .dialogs((d) -> d.withInputColor(rgb(0xFFFFFF, 0x1D3268)));
 
     private static final List<Theme> STANDARD = Collections.unmodifiableList(Arrays.asList(LEGACY, DARK, LIGHT, CLASSIC));
 
@@ -106,6 +117,12 @@ public final class Theme {
     private Color successColor;
     private Color statusColor;          // what just happened: a status line, a result
     private Color selectedColor;        // the picked row of a list, tree or table
+    private Color warningColor;         // take care - not yet an error
+    private Color dialogColor;          // a dialog's panel: a surface raised off the background
+
+    // the theme inside a dialog: this one laid on dialogColor (onSurface), then changed as the theme says (dialogs)
+    private Function<Theme, Theme> dialogChanges = Function.identity();
+    private Theme dialogTheme;
 
     // documents (markdown, help text): each falls back to a colour above when a theme leaves it out
     private Color subheadingColor;      // a level 2 heading, list markers
@@ -179,6 +196,8 @@ public final class Theme {
     public Color successColor()        { return successColor; }
     public Color statusColor()         { return statusColor != null ? statusColor : successColor; }
     public Color selectedColor()       { return selectedColor; }
+    public Color warningColor()        { return warningColor != null ? warningColor : errorColor; }
+    public Color dialogColor()         { return dialogColor != null ? dialogColor : backgroundColor; }
     public Color subheadingColor()     { return subheadingColor != null ? subheadingColor : headingColor; }
     public Color minorHeadingColor()   { return minorHeadingColor != null ? minorHeadingColor : headingColor; }
     public Color strongColor()         { return strongColor != null ? strongColor : textColor; }
@@ -186,6 +205,74 @@ public final class Theme {
     public Color linkColor()           { return linkColor != null ? linkColor : headingColor; }
     public Color codeColor()           { return codeColor != null ? codeColor : textColor; }
     public Color dimColor()            { return dimColor != null ? dimColor : disabledColor; }
+
+    /**
+     * The theme inside a dialog: this one, with dialogColor as its background and every colour that is drawn on the
+     * background (text, headings, borders, errors...) laid on dialogColor instead. Fields, buttons and the selected row
+     * keep their own colours; one with none of its own (Legacy) takes dialogColor.
+     * <p/>
+     * A dialog's panel takes it, so whatever goes in a dialog sits on the dialog's colour:
+     * <pre>
+     *     new TextComponent("Saved.")          text colour, on the dialog's background
+     * </pre>
+     * A theme may change it further - Legacy's headings are blue in a dialog, as its yellow can't be read on white.
+     */
+    public Theme dialogTheme() {
+        if (dialogTheme == null) {
+            dialogTheme = dialogChanges.apply(onSurface(dialogColor()));
+        }
+        return dialogTheme;
+    }
+
+    // this theme on surface: the colours drawn on the background take surface's background; the rest stay, unless none
+    private Theme onSurface(Color surface) {
+        Theme on = with((t) -> {
+            t.backgroundColor = surface;
+            t.textColor = laidOn(textColor, surface);
+            t.headingColor = laidOn(headingColor, surface);
+            t.borderColor = laidOn(borderColor, surface);
+            t.disabledColor = laidOn(disabledColor, surface);
+            t.errorColor = laidOn(errorColor, surface);
+            t.successColor = laidOn(successColor, surface);
+            t.statusColor = laidOn(statusColor, surface);
+            t.warningColor = laidOn(warningColor, surface);
+            t.subheadingColor = laidOn(subheadingColor, surface);
+            t.minorHeadingColor = laidOn(minorHeadingColor, surface);
+            t.strongColor = laidOn(strongColor, surface);
+            t.emphasisColor = laidOn(emphasisColor, surface);
+            t.linkColor = laidOn(linkColor, surface);
+            t.dimColor = laidOn(dimColor, surface);
+            t.inputColor = orSurface(inputColor, surface);
+            t.buttonColor = orSurface(buttonColor, surface);
+            t.buttonFocusedColor = orSurface(buttonFocusedColor, surface);
+            t.selectedColor = orSurface(selectedColor, surface);
+            t.codeColor = orSurface(codeColor, surface);
+            t.dialogChanges = Function.identity();
+        });
+        return on;
+    }
+
+    // color's foreground on surface's background; no colour (left out, or none of its own): surface itself
+    private static Color laidOn(Color color, Color surface) {
+        return color == null || color == Colors.DEFAULT_COLOR ? surface : color.mergeWith(surface);
+    }
+
+    private static Color orSurface(Color color, Color surface) {
+        return color == null || color == Colors.DEFAULT_COLOR ? surface : color;
+    }
+
+    // Legacy's dialog: black on white; bold, or the focused button, white on black
+    private static Color legacyDialogColor() {
+        Color color = new Colors.FGBGColors(Colors.Bla, Colors.On_Whi);
+        color.setBoldTransform((c) -> new Colors.FGBGColors(Colors.BIWhi, Colors.On_Bla));
+        color.setInvertTransform((c) -> new Colors.FGBGColors(Colors.BIWhi, Colors.On_Bla));
+        return color;
+    }
+
+    // how this theme's dialogs differ from it laid on dialogColor
+    private Theme dialogs(Function<Theme, Theme> changes) {
+        return with((t) -> t.dialogChanges = changes);
+    }
 
     @Override
     public String toString() {
@@ -207,6 +294,8 @@ public final class Theme {
     public Theme withSuccessColor(Color color)         { return with((t) -> t.successColor = color); }
     public Theme withStatusColor(Color color)          { return with((t) -> t.statusColor = color); }
     public Theme withSelectedColor(Color color)        { return with((t) -> t.selectedColor = color); }
+    public Theme withWarningColor(Color color)         { return with((t) -> t.warningColor = color); }
+    public Theme withDialogColor(Color color)          { return with((t) -> t.dialogColor = color); }
     public Theme withSubheadingColor(Color color)      { return with((t) -> t.subheadingColor = color); }
     public Theme withMinorHeadingColor(Color color)    { return with((t) -> t.minorHeadingColor = color); }
     public Theme withStrongColor(Color color)          { return with((t) -> t.strongColor = color); }
@@ -226,6 +315,9 @@ public final class Theme {
         copy.codeColor = codeColor;
         copy.dimColor = dimColor;
         copy.statusColor = statusColor;
+        copy.warningColor = warningColor;
+        copy.dialogColor = dialogColor;
+        copy.dialogChanges = dialogChanges;
         change.accept(copy);
         return copy;
     }
