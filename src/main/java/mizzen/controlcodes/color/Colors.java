@@ -325,7 +325,9 @@ public class Colors {
         public static RGBColorFGBG instance(int r, int g, int b, int bg_r, int bg_g, int bg_b) {
             //                       0   1  2  3  4  5   6  7     8     9
             int[] codes = new int[] {38, 2, r, g, b, 48, 2, bg_r, bg_g, bg_b };
-            return getColorFromCacheOrBuild(codes, ()->new RGBColorFGBG(codes));
+            Color cached = getColorFromCacheOrBuild(codes, ()->new RGBColorFGBG(codes));
+            return cached instanceof RGBColorFGBG ? (RGBColorFGBG) cached : new RGBColorFGBG(codes);   // the cache is by codes: a
+                                                                                                         // merge may have left a plain one
         }
 
         public static RGBColorFGBG instance(RGBColorForeground fgRGBColor, RGBColorBackground bgRGBColor) {
@@ -341,11 +343,11 @@ public class Colors {
 
         
         public Color getBackGroundColor() {
-            return fromRGBBG(this.codes[FG_R_IDX],this.codes[FG_G_IDX], this.codes[FG_B_IDX]);
+            return fromRGBBG(this.codes[BG_R_IDX],this.codes[BG_G_IDX], this.codes[BG_B_IDX]);
         }
 
         public Color getForeGroundColor() {
-            return fromRGBFG(this.codes[BG_R_IDX],this.codes[BG_G_IDX], this.codes[BG_B_IDX]);
+            return fromRGBFG(this.codes[FG_R_IDX],this.codes[FG_G_IDX], this.codes[FG_B_IDX]);
         }
         
         public boolean hasBackGroundColor() {

@@ -19,6 +19,7 @@ import mizzen.components.table.TableColumnImpl;
 import mizzen.components.table.TableComponent;
 import mizzen.components.table.TableComponent.CellSelected;
 import mizzen.components.table.TableModel;
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
 import mizzen.controlcodes.color.Colors;
 import mizzen.events.ChainedEventHandler;
@@ -84,6 +85,7 @@ public class MarkdownView extends BoundedComponent<MarkdownView> implements ToFo
     private MarkdownDocument document;
     final List<List<Piece>> lines = new ArrayList<List<Piece>>();
     private int laidOutTo = -1;
+    private Theme laidOutIn;                                                   // the theme the lines were laid out in
     private final ChainedEventHandler linkHandlers = ChainedEventHandler.useChainOfResponsibilityStrategy("MarkdownView-links");
     private final List<TableShown> tables = new ArrayList<TableShown>();
     private Function<String, String> source = null;                            // a document's text from its path; null: none to open
@@ -99,8 +101,8 @@ public class MarkdownView extends BoundedComponent<MarkdownView> implements ToFo
             .showOnFocus(() -> showing.get())
             .handleEvents(linkHandlers.asConditionalEventHandler());
 
-    private static final StyledTextCellRenderer CELLS = new StyledTextCellRenderer(null);
-    private static final StyledTextCellRenderer HEADINGS = new StyledTextCellRenderer(Colors.BWhi);
+    private final StyledTextCellRenderer cells = new StyledTextCellRenderer(() -> null, this::getTheme);
+    private final StyledTextCellRenderer headings = new StyledTextCellRenderer(() -> getTheme().strongColor(), this::getTheme);
 
     /** a table in the document, and the line it starts on */
     private static final class TableShown {
@@ -116,18 +118,23 @@ public class MarkdownView extends BoundedComponent<MarkdownView> implements ToFo
     }
 
     public MarkdownView(String markdown) {
-        super(Colors.Whi, Dimension.ZERO);
+        super((Color) null, Dimension.ZERO);              // its theme's colours: text, headings, links...
         this.document = MarkdownParser.parse(markdown);
         opensDocuments();
     }
 
     /** the document at path, from source: its text for a path, null if there is none - links to other .md files open through it too */
     public MarkdownView(String path, Function<String, String> source) {
-        super(Colors.Whi, Dimension.ZERO);
+        super((Color) null, Dimension.ZERO);
         this.source = source;
         this.path = path;
         this.document = read(path);
         opensDocuments();
+    }
+
+    /** the document at path, from source, in a scroll pane in its theme's colours - see inScrollPane(color, path, source) */
+    public static ScrollableComponent inScrollPane(String path, Function<String, String> source) {
+        return inScrollPane(null, path, source);
     }
 
     /** markdown, wrapped to the width inside a scroll pane, and again each time the pane is resized */
@@ -214,7 +221,7 @@ public class MarkdownView extends BoundedComponent<MarkdownView> implements ToFo
         for (TableShown shown : tables) {
             if (row >= shown.top && row < shown.top + shown.table.getHeight()) {
                 CellSelected cell = shown.table.cellAt(new Position.Simple(row - shown.top, col));
-                return cell == null || cell.isHeader() ? null : CELLS.linkAt(
+                return cell == null || cell.isHeader() ? null : cells.linkAt(
                         shown.model.getValueAt(cell.getTableRow(), cell.getTableCol()), cell.getCellSize(), cell.getOffsetInCell());
             }
         }
@@ -288,10 +295,19 @@ public class MarkdownView extends BoundedComponent<MarkdownView> implements ToFo
             return;
         }
         laidOutTo = width;
+        layOutLines(width);
+        resize(new Dimension.Simple(Math.max(1, lines.size()), width));
+        markAsDirty();
+    }
+
+    // the lines at width, in the colours of the theme that applies now - colours change nothing of the wrapping, so
+    // a new theme lays them out again at the same size (draw)
+    private void layOutLines(int width) {
+        laidOutIn = getTheme();
         lines.clear();
         tables.clear();
         if (!history.isEmpty()) {
-            lines.add(line(new Piece(0, "<< Back", Colors.UCya, BACK)));
+            lines.add(line(new Piece(0, "<< Back", getTheme().linkColor(), BACK)));
             lines.add(new ArrayList<Piece>());
         }
         Block previous = null;
@@ -303,8 +319,6 @@ public class MarkdownView extends BoundedComponent<MarkdownView> implements ToFo
             layOut(block, width);
             previous = block;
         }
-        resize(new Dimension.Simple(Math.max(1, lines.size()), width));
-        markAsDirty();
     }
 
     private void layOut(Block block, int width) {
@@ -313,14 +327,14 @@ public class MarkdownView extends BoundedComponent<MarkdownView> implements ToFo
                 layOutHeading(block, width);
                 break;
             case PARAGRAPH:
-                lines.addAll(wrapped(block.runs, width, 0, 0, null));
+                lines.addAll(wrapped(block.runs, width, 0, 0, null, getTheme()));
                 break;
             case LIST_ITEM:
                 layOutListItem(block, width);
                 break;
             case QUOTE:
-                for (List<Piece> line : wrapped(block.runs, width, 2, 2, Colors.IBla)) {
-                    line.add(0, new Piece(0, "│", Colors.IBla, null));
+                for (List<Piece> line : wrapped(block.runs, width, 2, 2, getTheme().dimColor(), getTheme())) {
+                    line.add(0, new Piece(0, "│", getTheme().dimColor(), null));
                     lines.add(line);
                 }
                 break;
@@ -331,7 +345,7 @@ public class MarkdownView extends BoundedComponent<MarkdownView> implements ToFo
                 layOutTable(block, width);
                 break;
             case RULE:
-                lines.add(line(new Piece(0, repeat('─', width), Colors.IBla, null)));
+                lines.add(line(new Piece(0, repeat('─', width), getTheme().dimColor(), null)));
                 break;
             default:
                 throw new IllegalStateException("no layout for " + block.kind);
@@ -339,8 +353,9 @@ public class MarkdownView extends BoundedComponent<MarkdownView> implements ToFo
     }
 
     private void layOutHeading(Block block, int width) {
-        Color color = block.level == 1 ? Colors.BYel : block.level == 2 ? Colors.BCya : Colors.BGre;
-        List<List<Piece>> title = wrapped(block.runs, width, 0, 0, color);
+        Theme theme = getTheme();
+        Color color = block.level == 1 ? theme.headingColor() : block.level == 2 ? theme.subheadingColor() : theme.minorHeadingColor();
+        List<List<Piece>> title = wrapped(block.runs, width, 0, 0, color, theme);
         lines.addAll(title);
         if (block.level <= 2) {
             int wide = 0;
@@ -354,9 +369,9 @@ public class MarkdownView extends BoundedComponent<MarkdownView> implements ToFo
 
     private void layOutListItem(Block block, int width) {
         int indent = block.level * 2;
-        List<List<Piece>> item = wrapped(block.runs, width, indent + block.marker.length(), indent + block.marker.length(), null);
+        List<List<Piece>> item = wrapped(block.runs, width, indent + block.marker.length(), indent + block.marker.length(), null, getTheme());
         if (!item.isEmpty()) {
-            item.get(0).add(0, new Piece(indent, block.marker, Colors.BCya, null));
+            item.get(0).add(0, new Piece(indent, block.marker, getTheme().subheadingColor(), null));
         }
         lines.addAll(item);
     }
@@ -365,7 +380,8 @@ public class MarkdownView extends BoundedComponent<MarkdownView> implements ToFo
     private void layOutCode(Block block) {
         JavaSyntaxHilighterTextFormatter java = "java".equalsIgnoreCase(block.language) ? new JavaSyntaxHilighterTextFormatter() : null;
         for (String code : block.codeLines) {
-            lines.add(line(new Piece(2, java != null ? java.getFormattedText(code) : code, java != null ? Colors.Whi : Colors.Yel, null)));
+            lines.add(line(new Piece(2, java != null ? java.getFormattedText(code) : code,
+                                     java != null ? getTheme().textColor() : getTheme().codeColor(), null)));
         }
     }
 
@@ -373,13 +389,13 @@ public class MarkdownView extends BoundedComponent<MarkdownView> implements ToFo
 
     private void layOutTable(Block block, int width) {
         TableModel<Object> model = tableModelOf(block);
-        TableComponent<Object> table = new TableComponent<Object>(Colors.IBla, model);
+        TableComponent<Object> table = new TableComponent<Object>(getTheme().dimColor(), model);
         table.setLinesStyle(TableComponent.TableLinesStyle.INNER);
         table.setSpacedRows(false);
         for (int c = 0; c < model.getColumnCount(); c++) {
             TableColumnImpl column = new TableColumnImpl(model.getColumnName(c), null, model.getColumnName(c), c, Align.LEFT, null, true, false);
-            column.setColumnRenderer(CELLS);
-            column.setHeaderRenderer(HEADINGS);
+            column.setColumnRenderer(cells);
+            column.setHeaderRenderer(headings);
             table.addColumn(column);
         }
         int wide = Math.min(width, table.widthNeeded());
@@ -431,13 +447,13 @@ public class MarkdownView extends BoundedComponent<MarkdownView> implements ToFo
     // ---- wrapping
 
     /** runs as lines ending before column end; the first starts at firstCol, the rest at nextCol. forced: every plain word in this colour */
-    static List<List<Piece>> wrapped(List<Run> runs, int end, int firstCol, int nextCol, Color forced) {
+    static List<List<Piece>> wrapped(List<Run> runs, int end, int firstCol, int nextCol, Color forced, Theme theme) {
         List<List<Piece>> wrapped = new ArrayList<List<Piece>>();
         List<Piece> line = new ArrayList<Piece>();
         int col = firstCol;
         boolean spaceOwed = false;
         for (Run run : runs) {
-            Color color = colorOf(run, forced);
+            Color color = colorOf(run, forced, theme);
             int i = 0;
             while (i < run.text.length()) {
                 if (run.text.charAt(i) == ' ') {
@@ -482,14 +498,14 @@ public class MarkdownView extends BoundedComponent<MarkdownView> implements ToFo
         }
     }
 
-    private static Color colorOf(Run run, Color forced) {
+    private static Color colorOf(Run run, Color forced, Theme theme) {
         switch (run.style) {
-            case BOLD:   return Colors.BWhi;
-            case ITALIC: return Colors.Cya;
-            case CODE:   return Colors.Yel;
-            case LINK:   return Colors.UCya;
-            case IMAGE:  return Colors.BPur;
-            default:     return forced != null ? forced : Colors.Whi;
+            case BOLD:   return theme.strongColor();
+            case ITALIC: return theme.emphasisColor();
+            case CODE:   return theme.codeColor();
+            case LINK:   return theme.linkColor();
+            case IMAGE:  return theme.linkColor();
+            default:     return forced != null ? forced : theme.textColor();
         }
     }
 
@@ -507,6 +523,9 @@ public class MarkdownView extends BoundedComponent<MarkdownView> implements ToFo
 
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
+        if (laidOutTo > 0 && getTheme() != laidOutIn) {
+            layOutLines(laidOutTo);                         // a new theme: the same lines, in its colours
+        }
         for (int row = 0; row < lines.size(); row++) {
             for (Piece piece : lines.get(row)) {
                 if (piece.col < getWidth()) {                                  // code wider than the view stops at its edge

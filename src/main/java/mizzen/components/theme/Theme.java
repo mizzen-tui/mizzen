@@ -9,7 +9,7 @@ import mizzen.app.TUIApp;
 import mizzen.components.Component;
 import mizzen.controlcodes.color.Color;
 import mizzen.controlcodes.color.Colors;
-import mizzen.controlcodes.color.Colors.FGBGColors;
+import mizzen.controlcodes.color.Colors.ColorFromCodes;
 import mizzen.core.Canvas;
 import mizzen.traverse.HasChildrenAdapter;
 
@@ -38,22 +38,46 @@ public final class Theme {
     /** the colours as they were before themes: a component given no colour looks as it always has */
     public static final Theme LEGACY = new Theme("Legacy", Colors.DEFAULT_COLOR, Colors.DEFAULT_COLOR, Colors.BYel,
             Colors.DEFAULT_COLOR, Colors.DEFAULT_COLOR, Colors.DEFAULT_COLOR, Colors.DEFAULT_COLOR,
-            Colors.DEFAULT_DISABLED_COLOR, Colors.BIRed, Colors.IGre, Colors.DEFAULT_COLOR);
+            Colors.DEFAULT_DISABLED_COLOR, Colors.BIRed, Colors.IGre, new Colors.FGBGColors(Colors.IYel))
+            .withSubheadingColor(Colors.BCya).withMinorHeadingColor(Colors.BGre).withStrongColor(Colors.BWhi)
+            .withEmphasisColor(Colors.Cya).withLinkColor(Colors.UCya).withCodeColor(Colors.Yel).withDimColor(Colors.IBla);
 
-    /** light text on black, cyan headings, dark grey input fields, light grey buttons */
-    public static final Theme DARK = onBackground("Dark", Colors.On_Bla, Colors.Whi, Colors.BCya,
-            on(Colors.BWhi, Colors.On_IBla), on(Colors.Bla, Colors.On_Whi), on(Colors.Bla, Colors.On_IWhi),
-            Colors.IBla, Colors.IBla, Colors.BIRed, Colors.BIGre, on(Colors.Bla, Colors.On_ICya));
+    // The themes below are 24-bit colour (most terminals today: PuTTY 0.71+, xterm, Windows Terminal, iTerm2). Each is low
+    // contrast between its blocks: a background that is not pure black, white or blue; fields one step off it; buttons
+    // two steps; one accent (headings, the focused button). Colours are hex: 0xRRGGBB - tweak here.
 
-    /** dark text on white, blue headings and buttons */
-    public static final Theme LIGHT = onBackground("Light", Colors.On_IWhi, Colors.Bla, Colors.Blu,
-            on(Colors.Bla, Colors.On_Whi), on(Colors.BWhi, Colors.On_Blu), on(Colors.BWhi, Colors.On_IBlu),
-            Colors.IBla, Colors.IBla, Colors.Red, Colors.Gre, on(Colors.BWhi, Colors.On_Blu));
+    /** charcoal: soft light text, blue accent, fields and buttons a shade or two lighter than the background */
+    public static final Theme DARK = rgbTheme("Dark", 0x22272E,       // background
+            0xADBAC7, 0x6CB6FF,                                          // text, heading
+            0xCDD9E5, 0x2D333B,                                          // input: text on field
+            0xCDD9E5, 0x373E47,                                          // button
+            0xFFFFFF, 0x316DCA,                                          // focused button: the accent
+            0x545D68, 0x636E7B,                                          // border, disabled
+            0xF47067, 0x8DDB8C,                                          // error, success
+            0xCDD9E5, 0x2E4A6E)                                          // selected: text on row
+            .documents(0x22272E, 0x96D0FF, 0xCDD9E5, 0xCDD9E5, 0xDCBDFB, 0x6CB6FF, 0xF69D50, 0x2D333B, 0x768390);
 
-    /** the classic blue screen: white on blue, yellow headings, cyan fields, green buttons */
-    public static final Theme CLASSIC = onBackground("Classic", Colors.On_Blu, Colors.Whi, Colors.BYel,
-            on(Colors.Bla, Colors.On_Cya), on(Colors.Bla, Colors.On_Gre), on(Colors.BWhi, Colors.On_Gre),
-            Colors.BWhi, Colors.IBla, Colors.BIRed, Colors.BIGre, on(Colors.Bla, Colors.On_Cya));
+    /** paper: dark text on off-white, blue accent, fields and buttons a shade or two darker */
+    public static final Theme LIGHT = rgbTheme("Light", 0xF6F8FA,
+            0x24292F, 0x0969DA,
+            0x24292F, 0xEAEEF2,
+            0x24292F, 0xD8DEE4,
+            0xFFFFFF, 0x0969DA,
+            0xAFB8C1, 0x8C959F,
+            0xCF222E, 0x1A7F37,
+            0x24292F, 0xDDF4FF)
+            .documents(0xF6F8FA, 0x0550AE, 0x24292F, 0x1F2328, 0x8250DF, 0x0969DA, 0x953800, 0xEAEEF2, 0x6E7781);
+
+    /** the classic blue screen, softened: navy, warm yellow headings, fields a lighter blue, green buttons */
+    public static final Theme CLASSIC = rgbTheme("Classic", 0x1D3268,
+            0xD7DCE8, 0xF2D06B,
+            0xFFFFFF, 0x2A4585,
+            0xFFFFFF, 0x2F7A5E,
+            0xFFFFFF, 0x3C9A76,
+            0x7A8CC4, 0x7F8BB0,
+            0xFF8A80, 0x9BE29B,
+            0xFFFFFF, 0x34539E)
+            .documents(0x1D3268, 0x9FD3FF, 0xFFFFFF, 0xFFFFFF, 0xC9B8FF, 0x8FD6FF, 0xF2D06B, 0x2A4585, 0x8E9CC9);
 
     private static final List<Theme> STANDARD = Collections.unmodifiableList(Arrays.asList(LEGACY, DARK, LIGHT, CLASSIC));
 
@@ -77,6 +101,15 @@ public final class Theme {
     private Color successColor;
     private Color selectedColor;        // the picked row of a list, tree or table
 
+    // documents (markdown, help text): each falls back to a colour above when a theme leaves it out
+    private Color subheadingColor;      // a level 2 heading, list markers
+    private Color minorHeadingColor;    // level 3 and below
+    private Color strongColor;          // **bold**
+    private Color emphasisColor;        // *italic*
+    private Color linkColor;
+    private Color codeColor;            // `code`
+    private Color dimColor;             // quotes, rules, the lines of a table in a document
+
     private Theme(String name, Color backgroundColor, Color textColor, Color headingColor, Color inputColor, Color buttonColor,
                   Color buttonFocusedColor, Color borderColor, Color disabledColor, Color errorColor, Color successColor,
                   Color selectedColor) {
@@ -94,17 +127,35 @@ public final class Theme {
         this.selectedColor = selectedColor;
     }
 
-    // a theme on one background: the plain foregrounds given get it; colours given whole (inputs, buttons) keep their own
-    private static Theme onBackground(String name, Colors.BgColor background, Colors.FgColor text, Colors.FgColor heading,
-                                      Color input, Color button, Color buttonFocused, Colors.FgColor border,
-                                      Colors.FgColor disabled, Colors.FgColor error, Colors.FgColor success, Color selected) {
-        return new Theme(name, on(text, background), on(text, background), on(heading, background), input, button,
-                buttonFocused, on(border, background), on(disabled, background), on(error, background),
-                on(success, background), selected);
+    // a theme in 24-bit colour: the plain colours (text, heading, border...) on its background; fields, buttons and the
+    // selected row on their own
+    private static Theme rgbTheme(String name, int background, int text, int heading, int inputText, int inputField,
+                                  int buttonText, int button, int focusedText, int focused, int border, int disabled,
+                                  int error, int success, int selectedText, int selected) {
+        return new Theme(name, rgb(text, background), rgb(text, background), bold(heading, background),
+                rgb(inputText, inputField), rgb(buttonText, button), rgb(focusedText, focused), rgb(border, background),
+                rgb(disabled, background), rgb(error, background), rgb(success, background), rgb(selectedText, selected));
     }
 
-    private static Color on(Colors.FgColor foreground, Colors.BgColor background) {
-        return new FGBGColors(foreground, background);
+    // the document colours, on background - inline code on its own field
+    private Theme documents(int background, int subheading, int minorHeading, int strong, int emphasis, int link,
+                            int code, int codeField, int dim) {
+        return withSubheadingColor(bold(subheading, background)).withMinorHeadingColor(bold(minorHeading, background))
+                .withStrongColor(bold(strong, background)).withEmphasisColor(rgb(emphasis, background))
+                .withLinkColor(rgb(link, background)).withCodeColor(rgb(code, codeField)).withDimColor(rgb(dim, background));
+    }
+
+    // as rgb, in bold - an RGB colour is only a colour; headings and **bold** need the attribute too
+    private static Color bold(int foreground, int background) {
+        return ColorFromCodes.instance(new int[] { 0, 1, 38, 2, foreground >> 16 & 0xFF, foreground >> 8 & 0xFF, foreground & 0xFF,
+                                                   48, 2, background >> 16 & 0xFF, background >> 8 & 0xFF, background & 0xFF });
+    }
+
+    // foreground on background, each 0xRRGGBB - starting with a reset, as the named colours do, so nothing before it
+    // (bold, underline) carries on into what is drawn in it
+    private static Color rgb(int foreground, int background) {
+        return ColorFromCodes.instance(new int[] { 0, 38, 2, foreground >> 16 & 0xFF, foreground >> 8 & 0xFF, foreground & 0xFF,
+                                                   48, 2, background >> 16 & 0xFF, background >> 8 & 0xFF, background & 0xFF });
     }
 
     // ---- the colours
@@ -121,6 +172,13 @@ public final class Theme {
     public Color errorColor()          { return errorColor; }
     public Color successColor()        { return successColor; }
     public Color selectedColor()       { return selectedColor; }
+    public Color subheadingColor()     { return subheadingColor != null ? subheadingColor : headingColor; }
+    public Color minorHeadingColor()   { return minorHeadingColor != null ? minorHeadingColor : headingColor; }
+    public Color strongColor()         { return strongColor != null ? strongColor : textColor; }
+    public Color emphasisColor()       { return emphasisColor != null ? emphasisColor : textColor; }
+    public Color linkColor()           { return linkColor != null ? linkColor : headingColor; }
+    public Color codeColor()           { return codeColor != null ? codeColor : textColor; }
+    public Color dimColor()            { return dimColor != null ? dimColor : disabledColor; }
 
     @Override
     public String toString() {
@@ -141,10 +199,24 @@ public final class Theme {
     public Theme withErrorColor(Color color)           { return with((t) -> t.errorColor = color); }
     public Theme withSuccessColor(Color color)         { return with((t) -> t.successColor = color); }
     public Theme withSelectedColor(Color color)        { return with((t) -> t.selectedColor = color); }
+    public Theme withSubheadingColor(Color color)      { return with((t) -> t.subheadingColor = color); }
+    public Theme withMinorHeadingColor(Color color)    { return with((t) -> t.minorHeadingColor = color); }
+    public Theme withStrongColor(Color color)          { return with((t) -> t.strongColor = color); }
+    public Theme withEmphasisColor(Color color)        { return with((t) -> t.emphasisColor = color); }
+    public Theme withLinkColor(Color color)            { return with((t) -> t.linkColor = color); }
+    public Theme withCodeColor(Color color)            { return with((t) -> t.codeColor = color); }
+    public Theme withDimColor(Color color)             { return with((t) -> t.dimColor = color); }
 
     private Theme with(Consumer<Theme> change) {
         Theme copy = new Theme(name, backgroundColor, textColor, headingColor, inputColor, buttonColor, buttonFocusedColor,
                 borderColor, disabledColor, errorColor, successColor, selectedColor);
+        copy.subheadingColor = subheadingColor;
+        copy.minorHeadingColor = minorHeadingColor;
+        copy.strongColor = strongColor;
+        copy.emphasisColor = emphasisColor;
+        copy.linkColor = linkColor;
+        copy.codeColor = codeColor;
+        copy.dimColor = dimColor;
         change.accept(copy);
         return copy;
     }

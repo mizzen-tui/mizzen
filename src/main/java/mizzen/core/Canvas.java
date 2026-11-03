@@ -50,7 +50,8 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
     private int              sc_current_id    = 0;
 
     private char             emptyChar        = '░';
-    private Color            emptyColor       = null;      // null: the default's (setDefaultEmptyColor) - a theme's background
+    private Color            emptyColor       = null;      // the app's own (setEmptyColors); null: a theme's
+    private Color            themeEmptyColor  = null;      // an app's theme's background; null: the default theme's
 
     // what a canvas with no empty colour of its own shows where nothing is drawn; Theme.setDefault sets it to its background
     private static volatile Supplier<Color> defaultEmptyColor = () -> Colors.DEFAULT_COLOR;
@@ -434,6 +435,14 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
             // recreate with new color
             scs = createScreenObject(scsColor, scs, scs);
         }
+        // a colour that sets no background shows the screen's - when the screen is a theme's background. An app that
+        // gave its own screen colour (setEmptyColors) keeps what it always had: such colours show the terminal's
+        if (emptyColor == null && scsColor != null && !Color.setsBackground(scsColor)) {
+            Color screen = getEmptyColor();
+            if (Color.setsBackground(screen)) {
+                scs = createScreenObject(scsColor.mergeWith(screen), scs, scs);
+            }
+        }
         backend.writeToBackend(scs);
     }
 
@@ -456,9 +465,18 @@ public class Canvas implements Dimension, IScreenLineSegmentsBuffer.Provider {
         return this;
     }
 
-    /** where nothing is drawn: its own empty colour, else the default's */
+    /** where nothing is drawn: the app's own empty colour, else its theme's, else the default theme's */
     public Color getEmptyColor() {
-        return this.emptyColor != null ? this.emptyColor : defaultEmptyColor.get();
+        if (this.emptyColor != null) {
+            return this.emptyColor;
+        }
+        return this.themeEmptyColor != null ? this.themeEmptyColor : defaultEmptyColor.get();
+    }
+
+    /** the background of the app's theme (TUIApp.setTheme); null: the default theme's. The app's own (setEmptyColors) comes first */
+    public Canvas setThemeEmptyColor(Color color) {
+        this.themeEmptyColor = color;
+        return this;
     }
 
     public char getEmptyChar() {

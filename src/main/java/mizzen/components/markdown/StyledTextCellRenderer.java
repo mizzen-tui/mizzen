@@ -2,12 +2,14 @@ package mizzen.components.markdown;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 import mizzen.components.markdown.MarkdownDocument.Run;
 import mizzen.components.markdown.MarkdownDocument.RunStyle;
 import mizzen.components.markdown.MarkdownView.Piece;
 import mizzen.components.table.CellRenderer;
 import mizzen.components.table.CellWidths;
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
 import mizzen.geom.Align;
 import mizzen.geom.Dimension;
@@ -27,10 +29,12 @@ final class StyledTextCellRenderer implements CellRenderer {
 
     private static final int ROOM = 1;
 
-    private final Color forced;                          // plain text in this colour; null: the document's
+    private final Supplier<Color> forced;                // plain text in this colour; null from it: the document's
+    private final Supplier<Theme> theme;                 // the document's: asked as cells are drawn, so they follow it
 
-    StyledTextCellRenderer(Color forced) {
+    StyledTextCellRenderer(Supplier<Color> forced, Supplier<Theme> theme) {
         this.forced = forced;
+        this.theme = theme;
     }
 
     @SuppressWarnings("unchecked")
@@ -39,7 +43,7 @@ final class StyledTextCellRenderer implements CellRenderer {
     }
 
     private List<List<Piece>> lines(Object value, int width) {
-        return MarkdownView.wrapped(runsOf(value), width - ROOM, ROOM, ROOM, forced);
+        return MarkdownView.wrapped(runsOf(value), width - ROOM, ROOM, ROOM, forced.get(), theme.get());
     }
 
     @Override

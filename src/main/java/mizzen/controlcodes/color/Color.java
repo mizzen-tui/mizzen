@@ -172,6 +172,10 @@ public abstract class Color extends ControlCode implements ColorProvider, HasBac
             return c2;
         }
 
+        if (!isNamed(c1) || !isNamed(c2)) {             // RGB, or built from codes: merged by reading their codes
+            return mergeByParts(c1, c2);
+        }
+
         if (c1 instanceof FGBGColors && c2 instanceof FGBGColors) {
             Color fg = c1.getForeGroundColor() instanceof FgColor ?  c1.getForeGroundColor() : null;
             Color bg = c2.getBackGroundColor() instanceof BgColor ?  c2.getBackGroundColor() : null;
@@ -197,7 +201,7 @@ public abstract class Color extends ControlCode implements ColorProvider, HasBac
 
         if (c2 instanceof FGBGColors && c1 != null) {
             Color bg = c2.getBackGroundColor() instanceof BgColor ?  c2.getBackGroundColor() : null;
-            Color fg = c1 instanceof FgColor ? c2 : null;
+            Color fg = c1 instanceof FgColor ? c1 : null;     // c1's foreground (was c2: it lost c1, and changed c2 - a shared colour)
             if (fg == null && c1 instanceof BgColor) {
                 fg = c1.invert();
                 if (!(fg instanceof FgColor)) {
@@ -233,10 +237,74 @@ public abstract class Color extends ControlCode implements ColorProvider, HasBac
             return new FGBGColors(cb2 instanceof FgColor ? (FgColor)cb2 : null, (BgColor)c1);
         }
         
-        // TODO:  handle RGB colors
-        
         return c1;
         
+    }
+
+    // the named colours: merged as they always were
+    private static boolean isNamed(Color c) {
+        return c == null || c instanceof FgColor || c instanceof BgColor || c instanceof FGBGColors;
+    }
+
+    // c1's foreground over c2's background, whatever kind each is (named or RGB); either missing: the other alone
+    private static Color mergeByParts(Color c1, Color c2) {
+        Color fg = foregroundOf(c1);
+        Color bg = backgroundOf(c2);
+        if (fg == null || bg == null) {
+            return fg != null ? fg : bg != null ? bg : c1;
+        }
+        if (fg instanceof Colors.RGBColorForeground && bg instanceof Colors.RGBColorBackground) {
+            return Colors.RGBColorFGBG.instance((Colors.RGBColorForeground) fg, (Colors.RGBColorBackground) bg);
+        }
+        return Colors.ColorFromCodes.instance(fg, bg);
+    }
+
+    private static Color foregroundOf(Color c) {
+        if (c instanceof FgColor || c instanceof Colors.RGBColorForeground) {
+            return c;
+        }
+        if (c instanceof BgColor || c instanceof Colors.RGBColorBackground) {
+            return null;
+        }
+        if (c instanceof FGBGColors) {
+            return ((FGBGColors) c).getFgc();
+        }
+        return part(c.getControlCodes(), false);
+    }
+
+    private static Color backgroundOf(Color c) {
+        if (c instanceof BgColor || c instanceof Colors.RGBColorBackground) {
+            return c;
+        }
+        if (c instanceof FgColor || c instanceof Colors.RGBColorForeground) {
+            return null;
+        }
+        if (c instanceof FGBGColors) {
+            return ((FGBGColors) c).getBgc();
+        }
+        return part(c.getControlCodes(), true);
+    }
+
+    // a colour's codes split in two: its background (40-47, 100-107, 48;2;r;g;b, 48;5;n) or the rest - reset, bold,
+    // the foreground. null: none of that part
+    private static Color part(int[] codes, boolean background) {
+        int[] kept = new int[codes.length];
+        int n = 0;
+        for (int i = 0; i < codes.length; i++) {
+            int code = codes[i];
+            int length = 1;
+            if (code == 38 || code == 48) {
+                length = (i + 1 < codes.length && codes[i + 1] == 5) ? 3 : 5;
+            }
+            boolean isBackground = code == 48 || (code >= 40 && code <= 47) || (code >= 100 && code <= 107);
+            for (int k = 0; k < length && i + k < codes.length; k++) {
+                if (isBackground == background) {
+                    kept[n++] = codes[i + k];
+                }
+            }
+            i += length - 1;
+        }
+        return n == 0 ? null : Colors.ColorFromCodes.instance(java.util.Arrays.copyOf(kept, n));
     }
     
     public static BgColor backgroundColor(Color color) {
@@ -257,6 +325,34 @@ public abstract class Color extends ControlCode implements ColorProvider, HasBac
     
     public static boolean hasBackgroundColor(Color color) {
         return backgroundColor(color) != null; 
+    }
+
+    /**
+     * Whether sending color sets a background - read from its codes, so any kind of colour answers (named, RGB, parsed
+     * from text). false: what is drawn in it shows whatever background is behind it (the canvas fills that in).
+     * <pre>
+     *     Colors.BGre                        false   (a foreground: it resets, then sets the foreground only)
+     *     new FGBGColors(Colors.Whi, On_Blu) true
+     *     RGBColorFGBG.instance(..)          true    (48;2;r;g;b)
+     * </pre>
+     */
+    public static boolean setsBackground(Color color) {
+        if (color == null) {
+            return false;
+        }
+        int[] codes = color.getControlCodes();
+        for (int i = 0; i < codes.length; i++) {
+            int code = codes[i];
+            if (code == 38 || code == 48) {                  // 38;2;r;g;b / 38;5;n - foreground; 48: background
+                if (code == 48) {
+                    return true;
+                }
+                i += (i + 1 < codes.length && codes[i + 1] == 5) ? 2 : 4;
+            } else if ((code >= 40 && code <= 47) || (code >= 100 && code <= 107)) {
+                return true;
+            }
+        }
+        return false;
     }
     
  // In Color.java

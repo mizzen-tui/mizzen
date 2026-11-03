@@ -116,7 +116,7 @@ public class TreeView<N> extends BoundedComponent<TreeView<N>>
     }
     private N selected;
 
-    private Color selectedColor = new Colors.FGBGColors(Colors.IYel);     // as ListBox
+    private Color selectedColor;                         // null: the theme's selected colour
     private UnfocusedSelection unfocusedSelection = UnfocusedSelection.DIM;
     private String collapsedMark = "▸";
     private String expandedMark = "▾";
@@ -505,11 +505,14 @@ public class TreeView<N> extends BoundedComponent<TreeView<N>>
         return at < 0 ? "[" + row.text + "]" : row.text.substring(0, at) + "[" + shown + "]";
     }
 
+    // focused: the selected colour - inverted if it is a foreground only (yellow text: shown as a yellow bar);
+    // not focused: as UnfocusedSelection says
     private Color selectedRowColor() {
+        Color selected = selectedColor != null ? selectedColor : getTheme().selectedColor();
         if (focus.hasFocus()) {
-            return selectedColor.invert();
+            return Color.setsBackground(selected) ? selected : selected.invert();
         }
-        return unfocusedSelection == UnfocusedSelection.DIM ? selectedColor : getColor();
+        return unfocusedSelection == UnfocusedSelection.DIM ? selected : getColor();
     }
 
     private int selectedIndex() {
