@@ -5,8 +5,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.StringJoiner;
 import java.util.TreeSet;
+import java.util.function.Function;
 
 import mizzen.components.composite.Composite;
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
 import mizzen.controlcodes.color.ColorProvider;
 import mizzen.events.EventBus;
@@ -41,6 +43,23 @@ public interface Component<T extends Component<?>>
                                         Rectangle {
 
     T setColor(Color drawingcolor);
+
+    /**
+     * Which of its theme's colours it draws with when it has none of its own - e.g. Theme::inputColor for a text input.
+     * <pre>
+     *     new TextComponent("No action picked").setThemeColor(Theme::emphasisColor);
+     * </pre>
+     */
+    Function<Theme, Color> getThemeColor();
+
+    T setThemeColor(Function<Theme, Color> colorFromTheme);
+
+    /**
+     * The colour it was given; null: none - getColor() is then its theme's. For code that builds or decorates components:
+     * a part is handed this, never getColor() (resolved, it would stay fixed when the theme changes); focus shows itself
+     * differently on a component with a colour of its own.
+     */
+    Color getOwnColor();
     
     void clear();
     

@@ -4,6 +4,7 @@ import java.util.Random;
 
 import mizzen.components.plot.PlotMiddleware;
 import mizzen.components.plot.PointPlotter;
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
 
 /**
@@ -192,5 +193,10 @@ public class ExplodingPointPlotter implements PointPlotter {
         Color c = colorCycle[colorCycleIndex % colorCycle.length];
         colorCycleIndex++;
         return c;
+    }
+
+    @Override
+    public Theme getTheme() {
+        return target.getTheme();
     }
 }

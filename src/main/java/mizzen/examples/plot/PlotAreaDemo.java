@@ -9,7 +9,6 @@ import mizzen.components.TextComponent;
 import mizzen.components.WindowFrame;
 import mizzen.components.plot.PlotArea;
 import mizzen.components.plot.shape.catalog.Star;
-import mizzen.controlcodes.color.Colors;
 import mizzen.geom.Dimension;
 import mizzen.geom.position.Vec2;
 
@@ -46,12 +45,12 @@ public class PlotAreaDemo {
                             .showing(0, 2 * Math.PI, -1.5, 1.5)
                             .axes(true)
                             .onDraw((pen) -> pen
-                                    .color(Colors.Blu).fillUnder(Math::sin, 0, Math.PI)
-                                    .color(Colors.BCya).function(Math::sin)
-                                    .color(Colors.BYel).function((x) -> Math.cos(x) / 2)
-                                    .color(Colors.BRed).points(samples)
-                                    .color(Colors.BPur).draw(star)
-                                    .color(Colors.BWhi).text(Math.PI / 2 - 0.2, 1.2, "peak"));
+                                    .drawingColor(5).fillUnder(Math::sin, 0, Math.PI)     // the theme's drawing colours:
+                                    .drawingColor(0).function(Math::sin)                  // 0 cyan 1 yellow 2 purple
+                                    .drawingColor(1).function((x) -> Math.cos(x) / 2)     // 3 green 4 red 5 blue
+                                    .drawingColor(4).points(samples)
+                                    .drawingColor(2).draw(star)
+                                    .drawingColor(0).text(Math.PI / 2 - 0.2, 1.2, "peak"));
                     plot.draggable(star);
                     plot.panByDrag(true);                              // drag empty space: move the view
                     plot.onClick((click) -> {

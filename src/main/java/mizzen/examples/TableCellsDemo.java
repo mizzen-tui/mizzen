@@ -56,7 +56,7 @@ public class TableCellsDemo {
         ObjectTableModel<Stock> stockColumns = new ObjectTableModel<Stock>()
                 .column("Part", (s) -> s.part.name)
                 .column("Drawing", (s) -> s)
-                        .renderer(CellRenderers.drawing((Stock s, Pen pen) -> pen.color(s.part.color).draw(s.part.drawing.get()),
+                        .renderer(CellRenderers.drawing((Stock s, Pen pen) -> pen.drawingColor(s.part.drawingColor).draw(s.part.drawing.get()),
                                 -1.3, 1.3, -1.3, 1.3, 8, 16))
                 .column("Price", (s) -> String.format("%,.2f", s.part.price))
                 .column("Shelf", (s) -> s)

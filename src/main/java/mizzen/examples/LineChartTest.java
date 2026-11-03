@@ -304,9 +304,9 @@ public class LineChartTest {
     static Shown renderNew(TUIApp tApp) {
         Composite appPanel = (Composite) tApp.getMainApplicationPanel();
         LineChart chart = new LineChart(new Dimension.Simple(Math.max(10, appPanel.getHeight() - 4), appPanel.getWidth()))
-                .series("sine", Colors.Blu)
-                .series("cosine", Colors.BYel)
-                .series("live", Colors.BRed);
+                .series("sine")                                // the theme's drawing colours, in turn
+                .series("cosine")
+                .series("live");
         for (int i = 0; i <= 120; i++) {
             double x = i / 10.0;
             chart.add("sine", x, Math.sin(x) * 3 + 4).add("cosine", x, Math.cos(x) * 2 + 4);

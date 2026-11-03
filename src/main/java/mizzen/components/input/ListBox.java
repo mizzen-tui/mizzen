@@ -6,6 +6,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 import mizzen.components.AbstractComponent;
 import mizzen.components.BorderedComponent;
@@ -19,6 +21,7 @@ import mizzen.components.TextComponent;
 import mizzen.components.composite.Composite;
 import mizzen.components.composite.VerticalPanel;
 import mizzen.components.input.DisplayableValue.StringDisplayValue;
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
 import mizzen.controlcodes.color.Colors;
 import mizzen.events.ChainedEventHandler;
@@ -69,7 +72,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
     int            selected;
     KeyStroke      keystrokePrevious       = Keys.UP_KEYSTROKE;
     KeyStroke      keystrokeNext           = Keys.DOWN_KEYSTROKE;
-    Color          selectedColor           = new Colors.FGBGColors(Colors.IYel);
+    Color          selectedColor;                     // null: its theme's (selectedColor)
     int            eventTriggerForValueChanged = DEFAULT_TRIGGER_FOR_ONVALUE_CHANGED;
     
     // VALUE_CHANGED_ON_... flags (setEventTriggerForValueChanged): see HasValue
@@ -113,10 +116,12 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
             Dimension strDim = Dimension.UTIL.stringToDimension( displayableItem.getDisplayValue());
 
             Dimension tcDim = new Dimension.Simple( strDim.getHeight(), maxWidthStr ); 
-            tc = new TextComponent(this.getColor(), tcDim, displayableItem.getDisplayValue());
+            tc = new TextComponent(color, tcDim, displayableItem.getDisplayValue());
+            tc.setThemeColor((theme) -> getColor());          // given no colour: the item's, as it is drawn
             tc.setFillOnClear(FILL_ON_CLEAR_DEFAULT);
 
-            bullet = new CharComponent( this.getColor() , '-');
+            bullet = new CharComponent(color, '-');
+            bullet.setThemeColor((theme) -> getColor());
 
             this.add( 0,0, bullet);
             this.add( 0,2, tc);
@@ -136,6 +141,19 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
 
     }
 
+    // an item not selected: the list's own colour; none: the list's as it is drawn (it follows a theme)
+    private void unselected(Component<?> item) {
+        Color own = getOwnColor();
+        item.setColor(own == null ? Colors.DEFAULT_COLOR : own);
+        item.setThemeColor((theme) -> getColor());
+    }
+
+    // an item selected: the selected colour (its own, else its theme's), as how shows it - worked out as it is drawn
+    private void inSelected(Component<?> item, UnaryOperator<Color> how) {
+        item.setColor(Colors.DEFAULT_COLOR);
+        item.setThemeColor((theme) -> how.apply(selectedColor != null ? selectedColor : getTheme().selectedColor()));
+    }
+
     ItemComponent itemComponentfactory(Component<?> component) {
              if (component instanceof ItemComponent) {
                  return (ItemComponent) component;
@@ -146,18 +164,18 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
                     @Override
                     public void selectWithFocus() {
                         //new HiliterAdapter<Component<?>>(getComponent()).getHiliter().hilite();
-                        getComponent().setColor(ListBox.this.selectedColor.invert());
+                        inSelected(getComponent(), (c) -> Color.setsBackground(c) ? c : c.invert());
                     }
 
                     @Override
                     public void unSelect() {
                         //new HiliterAdapter<Component<?>>(getComponent()).getHiliter().unHilite();
-                        getComponent().setColor(ListBox.this.getColor());
+                        unselected(getComponent());
                     }
 
                     @Override
                     public void selectWithNoFocus() {
-                        getComponent().setColor(ListBox.this.selectedColor.bold());
+                        inSelected(getComponent(), (c) -> c.bold());
                     }
                  };
              }
@@ -168,7 +186,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
                     @Override
                     public void selectWithFocus() {
                         new HiliterAdapter<Component<?>>(getComponent()).getHiliter().hilite();
-                        getComponent().setColor(selectedColor);
+                        inSelected(getComponent(), (c) -> c);
                         ((BorderedComponent)getComponent()).setShowBorder(true);
                     }
 
@@ -176,13 +194,13 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
                     public void unSelect() {
                         
                         new HiliterAdapter<Component<?>>(getComponent()).getHiliter().unHilite();
-                        getComponent().setColor(ListBox.this.getColor());
+                        unselected(getComponent());
                         ((BorderedComponent)getComponent()).setShowBorder(false);
                     }
 
                     @Override
                     public void selectWithNoFocus() {
-                        getComponent().setColor(selectedColor);
+                        inSelected(getComponent(), (c) -> c);
                         ((BorderedComponent)getComponent()).setShowBorder(false);
                     }
                      
@@ -196,7 +214,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
                     public void selectWithFocus() {
                         ListItemComponent<?> component = (ListItemComponent<?>)getComponent();
                         new HiliterAdapter<Component<?>>(component).getHiliter().hilite();
-                        component.setColor(selectedColor);
+                        inSelected(component, (c) -> c);
                         component.setBorder(true);
                         component.setSelectedBullet();
                     }
@@ -205,7 +223,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
                     public void unSelect() {
                         ListItemComponent<?> component = (ListItemComponent<?>)getComponent();
                         new HiliterAdapter<Component<?>>(component).getHiliter().unHilite();
-                        component.setColor(ListBox.this.getColor());
+                        unselected(component);
                         component.setBorder(false);
                         component.setUnSelectedBullet();
                     }
@@ -214,7 +232,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
                     public void selectWithNoFocus() {
                         ListItemComponent<?> component = (ListItemComponent<?>)getComponent();
                         new HiliterAdapter<Component<?>>(component).getHiliter().hilite();
-                        component.setColor(selectedColor);
+                        inSelected(component, (c) -> c);
                         component.setBorder(false);
                         component.setSelectedBullet();
                     }
@@ -227,21 +245,21 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
                     @Override
                     public void selectWithFocus() {
                         new HiliterAdapter<Component<?>>(getComponent()).getHiliter().hilite();
-                        getComponent().setColor(selectedColor);
+                        inSelected(getComponent(), (c) -> c);
                         ((Composite)getComponent()).setBorder(true);
                     }
 
                     @Override
                     public void unSelect() {
                         new HiliterAdapter<Component<?>>(getComponent()).getHiliter().unHilite();
-                        getComponent().setColor(ListBox.this.getColor());
+                        unselected(getComponent());
                         ((Composite)getComponent()).setBorder(false);
                     }
 
                     @Override
                     public void selectWithNoFocus() {
                         new HiliterAdapter<Component<?>>(getComponent()).getHiliter().hilite();
-                        getComponent().setColor(selectedColor);
+                        inSelected(getComponent(), (c) -> c);
                         ((Composite)getComponent()).setBorder(false);
                     }
                  };
@@ -304,6 +322,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
         this.selected = -1;
         itemsContainer = new VerticalPanel(color);
         itemsContainer.setColor(color);
+        itemsContainer.setThemeColor((theme) -> getColor());      // given no colour: the list's, as it is drawn
         itemsContainer.setParentContainer(this);
         itemsContainer.setFillOnClear(FILL_ON_CLEAR_DEFAULT);
         this.setFillOnClear(FILL_ON_CLEAR_DEFAULT);
@@ -368,6 +387,12 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
 
     ComponentItemFactory<T> DEFAULT_COMPONENT_FACTORY = new TextComponentItemFactory<T>(); //(color, maxWidthStr, displayableItem) -> new ListItemComponent<T>(this.getColor(), maxWidthStr, displayableItem);
 
+    // its own colour, or none (DEFAULT_COLOR): never a resolved one, which would stay fixed
+    private Color ownOrNone() {
+        Color own = getOwnColor();
+        return own == null ? Colors.DEFAULT_COLOR : own;
+    }
+
     public void setSelectedColor(Color selectedColor) {
         this.selectedColor = selectedColor;
     }
@@ -391,7 +416,7 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
 
         for (DisplayableValue<T> displayableItem : displayableItems) {
 
-            Component<?> component = displayItemToComponent.makeComponentFromdisplayableItem(this.getColor(), maxWidthStr, displayableItem);
+            Component<?> component = displayItemToComponent.makeComponentFromdisplayableItem(ownOrNone(), maxWidthStr, displayableItem);   // unSelect makes it follow the list
 //            if (component instanceof Composite) {
 //                padding = 4;
 //            }
@@ -467,6 +492,20 @@ public class ListBox<T> extends AbstractComponent<ListBox<T>>
             for (ListBox<T>.ListItem item : this.items) {
                 Component<?> listItemComponent = item.itemComponent.getComponent();
                 listItemComponent.setColor(drawingcolor);
+            }
+        }
+        return this;
+    }
+
+    // its items follow it (unselected, inSelected): a new theme colour - focus shows itself as one - draws them again too,
+    // as setColor does
+    @Override
+    public ListBox<T> setThemeColor(Function<Theme, Color> colorFromTheme) {
+        super.setThemeColor(colorFromTheme);
+        this.itemsContainer.markAsDirty();
+        if (this.items != null) {
+            for (ListBox<T>.ListItem item : this.items) {
+                item.itemComponent.getComponent().markAsDirty();
             }
         }
         return this;

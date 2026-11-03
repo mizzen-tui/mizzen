@@ -85,15 +85,15 @@ public class TestScale {
 
                    HorizontalPanel controlsInGrid = new HorizontalPanel();
                    controlsInGrid.setBorder(true);
-                   RadioGroup<Boolean> fillOption = RadioGroup.onOff("Fill", false).setColor(grid.getColor());
+                   RadioGroup<Boolean> fillOption = RadioGroup.onOff("Fill", false);
                    controlsInGrid.add(fillOption);
 
                    controlsInGrid.add(new TextComponent("|  "));
-                   RotationButtonBar rotationControls = new RotationButtonBar(grid.getColor());
+                   RotationButtonBar rotationControls = new RotationButtonBar(null);           // no colour: the theme's
                    controlsInGrid.add(rotationControls);
 
                    controlsInGrid.add(new TextComponent("|  "));
-                   ScaleButtonBar scaleInput = new ScaleButtonBar(grid.getColor());
+                   ScaleButtonBar scaleInput = new ScaleButtonBar(null);
                    controlsInGrid.add(scaleInput);
 
                    Position controlsInGridPosition = PositionRelativeFactory.fromAlign(VAlign.BOTTOM, 3, Align.LEFT, 0,  grid, controlsInGrid);
@@ -206,7 +206,7 @@ public class TestScale {
                    hp.add(shapesChoiceComponent);
 
                    // a drag that starts on the shape moves it
-                   ClickableDraggableComponentWrapper draggableGrid = new ClickableDraggableComponentWrapper(grid.getColor(), grid);
+                   ClickableDraggableComponentWrapper draggableGrid = new ClickableDraggableComponentWrapper(null, grid);
                    draggableGrid.setDraggable(new MoveShapeOnDrag(() -> Component.UTIL.getCanvasOffsetFor(grid.getPlotter()),
                                                                   shapesChoiceComponent::getSelectedValue,
                                                                   translateTranFormer,

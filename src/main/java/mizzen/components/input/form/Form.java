@@ -19,7 +19,6 @@ import mizzen.components.input.TextInput;
 import mizzen.components.input.form.FormBinder.FormBinderField;
 import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
-import mizzen.controlcodes.color.Colors;
 import mizzen.events.ChainedEventHandler;
 import mizzen.events.ConditionalEventHandler;
 import mizzen.events.keyboard.KeyEvent;
@@ -53,11 +52,11 @@ public class Form<T> extends ComponentWithFocus<VerticalPanel, Form<T>> implemen
     private final List<Consumer<T>> views = new ArrayList<Consumer<T>>();   // view rows: brought up to date after each change
     private final ChainedEventHandler formEvents = ChainedEventHandler.useChainOfResponsibilityStrategy(this);   // field / form changed
 
-    Color labelColor = Colors.BWhi;
-    Color inputColor = Colors.IYel;
-    Color noteColor = Colors.IBla;
-    Color headingColor = Colors.BYel;
-    Color errorColor = Colors.BIRed;
+    Color labelColor;                   // each null: the theme's - labels strong, inputs input, notes dim, headings
+    Color inputColor;                   // heading, errors error (Legacy's are the colours forms always had, but inputs)
+    Color noteColor;
+    Color headingColor;
+    Color errorColor;
     int inputWidth = 30;
     char inputEmptyChar = '_';                           // shows how far a text input goes while it is empty
 
@@ -66,7 +65,7 @@ public class Form<T> extends ComponentWithFocus<VerticalPanel, Form<T>> implemen
     }
 
     private Form(T data) {
-        super(Colors.BWhi, new VerticalPanel());
+        super((Color) null, new VerticalPanel());          // no colour: its theme's
         this.data = data;
         this.rows = new RowsPanel(getPanel());
         this.binder = FormBinder.UTIL.get(data, formEvents, null);   // no bus: taken from the first event

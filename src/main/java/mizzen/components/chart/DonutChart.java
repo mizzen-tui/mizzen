@@ -96,7 +96,7 @@ public class DonutChart<T> extends AbstractComponentWrappper<PlotArea> implement
         return redraw();
     }
 
-    /** the slices' colours, in turn (default: a palette of bright colours) */
+    /** the slices' colours, in turn (default: the theme's drawing colours) */
     public DonutChart<T> colors(Color... colors) {
         items.colors(colors);
         return redraw();
@@ -164,7 +164,7 @@ public class DonutChart<T> extends AbstractComponentWrappper<PlotArea> implement
             slice.setFilled(true);
             slice.setName(items.label(i));
             slices.add(slice);
-            pen.color(items.color(i)).draw(slice);
+            pen.color(items.color(i, getTheme())).draw(slice);
             start -= sweep;
         }
         legend(pen);
@@ -200,7 +200,7 @@ public class DonutChart<T> extends AbstractComponentWrappper<PlotArea> implement
         double total = items.total();
         for (int i = 0; i < items.count(); i++) {
             String mark = i == items.selected() ? ">" : " ";
-            pen.color(items.color(i)).text(x, y - i * row, mark + "█ " + items.label(i) + String.format("  %.1f%%", items.value(i) * 100 / total),
+            pen.color(items.color(i, getTheme())).text(x, y - i * row, mark + "█ " + items.label(i) + String.format("  %.1f%%", items.value(i) * 100 / total),
                                            slices.get(i));         // a click on the line picks its slice
         }
     }

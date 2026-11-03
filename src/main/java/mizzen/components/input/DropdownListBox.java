@@ -590,8 +590,9 @@ public class DropdownListBox<T> extends AbstractComponentWrappper<VerticalPanel>
                 } else {
                     Rectangle desiredRect = listBoxParent.intersectWith(new Rectangle.Simple(listBoxPosition, listBox));
                     listBox.setBorder(false);
-                    this.listBoxScrollPane = new ScrollableComponent(listBox.getColor(), new Dimension.Simple(desiredRect), listBox)
+                    this.listBoxScrollPane = new ScrollableComponent(listBox.getOwnColor(), new Dimension.Simple(desiredRect), listBox)
                                                                 .removeFooter();
+                    listBoxScrollPane.setThemeColor((theme) -> listBox.getColor());   // follows the list: no colour fixed now
                     listBoxScrollPane.setName(this.getName()+"-listBoxScrollPane");
                 }
             }

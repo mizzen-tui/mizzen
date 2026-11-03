@@ -27,7 +27,6 @@ import mizzen.components.plot.shape.threeD.projection.Plot2DSimple;
 import mizzen.components.scroll.ScrollBarHorizontal;
 import mizzen.components.scroll.ScrollBarVertical;
 import mizzen.controlcodes.color.Color;
-import mizzen.controlcodes.color.Colors;
 import mizzen.events.ChainedEventHandler;
 import mizzen.events.EventHandler;
 import mizzen.events.Registration;
@@ -40,6 +39,9 @@ import mizzen.geom.position.Vec3;
 import mizzen.util.Logging;
 
 public class TestCube {
+
+    // which of the theme's drawing colours (Theme.drawingColors) - the same kind of colour in every theme
+    private static final int YELLOW = 1, BLUE = 5;
 
     public static void main(String[] args) throws IOException {
 
@@ -60,8 +62,8 @@ public class TestCube {
                     BrailleGrid grid = new BrailleGrid(gridSize);
                     // Cube3D cube3D = new Cube3D(50, Vec3.ZERO, Colors.BYel, Colors.BBlu);
                     // Sphere3D sphere3D = new Sphere3D(30, Vec3.ZERO, 15, Colors.IYel);
-                    Cube3D cube3D = new Cube3D(50, new Vec3.BaseVec3(-60, 0, 0), Colors.BYel, Colors.BBlu);
-                    Sphere3D sphere3D = new Sphere3D(30, new Vec3.BaseVec3(60, 0, 0), 15, Colors.IYel);
+                    Cube3D cube3D = new Cube3D(50, new Vec3.BaseVec3(-60, 0, 0), (t) -> t.drawingColor(YELLOW), (t) -> t.drawingColor(BLUE));
+                    Sphere3D sphere3D = new Sphere3D(30, new Vec3.BaseVec3(60, 0, 0), 15, (t) -> t.drawingColor(YELLOW));   // shaded: the theme's dim
 
                     AbstractShape3D<?> activeShape[] = new AbstractShape3D<?>[]{cube3D};
 

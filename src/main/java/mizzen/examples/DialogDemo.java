@@ -10,7 +10,6 @@ import mizzen.components.input.Button;
 import mizzen.components.input.TextInput;
 import mizzen.components.modal.Dialog;
 import mizzen.components.theme.Theme;
-import mizzen.controlcodes.color.Colors;
 import mizzen.events.keyboard.KeyStroke;
 import mizzen.geom.Dimension;
 
@@ -136,7 +135,7 @@ public class DialogDemo {
 
     /** any component in the middle - here a chart, with buttons that change it and leave it open */
     private void chartTool() {
-        LineChart chart = new LineChart(new Dimension.Simple(10, 56)).series("size", Colors.BCya).legend(false);
+        LineChart chart = new LineChart(new Dimension.Simple(10, 56)).series("size").legend(false);
         for (int day = 0; day < 30; day++) {
             chart.add("size", day, 1.9 + day * day * 0.0001);
         }

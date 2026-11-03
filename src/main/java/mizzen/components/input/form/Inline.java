@@ -39,7 +39,7 @@ public class Inline<T> implements FormLayout<T, Inline<T>> {
 
     @Override
     public FormRow placeRow(String field, String labelText, Component<?> shown, Object input, TextComponent error) {
-        TextComponent label = new TextComponent(form.labelColor, labelText);
+        TextComponent label = Form.text(form.labelColor, Theme::strongColor, labelText);
         VerticalPanel inputAndError = new VerticalPanel();
         inputAndError.add(shown);
         inputAndError.add(error);

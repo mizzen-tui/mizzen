@@ -1,10 +1,13 @@
 package mizzen.components.plot.shape;
 
 import java.util.Collection;
+import java.util.function.Function;
 
 import mizzen.components.HasName;
 import mizzen.components.plot.PointPlotter;
 import mizzen.components.plot.PointPlotterAsRectangle;
+import mizzen.components.theme.Theme;
+import mizzen.controlcodes.color.Color;
 import mizzen.geom.AsRectangle2D;
 import mizzen.geom.Rectangle2D;
 import mizzen.geom.Rectangle2D.Float2D;
@@ -40,14 +43,39 @@ public interface Shape<T extends Shape<?>> extends HasName<T> {
 
         PositionTransform positionTransform = PositionTransform.NOOP; 
         String name;
+        Function<Theme, Color> themeColor;              // null: none - its own colour, else the plotter's
 
         public AbstractShape() {
             this.setName(HasName.UTIL.deriveName(this));
         }
 
+        // given a theme colour: worked out once per draw, from the theme of what it plots into, and set on the plotter
+        // around its drawing (a shape's own colour, set by the shape as it draws, still wins). Not per point.
         @Override
         final public void draw(PointPlotter pointPlotter) {
-            drawWithTransform(pointPlotter, getPositionTransform());
+            if (themeColor == null) {                       // nearly every shape: drawn as before, nothing made
+                drawWithTransform(pointPlotter, getPositionTransform());
+                return;
+            }
+            UTIL.drawInThemeColor(pointPlotter, themeColor, () -> drawWithTransform(pointPlotter, getPositionTransform()));
+        }
+
+        /**
+         * Draws in a colour of its theme - the theme of what it is plotted into, worked out as it is drawn, so a theme
+         * switch reaches it. Its own colour, if it has one, still wins.
+         * <pre>
+         *     new Circle(0, 0, 10).setThemeColor((t) -&gt; t.drawingColor(YELLOW));
+         *     new Line(a, b, null).setThemeColor(Theme::dimColor);
+         * </pre>
+         */
+        @SuppressWarnings("unchecked")
+        public T setThemeColor(Function<Theme, Color> themeColor) {
+            this.themeColor = themeColor;
+            return (T) this;
+        }
+
+        public Function<Theme, Color> getThemeColor() {
+            return themeColor;
         }
 
 
@@ -126,6 +154,23 @@ public interface Shape<T extends Shape<?>> extends HasName<T> {
     }
 
     public static class UTIL {
+
+        /**
+         * Runs draw with the plotter's next colour set to themeColor in the plotter's theme, then puts back what it was -
+         * worked out once per shape drawn, not per point. themeColor null: draw as it is.
+         */
+        public static void drawInThemeColor(PointPlotter pointPlotter, Function<Theme, Color> themeColor, Runnable draw) {
+            if (themeColor == null) {
+                draw.run();
+                return;
+            }
+            Color before = pointPlotter.setNextPlotColor(themeColor.apply(pointPlotter.getTheme()));
+            try {
+                draw.run();
+            } finally {
+                pointPlotter.setNextPlotColor(before);
+            }
+        }
 
         static public Rectangle2D.Float2D getAsRectangle(Shape<?> shape) {
 

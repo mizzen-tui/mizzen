@@ -7,6 +7,7 @@ import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import mizzen.components.BorderedComponent;
 import mizzen.components.BoundedComponent;
@@ -16,6 +17,7 @@ import mizzen.components.HasTitleAndBorder;
 import mizzen.components.ParentContainer;
 import mizzen.components.TextComponent;
 import mizzen.components.composite.Composite;
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
 import mizzen.controlcodes.color.Colors;
 import mizzen.core.Canvas;
@@ -153,6 +155,22 @@ public class DrawingBoardImpl implements DrawingBoard {
         @Override
         public T setColor(Color drawingcolor) {
             return (T) componentManager.setColor(drawingcolor);
+        }
+
+        @Override
+        public Function<Theme, Color> getThemeColor() {
+            return componentManager.getThemeColor();
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public T setThemeColor(Function<Theme, Color> colorFromTheme) {
+            return (T) componentManager.setThemeColor(colorFromTheme);
+        }
+
+        @Override
+        public Color getOwnColor() {
+            return componentManager.getOwnColor();
         }
 
         public void replace(String name, Component<?> c1, Component<?> c2) {

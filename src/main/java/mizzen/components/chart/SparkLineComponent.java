@@ -28,7 +28,9 @@ public class SparkLineComponent extends AbstractComponent<SparkLineComponent> im
     int currentMin = Integer.MAX_VALUE;
     boolean trackingMinMax = false;
 
-    /** as the constructor with a colour first, in its theme's colours */
+    { defaultThemeColor((theme) -> theme.drawingColor(0)); }
+
+    /** as the constructor with a colour first, in its theme's first drawing colour */
     public SparkLineComponent() {
         this((Color) null);
     }
@@ -43,6 +45,7 @@ public class SparkLineComponent extends AbstractComponent<SparkLineComponent> im
         super(color);
         container = new Composite(color).setName("sparkLineContainer");
         chart = new TextComponent(color, SparkLine.render(0));
+        chart.setThemeColor((theme) -> getColor());       // given no colour: the sparkline's, as it is drawn
         container.add(chart);
         container.setParentContainer(this);
     }

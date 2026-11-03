@@ -3,6 +3,7 @@ package mizzen.components.plot;
 import java.util.TreeSet;
 
 import mizzen.components.BoundedComponent;
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
 import mizzen.controlcodes.color.Colors;
 import mizzen.geom.Dimension;
@@ -139,6 +140,7 @@ public class Plotter extends BoundedComponent<Plotter> {
         int maxRow = this.getBottomMostRow();
         int minCol = this.getCol();
         int maxCol = this.getRightMostCol();
+        Color ownColor = getColor();                       // for plots with no colour of their own: worked out once, not per plot
 
         for (Plotter.Plot plot : plots) {
             int plotPosRow = plot.getRow();
@@ -151,7 +153,7 @@ public class Plotter extends BoundedComponent<Plotter> {
                 continue;
             }
             
-            Color plotColor = plot.plotColor != null ? plot.plotColor : getColor();   // no colour of its own: the plotter's (its theme's)
+            Color plotColor = plot.plotColor != null ? plot.plotColor : ownColor;   // no colour of its own: the plotter's (its theme's)
             if (lastRow != plotPosRow     || 
                 !plotColor.equals(lastColor)||
                 plotPosCol != lastCol+1) {
@@ -207,7 +209,7 @@ public class Plotter extends BoundedComponent<Plotter> {
 
             @Override
             public Color setNextPlotColor(Color color) {
-                Color prevColor = Plotter.this.getColor();
+                Color prevColor = Plotter.this.getOwnColor();   // its own, not resolved: put back, it still follows a theme
                 Plotter.this.setColor(color);
                 return prevColor;
             }
@@ -215,6 +217,11 @@ public class Plotter extends BoundedComponent<Plotter> {
             @Override
             public void clearPlots() {
                 Plotter.this.clearPlots();
+            }
+
+            @Override
+            public Theme getTheme() {
+                return Plotter.this.getTheme();
             }
 
         };

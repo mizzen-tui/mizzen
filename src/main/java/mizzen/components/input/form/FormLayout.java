@@ -155,7 +155,7 @@ public interface FormLayout<T, B extends FormLayout<T, B>> {
      * </pre>
      */
     default B view(String label, Function<T, String> text) {
-        TextComponent shown = new TextComponent(form().labelColor, "");
+        TextComponent shown = Form.text(form().labelColor, Theme::strongColor, "");
         return view(label, shown, (o) -> shown.setTextAndResize(text.apply(o)));
     }
 

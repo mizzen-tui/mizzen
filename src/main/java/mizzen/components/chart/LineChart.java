@@ -15,7 +15,6 @@ import mizzen.components.plot.shape.ConnectedPoints;
 import mizzen.components.plot.shape.Polygon;
 import mizzen.components.plot.shape.Shape;
 import mizzen.controlcodes.color.Color;
-import mizzen.controlcodes.color.Colors;
 import mizzen.events.EventBus;
 import mizzen.events.EventHandler;
 import mizzen.events.Registration;
@@ -160,7 +159,12 @@ public class LineChart extends AbstractComponentWrappper<PlotArea> implements Ha
         return getWrappedComponent();
     }
 
-    /** a series (its points are added with add); the same name again changes its colour */
+    /** a series in the theme's next drawing colour (the first series: drawingColor(0), and so on) */
+    public LineChart series(String name) {
+        return series(name, (Color) null);
+    }
+
+    /** a series (its points are added with add); the same name again changes its colour. null: as series(name) */
     public LineChart series(String name, Color color) {
         Series s = series.get(name);
         if (s == null) {
@@ -492,7 +496,7 @@ public class LineChart extends AbstractComponentWrappper<PlotArea> implements Ha
                 continue;
             }
             if (s.fillUnder) {
-                pen.color(s.color).fillUnder((x) -> interpolate(s.points, x), s.points.get(0)[0], s.points.get(s.points.size() - 1)[0]);
+                pen.color(colorOf(s)).fillUnder((x) -> interpolate(s.points, x), s.points.get(0)[0], s.points.get(s.points.size() - 1)[0]);
             }
             ConnectedPoints line = new ConnectedPoints(false);
             for (double[] p : s.points) {
@@ -500,13 +504,13 @@ public class LineChart extends AbstractComponentWrappper<PlotArea> implements Ha
             }
             line.setName(s.name);
             s.line = line;
-            pen.color(s.color).draw(line);
+            pen.color(colorOf(s)).draw(line);
         }
         legend(pen);
         Point selected = getValue();
         if (selected != null) {
             double w = plot().characterWidth(), h = plot().characterHeight();
-            pen.color(selectedSeries.color).text(selected.x() - w / 2, selected.y(), "◆");
+            pen.color(colorOf(selectedSeries)).text(selected.x() - w / 2, selected.y(), "◆");
             String label = ChartItems.format(selected.x()) + ", " + ChartItems.format(selected.y());
             double x = Math.min(selected.x() + w, plot().getXMax() - (label.length() + 1) * w);
             pen.text(x, selected.y() + h, label);
@@ -530,13 +534,28 @@ public class LineChart extends AbstractComponentWrappper<PlotArea> implements Ha
         double x = plot().getXMax() - (widest + 1) * w;
         double y = plot().getYMax() - h / 2;
         for (Series s : series.values()) {
-            Color color = s.visible ? s.color : Colors.BBla;
+            Color color = s.visible ? colorOf(s) : getTheme().disabledColor();
             if (legendCheckBoxes) {
                 pen.color(color).text(x, y, s.visible ? "[x]" : "[ ]", s.legendBox);
             }
             pen.color(color).text(x + box * w, y, nameText(s), s.legendLine);
             y -= h;
         }
+    }
+
+    // its own colour; none: the theme's drawing colour for its place among the series - worked out as it is drawn
+    private Color colorOf(Series s) {
+        if (s.color != null) {
+            return s.color;
+        }
+        int i = 0;
+        for (Series other : series.values()) {
+            if (other == s) {
+                break;
+            }
+            i++;
+        }
+        return getTheme().drawingColor(i);
     }
 
     private String nameText(Series s) {

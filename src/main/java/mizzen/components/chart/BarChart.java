@@ -183,7 +183,7 @@ public class BarChart<T> extends AbstractComponentWrappper<PlotArea> implements 
             bar.setName(items.label(i));
             bars.add(bar);
             boolean selected = i == items.selected();
-            pen.color(selected ? selectedColor : items.color(i)).draw(bar);
+            pen.color(selected ? selectedColor : items.color(i, getTheme())).draw(bar);
 
             String name = items.label(i);
             if (name.length() > nameChars) {

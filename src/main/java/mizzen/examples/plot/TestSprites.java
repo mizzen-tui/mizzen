@@ -24,17 +24,20 @@ import mizzen.components.plot.shape.Line;
 import mizzen.components.plot.shape.RectangleShape;
 import mizzen.components.plot.shape.Shape;
 import mizzen.components.plot.shape.math.TrigUtil;
-import mizzen.controlcodes.color.Colors;
 import mizzen.events.EventBus;
 import mizzen.events.OnIdleEventEventHandler.OneTimeAfterInterval;
 import mizzen.events.OnIdleEventEventHandler.RepeatingInterval;
 import mizzen.events.TerminalEvent.TYPE;
+import mizzen.controlcodes.color.Color;
 import mizzen.geom.Dimension;
 import mizzen.geom.Rectangle;
 import mizzen.geom.position.Position;
 import mizzen.geom.position.PositionTransform;
 
 public class TestSprites {
+
+    // which of the theme's drawing colours (Theme.drawingColors) - the same kind of colour in every theme
+    private static final int CYAN = 0, YELLOW = 1, RED = 4, GREY = 7;
 
     public static void main(String args[]) {
         
@@ -257,7 +260,7 @@ public class TestSprites {
     static class Stick extends  AbstractShapeSprite {
         public Stick() {
             RectangleShape shape = new RectangleShape( new Rectangle.Simple(0,0, 3, 50) );
-            shape.setColor(Colors.BIRed);
+            shape.setThemeColor((t) -> t.drawingColor(RED));
             this.setShape(shape);
             nextPathPosIncr = 4;
         }
@@ -274,16 +277,16 @@ public class TestSprites {
         public Wheel(int radius) {
             CompositeShape shape = new CompositeShape();
             Circle outerCircle = new Circle(0, 0, (int)(15f/19f * radius));
-            outerCircle.setColor(Colors.BCya);
+            outerCircle.setThemeColor((t) -> t.drawingColor(CYAN));
 
             Circle outerCircle2 = new Circle(0, 0, radius);
-            outerCircle2.setColor(outerCircle.getColor());
+            outerCircle2.setThemeColor(outerCircle.getThemeColor());
 
             Circle innerCircle = new Circle(0, 0, (int)(5f/19f * radius));
-            innerCircle.setColor(Colors.BIBla);
+            innerCircle.setThemeColor((t) -> t.drawingColor(GREY));
             innerCircle.setFilled(true);
 
-            Line line0 = new Line( 0 , innerCircle.getRadius()+2,  0, outerCircle.getRadius()-2, Colors.BYel);
+            Line line0 = new Line( 0 , innerCircle.getRadius()+2,  0, outerCircle.getRadius()-2, (Color) null);   // the spokes: no colour, the wheel's
 
             Line line45 = new Line(TrigUtil.circlePointAtAngle(45, innerCircle.getMidPoint(),innerCircle.getRadius()+2),
                                    TrigUtil.circlePointAtAngle(45, outerCircle.getMidPoint(),outerCircle.getRadius()-2),
@@ -320,6 +323,7 @@ public class TestSprites {
             
             shape.addShape(outerCircle);
             shape.addShape(outerCircle2);
+            shape.setThemeColor((t) -> t.drawingColor(YELLOW));   // parts with no colour of their own: the spokes
             
             setShape(shape);
         }

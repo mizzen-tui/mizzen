@@ -1,5 +1,8 @@
 package mizzen.components;
 
+import java.util.function.Function;
+
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
 import mizzen.core.Canvas;
 import mizzen.core.CanvasBackend;
@@ -158,6 +161,25 @@ public class CanvasComponent implements Component<CanvasComponent>, CanResize {
     public void moveTo(int row, int col) {
         this.pos = new Position.Simple(row, col);
         
+    }
+
+    // its colour is its canvas's text colour: always its own. A theme colour is kept, but a canvas does not use it
+    private Function<Theme, Color> colorFromTheme = Theme::textColor;
+
+    @Override
+    public Function<Theme, Color> getThemeColor() {
+        return colorFromTheme;
+    }
+
+    @Override
+    public CanvasComponent setThemeColor(Function<Theme, Color> colorFromTheme) {
+        this.colorFromTheme = colorFromTheme;
+        return this;
+    }
+
+    @Override
+    public Color getOwnColor() {
+        return canvas.getTextColor();
     }
 
     @Override

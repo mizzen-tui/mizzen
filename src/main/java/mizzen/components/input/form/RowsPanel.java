@@ -32,7 +32,7 @@ class RowsPanel {
 
     /** a label lined up with the others */
     TextComponent label(Color color, String text) {
-        TextComponent label = new TextComponent(color, text);
+        TextComponent label = Form.text(color, Theme::strongColor, text);
         labels.add(label);
         texts.add(text);
         widen();

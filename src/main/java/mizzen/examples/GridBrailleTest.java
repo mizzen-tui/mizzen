@@ -19,7 +19,7 @@ import mizzen.components.plot.shape.CompositeShape;
 import mizzen.components.plot.shape.RectangleShape;
 import mizzen.components.plot.shape.ShapeWithTransform;
 import mizzen.components.plot.shape.Triangle;
-import mizzen.controlcodes.color.Color;
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Colors;
 import mizzen.events.EventHandler;
 import mizzen.events.EventHandlerContainer;
@@ -105,33 +105,33 @@ public class GridBrailleTest {
             getBrailleComponent().setBorder(false);
             getBrailleComponent().setName("brailleComponent");
 
-            Color textCOLOR = Colors.DEFAULT_COLOR;
-            Color textColorBOLD = textCOLOR.bold();
+            // no colours in the text: each part takes a theme colour, so a theme switch reaches it
+            TextComponent tcBrailleTitle = new TextComponent("Braille Character set : ").setThemeColor(Theme::strongColor);
+            TextComponent tcBrailleChars = new TextComponent("⠀⠁⠂⠃⠄⠅⠆⠇⠈⠉⠊⠋⠌⠍⠎⠏⠐⠑⠒⠓⠔⠕⠖⠗⠘⠙⠚⠛⠜⠝⠞⠟⠠⠡⠢⠣⠤⠥⠦⠧⠨⠩⠪⠫⠬⠭⠮⠯⠰⠱⠲⠳⠴⠵⠶⠷⠸⠹⠺⠻⠼⠽⠾⠿")
+                    .setThemeColor((theme) -> theme.drawingColor(0));
 
-            TextComponent tcBrailleChars = new TextComponent(textCOLOR,
-                    textColorBOLD.asString() + "Braille Character set : " + Colors.ICya.asBold().asString()
-                            + "⠀⠁⠂⠃⠄⠅⠆⠇⠈⠉⠊⠋⠌⠍⠎⠏⠐⠑⠒⠓⠔⠕⠖⠗⠘⠙⠚⠛⠜⠝⠞⠟⠠⠡⠢⠣⠤⠥⠦⠧⠨⠩⠪⠫⠬⠭⠮⠯⠰⠱⠲⠳⠴⠵⠶⠷⠸⠹⠺⠻⠼⠽⠾⠿"
-                            + textCOLOR.asString());
-
-            tc = new TextComponent(textCOLOR,
+            tc = new TextComponent(
                               "This is a demonstration \n" + "using the special braille\n" + "character set to plot points\n"
                             + "in a standard linux terminal.\n" + "\n" + "The idea is that we map the normal\n"
                             + "terminal row columns combined with the\n" + "2 x 8 dots of the braille character set\n"
                             + "to come up with a plottable coordinate system.\n" + "\n" + "      "
-                            + Colors.IYel.asBold().asString() + "    .........." + textCOLOR.asString() + "\n" + "\n"
+                            + "    .........." + "\n" + "\n"
                             + "In this example we are\n" + "plotting boxes, circles and triangles.\n" + "\n"
                             + "We transform (move/rotate) their positions\n" + "using simple trigonometry\n" + "\n"
                             + "A more practical use for\n" + "this plotting technique is\n"
                             + "terminal-based charts for\n" + "monitoring values (see the\n"
                             + "line, bar and spark-line examples)");
 
-            getBrailleComponent().add(tcBrailleChars);
+            getBrailleComponent().add(tcBrailleTitle);
+            getBrailleComponent().add(0, tcBrailleTitle.getWidth(), tcBrailleChars);
             getBrailleComponent().add(2, 0, tc);
 
             // the room beside the text; a window too small for both leaves the drawing none
             grid = new BrailleGrid(Colors.DEFAULT_COLOR, new Dimension.Simple(Math.max(0, getBrailleComponent().getHeight() - 4),
                     Math.max(0, getBrailleComponent().getWidth() - 4 - tc.getWidth())));
-            grid.setPlottingColor(new Colors.FGBGColors(Colors.Yel));
+            // this older plotting API takes fixed colours: the theme's drawing colours as the demo is laid out (each resize)
+            Theme theme = getBrailleComponent().getTheme();
+            grid.setPlottingColor(theme.drawingColor(1));
 
             getBrailleComponent().add(new Position.Simple(2, tc.getWidth() + 2), grid);
 
@@ -142,7 +142,7 @@ public class GridBrailleTest {
             XYTranslate rectangle1PointPlotter = new XYTranslate(null, 0, 0);
 
             shapes.addShape(new ShapeWithTransform(
-                    new RectangleShape(new Rectangle.Simple(30, 30, 20, 20), Colors.IBlu), rectangle1PointPlotter));
+                    new RectangleShape(new Rectangle.Simple(30, 30, 20, 20), theme.drawingColor(5)), rectangle1PointPlotter));
 
             Position fixedPoint = new Position.Simple(30, 50);
 
@@ -151,11 +151,11 @@ public class GridBrailleTest {
             TransformPointPlotter rectangle2PointPlotter = new TransformPointPlotter(null, rectangle2Rotator);
 
             shapes.addShape(new ShapeWithTransform(
-                    new RectangleShape(new Rectangle.Simple(30, 30, 20, 20), Colors.IGre).setFilled(true), rectangle2PointPlotter));
+                    new RectangleShape(new Rectangle.Simple(30, 30, 20, 20), theme.drawingColor(3)).setFilled(true), rectangle2PointPlotter));
 
             PositionTransform.FofG trianglePositionTransform = new PositionTransform.FofG(
                     new RotateAroundFixedPoint(0, fixedPoint), new PositionTransform.Translate(0, 0));
-            shapes.addShape(new ShapeWithTransform(new Triangle(0, 0, 30, 100, 65, 50, Colors.ICya).setFilled(true),
+            shapes.addShape(new ShapeWithTransform(new Triangle(0, 0, 30, 100, 65, 50, theme.drawingColor(0)).setFilled(true),
                                                    new TransformPointPlotter(null, trianglePositionTransform)));
 
             XYTranslate circle1PointPlotter = new XYTranslate(null, 0, 0);
@@ -166,7 +166,7 @@ public class GridBrailleTest {
                     new ShapeWithTransform(new Circle(0, 0, 30).setAlgorithm(donutPlotter), circle1PointPlotter));
 
             XYTranslate circle2PointPlotter = new XYTranslate(null, 0, 0);
-            shapes.addShape(new ShapeWithTransform(new Circle(50, 50, 30, Colors.IRed), circle2PointPlotter));
+            shapes.addShape(new ShapeWithTransform(new Circle(50, 50, 30, theme.drawingColor(4)), circle2PointPlotter));
             drawIt = new Runnable() {
 
                 @Override
@@ -246,7 +246,7 @@ public class GridBrailleTest {
             }).setName("rectangle2Rotator.idleHandler"));
 
             // brailleComponent
-            ButtonBar movementKeys = new ButtonBar(getBrailleComponent().getColor()).setName("movementKeys");
+            ButtonBar movementKeys = new ButtonBar().setName("movementKeys");
             movementKeys.setBorder(true);
             movementKeys.setLeftMostBorderChar((char) 0);
             movementKeys.setRightMostBorderChar((char) 0);

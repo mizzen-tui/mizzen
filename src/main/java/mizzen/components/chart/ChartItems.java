@@ -8,8 +8,8 @@ import java.util.function.ToDoubleFunction;
 import mizzen.components.Component;
 import mizzen.components.input.HasValue;
 import mizzen.components.input.OnChangeListeners;
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
-import mizzen.controlcodes.color.Colors;
 import mizzen.events.EventBus;
 import mizzen.events.EventHandler;
 import mizzen.events.Registration;
@@ -22,13 +22,10 @@ import mizzen.events.RequestUpdateCanvasEvent;
  */
 class ChartItems<T> {
 
-    static final Color[] PALETTE = { Colors.BCya, Colors.BYel, Colors.BPur, Colors.BGre, Colors.BRed, Colors.BBlu,
-                                     Colors.Cya, Colors.Yel, Colors.Pur, Colors.Blu, Colors.Red };
-
     private List<T> items = Collections.emptyList();
     private ToDoubleFunction<? super T> size = (t) -> 1;
     private Function<? super T, String> label = String::valueOf;
-    private Color[] colors = PALETTE;
+    private Color[] colors;                        // null: the theme's drawing colours
     private int selected = -1;                     // -1: none
     private final OnChangeListeners<ChartItem<T>> changeListeners = new OnChangeListeners<ChartItem<T>>(null);   // fired by hand: no source to claim events for
 
@@ -48,7 +45,7 @@ class ChartItems<T> {
     }
 
     void colors(Color... colors) {
-        this.colors = colors == null || colors.length == 0 ? PALETTE : colors;
+        this.colors = colors == null || colors.length == 0 ? null : colors;
     }
 
     Registration onChange(EventHandler onChange) {
@@ -85,8 +82,9 @@ class ChartItems<T> {
         return label.apply(items.get(i));
     }
 
-    Color color(int i) {
-        return colors[i % colors.length];
+    // item i's colour: the ones given, in turn; none given: theme's drawing colours
+    Color color(int i, Theme theme) {
+        return colors != null ? colors[i % colors.length] : theme.drawingColor(i);
     }
 
     int selected() {

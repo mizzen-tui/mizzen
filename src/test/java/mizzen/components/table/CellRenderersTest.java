@@ -100,7 +100,7 @@ public class CellRenderersTest extends TestCase {
     }
 
     public void testDrawing() {
-        CellRenderer drawing = CellRenderers.drawing((Part part, mizzen.components.plot.Pen pen) -> pen.color(part.color)
+        CellRenderer drawing = CellRenderers.drawing((Part part, mizzen.components.plot.Pen pen) -> pen.drawingColor(part.drawingColor)
                 .draw(part.drawing.get()), -1.3, 1.3, -1.3, 1.3, 4, 20);
         for (Part part : Arrays.asList(Parts.GEAR_12, Parts.HEX_NUT, Parts.SPRING)) {
             assertKeepsToItsRectangle(part.name, drawing, part);

@@ -49,8 +49,13 @@ public class Pen {
     /** the colour of what is drawn next */
     public Pen color(Color color) {
         this.color = color;
-        dots.setNextPlotColor(color);
+        dots.setNextPlotColor(area.onBackground(color));
         return this;
+    }
+
+    /** the theme's drawing colour i - the same kind of colour in any theme (Theme.drawingColors): pen.drawingColor(4).draw(mars) */
+    public Pen drawingColor(int i) {
+        return color(area.getTheme().drawingColor(i));
     }
 
     // ---- where things go: a transform, as on a canvas ----------------------------------------
@@ -164,7 +169,7 @@ public class Pen {
     /** a shape, in your numbers; clicks find it (PlotArea.onClick) and it can be dragged (PlotArea.draggable) */
     public Pen draw(Shape<?> shape) {
         area.drawShape(shape, color, transform);
-        dots.setNextPlotColor(color);
+        dots.setNextPlotColor(area.onBackground(color));
         return this;
     }
 

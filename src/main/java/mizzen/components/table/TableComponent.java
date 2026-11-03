@@ -17,7 +17,6 @@ import mizzen.components.input.DisplayableValue.SimpleDisplayValue;
 import mizzen.components.input.LeafFocusBehaviour;
 import mizzen.components.input.UnfocusedSelection;
 import mizzen.controlcodes.color.Color;
-import mizzen.controlcodes.color.Colors;
 import mizzen.events.ChainedEventHandler;
 import mizzen.events.ConditionalEventHandler;
 import mizzen.events.EventBus;
@@ -80,7 +79,7 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
     int topRow = 0;                           // the first data row on screen
     final List<Integer> rowEnds = new ArrayList<Integer>();   // where each data row drawn ends on screen - the line under it goes there
     Rectangle selectedRowArea;                // where the selected row was painted (for scrolling it into view)
-    Color selectedColor = new Colors.FGBGColors(Colors.IYel);     // as ListBox / TreeView
+    Color selectedColor;                                           // null: its theme's (as ListBox / TreeView)
     UnfocusedSelection unfocusedSelection = UnfocusedSelection.DIM;
     BiConsumer<Integer, EventBus> onRowActivated = (row, bus) -> { };
 
@@ -914,11 +913,14 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
         markAsDirty();
     }
 
+    // focused: the selected colour (its own, else its theme's) - inverted if it is a foreground only (yellow text: a
+    // yellow bar); not focused: as unfocusedSelection says
     private Color selectedRowColor() {
+        Color selected = selectedColor != null ? selectedColor : getTheme().selectedColor();
         if (focus.hasFocus()) {
-            return selectedColor.invert();
+            return Color.setsBackground(selected) ? selected : selected.invert();
         }
-        return unfocusedSelection == UnfocusedSelection.NONE ? null : selectedColor;
+        return unfocusedSelection == UnfocusedSelection.NONE ? null : selected;
     }
 
     /** where the selected row is on the table (for scrolling it into view); the whole table if it isn't painted yet */

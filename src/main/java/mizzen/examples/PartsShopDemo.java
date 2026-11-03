@@ -27,7 +27,6 @@ import mizzen.components.table.ObjectTableModel;
 import mizzen.components.table.TableComponent;
 import mizzen.components.table.TableComponent.TableLinesStyle;
 import mizzen.components.theme.Theme;
-import mizzen.controlcodes.color.Colors;
 import mizzen.geom.Dimension;
 
 /**
@@ -81,7 +80,6 @@ public class PartsShopDemo {
         DonutChart<Status> shippedChart = new DonutChart<Status>()
                 .sliceSize((s) -> s == Status.SHIPPED ? count(sales, true) : count(sales, false))
                 .sliceLabel((s) -> s == Status.SHIPPED ? "Shipped" : "Not shipped")
-                .colors(Colors.BGre, Colors.BYel)
                 .setItems(Arrays.asList(Status.SHIPPED, Status.ORDERED));
         shippedChart.setTitle(" Shipped? ");
 
@@ -93,7 +91,7 @@ public class PartsShopDemo {
                 .showing(-1.3, 1.3, -1.3, 1.3)                  // x and y from -1.3 to 1.3: a part, about 1 from its middle, fits
                 .scaling(PlotArea.Scaling.EQUAL)
                 .axes(false)
-                .onDraw((pen) -> pen.color(itemForm.data().part.color).draw(itemForm.data().part.drawing.get()));
+                .onDraw((pen) -> pen.drawingColor(itemForm.data().part.drawingColor).draw(itemForm.data().part.drawing.get()));
 
         // the objects changed: everything that shows them works itself out again
         Runnable refreshViews = () -> {

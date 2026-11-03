@@ -4,6 +4,7 @@ import mizzen.components.composite.Composite;
 import mizzen.components.plot.Plotter;
 import mizzen.components.plot.Plotter.Plot;
 import mizzen.components.plot.PointPlotter;
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
 import mizzen.events.EventBus;
 import mizzen.events.EventHandler;
@@ -196,7 +197,7 @@ public class BrailleGrid extends Composite implements PointPlotter {
 
             @Override
             public Color setNextPlotColor(Color color) {
-                Color prevColor = BrailleGrid.this.getPlotColor();
+                Color prevColor = BrailleGrid.this.plotter.getOwnColor();   // its own, not resolved: put back, it still follows a theme
                 BrailleGrid.this.setPlottingColor(color);
                 return prevColor;
             }
@@ -204,6 +205,11 @@ public class BrailleGrid extends Composite implements PointPlotter {
             @Override
             public void clearPlots() {
                 BrailleGrid.this.clearPlots();
+            }
+
+            @Override
+            public Theme getTheme() {
+                return BrailleGrid.this.getTheme();
             }
 
         };

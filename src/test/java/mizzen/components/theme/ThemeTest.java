@@ -2,6 +2,7 @@ package mizzen.components.theme;
 
 import mizzen.components.BorderedComponent;
 import mizzen.components.TextComponent;
+import mizzen.components.plot.PlotArea;
 import mizzen.components.input.Button;
 import mizzen.components.input.TextInput;
 import mizzen.components.composite.Composite;
@@ -11,6 +12,7 @@ import mizzen.controlcodes.color.Colors;
 import mizzen.components.modal.ModalPanel;
 import mizzen.events.EventBus;
 import mizzen.geom.Dimension;
+import mizzen.textsegments.IScreenLineSegmentsBuffer;
 import mizzen.textsegments.ScreenLineSegment;
 import junit.framework.TestCase;
 
@@ -181,5 +183,50 @@ public class ThemeTest extends TestCase {
         assertSame(Theme.DARK.dialogTheme().textColor(), text.getColor());
         screen.setTheme(Theme.LIGHT);
         assertSame("a theme set later reaches it", Theme.LIGHT.dialogTheme().textColor(), text.getColor());
+    }
+    // whether any segment is drawn in a colour whose codes contain these (e.g. an RGB foreground "38;2;r;g;b")
+    private static boolean drawsIn(IScreenLineSegmentsBuffer buffer, String codes) {
+        for (ScreenLineSegment segment : buffer.getSegments()) {
+            if (segment.getColors() != null && segment.getColors().asString().contains(codes) && !segment.getText().trim().isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void testDrawingColoursCountRound() {
+        assertSame(Theme.DARK.drawingColor(1), Theme.DARK.drawingColor(1 + Theme.DARK.drawingColors().size()));
+    }
+
+    public void testAPlotDrawsAgainInANewThemesDrawingColours() {
+        Composite panel = new VerticalPanel();
+        PlotArea plot = new PlotArea(new Dimension.Simple(4, 10)).showing(0, 1, 0, 1)
+                .onDraw((pen) -> pen.drawingColor(0).line(0, 0.5, 1, 0.5));
+        panel.add(plot);
+        panel.setTheme(Theme.DARK);
+        assertTrue("Dark's cyan", drawsIn(plot.getSegmentsBuffer(), "38;2;118;227;234"));
+        panel.setTheme(Theme.LIGHT);
+        assertTrue("Light's cyan, with no redraw() called", drawsIn(plot.getSegmentsBuffer(), "38;2;8;145;178"));
+    }
+
+    public void testAPlotsDotsSitOnItsBackground() {
+        Composite panel = new VerticalPanel();
+        PlotArea plot = new PlotArea(new Dimension.Simple(4, 10)).showing(0, 1, 0, 1)
+                .onDraw((pen) -> pen.drawingColor(0).line(0, 0.5, 1, 0.5));
+        panel.add(plot);
+        panel.setTheme(Theme.DARK.dialogTheme());
+        assertTrue("the dialog's background behind the dots, not none", drawsIn(plot.getSegmentsBuffer(), "38;2;118;227;234;48;2;45;51;59"));
+    }
+
+    public void testSeriesGivenNoColourTakeDrawingColoursInTurn() {
+        Composite panel = new VerticalPanel();
+        mizzen.components.chart.LineChart chart = new mizzen.components.chart.LineChart(new Dimension.Simple(10, 40))
+                .series("a").series("b").legend(true);
+        chart.add("a", 0, 0).add("a", 1, 1).add("b", 0, 1).add("b", 1, 0);
+        panel.add(chart);
+        panel.setTheme(Theme.DARK);
+        chart.redraw();
+        assertTrue("the first series in drawing colour 0", drawsIn(chart.getSegmentsBuffer(), "38;2;118;227;234"));
+        assertTrue("the second in drawing colour 1", drawsIn(chart.getSegmentsBuffer(), "38;2;218;170;63"));
     }
 }

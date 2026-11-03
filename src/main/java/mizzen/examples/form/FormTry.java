@@ -82,7 +82,7 @@ public class FormTry {
                 .onDraw((pen) -> {
                     Part part = order.pickedPart();
                     if (part != null) {
-                        pen.color(part.color).draw(part.drawing.get());
+                        pen.drawingColor(part.drawingColor).draw(part.drawing.get());
                     }
                 });
     }

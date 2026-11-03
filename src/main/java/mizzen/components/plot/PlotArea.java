@@ -17,6 +17,7 @@ import mizzen.components.plot.braille.BrailleGrid;
 import mizzen.components.plot.grid.GridContext;
 import mizzen.components.plot.grid.GridContext.GRID_TYPE;
 import mizzen.components.plot.shape.Shape;
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
 import mizzen.events.EventBus;
 import mizzen.events.RequestUpdateCanvasEvent;
@@ -32,6 +33,7 @@ import mizzen.geom.Rectangle;
 import mizzen.geom.position.Position;
 import mizzen.geom.position.PositionTransform;
 import mizzen.geom.position.Vec2;
+import mizzen.textsegments.IScreenLineSegmentsBuffer;
 
 /**
  * A plot in your own numbers: you say which part of your data to show (showing), and draw in it
@@ -87,6 +89,7 @@ public class PlotArea extends AbstractComponentWrappper<Component<?>> implements
     private boolean axes = false;
     private Color axesColor;
     private Consumer<Pen> onDraw = (pen) -> { };
+    private Theme drawnIn;                                         // the theme it was last plotted in
     private Consumer<Click> onClick = null;
     private boolean xTickLabels = true;
     private boolean axisOverhang = true;
@@ -457,12 +460,31 @@ public class PlotArea extends AbstractComponentWrappper<Component<?>> implements
 
     /** draw again: axes, then onDraw */
     public PlotArea redraw() {
+        if (plot()) {
+            markAsDirty();
+        }
+        return this;
+    }
+
+    // a theme set since the plot was drawn: plotted again first - its colours (drawing colours, its background) are the
+    // theme's, worked out as it is plotted
+    @Override
+    protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
+        if (drawnIn != getTheme()) {
+            plot();
+        }
+        super.draw(color, segments);
+    }
+
+    // axes, then onDraw, into the grid; false: not yet anything to plot into
+    private boolean plot() {
         if (grid == null || drawn == null) {
-            return this;                                           // still being built (a resize from the base class)
+            return false;                                           // still being built (a resize from the base class)
         }
         if (grid.getGridRectangle() == null || grid.getGridRectangle().getWidth() < 1) {
-            return this;
+            return false;
         }
+        drawnIn = getTheme();
         workOutMapping();
         grid.asPointPlotter().clearPlots();
         drawn.clear();
@@ -475,8 +497,7 @@ public class PlotArea extends AbstractComponentWrappper<Component<?>> implements
         if (axes) {
             labelAxes();                                        // labels last: nothing covers them
         }
-        markAsDirty();
-        return this;
+        return true;
     }
 
     @Override
@@ -515,7 +536,7 @@ public class PlotArea extends AbstractComponentWrappper<Component<?>> implements
         }
         BitSet recording = new BitSet();
         PointPlotter plotter = dotsPlotter(recording);
-        plotter.setNextPlotColor(color);
+        plotter.setNextPlotColor(onBackground(color));
         shape.setPositionTransform(new PositionTransform.FofG(view, inData));
         try {
             shape.draw(plotter);
@@ -523,6 +544,19 @@ public class PlotArea extends AbstractComponentWrappper<Component<?>> implements
             shape.setPositionTransform(own);
         }
         drawn.add(new Drawn(shape, recording));
+    }
+
+    /**
+     * color as drawn on this plot: one that sets no background takes this plot's - a plot on a dialog shows the
+     * dialog's grey around its dots, not the terminal's black. On a plot whose own colour sets no background (Legacy's
+     * screen), color as it is. null: the plotter's own colour, as before.
+     */
+    Color onBackground(Color color) {
+        Color own = getColor();
+        if (color == null || Color.setsBackground(color) || !Color.setsBackground(own)) {
+            return color;
+        }
+        return color.mergeWith(own);
     }
 
     /** text in the character cell at a grid dot (it replaces what that cell showed) */
@@ -560,9 +594,9 @@ public class PlotArea extends AbstractComponentWrappper<Component<?>> implements
             Plotter.Plot at = characters.getPlotAt(row, c);
             if (at != null) {
                 at.setPlotChar(text.charAt(i));
-                at.setPlotColor(color);
+                at.setPlotColor(onBackground(color));
             } else {
-                characters.addPlot(row, c, text.charAt(i), color);
+                characters.addPlot(row, c, text.charAt(i), onBackground(color));
             }
         }
     }
@@ -596,10 +630,15 @@ public class PlotArea extends AbstractComponentWrappper<Component<?>> implements
         return niceStep(yMax - yMin, Math.max(2, dots.getHeight() / dotsPerCellRow / 4));      // ... about every 4 rows
     }
 
+    // the axes' own colour; none: this plot's - not whatever the pen drew in last
+    private Color axesColor() {
+        return axesColor != null ? axesColor : getColor();
+    }
+
     /** the axis lines and their ticks */
     private void drawAxes(Pen pen) {
         double axisY = axisY(), axisX = axisX();
-        pen.color(axesColor);
+        pen.color(axesColor());
         pen.line(axisOverhang ? xMin : axisX, axisY, xMax, axisY);
         pen.line(axisX, axisOverhang ? yMin : axisY, axisX, yMax);
         double xStep = xStep(), yStep = yStep();
@@ -641,7 +680,7 @@ public class PlotArea extends AbstractComponentWrappper<Component<?>> implements
             }
             String text = xTickLabel != null ? xTickLabel.apply(x) : label(x, xStep);
             if (text != null) {
-                textInCell(xLabelRow, cellCol(toGrid(x, axisY).getCol()), text, axesColor);
+                textInCell(xLabelRow, cellCol(toGrid(x, axisY).getCol()), text, axesColor());
             }
         }
         int yLabelCol = cellCol(toGrid(axisX, 0).getCol()) + 1;
@@ -649,7 +688,7 @@ public class PlotArea extends AbstractComponentWrappper<Component<?>> implements
             if (!axisOverhang && y < axisY) {
                 continue;
             }
-            textInCell(cellRow(toGrid(axisX, y).getRow()), yLabelCol, label(y, yStep), axesColor);
+            textInCell(cellRow(toGrid(axisX, y).getRow()), yLabelCol, label(y, yStep), axesColor());
         }
     }
 

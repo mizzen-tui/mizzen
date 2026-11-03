@@ -11,8 +11,6 @@ import mizzen.components.composite.VerticalPanel;
 import mizzen.components.plot.Pen;
 import mizzen.components.plot.PlotArea;
 import mizzen.components.plot.shape.Circle;
-import mizzen.controlcodes.color.Color;
-import mizzen.controlcodes.color.Colors;
 import mizzen.events.OnIdleEventEventHandler;
 import mizzen.geom.Dimension;
 
@@ -27,31 +25,34 @@ import mizzen.geom.Dimension;
  */
 public class OrbitsDemo {
 
+    // which of the theme's drawing colours (Theme.drawingColors) - the same kind of colour in every theme
+    private static final int YELLOW = 1, RED = 4, BLUE = 5, ORANGE = 6, GREY = 7;
+
     /** a planet: its orbit's radius, its year (in Earth years), its size and colour */
     static class Planet {
         final String name;
         final double orbit;
         final double year;
         final float size;
-        final Color color;
+        final int drawingColor;                            // which of the theme's drawing colours
         final String about;
 
-        Planet(String name, double orbit, double year, float size, Color color, String about) {
+        Planet(String name, double orbit, double year, float size, int drawingColor, String about) {
             this.name = name;
             this.orbit = orbit;
             this.year = year;
             this.size = size;
-            this.color = color;
+            this.drawingColor = drawingColor;
             this.about = about;
         }
     }
 
     static final Planet[] PLANETS = {
-        new Planet("Mercury", 0.9, 0.24, 0.10f, Colors.BBla, "the smallest, a year of 88 days"),
-        new Planet("Venus",   1.5, 0.62, 0.16f, Colors.BYel, "the hottest, under thick clouds"),
-        new Planet("Earth",   2.2, 1.00, 0.17f, Colors.BBlu, "home - the moon goes round it every 27 days"),
-        new Planet("Mars",    3.0, 1.88, 0.13f, Colors.BRed, "red with iron rust, two small moons"),
-        new Planet("Jupiter", 4.3, 11.9, 0.32f, Colors.Yel,  "the biggest - more than all the others together"),
+        new Planet("Mercury", 0.9, 0.24, 0.10f, GREY,   "the smallest, a year of 88 days"),
+        new Planet("Venus",   1.5, 0.62, 0.16f, YELLOW, "the hottest, under thick clouds"),
+        new Planet("Earth",   2.2, 1.00, 0.17f, BLUE,   "home - the moon goes round it every 27 days"),
+        new Planet("Mars",    3.0, 1.88, 0.13f, RED,    "red with iron rust, two small moons"),
+        new Planet("Jupiter", 4.3, 11.9, 0.32f, ORANGE, "the biggest - more than all the others together"),
     };
 
     public static void main(String[] args) throws IOException {
@@ -120,9 +121,9 @@ public class OrbitsDemo {
 
     /** the sun, each orbit, each planet where it is at this time (and Earth's moon), each labelled */
     static void drawSystem(Pen pen, double time, boolean displayName) {
-        pen.color(Colors.BYel).draw(new Circle(0f, 0f, 0.35f).setFilled(true));
+        pen.drawingColor(YELLOW).draw(new Circle(0f, 0f, 0.35f).setFilled(true));
         for (Planet p : PLANETS) {
-            pen.color(Colors.BBla).draw(new Circle(0f, 0f, (float) p.orbit));
+            pen.drawingColor(GREY).draw(new Circle(0f, 0f, (float) p.orbit));
         }
         for (Planet p : PLANETS) {
             double angle = 2 * Math.PI * time / p.year;
@@ -130,13 +131,13 @@ public class OrbitsDemo {
             double y = Math.sin(angle) * p.orbit;
             Circle planet = new Circle((float) x, (float) y, p.size).setFilled(true);
             planet.setName(p.name);
-            pen.color(p.color).draw(planet);
+            pen.drawingColor(p.drawingColor).draw(planet);
             if (displayName) {
                 pen.text(x + p.size + 0.15, y, p.name, planet);
             }
             if ("Earth".equals(p.name)) {
                 double moonAngle = 2 * Math.PI * time / 0.075;
-                pen.color(Colors.BWhi).point(x + Math.cos(moonAngle) * 0.35, y + Math.sin(moonAngle) * 0.35);
+                pen.drawingColor(GREY).point(x + Math.cos(moonAngle) * 0.35, y + Math.sin(moonAngle) * 0.35);
             }
         }
     }

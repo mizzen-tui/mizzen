@@ -1,5 +1,6 @@
 package mizzen.components.input;
 
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import mizzen.components.ColorHiliter;
@@ -8,6 +9,8 @@ import mizzen.components.EmptyAttributes;
 import mizzen.components.Enabled;
 import mizzen.components.FocusSetterToHiliteAction;
 import mizzen.components.Hiliter;
+import mizzen.components.theme.Theme;
+import mizzen.controlcodes.color.Color;
 import mizzen.events.ConditionalEventHandler;
 import mizzen.events.EventBus;
 import mizzen.events.EventHandler;
@@ -59,6 +62,7 @@ public class DefaultFocusableBehaviour implements FocusBehaviour  {
         Component<?> component;
         ColorHiliter colorHiliter;
         ColorHiliter emptyColorHiliter;
+        Function<Theme, Color> themeColorBefore;        // focused with no colour of its own: its theme colour before (showFocus)
 
         protected ComponentHiliterFocusableBehaviour(FocusableComponentMixin<?> component, boolean hiliteEmptyColor) {
             super(component);
@@ -93,20 +97,7 @@ public class DefaultFocusableBehaviour implements FocusBehaviour  {
                 return;
             }
             super.setFocus(focus, eventBus);  // set the focus flag
-            new FocusSetterToHiliteAction().hiliteAction(this, colorHiliter); // hilite
-            if (this.component instanceof Hiliter) {
-                if (focus) 
-                     ((Hiliter)this.component).hilite(); 
-                else 
-                     ((Hiliter)this.component).unHilite();
-            }
-            else {
-                this.component.setColor( colorHiliter.asColor() );
-            }
-            if (this.emptyColorHiliter != null && this.component instanceof EmptyAttributes) {
-                new FocusSetterToHiliteAction().hiliteAction(this, emptyColorHiliter); // hilite
-                ((EmptyAttributes<?>)this.component).setEmptyColor( emptyColorHiliter.asColor() );
-            }
+            showFocus(focus);
             if (focus) {
                Component.UTIL.bringToFront(component);
             }
@@ -115,35 +106,56 @@ public class DefaultFocusableBehaviour implements FocusBehaviour  {
         @Override
         public void unFocus(Focusable newFocusable, EventBus eventBus) {
             super.unFocus(newFocusable, eventBus);
-            new FocusSetterToHiliteAction().hiliteAction(this, colorHiliter); // hilite
-            if (this.component instanceof Hiliter) {
-                     ((Hiliter)this.component).unHilite();
-            }
-            else {
-                this.component.setColor( colorHiliter.asColor() );
-            }
-            if (this.emptyColorHiliter != null && this.component instanceof EmptyAttributes) {
-                new FocusSetterToHiliteAction().hiliteAction(this, emptyColorHiliter); // hilite
-                ((EmptyAttributes<?>)this.component).setEmptyColor( emptyColorHiliter.asColor() );
-            }
+            showFocus(false);
         }
         
         public void focus(Focusable oldFocusable, EventBus eventBus) {
             super.focus(oldFocusable, eventBus);
-            new FocusSetterToHiliteAction().hiliteAction(this, colorHiliter); // hilite
-            if (this.component instanceof Hiliter) {
-                 ((Hiliter)this.component).hilite(); 
-            }
-            else {
-                this.component.setColor( colorHiliter.asColor() );
-            }
-            if (this.emptyColorHiliter != null && this.component instanceof EmptyAttributes) {
-                new FocusSetterToHiliteAction().hiliteAction(this, emptyColorHiliter); // hilite
-                ((EmptyAttributes<?>)this.component).setEmptyColor( emptyColorHiliter.asColor() );
-            }
+            showFocus(true);
             Component.UTIL.bringToFront(component);
         }
         
+        /**
+         * Shows focus in the component's colour. A Hiliter shows it its own way. A component with a colour of its own
+         * shows that colour hilited (bold), as it always has. One with none keeps none: while focused it draws its theme
+         * colour in bold, worked out as it is drawn - so a theme set later still reaches it.
+         * <p/>
+         * Not the resolved colour, set as its own: that is what ColorHiliter would give (it keeps the colour it saw at the
+         * first focus), and the component would stay in the theme of that moment.
+         * <pre>
+         *     TextInput, no colour, Dark:   focused  Dark's input colour, bold     a switch to Light: Light's, bold
+         *     TextInput given Colors.IYel:  focused  IYel bold                     (as before)
+         * </pre>
+         */
+        private void showFocus(boolean focused) {
+            if (!focused && themeColorBefore != null) {          // it was focused with its theme colour: follow it again
+                component.setThemeColor(themeColorBefore);
+                themeColorBefore = null;
+            }
+            boolean ownColor = component.getOwnColor() != null;
+            if (this.component instanceof Hiliter) {
+                if (focused) {
+                    ((Hiliter) this.component).hilite();
+                } else {
+                    ((Hiliter) this.component).unHilite();
+                }
+            } else if (!ownColor) {
+                if (focused && themeColorBefore == null) {
+                    Function<Theme, Color> before = component.getThemeColor();
+                    themeColorBefore = before;
+                    component.setThemeColor((theme) -> before.apply(theme).bold());
+                }
+            } else {
+                new FocusSetterToHiliteAction().hiliteAction(this, colorHiliter);
+                this.component.setColor(colorHiliter.asColor());
+            }
+            // the empty colour: with no colour of its own, its gaps already follow its colour (bold or not) as they are drawn
+            if (ownColor && this.emptyColorHiliter != null && this.component instanceof EmptyAttributes) {
+                new FocusSetterToHiliteAction().hiliteAction(this, emptyColorHiliter);
+                ((EmptyAttributes<?>) this.component).setEmptyColor(emptyColorHiliter.asColor());
+            }
+        }
+
         public String toString() {
             return this.getClass().getSimpleName() + ":[" +String.valueOf(component)+"]";
         }

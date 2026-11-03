@@ -9,6 +9,7 @@ import mizzen.components.ParentContainer;
 import mizzen.components.plot.Plotter;
 import mizzen.components.plot.PointPlotter;
 import mizzen.components.plot.blocks.BlocksUtils.BlocksPlot;
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
 import mizzen.controlcodes.color.Colors.FgColor;
 import mizzen.geom.Dimension;
@@ -182,7 +183,7 @@ public class BlocksGrid extends BoundedComponent<BlocksGrid>  implements ParentC
 
             @Override
             public Color setNextPlotColor(Color color) {
-                Color prevColor = BlocksGrid.this.getPlotColor();
+                Color prevColor = BlocksGrid.this.plotter.getOwnColor();   // its own, not resolved: put back, it still follows a theme
                 BlocksGrid.this.setPlotColor(color);
                 return prevColor;
             }
@@ -190,6 +191,11 @@ public class BlocksGrid extends BoundedComponent<BlocksGrid>  implements ParentC
             @Override
             public void clearPlots() {
                 BlocksGrid.this.clearPlots();
+            }
+
+            @Override
+            public Theme getTheme() {
+                return BlocksGrid.this.getTheme();
             }
 
         };

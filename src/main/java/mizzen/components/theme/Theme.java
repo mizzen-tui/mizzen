@@ -44,11 +44,18 @@ public final class Theme {
             .withSubheadingColor(Colors.BCya).withMinorHeadingColor(Colors.BGre).withStrongColor(Colors.BWhi)
             .withEmphasisColor(Colors.Cya).withLinkColor(Colors.UCya).withCodeColor(Colors.Yel).withDimColor(Colors.IBla)
             .withStatusColor(Colors.IGre).withWarningColor(Colors.Yel).withDialogColor(legacyDialogColor())
+            .withDrawingColors(Colors.BCya, Colors.BYel, Colors.BPur, Colors.BGre, Colors.BRed, Colors.BBlu, Colors.Yel, Colors.IBla)
             .dialogs((d) -> d.withHeadingColor(new Colors.FGBGColors(Colors.Blu, Colors.On_Whi))   // BYel can't be read on white
                     .withLinkColor(new Colors.FGBGColors(Colors.Pur, Colors.On_Whi))
                     .withWarningColor(new Colors.FGBGColors(Colors.BIBla, Colors.On_Yel))   // filled: a yellow line is lost on the grey
                     .withErrorColor(new Colors.FGBGColors(Colors.BRed, Colors.On_Whi))
-                    .withInputColor(new Colors.FGBGColors(Colors.Bla, Colors.On_IWhi)));   // a white field on the grey
+                    .withStrongColor(new Colors.FGBGColors(Colors.Bla, Colors.On_Whi))   // a form's labels: BWhi is lost on white
+                    .withInputColor(new Colors.FGBGColors(Colors.Bla, Colors.On_IWhi))   // a white field on the grey
+                    .withDrawingColors(onWhite(Colors.Cya), onWhite(Colors.Yel), onWhite(Colors.Pur), onWhite(Colors.Gre),
+                                       onWhite(Colors.Red), onWhite(Colors.Blu), onWhite(Colors.Yel), onWhite(Colors.IBla)));
+
+    // Drawing colours (charts, plots) keep one order of hues in every theme, each one readable on its background:
+    //     0 cyan   1 yellow   2 purple   3 green   4 red   5 blue   6 orange   7 grey
 
     // The themes below are 24-bit colour (most terminals today: PuTTY 0.71+, xterm, Windows Terminal, iTerm2). Each is low
     // contrast between its blocks: a background that is not pure black, white or blue; fields one step off it; buttons
@@ -66,26 +73,28 @@ public final class Theme {
             .documents(0x22272E, 0x96D0FF, 0xCDD9E5, 0xCDD9E5, 0xDCBDFB, 0x6CB6FF, 0xF69D50, 0x2D333B, 0x768390)
             .withStatusColor(rgb(0x6BC9A7, 0x22272E)).withWarningColor(rgb(0xDAAA3F, 0x22272E))
             .withDialogColor(rgb(0xADBAC7, 0x2D333B))
+            .drawing(0x22272E, 0x76E3EA, 0xDAAA3F, 0xDCBDFB, 0x8DDB8C, 0xF47067, 0x6CB6FF, 0xF69D50, 0x909DAB)
             .dialogs((d) -> d.withInputColor(rgb(0xCDD9E5, 0x22272E)));    // fields sunk to the screen's shade: the dialog has theirs
 
     /** paper: dark text on off-white, blue accent, fields and buttons a shade or two darker */
     public static final Theme LIGHT = rgbTheme("Light", 0xF6F8FA,
             0x24292F, 0x0969DA,
             0x24292F, 0xEAEEF2,
-            0x24292F, 0xD8DEE4,
+            0x24292F, 0xE4E8EC,                                          // button: a light step - large bordered ones too
             0xFFFFFF, 0x0969DA,
             0xAFB8C1, 0x8C959F,
             0xCF222E, 0x1A7F37,
             0x24292F, 0xDDF4FF)
             .documents(0xF6F8FA, 0x0550AE, 0x24292F, 0x1F2328, 0x8250DF, 0x0969DA, 0x953800, 0xEAEEF2, 0x6E7781)
             .withStatusColor(rgb(0x1B7C83, 0xF6F8FA)).withWarningColor(rgb(0x9A6700, 0xF6F8FA))
-            .withDialogColor(rgb(0x24292F, 0xFFFFFF));
+            .withDialogColor(rgb(0x24292F, 0xFFFFFF))
+            .drawing(0xF6F8FA, 0x0891B2, 0xCA8A04, 0x9333EA, 0x16A34A, 0xDC2626, 0x2563EB, 0xEA580C, 0x6B7280);   // strong: dots are thin
 
     /** the classic blue screen, softened: navy, warm yellow headings, fields a lighter blue, green buttons */
     public static final Theme CLASSIC = rgbTheme("Classic", 0x1D3268,
             0xD7DCE8, 0xF2D06B,
             0xFFFFFF, 0x2A4585,
-            0xFFFFFF, 0x2F7A5E,
+            0xFFFFFF, 0x2B5E5A,                                          // button: a quieter green
             0xFFFFFF, 0x3C9A76,
             0x7A8CC4, 0x7F8BB0,
             0xFF8A80, 0x9BE29B,
@@ -93,6 +102,7 @@ public final class Theme {
             .documents(0x1D3268, 0x9FD3FF, 0xFFFFFF, 0xFFFFFF, 0xC9B8FF, 0x8FD6FF, 0xF2D06B, 0x2A4585, 0x8E9CC9)
             .withStatusColor(rgb(0x8FE3C2, 0x1D3268)).withWarningColor(rgb(0xFFB86B, 0x1D3268))
             .withDialogColor(rgb(0xD7DCE8, 0x2A4585))
+            .drawing(0x1D3268, 0x7FE3F0, 0xF2D06B, 0xC9B8FF, 0x9BE29B, 0xFF8A80, 0x8FB8FF, 0xFFB86B, 0xB4BED8)
             .dialogs((d) -> d.withInputColor(rgb(0xFFFFFF, 0x1D3268)));
 
     private static final List<Theme> STANDARD = Collections.unmodifiableList(Arrays.asList(LEGACY, DARK, LIGHT, CLASSIC));
@@ -133,6 +143,8 @@ public final class Theme {
     private Color codeColor;            // `code`
     private Color dimColor;             // quotes, rules, the lines of a table in a document
 
+    private List<Color> drawingColors;  // charts and plots: series i in drawingColor(i)
+
     private Theme(String name, Color backgroundColor, Color textColor, Color headingColor, Color inputColor, Color buttonColor,
                   Color buttonFocusedColor, Color borderColor, Color disabledColor, Color errorColor, Color successColor,
                   Color selectedColor) {
@@ -166,6 +178,19 @@ public final class Theme {
         return withSubheadingColor(bold(subheading, background)).withMinorHeadingColor(bold(minorHeading, background))
                 .withStrongColor(bold(strong, background)).withEmphasisColor(rgb(emphasis, background))
                 .withLinkColor(rgb(link, background)).withCodeColor(rgb(code, codeField)).withDimColor(rgb(dim, background));
+    }
+
+    // the drawing colours, each on background
+    private Theme drawing(int background, int... hues) {
+        Color[] colors = new Color[hues.length];
+        for (int i = 0; i < hues.length; i++) {
+            colors[i] = rgb(hues[i], background);
+        }
+        return withDrawingColors(colors);
+    }
+
+    private static Color onWhite(Color color) {
+        return new Colors.FGBGColors((Colors.FgColor) color, Colors.On_Whi);
     }
 
     // as rgb, in bold - an RGB colour is only a colour; headings and **bold** need the attribute too
@@ -207,6 +232,26 @@ public final class Theme {
     public Color dimColor()            { return dimColor != null ? dimColor : disabledColor; }
 
     /**
+     * The colours to draw data in - a chart's series, a plot's shapes - in one order of hues in every theme, each readable
+     * on this theme's background: 0 cyan, 1 yellow, 2 purple, 3 green, 4 red, 5 blue, 6 orange, 7 grey. A chart gives
+     * its series or slices these in turn when they are given no colour; a drawing can pick one by its number:
+     * <pre>
+     *     chart.series("cpu").series("memory");               cyan, then yellow
+     *     pen.drawingColor(4).draw(mars);                     a red, in any theme
+     * </pre>
+     */
+    public List<Color> drawingColors() {
+        return drawingColors != null ? drawingColors
+                : Collections.unmodifiableList(Arrays.asList(headingColor, linkColor(), successColor, errorColor, warningColor(), textColor));
+    }
+
+    /** drawing colour i, counting round: drawingColor(9) is drawingColor(1) when there are 8 */
+    public Color drawingColor(int i) {
+        List<Color> colors = drawingColors();
+        return colors.get(Math.floorMod(i, colors.size()));
+    }
+
+    /**
      * The theme inside a dialog: this one, with dialogColor as its background and every colour that is drawn on the
      * background (text, headings, borders, errors...) laid on dialogColor instead. Fields, buttons and the selected row
      * keep their own colours; one with none of its own (Legacy) takes dialogColor.
@@ -242,6 +287,13 @@ public final class Theme {
             t.emphasisColor = laidOn(emphasisColor, surface);
             t.linkColor = laidOn(linkColor, surface);
             t.dimColor = laidOn(dimColor, surface);
+            if (drawingColors != null) {
+                Color[] drawing = new Color[drawingColors.size()];
+                for (int i = 0; i < drawing.length; i++) {
+                    drawing[i] = laidOn(drawingColors.get(i), surface);
+                }
+                t.drawingColors = Collections.unmodifiableList(Arrays.asList(drawing));
+            }
             t.inputColor = orSurface(inputColor, surface);
             t.buttonColor = orSurface(buttonColor, surface);
             t.buttonFocusedColor = orSurface(buttonFocusedColor, surface);
@@ -296,6 +348,7 @@ public final class Theme {
     public Theme withSelectedColor(Color color)        { return with((t) -> t.selectedColor = color); }
     public Theme withWarningColor(Color color)         { return with((t) -> t.warningColor = color); }
     public Theme withDialogColor(Color color)          { return with((t) -> t.dialogColor = color); }
+    public Theme withDrawingColors(Color... colors)    { return with((t) -> t.drawingColors = Collections.unmodifiableList(Arrays.asList(colors.clone()))); }
     public Theme withSubheadingColor(Color color)      { return with((t) -> t.subheadingColor = color); }
     public Theme withMinorHeadingColor(Color color)    { return with((t) -> t.minorHeadingColor = color); }
     public Theme withStrongColor(Color color)          { return with((t) -> t.strongColor = color); }
@@ -317,6 +370,7 @@ public final class Theme {
         copy.statusColor = statusColor;
         copy.warningColor = warningColor;
         copy.dialogColor = dialogColor;
+        copy.drawingColors = drawingColors;
         copy.dialogChanges = dialogChanges;
         change.accept(copy);
         return copy;

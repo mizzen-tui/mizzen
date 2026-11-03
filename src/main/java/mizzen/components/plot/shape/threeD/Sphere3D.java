@@ -1,25 +1,58 @@
 package mizzen.components.plot.shape.threeD;
 
+import java.util.function.Function;
+
 import mizzen.components.plot.shape.CompositeShape;
 import mizzen.components.plot.shape.Line;
 import mizzen.components.plot.shape.Shape;
 import mizzen.components.plot.shape.threeD.projection.Plot2D;
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
-import mizzen.controlcodes.color.Colors;
 import mizzen.geom.position.Vec2;
 import mizzen.geom.position.Vec3;
 
 public class Sphere3D extends AbstractShape3D<Sphere3D> {
     private final float radius;
     private final int slices, stacks;
-    private final Color color;
+    private final Color color, shadedColor;                                  // fixed; null: the theme colours below
+    private final Function<Theme, Color> themeColor, shadedThemeColor;
 
+    /** the lit side in color; the side in shadow in its theme's dim colour */
     public Sphere3D(float radius, Vec3<?> center, int resolution, Color color) {
+        this(radius, center, resolution, color, null, null, Theme::dimColor);
+    }
+
+    /** the lit side in color, the side in shadow in shaded - both fixed */
+    public Sphere3D(float radius, Vec3<?> center, int resolution, Color color, Color shaded) {
+        this(radius, center, resolution, color, shaded, null, null);
+    }
+
+    /**
+     * in its theme's colours, worked out as it is drawn - a theme switch reaches it. The side in shadow: the theme's dim
+     * colour.
+     * <pre>
+     *     new Sphere3D(30, at, 15, (t) -&gt; t.drawingColor(YELLOW));
+     * </pre>
+     */
+    public Sphere3D(float radius, Vec3<?> center, int resolution, Function<Theme, Color> color) {
+        this(radius, center, resolution, null, null, color, Theme::dimColor);
+    }
+
+    /** in its theme's colours: the lit side in color, the side in shadow in shaded */
+    public Sphere3D(float radius, Vec3<?> center, int resolution, Function<Theme, Color> color, Function<Theme, Color> shaded) {
+        this(radius, center, resolution, null, null, color, shaded);
+    }
+
+    private Sphere3D(float radius, Vec3<?> center, int resolution, Color color, Color shaded,
+                     Function<Theme, Color> themeColor, Function<Theme, Color> shadedThemeColor) {
         this.radius = radius;
         this.center = center;
         this.slices = resolution; // Horizontal divisions
         this.stacks = resolution; // Vertical divisions
         this.color = color;
+        this.shadedColor = shaded;
+        this.themeColor = themeColor;
+        this.shadedThemeColor = shadedThemeColor;
     }
 
     @Override
@@ -86,9 +119,10 @@ public class Sphere3D extends AbstractShape3D<Sphere3D> {
 
         // Choose color: If lit, use primary color; if in shadow, use a dimmed color
         // Threshold (0.3f) can be tuned to change how much of the sphere is "dark"
-        Color segmentColor = (avgIntensity > 0.3f) ? this.color : Colors.IBla;
-
-        shape.addShape(new Line(p1, p2, segmentColor));
+        boolean lit = avgIntensity > 0.3f;
+        Line segment = new Line(p1, p2, lit ? color : shadedColor);
+        Function<Theme, Color> segmentThemeColor = lit ? themeColor : shadedThemeColor;
+        shape.addShape(segmentThemeColor == null ? segment : segment.setThemeColor(segmentThemeColor));
     }
 
     @Override
