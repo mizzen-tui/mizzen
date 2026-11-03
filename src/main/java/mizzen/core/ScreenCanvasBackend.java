@@ -306,8 +306,12 @@ public class ScreenCanvasBackend implements CanvasBackend {
                             screen.add( new ControlCode.CursorForward(sc.getCol() - curCol) );
                         }
                         writeSegment(sc);
-                        if (this.screenWidth>0) {
-                            curCol = Math.min(sc.getRightMostCol()+1, this.screenWidth-1);
+                        if (this.screenWidth>0 && sc.getRightMostCol()+1 >= this.screenWidth) {
+                            // written to the last column: the terminal is left "pending wrap", and on many terminals
+                            // the next character after a cursor-down wraps to a further line the line count never
+                            // sees (an inline canvas then draws one row low). Column 1 clears it.
+                            screen.add( ControlCode.CURSOR_LEFT );
+                            curCol = 0;
                         } else {
                             curCol = sc.getRightMostCol()+1;
                         }
