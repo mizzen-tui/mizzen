@@ -55,7 +55,14 @@ public class CardsDemo {
                             .add(new TextComponent("newest 9 h").setThemeColor(Theme::dimColor));
                     HorizontalPanel cards = new HorizontalPanel().setHorizontalSpacer(2).add(site).add(disk).add(backups);
 
-                    screen.add(new VerticalPanel().setVerticalSpacer(1).add(heading).add(cards));
+                    // buttons: filled (the theme's button colour) and outlined (a border, no fill); in Rounded, focus
+                    // shows by colour, not [brackets] - TAB between them
+                    Button refresh = new Button("Refresh");
+                    Button details = new Button("Details").setThemeColor(Theme::textColor);
+                    details.setBorder(true);
+                    HorizontalPanel buttons = new HorizontalPanel().setHorizontalSpacer(2).add(refresh).add(details);
+
+                    screen.add(new VerticalPanel().setVerticalSpacer(1).add(heading).add(cards).add(buttons));
                 })
                 .start();
     }

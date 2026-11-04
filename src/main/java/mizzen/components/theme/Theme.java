@@ -129,7 +129,7 @@ public final class Theme {
             .withStatusColor(rgb(0x8EDB9B, 0x1F2933)).withWarningColor(rgb(0xF0B429, 0x1F2933))
             .withSurfaceColor(rgb(0xD9E2EC, 0x2B3846)).withAccentColor(rgbBold(0xF0B429, 0x1F2933))
             .drawing(0x1F2933, 0x6FD6E8, 0xF0C75E, 0xC3B5F5, 0x8EDB9B, 0xF29B9B, 0x8BC4F9, 0xF5A86B, 0x9AA5B1)
-            .withBlockChars(BlockChars.ROUNDED).withFocusedBlockChars(BlockChars.ROUNDED)
+            .withBlockChars(BlockChars.ROUNDED).withFocusedBlockChars(BlockChars.ROUNDED).withButtonFocus(ButtonFocus.ACCENT)
             .dialogs((d) -> d.withInputColor(rgb(0xF0F4F8, 0x1F2933)));    // fields sunk to the screen's shade
 
     private static final List<Theme> STANDARD = Collections.unmodifiableList(Arrays.asList(LEGACY, DARK, LIGHT, CLASSIC, ROUNDED));
@@ -176,6 +176,10 @@ public final class Theme {
 
     private List<Color> drawingColors;  // charts and plots: series i in drawingColor(i)
 
+    /** how a focused button shows: BRACKETS [OK] (the standard themes), or ACCENT - in the focused-button colour, no brackets */
+    public enum ButtonFocus { BRACKETS, ACCENT }
+
+    private ButtonFocus buttonFocus;     // null: BRACKETS
     private BlockChars blockChars;       // lines and corners of boxes, borders, tables; null: BlockChars.NICE
     private BlockChars focusedBlockChars;// a focused box's; null: BlockChars.NICE_DOUBLE
 
@@ -298,6 +302,11 @@ public final class Theme {
      *     Theme.DARK.withBlockChars(BlockChars.ROUNDED).withFocusedBlockChars(BlockChars.ROUNDED)    ╭──╮ boxes
      * </pre>
      */
+    /** how a focused button shows (Button): BRACKETS, or ACCENT - buttonFocusedColor, or an outlined button's accentColor */
+    public ButtonFocus buttonFocus() {
+        return buttonFocus != null ? buttonFocus : ButtonFocus.BRACKETS;
+    }
+
     public BlockChars blockChars() {
         return blockChars != null ? blockChars : BlockChars.NICE;
     }
@@ -427,6 +436,7 @@ public final class Theme {
     public Theme withDialogColor(Color color)          { return with((t) -> t.dialogColor = color); }
     public Theme withSurfaceColor(Color color)         { return with((t) -> t.surfaceColor = color); }
     public Theme withAccentColor(Color color)          { return with((t) -> t.accentColor = color); }
+    public Theme withButtonFocus(ButtonFocus focus)    { return with((t) -> t.buttonFocus = focus); }
     public Theme withBlockChars(BlockChars chars)      { return with((t) -> t.blockChars = chars); }
     public Theme withFocusedBlockChars(BlockChars chars) { return with((t) -> t.focusedBlockChars = chars); }
     public Theme withDrawingColors(Color... colors)    { return with((t) -> t.drawingColors = Collections.unmodifiableList(Arrays.asList(colors.clone()))); }
@@ -455,6 +465,7 @@ public final class Theme {
         copy.accentColor = accentColor;
         copy.drawingColors = drawingColors;
         copy.blockChars = blockChars;
+        copy.buttonFocus = buttonFocus;
         copy.focusedBlockChars = focusedBlockChars;
         copy.dialogChanges = dialogChanges;
         change.accept(copy);

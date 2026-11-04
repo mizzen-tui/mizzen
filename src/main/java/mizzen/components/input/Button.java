@@ -2,6 +2,7 @@ package mizzen.components.input;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.Function;
 
 import mizzen.components.BoundedComponent;
 import mizzen.components.ColorHiliter;
@@ -46,8 +47,10 @@ public class Button extends BoundedComponent<Button> implements FormInput<Boolea
                                                                 GetComponentAtOffset,
                                                                 EventHandlerContainer{
 
+    private static final Function<Theme, Color> BUTTON = Theme::buttonColor;   // a filled button's theme colour (the default)
+
     {
-        defaultThemeColor(Theme::buttonColor);                // given no colour: the theme's - a button
+        defaultThemeColor(BUTTON);                            // given no colour: the theme's - a button
     }
 
     String buttonText;
@@ -181,6 +184,7 @@ public class Button extends BoundedComponent<Button> implements FormInput<Boolea
     }
 
     protected String getTextForRendering(boolean hasFocus) {
+         hasFocus = hasFocus && !accentFocus();                // focus shown by colour (getColor): no brackets, the same width
          String outputStr = this.buttonText;
 
          if (isDisplayHotKey()) {
@@ -199,6 +203,26 @@ public class Button extends BoundedComponent<Button> implements FormInput<Boolea
                          rbracket(StringUtils.repeat(' ', rightSelectedBracket != null ? leftSelectedBracket.length():0));
          }
          return outputStr;
+    }
+
+    // the theme shows focus by colour, not brackets (Theme.ButtonFocus.ACCENT)
+    private boolean accentFocus() {
+        return getTheme().buttonFocus() == Theme.ButtonFocus.ACCENT;
+    }
+
+    /**
+     * Its colour; with a theme that shows focus by colour (Theme.ButtonFocus.ACCENT), while focused a button with no colour
+     * of its own is in the theme's focused-button colour - or, outlined (another theme colour, e.g. setThemeColor(Theme::
+     * textColor) with a border), its accent: the outline turns the accent colour rather than filling.
+     */
+    @Override
+    public Color getColor() {
+        // meAsFocusable first: hasFocus() would build the focus behaviour, and getColor is asked while the button is made
+        if (getOwnColor() == null && meAsFocusable != null && meAsFocusable.hasFocus() && accentFocus()) {
+            Theme theme = getTheme();
+            return getThemeColor() == BUTTON ? theme.buttonFocusedColor() : theme.accentColor();
+        }
+        return super.getColor();
     }
 
     @Override

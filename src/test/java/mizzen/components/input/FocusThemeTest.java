@@ -74,4 +74,40 @@ public class FocusThemeTest extends TestCase {
                     codes.contains("48;2;234;238;242"));
         }
     }
+    // what a button shows, characters only
+    private static String shown(Button button) {
+        StringBuilder b = new StringBuilder();
+        for (mizzen.textsegments.ScreenLineSegment segment : button.getSegmentsBuffer().getSegments()) {
+            b.append(segment.getText());
+        }
+        return b.toString();
+    }
+
+    public void testRoundedShowsAFocusedButtonByColourNotBrackets() throws UnsupportedEncodingException {
+        Button ok = new Button("OK");
+        Button other = new Button("Other");
+        onScreen(ok, other);
+        root.setTheme(Theme.ROUNDED);
+        focus(ok);
+        assertFalse("no brackets: " + shown(ok), shown(ok).contains("["));
+        assertSame(Theme.ROUNDED.buttonFocusedColor(), ok.getColor());
+        focus(other);
+        assertSame("its own theme colour again", Theme.ROUNDED.buttonColor(), ok.getColor());
+    }
+
+    public void testAnOutlinedButtonTurnsTheAccent() throws UnsupportedEncodingException {
+        Button outlined = new Button("Details").setThemeColor(Theme::textColor);
+        onScreen(outlined, new Button("Other"));
+        root.setTheme(Theme.ROUNDED);
+        focus(outlined);
+        assertSame(Theme.ROUNDED.accentColor(), outlined.getColor());
+    }
+
+    public void testDarkStillShowsBrackets() throws UnsupportedEncodingException {
+        Button ok = new Button("OK");
+        onScreen(ok, new Button("Other"));
+        root.setTheme(Theme.DARK);
+        focus(ok);
+        assertTrue(shown(ok), shown(ok).contains("[OK]"));
+    }
 }
