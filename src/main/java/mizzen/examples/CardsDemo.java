@@ -4,21 +4,21 @@ import java.util.Arrays;
 
 import mizzen.app.TUIApp;
 import mizzen.components.Badge;
-import mizzen.components.TextComponent;
 import mizzen.components.card.Card;
+import mizzen.components.card.Tile;
 import mizzen.components.composite.Composite;
 import mizzen.components.composite.HorizontalPanel;
 import mizzen.components.composite.VerticalPanel;
 import mizzen.components.input.Button;
 import mizzen.components.input.DropdownListBox;
-import mizzen.components.progressmeter.Counter;
 import mizzen.components.table.ObjectTableModel;
 import mizzen.components.table.TableComponent;
 import mizzen.components.theme.Theme;
 import mizzen.geom.Dimension;
 
 /**
- * Cards and badges: a status page as cards on the background, a badge for the state. Pick Rounded in the theme list for
+ * Cards, tiles and badges: a status page as tiles on the background, a badge for the state - Flip state turns the
+ * Site tile red. Pick Rounded in the theme list for
  * rounded cards on a raised surface; in Legacy a card is a bordered panel.
  * <pre>
  *     ● M I Z Z E N  status                               ● OK
@@ -38,27 +38,24 @@ public class CardsDemo {
                 .setOnReadyStart((tApp) -> {
                     Composite screen = (Composite) tApp.getMainApplicationPanel();
 
+                    // tiles: one per thing checked, all one width - a dashboard row; a state colours the value
+                    Tile site = new Tile("Site", 22).value("HTTP 200").note("store.example.com");
+                    Tile disk = new Tile("Disk", 22).value("52% used").bar(52, 100);
+                    Tile backups = new Tile("Backups", 22).value("7 kept").note("newest 9 h");
+                    HorizontalPanel cards = new HorizontalPanel().setHorizontalSpacer(2).add(site).add(disk).add(backups);
+
                     Badge health = new Badge(Theme::successColor, "OK");
                     Button flip = new Button("Flip state");
                     flip.onChange((te) -> {
                         boolean ok = "ALERT".equals(health.getText());
                         health.setText(ok ? "OK" : "ALERT").setDotThemeColor(ok ? Theme::successColor : Theme::errorColor);
+                        site.value(ok ? "HTTP 200" : "HTTP 500").state(ok ? Tile.State.NORMAL : Tile.State.ALERT);
                     });
                     DropdownListBox<Theme> theme = ThemeList.of(tApp);
                     HorizontalPanel heading = new HorizontalPanel().setHorizontalSpacer(4)
                             .add(new Badge("M I Z Z E N   status").setThemeColor(Theme::strongColor))
                             .add(health).add(flip).add(theme);
 
-                    Card site = new Card("Site")
-                            .add(new TextComponent("HTTP 200").setThemeColor(Theme::strongColor))
-                            .add(new Badge(Theme::successColor, "up 41 days"));
-                    Card disk = new Card("Disk")
-                            .add(new TextComponent("52% used").setThemeColor(Theme::strongColor))
-                            .add(new Counter(10).set(52, 100));
-                    Card backups = new Card("Backups")
-                            .add(new TextComponent("7 kept").setThemeColor(Theme::strongColor))
-                            .add(new TextComponent("newest 9 h").setThemeColor(Theme::dimColor));
-                    HorizontalPanel cards = new HorizontalPanel().setHorizontalSpacer(2).add(site).add(disk).add(backups);
 
                     // buttons: filled (the theme's button colour) and outlined (a border, no fill); in Rounded, focus
                     // shows by colour, not [brackets] - TAB between them
