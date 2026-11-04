@@ -216,7 +216,7 @@ public class TUIApp implements TUIAppInterface {
                 String name = arg.substring(6);
                 Theme theme = Theme.named(name);
                 if (theme == null) {
-                    throw new IllegalArgumentException("no theme named '" + name + "' - there are " + Theme.standard());
+                    throw new IllegalArgumentException("no theme named '" + name + "' - there are " + Theme.all());
                 }
                 return theme;
             }

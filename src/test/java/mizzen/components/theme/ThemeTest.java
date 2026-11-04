@@ -1,6 +1,7 @@
 package mizzen.components.theme;
 
 import mizzen.components.BorderedComponent;
+import mizzen.components.BlockChars;
 import mizzen.components.TextComponent;
 import mizzen.components.plot.PlotArea;
 import mizzen.components.input.Button;
@@ -281,5 +282,29 @@ public class ThemeTest extends TestCase {
         assertTrue("focused: " + drawn(box), drawn(box).contains("╔"));
         box.unHilite();
         assertTrue(drawn(box), drawn(box).contains("╭"));
+    }
+    public void testARegisteredThemeIsFoundByNameAndListed() {
+        Theme harbour = Theme.ROUNDED.withName("Harbour").withBackgroundColor(Theme.rgb(0xE6EEF2, 0x1D4F4A));
+        Theme.register(harbour);
+        assertSame(harbour, Theme.named("harbour"));
+        assertTrue(Theme.all().contains(harbour));
+        assertFalse("the standard list stays the library's", Theme.standard().contains(harbour));
+        Theme again = harbour.withAccentColor(Theme.rgb(0xF2C94C, 0x1D4F4A));
+        Theme.register(again);
+        assertSame("the same name again replaces it", again, Theme.named("Harbour"));
+    }
+
+    public void testSurfaceAndAccentFallBack() {
+        Theme plain = Theme.DARK.withName("plain");
+        assertSame("no accent: the heading colour", plain.headingColor(), plain.accentColor());
+        assertSame("Dark's dialogs keep their own colour", Theme.DARK.dialogColor(), plain.dialogColor());
+        Theme surfaced = Theme.ROUNDED;
+        assertSame("Rounded's dialogs are on its surface", surfaced.surfaceColor(), surfaced.dialogColor());
+        assertSame(BlockChars.ROUNDED, Theme.ROUNDED.blockChars());
+    }
+
+    public void testRgbIsTheThemesOwnKindOfColour() {
+        assertEquals("\u001b[0;38;2;230;238;242;48;2;29;79;74m", Theme.rgb(0xE6EEF2, 0x1D4F4A).asString());
+        assertTrue(Theme.rgbBold(0xF2C94C, 0x1D4F4A).asString().startsWith("\u001b[0;1;38;2;242;201;76"));
     }
 }

@@ -106,7 +106,34 @@ public final class Theme {
             .drawing(0x1D3268, 0x7FE3F0, 0xF2D06B, 0xC9B8FF, 0x9BE29B, 0xFF8A80, 0x8FB8FF, 0xFFB86B, 0xB4BED8)
             .dialogs((d) -> d.withInputColor(rgb(0xFFFFFF, 0x1D3268)));
 
-    private static final List<Theme> STANDARD = Collections.unmodifiableList(Arrays.asList(LEGACY, DARK, LIGHT, CLASSIC));
+    /**
+     * Rounded corners and a neutral slate palette with an amber accent - a base to copy for an app's own look: take it,
+     * change the colours (rgb), name it, register it.
+     * <pre>
+     *     Theme mine = Theme.ROUNDED.withName("Harbour")
+     *             .withBackgroundColor(Theme.rgb(0xE6EEF2, 0x1D4F4A))
+     *             .withSurfaceColor(Theme.rgb(0x22313A, 0xF4F7F8))
+     *             .withAccentColor(Theme.rgb(0xF2C94C, 0x1D4F4A));
+     *     Theme.register(mine);                    then theme=Harbour on the command line finds it
+     * </pre>
+     */
+    public static final Theme ROUNDED = rgbTheme("Rounded", 0x1F2933,
+            0xD9E2EC, 0x7BD3C8,                                          // text, heading (teal)
+            0xF0F4F8, 0x2A3744,                                          // input
+            0xF0F4F8, 0x3E5266,                                          // button
+            0x102A43, 0xF0B429,                                          // focused button: the amber accent
+            0x52606D, 0x7B8794,                                          // border, disabled
+            0xF29B9B, 0x8EDB9B,                                          // error, success
+            0xF0F4F8, 0x34495E)                                          // selected
+            .documents(0x1F2933, 0x9FE0D8, 0xD9E2EC, 0xF0F4F8, 0xC3B5F5, 0x8BC4F9, 0xF7C978, 0x2A3744, 0x8796A5)
+            .withStatusColor(rgb(0x8EDB9B, 0x1F2933)).withWarningColor(rgb(0xF0B429, 0x1F2933))
+            .withSurfaceColor(rgb(0xD9E2EC, 0x2B3846)).withAccentColor(rgbBold(0xF0B429, 0x1F2933))
+            .drawing(0x1F2933, 0x6FD6E8, 0xF0C75E, 0xC3B5F5, 0x8EDB9B, 0xF29B9B, 0x8BC4F9, 0xF5A86B, 0x9AA5B1)
+            .withBlockChars(BlockChars.ROUNDED).withFocusedBlockChars(BlockChars.ROUNDED)
+            .dialogs((d) -> d.withInputColor(rgb(0xF0F4F8, 0x1F2933)));    // fields sunk to the screen's shade
+
+    private static final List<Theme> STANDARD = Collections.unmodifiableList(Arrays.asList(LEGACY, DARK, LIGHT, CLASSIC, ROUNDED));
+    private static final List<Theme> REGISTERED = new java.util.concurrent.CopyOnWriteArrayList<Theme>();
 
     private static volatile Theme defaultTheme = LEGACY;
     private static volatile int version = 1;
@@ -129,7 +156,9 @@ public final class Theme {
     private Color statusColor;          // what just happened: a status line, a result
     private Color selectedColor;        // the picked row of a list, tree or table
     private Color warningColor;         // take care - not yet an error
-    private Color dialogColor;          // a dialog's panel: a surface raised off the background
+    private Color dialogColor;          // a dialog's panel: a surface raised off the background (none: surfaceColor)
+    private Color surfaceColor;         // a card's or a dialog's panel: raised off the background
+    private Color accentColor;          // the one bright colour: focus, a brand mark
 
     // the theme inside a dialog: this one laid on dialogColor (onSurface), then changed as the theme says (dialogs)
     private Function<Theme, Theme> dialogChanges = Function.identity();
@@ -171,7 +200,7 @@ public final class Theme {
     private static Theme rgbTheme(String name, int background, int text, int heading, int inputText, int inputField,
                                   int buttonText, int button, int focusedText, int focused, int border, int disabled,
                                   int error, int success, int selectedText, int selected) {
-        return new Theme(name, rgb(text, background), rgb(text, background), bold(heading, background),
+        return new Theme(name, rgb(text, background), rgb(text, background), rgbBold(heading, background),
                 rgb(inputText, inputField), rgb(buttonText, button), rgb(focusedText, focused), rgb(border, background),
                 rgb(disabled, background), rgb(error, background), rgb(success, background), rgb(selectedText, selected));
     }
@@ -179,8 +208,8 @@ public final class Theme {
     // the document colours, on background - inline code on its own field
     private Theme documents(int background, int subheading, int minorHeading, int strong, int emphasis, int link,
                             int code, int codeField, int dim) {
-        return withSubheadingColor(bold(subheading, background)).withMinorHeadingColor(bold(minorHeading, background))
-                .withStrongColor(bold(strong, background)).withEmphasisColor(rgb(emphasis, background))
+        return withSubheadingColor(rgbBold(subheading, background)).withMinorHeadingColor(rgbBold(minorHeading, background))
+                .withStrongColor(rgbBold(strong, background)).withEmphasisColor(rgb(emphasis, background))
                 .withLinkColor(rgb(link, background)).withCodeColor(rgb(code, codeField)).withDimColor(rgb(dim, background));
     }
 
@@ -197,15 +226,25 @@ public final class Theme {
         return new Colors.FGBGColors((Colors.FgColor) color, Colors.On_Whi);
     }
 
-    // as rgb, in bold - an RGB colour is only a colour; headings and **bold** need the attribute too
-    private static Color bold(int foreground, int background) {
+    /**
+     * As rgb, in bold - an RGB colour is only a colour; headings and **bold** need the attribute too.
+     * <pre>
+     *     Theme.rgbBold(0xF2C94C, 0x1D4F4A)        bold yellow on teal
+     * </pre>
+     */
+    public static Color rgbBold(int foreground, int background) {
         return ColorFromCodes.instance(new int[] { 0, 1, 38, 2, foreground >> 16 & 0xFF, foreground >> 8 & 0xFF, foreground & 0xFF,
                                                    48, 2, background >> 16 & 0xFF, background >> 8 & 0xFF, background & 0xFF });
     }
 
-    // foreground on background, each 0xRRGGBB - starting with a reset, as the named colours do, so nothing before it
-    // (bold, underline) carries on into what is drawn in it
-    private static Color rgb(int foreground, int background) {
+    /**
+     * A colour from 24-bit values - foreground on background, each 0xRRGGBB - as the themes here are made. It starts with a
+     * reset, as the named colours do, so nothing before it (bold, underline) carries on into what is drawn in it.
+     * <pre>
+     *     Theme.rgb(0xE6EEF2, 0x1D4F4A)            near-white on teal
+     * </pre>
+     */
+    public static Color rgb(int foreground, int background) {
         return ColorFromCodes.instance(new int[] { 0, 38, 2, foreground >> 16 & 0xFF, foreground >> 8 & 0xFF, foreground & 0xFF,
                                                    48, 2, background >> 16 & 0xFF, background >> 8 & 0xFF, background & 0xFF });
     }
@@ -226,7 +265,9 @@ public final class Theme {
     public Color statusColor()         { return statusColor != null ? statusColor : successColor; }
     public Color selectedColor()       { return selectedColor; }
     public Color warningColor()        { return warningColor != null ? warningColor : errorColor; }
-    public Color dialogColor()         { return dialogColor != null ? dialogColor : backgroundColor; }
+    public Color dialogColor()         { return dialogColor != null ? dialogColor : surfaceColor(); }
+    public Color surfaceColor()        { return surfaceColor != null ? surfaceColor : backgroundColor; }
+    public Color accentColor()         { return accentColor != null ? accentColor : headingColor; }
     public Color subheadingColor()     { return subheadingColor != null ? subheadingColor : headingColor; }
     public Color minorHeadingColor()   { return minorHeadingColor != null ? minorHeadingColor : headingColor; }
     public Color strongColor()         { return strongColor != null ? strongColor : textColor; }
@@ -300,6 +341,7 @@ public final class Theme {
             t.successColor = laidOn(successColor, surface);
             t.statusColor = laidOn(statusColor, surface);
             t.warningColor = laidOn(warningColor, surface);
+            t.accentColor = laidOn(accentColor, surface);
             t.subheadingColor = laidOn(subheadingColor, surface);
             t.minorHeadingColor = laidOn(minorHeadingColor, surface);
             t.strongColor = laidOn(strongColor, surface);
@@ -367,6 +409,8 @@ public final class Theme {
     public Theme withSelectedColor(Color color)        { return with((t) -> t.selectedColor = color); }
     public Theme withWarningColor(Color color)         { return with((t) -> t.warningColor = color); }
     public Theme withDialogColor(Color color)          { return with((t) -> t.dialogColor = color); }
+    public Theme withSurfaceColor(Color color)         { return with((t) -> t.surfaceColor = color); }
+    public Theme withAccentColor(Color color)          { return with((t) -> t.accentColor = color); }
     public Theme withBlockChars(BlockChars chars)      { return with((t) -> t.blockChars = chars); }
     public Theme withFocusedBlockChars(BlockChars chars) { return with((t) -> t.focusedBlockChars = chars); }
     public Theme withDrawingColors(Color... colors)    { return with((t) -> t.drawingColors = Collections.unmodifiableList(Arrays.asList(colors.clone()))); }
@@ -391,6 +435,8 @@ public final class Theme {
         copy.statusColor = statusColor;
         copy.warningColor = warningColor;
         copy.dialogColor = dialogColor;
+        copy.surfaceColor = surfaceColor;
+        copy.accentColor = accentColor;
         copy.drawingColors = drawingColors;
         copy.blockChars = blockChars;
         copy.focusedBlockChars = focusedBlockChars;
@@ -406,14 +452,30 @@ public final class Theme {
         return STANDARD;
     }
 
-    /** the theme with that name, case aside - e.g. from the command line (theme=Dark); null: none */
+    /** the theme with that name, case aside - the standard ones, then those registered (theme=Dark); null: none */
     public static Theme named(String name) {
-        for (Theme theme : STANDARD) {
+        for (Theme theme : all()) {
             if (theme.name().equalsIgnoreCase(name)) {
                 return theme;
             }
         }
         return null;
+    }
+
+    /**
+     * An app's own theme, found by its name from now on (named, theme=NAME on the command line) and offered with the
+     * standard ones (all). Registering a theme of the same name again replaces it.
+     */
+    public static void register(Theme theme) {
+        REGISTERED.removeIf((t) -> t.name().equalsIgnoreCase(theme.name()));
+        REGISTERED.add(theme);
+    }
+
+    /** the standard themes, then the ones registered - e.g. to offer in a list */
+    public static List<Theme> all() {
+        List<Theme> all = new java.util.ArrayList<Theme>(STANDARD);
+        all.addAll(REGISTERED);
+        return Collections.unmodifiableList(all);
     }
 
     /** the theme for components with none from an ancestor or their app */

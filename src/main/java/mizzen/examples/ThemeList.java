@@ -29,7 +29,7 @@ public final class ThemeList {
 
     /** picking a theme gives it to picked */
     public static DropdownListBox<Theme> of(Consumer<Theme> picked) {
-        List<Theme> themes = new ArrayList<Theme>(Theme.standard());
+        List<Theme> themes = new ArrayList<Theme>(Theme.all());
         if (!themes.contains(Theme.getDefault())) {
             themes.add(0, Theme.getDefault());                         // a theme of the app's own, set as the default
         }
