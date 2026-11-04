@@ -427,6 +427,34 @@ public interface BlockChars {
 
     public static final BlockChars DEFAULT = NICE;
 
+    /**
+     * NICE with rounded corners ╭╮╰╯ - the same width class as the lines, so they join them in any font with box
+     * drawing. No double rounded set exists: a focused rounded box shows its focus by colour (see Theme.focusedBlockChars).
+     */
+    public static final BlockChars ROUNDED = new Rounded();
+
+    public static class Rounded extends Nice {
+        @Override
+        public char getTOP_LEFT() {
+            return '╭';
+        }
+
+        @Override
+        public char getTOP_RIGHT() {
+            return '╮';
+        }
+
+        @Override
+        public char getBOTTOM_LEFT() {
+            return '╰';
+        }
+
+        @Override
+        public char getBOTTOM_RIGHT() {
+            return '╯';
+        }
+    }
+
     
     @FunctionalInterface
     static interface GetCharAt {
@@ -831,22 +859,24 @@ public interface BlockChars {
 
     }
 
+    /** focused or not, for a box: its characters are its theme's - focusedBlockChars while hilited, else blockChars */
     public static class BlockHiliter implements Hiliter {
 
-        BlockChars blockChars = NICE;
+        private boolean hilited;
 
         @Override
         public void hilite() {
-            blockChars = NICE_DOUBLE;
+            hilited = true;
         }
 
         @Override
         public void unHilite() {
-            blockChars = NICE;
+            hilited = false;
         }
 
-        public BlockChars getBlockChars() {
-            return blockChars;
+        /** the characters for now, from theme (worked out as the box is drawn, so a theme switch reaches it) */
+        public BlockChars getBlockChars(mizzen.components.theme.Theme theme) {
+            return hilited ? theme.focusedBlockChars() : theme.blockChars();
         }
 
     };

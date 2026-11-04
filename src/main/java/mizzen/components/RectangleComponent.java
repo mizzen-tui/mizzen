@@ -65,7 +65,7 @@ public class RectangleComponent extends BoundedComponent<RectangleComponent> imp
     }
 
     public BlockChars getBlockChars() {
-        return blockHiliter.getBlockChars();
+        return blockHiliter.getBlockChars(getTheme());
     }
 
 

@@ -41,7 +41,7 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
     private Theme                     theme;                // the theme that applies here, as last looked up (getTheme)
     private int                       themeVersion;
     private Function<Theme, Color>    colorFromTheme = Theme::textColor;   // which theme colour, when it has none of its own
-    private BlockChars                  blockChars = BlockChars.DEFAULT;
+    private BlockChars                  blockChars = null;                // null: its theme's (Theme.blockChars)
     private boolean enabled = true;
 
     private FillOnClearPolicy<T>    fillPolicy = new FillOnClearPolicy.AbstractImpl<T>(this) {
@@ -200,7 +200,7 @@ public abstract class BoundedComponent<T extends BoundedComponent<?>> extends Re
     }
 
     public BlockChars getBlockChars() {
-        return blockChars;
+        return blockChars != null ? blockChars : getTheme().blockChars();
     }
 
     public T setBlockChars(BlockChars blockChars) {

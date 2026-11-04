@@ -1,5 +1,6 @@
 package mizzen.examples;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -28,7 +29,11 @@ public final class ThemeList {
 
     /** picking a theme gives it to picked */
     public static DropdownListBox<Theme> of(Consumer<Theme> picked) {
-        DropdownListBox<Theme> list = new DropdownListBox<Theme>(choices(Theme.standard()));
+        List<Theme> themes = new ArrayList<Theme>(Theme.standard());
+        if (!themes.contains(Theme.getDefault())) {
+            themes.add(0, Theme.getDefault());                         // a theme of the app's own, set as the default
+        }
+        DropdownListBox<Theme> list = new DropdownListBox<Theme>(choices(themes));
         list.setValue(Theme.getDefault());
         list.onChange((te) -> picked.accept(list.getValue()));
         return list;

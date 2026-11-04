@@ -7,6 +7,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import mizzen.app.TUIApp;
+import mizzen.components.BlockChars;
 import mizzen.components.Component;
 import mizzen.controlcodes.color.Color;
 import mizzen.controlcodes.color.Colors;
@@ -145,6 +146,9 @@ public final class Theme {
 
     private List<Color> drawingColors;  // charts and plots: series i in drawingColor(i)
 
+    private BlockChars blockChars;       // lines and corners of boxes, borders, tables; null: BlockChars.NICE
+    private BlockChars focusedBlockChars;// a focused box's; null: BlockChars.NICE_DOUBLE
+
     private Theme(String name, Color backgroundColor, Color textColor, Color headingColor, Color inputColor, Color buttonColor,
                   Color buttonFocusedColor, Color borderColor, Color disabledColor, Color errorColor, Color successColor,
                   Color selectedColor) {
@@ -243,6 +247,21 @@ public final class Theme {
     public List<Color> drawingColors() {
         return drawingColors != null ? drawingColors
                 : Collections.unmodifiableList(Arrays.asList(headingColor, linkColor(), successColor, errorColor, warningColor(), textColor));
+    }
+
+    /**
+     * The characters lines and boxes are drawn with - borders, frames, tables, a tree's branches - unless a component was
+     * given its own (setBlockChars). focusedBlockChars: a focused box's (by default double lines).
+     * <pre>
+     *     Theme.DARK.withBlockChars(BlockChars.ROUNDED).withFocusedBlockChars(BlockChars.ROUNDED)    ╭──╮ boxes
+     * </pre>
+     */
+    public BlockChars blockChars() {
+        return blockChars != null ? blockChars : BlockChars.NICE;
+    }
+
+    public BlockChars focusedBlockChars() {
+        return focusedBlockChars != null ? focusedBlockChars : BlockChars.NICE_DOUBLE;
     }
 
     /** drawing colour i, counting round: drawingColor(9) is drawingColor(1) when there are 8 */
@@ -348,6 +367,8 @@ public final class Theme {
     public Theme withSelectedColor(Color color)        { return with((t) -> t.selectedColor = color); }
     public Theme withWarningColor(Color color)         { return with((t) -> t.warningColor = color); }
     public Theme withDialogColor(Color color)          { return with((t) -> t.dialogColor = color); }
+    public Theme withBlockChars(BlockChars chars)      { return with((t) -> t.blockChars = chars); }
+    public Theme withFocusedBlockChars(BlockChars chars) { return with((t) -> t.focusedBlockChars = chars); }
     public Theme withDrawingColors(Color... colors)    { return with((t) -> t.drawingColors = Collections.unmodifiableList(Arrays.asList(colors.clone()))); }
     public Theme withSubheadingColor(Color color)      { return with((t) -> t.subheadingColor = color); }
     public Theme withMinorHeadingColor(Color color)    { return with((t) -> t.minorHeadingColor = color); }
@@ -371,6 +392,8 @@ public final class Theme {
         copy.warningColor = warningColor;
         copy.dialogColor = dialogColor;
         copy.drawingColors = drawingColors;
+        copy.blockChars = blockChars;
+        copy.focusedBlockChars = focusedBlockChars;
         copy.dialogChanges = dialogChanges;
         change.accept(copy);
         return copy;

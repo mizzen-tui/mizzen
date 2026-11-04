@@ -241,4 +241,45 @@ public class ThemeTest extends TestCase {
         assertTrue("the first series in drawing colour 0", drawsIn(chart.getSegmentsBuffer(), "38;2;118;227;234"));
         assertTrue("the second in drawing colour 1", drawsIn(chart.getSegmentsBuffer(), "38;2;218;170;63"));
     }
+    // every character a component draws
+    private static String drawn(mizzen.components.Component<?> component) {
+        StringBuilder b = new StringBuilder();
+        for (ScreenLineSegment segment : component.getSegmentsBuffer().getSegments()) {
+            b.append(segment.getText());
+        }
+        return b.toString();
+    }
+
+    public void testABorderTakesItsThemesBlockChars() {
+        Composite outer = new VerticalPanel();
+        Composite boxed = new Composite(new Dimension.Simple(4, 10));
+        boxed.setBorder(true);
+        outer.add(boxed);
+        outer.setTheme(Theme.DARK.withBlockChars(mizzen.components.BlockChars.ROUNDED));
+        assertTrue(drawn(boxed), drawn(boxed).contains("╭") && drawn(boxed).contains("╯"));
+        outer.setTheme(Theme.DARK);
+        assertTrue("a switch reaches it: " + drawn(boxed), drawn(boxed).contains("┌") && !drawn(boxed).contains("╭"));
+    }
+
+    public void testItsOwnBlockCharsWin() {
+        Composite outer = new VerticalPanel();
+        Composite boxed = new Composite(new Dimension.Simple(4, 10));
+        boxed.setBorder(true);
+        outer.add(boxed);
+        outer.setTheme(Theme.DARK.withBlockChars(mizzen.components.BlockChars.ROUNDED));
+        boxed.setBlockChars(mizzen.components.BlockChars.BASIC);
+        assertSame(mizzen.components.BlockChars.BASIC, boxed.getBlockChars());
+    }
+
+    public void testAFocusedBoxUsesTheFocusedSet() {
+        Composite outer = new VerticalPanel();
+        mizzen.components.RectangleComponent box = new mizzen.components.RectangleComponent(3, 6);
+        outer.add(box);
+        outer.setTheme(Theme.DARK.withBlockChars(mizzen.components.BlockChars.ROUNDED).withFocusedBlockChars(mizzen.components.BlockChars.NICE_DOUBLE));
+        assertTrue(drawn(box), drawn(box).contains("╭"));
+        box.hilite();
+        assertTrue("focused: " + drawn(box), drawn(box).contains("╔"));
+        box.unHilite();
+        assertTrue(drawn(box), drawn(box).contains("╭"));
+    }
 }

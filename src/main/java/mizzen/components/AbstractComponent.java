@@ -34,7 +34,7 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
     
     private boolean enabled = true;
 
-    BlockChars                        blockChars = BlockChars.DEFAULT;
+    BlockChars                        blockChars = null;                // null: its theme's (Theme.blockChars)
 
     ParentContainer parentContainer;
     Component<?> popupOwner;     // see Component.getPopupOwner
@@ -265,7 +265,7 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
     }
 
     public BlockChars getBlockChars() {
-        return blockChars;
+        return blockChars != null ? blockChars : getTheme().blockChars();
     }
 
     public T setBlockChars(BlockChars blockChars) {

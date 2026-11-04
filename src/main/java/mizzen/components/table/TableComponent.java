@@ -10,7 +10,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import mizzen.components.BlockChars;
 import mizzen.components.BoundedComponent;
 import mizzen.components.HasName;
 import mizzen.components.input.DisplayableValue.SimpleDisplayValue;
@@ -277,14 +276,14 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
             ElapsedTime timer = new ElapsedTime();
 
             // Draw top of table
-            drawHorizontalLine.accept(0, new char[] { BlockChars.NICE.getTOP_LEFT(), 
-                                                      BlockChars.NICE.getHORIZONTAL_LINE(),
-                                                      BlockChars.NICE.getHORIZONTAL_DOWN(), 
-                                                      BlockChars.NICE.getTOP_RIGHT() });
+            drawHorizontalLine.accept(0, new char[] { getBlockChars().getTOP_LEFT(), 
+                                                      getBlockChars().getHORIZONTAL_LINE(),
+                                                      getBlockChars().getHORIZONTAL_DOWN(), 
+                                                      getBlockChars().getTOP_RIGHT() });
 
 
             // verticals
-            String verticalLineCharAsStr = BlockChars.NICE.getVERTICAL_LINE() + "";
+            String verticalLineCharAsStr = getBlockChars().getVERTICAL_LINE() + "";
             for (int row = 1; row <= 1; row++) {
                 if (rowsDrawn.contains(row)) {
                     continue;
@@ -300,10 +299,10 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
             }
             
             drawHorizontalLine.accept(layout.headerHeight + 1,
-                    new char[] { BlockChars.NICE.getBOTTOM_LEFT(), 
-                                 BlockChars.NICE.getHORIZONTAL_LINE(),
-                                 BlockChars.NICE.getHORIZONTAL_UP(), 
-                                 BlockChars.NICE.getBOTTOM_RIGHT() });            
+                    new char[] { getBlockChars().getBOTTOM_LEFT(), 
+                                 getBlockChars().getHORIZONTAL_LINE(),
+                                 getBlockChars().getHORIZONTAL_UP(), 
+                                 getBlockChars().getBOTTOM_RIGHT() });            
 
         }
 
@@ -328,18 +327,18 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
                     borderColor, boxWidth, rowsDrawn);
 
             // Draw top of table
-            drawHorizontalLine.accept(0, new char[] { BlockChars.NICE.getTOP_LEFT(), 
-                                                      BlockChars.NICE.getHORIZONTAL_LINE(),
-                                                      BlockChars.NICE.getHORIZONTAL_DOWN(), 
-                                                      BlockChars.NICE.getTOP_RIGHT() });
+            drawHorizontalLine.accept(0, new char[] { getBlockChars().getTOP_LEFT(), 
+                                                      getBlockChars().getHORIZONTAL_LINE(),
+                                                      getBlockChars().getHORIZONTAL_DOWN(), 
+                                                      getBlockChars().getTOP_RIGHT() });
 
             drawHorizontalLine.accept(layout.headerHeight + 1,
-                    new char[] { BlockChars.NICE.getVERTICAL_RIGHT(), 
-                                 BlockChars.NICE.getHORIZONTAL_LINE(),
-                                 BlockChars.NICE.getINTERSECT(), 
-                                 BlockChars.NICE.getVERTICAL_LEFT() });
+                    new char[] { getBlockChars().getVERTICAL_RIGHT(), 
+                                 getBlockChars().getHORIZONTAL_LINE(),
+                                 getBlockChars().getINTERSECT(), 
+                                 getBlockChars().getVERTICAL_LEFT() });
             // verticals
-            String verticalLineCharAsStr = BlockChars.NICE.getVERTICAL_LINE() + "";
+            String verticalLineCharAsStr = getBlockChars().getVERTICAL_LINE() + "";
             for (int row = 1; row < boxHeight; row++) {
                 if (rowsDrawn.contains(row)) {
                     continue;
@@ -354,10 +353,10 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
             }
 
             drawHorizontalLine.accept(meAsRectangle.getHeight() - 1,
-                    new char[] { BlockChars.NICE.getBOTTOM_LEFT(), 
-                                 BlockChars.NICE.getHORIZONTAL_LINE(),
-                                 BlockChars.NICE.getHORIZONTAL_UP(), 
-                                 BlockChars.NICE.getBOTTOM_RIGHT() }); 
+                    new char[] { getBlockChars().getBOTTOM_LEFT(), 
+                                 getBlockChars().getHORIZONTAL_LINE(),
+                                 getBlockChars().getHORIZONTAL_UP(), 
+                                 getBlockChars().getBOTTOM_RIGHT() }); 
         }
 
     }
@@ -370,14 +369,14 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
             StringBuilder line = new StringBuilder();
             for (int c = 0; c <= maxColRendered; c++) {
                 for (int j = 0; j < layout.widthOf(c); j++) {
-                    line.append(BlockChars.NICE.getHORIZONTAL_LINE());
+                    line.append(getBlockChars().getHORIZONTAL_LINE());
                 }
                 if (c < maxColRendered) {
-                    line.append(BlockChars.NICE.getINTERSECT());
+                    line.append(getBlockChars().getINTERSECT());
                 }
             }
             mySegments.add(new SegmentImpl(lineColor, new Position.Simple(underHeading, 0), line.toString()));
-            String vertical = BlockChars.NICE.getVERTICAL_LINE() + "";
+            String vertical = getBlockChars().getVERTICAL_LINE() + "";
             for (int row = 0; row < getHeight(); row++) {
                 if (row != underHeading) {
                     for (int c = 0; c < maxColRendered; c++) {
@@ -409,10 +408,10 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
             ElapsedTime timer = new ElapsedTime();
 
             // Draw top of table
-            drawHorizontalLine.accept(0, new char[] { BlockChars.NICE.getTOP_LEFT(), 
-                                                      BlockChars.NICE.getHORIZONTAL_LINE(),
-                                                      BlockChars.NICE.getHORIZONTAL_DOWN(), 
-                                                      BlockChars.NICE.getTOP_RIGHT() });
+            drawHorizontalLine.accept(0, new char[] { getBlockChars().getTOP_LEFT(), 
+                                                      getBlockChars().getHORIZONTAL_LINE(),
+                                                      getBlockChars().getHORIZONTAL_DOWN(), 
+                                                      getBlockChars().getTOP_RIGHT() });
 
             // Logging.info("Top line  : " + timer);
 
@@ -420,33 +419,33 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
 
             /*  need to draw header line */
             drawHorizontalLine.accept(layout.headerHeight + 1,
-                    new char[] { BlockChars.NICE.getVERTICAL_RIGHT(), 
-                                 BlockChars.NICE.getHORIZONTAL_LINE(),
-                                 BlockChars.NICE.getINTERSECT(), 
-                                 BlockChars.NICE.getVERTICAL_LEFT() });
+                    new char[] { getBlockChars().getVERTICAL_RIGHT(), 
+                                 getBlockChars().getHORIZONTAL_LINE(),
+                                 getBlockChars().getINTERSECT(), 
+                                 getBlockChars().getVERTICAL_LEFT() });
 
             // a line under each row that ends above the bottom border - where the layout put that row's end (rows
             // from topRow, each as high as its tallest cell), so a line never lands inside a row
             for (int r = 0; r < rowEnds.size() && rowEnds.get(r) < boxHeight - 1; r++) {
                 drawHorizontalLine.accept(rowEnds.get(r),
-                        new char[] { BlockChars.NICE.getVERTICAL_RIGHT(), 
-                                     BlockChars.NICE.getHORIZONTAL_LINE(),
-                                     BlockChars.NICE.getINTERSECT(), 
-                                     BlockChars.NICE.getVERTICAL_LEFT() });
+                        new char[] { getBlockChars().getVERTICAL_RIGHT(), 
+                                     getBlockChars().getHORIZONTAL_LINE(),
+                                     getBlockChars().getINTERSECT(), 
+                                     getBlockChars().getVERTICAL_LEFT() });
             }
             //Logging.info("Middle intersecting lines  : " + timer);
 
             timer.reset();
             drawHorizontalLine.accept(meAsRectangle.getHeight() - 1,
-                    new char[] { BlockChars.NICE.getBOTTOM_LEFT(), 
-                                 BlockChars.NICE.getHORIZONTAL_LINE(),
-                                 BlockChars.NICE.getHORIZONTAL_UP(), 
-                                 BlockChars.NICE.getBOTTOM_RIGHT() });
+                    new char[] { getBlockChars().getBOTTOM_LEFT(), 
+                                 getBlockChars().getHORIZONTAL_LINE(),
+                                 getBlockChars().getHORIZONTAL_UP(), 
+                                 getBlockChars().getBOTTOM_RIGHT() });
 
             // Logging.info("Bottom line  : " + timer);
 
             timer.reset();
-            String verticalLineCharAsStr = BlockChars.NICE.getVERTICAL_LINE() + "";
+            String verticalLineCharAsStr = getBlockChars().getVERTICAL_LINE() + "";
             for (int row = 1; row < boxHeight; row++) {
                 if (rowsDrawn.contains(row)) {
                     continue;

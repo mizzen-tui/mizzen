@@ -197,7 +197,7 @@ public class ScrollBarHorizontal extends BoundedComponent<ScrollBarVertical>
     }
 
     public BlockChars getBlockChars() {
-        return blockHiliter.getBlockChars();
+        return blockHiliter.getBlockChars(getTheme());
     }
 
     @Override
