@@ -163,6 +163,7 @@ public final class Theme {
     // the theme inside a dialog: this one laid on dialogColor (onSurface), then changed as the theme says (dialogs)
     private Function<Theme, Theme> dialogChanges = Function.identity();
     private Theme dialogTheme;
+    private Theme surfaceTheme;                                   // worked out once (surfaceTheme)
 
     // documents (markdown, help text): each falls back to a colour above when a theme leaves it out
     private Color subheadingColor;      // a level 2 heading, list markers
@@ -322,6 +323,21 @@ public final class Theme {
      * </pre>
      * A theme may change it further - Legacy's headings are blue in a dialog, as its yellow can't be read on white.
      */
+    /**
+     * The theme on a card (Card): this one, with surfaceColor as its background and everything drawn on the background
+     * laid on surfaceColor instead - as dialogTheme does for a dialog. A theme with no surface of its own: itself (a card
+     * is then a bordered panel on the background).
+     */
+    public Theme surfaceTheme() {
+        if (surfaceColor == null) {
+            return this;
+        }
+        if (surfaceTheme == null) {
+            surfaceTheme = onSurface(surfaceColor);
+        }
+        return surfaceTheme;
+    }
+
     public Theme dialogTheme() {
         if (dialogTheme == null) {
             dialogTheme = dialogChanges.apply(onSurface(dialogColor()));

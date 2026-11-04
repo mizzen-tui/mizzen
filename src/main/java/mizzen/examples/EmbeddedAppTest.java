@@ -148,7 +148,8 @@ public class EmbeddedAppTest {
                 group("Putting it together",
                         example("Parts shop", PartsShopDemo.class),
                         example("Markdown view", ReadMe.class),
-                        example("Markdown report", MarkdownReport.class)));
+                        example("Markdown report", MarkdownReport.class),
+                        example("Cards and badges", CardsDemo.class)));
     }
 
     public static void main(String[] args) {
