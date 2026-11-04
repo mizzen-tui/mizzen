@@ -100,7 +100,7 @@ public class Table01Test {
                 });
 
                 vs.addComponent(t2);
-                vs.resize(new Dimension.Simple(tApp.getDimensions().getHeight() - 4, tApp.getDimensions().getWidth()));
+                vs.resize(new Dimension.Simple(Math.max(0, tApp.getDimensions().getHeight() - 4), tApp.getDimensions().getWidth()));
 
                 mainViewPanel.add(DropdownListBox.fromStrings(new String[]{"Option-1",
                                                                            "Option-2",
@@ -136,7 +136,7 @@ public class Table01Test {
                 hs.addComponent(t1);
                 hs.addComponent(t2);
                 hs.onResizeExpandRight(t1, 40);
-                hs.resize(new Dimension.Simple(tApp.getDimensions().getHeight() - 4, tApp.getDimensions().getWidth()));
+                hs.resize(new Dimension.Simple(Math.max(0, tApp.getDimensions().getHeight() - 4), tApp.getDimensions().getWidth()));
                 showEvents.accept(t1);
                 showEvents.accept(t2);
  

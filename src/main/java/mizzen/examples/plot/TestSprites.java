@@ -59,8 +59,8 @@ public class TestSprites {
     public static Component<?> addTestSpritesPanel(TUIApp tApp, ChildComponentManager<?> parentPanel, boolean includeTitle) {
         
         Supplier<Dimension> computeGridSize = ()-> {
-            return new Dimension.Simple(parentPanel.getHeight()-3,
-                    parentPanel.getWidth()-3);
+            return new Dimension.Simple(Math.max(0, parentPanel.getHeight()-3),    // no room: none, not less
+                    Math.max(0, parentPanel.getWidth()-3));
         };
 
         Dimension gridSize = computeGridSize.get();

@@ -40,7 +40,7 @@ public class ScrollableComponentTest {
         .setOnReadyStart((tApp)->{ 
 
             Supplier<Dimension> calcScrollableDimension = ()-> {
-                return new Dimension.Simple( ((int)(tApp.getCanvas().getHeight()*.7)), tApp.getCanvas().getWidth()/2 -3);
+                return new Dimension.Simple( ((int)(tApp.getCanvas().getHeight()*.7)), Math.max(0, tApp.getCanvas().getWidth()/2 -3));
             };
             
             TextComponent largeTextComponent = new TextViewer().getComponent(tApp.getCanvas().getWidth()-2);

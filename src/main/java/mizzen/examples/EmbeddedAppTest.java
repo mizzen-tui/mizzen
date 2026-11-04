@@ -79,7 +79,7 @@ public class EmbeddedAppTest {
     private static Embedding running;
 
     /** a row in the tree: a group (no type, no document), an example - its class: what runs (its main), and its source - or a document */
-    private static class Demo {
+    static class Demo {
         final String name;
         final Class<?> type;
         final String document;                          // a markdown file's path, from the project's top
@@ -105,54 +105,59 @@ public class EmbeddedAppTest {
         }
     }
 
+    /** the examples, in their groups - the tree on the left; the smoke test runs each (ExamplesSmoke) */
+    static DefaultTreeNode<Demo> examples() {
+        return group("Examples",
+                document("Read me", "README.md"),
+                group("Input",
+                        example("Text boxes", TextBoxSimpleForm01Test.class),
+                        example("Multi-line text", MultiLineTextInputTest.class),
+                        example("Dropdowns", DropdownListBoxSimpleTest.class),
+                        example("Radio groups", RadioGroupSimpleTest.class)),
+                group("Forms",
+                        example("Form builder", FormTry.class),
+                        example("Form by hand", FormTryByHand.class)),
+                group("Lists and tables",
+                        example("List box", ListBoxTest.class),
+                        example("Table", Table01Test.class),
+                        example("Table cells", TableCellsDemo.class),
+                        example("Tree view", TreeViewTest.class)),
+                group("Menus and buttons",
+                        example("Menu bar", MenuBarTest.class),
+                        example("Button bar", ButtonBarTest.class)),
+                group("Containers",
+                        example("Tab panel", TabPanelTest2.class),
+                        example("Window frames", WindowFrameTest.class),
+                        example("Splitters", HorizontalSplitterTest.class),
+                        example("Scrolling", ScrollableComponentTest.class)),
+                group("Feedback",
+                        example("Progress meter", ProgressMeterTest.class),
+                        example("Dialogs", DialogDemo.class)),
+                group("Charts",
+                        example("Bar chart", BarChartTest.class),
+                        example("Line chart", LineChartTest.class),
+                        example("Donut chart", DonutChartTest.class),
+                        example("Sparkline", SparklineTest.class)),
+                group("Graphics",
+                        example("Plot area", PlotAreaDemo.class),
+                        example("Shapes", TestScale.class),
+                        example("3D shapes", TestCube.class),
+                        example("Sprites", TestSprites.class),
+                        example("Orbits", OrbitsDemo.class),
+                        example("Fractals", FractalsViewer.class)),
+                group("Putting it together",
+                        example("Parts shop", PartsShopDemo.class),
+                        example("Markdown view", ReadMe.class),
+                        example("Markdown report", MarkdownReport.class)));
+    }
+
     public static void main(String[] args) {
         new TUIApp(args)
         .setDefaultMainApplicationPanel()
         .setOnReadyStart((host) -> {
             Composite main = (Composite) host.getMainApplicationPanel();
 
-            DefaultTreeNode<Demo> examples = group("Examples",
-                    document("Read me", "README.md"),
-                    group("Input",
-                            example("Text boxes", TextBoxSimpleForm01Test.class),
-                            example("Multi-line text", MultiLineTextInputTest.class),
-                            example("Dropdowns", DropdownListBoxSimpleTest.class),
-                            example("Radio groups", RadioGroupSimpleTest.class)),
-                    group("Forms",
-                            example("Form builder", FormTry.class),
-                            example("Form by hand", FormTryByHand.class)),
-                    group("Lists and tables",
-                            example("List box", ListBoxTest.class),
-                            example("Table", Table01Test.class),
-                            example("Table cells", TableCellsDemo.class),
-                            example("Tree view", TreeViewTest.class)),
-                    group("Menus and buttons",
-                            example("Menu bar", MenuBarTest.class),
-                            example("Button bar", ButtonBarTest.class)),
-                    group("Containers",
-                            example("Tab panel", TabPanelTest2.class),
-                            example("Window frames", WindowFrameTest.class),
-                            example("Splitters", HorizontalSplitterTest.class),
-                            example("Scrolling", ScrollableComponentTest.class)),
-                    group("Feedback",
-                            example("Progress meter", ProgressMeterTest.class),
-                            example("Dialogs", DialogDemo.class)),
-                    group("Charts",
-                            example("Bar chart", BarChartTest.class),
-                            example("Line chart", LineChartTest.class),
-                            example("Donut chart", DonutChartTest.class),
-                            example("Sparkline", SparklineTest.class)),
-                    group("Graphics",
-                            example("Plot area", PlotAreaDemo.class),
-                            example("Shapes", TestScale.class),
-                            example("3D shapes", TestCube.class),
-                            example("Sprites", TestSprites.class),
-                            example("Orbits", OrbitsDemo.class),
-                            example("Fractals", FractalsViewer.class)),
-                    group("Putting it together",
-                            example("Parts shop", PartsShopDemo.class),
-                            example("Markdown view", ReadMe.class),
-                            example("Markdown report", MarkdownReport.class)));
+            DefaultTreeNode<Demo> examples = examples();
 
             TreeView<DefaultTreeNode<Demo>> tree = new TreeView<DefaultTreeNode<Demo>>(examples.asModel());
             tree.expandAll();

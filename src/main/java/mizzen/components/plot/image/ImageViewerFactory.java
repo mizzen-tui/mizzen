@@ -779,6 +779,8 @@ public class ImageViewerFactory {
         
         desiredDimension =  containerToImageSize.calcDimension(imgRect, desiredDimension);
 
+        // no room (a viewer squeezed to nothing): a 1 x 1 image - BufferedImage refuses 0, and nothing of it shows anyway
+        desiredDimension = new Dimension.Simple(Math.max(1, desiredDimension.getHeight()), Math.max(1, desiredDimension.getWidth()));
         BufferedImage outputImage = new BufferedImage(desiredDimension.getWidth(), desiredDimension.getHeight(), imageTYPE);
 
         // scales the input image to the output image

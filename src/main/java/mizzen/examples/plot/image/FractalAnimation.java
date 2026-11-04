@@ -97,7 +97,7 @@ public class FractalAnimation {
     }
 
     private static Dimension imageSize(Dimension size) {
-        return new Dimension.ComputedDelegate(size, (s) -> s.getHeight() - 1, (s) -> s.getWidth());
+        return new Dimension.ComputedDelegate(size, (s) -> Math.max(0, s.getHeight() - 1), (s) -> s.getWidth());
     }
 
     /** a new random fractal, for ever */
