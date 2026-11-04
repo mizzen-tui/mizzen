@@ -4,6 +4,7 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 
 import mizzen.components.TextComponent;
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
 import mizzen.geom.Align;
 import mizzen.geom.Dimension;
@@ -36,6 +37,7 @@ public class TextCellRenderer implements CellRenderer {
 
     // draws the text: one, reused - the table copies what it draws
     private final TextComponent drawn = new TextComponent(new CleanString.Simple(""));
+    private Theme theme;                                    // the table's (inTheme); null: told none - drawn's own
 
     /** the cells of column, as it says: whether it wraps, whether it may be cut - asked each time, so a change shows */
     static TextCellRenderer forColumn(TableColumn column) {
@@ -55,6 +57,11 @@ public class TextCellRenderer implements CellRenderer {
     public TextCellRenderer color(Function<Object, Color> color) {
         this.color = color;
         return this;
+    }
+
+    @Override
+    public void inTheme(Theme theme) {
+        this.theme = theme;
     }
 
     public TextCellRenderer wraps(boolean wraps) {
@@ -101,11 +108,11 @@ public class TextCellRenderer implements CellRenderer {
         if (size.getHeight() == 0 || size.getWidth() == 0) {
             return new ScreenLineSegmentsBuffer();
         }
-        if (color != null) {
-            Color shownIn = color.apply(value);
-            if (shownIn != null) {
-                drawn.setColor(shownIn);
-            }
+        Color shownIn = color != null ? color.apply(value) : null;
+        if (shownIn != null) {
+            drawn.setColor(shownIn);
+        } else if (theme != null) {
+            drawn.setColor(theme.textColor());              // the table's text colour (drawn is off the screen: no theme of its own)
         }
         drawn.setTextAndResize(lines(value, size.getWidth(), size.getHeight(), align));
         return drawn.getSegmentsBuffer();

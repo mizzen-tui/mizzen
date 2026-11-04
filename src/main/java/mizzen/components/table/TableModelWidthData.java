@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
 import mizzen.geom.Align;
 import mizzen.geom.Dimension;
@@ -34,6 +35,13 @@ import mizzen.textsegments.ScreenLineSegmentsBuffer;
  * </pre>
  */
 class TableModelWidthData extends TableModel.Delegate<Object> {
+
+    private Theme theme;                                  // the table's, told each draw (inTheme): renderers draw in it
+
+    /** the table's theme, for the cells drawn from now on */
+    void inTheme(Theme theme) {
+        this.theme = theme;
+    }
 
     private static final Object NOT_READ = new Object();
 
@@ -123,7 +131,9 @@ class TableModelWidthData extends TableModel.Delegate<Object> {
         Drawn drawn = cells.get(key);
         if (drawn == null || drawn.width != width || drawn.height != height) {
             TableColumn column = getTableColumnAt(c);
-            drawn = new Drawn(width, height, copy(column.getRenderer().render(valueAt(row, c), new Dimension.Simple(height, width), column.getAlign())));
+            CellRenderer renderer = column.getRenderer();
+            renderer.inTheme(theme);
+            drawn = new Drawn(width, height, copy(renderer.render(valueAt(row, c), new Dimension.Simple(height, width), column.getAlign())));
             cells.put(key, drawn);
         }
         return drawn.segments;
@@ -132,14 +142,18 @@ class TableModelWidthData extends TableModel.Delegate<Object> {
     /** column c's cell in row drawn as the selected row's, in selected - drawn each time: one row, and the colour changes with focus */
     IScreenLineSegmentsBuffer selectedCell(int row, int c, int width, int height, Color selected) {
         TableColumn column = getTableColumnAt(c);
-        return copy(column.getRenderer().renderSelected(valueAt(row, c), new Dimension.Simple(height, width), column.getAlign(), selected));
+        CellRenderer renderer = column.getRenderer();
+        renderer.inTheme(theme);
+        return copy(renderer.renderSelected(valueAt(row, c), new Dimension.Simple(height, width), column.getAlign(), selected));
     }
 
     /** column c's header, drawn width x height */
     IScreenLineSegmentsBuffer header(int c, int width, int height) {
         Drawn drawn = headers.get(c);
         if (drawn == null || drawn.width != width || drawn.height != height) {
-            drawn = new Drawn(width, height, copy(getTableColumnAt(c).getHeaderRenderer().render(headerOf(c), new Dimension.Simple(height, width), getTableColumnAt(c).getHeaderAlign())));
+            CellRenderer heading = getTableColumnAt(c).getHeaderRenderer();
+            heading.inTheme(theme);
+            drawn = new Drawn(width, height, copy(heading.render(headerOf(c), new Dimension.Simple(height, width), getTableColumnAt(c).getHeaderAlign())));
             headers.put(c, drawn);
         }
         return drawn.segments;

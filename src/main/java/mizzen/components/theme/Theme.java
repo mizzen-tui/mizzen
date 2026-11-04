@@ -73,7 +73,7 @@ public final class Theme {
             0xCDD9E5, 0x2E4A6E)                                          // selected: text on row
             .documents(0x22272E, 0x96D0FF, 0xCDD9E5, 0xCDD9E5, 0xDCBDFB, 0x6CB6FF, 0xF69D50, 0x2D333B, 0x768390)
             .withStatusColor(rgb(0x6BC9A7, 0x22272E)).withWarningColor(rgb(0xDAAA3F, 0x22272E))
-            .withDialogColor(rgb(0xADBAC7, 0x2D333B))
+            .withDialogColor(rgb(0xADBAC7, 0x2D333B)).withStripeColor(rgb(0xADBAC7, 0x2C333D))
             .drawing(0x22272E, 0x76E3EA, 0xDAAA3F, 0xDCBDFB, 0x8DDB8C, 0xF47067, 0x6CB6FF, 0xF69D50, 0x909DAB)
             .dialogs((d) -> d.withInputColor(rgb(0xCDD9E5, 0x22272E)));    // fields sunk to the screen's shade: the dialog has theirs
 
@@ -88,7 +88,7 @@ public final class Theme {
             0x24292F, 0xDDF4FF)
             .documents(0xF6F8FA, 0x0550AE, 0x24292F, 0x1F2328, 0x8250DF, 0x0969DA, 0x953800, 0xEAEEF2, 0x6E7781)
             .withStatusColor(rgb(0x1B7C83, 0xF6F8FA)).withWarningColor(rgb(0x9A6700, 0xF6F8FA))
-            .withDialogColor(rgb(0x24292F, 0xFFFFFF))
+            .withDialogColor(rgb(0x24292F, 0xFFFFFF)).withStripeColor(rgb(0x24292F, 0xE6EBF0))
             .drawing(0xF6F8FA, 0x0891B2, 0xCA8A04, 0x9333EA, 0x16A34A, 0xDC2626, 0x2563EB, 0xEA580C, 0x6B7280);   // strong: dots are thin
 
     /** the classic blue screen, softened: navy, warm yellow headings, fields a lighter blue, green buttons */
@@ -102,7 +102,7 @@ public final class Theme {
             0xFFFFFF, 0x34539E)
             .documents(0x1D3268, 0x9FD3FF, 0xFFFFFF, 0xFFFFFF, 0xC9B8FF, 0x8FD6FF, 0xF2D06B, 0x2A4585, 0x8E9CC9)
             .withStatusColor(rgb(0x8FE3C2, 0x1D3268)).withWarningColor(rgb(0xFFB86B, 0x1D3268))
-            .withDialogColor(rgb(0xD7DCE8, 0x2A4585))
+            .withDialogColor(rgb(0xD7DCE8, 0x2A4585)).withStripeColor(rgb(0xD7DCE8, 0x274283))
             .drawing(0x1D3268, 0x7FE3F0, 0xF2D06B, 0xC9B8FF, 0x9BE29B, 0xFF8A80, 0x8FB8FF, 0xFFB86B, 0xB4BED8)
             .dialogs((d) -> d.withInputColor(rgb(0xFFFFFF, 0x1D3268)));
 
@@ -128,6 +128,7 @@ public final class Theme {
             .documents(0x1F2933, 0x9FE0D8, 0xD9E2EC, 0xF0F4F8, 0xC3B5F5, 0x8BC4F9, 0xF7C978, 0x2A3744, 0x8796A5)
             .withStatusColor(rgb(0x8EDB9B, 0x1F2933)).withWarningColor(rgb(0xF0B429, 0x1F2933))
             .withSurfaceColor(rgb(0xD9E2EC, 0x2B3846)).withAccentColor(rgbBold(0xF0B429, 0x1F2933))
+            .withStripeColor(rgb(0xD9E2EC, 0x354556))
             .drawing(0x1F2933, 0x6FD6E8, 0xF0C75E, 0xC3B5F5, 0x8EDB9B, 0xF29B9B, 0x8BC4F9, 0xF5A86B, 0x9AA5B1)
             .withBlockChars(BlockChars.ROUNDED).withFocusedBlockChars(BlockChars.ROUNDED).withButtonFocus(ButtonFocus.ACCENT)
             .dialogs((d) -> d.withInputColor(rgb(0xF0F4F8, 0x1F2933)));    // fields sunk to the screen's shade
@@ -159,6 +160,7 @@ public final class Theme {
     private Color dialogColor;          // a dialog's panel: a surface raised off the background (none: surfaceColor)
     private Color surfaceColor;         // a card's or a dialog's panel: raised off the background
     private Color accentColor;          // the one bright colour: focus, a brand mark
+    private Color stripeColor;          // every other row of a striped table; null: no stripes
 
     // the theme inside a dialog: this one laid on dialogColor (onSurface), then changed as the theme says (dialogs)
     private Function<Theme, Theme> dialogChanges = Function.identity();
@@ -273,6 +275,7 @@ public final class Theme {
     public Color dialogColor()         { return dialogColor != null ? dialogColor : surfaceColor(); }
     public Color surfaceColor()        { return surfaceColor != null ? surfaceColor : backgroundColor; }
     public Color accentColor()         { return accentColor != null ? accentColor : headingColor; }
+    public Color stripeColor()         { return stripeColor; }
     public Color subheadingColor()     { return subheadingColor != null ? subheadingColor : headingColor; }
     public Color minorHeadingColor()   { return minorHeadingColor != null ? minorHeadingColor : headingColor; }
     public Color strongColor()         { return strongColor != null ? strongColor : textColor; }
@@ -436,6 +439,7 @@ public final class Theme {
     public Theme withDialogColor(Color color)          { return with((t) -> t.dialogColor = color); }
     public Theme withSurfaceColor(Color color)         { return with((t) -> t.surfaceColor = color); }
     public Theme withAccentColor(Color color)          { return with((t) -> t.accentColor = color); }
+    public Theme withStripeColor(Color color)          { return with((t) -> t.stripeColor = color); }
     public Theme withButtonFocus(ButtonFocus focus)    { return with((t) -> t.buttonFocus = focus); }
     public Theme withBlockChars(BlockChars chars)      { return with((t) -> t.blockChars = chars); }
     public Theme withFocusedBlockChars(BlockChars chars) { return with((t) -> t.focusedBlockChars = chars); }
@@ -463,6 +467,7 @@ public final class Theme {
         copy.dialogColor = dialogColor;
         copy.surfaceColor = surfaceColor;
         copy.accentColor = accentColor;
+        copy.stripeColor = stripeColor;
         copy.drawingColors = drawingColors;
         copy.blockChars = blockChars;
         copy.buttonFocus = buttonFocus;

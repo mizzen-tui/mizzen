@@ -15,6 +15,7 @@ import mizzen.components.HasName;
 import mizzen.components.input.DisplayableValue.SimpleDisplayValue;
 import mizzen.components.input.LeafFocusBehaviour;
 import mizzen.components.input.UnfocusedSelection;
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
 import mizzen.events.ChainedEventHandler;
 import mizzen.events.ConditionalEventHandler;
@@ -37,6 +38,7 @@ import mizzen.geom.Dimension;
 import mizzen.geom.Rectangle;
 import mizzen.geom.position.Position;
 import mizzen.textsegments.IScreenLineSegmentsBuffer;
+import mizzen.util.StringUtils;
 import mizzen.textsegments.ScreenLineSegment;
 import mizzen.textsegments.ScreenLineSegment.SegmentImpl;
 import mizzen.textsegments.ScreenLineSegmentsBuffer;
@@ -70,6 +72,8 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
     boolean hasBorder = true;
     int rowsDisplayed = 0;
     TableLinesStyle linesStyle = TableLinesStyle.ALL;
+    private boolean stripedRows = false;
+    private Theme cellsDrawnIn;                          // the theme the kept cells were drawn in (draw)
     boolean spacedRows = true;
 
     ConditionalEventHandler eventHandler;
@@ -135,6 +139,15 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
     }
 
     /** the cell's segments within width x height (the border or the bottom can cut a cell), moved to offset */
+    // a cell's segments on the stripe: each one's foreground over the stripe's background
+    private static TreeSet<ScreenLineSegment> onStripe(TreeSet<ScreenLineSegment> segments, Color stripe) {
+        TreeSet<ScreenLineSegment> striped = ScreenLineSegment.UTIL.makeCollection(null);
+        for (ScreenLineSegment s : segments) {
+            striped.add(new SegmentImpl(s.getColors().mergeWith(stripe), new Position.Simple(s.getRow(), s.getCol()), s.getText()));
+        }
+        return striped;
+    }
+
     private TreeSet<ScreenLineSegment> copyCellSegments(IScreenLineSegmentsBuffer cellSegmentsBuffer, Position offset, int width, int height) {
         ScreenLineSegmentsBuffer within = new ScreenLineSegmentsBuffer();
         for (ScreenLineSegment segment : cellSegmentsBuffer.getSegments()) {
@@ -167,6 +180,12 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
 
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer mySegments) {
+        if (cellsDrawnIn != getTheme()) {                // cells are kept as drawn, colours and all: a new theme (or a move
+            tableModel.clearData();                      // onto a card's surface) draws them again
+            tableCellAtPositions.clear();
+            cellsDrawnIn = getTheme();
+        }
+        tableModel.inTheme(getTheme());                  // renderers draw in the table's theme
         //Logging.setEnabled(false);
 
         //Logging.info("Table-draw start--------------------");
@@ -206,6 +225,12 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
             int linesShown = Math.min(row.height, bottom - row.top);           // the last row can be cut by the bottom
             rowEnds.add(row.top + row.height);
             Color rowColor = row.row == selectedRow ? selectedRowColor() : null;
+            Color stripe = stripedRows && rowColor == null && row.row % 2 == 1 ? getTheme().stripeColor() : null;
+            if (stripe != null) {                                              // every other row on the theme's stripe
+                for (int line = 0; line < linesShown; line++) {
+                    mySegments.add(new SegmentImpl(stripe, new Position.Simple(row.top + line, 0), StringUtils.repeat(" ", getWidth())));
+                }
+            }
             if (row.row == selectedRow) {
                 selectedRowArea = new Rectangle.Simple(row.top, 0, Math.max(1, linesShown), getWidth());
             }
@@ -214,7 +239,8 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
                 IScreenLineSegmentsBuffer cell = rowColor == null                     // the selected row: each renderer shows it its own way
                         ? tableModel.cell(row.row, layout.columns.get(i), layout.fitted[i], row.height)
                         : tableModel.selectedCell(row.row, layout.columns.get(i), layout.fitted[i], row.height, rowColor);
-                mySegments.merge(copyCellSegments(cell, at, layout.shown[i], linesShown));
+                TreeSet<ScreenLineSegment> copied = copyCellSegments(cell, at, layout.shown[i], linesShown);
+                mySegments.merge(stripe == null ? copied : onStripe(copied, stripe));
                 tableCellAtPositions.addDataCell(at, row.row, tableModel.modelColumn(layout.columns.get(i)), layout.shown[i], linesShown, layout.fitted[i], row.height);
             }
             lastRow = row.row;
@@ -361,6 +387,18 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
 
     }
 
+    /** a rule under the heading only - no border, no lines between the columns */
+    class DrawLines_HEADER_RULE implements TableLineDraw {
+        public void drawLines(IScreenLineSegmentsBuffer mySegments, int maxRowRendered, int maxColRendered) {
+            int wide = layout.columnStart(maxColRendered) + layout.widthOf(maxColRendered);
+            StringBuilder line = new StringBuilder();
+            for (int i = 0; i < wide; i++) {
+                line.append(getBlockChars().getHORIZONTAL_LINE());
+            }
+            mySegments.add(new SegmentImpl(getColor(), new Position.Simple(layout.headerHeight, 0), line.toString()));
+        }
+    }
+
     /** lines between the columns and under the heading, no border - as a table in a document: A │ B */
     class DrawLines_INNER implements TableLineDraw {
         public void drawLines(IScreenLineSegmentsBuffer mySegments, int maxRowRendered, int maxColRendered) {
@@ -466,7 +504,7 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
     
     // what the border takes on each side: nothing in the style with none
     private int edge() {
-        return TableLinesStyle.INNER.equals(linesStyle) ? 0 : 1;
+        return TableLinesStyle.INNER.equals(linesStyle) || TableLinesStyle.HEADER_RULE.equals(linesStyle) ? 0 : 1;
     }
 
     /** the width that shows the whole of every row's cells, lines included, from all the rows - for a small table sized by its content */
@@ -492,6 +530,19 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
     /** the line under each data row: the line drawn there (ALL), else a blank line unless rows are packed */
     int rowGap() {
         return TableLinesStyle.ALL.equals(getLinesStyle()) || spacedRows ? 1 : 0;
+    }
+
+    /**
+     * true: every other row on a faint background, the theme's stripeColor - easier to follow across a wide table. A theme
+     * with no stripe colour (Legacy) shows none. Off by default.
+     * <pre>
+     *     table.setLinesStyle(TableLinesStyle.HEADER_RULE).setStripedRows(true);
+     * </pre>
+     */
+    public TableComponent<T> setStripedRows(boolean stripedRows) {
+        this.stripedRows = stripedRows;
+        markAsDirty();
+        return this;
     }
 
     public boolean isSpacedRows() {
@@ -522,6 +573,9 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
         }
         if ( TableLinesStyle.INNER.equals(this.getLinesStyle()) ) {
             return new DrawLines_INNER();
+        }
+        if ( TableLinesStyle.HEADER_RULE.equals(this.getLinesStyle()) ) {
+            return new DrawLines_HEADER_RULE();
         }
         if ( TableLinesStyle.HEADER_FULL.equals(this.getLinesStyle()) ) {
             return new DrawLines_HEADER_ONLY_ALL();
@@ -1054,7 +1108,9 @@ public class TableComponent<T> extends BoundedComponent<TableComponent<T>> imple
         HEADER_ALL_AND_BORDER,
         ALL,
         /** no border: lines between the columns and under the heading - as a table in a document */
-        INNER
+        INNER,
+        /** a rule under the heading, nothing else: columns apart by their gap - a light table, as a web page draws one */
+        HEADER_RULE
     }
 
     public static class TableLinesStyleOption extends SimpleDisplayValue<TableLinesStyle> {

@@ -1,12 +1,13 @@
 package mizzen.components.table;
 
+import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
 import mizzen.geom.Align;
 import mizzen.geom.Dimension;
 import mizzen.geom.position.Position;
 import mizzen.textsegments.IScreenLineSegmentsBuffer;
-import mizzen.textsegments.ScreenLineSegment;
 import mizzen.textsegments.ScreenLineSegment.SegmentImpl;
+import mizzen.textsegments.ScreenLineSegment;
 import mizzen.textsegments.ScreenLineSegmentsBuffer;
 
 /**
@@ -35,6 +36,14 @@ public interface CellRenderer {
 
     /** value drawn in exactly size - no segment outside it; align: where in it, if it is narrower */
     IScreenLineSegmentsBuffer render(Object value, Dimension size, Align align);
+
+    /**
+     * The theme of the table it draws for, told before each cell is rendered: a renderer that draws with a component of
+     * its own, off the screen, draws in it - so cells are in the table's colours (on a card, the card's). Nothing by
+     * default.
+     */
+    default void inTheme(Theme theme) {
+    }
 
     /**
      * value drawn as a cell of the selected row, in selected (the table's selection colour, focused or

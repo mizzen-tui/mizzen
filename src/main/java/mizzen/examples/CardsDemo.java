@@ -1,5 +1,7 @@
 package mizzen.examples;
 
+import java.util.Arrays;
+
 import mizzen.app.TUIApp;
 import mizzen.components.Badge;
 import mizzen.components.TextComponent;
@@ -10,7 +12,10 @@ import mizzen.components.composite.VerticalPanel;
 import mizzen.components.input.Button;
 import mizzen.components.input.DropdownListBox;
 import mizzen.components.progressmeter.Counter;
+import mizzen.components.table.ObjectTableModel;
+import mizzen.components.table.TableComponent;
 import mizzen.components.theme.Theme;
+import mizzen.geom.Dimension;
 
 /**
  * Cards and badges: a status page as cards on the background, a badge for the state. Pick Rounded in the theme list for
@@ -62,7 +67,19 @@ public class CardsDemo {
                     details.setBorder(true);
                     HorizontalPanel buttons = new HorizontalPanel().setHorizontalSpacer(2).add(refresh).add(details);
 
-                    screen.add(new VerticalPanel().setVerticalSpacer(1).add(heading).add(cards).add(buttons));
+                    // a light table: a rule under the heading, every other row striped (in themes with a stripe colour)
+                    TableComponent<String[]> table = new TableComponent<String[]>(new ObjectTableModel<String[]>()
+                            .column("Backup", (r) -> r[0]).column("Size", (r) -> r[1]).column("Age", (r) -> r[2])
+                            .setRows(Arrays.asList(new String[] { "wp_backup_20261101.tar.gz.gpg", "1904 MB", "9 h" },
+                                                   new String[] { "wp_backup_20261031.tar.gz.gpg", "1901 MB", "33 h" },
+                                                   new String[] { "wp_backup_20261030.tar.gz.gpg", "1899 MB", "57 h" })));
+                    table.setLinesStyle(TableComponent.TableLinesStyle.HEADER_RULE);
+                    table.setSpacedRows(false);
+                    table.setStripedRows(true);
+                    table.resize(new Dimension.Simple(table.heightAt(table.widthNeeded()), table.widthNeeded()));
+                    Card recent = new Card("Recent backups").add(table);
+
+                    screen.add(new VerticalPanel().setVerticalSpacer(1).add(heading).add(cards).add(recent).add(buttons));
                 })
                 .start();
     }
