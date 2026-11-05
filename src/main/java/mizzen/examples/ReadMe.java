@@ -3,10 +3,9 @@ package mizzen.examples;
 
 import mizzen.app.TUIApp;
 import mizzen.components.composite.Composite;
-import mizzen.components.input.DropdownListBox;
 import mizzen.components.markdown.MarkdownView;
 import mizzen.components.scroll.ScrollableComponent;
-import mizzen.components.theme.Theme;
+import mizzen.components.theme.ThemePickerComponent;
 import mizzen.geom.Align;
 import mizzen.geom.VAlign;
 import mizzen.geom.position.PositionRelativeFactory;
@@ -33,7 +32,10 @@ public class ReadMe {
                     tApp.appendOnResizeAction((ta, size) -> readme.resize(size));
 
                     // on the top border, at its right end: the theme
-                    DropdownListBox<Theme> theme = ThemeList.of(tApp);
+                    ThemePickerComponent theme = ThemePickerComponent.of(tApp)
+                                                                     .setBorder(true)
+                                                                     .setLabel("Color Scheme");
+                    //DropdownListBox<Theme> theme = ThemeList.of(tApp);
                     screen.add(PositionRelativeFactory.fromAlign(VAlign.TOP, 0, Align.RIGHT, 2, screen, theme), theme);
                     screen.keepOnTop(theme);
                 })

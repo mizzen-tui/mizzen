@@ -30,10 +30,12 @@ import mizzen.components.markdown.MarkdownView;
 import mizzen.components.tab.TabPanel;
 import mizzen.components.tab.TabPanel.TabContext;
 import mizzen.components.theme.Theme;
+import mizzen.components.theme.ThemePickerComponent;
 import mizzen.controlcodes.color.Color;
 import mizzen.controlcodes.color.Colors;
 import mizzen.events.EventBus;
 import mizzen.events.OnIdleEventEventHandler.RepeatingIntervalWhileCond;
+import mizzen.events.focus.RequestFocusEvent;
 import mizzen.events.TimedRequestedController;
 import mizzen.examples.form.FormTry;
 import mizzen.examples.form.FormTryByHand;
@@ -159,6 +161,9 @@ public class EmbeddedAppTest {
             Composite main = (Composite) host.getMainApplicationPanel();
 
             DefaultTreeNode<Demo> examples = examples();
+            Composite topBanner = new HorizontalPanel().setHorizontalSpacer(3);
+            TextComponent bannerTitle = new TextComponent("Example Runner").setThemeColor(theme->theme.emphasisColor());
+            topBanner.add(bannerTitle);
 
             TreeView<DefaultTreeNode<Demo>> tree = new TreeView<DefaultTreeNode<Demo>>(examples.asModel());
             tree.expandAll();
@@ -166,12 +171,15 @@ public class EmbeddedAppTest {
             treePane.setTitle(" Examples ");
             Button learnButton = new Button("Learn", true);   // a toggle: pressed, the learning panel shows
             // the theme: the desktop's - an example that gives no colours takes it too (its app has none of its own)
-            DropdownListBox<Theme> theme = ThemeList.of(host::setTheme).skippedByTab(true);   // focus starts in the tree, not here
+            //DropdownListBox<Theme> theme = ThemeList.of(host::setTheme).skippedByTab(true);   // focus starts in the tree, not here
+            ThemePickerComponent theme = ThemePickerComponent.of(host);
             VerticalPanel left = new VerticalPanel();
-            left.add(new HorizontalPanel(1).addText("Theme").add(theme));   // at the top: its list opens down, over the tree
+            topBanner.add(new HorizontalPanel().addText("Theme").add(theme));
+            topBanner.add(learnButton);
             left.add(treePane);
-            left.add(learnButton);
             left.onResizeExpandDown(treePane);
+
+            host.getEventBus().raiseEvent(new RequestFocusEvent(tree));
 
             // right: where the examples run - the embedded app gets the inside of its border - and, with Learn,
             // the learning panel (its code, its components): below it, to its right, or alone - the bar on the
@@ -196,6 +204,7 @@ public class EmbeddedAppTest {
             panes.onResizeExpandDownAndRight(right.area);
 
             VerticalPanel page = new VerticalPanel();
+            page.add(topBanner);
             page.add(panes);
             page.add(status);
             page.onResizeExpandDownAndRight(panes);
