@@ -31,7 +31,7 @@ final class SolarizedDarkTheme {
                 DEEP_TEAL, CYAN,
                 BLUE_GREY, LIGHT_BLUE_GREY,
                 RED, GREEN,
-                CREAM, DARK_TEAL)
+                DEEP_TEAL, CYAN)                // selected: as its focused button - DARK_TEAL was the fields' own colour, so nothing showed
                 .documents(DEEP_TEAL, BLUE, PALE_BLUE_GREY,
                         CREAM, VIOLET, CYAN,
                         ORANGE, DARK_TEAL, LIGHT_BLUE_GREY)

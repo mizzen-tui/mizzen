@@ -21,7 +21,6 @@ final class LightTheme {
     private static final int DARK_SLATE_GREY = 0x6B7280;
     private static final int BLUE = 0x0969DA;
     private static final int DARK_BLUE = 0x0550AE;
-    private static final int PALE_BLUE = 0xDDF4FF;
     private static final int CYAN = 0x0891B2;
     private static final int TEAL = 0x1B7C83;
     private static final int PURPLE = 0x8250DF;
@@ -44,7 +43,7 @@ final class LightTheme {
                 WHITE, BLUE,
                 SILVER_GREY, MEDIUM_GREY,
                 RED, DARK_GREEN,
-                CHARCOAL, PALE_BLUE)
+                WHITE, BLUE)                    // selected: its accent, as its focused button - a pale tint was hard to see on the pale fields
                 .documents(OFF_WHITE, DARK_BLUE, CHARCOAL, NEAR_BLACK,
                         PURPLE, BLUE, DARK_ORANGE, PALE_GREY, SLATE_GREY)
                 .withStatusColor(rgb(TEAL, OFF_WHITE))

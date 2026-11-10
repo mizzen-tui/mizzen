@@ -31,7 +31,7 @@ final class SolarizedLightTheme {
                 WHITE, BLUE,
                 LIGHT_BLUE_GREY, BLUE_GREY,
                 RED, GREEN,
-                DARK_TEAL, PALE_CREAM)
+                WARM_CREAM, BLUE)               // selected: its accent - PALE_CREAM was the fields' own colour, so nothing showed
                 .documents(WARM_CREAM, BLUE, BLUE_GREY,
                         DARK_TEAL, VIOLET, CYAN,
                         ORANGE, PALE_CREAM, LIGHT_BLUE_GREY)
