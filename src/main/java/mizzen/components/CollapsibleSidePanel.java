@@ -116,7 +116,9 @@ public class CollapsibleSidePanel
             return this;
         }
 
-        stateGuard.execute(() -> {
+        // resizeGuard too: while the child is swapped, the parent's rules resize this panel to its in-between
+        // width - e.g. 29 for a moment, on the way from 30 to 5 - and resize() would pass it to the hidden content
+        stateGuard.execute(() -> resizeGuard.execute(() -> {
             if (collapsed) {
                 showChild(contentWhenHidden, next);
                 toggleButton.setButtonText(">");
@@ -127,7 +129,7 @@ public class CollapsibleSidePanel
 
             state = next;
             markAsDirty();
-        });
+        }));
 
         return this;
     }
