@@ -3,6 +3,8 @@ package mizzen.components.modal;
 import mizzen.components.Component;
 import mizzen.components.CompositeWithFocusManager;
 import mizzen.components.input.Button;
+import mizzen.components.input.DisplayableValue.StringDisplayValue;
+import mizzen.components.input.DropdownListBox;
 import mizzen.controlcodes.color.Colors;
 import mizzen.core.Canvas;
 import mizzen.events.ConditionalEventHandler;
@@ -16,9 +18,12 @@ import mizzen.supportfortesting.SyncEventLoop;
 import junit.framework.TestCase;
 
 /**
- * The mouse while a dialog is open: a click on the dialog works as anywhere else; a click elsewhere does
- * nothing. A dialog opened from it is the live one - all of it, even a part that sticks out past the
- * first - and the first is frozen until it closes.
+ * Tests that an open dialog is modal for the mouse: clicks on the dialog work as usual, and clicks anywhere
+ * else on the screen are ignored until the dialog closes.
+ * <p/>
+ * Also tested: a dropdown in a dialog, whose open list must work even where it hangs past the dialog's frame;
+ * and two dialogs, the second opened from the first, where all of the second works (even a part sticking out
+ * past the first) and the first ignores clicks until the second closes.
  */
 public class DialogMouseTest extends TestCase {
 
@@ -107,5 +112,70 @@ public class DialogMouseTest extends TestCase {
         assertEquals("two closed: one is live again", "far first ", pressed.toString());
         clickBehind();
         assertEquals("the background still frozen", "far first ", pressed.toString());
+    }
+
+    // ten items: opened, the list hangs below the dialog's bottom edge
+    private DropdownListBox<String> tenItems() {
+        String[] items = new String[10];
+        for (int i = 0; i < items.length; i++) {
+            items[i] = "item" + i;
+        }
+        return new DropdownListBox<String>(StringDisplayValue.fromStringValues(items));
+    }
+
+    private void openList(DropdownListBox<String> dropdown) {
+        Position at = Component.UTIL.getCanvasOffsetFor(dropdown);
+        clickAt(at.getRow(), at.getCol() + dropdown.getWidth() - 2);       // its [v]
+    }
+
+    // the row of item n in the open list: the list's top border is the row under the dropdown
+    private int itemRow(DropdownListBox<String> dropdown, int n) {
+        return Component.UTIL.getCanvasOffsetFor(dropdown).getRow() + 2 + n;
+    }
+
+    private int belowButton(Dialog dialog, String name) {
+        Button button = dialog.button(name);
+        return Component.UTIL.getCanvasOffsetFor(button).getRow() + button.getHeight() + 1;   // + the dialog's frame
+    }
+
+    public void testADropdownListPastTheDialogsEdgeTakesClicks() {
+        DropdownListBox<String> dropdown = tenItems();
+        Dialog one = open(Dialog.question("Pick one").add("Item", dropdown).ok());
+        openList(dropdown);
+        int col = Component.UTIL.getCanvasOffsetFor(dropdown).getCol() + 2;
+        assertTrue("item7 is below the dialog", itemRow(dropdown, 7) > belowButton(one, "ok"));
+
+        clickAt(itemRow(dropdown, 7), col);
+        assertEquals("item7", dropdown.getValue());
+        assertTrue(one.isOpen());
+    }
+
+    public void testBesideTheListOutsideTheDialogStillStops() {
+        DropdownListBox<String> dropdown = tenItems();
+        Dialog one = open(Dialog.question("Pick one").add("Item", dropdown).ok());
+        dropdown.setValue("item1");
+        openList(dropdown);
+        Position at = Component.UTIL.getCanvasOffsetFor(dropdown);
+
+        clickAt(itemRow(dropdown, 7), at.getCol() + dropdown.getWidth() + 10);   // level with item7, right of the list
+        clickBehind();
+        assertEquals("item1", dropdown.getValue());
+        assertEquals("", pressed.toString());
+        assertTrue(one.isOpen());
+    }
+
+    public void testANewerDialogsListPastItsEdgeWorksTheOlderStaysFrozen() {
+        Dialog one = open(Dialog.question("One").button("first", "First", (d) -> pressed.append("first ")).staysOpen().cancel());
+        DropdownListBox<String> dropdown = tenItems();
+        Dialog two = open(Dialog.question("Two").add("Item", dropdown).ok());
+        openList(dropdown);
+        int col = Component.UTIL.getCanvasOffsetFor(dropdown).getCol() + 2;
+        assertTrue("item7 is below two", itemRow(dropdown, 7) > belowButton(two, "ok"));
+
+        clickAt(itemRow(dropdown, 7), col);
+        assertEquals("item7", dropdown.getValue());
+        clickOn(one.button("first"));
+        assertEquals("one frozen", "", pressed.toString());
+        assertTrue(two.isOpen());
     }
 }

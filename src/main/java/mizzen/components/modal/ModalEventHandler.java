@@ -1,6 +1,6 @@
 package mizzen.components.modal;
 
-import java.util.function.Supplier;
+import java.util.function.Predicate;
 
 import mizzen.events.ChainedEventHandler;
 import mizzen.events.ConditionalEventHandler;
@@ -10,28 +10,57 @@ import mizzen.events.EventHandlerContainer;
 import mizzen.events.TerminalEvent;
 import mizzen.events.keyboard.KeyInputEventHandler;
 import mizzen.events.mouse.ApplicationMouseEvent;
-import mizzen.geom.Rectangle;
+import mizzen.geom.position.Position;
 
 /**
- * A Modal eventHandler ( to be effective ) should be prepended to 
- * the {@link EventBus} so that it is in front of all the other eventHandlers.
- * 
+ * Makes a dialog modal: while the dialog is open, keys and mouse clicks reach only the dialog, and
+ * nothing else on the screen reacts until it closes.
  * <p/>
- * 
- * Its job is to handle all keyboard events that occur within a modal
- * dialog and block any keyboard eventHandlers that are previously and currently
- * attached to the EventBus - thereby making it modal.  Its for this reason that this
- * EventHandler must be prepended to the EventBus.
+ * <b>How it gets in first.</b> The event bus offers each event to its handlers in order. This handler is
+ * put at the front of the bus (prepended), so it sees every event before the rest of the app does.
  * <p/>
- * Given where its dialog is (stopsMouseOutside), it does the same for the mouse: what lands outside the
- * dialog stops here, what lands on it is marked and goes on to the normal mouse handling - focus,
- * clicks, drags as anywhere else. A dialog opened from this one has its handler in front: it marks what
- * lands on it, and this one lets marked events through without judging them - so all of the newer
- * dialog works, even a part of it that sticks out past this one, and this one is frozen meanwhile.
+ * <b>Keys.</b> Every key goes to the dialog's own handlers (appendEventHandler). A key the dialog doesn't
+ * use is swallowed by a catch-all at the end, so it never reaches the app behind the dialog.
+ * <p/>
+ * <b>Mouse.</b> For each mouse event it asks its dialog "is this spot part of you?" - the question given to
+ * stopsMouseOutside. Part of the dialog is the dialog itself and anything a component inside it opened,
+ * such as a dropdown's list, even where that sticks out past the dialog's frame:
  * <pre>
- *     newest dialog's handler:  on it? mark, pass on.  elsewhere? stop.
- *     older dialog's handler:   marked? pass on.  (unmarked never gets here while a newer one is open)
- *     MouseEventOrchestrator:   the topmost component at the spot, as usual
+ *   +------------------------- screen --------------------------+
+ *   |   background: clicks here are stopped                     |
+ *   |        +-------------- dialog --------------+             |
+ *   |        |  Colour  [ red          v]         |  <- part    |
+ *   |        |          +--------------+          |             |
+ *   |        |          | red          |          |             |
+ *   |        +----------| green        |----------+             |
+ *   |                   | blue         |  <- part: the list     |
+ *   |                   +--------------+     is the dropdown's  |
+ *   +-----------------------------------------------------------+
+ * </pre>
+ * Part of the dialog: the event is marked as on a dialog and goes on to the normal mouse handling (focus,
+ * clicks, drags, as anywhere else). Not part of it: the event stops here.
+ * <p/>
+ * <b>Stacked dialogs.</b> A dialog opened from another dialog puts its own handler in front of the older
+ * one's. The newer one judges each mouse event first; the older one lets marked events through without
+ * judging them, and never sees the rest (the newer one stopped them). So all of the newest dialog works,
+ * and the older dialog and the app behind it stay frozen until the newest closes:
+ * <pre>
+ *   mouse event
+ *        |
+ *        v
+ *   +----------------------+   part of my dialog?  yes: mark it, pass it on
+ *   | newest dialog's gate |                       no:  stop it
+ *   +----------------------+
+ *        |  only marked events
+ *        v
+ *   +----------------------+   marked?  pass it on
+ *   | older dialog's gate  |
+ *   +----------------------+
+ *        |
+ *        v
+ *   +----------------------+   finds the topmost component at the spot, as usual
+ *   | mouse handling       |   (MouseEventOrchestrator)
+ *   +----------------------+
  * </pre>
  */
 class ModalEventHandler implements ConditionalEventHandler {
@@ -63,12 +92,16 @@ class ModalEventHandler implements ConditionalEventHandler {
 
     }
 
-    private Supplier<Rectangle> dialogOnCanvas;          // null: the mouse is not judged
+    private Predicate<Position> isOnDialog;              // null: the mouse is not judged
     private static final EventHandler STOP = (te) -> { };
 
-    /** the mouse outside dialogOnCanvas - where the dialog is on the canvas now - stops here (see the class comment) */
-    public ModalEventHandler stopsMouseOutside(Supplier<Rectangle> dialogOnCanvas) {
-        this.dialogOnCanvas = dialogOnCanvas;
+    /**
+     * Makes this handler judge the mouse too: for each mouse event it calls isOnDialog with the event's position
+     * on the canvas, and stops the event when the answer is false (see the class comment). Dialog's answer: is
+     * the component drawn at that spot part of the dialog? Never called: mouse events pass through unjudged.
+     */
+    public ModalEventHandler stopsMouseOutside(Predicate<Position> isOnDialog) {
+        this.isOnDialog = isOnDialog;
         return this;
     }
 
@@ -77,8 +110,7 @@ class ModalEventHandler implements ConditionalEventHandler {
         if (mouse.isOnADialog()) {
             return null;                                  // a newer dialog let it through
         }
-        Rectangle dialog = dialogOnCanvas.get();
-        if (dialog != null && dialog.containsPosition(mouse.getMousePosition())) {
+        if (isOnDialog.test(mouse.getMousePosition())) {
             mouse.markOnADialog();                        // asking is also marking: the bus asks each handler once, in order
             return null;
         }
@@ -96,7 +128,7 @@ class ModalEventHandler implements ConditionalEventHandler {
 
     @Override
     public EventHandler canHandle(TerminalEvent<?> te) {
-        if (dialogOnCanvas != null && te instanceof ApplicationMouseEvent) {
+        if (isOnDialog != null && te instanceof ApplicationMouseEvent) {
             return judgeMouse((ApplicationMouseEvent) te);
         }
         if (modalEventHandlerAsConditionalEventHandler.canHandle(te) != null) {

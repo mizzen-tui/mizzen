@@ -10,6 +10,7 @@ import mizzen.app.TUIApp;
 import mizzen.components.BorderedComponent;
 import mizzen.components.ChildComponentManager;
 import mizzen.components.Component;
+import mizzen.components.GetComponentAtOffset;
 import mizzen.components.HasName;
 import mizzen.components.TextComponent;
 import mizzen.components.composite.HorizontalPanel;
@@ -329,7 +330,7 @@ public class Dialog {
         parent.add(at, panel);
         parent.setDropShadow(true, panel);
 
-        modalEvents = new ModalEventHandler(bus).stopsMouseOutside(this::onCanvas);
+        modalEvents = new ModalEventHandler(bus).stopsMouseOutside(this::isOnDialog);
         modalEvents.appendEventHandler(new KeyInputEventHandler(Keys.ESC_KEYSTROKE, (te) -> escape()));
         modalEvents.appendEventHandler(thenRefresh(panel.asEventHandler()));
         for (TextInput field : textFields()) {
@@ -343,10 +344,23 @@ public class Dialog {
         return this;
     }
 
-    // where the dialog is on the canvas now - null while it isn't on it
-    private Rectangle onCanvas() {
-        Position at = Component.UTIL.getCanvasOffsetFor(panel);
-        return at == null ? null : new Rectangle.Simple(at, new Dimension.Simple(panel.getHeight(), panel.getWidth()));
+    /**
+     * Is what is drawn at spot (on the canvas) part of this dialog? Its panel and everything in it, and a popup
+     * one of its components opened - a dropdown's list is drawn on the root panel and may stick out past the
+     * dialog's edge, but it belongs to its dropdown (Component.UTIL.isPartOf). The lookup starts at the top of the
+     * dialog's tree, where popups are drawn, as the mouse handling does.
+     */
+    private boolean isOnDialog(Position spot) {
+        Component<?> top = panel;
+        while (top.getParentContainer() instanceof Component) {
+            top = (Component<?>) top.getParentContainer();
+        }
+        Position topAt = Component.UTIL.getCanvasOffsetFor(top);
+        if (topAt == null) {
+            return false;                                 // not on the canvas
+        }
+        Component<?> under = GetComponentAtOffset.UTIL.getComponentAtOffset(top, spot.offsetAdd(topAt.negate()));
+        return under != null && Component.UTIL.isPartOf(under, panel);
     }
 
     private Component<?> messageWithIcon() {

@@ -2,7 +2,9 @@ package mizzen.components;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.StringJoiner;
 import java.util.TreeSet;
 import java.util.function.Function;
@@ -127,6 +129,69 @@ public interface Component<T extends Component<?>>
                         + " is not an AbstractComponent - it cannot be a popup");
             }
             ((AbstractComponent<?>) popup).popupOwner = owner;
+        }
+
+        /**
+         * One step up the component tree: the component that this one belongs to.
+         * <p/>
+         * Usually that is its container (getParentContainer). A popup is the exception: a dropdown's open
+         * list, or a menu, is drawn on the root panel so that no container clips it, yet it belongs to the
+         * dropdown or menu button that opened it (getPopupOwner). For a popup the step goes to that owner.
+         * Returns null at the top of the tree.
+         */
+        public static Component<?> ownerOrParent(Component<?> component) {
+            if (component.getPopupOwner() != null) {
+                return component.getPopupOwner();
+            }
+            Object up = component.getParentContainer();
+            return up instanceof Component ? (Component<?>) up : null;
+        }
+
+        /**
+         * Answers whether a component is inside another component - its container, its container's container,
+         * and so on - or is that component itself. It walks up the tree from component, one ownerOrParent step
+         * at a time, until it meets whole (true) or reaches the top (false).
+         * <p/>
+         * Because the walk goes through popup owners, a popup counts as inside the component that opened it.
+         * For example, a dialog holds a dropdown, and the dropdown's open list is drawn on the root panel,
+         * outside the dialog; the list still counts as part of the dialog:
+         * <pre>
+         *   item7  ->  the open list  -(popup owner)->  dropdown  ->  form  ->  dialog panel
+         * </pre>
+         * Used by Dialog to decide whether a mouse click landed on the dialog.
+         * <p/>
+         * Fails if the links form a cycle (e.g. a popup was made the owner of its own owner): the walk would
+         * never end, so it throws an IllegalStateException that lists the walk.
+         */
+        public static boolean isPartOf(Component<?> component, Component<?> whole) {
+            Set<Component<?>> seen = Collections.newSetFromMap(new IdentityHashMap<Component<?>, Boolean>());
+            for (Component<?> c = component; c != null; c = ownerOrParent(c)) {
+                if (c == whole) {
+                    return true;
+                }
+                if (!seen.add(c)) {
+                    throw new IllegalStateException("isPartOf(): the popup-owner / parent links form a cycle - "
+                            + HasName.UTIL.getName(c) + " is its own ancestor. The walk up from "
+                            + HasName.UTIL.getName(component) + ":\n" + walkUntilSecondVisit(component, c));
+                }
+            }
+            return false;
+        }
+
+        // e.g.   list (popup: next is its owner) -> dropdown -> panel -> list ...  - up to the second visit of repeated
+        private static String walkUntilSecondVisit(Component<?> from, Component<?> repeated) {
+            StringJoiner walk = new StringJoiner("\n  -> ", "  ", "");
+            boolean metOnce = false;
+            for (Component<?> w = from; w != null; w = ownerOrParent(w)) {
+                walk.add(HasName.UTIL.getName(w) + (w.getPopupOwner() != null ? "   (popup: next is its owner)" : ""));
+                if (w == repeated) {
+                    if (metOnce) {
+                        break;
+                    }
+                    metOnce = true;
+                }
+            }
+            return walk.toString();
         }
 
         /**
