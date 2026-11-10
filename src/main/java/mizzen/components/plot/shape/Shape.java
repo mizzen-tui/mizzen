@@ -1,12 +1,11 @@
 package mizzen.components.plot.shape;
 
+import mizzen.controlcodes.color.ColorProvider;
 import java.util.Collection;
-import java.util.function.Function;
 
 import mizzen.components.HasName;
 import mizzen.components.plot.PointPlotter;
 import mizzen.components.plot.PointPlotterAsRectangle;
-import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
 import mizzen.geom.AsRectangle2D;
 import mizzen.geom.Rectangle2D;
@@ -43,41 +42,41 @@ public interface Shape<T extends Shape<?>> extends HasName<T> {
 
         PositionTransform positionTransform = PositionTransform.NOOP; 
         String name;
-        Function<Theme, Color> themeColor;              // null: none - its own colour, else the plotter's
+        ColorProvider colorProvider;                    // null: none - its own colour, else the plotter's
 
         public AbstractShape() {
             this.setName(HasName.UTIL.deriveName(this));
         }
 
-        // given a theme colour: worked out once per draw, from the theme of what it plots into, and set on the plotter
-        // around its drawing (a shape's own colour, set by the shape as it draws, still wins). Not per point.
+        // given a colour provider: asked once per draw, and its colour set on the plotter around the drawing (a shape's own
+        // colour, set by the shape as it draws, still wins). Not per point.
         @Override
         final public void draw(PointPlotter pointPlotter) {
-            if (themeColor == null) {                       // nearly every shape: drawn as before, nothing made
+            if (colorProvider == null) {                    // nearly every shape: drawn as before, nothing made
                 drawWithTransform(pointPlotter, getPositionTransform());
                 return;
             }
-            UTIL.drawInThemeColor(pointPlotter, themeColor, () -> drawWithTransform(pointPlotter, getPositionTransform()));
+            UTIL.drawInColor(pointPlotter, colorProvider.getColor(), () -> drawWithTransform(pointPlotter, getPositionTransform()));
         }
 
         /**
-         * Draws in a colour of its theme - the theme of what it is plotted into, worked out as it is drawn, so a theme
-         * switch reaches it. Its own colour, if it has one, still wins.
+         * Draws in the colour the provider gives, asked each time the shape is drawn: a fixed colour (a Color is a
+         * ColorProvider), or one that follows a component's theme - the component hands it out, so the shape never
+         * looks a theme up itself. Its own colour (a Line's), if it has one, still wins.
          * <pre>
-         *     new Circle(0, 0, 10).setThemeColor((t) -&gt; t.drawingColor(YELLOW));
-         *     new Line(a, b, null).setThemeColor(Theme::dimColor);
+         *     new Circle(0, 0, 10).setColorProvider(Colors.IYel);
+         *     new Circle(0, 0, 10).setColorProvider(grid.drawingColor(YELLOW));    // the grid's theme, whichever it is now
          * </pre>
          */
         @SuppressWarnings("unchecked")
-        public T setThemeColor(Function<Theme, Color> themeColor) {
-            this.themeColor = themeColor;
+        public T setColorProvider(ColorProvider colorProvider) {
+            this.colorProvider = colorProvider;
             return (T) this;
         }
 
-        public Function<Theme, Color> getThemeColor() {
-            return themeColor;
+        public ColorProvider getColorProvider() {
+            return colorProvider;
         }
-
 
         abstract protected void drawWithTransform(PointPlotter pointPlotter, PositionTransform positionTransform);
 
@@ -155,16 +154,13 @@ public interface Shape<T extends Shape<?>> extends HasName<T> {
 
     public static class UTIL {
 
-        /**
-         * Runs draw with the plotter's next colour set to themeColor in the plotter's theme, then puts back what it was -
-         * worked out once per shape drawn, not per point. themeColor null: draw as it is.
-         */
-        public static void drawInThemeColor(PointPlotter pointPlotter, Function<Theme, Color> themeColor, Runnable draw) {
-            if (themeColor == null) {
+        /** Runs draw with the plotter's next colour set to color, then puts back what it was. color null: draw as it is. */
+        public static void drawInColor(PointPlotter pointPlotter, Color color, Runnable draw) {
+            if (color == null) {
                 draw.run();
                 return;
             }
-            Color before = pointPlotter.setNextPlotColor(themeColor.apply(pointPlotter.getTheme()));
+            Color before = pointPlotter.setNextPlotColor(color);
             try {
                 draw.run();
             } finally {

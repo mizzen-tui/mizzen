@@ -1,10 +1,12 @@
 package mizzen.components.plot.braille;
 
+import java.util.function.Function;
+import mizzen.components.theme.Theme;
+import mizzen.controlcodes.color.ColorProvider;
 import mizzen.components.composite.Composite;
 import mizzen.components.plot.Plotter;
 import mizzen.components.plot.Plotter.Plot;
 import mizzen.components.plot.PointPlotter;
-import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
 import mizzen.events.EventBus;
 import mizzen.events.EventHandler;
@@ -183,6 +185,22 @@ public class BrailleGrid extends Composite implements PointPlotter {
         unplotPosition(new Position.Simple(row, col));
     }
 
+    /**
+     * Its theme's drawing colour i, asked for each time it is used - so a shape given it (setColorProvider, Cube3D...)
+     * draws in this grid's theme, whichever theme that is when it draws; the shape never looks a theme up itself.
+     * <pre>
+     *     new Cube3D(50, at, grid.drawingColor(YELLOW), grid.drawingColor(BLUE));
+     * </pre>
+     */
+    public ColorProvider drawingColor(int i) {
+        return () -> getTheme().drawingColor(i);
+    }
+
+    /** any colour of its theme, asked for each time it is used: e.g. grid.themeColor(Theme::dimColor) - see drawingColor */
+    public ColorProvider themeColor(Function<Theme, Color> themeColor) {
+        return () -> themeColor.apply(getTheme());
+    }
+
     private PointPlotter pointPlotter;
     
     public PointPlotter asPointPlotter() {
@@ -205,11 +223,6 @@ public class BrailleGrid extends Composite implements PointPlotter {
             @Override
             public void clearPlots() {
                 BrailleGrid.this.clearPlots();
-            }
-
-            @Override
-            public Theme getTheme() {
-                return BrailleGrid.this.getTheme();
             }
 
         };

@@ -1,5 +1,8 @@
 package mizzen.components.plot.blocks;
 
+import java.util.function.Function;
+import mizzen.components.theme.Theme;
+import mizzen.controlcodes.color.ColorProvider;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -9,7 +12,6 @@ import mizzen.components.ParentContainer;
 import mizzen.components.plot.Plotter;
 import mizzen.components.plot.PointPlotter;
 import mizzen.components.plot.blocks.BlocksUtils.BlocksPlot;
-import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
 import mizzen.controlcodes.color.Colors.FgColor;
 import mizzen.geom.Dimension;
@@ -175,6 +177,22 @@ public class BlocksGrid extends BoundedComponent<BlocksGrid>  implements ParentC
         // unplotPosition(new Position.Simple(row, col));
     }
 
+    /**
+     * Its theme's drawing colour i, asked for each time it is used - so a shape given it (setColorProvider, Cube3D...)
+     * draws in this grid's theme, whichever theme that is when it draws; the shape never looks a theme up itself.
+     * <pre>
+     *     new Cube3D(50, at, grid.drawingColor(YELLOW), grid.drawingColor(BLUE));
+     * </pre>
+     */
+    public ColorProvider drawingColor(int i) {
+        return () -> getTheme().drawingColor(i);
+    }
+
+    /** any colour of its theme, asked for each time it is used: e.g. grid.themeColor(Theme::dimColor) - see drawingColor */
+    public ColorProvider themeColor(Function<Theme, Color> themeColor) {
+        return () -> themeColor.apply(getTheme());
+    }
+
     public PointPlotter asPointPlotter() {
         PointPlotter plot = new PointPlotter() {
             @Override
@@ -192,11 +210,6 @@ public class BlocksGrid extends BoundedComponent<BlocksGrid>  implements ParentC
             @Override
             public void clearPlots() {
                 BlocksGrid.this.clearPlots();
-            }
-
-            @Override
-            public Theme getTheme() {
-                return BlocksGrid.this.getTheme();
             }
 
         };

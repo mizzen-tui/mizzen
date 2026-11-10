@@ -2,6 +2,7 @@ package mizzen.examples.plot;
 
 import java.io.IOException;
 
+import mizzen.components.theme.Theme;
 import mizzen.app.TUIApp;
 import mizzen.components.ComponentWithFocus;
 import mizzen.components.ClickableDraggableComponentWrapper;
@@ -62,12 +63,12 @@ public class TestCube {
                     BrailleGrid grid = new BrailleGrid(gridSize);
                     // Cube3D cube3D = new Cube3D(50, Vec3.ZERO, Colors.BYel, Colors.BBlu);
                     // Sphere3D sphere3D = new Sphere3D(30, Vec3.ZERO, 15, Colors.IYel);
-                    Cube3D cube3D = new Cube3D(50, new Vec3.BaseVec3(-60, 0, 0), (t) -> t.drawingColor(YELLOW), (t) -> t.drawingColor(BLUE));
-                    Sphere3D sphere3D = new Sphere3D(30, new Vec3.BaseVec3(60, 0, 0), 15, (t) -> t.drawingColor(YELLOW));   // shaded: the theme's dim
+                    Cube3D cube3D = new Cube3D(50, new Vec3.BaseVec3(-60, 0, 0), grid.drawingColor(YELLOW), grid.drawingColor(BLUE));
+                    Sphere3D sphere3D = new Sphere3D(30, new Vec3.BaseVec3(60, 0, 0), 15, grid.drawingColor(YELLOW), grid.themeColor(Theme::dimColor));
 
                     AbstractShape3D<?> activeShape[] = new AbstractShape3D<?>[]{cube3D};
 
-                    Plot2DConfigFormProjection plot2DInputForm = new Plot2DConfigFormProjection(grid.getColor());
+                    Plot2DConfigFormProjection plot2DInputForm = new Plot2DConfigFormProjection(grid.getOwnColor());
 
                     Plot2DFromProjection projection = (Plot2DFromProjection) plot2DInputForm.getValue();
 
@@ -114,13 +115,13 @@ public class TestCube {
                             mousePos -> BrailleUtils.componentPosToGridPos(mousePos));
 
                     ClickableDraggableComponentWrapper draggableGrid = new ClickableDraggableComponentWrapper(
-                            grid.getColor(), grid);
+                            grid.getOwnColor(), grid);
 
                     draggableGrid.setDraggable(mouseXYToGridXYDraggableBehaviour);
 
                     // the pan bars: as long as the grid's sides, ranging half the grid each way - set by fitToWindow
-                    ScrollBarHorizontal panXScroll = new ScrollBarHorizontal(grid.getColor(), 0, 0, 0);
-                    ScrollBarVertical panYScroll = new ScrollBarVertical(grid.getColor(), 0, 0, 0);
+                    ScrollBarHorizontal panXScroll = new ScrollBarHorizontal(grid.getOwnColor(), 0, 0, 0);
+                    ScrollBarVertical panYScroll = new ScrollBarVertical(grid.getOwnColor(), 0, 0, 0);
 
                     panXScroll.onChange((te) -> {
                         Position offset = panXScroll.getValue();
@@ -179,7 +180,7 @@ public class TestCube {
                         redrawShape.run();
                     }));                    
 
-                    RadioGroup<Boolean> simulationToggle = RadioGroup.onOff("Simulation", "START", "STOP", true).setColor(grid.getColor());
+                    RadioGroup<Boolean> simulationToggle = RadioGroup.onOff("Simulation", "START", "STOP", true).setColor(grid.getOwnColor());
 
                     Runnable startStopSimulation = () -> {
                         if (simulationToggle.getValue()) {

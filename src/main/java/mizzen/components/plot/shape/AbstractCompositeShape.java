@@ -1,11 +1,9 @@
 package mizzen.components.plot.shape;
 
+import mizzen.controlcodes.color.ColorProvider;
 import java.util.Collection;
-import java.util.function.Function;
 
 import mizzen.components.plot.PointPlotter;
-import mizzen.components.theme.Theme;
-import mizzen.controlcodes.color.Color;
 import mizzen.geom.AsRectangle2D;
 import mizzen.geom.Rectangle2D;
 import mizzen.geom.position.PositionTransform;
@@ -16,7 +14,7 @@ public abstract class AbstractCompositeShape<T extends AbstractCompositeShape<?>
     private Collection<Shape<?>> shapes = null;
     private PositionTransform positionTransform = PositionTransform.NOOP;
     private String name;
-    private Function<Theme, Color> themeColor;      // null: none - each part's own, else the plotter's
+    private ColorProvider colorProvider;            // null: none - each part's own, else the plotter's
 
     protected void drawChild(Shape<?> childShape, PointPlotter pointPlotter) {
         childShape.draw(pointPlotter);
@@ -33,11 +31,11 @@ public abstract class AbstractCompositeShape<T extends AbstractCompositeShape<?>
 
     @Override
     public void draw(PointPlotter pointPlotter) {
-        if (themeColor == null) {                           // nearly every composite: drawn as before, nothing made
+        if (colorProvider == null) {                        // nearly every composite: drawn as before, nothing made
             drawParts(pointPlotter);
             return;
         }
-        Shape.UTIL.drawInThemeColor(pointPlotter, themeColor, () -> drawParts(pointPlotter));
+        Shape.UTIL.drawInColor(pointPlotter, colorProvider.getColor(), () -> drawParts(pointPlotter));
     }
 
     private void drawParts(PointPlotter pointPlotter) {
@@ -47,17 +45,17 @@ public abstract class AbstractCompositeShape<T extends AbstractCompositeShape<?>
     }
 
     /**
-     * Its parts with no colour of their own draw in this colour of its theme - the theme of what it is plotted into, worked
-     * out as it is drawn (Shape.AbstractShape.setThemeColor).
+     * Its parts with no colour of their own draw in the colour the provider gives, asked each time it is drawn - a fixed
+     * colour, or one a component hands out that follows its theme (Shape.AbstractShape.setColorProvider).
      */
     @SuppressWarnings("unchecked")
-    public T setThemeColor(Function<Theme, Color> themeColor) {
-        this.themeColor = themeColor;
+    public T setColorProvider(ColorProvider colorProvider) {
+        this.colorProvider = colorProvider;
         return (T) this;
     }
 
-    public Function<Theme, Color> getThemeColor() {
-        return themeColor;
+    public ColorProvider getColorProvider() {
+        return colorProvider;
     }
 
     @Override

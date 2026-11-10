@@ -1,5 +1,7 @@
 package mizzen.examples.plot;
 
+import mizzen.controlcodes.color.ColorProvider;
+import java.util.function.IntFunction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -97,7 +99,8 @@ public class TestSprites {
                                                    spawnGameLoop(tApp.getEventBus(), 
                                                                  ()-> tApp.getEventBus().isActive(), 
                                                                  ()-> grid.getGridRectangle(), 
-                                                                 gamePlayPointsPlotter);
+                                                                 gamePlayPointsPlotter,
+                                                                 grid::drawingColor);   // the sprites' colours: the grid's theme, live
                                                    },200));
 
         BiConsumer<TUIApp, Dimension> defaultOnResizeAction = 
@@ -115,7 +118,8 @@ public class TestSprites {
     }
     
 
-    static void spawnGameLoop(EventBus eventBus, Supplier<Boolean> isActive, Supplier<Rectangle> size, PointPlotter pointPlotter) {
+    static void spawnGameLoop(EventBus eventBus, Supplier<Boolean> isActive, Supplier<Rectangle> size, PointPlotter pointPlotter,
+                              IntFunction<ColorProvider> drawingColor) {
 
 
         Supplier<PathPlotter> makePathPlotter = ()-> {
@@ -128,13 +132,13 @@ public class TestSprites {
             return pathShape;
         };
 
-        Sprite wheel = new Wheel(160);
+        Sprite wheel = new Wheel(160, drawingColor);
 
         wheel.setPath(makePathPlotter.get());
         wheel.setRotateRate(10);
         wheel.setRotateRate(12);
 
-        Stick stick = new Stick();
+        Stick stick = new Stick(drawingColor);
         stick.setPath(makePathPlotter.get());
         stick.setRotateRate(3);
 
@@ -258,9 +262,9 @@ public class TestSprites {
     }
 
     static class Stick extends  AbstractShapeSprite {
-        public Stick() {
+        public Stick(IntFunction<ColorProvider> drawingColor) {
             RectangleShape shape = new RectangleShape( new Rectangle.Simple(0,0, 3, 50) );
-            shape.setThemeColor((t) -> t.drawingColor(RED));
+            shape.setColorProvider(drawingColor.apply(RED));
             this.setShape(shape);
             nextPathPosIncr = 4;
         }
@@ -274,16 +278,16 @@ public class TestSprites {
 
         Rectangle boundingRect;
 
-        public Wheel(int radius) {
+        public Wheel(int radius, IntFunction<ColorProvider> drawingColor) {
             CompositeShape shape = new CompositeShape();
             Circle outerCircle = new Circle(0, 0, (int)(15f/19f * radius));
-            outerCircle.setThemeColor((t) -> t.drawingColor(CYAN));
+            outerCircle.setColorProvider(drawingColor.apply(CYAN));
 
             Circle outerCircle2 = new Circle(0, 0, radius);
-            outerCircle2.setThemeColor(outerCircle.getThemeColor());
+            outerCircle2.setColorProvider(outerCircle.getColorProvider());
 
             Circle innerCircle = new Circle(0, 0, (int)(5f/19f * radius));
-            innerCircle.setThemeColor((t) -> t.drawingColor(GREY));
+            innerCircle.setColorProvider(drawingColor.apply(GREY));
             innerCircle.setFilled(true);
 
             Line line0 = new Line( 0 , innerCircle.getRadius()+2,  0, outerCircle.getRadius()-2, (Color) null);   // the spokes: no colour, the wheel's
@@ -323,7 +327,7 @@ public class TestSprites {
             
             shape.addShape(outerCircle);
             shape.addShape(outerCircle2);
-            shape.setThemeColor((t) -> t.drawingColor(YELLOW));   // parts with no colour of their own: the spokes
+            shape.setColorProvider(drawingColor.apply(YELLOW));   // parts with no colour of their own: the spokes
             
             setShape(shape);
         }

@@ -1,12 +1,11 @@
 package mizzen.components.plot.shape.threeD;
 
-import java.util.function.Function;
+import mizzen.controlcodes.color.ColorProvider;
 
 import mizzen.components.plot.shape.CompositeShape;
 import mizzen.components.plot.shape.Line;
 import mizzen.components.plot.shape.Shape;
 import mizzen.components.plot.shape.threeD.projection.Plot2D;
-import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
 import mizzen.geom.position.Vec2;
 import mizzen.geom.position.Vec3;
@@ -14,50 +13,35 @@ import mizzen.geom.position.Vec3;
 public class Sphere3D extends AbstractShape3D<Sphere3D> {
     private final float radius;
     private final int slices, stacks;
-    private final Color color, shadedColor;                                  // fixed; null: the theme colours below
-    private final Function<Theme, Color> themeColor, shadedThemeColor;
+    private final ColorProvider color, shaded;       // null: no colour - the plotter's
 
-    /** the lit side in color; the side in shadow in its theme's dim colour */
-    public Sphere3D(float radius, Vec3<?> center, int resolution, Color color) {
-        this(radius, center, resolution, color, null, null, Theme::dimColor);
-    }
-
-    /** the lit side in color, the side in shadow in shaded - both fixed */
-    public Sphere3D(float radius, Vec3<?> center, int resolution, Color color, Color shaded) {
-        this(radius, center, resolution, color, shaded, null, null);
+    /** the lit side in color; the side in shadow in no colour of its own - the plotter's */
+    public Sphere3D(float radius, Vec3<?> center, int resolution, ColorProvider color) {
+        this(radius, center, resolution, color, null);
     }
 
     /**
-     * in its theme's colours, worked out as it is drawn - a theme switch reaches it. The side in shadow: the theme's dim
-     * colour.
+     * the lit side in color, the side in shadow in shaded - asked each time it is drawn: fixed colours (a Color is a
+     * ColorProvider), or ones a component hands out that follow its theme:
      * <pre>
-     *     new Sphere3D(30, at, 15, (t) -&gt; t.drawingColor(YELLOW));
+     *     new Sphere3D(30, at, 15, Colors.IYel, Colors.Yel);
+     *     new Sphere3D(30, at, 15, grid.drawingColor(YELLOW), grid.themeColor(Theme::dimColor));
      * </pre>
      */
-    public Sphere3D(float radius, Vec3<?> center, int resolution, Function<Theme, Color> color) {
-        this(radius, center, resolution, null, null, color, Theme::dimColor);
-    }
-
-    /** in its theme's colours: the lit side in color, the side in shadow in shaded */
-    public Sphere3D(float radius, Vec3<?> center, int resolution, Function<Theme, Color> color, Function<Theme, Color> shaded) {
-        this(radius, center, resolution, null, null, color, shaded);
-    }
-
-    private Sphere3D(float radius, Vec3<?> center, int resolution, Color color, Color shaded,
-                     Function<Theme, Color> themeColor, Function<Theme, Color> shadedThemeColor) {
+    public Sphere3D(float radius, Vec3<?> center, int resolution, ColorProvider color, ColorProvider shaded) {
         this.radius = radius;
         this.center = center;
         this.slices = resolution; // Horizontal divisions
         this.stacks = resolution; // Vertical divisions
         this.color = color;
-        this.shadedColor = shaded;
-        this.themeColor = themeColor;
-        this.shadedThemeColor = shadedThemeColor;
+        this.shaded = shaded;
     }
 
     @Override
     public Shape<?> as2DShape(Plot2D projection) {
         CompositeShape sphere2D = new CompositeShape();
+        Color litColor = color == null ? null : color.getColor();          // once per drawing, not per segment
+        Color shadedColor = shaded == null ? null : shaded.getColor();
 
         // 1. Get the lighting context from the projection (The "Lens" properties)
         RenderContext ctx = projection.getRenderContext();
@@ -103,9 +87,9 @@ public class Sphere3D extends AbstractShape3D<Sphere3D> {
                 int nextI = (i + 1) % slices;
                 int nextJ = j + 1;
 
-                drawLitSegment(sphere2D, pts[i][j], pts[nextI][j], intensity[i][j], intensity[nextI][j]);
+                drawLitSegment(sphere2D, pts[i][j], pts[nextI][j], intensity[i][j], intensity[nextI][j], litColor, shadedColor);
                 if (nextJ <= stacks) {
-                    drawLitSegment(sphere2D, pts[i][j], pts[i][nextJ], intensity[i][j], intensity[i][nextJ]);
+                    drawLitSegment(sphere2D, pts[i][j], pts[i][nextJ], intensity[i][j], intensity[i][nextJ], litColor, shadedColor);
                 }
             }
         }
@@ -113,16 +97,14 @@ public class Sphere3D extends AbstractShape3D<Sphere3D> {
         return sphere2D;
     }
 
-    private void drawLitSegment(CompositeShape shape, Vec2<?> p1, Vec2<?> p2, float i1, float i2) {
+    private void drawLitSegment(CompositeShape shape, Vec2<?> p1, Vec2<?> p2, float i1, float i2, Color litColor, Color shadedColor) {
         // Average the intensity of the two vertices
         float avgIntensity = (i1 + i2) / 2.0f;
 
         // Choose color: If lit, use primary color; if in shadow, use a dimmed color
         // Threshold (0.3f) can be tuned to change how much of the sphere is "dark"
         boolean lit = avgIntensity > 0.3f;
-        Line segment = new Line(p1, p2, lit ? color : shadedColor);
-        Function<Theme, Color> segmentThemeColor = lit ? themeColor : shadedThemeColor;
-        shape.addShape(segmentThemeColor == null ? segment : segment.setThemeColor(segmentThemeColor));
+        shape.addShape(new Line(p1, p2, lit ? litColor : shadedColor));
     }
 
     @Override

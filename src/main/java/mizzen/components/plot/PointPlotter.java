@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
 import mizzen.geom.position.Position;
 import mizzen.geom.position.Vec2;
@@ -41,14 +40,6 @@ public interface PointPlotter {
     
     void clearPlots();
 
-    /**
-     * The theme of what it plots into - a shape given a theme colour (Shape.AbstractShape.setThemeColor) is drawn in that
-     * theme's colour. Asked once per shape drawn, not per point. A grid answers with its own theme; a plotter that
-     * passes points on asks the one it passes them to; any other: the default theme.
-     */
-    default Theme getTheme() {
-        return Theme.getDefault();
-    }
 
     public static class Delegate implements PointPlotter {
 
@@ -80,11 +71,6 @@ public interface PointPlotter {
         @Override
         public void clearPlots() {
             this.getPointPlotter().clearPlots();
-        }
-
-        @Override
-        public Theme getTheme() {
-            return this.getPointPlotter().getTheme();
         }
 
     }

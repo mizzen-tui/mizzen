@@ -3,7 +3,6 @@ package mizzen.components.plot;
 import java.util.TreeSet;
 
 import mizzen.components.BoundedComponent;
-import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
 import mizzen.controlcodes.color.Colors;
 import mizzen.geom.Dimension;
@@ -223,11 +222,6 @@ public class Plotter extends BoundedComponent<Plotter> {
             @Override
             public void clearPlots() {
                 Plotter.this.clearPlots();
-            }
-
-            @Override
-            public Theme getTheme() {
-                return Plotter.this.getTheme();
             }
 
         };

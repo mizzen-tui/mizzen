@@ -1,11 +1,10 @@
 package mizzen.components.plot.shape.threeD;
 
+import mizzen.controlcodes.color.ColorProvider;
 import mizzen.components.plot.shape.CompositeShape;
 import mizzen.components.plot.shape.Line;
 import mizzen.components.plot.shape.Shape;
-import java.util.function.Function;
 
-import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
 import mizzen.geom.position.Vec2;
 import mizzen.geom.position.Vec3;
@@ -15,31 +14,21 @@ import mizzen.components.plot.shape.threeD.projection.ProjectionUtils;
 public class Cube3D extends AbstractShape3D<Cube3D> {
     private final int size;
     private final Vec3<?> center;
-    private final Color outsideColor, insideColor;                          // fixed; null: the theme colours below
-    private final Function<Theme, Color> outsideThemeColor, insideThemeColor;
-
-    /** the edges in front in out, the hidden ones in in - fixed colours */
-    public Cube3D(int size, Vec3<?> center, Color out, Color in) {
-        this(size, center, out, in, null, null);
-    }
+    private final ColorProvider outside, inside;     // null: no colour - the plotter's
 
     /**
-     * the edges in its theme's colours, worked out as it is drawn - a theme switch reaches it:
+     * the edges in front in out, the hidden ones in in - asked each time it is drawn: fixed colours (a Color is a
+     * ColorProvider), or ones a component hands out that follow its theme:
      * <pre>
-     *     new Cube3D(50, at, (t) -&gt; t.drawingColor(YELLOW), Theme::dimColor);
+     *     new Cube3D(50, at, Colors.BYel, Colors.BBlu);
+     *     new Cube3D(50, at, grid.drawingColor(YELLOW), grid.themeColor(Theme::dimColor));
      * </pre>
      */
-    public Cube3D(int size, Vec3<?> center, Function<Theme, Color> out, Function<Theme, Color> in) {
-        this(size, center, null, null, out, in);
-    }
-
-    private Cube3D(int size, Vec3<?> center, Color out, Color in, Function<Theme, Color> outTheme, Function<Theme, Color> inTheme) {
+    public Cube3D(int size, Vec3<?> center, ColorProvider out, ColorProvider in) {
         this.size = size;
         this.center = center;
-        this.outsideColor = out;
-        this.insideColor = in;
-        this.outsideThemeColor = outTheme;
-        this.insideThemeColor = inTheme;
+        this.outside = out;
+        this.inside = in;
     }
 
     @Override
@@ -93,11 +82,11 @@ public class Cube3D extends AbstractShape3D<Cube3D> {
         }
 
         CompositeShape cube2D = new CompositeShape();
+        Color out = outside == null ? null : outside.getColor();   // once per drawing, not per edge
+        Color in = inside == null ? null : inside.getColor();
         for (int[] e : edges) {
             boolean visible = visibleEdge[e[0]][e[1]];
-            Line edge = new Line(pts[e[0]], pts[e[1]], visible ? outsideColor : insideColor);
-            Function<Theme, Color> themeColor = visible ? outsideThemeColor : insideThemeColor;
-            cube2D.addShape(themeColor == null ? edge : edge.setThemeColor(themeColor));   // a fixed colour: as it always was
+            cube2D.addShape(new Line(pts[e[0]], pts[e[1]], visible ? out : in));
         }
         return cube2D;
     }
