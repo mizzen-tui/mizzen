@@ -200,7 +200,6 @@ public class EmbeddedAppTest {
 
             // the tree keeps its width, the slot takes the rest; the status line keeps its row at the bottom
             HorizontalPanel panes = new HorizontalPanel();
-            panes.setBorderColor(Colors.IRed);
             panes.add(collapsibleTreePane);
             panes.add(right.area);
             panes.onResizeExpandDown(collapsibleTreePane);
@@ -419,6 +418,7 @@ public class EmbeddedAppTest {
         private DefaultTreeNode<Component<?>> root;
         private List<Component<?>> shown = new ArrayList<Component<?>>();   // the components in the tree: changed, it is built again
         private int showing;                                                // which showing of the tab a timer belongs to
+        private List<Component<?>> exampleShown;                            // the slot's children the tree was built for: the running example
 
         @Override
         public void activateComponent(EventBus eventBus, TabContext tabContext, ScrollableComponent view) {
@@ -446,9 +446,13 @@ public class EmbeddedAppTest {
             if (root != null) {
                 collectOpen(root, open);
             }
+            // another example in the slot: its components are all new, none was open - so open them all, as the first time
+            List<Component<?>> example = new ArrayList<Component<?>>(slot.getChildren());
+            boolean newExample = !example.equals(exampleShown);
+            exampleShown = example;
             root = treeOf(slot);
             tree.setModel(root.asModel());
-            reopen(root, open, root == null || open.isEmpty());
+            reopen(root, open, open.isEmpty() || newExample);
             DefaultTreeNode<Component<?>> again = find(root, picked);
             if (again != null) {
                 tree.setValue(again);
