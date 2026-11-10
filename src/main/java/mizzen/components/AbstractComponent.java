@@ -156,7 +156,9 @@ public abstract class AbstractComponent<T extends AbstractComponent<?>> implemen
             return getTheme().disabledColor();      // worked out as it is drawn: a later theme reaches it too
         }
         if (color != null) {
-            return color;
+            // a colour with no background of its own (Colors.IRed) shows on the background it would have had - on a
+            // card, the card's - not the screen's; one with a background, or a theme with none (Legacy): as given
+            return Color.setsBackground(color) ? color : Color.onBackgroundOf(color, colorFromTheme.apply(getTheme()));
         }
         return colorFromTheme.apply(getTheme());
     }

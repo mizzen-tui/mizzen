@@ -154,11 +154,38 @@ public class ThemeTest extends TestCase {
     /** a component given its own colour keeps it, and so do the parts it makes */
     public void testAnInputGivenAColourKeepsIt() {
         Composite panel = new VerticalPanel();
+        Color ownColor = Theme.rgb(0xFFFF55, 0x0000AA);                   // a foreground and a background
+        TextInput input = new TextInput(ownColor, 6);
+        panel.add(input);
+        panel.setTheme(Theme.CLASSIC);
+        assertEquals(ownColor.asString(), firstColor(input).asString());
+    }
+
+    /**
+     * given only a foreground (Colors.IYel), it keeps that and shows on the background it would have had - the
+     * theme's field - as a terminal keeps the background when only the foreground changes
+     */
+    public void testAnInputGivenOnlyAForegroundShowsOnItsFieldsBackground() {
+        Composite panel = new VerticalPanel();
         TextInput input = new TextInput(Colors.IYel, 6);
         panel.add(input);
         panel.setTheme(Theme.CLASSIC);
-        assertSame(Colors.IYel, firstColor(input));
+        assertEquals(Color.onBackgroundOf(Colors.IYel, Theme.CLASSIC.inputColor()).asString(), firstColor(input).asString());
+        assertTrue("yellow on the field's background", Color.setsBackground(firstColor(input)));
     }
+    /**
+     * shown on a background, a foreground-only colour still behaves as itself: bold green stays bold (a focused frame),
+     * and its inverse is its own inverse (a selected item) - each on that background again
+     */
+    public void testAColourOnABackgroundKeepsItsBoldAndInverse() {
+        Color under = Theme.CLASSIC.inputColor();
+        Color green = Color.onBackgroundOf(Colors.Gre, under);
+        assertEquals(Color.onBackgroundOf(Colors.Gre.bold(), under).asString(), green.bold().asString());
+        assertFalse("bold changes it", green.asString().equals(green.bold().asString()));
+        assertEquals(Color.onBackgroundOf(Colors.Gre.invert(), under).asString(), green.invert().asString());
+        assertSame("a colour with its own background is left as it is", under, Color.onBackgroundOf(under, Theme.CLASSIC.textColor()));
+    }
+
     public void testAPanelsChildrenLookAgainWhenThePanelMoves() {
         Composite yellow = new VerticalPanel();
         yellow.setTheme(YELLOW_TEXT);

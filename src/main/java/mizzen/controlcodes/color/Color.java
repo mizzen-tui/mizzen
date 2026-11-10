@@ -241,6 +241,78 @@ public abstract class Color extends ControlCode implements ColorProvider, HasBac
         
     }
 
+    /**
+     * A colour that sets no background takes the background of what it is drawn on, as in a terminal: only a
+     * foreground given means "the background stays". For example red text on a card - Colors.IRed is a
+     * foreground only - shows on the card's background, not the screen's:
+     * <pre>
+     *     onBackgroundOf(Colors.IRed, cardColor)       red on the card's background
+     *     onBackgroundOf(rgb(red, white), cardColor)   as it is: it sets its own background
+     *     onBackgroundOf(Colors.IRed, legacyText)      as it is: there is no background to take (Legacy has none)
+     * </pre>
+     * It is foreground over background, part by part - not mergeWith, whose older rules for the named colours
+     * do other things (a foreground-only second colour is inverted into a background).
+     */
+    public static Color onBackgroundOf(Color color, Color under) {
+        if (color == null || under == null || setsBackground(color) || !setsBackground(under)) {
+            return color;
+        }
+        return new OnBackground(color, under);
+    }
+
+    /**
+     * A foreground-only colour shown on another's background (onBackgroundOf). It still behaves as the colour it
+     * was given: bold() and invert() are the given colour's - bold green, its inverse - shown on that background
+     * again. Without that, a focused frame drawn in Colors.Gre would lose its bold, and a selected item its inverse.
+     */
+    private static final class OnBackground extends Color {
+        private final Color color;
+        private final Color under;
+
+        OnBackground(Color color, Color under) {
+            this.color = color;
+            this.under = under;
+            setBoldTransform((c) -> onBackgroundOf(color.bold(), under));
+            setInvertTransform((c) -> onBackgroundOf(color.invert(), under));
+        }
+
+        @Override
+        protected int[] buildControlCodes() {
+            return mergeByParts(color, under).getControlCodes();
+        }
+
+        @Override
+        public Color getForeGroundColor() {
+            return color.getForeGroundColor();
+        }
+
+        @Override
+        public Color getBackGroundColor() {
+            return under.getBackGroundColor();
+        }
+
+        @Override
+        public boolean hasBackGroundColor() {
+            return true;                                  // that is what it is for
+        }
+
+        @Override
+        public boolean equals(Object other) {             // the same colour on the same background: the same, e.g. for
+            return other instanceof OnBackground          // a plotter joining neighbouring cells into one segment
+                    && ((OnBackground) other).color.equals(color) && ((OnBackground) other).under.equals(under);
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * color.hashCode() + under.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return color + " on " + under;
+        }
+    }
+
     // the named colours: merged as they always were
     private static boolean isNamed(Color c) {
         return c == null || c instanceof FgColor || c instanceof BgColor || c instanceof FGBGColors;

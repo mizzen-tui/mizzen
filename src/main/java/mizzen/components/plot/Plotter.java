@@ -141,6 +141,7 @@ public class Plotter extends BoundedComponent<Plotter> {
         int minCol = this.getCol();
         int maxCol = this.getRightMostCol();
         Color ownColor = getColor();                       // for plots with no colour of their own: worked out once, not per plot
+        Color lastGiven = null, lastShown = null;          // a plot colour with no background, completed once per run of it
 
         for (Plotter.Plot plot : plots) {
             int plotPosRow = plot.getRow();
@@ -154,6 +155,11 @@ public class Plotter extends BoundedComponent<Plotter> {
             }
             
             Color plotColor = plot.plotColor != null ? plot.plotColor : ownColor;   // no colour of its own: the plotter's (its theme's)
+            if (plotColor != lastGiven) {                  // given only a foreground (Colors.IRed): on the plotter's background
+                lastGiven = plotColor;
+                lastShown = Color.setsBackground(plotColor) ? plotColor : Color.onBackgroundOf(plotColor, ownColor);
+            }
+            plotColor = lastShown;
             if (lastRow != plotPosRow     || 
                 !plotColor.equals(lastColor)||
                 plotPosCol != lastCol+1) {
