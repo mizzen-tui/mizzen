@@ -44,9 +44,6 @@ public class Table01Test {
     }
 
     public static void main(String[] args) throws IOException {
-
-        Logging.setEnabledFromArgs(args);
-
         new TUIApp(args).setDefaultMainApplicationPanel().setOnReadyStart((tApp) -> {
 
             Options options = new Options();

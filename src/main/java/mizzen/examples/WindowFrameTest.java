@@ -128,7 +128,6 @@ public class WindowFrameTest {
 
         dumbArgsParse(args);
         
-        Logging.setEnabledFromArgs(args);
 
         
         new TUIApp(args)

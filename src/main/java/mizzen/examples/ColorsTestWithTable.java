@@ -21,13 +21,10 @@ import mizzen.controlcodes.color.Colors.FGBGColors;
 import mizzen.examples.sampledata.ReadSampleFiles;
 import mizzen.geom.Align;
 import mizzen.geom.Dimension;
-import mizzen.util.Logging;
 
 public class ColorsTestWithTable {
 
     public static void main(String args[]) {
-
-        Logging.setEnabledFromArgs(args);
 
         new TUIApp(args)
         .setEmptyChar(' ')

@@ -817,16 +817,75 @@ public final class Theme implements HasName<Theme> {
     }
 
     /**
-     * the theme with that name, case aside - the standard ones, then those
-     * registered (theme=Dark); null: none
+     * The theme with that name, case aside: a standard one, then one registered - and, as the theme picker
+     * shows them, a theme with its border style after its name. The style may follow a space or a hyphen:
+     * <pre>
+     *     named("dark")                       Dark
+     *     named("Retro Phosphor Rounded")     Retro Phosphor, with rounded borders (rounded())
+     *     named("Retro Phosphor - Rounded")   the same
+     *     named("Rounded Traditional")        the Rounded theme's colours, traditional borders (traditional())
+     * </pre>
+     * null: no theme has that name.
      */
     public static Theme named(String name) {
+        if (name == null) {
+            return null;
+        }
+        String wanted = name.trim();
         for (Theme theme : all()) {
-            if (theme.name().equalsIgnoreCase(name)) {
+            if (theme.name().equalsIgnoreCase(wanted)) {
+                return theme;                             // a name as it is: "Rounded" is a theme of its own
+            }
+        }
+        java.util.regex.Matcher styled = STYLED_NAME.matcher(wanted);
+        if (styled.matches()) {
+            Theme base = named(styled.group(1));
+            if (base != null) {
+                return styled.group(2).equalsIgnoreCase("rounded") ? base.rounded() : base.traditional();
+            }
+        }
+        return null;
+    }
+
+    // "<base name> Rounded" / "<base name> - Traditional": the base, then the border style after spaces or a hyphen
+    private static final java.util.regex.Pattern STYLED_NAME =
+            java.util.regex.Pattern.compile("(?i)(.+?)[\\s-]+(rounded|traditional)");
+
+    /**
+     * The theme named by theme=NAME among a program's arguments (case aside, see named); null: none given.
+     * Other arguments are left alone. Fails, listing the names there are, if no theme has that name.
+     * <pre>
+     *     java ... mizzen.examples.EmbeddedAppTest theme=Dark
+     *     java ... mizzen.examples.EmbeddedAppTest "theme=Retro Phosphor Rounded"
+     * </pre>
+     */
+    public static Theme fromArgs(String[] args) {
+        if (args == null) {
+            return null;
+        }
+        for (String arg : args) {
+            if (arg != null && arg.regionMatches(true, 0, "theme=", 0, 6)) {
+                String name = arg.substring(6);
+                Theme theme = named(name);
+                if (theme == null) {
+                    throw new IllegalArgumentException("no theme named '" + name + "' - there are " + all()
+                            + ", each also with Rounded or Traditional after it, e.g. theme=\"Dark Rounded\"");
+                }
                 return theme;
             }
         }
         return null;
+    }
+
+    /**
+     * theme=NAME among a program's arguments becomes the default theme (setDefault); without one, nothing
+     * changes. TUIApp calls it with the arguments it is given, so every app takes theme=NAME.
+     */
+    public static void setDefaultFromArgs(String[] args) {
+        Theme theme = fromArgs(args);
+        if (theme != null) {
+            setDefault(theme);
+        }
     }
 
     /** Whether this theme uses rounded borders and accent-based button focus. */

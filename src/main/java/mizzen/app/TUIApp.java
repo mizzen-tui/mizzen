@@ -20,6 +20,7 @@ import mizzen.events.keyboard.KeyInputEventHandler;
 import mizzen.events.keyboard.KeyStroke;
 import mizzen.events.focus.FocusManager;
 import mizzen.geom.Dimension;
+import mizzen.util.Logging;
 
 /**
  * 
@@ -189,39 +190,22 @@ public class TUIApp implements TUIAppInterface {
     }
 
     /**
-     * Reads the arguments the program was started with. Among them, theme=NAME picks the theme (case does not matter) -
-     * as Theme.setDefault, so an app that sets a theme in code still has its own:
+     * Reads the arguments the program was started with. Among them:
      * <pre>
-     *     java -cp mizzen.jar mizzen.examples.EmbeddedAppTest theme=Dark
+     *     theme=NAME              the default theme (Theme.setDefaultFromArgs) - an app that sets a theme in code
+     *                             still has its own; e.g. theme=Dark, "theme=Retro Phosphor Rounded"
+     *     LoggingEnabled true     the log on (Logging.setEnabledFromArgs; also -Dmizzen.log.enabled=true)
+     *
+     *     java -cp mizzen.jar mizzen.examples.EmbeddedAppTest theme=Dark LoggingEnabled true
      * </pre>
      * Fails, listing the names there are, if no theme has that name. Arguments it doesn't know are left for the app.
      */
     @Override
     public TUIApp initFromArgs(String[] args) {
         app.initFromArgs(args);
-        Theme fromArgs = themeFromArgs(args);
-        if (fromArgs != null) {
-            Theme.setDefault(fromArgs);
-        }
+        Theme.setDefaultFromArgs(args);
+        Logging.setEnabledFromArgs(args);
         return this;
-    }
-
-    // theme=NAME among args; null: none given
-    static Theme themeFromArgs(String[] args) {
-        if (args == null) {
-            return null;
-        }
-        for (String arg : args) {
-            if (arg != null && arg.regionMatches(true, 0, "theme=", 0, 6)) {
-                String name = arg.substring(6);
-                Theme theme = Theme.named(name);
-                if (theme == null) {
-                    throw new IllegalArgumentException("no theme named '" + name + "' - there are " + Theme.all());
-                }
-                return theme;
-            }
-        }
-        return null;
     }
 
     @Override

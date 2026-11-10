@@ -35,6 +35,7 @@ public class ThemePickerComponent extends AbstractComponentWrappper<HorizontalPa
     private boolean showRoundedCheckBox = true;
 
     Theme value = null;
+    private List<Theme> entries;                         // the dropdown's themes, as listed
 
     public ThemePickerComponent(List<Theme> themes) {
         super(null, new HorizontalPanel());
@@ -43,6 +44,7 @@ public class ThemePickerComponent extends AbstractComponentWrappper<HorizontalPa
 
         // components
         pickerLabelComponent = new TextComponent("");
+        entries = new ArrayList<Theme>(themes);
         themesDDLB = new DropdownListBox<Theme>(choices(themes));
         isRoundedCHBX = new CheckBoxInput();
         checkBoxLabel = new TextComponent("Rounded");
@@ -133,10 +135,14 @@ public class ThemePickerComponent extends AbstractComponentWrappper<HorizontalPa
     public void setValue(Theme theme) {
         Theme baseTheme = themeToItsBase.get(theme);
         if (baseTheme == null) {
-            // External theme: treat its traditional form as a new palette choice,
-            // unless it is already an exact dropdown entry.
-            baseTheme = theme.traditional();
-            // Add base to dropdown choices here if necessary.
+            // a theme not picked here - e.g. theme="Retro Phosphor Rounded" on the command line: its base is the
+            // dropdown's entry of the same name. By name, not by object: traditional() makes a new Theme each time,
+            // which the dropdown would not know
+            baseTheme = entryNamed(theme.traditional().name());
+            if (baseTheme == null) {
+                throw new IllegalArgumentException("ThemePickerComponent: no entry for " + theme.name() + " - its list: " + entries);
+            }
+            themeToItsBase.put(theme, baseTheme);
         }
         this.value = theme;
         boolean isRounded = (theme != null & theme.isRounded());
@@ -193,11 +199,29 @@ public class ThemePickerComponent extends AbstractComponentWrappper<HorizontalPa
     }
 
 
-    @SuppressWarnings("unchecked")
+    // the dropdown's entry with that name, case aside; null: none
+    private Theme entryNamed(String name) {
+        for (Theme entry : entries) {
+            if (entry.name().equalsIgnoreCase(name)) {
+                return entry;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * The themes to offer: all there are, and first, a theme of the app's own set as the default - unless it is one
+     * of them with another border style (e.g. "Retro Phosphor Rounded" from theme=NAME), which the Rounded box shows.
+     */
     private static List<Theme> applicationThemes() {
         List<Theme> themes = new ArrayList<Theme>(Theme.all());
-        if (!themes.contains(Theme.getDefault())) {
-            themes.add(0, Theme.getDefault()); // a theme of the app's own, set as the default
+        Theme base = Theme.getDefault().traditional();
+        boolean listed = false;
+        for (Theme theme : themes) {
+            listed |= theme.name().equalsIgnoreCase(base.name());
+        }
+        if (!listed) {
+            themes.add(0, base);                         // a theme of the app's own, set as the default
         }
         return themes;
     }
