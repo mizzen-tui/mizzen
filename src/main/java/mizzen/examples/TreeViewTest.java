@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import mizzen.app.TUIApp;
+import mizzen.components.CollapsibleSidePanel;
 import mizzen.components.Component;
 import mizzen.components.TextComponent;
 import mizzen.components.composite.Composite;
@@ -88,6 +89,7 @@ public class TreeViewTest {
                Dimension viewSize = viewSize(tApp.getCanvas());
                ScrollableComponent treePane = new ScrollableComponent(new Dimension.Simple(viewSize.getHeight(), TREE_WIDTH), tree);
                treePane.setTitle(" Sample Tree ");
+               CollapsibleSidePanel collapsibleTreePane = new CollapsibleSidePanel(treePane);
 
                // the right-hand side: shows the selected node's view - like a tab panel's content
                Composite detail = new Composite(viewSize);
@@ -127,8 +129,8 @@ public class TreeViewTest {
                    repaint(eventBus, status);
                });
 
-               HorizontalPanel panes = new HorizontalPanel().setHorizontalSpacer(2);
-               panes.add(treePane);
+               HorizontalPanel panes = new HorizontalPanel().setHorizontalSpacer(1);
+               panes.add( collapsibleTreePane );
                panes.add(detail);
 
                VerticalPanel page = new VerticalPanel();
@@ -148,7 +150,7 @@ public class TreeViewTest {
                // the panes follow the terminal's size; the view inside detail follows detail (its resize rule, see show)
                tApp.appendOnResizeAction((app, size) -> {
                    Dimension newSize = viewSize(size);
-                   treePane.resize(new Dimension.Simple(newSize.getHeight(), TREE_WIDTH));
+                   collapsibleTreePane.resize(new Dimension.Simple(newSize.getHeight(), TREE_WIDTH));
                    detail.resize(newSize);
                    panes.fullrecalcDim();     // a Composite that changes size doesn't (yet) tell its parent to lay out again
                    page.fullrecalcDim();

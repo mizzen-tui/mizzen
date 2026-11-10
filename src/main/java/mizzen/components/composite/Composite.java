@@ -36,6 +36,7 @@ import mizzen.textsegments.ScreenLineSegment;
 import mizzen.textsegments.SegmentsViewUtils;
 import mizzen.util.ElapsedTime;
 import mizzen.util.Logging;
+import mizzen.util.RecursionGuard;
 
 /**
  * A component with child components
@@ -262,15 +263,11 @@ public class Composite extends AbstractComponent<Composite>
         return children.stream().filter(c->c.visible).collect(Collectors.toList());
     }
 
-    private boolean resizing = false;
+    private final RecursionGuard resizeGuard = new RecursionGuard();   // a resize that comes back here while one runs is skipped
     private boolean resizeRulesToRun = false;                  // rules added since the last draw: they run before the next one
 
     public void resize(Dimension size) {
-        if (resizing) {
-            return;
-        }
-        try {
-            resizing = true;
+        resizeGuard.execute(() -> {
             // yes - size = null is valid; see setBounds(..)
             if (size != null && size.isSameDimension(this)) {
                 return;
@@ -284,18 +281,20 @@ public class Composite extends AbstractComponent<Composite>
             }
             markAsDirty();
             clearComputedChildPositions();
-        } finally {
-            resizing = false;
-        }
+        });
     }
     // run resize service and tell parent that we have resized to size
     private void handleResizeDependants(Dimension size) {
-        this.onResizeService.resize(size);
-        if (this.getParentContainer()!=null ) {
-            this.getParentContainer().childResized(this);
-        }
+        applyResizeRulesGuard.execute(()->{
+            this.onResizeService.resize(size);
+            if (this.getParentContainer()!=null ) {
+                this.getParentContainer().childResized(this);
+            }
+        });
     }
     
+    private RecursionGuard applyResizeRulesGuard = new RecursionGuard();
+
     /**
      * Run the resize rules once, at the current sizes: this Composite's, then those of each Composite
      * inside it, all the way down - whether or not a size changed. A resize skips a panel whose size
@@ -304,12 +303,14 @@ public class Composite extends AbstractComponent<Composite>
      */
     public void applyResizeRules() {
         resizeRulesToRun = false;
-        this.onResizeService.resize(this.getPreferredRectangleForLayout());
-        for (ComponentWithOffset child : children) {
-            if (child.component instanceof Composite) {
-                ((Composite) child.component).applyResizeRules();
+        applyResizeRulesGuard.execute(()->{
+            this.onResizeService.resize(this.getPreferredRectangleForLayout());
+            for (ComponentWithOffset child : children) {
+                if (child.component instanceof Composite) {
+                    ((Composite) child.component).applyResizeRules();
+                }
             }
-        }
+        });
     }
     
     public Rectangle getInnerRectangle() {
@@ -549,6 +550,9 @@ public class Composite extends AbstractComponent<Composite>
     }
 
     public Composite setOnResizeRule(CanResize resizableRule) {
+        if (resizableRule == null) {                // no rules: forget which rule belonged to which child too
+            this.childToResizeRule = null;
+        }
         this.onResizeService = resizableRule == null ? CanResize.NOOP : resizableRule;
         return this;
     }
@@ -619,8 +623,10 @@ public class Composite extends AbstractComponent<Composite>
             fullrecalcDim(hasBorder());
             // if we have a parent, then we better tell it our new size
             if (this.getParentContainer() != null && !previousDimension.isSameDimension(this)) {
-                this.onResizeService.resize(this.getPreferredRectangleForLayout());
-                this.getParentContainer().childResized(this);
+                applyResizeRulesGuard.execute(()->{
+                    this.onResizeService.resize(this.getPreferredRectangleForLayout());
+                    this.getParentContainer().childResized(this);
+                });
             }
         } finally {
             fullrecalcDim_FLAG = false;
@@ -1240,7 +1246,9 @@ public class Composite extends AbstractComponent<Composite>
     protected void draw(Color color, IScreenLineSegmentsBuffer segments, boolean boundsFixedFlag) {
         if (resizeRulesToRun) {                                 // new rules lay out the children: the first layout needs no sums
             resizeRulesToRun = false;
-            this.onResizeService.resize(this.getPreferredRectangleForLayout());
+            applyResizeRulesGuard.execute(()-> {
+                this.onResizeService.resize(this.getPreferredRectangleForLayout());
+            });
         }
         drawBorderIfNeeded(segments);
         if (DRAW_VIA_PARTS /*&& children != null && children.size()>1*/) {
@@ -1348,7 +1356,11 @@ public class Composite extends AbstractComponent<Composite>
     public void childResized(Component<?> child) {
         this.markAsDirty();
         fullrecalcDim();
-        this.onResizeService.resize(this.getPreferredRectangleForLayout());
+        // the child's new size changes the room left for its siblings: lay them out again. Needed even though
+        // fullrecalcDim() can run the rules: it skips them when this panel's size is fixed or unchanged - the
+        // usual case, e.g. a side panel collapsing inside a panel its parent sized. The guard skips the call that
+        // comes back here when the rules resize a child.
+        applyResizeRulesGuard.execute(() -> this.onResizeService.resize(this.getPreferredRectangleForLayout()));
         clearComputedChildPositions();
     }
 

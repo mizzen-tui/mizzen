@@ -18,6 +18,7 @@ import mizzen.geom.position.Position;
 import mizzen.textsegments.CleanString;
 import mizzen.textsegments.IScreenLineSegmentsBuffer;
 import mizzen.textsegments.ScreenLineSegment;
+import mizzen.util.RecursionGuard;
 
 public class BlocksGrid extends BoundedComponent<BlocksGrid>  implements ParentContainer {
 
@@ -224,21 +225,18 @@ public class BlocksGrid extends BoundedComponent<BlocksGrid>  implements ParentC
         return Position.ZERO;
     }
 
+    private final RecursionGuard childResizedGuard = new RecursionGuard();
+
     @Override
     public void childResized(Component<?> child) {
-        this.markAsDirty();
-        
-//      if (lastRecordedSize.isSameDimension(this)) {
-//          return;
-//      }
-//      
-//      lastRecordedSize = new Dimension.Simple(this);
-      
-//      Logging.info("childResized() --> " + HasName.UTIL.getName(this) +  "    X child = " + HasName.UTIL.getName(child)  + " child size = "+ Dimension.UTIL.shortStr(child));
-      
-      if (this.getParentContainer() != null) {
-          this.getParentContainer().childResized(this);
-      }
+        childResizedGuard.execute(()->{
+            this.markAsDirty();
+            
+          
+          if (this.getParentContainer() != null) {
+              this.getParentContainer().childResized(this);
+          }
+        });
     }
 
     @Override

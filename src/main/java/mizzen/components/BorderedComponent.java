@@ -139,6 +139,9 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
         if (this.component != null) {
             this.component.setParentContainer(null);
         }
+        if (component == null) {
+            throw new NullPointerException("Null child component.  BorderedComponent must always have a child component.");
+        }
         this.component = component;
         this.component.setParentContainer(this);
         this.componentPosition = new Position.Simple(1,1);
@@ -240,7 +243,7 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
     }
 
     public String getTitle() {
-        return border.getTitle();
+        return border != null ? border.getTitle() : null;
     }
 
     public BorderedComponent setTitle(Color titleColor, String title, Align titleAlign) {

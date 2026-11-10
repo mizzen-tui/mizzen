@@ -15,7 +15,11 @@ public class PositionDelegate implements Position {
     public PositionDelegate(Position rowColumnDelegate) {
         this(rowColumnDelegate, rowColumnDelegate);
     }
-    
+
+    public void setDelegate(Position rowColumnDelegate) {
+        this.rowDelegate = rowColumnDelegate;
+        this.columnDelegate = rowColumnDelegate;
+    }
     
     @Override
     public int getRow() {

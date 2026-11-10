@@ -9,6 +9,7 @@ import mizzen.geom.Dimension;
 import mizzen.geom.Rectangle;
 import mizzen.geom.position.Position;
 import mizzen.textsegments.IScreenLineSegmentsBuffer;
+import mizzen.util.RecursionGuard;
 
 public class AbstractComponentWrappper<T extends Component<?>>  extends  AbstractComponent<AbstractComponentWrappper<T>> 
                       implements ParentContainer, 
@@ -92,21 +93,17 @@ public class AbstractComponentWrappper<T extends Component<?>>  extends  Abstrac
         }
     }
 
+    private final RecursionGuard childResizedGuard = new RecursionGuard();
+
     @Override
     public void childResized(Component<?> child) {
-        this.markAsDirty();
-        
-//        if (lastRecordedSize.isSameDimension(this)) {
-//            return;
-//        }
-//        
-//        lastRecordedSize = new Dimension.Simple(this);
-        
-//        Logging.info("childResized() --> " + HasName.UTIL.getName(this) +  "    X child = " + HasName.UTIL.getName(child)  + " child size = "+ Dimension.UTIL.shortStr(child));
-        
-        if (this.getParentContainer() != null) {
-            this.getParentContainer().childResized(this);
-        }
+        childResizedGuard.execute(()->{
+            this.markAsDirty();
+            
+            if (this.getParentContainer() != null) {
+                this.getParentContainer().childResized(this);
+            }
+        });
     }
 
     @Override

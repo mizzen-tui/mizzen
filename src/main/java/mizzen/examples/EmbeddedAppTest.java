@@ -8,6 +8,7 @@ import java.util.function.Consumer;
 
 import mizzen.app.Embedding;
 import mizzen.app.TUIApp;
+import mizzen.components.CollapsibleSidePanel;
 import mizzen.components.Component;
 import mizzen.components.HasName;
 import mizzen.components.ParentContainer;
@@ -18,7 +19,6 @@ import mizzen.components.composite.VerticalPanel;
 import mizzen.components.frameset.HorizontalSplitter;
 import mizzen.components.frameset.VerticalSplitter;
 import mizzen.components.input.Button;
-import mizzen.components.input.DropdownListBox;
 import mizzen.components.input.RadioGroup;
 import mizzen.components.input.tree.DefaultTreeNode;
 import mizzen.components.plot.braille.BrailleGrid;
@@ -173,11 +173,13 @@ public class EmbeddedAppTest {
             // the theme: the desktop's - an example that gives no colours takes it too (its app has none of its own)
             //DropdownListBox<Theme> theme = ThemeList.of(host::setTheme).skippedByTab(true);   // focus starts in the tree, not here
             ThemePickerComponent theme = ThemePickerComponent.of(host);
-            VerticalPanel left = new VerticalPanel();
+            //VerticalPanel left = new VerticalPanel();
             topBanner.add(new HorizontalPanel().addText("Theme").add(theme));
             topBanner.add(learnButton);
-            left.add(treePane);
-            left.onResizeExpandDown(treePane);
+            CollapsibleSidePanel collapsibleTreePane = new CollapsibleSidePanel(treePane);
+            // left.add(collapsibleTreePane);
+            // left.onResizeExpandDownAndRight(collapsibleTreePane);//(collapsibleTreePane);
+            // left.setEmptyChar('?');
 
             host.getEventBus().raiseEvent(new RequestFocusEvent(tree));
 
@@ -198,9 +200,10 @@ public class EmbeddedAppTest {
 
             // the tree keeps its width, the slot takes the rest; the status line keeps its row at the bottom
             HorizontalPanel panes = new HorizontalPanel();
-            panes.add(left);
+            panes.setBorderColor(Colors.IRed);
+            panes.add(collapsibleTreePane);
             panes.add(right.area);
-            panes.onResizeExpandDown(left);
+            panes.onResizeExpandDown(collapsibleTreePane);
             panes.onResizeExpandDownAndRight(right.area);
 
             VerticalPanel page = new VerticalPanel();
