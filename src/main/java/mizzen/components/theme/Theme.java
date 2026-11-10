@@ -144,6 +144,8 @@ public final class Theme implements HasName<Theme> {
     private Color codeColor; // `code`
     private Color dimColor; // quotes, rules, the lines of a table in a document
     private List<Color> drawingColors; // charts and plots: series i in drawingColor(i)
+    private List<Color> derivedDrawingColors; // none given: made once from its other colours (drawingColors) - never
+                                              // copied with the theme, so a copy with other colours makes its own
 
     /**
      * how a focused button shows: BRACKETS [OK] (the standard themes), or ACCENT -
@@ -416,10 +418,14 @@ public final class Theme implements HasName<Theme> {
 
     public List<Color> drawingColors() {
 
-        return drawingColors != null ? drawingColors
-
-                : Collections.unmodifiableList(
-                        Arrays.asList(headingColor, linkColor(), successColor, errorColor, warningColor(), textColor));
+        if (drawingColors != null) {
+            return drawingColors;
+        }
+        if (derivedDrawingColors == null) {               // made the first time it is asked for, not on every call
+            derivedDrawingColors = Collections.unmodifiableList(
+                    Arrays.asList(headingColor, linkColor(), successColor, errorColor, warningColor(), textColor));
+        }
+        return derivedDrawingColors;
 
     }
 

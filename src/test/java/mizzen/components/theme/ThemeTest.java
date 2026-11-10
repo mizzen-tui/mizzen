@@ -186,6 +186,20 @@ public class ThemeTest extends TestCase {
         assertSame("a colour with its own background is left as it is", under, Color.onBackgroundOf(under, Theme.CLASSIC.textColor()));
     }
 
+    /**
+     * a theme with no drawing colours of its own (an app's, say - every standard theme has its own) makes them from its
+     * other colours - once, not on every call; a copy with another colour makes its own, from its colours
+     */
+    public void testDrawingColorsMadeFromItsColoursOnceAndAfreshInACopy() {
+        Theme plain = Theme.rgbTheme("Plain", 0x000000, 0xCCCCCC, 0xFFFFFF, 0xCCCCCC, 0x222222, 0xFFFFFF, 0x333333,
+                0x000000, 0xFFFF00, 0x888888, 0x555555, 0xFF0000, 0x00FF00, 0x000000, 0x00FFFF);
+        assertSame("made once", plain.drawingColors(), plain.drawingColors());
+        Theme redText = plain.withTextColor(Colors.IRed);
+        assertNotSame("a copy makes its own", plain.drawingColors(), redText.drawingColors());
+        assertSame("from its own text colour, the last of the six", Colors.IRed, redText.drawingColor(5));
+        assertSame(plain.textColor(), plain.drawingColor(5));
+    }
+
     public void testAPanelsChildrenLookAgainWhenThePanelMoves() {
         Composite yellow = new VerticalPanel();
         yellow.setTheme(YELLOW_TEXT);
