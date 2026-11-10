@@ -2,8 +2,8 @@
 
 Working notes on how the library actually works, warts included. Written from
 reading the code (Sep 2026), not from original design intent — where intent is
-guessed, it says so. Scope so far: **event system and focus**. Other areas
-(rendering, layout, plotting) are not yet covered.
+guessed, it says so. Scope so far: **event system and focus**, and in §8 how sizes propagate
+(layout). Other areas (rendering, plotting) are not yet covered.
 
 ---
 
@@ -696,6 +696,9 @@ actual scrolling, hotkeys, table selection events, bring-to-front.
 
 ## 7. TODO (parked)
 
+- **Two-phase layout instead of recursion guards** - see §8. Not urgent: the guards work and are
+  tested.
+
 - **Scripted regression run for the examples ("Selenium for the TUI").** Scenario files (keys,
   clicks on *text*, drags, dialogs) played in a real pseudo-terminal; fails on any exception and on
   differences from recorded "golden" screens and focus order; `--record` to accept an intended
@@ -703,3 +706,61 @@ actual scrolling, hotkeys, table selection events, bring-to-front.
   goldens would need constant re-recording. A working prototype of the driver exists from the focus
   redesign sessions (Python + `pyte`, dev-only); a pure-Java variant inside `mvn test` is the
   alternative (it would not see screen-backend bugs).
+
+## 8. Layout: sizes propagate eagerly (Nov 2026)
+
+### 8.1 Today: eager resizes, cut by recursion guards
+
+A size change is acted on at once, inside the call that made it:
+```
+  child resizes itself     ->  parent.childResized(child)  ->  parent runs its resize rules
+  a rule resizes a sibling ->  sibling tells the parent     ->  parent.childResized(..) again ...
+```
+`util/RecursionGuard` cuts the loop: a call that comes back while the guarded code runs is
+skipped. Guards in use: `Composite` (`resizeGuard` in `resize`, `applyResizeRulesGuard` in
+`handleResizeDependants`, `applyResizeRules`, `fullrecalcDim`, `draw` and `childResized`),
+`AbstractComponentWrappper.childResized`, `BlocksGrid.childResized`, and `CollapsibleSidePanel`
+(its `resize`, and the child swap in `setCollapsed`).
+
+`Composite.childResized` runs the rules itself (commit 32bb7ac): `fullrecalcDim()` skips them when
+the panel's size is fixed or unchanged, which is the usual case. Example: a `CollapsibleSidePanel`
+collapses inside a `HorizontalPanel` its parent has sized; without this, the neighbour kept its
+old width and left a gap.
+
+Known cost: a skipped call is **dropped**, not postponed. Rules run in the order they were added,
+so a pass can go stale:
+```
+  rule A: right pane fills what is left   (laid out for a tree 30 wide)
+  rule B: the tree grows to 35            ->  childResized  ->  skipped by the guard
+  result: the right pane overlaps the tree by 5, until the next terminal resize
+```
+Not seen yet: the examples add the fixed-width rules first. `CollapsibleSidePanel` shows the other
+risk: while it swaps its child it has an in-between width, and a parent's rule that ran at that
+moment passed it on (it lost a column per toggle until the swap ignored outside resizes, 2910eaa).
+
+### 8.2 Intent: two phases, like the mature toolkits
+
+Swing (`revalidate`), JavaFX (`requestLayout`, once per pulse), Android (`requestLayout`; a request
+made during layout gets a second pass and a warning) and browsers all split layout in two:
+1. **Invalidate:** a size change only marks the component, and its parents up to the top, as
+   needing layout. Nothing is laid out yet.
+2. **Validate:** once, before painting, one top-down pass runs the rules of every marked panel.
+
+Recursion can't happen, so most guards go, and no pass is lost. Mizzen has half of this already:
+dirty marks bubble up, `RepaintWhenDirty` repaints whatever is dirty, and `Composite.draw` runs
+newly added rules before drawing (`resizeRulesToRun`).
+
+**Where the hook could go** (not decided):
+- `drawIfNeeded()`, the final method every draw goes through - in `AbstractComponent` (line ~84)
+  and again in `BoundedComponent` (line ~159); the two copies have drifted (`clearBeforeDraw` vs
+  `clear`, a zero-size check, the segments integrity assert). Draws run parent first, so
+  "lay out if marked, then draw" here is top-down; `resizeRulesToRun` in `Composite.draw` is the
+  precedent. Catch: a child laid out during its parent's draw can change size after the parent
+  has drawn around it.
+- Or one pass before the canvas draws (where `RequestUpdateCanvasEvent` is handled), so all
+  layout finishes before any painting - the toolkits' way, and cleaner.
+
+Note the contrast in style: `drawIfNeeded` **throws** on a recursive call (`busyDrawingFLAG`),
+while `RecursionGuard` **skips** silently. If two-phase layout lands, a request for layout made
+during the validate pass should either get one more pass (capped, then throw with the component
+tree) or throw, never be dropped.
