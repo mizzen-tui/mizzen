@@ -44,8 +44,29 @@ public class ComponentInsideViaParentOrPopupOwnerTest extends TestCase {
         assertTrue(Component.UTIL.isPartOf(popup, dialog));
     }
 
-    public void testACycleFailsAndShowsTheWalk() {
-        Component.UTIL.setPopupOwner(form, field);           // form owned by its own child: field -> form -> field ...
+    public void testOwningAnAncestorFailsWhenTheLinkIsMade() {
+        try {
+            Component.UTIL.setPopupOwner(form, field);       // form owned by its own child: field -> form -> field ...
+            fail("a popup owned by something inside it must fail");
+        } catch (IllegalArgumentException expected) {
+            assertTrue(expected.getMessage(), expected.getMessage().contains("cannot own"));
+            assertTrue(expected.getMessage(), expected.getMessage().contains("field"));
+        }
+        assertNull("the link was not made", form.getPopupOwner());
+    }
+
+    public void testOwningItselfFails() {
+        try {
+            Component.UTIL.setPopupOwner(popup, popup);
+            fail("a popup owning itself must fail");
+        } catch (IllegalArgumentException expected) {
+            assertTrue(expected.getMessage(), expected.getMessage().contains("cannot own"));
+        }
+    }
+
+    /** a cycle made without setPopupOwner's check (the field set directly) still fails the walk, listing it */
+    public void testACycleFoundOnTheWalkFailsAndShowsTheWalk() {
+        ((AbstractComponent<?>) form).popupOwner = field;
         try {
             Component.UTIL.isPartOf(field, root);
             fail("a cycle must fail");

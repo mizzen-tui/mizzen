@@ -122,11 +122,24 @@ public interface Component<T extends Component<?>>
 
     public static class UTIL {
 
-        /** mark popup as belonging to owner for keyboard focus (see getPopupOwner); owner null = not a popup */
+        /**
+         * Marks popup as belonging to owner (see getPopupOwner): e.g. a dropdown marks its open list, which it
+         * draws on the root panel, as its own. Keyboard focus, and a dialog deciding whether a click is on it,
+         * then treat the list as part of the dropdown. owner null: popup is no longer a popup.
+         * <p/>
+         * Fails if owner is popup itself or is inside popup: walking up from popup would come back to popup
+         * and never end. The message shows the walk up from owner.
+         */
         public static void setPopupOwner(Component<?> popup, Component<?> owner) {
             if (!(popup instanceof AbstractComponent)) {
                 throw new IllegalArgumentException("setPopupOwner(): " + HasName.UTIL.getName(popup)
                         + " is not an AbstractComponent - it cannot be a popup");
+            }
+            if (owner != null && isPartOf(owner, popup)) {
+                throw new IllegalArgumentException("setPopupOwner(): " + HasName.UTIL.getName(owner)
+                        + " cannot own " + HasName.UTIL.getName(popup) + " - it is that popup or inside it, so the"
+                        + " walk up from the popup would come back to it. The walk up from the owner:\n"
+                        + walkUntilVisit(owner, popup, 1));
             }
             ((AbstractComponent<?>) popup).popupOwner = owner;
         }
@@ -172,23 +185,22 @@ public interface Component<T extends Component<?>>
                 if (!seen.add(c)) {
                     throw new IllegalStateException("isPartOf(): the popup-owner / parent links form a cycle - "
                             + HasName.UTIL.getName(c) + " is its own ancestor. The walk up from "
-                            + HasName.UTIL.getName(component) + ":\n" + walkUntilSecondVisit(component, c));
+                            + HasName.UTIL.getName(component) + ":\n" + walkUntilVisit(component, c, 2));
                 }
             }
             return false;
         }
 
-        // e.g.   list (popup: next is its owner) -> dropdown -> panel -> list ...  - up to the second visit of repeated
-        private static String walkUntilSecondVisit(Component<?> from, Component<?> repeated) {
+        // For error messages: the components met walking up from 'from', one per line, stopping once 'until'
+        // has been reached 'visits' times - 1 to show the path to it, 2 to show a cycle round to it again:
+        //   field -> form (popup: next is its owner) -> field
+        private static String walkUntilVisit(Component<?> from, Component<?> until, int visits) {
             StringJoiner walk = new StringJoiner("\n  -> ", "  ", "");
-            boolean metOnce = false;
+            int met = 0;
             for (Component<?> w = from; w != null; w = ownerOrParent(w)) {
                 walk.add(HasName.UTIL.getName(w) + (w.getPopupOwner() != null ? "   (popup: next is its owner)" : ""));
-                if (w == repeated) {
-                    if (metOnce) {
-                        break;
-                    }
-                    metOnce = true;
+                if (w == until && ++met == visits) {
+                    break;
                 }
             }
             return walk.toString();
