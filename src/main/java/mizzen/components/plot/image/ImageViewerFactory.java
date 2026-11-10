@@ -459,7 +459,9 @@ public class ImageViewerFactory {
                                                        RGBToAnsiColorControlCode colorMap, 
                                                        String gradientStr) throws Exception {
 
-        Plotter plotterComponent = new Plotter(Colors.On_Whi, desiredImgSizeInCharacters);
+        // no colour of its own: its theme's - the image's characters (coloured by their pixels, foreground only) show on
+        // the theme's background; a fixed white here would put them all on white, where light pixels can't be seen
+        Plotter plotterComponent = new Plotter((Color) null, desiredImgSizeInCharacters);
         plotterComponent.setEmptyColor(Colors.Whi);
         plotterComponent.setEmptyChar(' ');
         plotterComponent.setFillOnClear(false);
@@ -543,7 +545,9 @@ public class ImageViewerFactory {
 
     public static Component<?> simpleImageToBrailleView(Image inputImage, Dimension desiredImgSizeInCharacters, RGBPlotPredicate toPlotOrNot, RGBToAnsiColorControlCode colorMap) throws Exception {
 
-        BrailleGrid brailleGrid = new BrailleGrid(Colors.On_Bla, desiredImgSizeInCharacters);
+        // no colour of its own: its theme's - the dots (foreground only, from their pixels) show on the theme's background,
+        // as the Ascii view's characters do; a fixed black here would show as black blocks on a light theme
+        BrailleGrid brailleGrid = new BrailleGrid((Color) null, desiredImgSizeInCharacters);
         brailleGrid.setEmptyColor(Colors.Whi);
         brailleGrid.setEmptyChar(' ');
         brailleGrid.setFillOnClear(false);

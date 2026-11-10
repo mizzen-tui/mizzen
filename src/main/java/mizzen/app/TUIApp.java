@@ -21,6 +21,7 @@ import mizzen.events.keyboard.KeyStroke;
 import mizzen.events.focus.FocusManager;
 import mizzen.geom.Dimension;
 import mizzen.util.Logging;
+import mizzen.util.VeryBasicArgsHelper;
 
 /**
  * 
@@ -206,6 +207,33 @@ public class TUIApp implements TUIAppInterface {
         Theme.setDefaultFromArgs(args);
         Logging.setEnabledFromArgs(args);
         return this;
+    }
+
+    /**
+     * How many of the arguments, from args[i] on, are TUIApp's own - read by initFromArgs; 0: args[i] is not one of
+     * them. An app that checks its own arguments skips these, so theme=Dark among them is not an "unknown option":
+     * <pre>
+     *     NOGRAPHICS              1
+     *     theme=NAME              1     e.g. "theme=Retro Phosphor Rounded"
+     *     LoggingEnabled true     2     also -LoggingEnabled, --LoggingEnabled
+     *
+     *     int own = TUIApp.argumentsReadAt(args, i);
+     *     if (own &gt; 0) { i += own - 1; continue; }        // in the app's loop over its arguments
+     * </pre>
+     * Keep it in step with initFromArgs: an argument added there belongs here too.
+     */
+    public static int argumentsReadAt(String[] args, int i) {
+        if (args == null || i < 0 || i >= args.length || args[i] == null) {
+            return 0;
+        }
+        String arg = args[i];
+        if (VeryBasicArgsHelper.isArgName(arg, "NOGRAPHICS") || arg.regionMatches(true, 0, "theme=", 0, 6)) {
+            return 1;
+        }
+        if (VeryBasicArgsHelper.isArgName(arg, "LoggingEnabled")) {
+            return i + 1 < args.length ? 2 : 1;            // its value follows
+        }
+        return 0;
     }
 
     @Override

@@ -196,8 +196,9 @@ public class ImageSplitterTest {
                     throw new IllegalArgumentException("OFFSETS needs x y pairs (odd number of values)");
                 }
                 current.offsets = offsets;
-            } else if (VeryBasicArgsHelper.isArgName(arg, "NOGRAPHICS")) {
-                continue;   // read by TUIApp itself
+            } else if (TUIApp.argumentsReadAt(args, i) > 0) {
+                i += TUIApp.argumentsReadAt(args, i) - 1;   // TUIApp's own (theme=NAME, NOGRAPHICS, LoggingEnabled): read by it
+                continue;
             } else {
                 throw new IllegalArgumentException("unknown option '" + arg + "'");
             }
@@ -280,6 +281,8 @@ public class ImageSplitterTest {
             "  IMAGEWIDTH <px>        sprite sheet only: frame width  (default " + DEFAULTS.imageWidth + ")",
             "  IMAGEHEIGHT <px>       sprite sheet only: frame height (default " + DEFAULTS.imageHeight + ")",
             "  NOGRAPHICS             (TUIApp) draw without graphics characters",
+            "  theme=NAME             (TUIApp) the theme, e.g. theme=Dark, \"theme=Retro Phosphor Rounded\"",
+            "  LoggingEnabled true    (TUIApp) write mizzen.log",
             "  HELP | -h              this help",
             "",
             "example (two GIFs in ASCII at 50ms, then a sprite sheet of 4 x 2 frames of 96 x 96 in Braille):",
