@@ -40,6 +40,16 @@ public class BlocksGrid extends BoundedComponent<BlocksGrid>  implements ParentC
         this(color, new Dimension.Simple(height, width));
     }
 
+    /** its colour from its theme - and its plotter's, which draws the points: on a picture, the theme's image backing */
+    @Override
+    public BlocksGrid setThemeColor(Function<Theme, Color> colorFromTheme) {
+        super.setThemeColor(colorFromTheme);
+        if (this.plotter != null) {
+            this.plotter.setThemeColor(colorFromTheme);
+        }
+        return this;
+    }
+
     public Plotter getPlotter() {
         return plotter;
     }

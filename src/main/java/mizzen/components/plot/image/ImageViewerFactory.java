@@ -1,5 +1,6 @@
 package mizzen.components.plot.image;
 
+import mizzen.components.theme.Theme;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.RenderingHints;
@@ -217,6 +218,36 @@ public class ImageViewerFactory {
         return null;
     }
 
+    /**
+     * Fills an image view with the theme's image backing colour and returns it. Used however the view was made - shown
+     * first, or made again when Options picks another kind of view: its colour is the theme's image backing (Theme.imageBackingColor), the whole picture area filled with it. The
+     * pixels, drawn as characters, dots or blocks in their own colours (foreground only), show on it - dark in every
+     * theme, so light pixels can be seen - and a theme switch reaches it. Blocks set both colours where a pixel is
+     * plotted: the backing shows only where none is.
+     */
+    private static Plotter filledWithThemeImageBacking(Plotter view) {
+        view.setThemeColor(Theme::imageBackingColor);
+        view.setEmptyChar(' ');
+        view.setFillOnClear(true);
+        return view;
+    }
+
+    /** see filledWithThemeImageBacking(Plotter) */
+    private static BrailleGrid filledWithThemeImageBacking(BrailleGrid view) {
+        view.setThemeColor(Theme::imageBackingColor);
+        view.setEmptyChar(' ');
+        view.setFillOnClear(true);
+        return view;
+    }
+
+    /** see filledWithThemeImageBacking(Plotter) */
+    private static BlocksGrid filledWithThemeImageBacking(BlocksGrid view) {
+        view.setThemeColor(Theme::imageBackingColor);
+        view.setEmptyChar(' ');
+        view.setFillOnClear(true);
+        return view;
+    }
+
     public static class ImageRenderer extends AbstractComponentWrappper<Component<?>> {
 
         public ImageRenderer(Component<?> wrappedComponent) {
@@ -226,13 +257,13 @@ public class ImageViewerFactory {
 
         void rebuildWrappedComponentIfNeeded(ImageRenderRequest rqst) {
             if (!(this.getWrappedComponent() instanceof BlocksGrid) && rqst.isBlocksType()) {
-                BlocksGrid grid = new BlocksGrid(this.getWrappedComponent().getColor(), (Dimension)this.getWrappedComponent());
+                BlocksGrid grid = filledWithThemeImageBacking(new BlocksGrid((Color) null, (Dimension)this.getWrappedComponent()));
                 this.setWrappedComponent(grid);
             } else if (!(this.getWrappedComponent() instanceof BrailleGrid) && rqst.isBrailleType()) {
-                BrailleGrid grid = new BrailleGrid(this.getWrappedComponent().getColor(), (Dimension)this.getWrappedComponent());
+                BrailleGrid grid = filledWithThemeImageBacking(new BrailleGrid((Color) null, (Dimension)this.getWrappedComponent()));
                 this.setWrappedComponent(grid);
             } else if (!(this.getWrappedComponent() instanceof Plotter) && (!rqst.isBrailleType()) && (!rqst.isBlocksType())) {
-                Plotter plotter = new Plotter(this.getWrappedComponent().getColor(), (Dimension)this.getWrappedComponent());
+                Plotter plotter = filledWithThemeImageBacking(new Plotter((Color) null, (Dimension)this.getWrappedComponent()));
                 this.setWrappedComponent(plotter);
             }
         }
@@ -459,12 +490,7 @@ public class ImageViewerFactory {
                                                        RGBToAnsiColorControlCode colorMap, 
                                                        String gradientStr) throws Exception {
 
-        // no colour of its own: its theme's - the image's characters (coloured by their pixels, foreground only) show on
-        // the theme's background; a fixed white here would put them all on white, where light pixels can't be seen
-        Plotter plotterComponent = new Plotter((Color) null, desiredImgSizeInCharacters);
-        plotterComponent.setEmptyColor(Colors.Whi);
-        plotterComponent.setEmptyChar(' ');
-        plotterComponent.setFillOnClear(false);
+        Plotter plotterComponent = filledWithThemeImageBacking(new Plotter((Color) null, desiredImgSizeInCharacters));
         plotterComponent.setName("imageViewer-plotter");
 
         return simpleImageToStringView(plotterComponent,
@@ -545,12 +571,7 @@ public class ImageViewerFactory {
 
     public static Component<?> simpleImageToBrailleView(Image inputImage, Dimension desiredImgSizeInCharacters, RGBPlotPredicate toPlotOrNot, RGBToAnsiColorControlCode colorMap) throws Exception {
 
-        // no colour of its own: its theme's - the dots (foreground only, from their pixels) show on the theme's background,
-        // as the Ascii view's characters do; a fixed black here would show as black blocks on a light theme
-        BrailleGrid brailleGrid = new BrailleGrid((Color) null, desiredImgSizeInCharacters);
-        brailleGrid.setEmptyColor(Colors.Whi);
-        brailleGrid.setEmptyChar(' ');
-        brailleGrid.setFillOnClear(false);
+        BrailleGrid brailleGrid = filledWithThemeImageBacking(new BrailleGrid((Color) null, desiredImgSizeInCharacters));
         brailleGrid.setName("imageViewer-brailleGrid");
 
         return simpleImageToBrailleView(brailleGrid, 
@@ -644,10 +665,7 @@ public class ImageViewerFactory {
     
     public static Component<?> simpleImageToBlocksView(Image inputImage, Dimension desiredImgSizeInCharacters, RGBPlotPredicate toPlotOrNot, RGBToAnsiColorControlCode colorMap) throws Exception {
         
-        BlocksGrid blocksGrid = new BlocksGrid(Colors.On_Whi, desiredImgSizeInCharacters);
-        blocksGrid.setEmptyColor(Colors.Whi);
-        blocksGrid.setEmptyChar(' ');
-        blocksGrid.setFillOnClear(false);
+        BlocksGrid blocksGrid = filledWithThemeImageBacking(new BlocksGrid((Color) null, desiredImgSizeInCharacters));
         blocksGrid.setName("imageViewer-BlocksGrid");
 
         return simpleImageToBlocksView(blocksGrid, 

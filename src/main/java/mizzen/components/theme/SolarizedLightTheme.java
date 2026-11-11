@@ -11,6 +11,7 @@ final class SolarizedLightTheme {
     private static final int PALE_CREAM = 0xEEE8D5;
     private static final int WHITE = 0xFFFFFF;
     private static final int DARK_TEAL = 0x073642;
+    private static final int DEEP_TEAL = 0x002B36;                // Solarized's darkest base (base03)
     private static final int SLATE_GREY = 0x586E75;
     private static final int BLUE_GREY = 0x657B83;
     private static final int LIGHT_BLUE_GREY = 0x93A1A1;
@@ -41,6 +42,7 @@ final class SolarizedLightTheme {
                 .withSurfaceColor(rgb(SLATE_GREY, PALE_CREAM))
                 .withAccentColor(rgb(BLUE, WARM_CREAM))
                 .withStripeColor(rgb(SLATE_GREY, PALE_CREAM))
+                .withImageBackingColor(rgb(WARM_CREAM, DEEP_TEAL))   // pictures in Solarized's dark base: light pixels show
                 .drawing(WARM_CREAM, CYAN, YELLOW, VIOLET,
                         GREEN, RED, BLUE, ORANGE, MAGENTA);
     }

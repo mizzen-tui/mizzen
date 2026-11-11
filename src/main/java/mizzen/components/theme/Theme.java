@@ -144,6 +144,7 @@ public final class Theme implements HasName<Theme> {
     private Color codeColor; // `code`
     private Color dimColor; // quotes, rules, the lines of a table in a document
     private List<Color> drawingColors; // charts and plots: series i in drawingColor(i)
+    private Color imageBackingColor;     // pictures (the Ascii and Braille image views) drawn on this; null: the background
     private List<Color> derivedDrawingColors; // none given: made once from its other colours (drawingColors) - never
                                               // copied with the theme, so a copy with other colours makes its own
 
@@ -749,6 +750,23 @@ public final class Theme implements HasName<Theme> {
         return with((t) -> t.focusedBlockChars = chars);
     }
 
+    /**
+     * What pictures are drawn on - the Ascii and Braille image views, whose characters are only the image's pixels,
+     * each in its own colour. They read like light on a dark screen: a light theme gives a dark backing here, or the
+     * light parts of a picture disappear into its background. Not given: the theme's own background (textColor's) -
+     * a dark theme's pictures sit on its screen; Legacy, which has no background, is unchanged.
+     * <pre>
+     *     .withImageBackingColor(rgb(WHITE, CHARCOAL))      a light theme: pictures in a dark frame
+     * </pre>
+     */
+    public Color imageBackingColor() {
+        return imageBackingColor != null ? imageBackingColor : textColor;
+    }
+
+    public Theme withImageBackingColor(Color color) {
+        return with((t) -> t.imageBackingColor = color);
+    }
+
     public Theme withDrawingColors(Color... colors) {
         return with((t) -> t.drawingColors = Collections.unmodifiableList(Arrays.asList(colors.clone())));
     }
@@ -804,6 +822,7 @@ public final class Theme implements HasName<Theme> {
         copy.accentColor = accentColor;
         copy.stripeColor = stripeColor;
         copy.drawingColors = drawingColors;
+        copy.imageBackingColor = imageBackingColor;
         copy.blockChars = blockChars;
         copy.buttonFocus = buttonFocus;
         copy.focusedBlockChars = focusedBlockChars;

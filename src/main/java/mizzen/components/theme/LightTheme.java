@@ -50,6 +50,7 @@ final class LightTheme {
                 .withWarningColor(rgb(AMBER, OFF_WHITE))
                 .withDialogColor(rgb(CHARCOAL, WHITE))
                 .withStripeColor(rgb(CHARCOAL, COOL_LIGHT_GREY))
+                .withImageBackingColor(rgb(WHITE, CHARCOAL))   // pictures in a dark frame: light pixels show
                 .drawing(OFF_WHITE, CYAN, GOLD, VIOLET, GREEN,
                         BRIGHT_RED, BRIGHT_BLUE, ORANGE, DARK_SLATE_GREY);
     }

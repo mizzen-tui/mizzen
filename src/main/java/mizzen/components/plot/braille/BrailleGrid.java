@@ -43,6 +43,16 @@ public class BrailleGrid extends Composite implements PointPlotter {
     }
     
     
+    /** its colour from its theme - and its plotter's, which draws the points: on a picture, the theme's image backing */
+    @Override
+    public BrailleGrid setThemeColor(Function<Theme, Color> colorFromTheme) {
+        super.setThemeColor(colorFromTheme);
+        if (this.plotter != null) {
+            this.plotter.setThemeColor(colorFromTheme);
+        }
+        return this;
+    }
+
     public Plotter getPlotter() {
         return plotter;
     }
