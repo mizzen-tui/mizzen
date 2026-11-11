@@ -3,8 +3,11 @@ package mizzen.components.plot.image.animate;
 import java.awt.AlphaComposite;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -14,6 +17,7 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.metadata.IIOMetadata;
 import javax.imageio.stream.ImageInputStream;
+import javax.imageio.stream.MemoryCacheImageInputStream;
 
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
@@ -73,22 +77,69 @@ public class AnimatedGifImageIterator
     private final int canvasHeight;
 
 
+    /** the GIF in this file, read from it as it plays: the file stays open until close() */
     public AnimatedGifImageIterator(
             String gifPath)
             throws IOException {
 
-        ImageInputStream newInput = null;
+        this(ImageIO.createImageInputStream(new File(gifPath)), gifPath);
+    }
+
+    /**
+     * The GIF in these bytes - for a GIF that isn't a file this process can open, such as one sent by another
+     * process. The iterator keeps the bytes (the GIF's compressed size) and decodes each frame as it is shown, as it
+     * does from a file.
+     * <pre>
+     *     ImageIterator movie = new AnimatedGifImageIterator(gifBytes);
+     * </pre>
+     */
+    public AnimatedGifImageIterator(
+            byte[] gif)
+            throws IOException {
+
+        this(new MemoryCacheImageInputStream(new ByteArrayInputStream(gif)), "GIF from bytes");
+    }
+
+    /**
+     * The GIF read from this stream, to its end, at once: as AnimatedGifImageIterator(byte[]) from then on. The
+     * stream is the caller's: it is not closed here, and may be closed as soon as this returns.
+     * <p/>
+     * Read at once, not as the GIF plays: looping goes back to the GIF's start, which a stream may not allow, and
+     * ImageIO would otherwise cache it in a temporary file.
+     */
+    public AnimatedGifImageIterator(
+            InputStream gif)
+            throws IOException {
+
+        this(readToEnd(gif));
+    }
+
+    private static byte[] readToEnd(InputStream in) throws IOException {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        byte[] buffer = new byte[16 * 1024];
+        for (int n; (n = in.read(buffer)) != -1; ) {
+            bytes.write(buffer, 0, n);
+        }
+        return bytes.toByteArray();
+    }
+
+    /**
+     * Every constructor ends here: input, already open, is owned by this iterator from now on - closed by close(),
+     * or here if the GIF can't be read. source names the GIF in error messages: its path, or "GIF from bytes".
+     */
+    private AnimatedGifImageIterator(
+            ImageInputStream input,
+            String source)
+            throws IOException {
+
+        ImageInputStream newInput = input;
         ImageReader newReader = null;
 
         try {
 
-            newInput =
-                ImageIO.createImageInputStream(
-                    new File(gifPath));
-
             if (newInput == null) {
                 throw new IOException(
-                    "Unable to open GIF: " + gifPath);
+                    "Unable to open GIF: " + source);
             }
 
             Iterator<ImageReader> readers =
@@ -119,7 +170,7 @@ public class AnimatedGifImageIterator
             if (numFrames <= 0) {
                 throw new IOException(
                     "GIF contains no image frames: "
-                    + gifPath);
+                    + source);
             }
 
             /*
