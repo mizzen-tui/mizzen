@@ -74,6 +74,10 @@ public class ImageViewerFactory {
     public static ColorMapOption[] colorMap() {
         ColorMapOption[] colorMaps = new ColorMapOption[] {
                  new ColorMapOption("rgbColorMapDIRECT"    , rgbColorMapDIRECT),
+                 new ColorMapOption("rgbColors-4096"       , rgbColors4096),
+                 new ColorMapOption("rgbColors-512"        , rgbColors512),
+                 new ColorMapOption("rgbColors-256-palette", rgbColors256Palette),
+                 new ColorMapOption("rgbColors-64"         , rgbColors64),
                  new ColorMapOption("rgbColorPlotBlack"    , rgbColorPlotBlack),
                  new ColorMapOption("rgbColorPlotBlackAndGreyAsWhite", rgbColorPlotBlackAndGreyAsWhite),
                  new ColorMapOption("rgbColorMapSimple1"   , rgbColorMapSimple1),
@@ -731,7 +735,7 @@ public class ImageViewerFactory {
         return blocksGrid;
     }
 
-    private static String SIMPLE_char_gradientStr1 = "ÆÑÊŒØMÉËÈÃÂWQBÅæ#NÁþEÄÀHKRŽœXgÐêqÛŠÕÔA€ßpmãâG¶øðé8ÚÜ$ëdÙýèÓÞÖåÿÒb¥FDñáZPäšÇàhû§ÝkŸ®S9žUTe6µOyxÎ¾f4õ5ôú&aü™2ùçw©Y£0VÍL±3ÏÌóC@nöòs¢u‰½¼‡zJƒ%¤Itocîrjv1lí=ïì<>i7†[¿?×}*{+()\\/»«•¬|!¡÷¦¯—^ª„”“~³º²–°­¹‹›;:’‘‚’˜ˆ¸…·¨´`";
+    private static String SIMPLE_char_gradientStr1 = "ÆÑÊŒØMÉËÈÃÂWQBÅæ#NÁþEÄÀHKRŽœXgÐêqÛŠÕÔA€ßpmãâG¶øðé8ÚÜ$ëdÙýèÓÞÖåÿÒb¥FDñáZPäšÇàhû§ÝkŸ®S9žUTe6µOyxÎ¾f4õ5ôú&aü™2ùçw©Y£0VÍL±3ÏÌóC@nöòs¢u‰½¼‡zJƒ%¤Itocîrjv1lí=ïì<>i7†[¿?×}*{+()\\/»«•¬|!¡÷¦¯—^ª„”“~³º²–°¹‹›;:’‘‚’˜ˆ¸…·¨´`";
     private static String SIMPLE_char_gradientStr2 = new StringBuilder(" .:-=+*#%@").reverse().toString();
     private static String SIMPLE_char_gradientStr3 = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'. ";
 
@@ -906,6 +910,66 @@ public class ImageViewerFactory {
     public static RGBToAnsiColorControlCode rgbColorMapRCol = (r,g,b) ->Colors.RCol;
     
     public static RGBToAnsiColorControlCode rgbColorMapDIRECT = (r,g,b) ->Colors.fromRGBFG(r,g,b);
+
+    /**
+     * Fewer colours than DIRECT, still true to the picture: each of red, green and blue rounded to one of a few evenly
+     * spaced levels (black and white stay exact). Neighbouring cells then often share a colour, and a shared colour is
+     * sent to the terminal once, not per cell: fewer bytes per frame, so an animation keeps up on a slow terminal.
+     * <pre>
+     *     rgbColors4096   16 levels a channel: hard to tell from DIRECT
+     *     rgbColors512     8 levels: smooth shading shows faint bands
+     *     rgbColors64      4 levels: posterised, still recognisable
+     * </pre>
+     * Measured on a dark photographic gif at 80x152 (blocks), bytes a frame: DIRECT 223 KB, 4096 137 KB, 512 109 KB,
+     * 64 73 KB. 4096 is the one to try first; 512 and below shift the colour of dark areas (a dark brown has only 0 and
+     * 36 to round to, per channel).
+     */
+    public static RGBToAnsiColorControlCode rgbColors4096 = levels(16);
+    public static RGBToAnsiColorControlCode rgbColors512  = levels(8);
+    public static RGBToAnsiColorControlCode rgbColors64   = levels(4);
+
+    // r, g and b each rounded to the nearest of n levels from 0 to 255: levels(4) gives 0, 85, 170 and 255
+    private static RGBToAnsiColorControlCode levels(int n) {
+        return (r, g, b) -> Colors.fromRGBFG(toLevel(r, n), toLevel(g, n), toLevel(b, n));
+    }
+
+    private static int toLevel(int value, int n) {
+        return Math.round(Math.round(value * (n - 1) / 255f) * 255f / (n - 1));
+    }
+
+    /**
+     * The colours of a 256-colour terminal: xterm's 6x6x6 cube (levels 0, 95, 135, 175, 215, 255) and its 24 greys,
+     * each pixel the nearest of them - how the picture would look there. Sent as RGB codes like the others.
+     * <pre>
+     *     (200, 30, 30)    the cube's (215, 0, 0)
+     *     (120, 121, 119)  a grey: (118, 118, 118)
+     * </pre>
+     */
+    public static RGBToAnsiColorControlCode rgbColors256Palette = (r, g, b) -> {
+        int cr = cubeLevel(r), cg = cubeLevel(g), cb = cubeLevel(b);
+        int grey = Math.max(0, Math.min(23, Math.round(((r + g + b) / 3f - 8) / 10f)));   // greys: 8, 18, .. 238
+        int gv = 8 + grey * 10;
+        int cubeError = sq(r - cr) + sq(g - cg) + sq(b - cb);
+        int greyError = sq(r - gv) + sq(g - gv) + sq(b - gv);
+        return greyError < cubeError ? Colors.fromRGBFG(gv, gv, gv) : Colors.fromRGBFG(cr, cg, cb);
+    };
+
+    private static final int[] CUBE = { 0, 95, 135, 175, 215, 255 };
+
+    // the cube level nearest value
+    private static int cubeLevel(int value) {
+        int best = 0;
+        for (int level : CUBE) {
+            if (Math.abs(value - level) < Math.abs(value - best)) {
+                best = level;
+            }
+        }
+        return best;
+    }
+
+    private static int sq(int v) {
+        return v * v;
+    }
 
     static RGBToAnsiColorControlCode rgbColorPlotBlackAndGreyAsWhite = (r,g,b) ->  {
 
