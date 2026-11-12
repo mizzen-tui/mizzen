@@ -131,6 +131,10 @@ public final class Theme implements HasName<Theme> {
     // changed as the theme says (dialogs)
 
     private Function<Theme, Theme> dialogChanges = Function.identity();
+
+    // the theme on a card: this one laid on surfaceColor (onSurface), then changed as the theme says (cards)
+
+    private Function<Theme, Theme> cardChanges = Function.identity();
     private Theme dialogTheme;
     private Theme surfaceTheme; // worked out once (surfaceTheme)
 
@@ -511,8 +515,8 @@ public final class Theme implements HasName<Theme> {
      * The theme on a card (Card): this one, with surfaceColor as its background and
      * everything drawn on the background
      * 
-     * laid on surfaceColor instead - as dialogTheme does for a dialog. A theme with
-     * no surface of its own: itself (a card
+     * laid on surfaceColor instead - as dialogTheme does for a dialog - then changed as cards(..) says. A theme with
+     * no surface of its own: itself, with those changes (a card
      * 
      * is then a bordered panel on the background).
      * 
@@ -520,15 +524,9 @@ public final class Theme implements HasName<Theme> {
 
     public Theme surfaceTheme() {
 
-        if (surfaceColor == null) {
-
-            return this;
-
-        }
-
         if (surfaceTheme == null) {
 
-            surfaceTheme = onSurface(surfaceColor);
+            surfaceTheme = cardChanges.apply(surfaceColor == null ? this : onSurface(surfaceColor));
 
         }
 
@@ -613,6 +611,8 @@ public final class Theme implements HasName<Theme> {
 
             t.dialogChanges = Function.identity();
 
+            t.cardChanges = Function.identity();
+
         });
 
         return on;
@@ -648,11 +648,32 @@ public final class Theme implements HasName<Theme> {
 
     }
 
-    // how this theme's dialogs differ from it laid on dialogColor
-
-    Theme dialogs(Function<Theme, Theme> changes) {
+    /**
+     * How this theme's dialogs differ from it laid on the dialog colour: the colours that don't suit the dialog's
+     * panel, given again. Everything else is laid on the panel as it is.
+     * <pre>
+     *     theme.dialogs(d -> d.withInputColor(Theme.rgb(0xFFFFFF, 0x1D3268)))
+     * </pre>
+     */
+    public Theme dialogs(Function<Theme, Theme> changes) {
 
         return with((t) -> t.dialogChanges = changes);
+
+    }
+
+    /**
+     * How this theme on a card (surfaceTheme) differs from it laid on the surface colour: the colours that can't be
+     * read on the card, given again. Laid on the surface, every role keeps its foreground, so light text on a dark
+     * screen stays light on a near-white card; give the text-like roles colours for the card here.
+     * <pre>
+     *     theme.withSurfaceColor(Theme.rgb(0x22313A, 0xF4F7F8))
+     *          .cards(c -> c.withTextColor(Theme.rgb(0x22313A, 0xF4F7F8)).withHeadingColor(..).withDimColor(..))
+     * </pre>
+     * Colours given here are used as they are, so give them the card's background.
+     */
+    public Theme cards(Function<Theme, Theme> changes) {
+
+        return with((t) -> t.cardChanges = changes);
 
     }
 
@@ -827,6 +848,7 @@ public final class Theme implements HasName<Theme> {
         copy.buttonFocus = buttonFocus;
         copy.focusedBlockChars = focusedBlockChars;
         copy.dialogChanges = dialogChanges;
+        copy.cardChanges = cardChanges;
         change.accept(copy);
 
         return copy;
