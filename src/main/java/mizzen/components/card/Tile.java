@@ -4,9 +4,21 @@ import java.util.function.Function;
 
 import mizzen.components.AbstractComponentWrappper;
 import mizzen.components.TextComponent;
+import mizzen.components.input.LeafFocusBehaviour;
 import mizzen.components.progressmeter.Counter;
 import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
+import mizzen.events.ConditionalEventHandler;
+import mizzen.events.CustomApplicationEvent;
+import mizzen.events.EventBus;
+import mizzen.events.EventHandler;
+import mizzen.events.focus.Focusable;
+import mizzen.events.focus.ToFocusable;
+import mizzen.events.keyboard.AsKeyboardHandler;
+import mizzen.events.keyboard.KeyInputEventHandler;
+import mizzen.events.keyboard.KeyboardHandler;
+import mizzen.events.mouse.Clickable;
+import mizzen.events.keyboard.Keys;
 
 /**
  * A tile for a dashboard: a card with a title, a value that reads at a glance, an optional note and an optional Counter
@@ -23,8 +35,28 @@ import mizzen.controlcodes.color.Color;
  *     ╰────────────────────╯  ╰────────────────────╯
  * </pre>
  * Rows show in the order they are first set: the value, then a note or a bar.
+ * <p/>
+ * Given an action (onActivate), a tile is a TAB stop: focused, its frame and title are in the theme's accent colour
+ * (as an outlined button's), and ENTER or a click activates it - the action gets a Tile.ActivateEvent. With none it
+ * only shows. One action, as a tree's or a table's: a new one replaces it.
+ * <pre>
+ *     site.onActivate((te) -> showSiteDetails());
+ * </pre>
  */
-public class Tile extends AbstractComponentWrappper<Card> {
+public class Tile extends AbstractComponentWrappper<Card> implements ToFocusable, Clickable, AsKeyboardHandler {
+
+    /** a tile activated: ENTER on it, or a click. getTile() is the one. */
+    public static class ActivateEvent extends CustomApplicationEvent<Tile> {
+        private static final long serialVersionUID = 1L;
+
+        ActivateEvent(Tile tile) {
+            super(tile, tile);
+        }
+
+        public Tile getTile() {
+            return getEventData();
+        }
+    }
 
     /** what the value's colour says */
     public enum State {
@@ -42,6 +74,17 @@ public class Tile extends AbstractComponentWrappper<Card> {
     private TextComponent note;
     private Counter bar;
     private State state = State.NORMAL;
+    private EventHandler action;                        // what activating it does; null: it only shows (not focusable)
+
+    // focus shows on the frame (accent), so the value keeps its state's colour; ENTER activates
+    private final LeafFocusBehaviour focus = LeafFocusBehaviour.of(this).look(LeafFocusBehaviour.Look.NONE)
+            .whenFocusArrives((bus) -> getWrappedComponent().frameColor(Theme::accentColor))
+            .whenFocusLeaves((bus) -> getWrappedComponent().frameColor(Theme::textColor))
+            .handleKeys(AsKeyboardHandler.UTIL.toKeyboardHandler(
+                    new KeyInputEventHandler((te) -> activate(te.getEventBus()), Keys.ENTER_KEYSTROKE)))
+            .handleEvents(new ConditionalEventHandler.Impl(
+                    (te) -> te instanceof ActivateEvent && te.getSource() == this && action != null,
+                    (te) -> action.handle(te)));
 
     /** a tile as wide as what it holds */
     public Tile(String title) {
@@ -98,6 +141,38 @@ public class Tile extends AbstractComponentWrappper<Card> {
 
     public State getState() {
         return state;
+    }
+
+    /**
+     * What ENTER on the focused tile, or a click, does: action gets a Tile.ActivateEvent. One action - a new one replaces
+     * it. Given one, the tile is a TAB stop; null: it only shows again.
+     */
+    public Tile onActivate(EventHandler action) {
+        this.action = action;
+        return this;
+    }
+
+    private void activate(EventBus eventBus) {
+        eventBus.raiseEvent(new ActivateEvent(this));
+    }
+
+    @Override
+    public void onClick(EventBus eventBus) {
+        if (action != null) {
+            focus.requestFocus(eventBus);
+            activate(eventBus);
+        }
+    }
+
+    /** null - not focusable - while it has no action */
+    @Override
+    public Focusable asFocusable() {
+        return action != null ? focus.asFocusable() : null;
+    }
+
+    @Override
+    public KeyboardHandler asKeyboardHandler() {
+        return action != null ? focus.asKeyboardHandler() : null;
     }
 
     // text at the rows' width: padded to it, or cut with … - so every row, and every tile of a width, lines up

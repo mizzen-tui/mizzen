@@ -1,5 +1,7 @@
 package mizzen.components.card;
 
+import java.util.function.Function;
+
 import mizzen.components.AbstractComponentWrappper;
 import mizzen.components.Component;
 import mizzen.components.TextComponent;
@@ -27,6 +29,7 @@ import mizzen.geom.position.Position;
 public class Card extends AbstractComponentWrappper<Composite> {
 
     private final VerticalPanel content = new VerticalPanel();
+    private Function<Theme, Color> frame = Theme::textColor;           // the frame and title's colour (Tile: accent while focused)
 
     public Card() {
         this("");
@@ -35,7 +38,7 @@ public class Card extends AbstractComponentWrappper<Composite> {
     public Card(String title) {
         super((Color) null, new OnSurface());
         Composite panel = getWrappedComponent();
-        panel.setThemeColor(Theme::textColor);                          // the frame and title: text on the surface
+        panel.setThemeColor((theme) -> frame.apply(theme));              // the frame and title: text on the surface
         panel.setBorder(true);
         if (title != null && !title.isEmpty()) {
             panel.setTitle(" " + title + " ");
@@ -43,7 +46,16 @@ public class Card extends AbstractComponentWrappper<Composite> {
         panel.setFillOnClear(true);
         HorizontalPanel padded = new HorizontalPanel().setHorizontalSpacer(0)
                 .add(new TextComponent(" ")).add(content).add(new TextComponent(" "));      // a column of room each side
+        padded.setThemeColor(Theme::textColor);                         // what it holds: text, whatever the frame's colour
         panel.add(Position.ZERO, padded);                               // inside the frame
+    }
+
+    // the frame and title in another theme colour, worked out as they are drawn: a focused Tile's accent
+    void frameColor(Function<Theme, Color> color) {
+        frame = color;
+        // the frame is drawn by the panel's border, which markAsDirty and Theme.repaint don't reach: it would redraw
+        // only on a theme change. setBorderColor(null) marks it dirty, and null keeps it following the panel's colour.
+        getWrappedComponent().setBorderColor(null);
     }
 
     /** a row, under the ones added before */
