@@ -18,12 +18,16 @@ import mizzen.geom.position.PositionRelativeFactory;
 /**
  * An animation (an ImageIterator's frames) with an Options button top right that opens a dialog of
  * render settings. Border and title are its panel's.
+ * <pre>
+ *     new MovingPicturesViewer(new AnimatedGifImageIterator(bytes), rqst).withoutOptions().start(te, 100)
+ * </pre>
  */
 public class MovingPicturesViewer extends ComponentWithFocus<Composite, MovingPicturesViewer> implements AutoCloseable {
 
     ChainedEventHandler chainedEventHandler;
     ImageAnimatorComponent animatorComponent;
     Composite imageViewer;
+    Component<?> optionsButton;
 
     /** as the constructor with a colour first, in its theme's colours */
     public MovingPicturesViewer(ImageIterator imageIterator, ImageRenderRequest rqst) {
@@ -43,7 +47,7 @@ public class MovingPicturesViewer extends ComponentWithFocus<Composite, MovingPi
         chainedEventHandler = ChainedEventHandler.useChainOfResponsibilityStrategy(this);
         focus().handleEvents(chainedEventHandler.asConditionalEventHandler());
 
-        Component<?> popupImageControlsButton = ImageManipulationControls.popupOnClick("Options", rqst, imageViewer, chainedEventHandler, null);
+        optionsButton = ImageManipulationControls.popupOnClick("Options", rqst, imageViewer, chainedEventHandler, null);
 
         //animatorComponent = new ImageAnimatorComponent(color, rqst,  CombinedImageIterator.wrapWithCombinedImageIterator(imageIterator), rqst.getDesiredImgSizeInCharacters());
         animatorComponent = new ImageAnimatorComponent(color, rqst,  imageIterator, rqst.getDesiredImgSizeInCharacters());
@@ -51,12 +55,21 @@ public class MovingPicturesViewer extends ComponentWithFocus<Composite, MovingPi
         //imageViewer.setComponent(animatorComponent);
 
         imageViewer.add(animatorComponent);
-        Position bPos = PositionRelativeFactory.fromAlign(VAlign.TOP, Align.RIGHT, imageViewer, popupImageControlsButton);
-        imageViewer.add(bPos,  popupImageControlsButton);
+        Position bPos = PositionRelativeFactory.fromAlign(VAlign.TOP, Align.RIGHT, imageViewer, optionsButton);
+        imageViewer.add(bPos,  optionsButton);
 
 
     }
     
+    /** the animation alone: no Options button (a viewer that only shows, or one whose settings are set in code) */
+    public MovingPicturesViewer withoutOptions() {
+        if (optionsButton != null) {
+            imageViewer.remove(optionsButton);
+            optionsButton = null;
+        }
+        return this;
+    }
+
     public MovingPicturesViewer start(EventBus eventBus, int interval) {
         animatorComponent.setupTimer(eventBus, interval);
         return this;
