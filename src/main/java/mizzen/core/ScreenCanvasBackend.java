@@ -322,6 +322,7 @@ public class ScreenCanvasBackend implements CanvasBackend {
                         screen.home();
                     }
                 }
+                //Logging.info("modifiedLoopTime "+modifiedLoopTime.elapsed());
             }
             TreeSet<ScreenLineSegment> temp = previous;
             previous = current;
