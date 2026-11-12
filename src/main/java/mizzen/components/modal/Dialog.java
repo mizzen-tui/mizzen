@@ -13,6 +13,7 @@ import mizzen.components.Component;
 import mizzen.components.GetComponentAtOffset;
 import mizzen.components.HasName;
 import mizzen.components.TextComponent;
+import mizzen.components.composite.Composite;
 import mizzen.components.composite.HorizontalPanel;
 import mizzen.components.composite.VerticalPanel;
 import mizzen.components.input.Button;
@@ -30,6 +31,8 @@ import mizzen.events.focus.ToFocusable;
 import mizzen.events.keyboard.KeyInputEventHandler;
 import mizzen.events.keyboard.KeyStroke;
 import mizzen.events.keyboard.Keys;
+import mizzen.events.mouse.ApplicationMouseEvent;
+import mizzen.events.mouse.Draggable;
 import mizzen.geom.Dimension;
 import mizzen.geom.Rectangle;
 import mizzen.geom.position.Position;
@@ -105,6 +108,8 @@ public class Dialog {
     private EventBus bus;
     private boolean errorRaised;
     private boolean closed;
+    private boolean draggable;                 // draggable(): its title moves it
+    private boolean dragging;                  // a drag by the title is on: the mouse is the dialog's wherever it goes
 
     private Dialog(Icon icon, String message) {
         this.icon = icon;
@@ -130,6 +135,19 @@ public class Dialog {
     /** the words on its top border; none by default for a question, the kind of dialog for the others */
     public Dialog title(String title) {
         this.title = title == null ? "" : title;
+        return this;
+    }
+
+    /**
+     * Its top border, with the title, can be dragged with the mouse to move it - e.g. off a picture its options change.
+     * It needs a title (it fails when shown without one). Dialogs are not draggable unless asked: the others take the
+     * mouse exactly as before.
+     * <pre>
+     *     Dialog.info("Image Render options").draggable().add(controls).ok().show(bus, parent);
+     * </pre>
+     */
+    public Dialog draggable() {
+        this.draggable = true;
         return this;
     }
 
@@ -309,7 +327,11 @@ public class Dialog {
         }
         this.bus = bus;
         this.parent = parent;
-        panel = new ModalPanel();                          // colours: the dialog theme (ModalPanel), so nothing here gives one
+        if (draggable && title.isEmpty()) {
+            throw new IllegalStateException("a draggable dialog needs a title to drag it by - title(..)");
+        }
+        // only a draggable dialog's panel is Draggable: the others take the mouse exactly as before
+        panel = draggable ? new MovedByItsTitle() : new ModalPanel();   // colours: the dialog theme (ModalPanel), so nothing here gives one
         panel.setThemeColor(Theme::textColor);             // the frame and title: text on the dialog's colour
         panel.setBorder(true);
         if (!title.isEmpty()) {
@@ -351,6 +373,9 @@ public class Dialog {
      * dialog's tree, where popups are drawn, as the mouse handling does.
      */
     private boolean isOnDialog(Position spot) {
+        if (dragging) {
+            return true;                                  // a drag by its title goes on, and ends, wherever the mouse is
+        }
         Component<?> top = panel;
         while (top.getParentContainer() instanceof Component) {
             top = (Component<?>) top.getParentContainer();
@@ -435,6 +460,88 @@ public class Dialog {
     }
 
     // Esc: the cancel button, if there is one - its action runs; else just close
+    /**
+     * The panel of a draggable dialog: a drag that starts on its top row - the frame, with the title - moves it, by as
+     * much as the mouse moves (the spot grabbed stays under the mouse), kept on the screen and not above or left of
+     * the panel it is shown on. While a drag is on, the dialog takes every mouse event (isOnDialog), so one that gets
+     * ahead of the dialog, and the button coming up there, still reach the drag and end it.
+     */
+    private final class MovedByItsTitle extends ModalPanel implements Draggable {
+        private Position grab;                            // the mouse less the panel's corner, on the canvas
+
+        @Override
+        public boolean onDragStart(ApplicationMouseEvent mouse) {
+            Position corner = Component.UTIL.getCanvasOffsetFor(this);
+            if (!(parent instanceof Composite) || corner == null || mouse.getMousePosition().getRow() != corner.getRow()) {
+                return false;                             // not on the top row: the contents' own business
+            }
+            grab = mouse.getMousePosition().offsetAdd(corner.negate());
+            dragging = true;
+            return true;
+        }
+
+        @Override
+        public boolean onDrag(ApplicationMouseEvent mouse) {
+            if (!dragging) {
+                return false;
+            }
+            Composite under = (Composite) parent;
+            Position corner = Component.UTIL.getCanvasOffsetFor(this);
+            Rectangle at = under.childAsRectangleOffset(this);
+            Rectangle seen = seenArea(under);
+            Position wanted = mouse.getMousePosition().offsetAdd(grab.negate());
+            int row = within(wanted.getRow(), Math.max(seen.getRow(), corner.getRow() - at.getRow()),
+                             seen.getRow() + seen.getHeight() - getHeight());
+            int col = within(wanted.getCol(), Math.max(seen.getCol(), corner.getCol() - at.getCol()),
+                             seen.getCol() + seen.getWidth() - getWidth());
+            if (row != corner.getRow() || col != corner.getCol()) {
+                under.moveChildTo(new Position.Simple(at.getRow() + row - corner.getRow(), at.getCol() + col - corner.getCol()), this);
+                under.markAsDirty();
+                mouse.getEventBus().raiseEvent(new RequestUpdateCanvasEvent(this));
+            }
+            return true;
+        }
+
+        @Override
+        public boolean onDragStop(ApplicationMouseEvent mouse) {
+            dragging = false;
+            grab = null;
+            return true;
+        }
+    }
+
+    /**
+     * Where a dialog shown on under can be seen, on the canvas: the panels around under clip it (under itself grows to
+     * hold it). The screen when under is the top panel.
+     */
+    private static Rectangle seenArea(Composite under) {
+        Component<?> c = under;
+        Rectangle seen = null;
+        while (c.getParentContainer() instanceof Component) {
+            c = (Component<?>) c.getParentContainer();
+            seen = seen == null ? canvasRectangle(c) : intersection(seen, canvasRectangle(c));
+        }
+        return seen != null ? seen : canvasRectangle(under);
+    }
+
+    private static Rectangle canvasRectangle(Component<?> c) {
+        Position at = Component.UTIL.getCanvasOffsetFor(c);
+        return new Rectangle.Simple(at.getRow(), at.getCol(), c.getHeight(), c.getWidth());
+    }
+
+    private static Rectangle intersection(Rectangle a, Rectangle b) {
+        int row = Math.max(a.getRow(), b.getRow());
+        int col = Math.max(a.getCol(), b.getCol());
+        int bottom = Math.min(a.getRow() + a.getHeight(), b.getRow() + b.getHeight());
+        int right = Math.min(a.getCol() + a.getWidth(), b.getCol() + b.getWidth());
+        return new Rectangle.Simple(row, col, Math.max(0, bottom - row), Math.max(0, right - col));
+    }
+
+    // value kept within least .. most; least wins if most is below it (a dialog bigger than the screen)
+    private static int within(int value, int least, int most) {
+        return Math.max(least, Math.min(most, value));
+    }
+
     private void escape() {
         for (int i = 0; i < plans.size(); i++) {
             if (CANCEL.equals(plans.get(i).name)) {

@@ -1,5 +1,9 @@
 package mizzen.components.plot.image;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import mizzen.app.TUIApp;
 import mizzen.components.input.OnChangeListeners;
 import mizzen.components.AbstractComponentWithContainer;
 import mizzen.components.ChildComponentManager;
@@ -9,8 +13,10 @@ import mizzen.components.composite.Composite;
 import mizzen.components.composite.HorizontalPanel;
 import mizzen.components.composite.VerticalPanel;
 import mizzen.components.input.Button;
+import mizzen.components.input.DisplayableValue;
 import mizzen.components.input.DropdownListBox;
 import mizzen.components.input.HasValue;
+import mizzen.components.input.Slider;
 import mizzen.components.modal.Dialog;
 import mizzen.components.plot.image.ImageViewerFactory.ImageRenderRequest;
 import mizzen.controlcodes.color.Color;
@@ -58,22 +64,87 @@ public class ImageManipulationControls extends AbstractComponentWithContainer<Co
 
         controls.add(labelled("Colours    ", colorMapDDLB));
 
-        DropdownListBox<ImageViewerFactory.RGBPlotPredicate> plotPredicatesDDLB = new DropdownListBox<ImageViewerFactory.RGBPlotPredicate>(ImageViewerFactory.plotPointPredicateOptions());
+        controls.add(plotChoice(color));
+    }
 
-        plotPredicatesDDLB.setName("plotPredicatesDDLB");
+    // what to plot: a kind (always, white only, ... lighter than, darker than) and, for lighter / darker than, the grey
+    // level on a slider. A predicate the app made itself shows as "as given" until another kind is picked.
+    private enum PlotKind {
+        ALWAYS("always"), WHITE("white only"), BLACK("black only"), LIGHTER("lighter than"), DARKER("darker than"),
+        GIVEN("as given");
 
-        plotPredicatesDDLB.setValue( ImageManipulationControls.this.rqst.getToPlotOrNot()!=null
-                                     ? ImageManipulationControls.this.rqst.getToPlotOrNot() 
-                                     : ImageViewerFactory.plotPointPredicateOptions()[0].getValue() );
-        plotPredicatesDDLB.onChange((te) -> {
-            rqst.setToPlotOrNot( plotPredicatesDDLB.getValue() );
-            te.getEventBus().raiseEvent( new HasValue.ValueChangedEvent<>(ImageManipulationControls.this) );
-            te.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(ImageManipulationControls.this));
+        final String label;
+
+        PlotKind(String label) {
+            this.label = label;
+        }
+    }
+
+    private HorizontalPanel plotChoice(Color color) {
+        ImageViewerFactory.RGBPlotPredicate now = rqst.getToPlotOrNot();
+        PlotKind kind = kindOf(now);
+        int grey = now instanceof ImageViewerFactory.GreyLevel ? ((ImageViewerFactory.GreyLevel) now).grey : 125;
+
+        List<DisplayableValue<PlotKind>> kinds = new ArrayList<DisplayableValue<PlotKind>>();
+        for (PlotKind k : PlotKind.values()) {
+            if (k != PlotKind.GIVEN || kind == PlotKind.GIVEN) {
+                kinds.add(new DisplayableValue.SimpleDisplayValue<PlotKind>(k.label, k));
+            }
+        }
+        @SuppressWarnings("unchecked")
+        DropdownListBox<PlotKind> kindDDLB = new DropdownListBox<PlotKind>(kinds.toArray(new DisplayableValue[0]));
+        kindDDLB.setName("plotKindDDLB");
+        kindDDLB.setValue(kind);
+        kindDDLB.setColor(color);
+
+        Slider level = new Slider(0, 255).value(grey);
+        level.setName("plotLevel");
+
+        HorizontalPanel row = labelled("Plot       ", kindDDLB);
+        row.add(new TextComponent(" "));
+        row.add(level);
+        showLevelFor(kind, row, level);
+
+        kindDDLB.onChange((te) -> {
+            showLevelFor(kindDDLB.getValue(), row, level);
+            plotChanged(kindDDLB.getValue(), level.getValue(), te);
         });
-        plotPredicatesDDLB.setColor(color);
+        level.onChange((te) -> plotChanged(kindDDLB.getValue(), level.getValue(), te));
+        return row;
+    }
 
-        controls.add(labelled("Plot       ", plotPredicatesDDLB));
+    private static PlotKind kindOf(ImageViewerFactory.RGBPlotPredicate predicate) {
+        if (predicate == null || predicate == ImageViewerFactory.PLOT_ALWAYS) {
+            return PlotKind.ALWAYS;
+        } else if (predicate == ImageViewerFactory.PLOT_WHITE_ONLY) {
+            return PlotKind.WHITE;
+        } else if (predicate == ImageViewerFactory.PLOT_BLACK_ONLY) {
+            return PlotKind.BLACK;
+        } else if (predicate instanceof ImageViewerFactory.GreyLevel) {
+            return ((ImageViewerFactory.GreyLevel) predicate).lighter ? PlotKind.LIGHTER : PlotKind.DARKER;
+        }
+        return PlotKind.GIVEN;
+    }
 
+    private static void showLevelFor(PlotKind kind, HorizontalPanel row, Slider level) {
+        if (kind == PlotKind.LIGHTER || kind == PlotKind.DARKER) {
+            row.show(level);
+        } else {
+            row.hide(level);
+        }
+    }
+
+    private void plotChanged(PlotKind kind, int grey, TerminalEvent<?> te) {
+        switch (kind) {
+            case ALWAYS:  rqst.setToPlotOrNot(ImageViewerFactory.PLOT_ALWAYS); break;
+            case WHITE:   rqst.setToPlotOrNot(ImageViewerFactory.PLOT_WHITE_ONLY); break;
+            case BLACK:   rqst.setToPlotOrNot(ImageViewerFactory.PLOT_BLACK_ONLY); break;
+            case LIGHTER: rqst.setToPlotOrNot(ImageViewerFactory.plotLighterThan(grey)); break;
+            case DARKER:  rqst.setToPlotOrNot(ImageViewerFactory.plotDarkerThan(grey)); break;
+            case GIVEN:   return;                                     // still the app's own: nothing changed
+        }
+        te.getEventBus().raiseEvent( new HasValue.ValueChangedEvent<>(ImageManipulationControls.this) );
+        te.getEventBus().raiseEvent( new RequestUpdateCanvasEvent(ImageManipulationControls.this));
     }
 
     public ImageManipulationControls(ImageRenderRequest rqst) {
@@ -111,9 +182,12 @@ public class ImageManipulationControls extends AbstractComponentWithContainer<Co
 
         Registration listening = actionOnChangeHandler == null ? Registration.NONE
                 : controls.onChange(actionOnChangeHandler, eventHandlerContainer);
-        Dialog.info("Image Render options").add(controls).ok()
+        // over the app's whole screen when there is one, so it can be dragged off the picture it changes; shown on the
+        // picture's own small panel it would grow that panel (and move what is laid out from its edge)
+        TUIApp app = parentPanel instanceof Component ? TUIApp.of((Component<?>) parentPanel) : null;
+        Dialog.info("Image Render options").draggable().add(controls).ok()
               .onClose(listening::unregister)                                   // the dialog's listener goes with the dialog
-              .show(te.getEventBus(), parentPanel);
+              .show(te.getEventBus(), app != null ? app.getMainApplicationPanel() : parentPanel);
 
     }
 

@@ -867,37 +867,35 @@ public class ImageViewerFactory {
     public static RGBPlotPredicate PLOT_DARKER_THAN_255  = plotDarkerThan(255);
     
     static RGBPlotPredicate plotLighterThan(int grey) {
-        return new RGBPlotPredicate() {
-
-            @Override
-            public boolean test(int r, int g, int b) {
-                return (r + g + b)/3 >= grey;
-            }
-            
-            public String toString() {
-                return "RGBPlotPredicate.plotLighterThan("+grey+")";
-            }
-            
-            
-            
-        };
+        return new GreyLevel(true, grey);
     }
 
     static RGBPlotPredicate plotDarkerThan(int grey) {
-        return new RGBPlotPredicate() {
+        return new GreyLevel(false, grey);
+    }
 
-            @Override
-            public boolean test(int r, int g, int b) {
-                return(r + g + b)/3 < grey;
-            }
-            public String toString() {
-                return "RGBPlotPredicate.plotDarkerThan("+grey+")";
-            }
-        };
-//        return (r,g,b) -> {
-//            //  Logging.info(String.format("r %d g %d b %d = %d",r,g,b,(r + g + b)/3 ));
-//              return(r + g + b)/3 < grey;
-//        };
+    /**
+     * Plots a point by its grey level ((r + g + b) / 3): lighter - grey or more; darker - below grey. A class, not a
+     * lambda, so the Options dialog can show which and how much (lighter than, 125) on its slider.
+     */
+    static final class GreyLevel implements RGBPlotPredicate {
+        final boolean lighter;
+        final int grey;
+
+        GreyLevel(boolean lighter, int grey) {
+            this.lighter = lighter;
+            this.grey = grey;
+        }
+
+        @Override
+        public boolean test(int r, int g, int b) {
+            return lighter ? (r + g + b) / 3 >= grey : (r + g + b) / 3 < grey;
+        }
+
+        @Override
+        public String toString() {
+            return "RGBPlotPredicate." + (lighter ? "plotLighterThan(" : "plotDarkerThan(") + grey + ")";
+        }
     }
     
 //    public static RGBPlotPredicate PLOT_LIGHT_ONLY = (r,g,b) -> (r + g + b)/3 >= 9;

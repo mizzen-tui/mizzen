@@ -12,4 +12,18 @@ public class MouseEventsForTesting {
         click.setEventBus(eventBus);
         return click;
     }
+
+    /** a drag with the left button down, at row, col - as click(..) */
+    public static ApplicationMouseEvent drag(int row, int col, EventBus eventBus) {
+        ApplicationMouseEvent drag = new ApplicationMouseEvent("test", MOUSE_ACTION.DOWN_LEFT_DRAG, new Position.Simple(row, col));
+        drag.setEventBus(eventBus);
+        return drag;
+    }
+
+    /** the left button coming up at row, col - as click(..) */
+    public static ApplicationMouseEvent up(int row, int col, EventBus eventBus) {
+        ApplicationMouseEvent up = new ApplicationMouseEvent("test", MOUSE_ACTION.UP, new Position.Simple(row, col));
+        up.setEventBus(eventBus);
+        return up;
+    }
 }
