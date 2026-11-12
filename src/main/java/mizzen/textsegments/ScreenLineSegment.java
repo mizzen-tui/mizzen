@@ -998,12 +998,19 @@ public interface ScreenLineSegment extends Rectangle, CleanString  {
             // follows a code, so a code ending the line (the reset after a // comment) would be lost
             Color[] colorInEffect = new Color[] { lastColor[0] };
             CleanString[] lastSimpleText = new CleanString[] {null};
+            // cut at the width: nothing more is drawn, but the codes are still read to the line's end, so the colour
+            // the next line starts in is the line's last. A // comment cut short would otherwise lose its closing
+            // reset, and the next line's plain text would show in the comment's colour.
+            boolean[] cut = new boolean[] { false };
 
             Color endColor = ColorParsingUtils.parseColorsAndBuildResult(initialColor, colorCodedOneLineStr, new ColorParsingUtils.ColorColorSegmentBuilder() {
                 @Override
                 public boolean newColorSegment(Color color, CleanString simpleText) {
                     color = color == null ? lastColor[0] : color;
                     colorInEffect[0] = color;
+                    if (cut[0]) {
+                        return true;
+                    }
                     if (simpleText == null) {
                         simpleText = CleanString.UTIL.EMPTY_CLEAN_STRING;
                     }
@@ -1016,6 +1023,9 @@ public interface ScreenLineSegment extends Rectangle, CleanString  {
                                                                          lastSimpleText[0]);
                         curlengthCreated[0] += lastSimpleText[0].length();
                         ts.add(segment);
+                        // written: no longer pending. A colour code with no text (a reset straight before the next
+                        // colour) keeps nothing new here, so the next code would write this text a second time
+                        lastSimpleText[0] = null;
                     } else {
                         if (lastSimpleText[0] != null && 
                             lastSimpleText[0].length()>0) {
@@ -1048,7 +1058,8 @@ public interface ScreenLineSegment extends Rectangle, CleanString  {
                         }
                     }
 
-                    return continueParsing;
+                    cut[0] = !continueParsing;
+                    return true;
                 }
             });
 

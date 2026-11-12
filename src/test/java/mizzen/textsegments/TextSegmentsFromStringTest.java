@@ -28,11 +28,9 @@ public class TextSegmentsFromStringTest extends TestCase {
                                                                                new Rectangle.Simple(0,0,2,100),
                                                  (strColor, p, txt) -> new SegmentImpl( strColor != null ? strColor : Colors.DEFAULT_COLOR, p, -1, txt));
 
-        assertEquals(result.size(), 3);
-
-        
-        
-        
+        // two runs, each once: the label, then the size straight after it (this once counted 3: the label twice)
+        assertEquals(2, result.size());
+        assertEquals(24, ((java.util.TreeSet<ScreenLineSegment>) result.ts).last().getCol());
     }
 
     
