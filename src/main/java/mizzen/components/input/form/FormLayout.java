@@ -68,6 +68,11 @@ public interface FormLayout<T, B extends FormLayout<T, B>> {
         return row(label, field, new IntegerInputWithIncrDecrButtons(form().inputColor, "", "-", "+"));
     }
 
+    /** as number(label, field), the input width columns wide: number("UID", "uid", 6) */
+    default B number(String label, String field, int width) {
+        return row(label, field, new IntegerInputWithIncrDecrButtons(form().inputColor, "", "-", "+", width));
+    }
+
     default B checkBox(String label, String field) {
         return row(label, field, new CheckBoxInput(form().inputColor));
     }

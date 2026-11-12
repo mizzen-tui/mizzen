@@ -11,6 +11,9 @@ import mizzen.events.Registration;
 /**
  * "label  <-  value  ->": a text input for a value, with a button each side to step it down and up.
  * Its buttons and input are ordinary TAB stops; onChange hears every change, typed or stepped.
+ * <p/>
+ * width is the input's, in columns: as wide as the longest value expected (a port, 8080: 4).
+ * A subclass makes the input in buildTextInputForType(width), called from this constructor.
  */
 public abstract class TextInputWithIncrDecrButtons<T> extends ComponentWithFocus<HorizontalPanel, TextInputWithIncrDecrButtons<T>>
                                                       implements FormInput<T> {
@@ -18,12 +21,12 @@ public abstract class TextInputWithIncrDecrButtons<T> extends ComponentWithFocus
     ChainedEventHandler chainedEventHandler;
     TextInputForType<T> input;
 
-    public TextInputWithIncrDecrButtons(Color color, String labelText, String downButtonText, String upButtonText) {
+    public TextInputWithIncrDecrButtons(Color color, String labelText, String downButtonText, String upButtonText, int width) {
         super(color, new HorizontalPanel());
 
         HorizontalPanel controlsInGrid = getPanel();
 
-        input = buildTextInputForType();
+        input = buildTextInputForType(width);
         input.setValue( getValue() );
 
         Button decrementButton = new Button(color, downButtonText);
@@ -80,7 +83,8 @@ public abstract class TextInputWithIncrDecrButtons<T> extends ComponentWithFocus
         return this.input.getValue();
     }
 
-    abstract protected TextInputForType<T> buildTextInputForType();
+    /** the input, width columns wide; called from the constructor, so it may use only what it is given */
+    abstract protected TextInputForType<T> buildTextInputForType(int width);
 
     abstract protected T decr();
 

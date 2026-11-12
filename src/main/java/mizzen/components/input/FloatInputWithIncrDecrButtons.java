@@ -10,13 +10,19 @@ public class FloatInputWithIncrDecrButtons extends TextInputWithIncrDecrButtons<
     }
 
 
+    /** the input 5 columns wide */
     public FloatInputWithIncrDecrButtons(Color color, String labelText, String downButtonText, String upButtonText) {
-        super(color, labelText, downButtonText, upButtonText);
+        this(color, labelText, downButtonText, upButtonText, 5);
+    }
+
+    /** width: the input's columns */
+    public FloatInputWithIncrDecrButtons(Color color, String labelText, String downButtonText, String upButtonText, int width) {
+        super(color, labelText, downButtonText, upButtonText, width);
     }
 
     @Override
-    protected TextInputForType<Float> buildTextInputForType() {
-        return new TextInputFloat(this.getColor(),5);
+    protected TextInputForType<Float> buildTextInputForType(int width) {
+        return new TextInputFloat(this.getColor(), width);
     }
 
     @Override

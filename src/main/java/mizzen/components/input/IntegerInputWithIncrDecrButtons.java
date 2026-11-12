@@ -2,10 +2,21 @@ package mizzen.components.input;
 
 import mizzen.controlcodes.color.Color;
 
+/**
+ * A whole number with - and + buttons. The input is 3 columns unless a width is given:
+ * <pre>
+ *     new IntegerInputWithIncrDecrButtons(color, "UID", "-", "+", 6)     // room for 150000
+ * </pre>
+ */
 public class IntegerInputWithIncrDecrButtons extends TextInputWithIncrDecrButtons<Integer> {
-    
+
     public IntegerInputWithIncrDecrButtons(Color color, String labelText, String downButtonText, String upButtonText) {
-        super(color, labelText, downButtonText, upButtonText);
+        this(color, labelText, downButtonText, upButtonText, 3);
+    }
+
+    /** width: the input's columns */
+    public IntegerInputWithIncrDecrButtons(Color color, String labelText, String downButtonText, String upButtonText, int width) {
+        super(color, labelText, downButtonText, upButtonText, width);
     }
 
     /** in its theme's colours */
@@ -14,8 +25,8 @@ public class IntegerInputWithIncrDecrButtons extends TextInputWithIncrDecrButton
     }
 
     @Override
-    protected TextInputForType<Integer> buildTextInputForType() {
-        return new TextInputInteger(this.getOwnColor(), 3);       // none given: it stays themed too
+    protected TextInputForType<Integer> buildTextInputForType(int width) {
+        return new TextInputInteger(this.getOwnColor(), width);       // none given: it stays themed too
     }
 
     @Override
