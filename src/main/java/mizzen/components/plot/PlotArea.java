@@ -241,9 +241,20 @@ public class PlotArea extends AbstractComponentWrappper<Component<?>> implements
         if (x0 > x1) {
             return this;                                       // no points
         }
-        double mx = Math.max((x1 - x0) / 20, 1e-9);
-        double my = Math.max((y1 - y0) / 20, 1e-9);
+        double mx = margin(x0, x1);
+        double my = margin(y0, y1);
         return showing(x0 - mx, x1 + mx, y0 - my, y1 + my);
+    }
+
+    /**
+     * The margin fitTo leaves each side of from..to: a twentieth of it; all the same value (a flat series, one point),
+     * 1, so the window has a height to draw in.
+     * <pre>
+     *     margin(0, 40) is 2: the window 0 - 2 to 40 + 2;  margin(0, 0) is 1: the window -1 to 1, not 0 to 0.000000001
+     * </pre>
+     */
+    public static double margin(double from, double to) {
+        return to > from ? (to - from) / 20 : 1;
     }
 
     public Scaling getScaling() {
@@ -522,6 +533,11 @@ public class PlotArea extends AbstractComponentWrappper<Component<?>> implements
                     recording.set((row - r.getRow()) * r.getWidth() + (col - r.getCol()));
                 }
                 super.plot(col, row);
+            }
+
+            @Override
+            public Rectangle clip() {
+                return r;                                         // lines and fills are cut to the grid before stepping
             }
         };
     }

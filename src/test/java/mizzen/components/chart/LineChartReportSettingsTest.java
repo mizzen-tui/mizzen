@@ -141,4 +141,38 @@ public class LineChartReportSettingsTest extends TestCase {
             day = next;
         }
     }
+
+    // the console's Visitor stats on the server: 90 days, payments all 0
+    private static LineChart ninetyDays() {
+        LineChart chart = new LineChart(Colors.Cya, new mizzen.geom.Dimension.Simple(12, 140))
+                .series("sessions").series("paywall hits").series("payments");
+        for (int day = 0; day < 90; day++) {
+            chart.add("sessions", day, day % 22).add("paywall hits", day, day % 6).add("payments", day, 0);
+        }
+        return chart.yRange(0.0, null).xLabelsBelow(true).axisOverhang(false).legendClear(true);
+    }
+
+    /** payments alone (all 0), then paywall hits shown again: it froze the event thread for good; it must finish */
+    public void testShowingASeriesAgainAfterOnlyAFlatOneFinishes() throws InterruptedException {
+        LineChart chart = ninetyDays();
+        Thread clicks = new Thread(() -> {
+            chart.visible("sessions", false).visible("paywall hits", false);
+            chart.visible("paywall hits", true);
+        });
+        clicks.setDaemon(true);                                     // stuck, it mustn't hold the test run
+        clicks.start();
+        clicks.join(5000);
+        assertFalse("still drawing after 5s", clicks.isAlive());
+        String page = String.join("\n", new TextSnapshot(12, 140).render(chart).split("\n"));
+        assertTrue(page, page.contains("5"));                       // paywall hits up to 5: the window fits it
+    }
+
+    /** a flat series alone gets a window of some height: not 0 to 0.000000001 */
+    public void testAFlatSeriesHasAWindowOfSomeHeight() {
+        LineChart chart = ninetyDays().visible("sessions", false).visible("paywall hits", false);
+        String page = new TextSnapshot(12, 140).render(chart.redraw());
+        assertFalse(page, page.contains("0.0000"));
+        String plain = new TextSnapshot(10, 100).render(new LineChart(Colors.Cya).series("flat").add("flat", 0, 3).add("flat", 5, 3).redraw());
+        assertFalse(plain, plain.contains("0.0000"));
+    }
 }

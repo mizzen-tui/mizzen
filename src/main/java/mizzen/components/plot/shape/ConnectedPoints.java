@@ -11,6 +11,7 @@ import mizzen.components.plot.PointPlotterAsRectangle;
 import mizzen.components.plot.shape.Shape.AbstractShape;
 import mizzen.controlcodes.color.Color;
 import mizzen.geom.AsRectangle2D;
+import mizzen.geom.Rectangle;
 import mizzen.geom.Rectangle2D;
 import mizzen.geom.position.PositionTransform;
 import mizzen.geom.position.Vec2;
@@ -155,16 +156,27 @@ public class ConnectedPoints<T extends ConnectedPoints<?>> extends AbstractShape
             outlines.add(xy);
         }
 
+        Rectangle clip = pointPlotter.clip();                          // only the rows and columns that can show
+        long fromRow = (long) Math.ceil(yMin), toRow = (long) Math.floor(yMax);
+        long fromCol = Long.MIN_VALUE, toCol = Long.MAX_VALUE;
+        if (clip != null) {
+            fromRow = Math.max(fromRow, clip.getRow());
+            toRow = Math.min(toRow, clip.getRow() + clip.getHeight() - 1);
+            fromCol = clip.getCol();
+            toCol = clip.getCol() + clip.getWidth() - 1;
+        }
+
         List<Float> crossings = new ArrayList<Float>();
-        for (int y = (int) Math.ceil(yMin); y <= (int) Math.floor(yMax); y++) {
+        for (long row = fromRow; row <= toRow; row++) {
+            int y = (int) row;
             crossings.clear();
             for (float[][] xy : outlines) {
                 addCrossings(xy[0], xy[1], y, crossings);
             }
             Collections.sort(crossings);
             for (int k = 0; k + 1 < crossings.size(); k += 2) {
-                for (int x = Math.round(crossings.get(k)); x <= Math.round(crossings.get(k + 1)); x++) {
-                    pointPlotter.plot(x, y);
+                for (long x = Math.max(fromCol, Math.round(crossings.get(k))); x <= Math.min(toCol, Math.round(crossings.get(k + 1))); x++) {
+                    pointPlotter.plot((float) x, y);
                 }
             }
         }

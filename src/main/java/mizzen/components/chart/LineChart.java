@@ -338,7 +338,7 @@ public class LineChart extends AbstractComponentWrappper<PlotArea> implements Ha
             y0 = Math.min(y0, p.getY());
             y1 = Math.max(y1, p.getY());
         }
-        double mx = Math.max((x1 - x0) / 20, 1e-9), my = Math.max((y1 - y0) / 20, 1e-9);
+        double mx = PlotArea.margin(x0, x1), my = PlotArea.margin(y0, y1);
         double bottom = yRangeMin != null ? yRangeMin : y0 - my;
         double top = yRangeMax != null ? yRangeMax : y1 + my;
         if (bottom >= top) {
@@ -350,11 +350,13 @@ public class LineChart extends AbstractComponentWrappper<PlotArea> implements Ha
         double rowHeight = (top - bottom) / Math.max(1, rows - labelRows - legendRows);
         top += legendRows * rowHeight;
         double below = bottom - labelRows * rowHeight;
+        // the window first: the axis setters redraw at once, and drawn in the old window a newly shown series can be
+        // billions of dots off the grid (a flat series alone had a window 0.000000001 high)
+        plot().showing(x0 - mx, x1 + mx, below, top);
         if (labelRows > 0) {
             plot().xAxisAt(bottom);
             plot().xLabelAtCrossing(true);                         // that row is the labels' own: the first point's label fits there too
         }
-        plot().showing(x0 - mx, x1 + mx, below, top);
     }
 
     // legendClear: the legend's rows, when the top is fitted and a row is left for the data; else none

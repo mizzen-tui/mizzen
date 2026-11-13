@@ -6,6 +6,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import mizzen.controlcodes.color.Color;
+import mizzen.geom.Rectangle;
 import mizzen.geom.position.Position;
 import mizzen.geom.position.Vec2;
 
@@ -40,6 +41,15 @@ public interface PointPlotter {
     
     void clearPlots();
 
+    /**
+     * The points that can show, if only some can: a line or a fill is cut to it before it is stepped through, so a point
+     * far outside costs nothing. A plot's grid, say rows 0 to 47 and columns 0 to 199: a line to a row of 10 billion
+     * draws its part on the grid and no more. null (the default): no limit, as for a list in memory.
+     */
+    default Rectangle clip() {
+        return null;
+    }
+
 
     public static class Delegate implements PointPlotter {
 
@@ -71,6 +81,11 @@ public interface PointPlotter {
         @Override
         public void clearPlots() {
             this.getPointPlotter().clearPlots();
+        }
+
+        @Override
+        public Rectangle clip() {
+            return this.getPointPlotter().clip();
         }
 
     }
