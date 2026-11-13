@@ -109,7 +109,7 @@ public class SharedBordersTest extends TestCase {
         VerticalSplitter stacked = new VerticalSplitter().addComponent(boxed(" Top ", "one")).addComponent(boxed(" Bottom ", "two"));
         stacked.collapseBorders(true);
         stacked.resize(new Dimension.Simple(10, 24));
-        assertTrue(picture(stacked), picture(stacked).contains("├──────────⣿⣿──────────┤"));
+        assertTrue("the lower pane's title on the divider: " + picture(stacked), picture(stacked).contains("├ Bottom ──⣿⣿──────────┤"));
     }
 
     /** a divider is a line even when the pane across it has no box there (a tab panel's top is its tabs) */
@@ -205,6 +205,88 @@ public class SharedBordersTest extends TestCase {
         assertTrue(rows[4], rows[4].startsWith("║ line 0") && rows[4].endsWith(" ▒"));
         assertTrue(rows[10], rows[10].contains("┤ ^ │ v │ PgUp │ PgDn │ « │ » ├"));
         assertTrue("its own bottom, under the footer: " + rows[11], rows[11].contains("<-    ->"));
+    }
+
+    // ---- the console's checks (round 15): rounded corners, a holder, clicks ----------------------------------------
+
+    private static String inTheme(mizzen.components.theme.Theme theme, java.util.function.Supplier<String> drawing) {
+        mizzen.components.theme.Theme before = mizzen.components.theme.Theme.getDefault();
+        mizzen.components.theme.Theme.setDefault(theme);
+        try {
+            return drawing.get();
+        } finally {
+            mizzen.components.theme.Theme.setDefault(before);
+        }
+    }
+
+    /** ╭╮╰╯ boxes share as ┌┐└┘ ones: a rounded theme's panes on a divider, in both placements */
+    public void testRoundedCornersShare() {
+        for (FlipSplitter.Placement placement : new FlipSplitter.Placement[] { FlipSplitter.Placement.BELOW, FlipSplitter.Placement.RIGHT }) {
+            String text = inTheme(mizzen.components.theme.Theme.ROUNDED, () -> {
+                FlipSplitter split = new FlipSplitter(scroll(" Chart "), scroll(" Figures ")).setTitle(" Stats ").collapseBorders(true);
+                split.placement(placement);
+                split.resize(new Dimension.Simple(14, 40));
+                return picture(split);
+            });
+            assertTrue(placement + ":\n" + text, text.startsWith("╭"));
+            assertFalse(placement + ", a pane's own corner left:\n" + text, text.substring(1).contains("╭"));
+            assertTrue(placement + ":\n" + text, text.contains("⣿"));
+        }
+    }
+
+    /** a pane held in an unbordered panel (a screen's bottom half, its content swapped) still shares - its corners are its content's */
+    public void testAPaneInAnUnborderedHolderShares() {
+        String text = inTheme(mizzen.components.theme.Theme.ROUNDED, () -> {
+            BorderedComponent top = boxed(" Top ", "top");
+            VerticalPanel holder = new VerticalPanel();
+            mizzen.components.scroll.ScrollableComponent report = scroll(" Report ");
+            holder.add(report);
+            holder.onResizeExpandDownAndRight(report);
+            VerticalSplitter screen = new VerticalSplitter().addComponent(top).addComponent(holder);
+            screen.setBorder(true);
+            screen.collapseBorders(true);
+            screen.resize(new Dimension.Simple(14, 30));
+            return picture(screen);
+        });
+        String[] rows = text.split("\n");
+        assertTrue(text, rows[4].startsWith("├─ Report ") && rows[4].contains("⣿⣿") && rows[4].endsWith("┤"));
+        assertTrue(text, rows[13].startsWith("╰") && rows[13].contains("┤ ^ │ v │") && rows[13].endsWith("╯"));
+    }
+
+    /** after the edges moved, the footer's buttons and the scrollbar on the shared lines still take the clicks */
+    public void testMovedFooterAndScrollbarTakeClicks() {
+        Composite panel = new Composite();
+        panel.setTitle(" Panel ");
+        panel.resize(new Dimension.Simple(10, 44));
+        mizzen.components.scroll.ScrollableComponent sc = scroll(" Inner ");
+        panel.add(sc);
+        panel.onResizeExpandDownAndRight(sc);
+        panel.collapseBorders(true);
+        String[] rows = picture(panel).split("\n");
+        int pgUp = rows[9].indexOf("PgUp");
+        assertTrue(rows[9], pgUp > 0);
+        Component<?> button = panel.getComponentAtOffset(new Position.Simple(9, pgUp));
+        assertTrue("a footer button: " + button, insideOf(button, sc) && classChainHas(button, "Button"));
+        Component<?> thumb = panel.getComponentAtOffset(new Position.Simple(2, 43));
+        assertTrue("the vertical scrollbar: " + thumb, insideOf(thumb, sc) && classChainHas(thumb, "ScrollBar"));
+    }
+
+    private static boolean insideOf(Object c, Object outer) {
+        for (Object x = c; x instanceof Component; x = ((Component<?>) x).getParentContainer()) {
+            if (x == outer) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean classChainHas(Object c, String name) {
+        for (Object x = c; x instanceof Component; x = ((Component<?>) x).getParentContainer()) {
+            if (x.getClass().getSimpleName().contains(name)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** a click on a shared line goes to the box whose edge it is - at that edge */

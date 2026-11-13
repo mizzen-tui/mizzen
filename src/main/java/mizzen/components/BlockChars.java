@@ -488,6 +488,7 @@ public interface BlockChars {
 
         private static final BlockChars[] ALL_BLOCK_CHARS = new BlockChars[] {
                 NICE,
+                ROUNDED,                                     // after NICE: only its corners ╭╮╰╯ are its own
                 NICE_DOUBLE,
                 BASIC,
                 BASIC_DOUBLE
@@ -648,13 +649,25 @@ public interface BlockChars {
 
         /**
          * A horizontal line len long, each cell joined with the line already there (join): its first cell reaches right,
-         * its last left, the ones between both - so where it starts on a vertical line it makes ├, crossing one ┼.
+         * its last left, the ones between both - so where it starts on a vertical line it makes ├, crossing one ┼. Text
+         * already on a cell (a pane's title, moved onto a divider by shared borders) stays: a line goes under it, as a
+         * border's goes under its title.
          */
         static public void drawHorizontalLine(BlockChars blockChars, int len, GetCharAt getCharAt, PlotCharAt plotCharAt ) {
             for (int i = 0; i < len; i++) {
+                char current = getCharAt.getCharAt(0, i);
+                boolean padding = current == ' ' && (isText(getCharAt.getCharAt(0, i - 1)) || isText(getCharAt.getCharAt(0, i + 1)));
+                if (isText(current) || padding) {
+                    continue;                                    // a title on it (a pane's, shared with the line), with its spaces: it stays
+                }
                 int arms = (i > 0 ? LEFT : 0) | (i < len - 1 ? RIGHT : 0);
-                plotCharAt.setCharAt(0, i, joinArms(blockChars, getCharAt.getCharAt(0, i), arms == 0 ? LEFT | RIGHT : arms));
+                plotCharAt.setCharAt(0, i, joinArms(blockChars, current, arms == 0 ? LEFT | RIGHT : arms));
             }
+        }
+
+        // a character that is neither empty, a space nor a line: text - a line drawn across leaves it
+        private static boolean isText(char ch) {
+            return ch != 0 && ch != ' ' && armsOf(ch) == 0;
         }
         
         static public void drawHorizontalLine(IScreenLineSegmentsBuffer segments, Color drawColor, BlockChars blockChars, Position pos, int len ) {
@@ -669,8 +682,12 @@ public interface BlockChars {
         /** A vertical line len long, each cell joined with the line already there - as drawHorizontalLine, downwards. */
         static public void drawVerticalLine(BlockChars blockChars, int len, GetCharAt getCharAt, PlotCharAt plotCharAt ) {
             for (int i = 0; i < len; i++) {
+                char current = getCharAt.getCharAt(i, 0);
+                if (isText(current)) {
+                    continue;                                    // a scrollbar's thumb on it: it stays
+                }
                 int arms = (i > 0 ? UP : 0) | (i < len - 1 ? DOWN : 0);
-                plotCharAt.setCharAt(i, 0, joinArms(blockChars, getCharAt.getCharAt(i, 0), arms == 0 ? UP | DOWN : arms));
+                plotCharAt.setCharAt(i, 0, joinArms(blockChars, current, arms == 0 ? UP | DOWN : arms));
             }
         }
 
