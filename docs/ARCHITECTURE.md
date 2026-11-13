@@ -766,3 +766,140 @@ Note the contrast in style: `drawIfNeeded` **throws** on a recursive call (`busy
 while `RecursionGuard` **skips** silently. If two-phase layout lands, a request for layout made
 during the validate pass should either get one more pass (capped, then throw with the component
 tree) or throw, never be dropped.
+
+---
+
+## 9. Shared borders (design, Nov 2026 - not built)
+
+### 9.1 The problem
+
+Every bordered component draws a whole box inside its own rectangle, and every container keeps its children inside
+its own border. Put side by side, those boxes stand next to each other, not on each other. The desktop's right side
+shows four vertical lines for one boundary: the example slot's right edge, the splitter's divider, the tab panel's
+frame, README's scroll pane frame. Each is right on its own; together they show the nesting, not the layout.
+
+Today it is fixed case by case: take the panes' borders off and let the container's border join its divider
+(FlipSplitter). That works, but every app has to know the trick, and titles go with the borders.
+
+### 9.2 The idea: overlap, and join where lines land
+
+As Ratatui (a Rust TUI library) does it since 0.30 ("collapsed borders"), and in spirit CSS's `border-collapse`:
+
+1. **The layout overlaps** neighbouring bordered components by one cell, so their edges fall on the same column or
+   row - a child's edge on its container's border, two siblings' edges on one line, panes' edges on a divider.
+2. **Everything draws its own border, as today.** Where a line character lands on a cell that already holds one, the
+   two are **joined**: the directions each reaches (its arms: up, down, left, right) are added, and the cell becomes
+   the one character for that set.
+
+```
+today                                        collapsed
+┌ Example ──┐ ⣿ ┌ Docs ─────┐                ┌ Example ──┬ Docs ──────┐
+│           │ ⣿ │           │                │           ⣿            │
+└───────────┘ ⣿ └───────────┘                └───────────┴────────────┘
+
+Example's ┐ (left+down) + Docs's ┌ (right+down) + the divider │ (up+down)  →  left+right+down = ┬
+```
+
+Adding arms gives the same answer in any order. So nobody owns a shared line: no child looks at its parent, no parent
+draws its children's lines, and the children don't change at all.
+
+Composition code does not change: `panel.add(new BorderedComponent(text))`. A container opts in -
+`panel.collapseBorders(true)` (name open); without it every picture is as today. Later, once proven: a setting for an
+app or a theme.
+
+### 9.3 Who does what
+
+- **The child:** nothing new. It draws its box in its own rectangle, as now - the rectangle it is given is just one
+  cell larger on each side that overlaps. Its inner-rectangle code (its rectangle minus one all round) is unchanged.
+- **The container that lays children out** (Composite; later FrameSet, TabPanel, a scroll pane's view), when collapse
+  is on:
+  - **overlaps** in layout (9.4);
+  - lets a child's edge sit on its own border cells (today it clips children strictly inside);
+  - **joins** as it copies its children's drawings into its own (9.5). It picks the junction character, from its own
+    BlockChars - so the line style is the container's theme's;
+  - sends a click on a shared cell to the right component (9.6).
+- **Nesting** takes care of itself: one level up, the grandparent copies the parent's drawing - joined lines and all -
+  into its own, and joins again where its lines meet. Any depth; each level sees only its own children.
+- **Wrappers** that hold one thing at the same rectangle (AbstractComponentWrappper, ComponentWithFocus,
+  BorderedComponent) need nothing: their drawing is their content's.
+- **Never joined:** popups, dialogs, children kept on top (a floating control, a frame over an example). Joining is only
+  for siblings laid out side by side by one container, in one layer: a kept-on-top child is copied over as today.
+
+### 9.4 Overlap (layout)
+
+Once the container's rules have sized and placed its children, for each bordered child, for each side: if the cell
+just outside that side is a line - the container's own border, a divider, a bordered sibling's edge - the child's
+rectangle grows one cell that way.
+
+```
+against the container's border:   child.left == inner.left               (its left line next to the container's)
+against a sibling:                 a.right + 1 == b.left                  (b grows left onto a's right line)
+across a divider:                  a.right + 1 == divider == b.left - 1   (both grow onto the divider)
+```
+
+**Intent wins over merging.** A side is not overlapped when both lines would carry something of their own on it: two
+titles (a child's titled top against its container's titled top) stay two lines, as the developer asked for both.
+
+**Timing.** Growing a child is a resize. Done as a separate step after the rules, it would come straight back as
+"child resized" (§8.1's eager propagation) and could start another round. So it is done **in the same pass**: the
+container's rules already size and place each child (behind applyResizeRulesGuard); the overlap adds its cell to the
+size and moves the position there - a different answer in the round already running, not another round. The two-phase
+layout of §8.2 is not needed for it; if it shows otherwise (a resize coming back in a loop), do §8.2 first.
+
+### 9.5 Join (drawing)
+
+The join lives in the container's copy of its children's segments (Composite.drawParts: today a child's character
+replaces whatever is there). With collapse on: a line character over a line character becomes their join - the arms of
+both, as one character from the container's BlockChars. Anything else (text, a title, a blank) replaces, as today; a
+line over text, likewise.
+
+**Which colour and weight win** - the CSS 2.1 rules for collapsed table borders, which Ratatui reaches by drawing the
+selected pane last:
+1. the heavier line wins: a focused frame, drawn double (focusedBlockChars), over a plain one; where BlockChars has
+   mixed characters (╟ ╞ ...) the join keeps each arm's own weight;
+2. same weight: the inner one wins (CSS: cell over row over table) - a child's line over its container's;
+3. two siblings, same weight: the one drawn later (CSS: the leftmost cell; for us, z-order).
+
+So, today's draw order (container's border first, children over it, focused raised to the top) already gives the
+standard result if the join takes the colour of the line drawn last - once the heavier one is kept.
+
+### 9.6 Clicks on a shared cell
+
+A shared line's cell belongs to the component drawn on top there (z-order), as for any overlap - except a divider's
+grip, which stays the divider's (drag). A title on a shared line is its component's, as now.
+
+### 9.7 Touch points
+
+| Where | What changes |
+|---|---|
+| BlockChars | the join: arms of a character, and the character for a set of arms (weights; mixed where it has them) - order-free; unit-tested on its own. It replaces the "look at the neighbours already drawn" helpers (drawVerticalLine / drawHorizontalLine), which FrameSet notes only work if vertical lines are drawn first |
+| Composite | opt-in collapse: the overlap after its rules; children allowed on its border cells (today: drawParts' clip, getPositionRelativeToParent's (1,1), getComponentAtOffset's (-1,-1)); the join in drawParts' copy; clicks on shared cells |
+| the overlap arithmetic | one helper (9.4), shared by every laying-out container that opts in |
+| FrameSet | later: its dividers drawn as plain lines and joined like anything else; its panes overlap onto them |
+| TabPanel, ScrollableComponent | later: their frames are SimpleBorders already - they join once their container collapses |
+| children | nothing |
+
+### 9.8 Steps
+
+1. The join in BlockChars, with tests. No visible change on its own. **Built (Nov 2026):** BlockChars.UTIL.join / armsOf
+   / lineFor; drawHorizontalLine, drawVerticalLine and drawBox join each cell with the line there, so drawing order no
+   longer matters (the neighbour-peeking vertical ends are gone); every example the same, Legacy and Rounded. Learned:
+   - a line's end on an empty cell is a plain ─ and reads back as reaching both ways - a line can't say where it
+     stops. A box can, so drawBox puts its corners as corners first. Where two lines' ends would meet on an empty cell,
+     only something that knows the shape (a box) gets it right;
+   - toBlockCharIDX missed index 0 (┐: "> 0" for ">= 0"), so ┐ was never joined - fixed.
+2. Composite's opt-in collapse: overlap, the children allowed on its border, the join in drawParts, clicks. Tried on a
+   small example, then on the desktop's right side.
+3. FrameSet joins its dividers that way (the order-dependent helpers go); TabPanel and ScrollableComponent inside a
+   collapsing container checked.
+4. Decide on a default (app or theme setting).
+
+### 9.9 Open
+
+- the name: collapseBorders(true), or a theme/app style;
+- sizes change by a cell where children overlap: arithmetic such as `width - chart.getWidth()` may see a different
+  number - one reason it is opt-in per container first;
+- before or after the two-phase layout (§8.2).
+
+Sources: Ratatui collapsed borders - https://ratatui.rs/examples/widgets/collapsed-borders/ ; CSS 2.1 border conflict
+resolution (17.6.2.1), as summarised by the Mozilla wiki - https://wiki.mozilla.org/Gecko:Border_collapse

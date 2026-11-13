@@ -507,7 +507,7 @@ public interface BlockChars {
         static int toBlockCharIDX(char ch) {
             for (int i = 0; i < ALL_BLOCK_CHARS.length; i++) {
                 int idx = ALL_BLOCK_CHARS[i].toBlockCharIDX(ch);
-                if (idx > 0) {
+                if (idx >= 0) {                                  // 0 is TOP_RIGHT (┐): "> 0" missed it
                     return idx;
                 }
             }
@@ -554,173 +554,107 @@ public interface BlockChars {
                    charIDX == HORIZONTAL_DOWN;
         }
         
-        static int[] horizonal_start = new int[MAX+1];
+        // ---- joining lines: each line character as the directions it reaches (its arms) -------------------------
+
+        /** the directions a line character reaches - one cell's arms, combined by adding (or-ing) them */
+        public static final int UP = 1, DOWN = 2, LEFT = 4, RIGHT = 8;
+
+        // the arms of each character index (TOP_RIGHT is ┐: it reaches left and down)
+        private static final int[] ARMS = new int[MAX + 1];
         static {
-            horizonal_start[TOP_RIGHT]       = HORIZONTAL_DOWN;
-            horizonal_start[VERTICAL_LINE]   = VERTICAL_RIGHT;
-            horizonal_start[HORIZONTAL_LINE] = HORIZONTAL_LINE;
-            horizonal_start[TOP_LEFT]        = TOP_LEFT;
-            horizonal_start[BOTTOM_RIGHT]    = HORIZONTAL_UP;
-            horizonal_start[BOTTOM_LEFT]     = BOTTOM_LEFT;
-            horizonal_start[VERTICAL_LEFT]   = INTERSECT;
-            horizonal_start[VERTICAL_RIGHT]  = VERTICAL_RIGHT;
-            horizonal_start[HORIZONTAL_DOWN] = HORIZONTAL_DOWN;
-            horizonal_start[HORIZONTAL_UP]   = HORIZONTAL_UP;
-            horizonal_start[INTERSECT]       = INTERSECT;
+            ARMS[TOP_RIGHT]       = LEFT | DOWN;
+            ARMS[VERTICAL_LINE]   = UP | DOWN;
+            ARMS[HORIZONTAL_LINE] = LEFT | RIGHT;
+            ARMS[TOP_LEFT]        = RIGHT | DOWN;
+            ARMS[BOTTOM_RIGHT]    = LEFT | UP;
+            ARMS[BOTTOM_LEFT]     = RIGHT | UP;
+            ARMS[VERTICAL_LEFT]   = UP | DOWN | LEFT;
+            ARMS[VERTICAL_RIGHT]  = UP | DOWN | RIGHT;
+            ARMS[HORIZONTAL_DOWN] = LEFT | RIGHT | DOWN;
+            ARMS[HORIZONTAL_UP]   = LEFT | RIGHT | UP;
+            ARMS[INTERSECT]       = UP | DOWN | LEFT | RIGHT;
         }
 
-        static int[] horizonal_end = new int[MAX+1];
-        static {
-            horizonal_end[TOP_RIGHT]       = TOP_RIGHT;
-            horizonal_end[VERTICAL_LINE]   = VERTICAL_LEFT;
-            horizonal_end[HORIZONTAL_LINE] = HORIZONTAL_LINE;
-            horizonal_end[TOP_LEFT]        = HORIZONTAL_DOWN;
-            horizonal_end[BOTTOM_RIGHT]    = BOTTOM_RIGHT;
-            horizonal_end[BOTTOM_LEFT]     = HORIZONTAL_UP;
-            horizonal_end[VERTICAL_LEFT]   = VERTICAL_LEFT;
-            horizonal_end[VERTICAL_RIGHT]  = INTERSECT;
-            horizonal_end[HORIZONTAL_DOWN] = HORIZONTAL_DOWN;
-            horizonal_end[HORIZONTAL_UP]   = HORIZONTAL_UP;
-            horizonal_end[INTERSECT]       = INTERSECT;
+        /** a character's arms (any set's: light, double, rounded, basic); 0: not a line character */
+        public static int armsOf(char ch) {
+            int idx = toBlockCharIDX(ch);
+            return idx < 0 ? 0 : ARMS[idx];
         }
 
-        static int[] horizonal = new int[MAX+1];
-        static {
-            horizonal[TOP_RIGHT]       = HORIZONTAL_DOWN;
-            horizonal[VERTICAL_LINE]   = INTERSECT;
-            horizonal[HORIZONTAL_LINE] = HORIZONTAL_LINE;
-            horizonal[TOP_LEFT]        = HORIZONTAL_DOWN;
-            horizonal[BOTTOM_RIGHT]    = HORIZONTAL_UP;
-            horizonal[BOTTOM_LEFT]     = HORIZONTAL_UP;
-            horizonal[VERTICAL_LEFT]   = INTERSECT;
-            horizonal[VERTICAL_RIGHT]  = INTERSECT;
-            horizonal[HORIZONTAL_DOWN] = HORIZONTAL_DOWN;
-            horizonal[HORIZONTAL_UP]   = HORIZONTAL_UP;
-            horizonal[INTERSECT]       = INTERSECT;
-        }
-
-/*
-        static int[] vertical_start = new int[MAX+1];
-        static {
-            vertical_start[TOP_RIGHT]       = TOP_RIGHT;
-            vertical_start[VERTICAL_LINE]   = VERTICAL_LINE;
-            vertical_start[HORIZONTAL_LINE] = TOP_LEFT;
-            vertical_start[TOP_LEFT]        = TOP_LEFT;
-            vertical_start[BOTTOM_RIGHT]    = VERTICAL_LEFT;
-            vertical_start[BOTTOM_LEFT]     = VERTICAL_RIGHT;
-            vertical_start[VERTICAL_LEFT]   = VERTICAL_LEFT;
-            vertical_start[VERTICAL_RIGHT]  = VERTICAL_RIGHT;
-            vertical_start[HORIZONTAL_DOWN] = HORIZONTAL_DOWN;
-            vertical_start[HORIZONTAL_UP]   = INTERSECT;
-            vertical_start[INTERSECT]       = INTERSECT;
-        }
-*/        
-/*
-        static int[] vertical_end = new int[MAX+1];
-        static {
-            vertical_end[TOP_RIGHT]       = VERTICAL_LEFT;
-            vertical_end[VERTICAL_LINE]   = VERTICAL_LINE;
-            vertical_end[HORIZONTAL_LINE] = HORIZONTAL_UP;
-            vertical_end[TOP_LEFT]        = VERTICAL_RIGHT;
-            vertical_end[BOTTOM_RIGHT]    = BOTTOM_RIGHT;
-            vertical_end[BOTTOM_LEFT]     = BOTTOM_LEFT;
-            vertical_end[VERTICAL_LEFT]   = VERTICAL_LEFT;
-            vertical_end[VERTICAL_RIGHT]  = VERTICAL_RIGHT;
-            vertical_end[HORIZONTAL_DOWN] = INTERSECT;
-            vertical_end[HORIZONTAL_UP]   = HORIZONTAL_UP;
-            vertical_end[INTERSECT]       = INTERSECT;
-        }
-*/
-        static int[] vertical = new int[MAX+1];
-        static {
-            vertical[TOP_RIGHT]       = VERTICAL_LEFT;
-            vertical[VERTICAL_LINE]   = VERTICAL_LINE;
-            vertical[HORIZONTAL_LINE] = INTERSECT;
-            vertical[TOP_LEFT]        = VERTICAL_RIGHT;
-            vertical[BOTTOM_RIGHT]    = VERTICAL_LEFT;
-            vertical[BOTTOM_LEFT]     = VERTICAL_RIGHT;
-            vertical[VERTICAL_LEFT]   = VERTICAL_LEFT;
-            vertical[VERTICAL_RIGHT]  = VERTICAL_RIGHT;
-            vertical[HORIZONTAL_DOWN] = INTERSECT;
-            vertical[HORIZONTAL_UP]   = INTERSECT;
-            vertical[INTERSECT]       = INTERSECT;
-        }
-
-        
-        static private char drawLineCharHelper(BlockChars blockChars, int[] idxMappingArray, char current, char defaultChar) { 
-            int idx = toBlockCharIDX(current);
-            if (idx<0) {
-                return defaultChar;
+        /**
+         * The character in style for a set of arms. One arm alone (a line's end, with nothing to join) is the straight
+         * line of its direction.
+         * <pre>
+         *     lineFor(NICE, LEFT | RIGHT | DOWN)   ┬
+         *     lineFor(NICE, RIGHT)                 ─
+         * </pre>
+         */
+        public static char lineFor(BlockChars style, int arms) {
+            if ((arms & (LEFT | RIGHT)) == 0) {
+                return style.getVERTICAL_LINE();                 // up, down, or both
             }
-            
-            int mappedIDX = idxMappingArray[idx];
-            return blockChars.toBlockChar(mappedIDX);
+            if ((arms & (UP | DOWN)) == 0) {
+                return style.getHORIZONTAL_LINE();               // left, right, or both
+            }
+            for (int idx = MIN; idx <= MAX; idx++) {
+                if (ARMS[idx] == arms) {
+                    return style.toBlockChar(idx);
+                }
+            }
+            // three arms with one of a pair missing on each axis can't happen here: every set of two or more arms that
+            // reaches both axes is one of the characters above
+            throw new IllegalStateException("no line character for arms " + arms);
         }
 
-        static public char drawHorizontalStart(BlockChars blockChars, char current) { 
-            
-            return drawLineCharHelper(blockChars, horizonal_start, current, blockChars.getHORIZONTAL_LINE());
+        /**
+         * Two line characters on one cell become one: the arms of both, in style - in any order, the same character.
+         * Either not a line character: over, as drawing over it always does.
+         * <pre>
+         *     join('│', '─', NICE)   ┼        the divider over a border
+         *     join('┐', '┌', NICE)   ┬        two boxes' corners on one cell
+         *     join('│', 'x', NICE)   x
+         * </pre>
+         * The order-free core of line drawing, and of borders shared between neighbouring components (see
+         * docs/ARCHITECTURE.md, "Shared borders").
+         */
+        public static char join(char under, char over, BlockChars style) {
+            int underArms = armsOf(under);
+            int overArms = armsOf(over);
+            if (underArms == 0 || overArms == 0) {
+                return over;
+            }
+            return lineFor(style, underArms | overArms);
         }
 
-        static public char drawHorizontal(BlockChars blockChars, char current) { 
-            if (current == blockChars.getINTERSECT()) {
-                //return blockChars.getINTERSECT();
-                return drawLineCharHelper(blockChars, horizonal, current, blockChars.getHORIZONTAL_LINE());
-            }
-            return drawLineCharHelper(blockChars, horizonal, current, blockChars.getHORIZONTAL_LINE());
+        // a line's piece with these arms, joined with whatever line is in the cell already
+        private static char joinArms(BlockChars style, char current, int arms) {
+            return lineFor(style, armsOf(current) | arms);
         }
 
-        static public char drawHorizontalEnd(BlockChars blockChars, char current) { 
-            return drawLineCharHelper(blockChars, horizonal_end, current, blockChars.getHORIZONTAL_LINE());
+        /** a horizontal line's first cell over current: it reaches right (├ on a vertical line) */
+        static public char drawHorizontalStart(BlockChars blockChars, char current) {
+            return joinArms(blockChars, current, RIGHT);
         }
-        
-        /*
-        static public char drawHorizontalEnd(BlockChars blockChars, GetCharAt getCharAt) { 
-            boolean hasBelow = hasAboveComponent(toBlockCharIDX(getCharAt.getCharAt(1, 0)));
-            boolean hasAbove =  hasLeftComponent(toBlockCharIDX(getCharAt.getCharAt(0, -1)));
-            boolean hasRight = hasRightComponent(toBlockCharIDX(getCharAt.getCharAt(0, 1)));
-            
-            if (hasBelow && hasLeft && hasRight) {
-                return blockChars.toBlockChar( INTERSECT );
-            }
-            
-            if (hasBelow && hasLeft ) {
-                return blockChars.toBlockChar( VERTICAL_LEFT );
-            }
 
-            if (hasBelow && hasRight ) {
-                return blockChars.toBlockChar( VERTICAL_RIGHT );
-            }
-            
-            if (hasBelow) {
-                return blockChars.toBlockChar( VERTICAL_LINE );
-            }
-            
-            if (hasLeft && hasRight ) {
-                return blockChars.toBlockChar( HORIZONTAL_UP );
-            }
-
-            if (hasLeft ) {
-                return blockChars.toBlockChar( BOTTOM_RIGHT );
-            }
-
-            if (hasRight) {
-                return blockChars.toBlockChar( BOTTOM_LEFT );
-            }
-            
-            return blockChars.getVERTICAL_LINE();
-            
-            //return drawLineCharHelper(blockChars, vertical_end, current, blockChars.getVERTICAL_LINE());
+        /** a horizontal line's cell over current: it reaches both ways (┼ across a vertical line) */
+        static public char drawHorizontal(BlockChars blockChars, char current) {
+            return joinArms(blockChars, current, LEFT | RIGHT);
         }
-        
-        */
-        
+
+        /** a horizontal line's last cell over current: it reaches left (┤ on a vertical line) */
+        static public char drawHorizontalEnd(BlockChars blockChars, char current) {
+            return joinArms(blockChars, current, LEFT);
+        }
+
+        /**
+         * A horizontal line len long, each cell joined with the line already there (join): its first cell reaches right,
+         * its last left, the ones between both - so where it starts on a vertical line it makes ├, crossing one ┼.
+         */
         static public void drawHorizontalLine(BlockChars blockChars, int len, GetCharAt getCharAt, PlotCharAt plotCharAt ) {
-            plotCharAt.setCharAt(0,0, drawHorizontalStart(blockChars, getCharAt.getCharAt(0,0)));
-            for (int i=1; i<len-1; i++) {
-                plotCharAt.setCharAt(0,i, drawHorizontal(blockChars, getCharAt.getCharAt(0,i)));
+            for (int i = 0; i < len; i++) {
+                int arms = (i > 0 ? LEFT : 0) | (i < len - 1 ? RIGHT : 0);
+                plotCharAt.setCharAt(0, i, joinArms(blockChars, getCharAt.getCharAt(0, i), arms == 0 ? LEFT | RIGHT : arms));
             }
-            plotCharAt.setCharAt(0,len-1, drawHorizontalEnd(blockChars, getCharAt.getCharAt(0,len-1)));
         }
         
         static public void drawHorizontalLine(IScreenLineSegmentsBuffer segments, Color drawColor, BlockChars blockChars, Position pos, int len ) {
@@ -732,91 +666,12 @@ public interface BlockChars {
             drawHorizontalLine(blockChars, len, charAT, setCharAT);
         }
 
-        static private char drawVerticalStart(BlockChars blockChars, GetCharAt getCharAt) { 
-            boolean hasAbove = hasAboveComponent(toBlockCharIDX(getCharAt.getCharAt(-1, 0)));
-            boolean hasLeft =  hasLeftComponent(toBlockCharIDX(getCharAt.getCharAt(0, -1)));
-            boolean hasRight = hasRightComponent(toBlockCharIDX(getCharAt.getCharAt(0, 1)));
-
-            if (hasAbove && hasLeft && hasRight) {
-                return blockChars.toBlockChar( INTERSECT );
-            }
-            
-            if (hasAbove && hasLeft ) {
-                return blockChars.toBlockChar( VERTICAL_LEFT );
-            }
-
-            if (hasAbove && hasRight ) {
-                return blockChars.toBlockChar( VERTICAL_RIGHT );
-            }
-            
-            if (hasAbove) {
-                return blockChars.toBlockChar( VERTICAL_LINE );
-            }
-            
-            if (hasLeft && hasRight ) {
-                return blockChars.toBlockChar( HORIZONTAL_DOWN );
-            }
-
-            if (hasLeft ) {
-                return blockChars.toBlockChar( TOP_RIGHT );
-            }
-
-            if (hasRight) {
-                return blockChars.toBlockChar( TOP_LEFT );
-            }
-            
-            return blockChars.getVERTICAL_LINE();
-        }
-
-        static private char drawVertical(BlockChars blockChars, char current) { 
-            
-            return drawLineCharHelper(blockChars, vertical, current, blockChars.getVERTICAL_LINE());
-        }
-
-        static public char drawVerticalEnd(BlockChars blockChars, GetCharAt getCharAt) { 
-            boolean hasBelow = hasBelowComponent(toBlockCharIDX(getCharAt.getCharAt(1, 0)));
-            boolean hasLeft =  hasLeftComponent(toBlockCharIDX(getCharAt.getCharAt(0, -1)));
-            boolean hasRight = hasRightComponent(toBlockCharIDX(getCharAt.getCharAt(0, 1)));
-            
-            if (hasBelow && hasLeft && hasRight) {
-                return blockChars.toBlockChar( INTERSECT );
-            }
-            
-            if (hasBelow && hasLeft ) {
-                return blockChars.toBlockChar( VERTICAL_LEFT );
-            }
-
-            if (hasBelow && hasRight ) {
-                return blockChars.toBlockChar( VERTICAL_RIGHT );
-            }
-            
-            if (hasBelow) {
-                return blockChars.toBlockChar( VERTICAL_LINE );
-            }
-            
-            if (hasLeft && hasRight ) {
-                return blockChars.toBlockChar( HORIZONTAL_UP );
-            }
-
-            if (hasLeft ) {
-                return blockChars.toBlockChar( BOTTOM_RIGHT );
-            }
-
-            if (hasRight) {
-                return blockChars.toBlockChar( BOTTOM_LEFT );
-            }
-
-            return blockChars.getVERTICAL_LINE();
-
-            //return drawLineCharHelper(blockChars, vertical_end, current, blockChars.getVERTICAL_LINE());
-        }
-
+        /** A vertical line len long, each cell joined with the line already there - as drawHorizontalLine, downwards. */
         static public void drawVerticalLine(BlockChars blockChars, int len, GetCharAt getCharAt, PlotCharAt plotCharAt ) {
-            plotCharAt.setCharAt(0,0, drawVerticalStart(blockChars, getCharAt));
-            for (int i=1; i<len-1; i++) {
-                plotCharAt.setCharAt(i, 0, drawVertical(blockChars, getCharAt.getCharAt(i,0)));
+            for (int i = 0; i < len; i++) {
+                int arms = (i > 0 ? UP : 0) | (i < len - 1 ? DOWN : 0);
+                plotCharAt.setCharAt(i, 0, joinArms(blockChars, getCharAt.getCharAt(i, 0), arms == 0 ? UP | DOWN : arms));
             }
-            plotCharAt.setCharAt(len-1,0, drawVerticalEnd(blockChars, (row, col)-> getCharAt.getCharAt(row+len-1, col)  ));
         }
 
         static public void drawVerticalLine(IScreenLineSegmentsBuffer segments, Color drawColor, BlockChars blockChars, Position pos, int height ) {
@@ -828,11 +683,32 @@ public interface BlockChars {
             drawVerticalLine(blockChars, height, charAT, setCharAT);
         }
 
+        /**
+         * A box, joined with the lines already there. Its corners are put first, as corners, then the lines between them:
+         * drawn as four lines, a line's end on an empty cell is a plain ─ and reads back as reaching both ways, so two
+         * ends meeting at a corner would make ┬, not ┌.
+         */
         static public void drawBox(IScreenLineSegmentsBuffer segments, Color drawColor, BlockChars blockChars, Rectangle rect ) {
-            drawHorizontalLine(segments, drawColor, blockChars, rect.getPostion_TopLeft(), rect.getWidth());
-            drawHorizontalLine(segments, drawColor, blockChars, rect.getPostion_BottomLeft(), rect.getWidth());
-            drawVerticalLine(segments, drawColor, blockChars, rect.getPostion_TopLeft(), rect.getHeight());
-            drawVerticalLine(segments, drawColor, blockChars, rect.getPostion_TopRight(), rect.getHeight());
+            int top = rect.getRow(), left = rect.getCol();
+            int bottom = rect.getBottomMostRow(), right = rect.getRightMostCol();
+            putJoined(segments, drawColor, blockChars, top, left, RIGHT | DOWN);
+            putJoined(segments, drawColor, blockChars, top, right, LEFT | DOWN);
+            putJoined(segments, drawColor, blockChars, bottom, left, RIGHT | UP);
+            putJoined(segments, drawColor, blockChars, bottom, right, LEFT | UP);
+            for (int col = left + 1; col < right; col++) {
+                putJoined(segments, drawColor, blockChars, top, col, LEFT | RIGHT);
+                putJoined(segments, drawColor, blockChars, bottom, col, LEFT | RIGHT);
+            }
+            for (int row = top + 1; row < bottom; row++) {
+                putJoined(segments, drawColor, blockChars, row, left, UP | DOWN);
+                putJoined(segments, drawColor, blockChars, row, right, UP | DOWN);
+            }
+        }
+
+        // a piece with these arms at row, col, joined with the line there already
+        private static void putJoined(IScreenLineSegmentsBuffer segments, Color drawColor, BlockChars blockChars, int row, int col, int arms) {
+            String current = segments.getCharAt(row, col);
+            segments.setCharAt(row, col, joinArms(blockChars, current == null ? 0 : current.charAt(0), arms), drawColor);
         }
 
         public synchronized static MapChars getNICE_TO_BASIC() {
