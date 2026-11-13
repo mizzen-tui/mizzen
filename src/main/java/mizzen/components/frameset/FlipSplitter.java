@@ -96,6 +96,7 @@ public class FlipSplitter extends AbstractComponentWrappper<Composite> {
     private boolean secondOnlyOffered = false;
     private boolean secondShown = true;
     private boolean bordered = false;
+    private boolean collapse = false;                    // panes' borders shared with the divider: collapseBorders
     private String title;
     private final Map<Placement, Integer> shares = new EnumMap<Placement, Integer>(Placement.class);   // the first pane's %, as left
     private int share = 50;
@@ -140,6 +141,18 @@ public class FlipSplitter extends AbstractComponentWrappper<Composite> {
     public FlipSplitter setBorder(boolean bordered) {
         if (this.bordered != bordered) {
             this.bordered = bordered;
+            rebuild();
+        }
+        return this;
+    }
+
+    /**
+     * true: bordered panes share their edges with the divider, and with its border if it has one - one line between
+     * them, the grip on it (see Composite.collapseBorders). False (the default): each pane's box whole.
+     */
+    public FlipSplitter collapseBorders(boolean collapse) {
+        if (this.collapse != collapse) {
+            this.collapse = collapse;
             rebuild();
         }
         return this;
@@ -355,6 +368,7 @@ public class FlipSplitter extends AbstractComponentWrappper<Composite> {
             case RIGHT: {
                 HorizontalSplitter split = new HorizontalSplitter().addComponent(first).addComponent(second);
                 split.setBorder(bordered);                         // a frameset's border: the divider joins it
+                split.collapseBorders(collapse);
                 if (title != null) {
                     split.setTitle(title);
                 }
@@ -366,6 +380,7 @@ public class FlipSplitter extends AbstractComponentWrappper<Composite> {
             default: {
                 VerticalSplitter split = new VerticalSplitter().addComponent(first).addComponent(second);
                 split.setBorder(bordered);
+                split.collapseBorders(collapse);
                 if (title != null) {
                     split.setTitle(title);
                 }
@@ -382,6 +397,7 @@ public class FlipSplitter extends AbstractComponentWrappper<Composite> {
         }
         Composite box = new Composite();
         box.setBorder(true);
+        box.collapseBorders(collapse);
         if (title != null) {
             box.setTitle(title);
         }

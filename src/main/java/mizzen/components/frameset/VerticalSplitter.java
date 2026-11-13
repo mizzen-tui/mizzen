@@ -83,6 +83,12 @@ public class VerticalSplitter extends AbstractComponentWrappper<FrameSet> implem
         return getWrappedComponent().hasBorder();
     }
 
+    /** bordered panes share their edges with the divider (and the border): one line between them - see FrameSet */
+    public VerticalSplitter collapseBorders(boolean collapse) {
+        getWrappedComponent().collapseBorders(collapse);
+        return this;
+    }
+
     @Override
     public VerticalSplitter setBorder(boolean hasBorder) {
         getWrappedComponent().setBorder(hasBorder);

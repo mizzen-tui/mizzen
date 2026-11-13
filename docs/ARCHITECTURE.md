@@ -889,9 +889,9 @@ grip, which stays the divider's (drag). A title on a shared line is its componen
      only something that knows the shape (a box) gets it right;
    - toBlockCharIDX missed index 0 (┐: "> 0" for ">= 0"), so ┐ was never joined - fixed.
 2. Composite's opt-in collapse: overlap, the children allowed on its border, the join in drawParts, clicks. Tried on a
-   small example, then on the desktop's right side.
+   small example, then on the desktop's right side. **Built (Nov 2026), differently from 9.4 - see 9.10.**
 3. FrameSet joins its dividers that way (the order-dependent helpers go); TabPanel and ScrollableComponent inside a
-   collapsing container checked.
+   collapsing container checked. **Built (Nov 2026): see 9.10, "Step 3".**
 4. Decide on a default (app or theme setting).
 
 ### 9.9 Open
@@ -903,3 +903,51 @@ grip, which stays the divider's (drag). A title on a shared line is its componen
 
 Sources: Ratatui collapsed borders - https://ratatui.rs/examples/widgets/collapsed-borders/ ; CSS 2.1 border conflict
 resolution (17.6.2.1), as summarised by the Mozilla wiki - https://wiki.mozilla.org/Gecko:Border_collapse
+
+### 9.10 As built (step 2): the overlap is in the drawing, not the layout
+
+Growing children (9.4) fights Mizzen's layout: a pane placed after another (addRight, addBelow) is positioned from
+its neighbour's size, so growing the left one by a cell moves the right one too and the two never land on one line;
+and it is a resize inside layout (§8). So the overlap moves the drawing instead - no child is resized or moved:
+
+- `Composite.collapseBorders(true)`; after it has drawn its children, `SharedBorders.share(..)` moves each sharing
+  child's edge one cell out onto the line next to it. A child with a shared side is drawn again larger on those sides:
+  the moved sides' old cells are wiped (a blank inside - a column or row of padding), then each moved side's line is
+  drawn one cell out, corner to corner, joined with what is there; text on the old edge (a title, a scrollbar) is
+  carried across. Sides not moved keep their own drawing (a tab strip's tops stay), except the cell where their line
+  carries on to the new corner. All are wiped before any is drawn, so the joins come out the same in any order.
+- **Which children take part is read from what they drew:** a side is an edge when its two corner cells are that side's
+  corners (┌ and └ for the left). So a plain panel around a bordered slot counts (its corners are the slot's), with no
+  interface on the children.
+- **The lines an edge moves onto:** the panel's own border; a bordered neighbour's edge right next to it (only the right
+  or lower one moves); a one-cell gap between two bordered neighbours (both move into it); and lines its owner draws
+  over it later - `sharedLinesAt(..)`, how a FrameSet tells its pane panel where its dividers go.
+- **Intent:** a side isn't shared where both lines carry text (two titles stay two lines).
+- **Clicks** on a moved edge's new cells go to that child, at its edge (`Composite.getComponentAtOffset`); a FrameSet's
+  grip is checked before its panes, so it stays the divider's.
+- **Passed through:** `FrameSet.collapseBorders`, the splitters', `FlipSplitter.collapseBorders` (the desktop uses it).
+
+The cost of not resizing: a shared side gains no inside cell - it becomes padding, one column per level that moved (the
+desktop's README text sits two columns in: its frame moved, and the tab panel's).
+
+**Step 3 (tab panels, scroll panes), what they taught:**
+- **A box lower down:** a tab panel's top rows are its tab strip, so its top corners aren't corners; its box is the
+  first one lower down reaching its sides and bottom - its frame. The strip above is left as drawn.
+- **Inside another child's box:** a tab panel's frame is a SimpleBorder child, the content (a scroll pane) inside it -
+  an edge right inside another child's box shares that box's side, as a panel's own border. A top only onto a plain
+  line: a tab panel's frame top carries its tabs' joins (┘ └┴), and the content's title would land in them - so README's
+  title line stays its own line under the strip. `TabPanel.collapseBorders(..)`.
+- **Only the plain edge line is redrawn** (─ along a top or bottom, │ down a side). Everything else on a moved edge is
+  carried across as drawn: a title, a scrollbar's thumb, a horizontal scrollbar, a footer with its separators
+  (┤ ^ │ v │ ... ├ - line characters, but not the edge's line). A scrollbar's empty track is the plain line: it becomes
+  the shared one.
+- **A plain line never covers something carried:** two panes sharing a gap - the left one's thumb stays on it.
+- **Weight:** a box drawn double (focused) keeps it in every piece drawn for it; where it meets a single line, the join
+  is double - the heavier wins.
+- **A line that met a moved edge** (├ where README's top met the frame's side) carries on across the cell the edge
+  left, to the new edge - only when the cell inside really reaches back (a footer's ┤ has a stub up into text: no).
+- Two texts on one line (README's footer, the tab panel's <- -> on its bottom): not shared.
+
+The desktop now: beside, the example, the divider, the tab panel's frame and README's frame are one line with the grip
+on it (four lines before); stacked, the example's bottom is the divider, README's frame is the tab panel's.
+

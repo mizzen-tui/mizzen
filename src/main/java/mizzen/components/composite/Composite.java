@@ -55,6 +55,9 @@ public class Composite extends AbstractComponent<Composite>
     }
 
     private SimpleBorder border;
+    private boolean collapseBorders = false;                   // shared borders: see collapseBorders(..)
+    private List<SharedBorders.Move> sharedBorderMoves = Collections.emptyList();   // the edges moved, at the last draw
+    private java.util.function.Supplier<List<Rectangle>> sharedLines = Collections::emptyList;   // its owner's lines: sharedLinesAt
     protected boolean boundsFixed = false;
     private Rectangle bounds = Rectangle.ZERO;
     private List<ComponentWithOffset> children = new ArrayList<ComponentWithOffset>();
@@ -1289,6 +1292,55 @@ public class Composite extends AbstractComponent<Composite>
         } else {
            drawChildren(color, segments, childrenInZOrder, boundsFixedFlag);
         }
+        sharedBorderMoves = collapseBorders ? SharedBorders.share(segments, sharedBorderBoxes(), hasBorder() ? new Rectangle.Simple(0, 0, getHeight(), getWidth()) : null,
+                                                                  border != null && border.getTitle() != null, getBlockChars(),
+                                                                  sharedLines.get())
+                                            : Collections.<SharedBorders.Move>emptyList();
+    }
+
+    /**
+     * Shared borders: true - bordered children next to a line (this panel's border, a bordered neighbour, a one-cell gap
+     * between two) share it, one line where there were two. Nothing about the children changes; their edges are moved
+     * onto the line as they are drawn here (see SharedBorders). False (the default): every box drawn whole, as ever.
+     * <pre>
+     *     panel.collapseBorders(true);
+     *     panel.add(new BorderedComponent(list));                 // its left edge on the panel's: ├ where they meet
+     * </pre>
+     */
+    public Composite collapseBorders(boolean collapse) {
+        if (this.collapseBorders != collapse) {
+            this.collapseBorders = collapse;
+            markAsDirty();
+        }
+        return this;
+    }
+
+    public boolean isCollapseBorders() {
+        return collapseBorders;
+    }
+
+    /**
+     * Lines its owner draws over it after it has drawn (a FrameSet's dividers, in this panel's cells), asked each time it
+     * draws: with collapseBorders, a bordered child's edge right next to one moves onto it, as onto any line.
+     */
+    public Composite sharedLinesAt(java.util.function.Supplier<List<Rectangle>> lines) {
+        this.sharedLines = lines != null ? lines : Collections::emptyList;
+        markAsDirty();
+        return this;
+    }
+
+    // the children taking part in shared borders: shown, in this layer (not kept on top, not popups)
+    private List<SharedBorders.Box> sharedBorderBoxes() {
+        List<SharedBorders.Box> boxes = new ArrayList<SharedBorders.Box>();
+        for (ComponentWithOffset child : childrenInZOrder) {
+            if (!child.visible || child.keptOnTop || child.component.getPopupOwner() != null) {
+                continue;
+            }
+            Position at = getPositionRelativeToParent(child.component);
+            boxes.add(new SharedBorders.Box(child.component, new Rectangle.Simple(at.getRow(), at.getCol(),
+                                                                                    child.component.getHeight(), child.component.getWidth())));
+        }
+        return boxes;
     }
 
     private static Color shadowColor = new Colors.FGBGColors(Colors.IBla, Colors.On_Bla);
@@ -1366,6 +1418,14 @@ public class Composite extends AbstractComponent<Composite>
             return null;
         }
 
+        for (SharedBorders.Move move : sharedBorderMoves) {                // a shared line: the child whose edge it is
+            Position source = move.sourceOf(offset.getRow(), offset.getCol());
+            if (source != null) {
+                Component<?> child = (Component<?>) move.child;
+                Position at = getPositionRelativeToParent(child);
+                return GetComponentAtOffset.UTIL.getComponentAtOffset(child, source.offsetAdd(at.negate()));
+            }
+        }
         if (this.hasBorder()) {
             Component<?> onTheTopLine = border.getTitleLinePartAt(offset);   // a part on the border: a control, the title
             if (onTheTopLine != null) {

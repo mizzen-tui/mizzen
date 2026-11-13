@@ -134,6 +134,15 @@ public class TabPanel extends ComponentWithFocus<Composite, TabPanel>
 
     }
 
+    /**
+     * Shared borders (see Composite.collapseBorders): a bordered tab content (a scroll pane) shares its sides with this
+     * panel's frame - one line, not two. False (the default): each drawn whole.
+     */
+    public TabPanel collapseBorders(boolean collapse) {
+        getWrappedComponent().collapseBorders(collapse);
+        return this;
+    }
+
     public TabPanel(Color color, Color textActiveTabColor, Dimension bounds) {
         this(color, bounds);
         this.textActiveTabColor = textActiveTabColor;

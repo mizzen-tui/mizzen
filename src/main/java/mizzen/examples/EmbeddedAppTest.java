@@ -222,7 +222,7 @@ public class EmbeddedAppTest {
             MarkdownView docsView = new MarkdownView("README.md", SourceFiles::findText);
             ScrollableComponent docs = MarkdownView.inScrollPane((Color) null, docsView);
             ScrollableComponent codeView = new ScrollableComponent((Color) null, new TextComponent(" Pick an example: its code shows here"));
-            TabPanel learning = new TabPanel();
+            TabPanel learning = new TabPanel().collapseBorders(true);   // the docs' frame on the tab panel's, one line
             learning.addTab("Docs", docs);
             learning.addTab("Code", codeView);
             learning.addTab("Components", null, new ComponentsTab(slot, right));
@@ -567,7 +567,8 @@ public class EmbeddedAppTest {
             if (panel != null && split == null) {
                 area.setOnResizeRule(null);
                 area.remove(holder);
-                split = new FlipSplitter(holder, panel).share(55).offerSecondOnly(true);   // the example a little more than half
+                split = new FlipSplitter(holder, panel).share(55).offerSecondOnly(true)    // the example a little more than half
+                                                         .collapseBorders(true);           // one line between them, the grip on it
                 // concise: the two layouts as pictures, and Learn alone in a word - no picture says that
                 split.control(split.chips((p) -> p == FlipSplitter.Placement.SECOND_ONLY ? "Learn" : FlipSplitter.pictures(p)));
                 area.add(split);

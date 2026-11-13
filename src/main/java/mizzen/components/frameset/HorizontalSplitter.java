@@ -83,6 +83,12 @@ public class HorizontalSplitter extends AbstractComponentWrappper<FrameSet> impl
         return getWrappedComponent().hasBorder();
     }
 
+    /** bordered panes share their edges with the divider (and the border): one line between them - see FrameSet */
+    public HorizontalSplitter collapseBorders(boolean collapse) {
+        getWrappedComponent().collapseBorders(collapse);
+        return this;
+    }
+
     @Override
     public HorizontalSplitter setBorder(boolean hasBorder) {
         getWrappedComponent().setBorder(hasBorder);

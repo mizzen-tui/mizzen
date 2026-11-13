@@ -75,6 +75,32 @@ public class FrameSet extends BoundedComponent<FrameSet> implements HasTitleAndB
         return this;
     }
 
+    /**
+     * Shared borders (see Composite.collapseBorders): bordered panes share their edges with this one's border and with
+     * the divider between them - one line, the divider's grip on it. False (the default): every pane's box whole.
+     */
+    public FrameSet collapseBorders(boolean collapse) {
+        container.collapseBorders(collapse);
+        container.sharedLinesAt(collapse ? this::dividerLines : null);
+        markAsDirty();
+        return this;
+    }
+
+    // the dividers: the gap each sits in between its two panes - in this one's cells, which are its container's (the
+    // border is the container's own)
+    private List<Rectangle> dividerLines() {
+        List<Rectangle> lines = new ArrayList<Rectangle>();
+        for (VerticalDivider vd : vDividers) {
+            Position at = vd.getPositionOfVerticalDivider();
+            lines.add(new Rectangle.Simple(at.getRow(), at.getCol(), vd.getHeightOfVerticalDivider(), 1));
+        }
+        for (HorizontalDivider hd : hDividers) {
+            Position at = hd.getStartPositionOfHorizontalDivider();
+            lines.add(new Rectangle.Simple(at.getRow(), at.getCol(), 1, hd.getWidthOfHorizontalDivider()));
+        }
+        return lines;
+    }
+
     public FrameSet add(Component<?> component) {
         this.container.add(component);
         return this;
