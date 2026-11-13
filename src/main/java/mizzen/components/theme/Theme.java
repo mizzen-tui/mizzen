@@ -691,8 +691,60 @@ public final class Theme implements HasName<Theme> {
         return with((t) -> t.name = name);
     }
 
+    /**
+     * This theme on another background. Each colour that was on the old background is laid on the new one, keeping its
+     * foreground, so a theme built on another doesn't keep the other's background behind its text, headings, chart
+     * lines and the rest. A colour with a background of its own (a reversed status bar, a card's surface) keeps it, and
+     * colours given after this are used as given.
+     * <pre>
+     *     Theme.ROUNDED.withBackgroundColor(Theme.rgb(0xE6EEF2, 0x1D4F4A))    // Rounded's colours, on teal
+     *                  .withTextColor(Theme.rgb(0xFFFFFF, 0x1D4F4A));          // and white text
+     * </pre>
+     */
     public Theme withBackgroundColor(Color color) {
-        return with((t) -> t.backgroundColor = color);
+        Color old = backgroundColor;
+        return with((t) -> {
+            t.backgroundColor = color;
+            t.textColor = movedOnto(textColor, old, color);
+            t.headingColor = movedOnto(headingColor, old, color);
+            t.inputColor = movedOnto(inputColor, old, color);
+            t.buttonColor = movedOnto(buttonColor, old, color);
+            t.buttonFocusedColor = movedOnto(buttonFocusedColor, old, color);
+            t.borderColor = movedOnto(borderColor, old, color);
+            t.disabledColor = movedOnto(disabledColor, old, color);
+            t.errorColor = movedOnto(errorColor, old, color);
+            t.successColor = movedOnto(successColor, old, color);
+            t.statusColor = movedOnto(statusColor, old, color);
+            t.selectedColor = movedOnto(selectedColor, old, color);
+            t.warningColor = movedOnto(warningColor, old, color);
+            t.dialogColor = movedOnto(dialogColor, old, color);
+            t.surfaceColor = movedOnto(surfaceColor, old, color);
+            t.accentColor = movedOnto(accentColor, old, color);
+            t.stripeColor = movedOnto(stripeColor, old, color);
+            t.subheadingColor = movedOnto(subheadingColor, old, color);
+            t.minorHeadingColor = movedOnto(minorHeadingColor, old, color);
+            t.strongColor = movedOnto(strongColor, old, color);
+            t.emphasisColor = movedOnto(emphasisColor, old, color);
+            t.linkColor = movedOnto(linkColor, old, color);
+            t.codeColor = movedOnto(codeColor, old, color);
+            t.dimColor = movedOnto(dimColor, old, color);
+            t.imageBackingColor = movedOnto(imageBackingColor, old, color);
+            if (drawingColors != null) {
+                Color[] drawing = new Color[drawingColors.size()];
+                for (int i = 0; i < drawing.length; i++) {
+                    drawing[i] = movedOnto(drawingColors.get(i), old, color);
+                }
+                t.drawingColors = Collections.unmodifiableList(Arrays.asList(drawing));
+            }
+        });
+    }
+
+    // a colour on the old background: its foreground on the new one; any other as it is
+    private static Color movedOnto(Color role, Color oldBackground, Color newBackground) {
+        if (newBackground == null || !Color.sameBackground(role, oldBackground) || !Color.setsBackground(newBackground)) {
+            return role;
+        }
+        return role.mergeWith(newBackground);
     }
 
     public Theme withTextColor(Color color) {

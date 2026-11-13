@@ -237,6 +237,13 @@ public class ButtonBar extends ComponentWithFocus<HorizontalPanel, ButtonBar> {
         if (prevChild != null && isDividerComponent(prevChild)) {
             getContainer().remove(prevChild);
         }
+        if (count == 0) {
+            // the last one gone: the end pieces go too. Left behind, the right end stayed in front of the left end the
+            // next add puts in - a scroll pane narrowed past its buttons and widened again showed "├├┤ ^ ...", one more
+            // each time
+            removeAllFromPanel();
+            lastDivider = null;
+        }
         return this;
     }
 

@@ -104,4 +104,17 @@ public class TestButtonBarAddInsert extends TestCase {
     private static java.util.Collection<? extends mizzen.events.focus.Focusable> focusablesIn(ButtonBar bar) {
         return ((mizzen.events.focus.FocusManager) bar.asFocusable()).getChildFocusables();
     }
+
+    /** every component removed, the bar is empty: added to again, it has one left end and one right end */
+    public void testEmptiedAndFilledAgainNoEndIsLeftBehind() {
+        ButtonBar bar = new ButtonBar(Colors.IGre);
+        TextComponent a = bar.addComponent(new TextComponent("a"));
+        TextComponent b = bar.addComponent(new TextComponent("b"));
+        String full = new mizzen.core.TextSnapshot(1, 10).render(bar);
+        bar.remove(b);
+        bar.remove(a);
+        bar.insertComponent(0, a);
+        bar.insertComponent(1, b);
+        assertEquals("as before", full, new mizzen.core.TextSnapshot(1, 10).render(bar));
+    }
 }

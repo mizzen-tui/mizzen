@@ -379,6 +379,21 @@ public abstract class Color extends ControlCode implements ColorProvider, HasBac
         return n == 0 ? null : Colors.ColorFromCodes.instance(java.util.Arrays.copyOf(kept, n));
     }
     
+    /**
+     * Do a and b have the same background? Named or RGB, whatever kind each is. A colour that sets no background has
+     * none to share: false.
+     * <pre>
+     *     sameBackground(Theme.rgb(0xFFFFFF, 0x1D4F4A), Theme.rgb(0x9FB3C8, 0x1D4F4A))   true: both on 0x1D4F4A
+     * </pre>
+     */
+    public static boolean sameBackground(Color a, Color b) {
+        if (a == null || b == null) {
+            return false;
+        }
+        Color under = backgroundOf(a), other = backgroundOf(b);
+        return under != null && other != null && java.util.Arrays.equals(under.getControlCodes(), other.getControlCodes());
+    }
+
     public static BgColor backgroundColor(Color color) {
         if (color == null) {
             return null;

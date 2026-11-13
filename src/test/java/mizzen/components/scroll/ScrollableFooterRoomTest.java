@@ -87,4 +87,24 @@ public class ScrollableFooterRoomTest extends TestCase {
         String bottom = bottomRow(pane);                                      // drawn - no exception - inside the pane
         assertTrue(bottom, bottom.contains("SEARCH"));
     }
+
+    /**
+     * Narrowed past all its buttons and widened again (a splitter rebuilt around it), the bottom line is as it was: a
+     * single start to the footer, not a stray right end in front of it for each time.
+     */
+    public void testNarrowedPastItsButtonsAndWidenedAgainTheFooterIsWhole() {
+        ScrollableComponent pane = mizzen.components.markdown.MarkdownView.inScrollPane(null, "# Figures\n\nsome words");
+        String first = bottomLine(pane, 60);
+        assertEquals("one right end, at the footer's end: [" + first + "]", 1, first.chars().filter((c) -> c == '\u251C').count());
+        for (int i = 0; i < 3; i++) {
+            bottomLine(pane, 6);
+            assertEquals(first, bottomLine(pane, 60));
+        }
+        assertTrue(first, first.contains("\u2500\u2524 ^ "));          // the bar's line, then the footer's start
+    }
+
+    private static String bottomLine(ScrollableComponent pane, int width) {
+        String[] lines = new mizzen.core.TextSnapshot(8, width).render(pane).split("\n");
+        return lines[lines.length - 1];
+    }
 }

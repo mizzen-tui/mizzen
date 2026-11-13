@@ -348,4 +348,27 @@ public class ThemeTest extends TestCase {
         assertEquals("\u001b[0;38;2;230;238;242;48;2;29;79;74m", Theme.rgb(0xE6EEF2, 0x1D4F4A).asString());
         assertTrue(Theme.rgbBold(0xF2C94C, 0x1D4F4A).asString().startsWith("\u001b[0;1;38;2;242;201;76"));
     }
+
+    /** a theme on another background: what was on the old one moves to the new, what had its own background keeps it */
+    public void testWithBackgroundColorMovesWhatWasOnTheOldBackground() {
+        Theme base = Theme.ROUNDED;
+        mizzen.controlcodes.color.Color teal = Theme.rgb(0xE6EEF2, 0x1D4F4A);
+        Theme guardian = base.withBackgroundColor(teal);
+        mizzen.controlcodes.color.Color[][] roles = {
+                { base.textColor(), guardian.textColor() },
+                { base.drawingColor(0), guardian.drawingColor(0) },
+                { base.subheadingColor(), guardian.subheadingColor() },
+                { base.strongColor(), guardian.strongColor() },
+                { base.linkColor(), guardian.linkColor() },
+                { base.statusColor(), guardian.statusColor() },
+                { base.disabledColor(), guardian.disabledColor() } };
+        for (mizzen.controlcodes.color.Color[] role : roles) {
+            assertTrue("on Rounded's background to start with: " + role[0], mizzen.controlcodes.color.Color.sameBackground(role[0], base.backgroundColor()));
+            assertTrue("now on the teal: " + role[1], mizzen.controlcodes.color.Color.sameBackground(role[1], teal));
+        }
+        assertFalse("its own background: kept", mizzen.controlcodes.color.Color.sameBackground(base.surfaceColor(), base.backgroundColor()));
+        assertSame(base.surfaceColor(), guardian.surfaceColor());
+        mizzen.controlcodes.color.Color white = Theme.rgb(0xFFFFFF, 0x1D4F4A);
+        assertSame("given after: as given", white, guardian.withTextColor(white).textColor());
+    }
 }
