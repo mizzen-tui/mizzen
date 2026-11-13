@@ -88,9 +88,13 @@ public class StdoutViewer extends AbstractComponent<StdoutViewer>  implements Te
             @Override
             public void removeRect(Rectangle rectangleToRemove) {
                 submitToQ(()-> {
-                    if (rectangleToRemove.getRow() >= droppedRows) {
-                        stdoutSegmentsBuffer.removeRect(new Rectangle.Simple(rectangleToRemove.getRow() - droppedRows, rectangleToRemove.getCol(),
-                                                                             rectangleToRemove.getHeight(), rectangleToRemove.getWidth()));
+                    // cut to what is written (an erase to the end of a line or the screen runs past it) and kept
+                    int top = Math.max(rectangleToRemove.getRow(), droppedRows);
+                    int bottom = Math.min(rectangleToRemove.getRow() + rectangleToRemove.getHeight(), sizeOfSegments.getRow() + sizeOfSegments.getHeight());
+                    int left = rectangleToRemove.getCol();
+                    int right = Math.min(rectangleToRemove.getCol() + rectangleToRemove.getWidth(), sizeOfSegments.getCol() + sizeOfSegments.getWidth());
+                    if (bottom > top && right > left) {
+                        stdoutSegmentsBuffer.removeRect(new Rectangle.Simple(top - droppedRows, left, bottom - top, right - left));
                     }
                 });
                 markAsDirty();

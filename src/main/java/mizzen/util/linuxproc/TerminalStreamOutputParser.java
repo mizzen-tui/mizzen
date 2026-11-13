@@ -7,6 +7,7 @@ import mizzen.controlcodes.ControlCode;
 import mizzen.controlcodes.ControlCode.CursorBackward;
 import mizzen.controlcodes.ControlCode.CursorDown;
 import mizzen.controlcodes.ControlCode.CursorForward;
+import mizzen.controlcodes.ControlCode.CursorTo;
 import mizzen.controlcodes.ControlCode.CursorUp;
 import mizzen.controlcodes.color.Color;
 import mizzen.controlcodes.color.ColorParsingUtils;
@@ -184,12 +185,28 @@ public class TerminalStreamOutputParser {
                 streamConsumer.consumeControlCode(new CursorForward(count(params) - 1));
             }
             break;
+        case 'H':   // to row r, column c (1 = the first; ESC[H: home)
+        case 'f':
+            if (params.startsWith("?")) {
+                break;
+            }
+            String[] rowCol = params.split(";", -1);
+            streamConsumer.consumeControlCode(new CursorTo(count(rowCol[0]) - 1, rowCol.length > 1 ? count(rowCol[1]) - 1 : 0));
+            break;
+        case 'd':   // to row n, the same column
+            streamConsumer.consumeControlCode(new CursorTo(count(params) - 1, CursorTo.SAME_COLUMN));
+            break;
+        case 'J':   // ESC[J and ESC[1J are known codes (above); these are the same with a 0 or no count
+            if (params.equals("0")) {
+                streamConsumer.consumeControlCode(ControlCode.ERASE_DOWN);
+            }
+            break;
         case 'K':
             if (params.equals("0")) {
                 streamConsumer.consumeControlCode(ControlCode.ERASE_END_OF_LINE);
             }
             break;
-        default:    // not shown (e.g. ESC[3J, ESC[?2004h, ESC[5;10H)
+        default:    // not shown (e.g. ESC[3J, ESC[?2004h, ESC[2;20r)
             break;
         }
         clearBuffer();

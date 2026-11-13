@@ -336,6 +336,40 @@ public abstract class ControlCode implements Renderer, HasName<ControlCode> {
         }
     }
 
+    /**
+     * The cursor to a row and column, both from 0 (the terminal's codes count from 1): ESC[r;cH, or ESC[rd for a row
+     * in the same column (column SAME_COLUMN).
+     * <pre>
+     *     new CursorTo(0, 0)        ESC[1;1H - home: top left, as top starts each frame
+     *     new CursorTo(5, SAME_COLUMN)   ESC[6d
+     * </pre>
+     */
+    public static class CursorTo extends BaseTextControlCode {
+        public static final int SAME_COLUMN = -1;
+
+        private final int row;
+        private final int col;
+
+        public CursorTo(int row, int col) {
+            super(escape_CHR + "[" + (row + 1) + (col == SAME_COLUMN ? "d" : ";" + (col + 1) + "H"));
+            this.row = row;
+            this.col = col;
+        }
+
+        public int getRow() {
+            return row;
+        }
+
+        /** SAME_COLUMN: the column stays */
+        public int getCol() {
+            return col;
+        }
+
+        public String getName() {
+            return "CursorTo(" + row + "," + col + ")";
+        }
+    }
+
     public static class CursorUpAndClearLines implements Renderer, HasRowChange {
         int nLines;
 

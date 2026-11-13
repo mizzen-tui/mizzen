@@ -68,7 +68,6 @@ public class TerminalStreamingTest extends TestCase {
     public void testUnusedControlCodesAreNotShown() {
         assertEquals("AB", parsed("A\033[3JB"));             // "clear" ends with this (clear scrollback)
         assertEquals("AB", parsed("A\033[?2004hB"));         // bash: bracketed paste
-        assertEquals("AB", parsed("A\033[5;10HB"));          // cursor position
         assertEquals("AB", parsed("A\033]0;title\007B"));    // window title
         assertEquals("AB", parsed("A\033]0;title\033\\B"));  // ... ended by ESC \\ instead
         assertEquals("AB", parsed("A\0337\0338B"));          // save / restore cursor
@@ -83,6 +82,19 @@ public class TerminalStreamingTest extends TestCase {
     public void testCursorToColumn() {
         assertEquals("A{" + ControlCode.CURSOR_LEFT + "}B", parsed("A\033[GB"));
         assertTrue(parsed("A\033[10GB").startsWith("A{" + ControlCode.CURSOR_LEFT + "}{"));
+    }
+
+    /** ESC[r;cH and ESC[r;cf: to row r, column c, counted from 1 (none: 1); ESC[nd: to row n */
+    public void testCursorToARowAndColumn() {
+        assertEquals("A{CursorTo(4,9)}B", parsed("A\033[5;10HB"));
+        assertEquals("A{CursorTo(0,0)}B", parsed("A\033[HB"));
+        assertEquals("A{CursorTo(2,0)}B", parsed("A\033[3fB"));
+        assertEquals("A{CursorTo(5,-1)}B", parsed("A\033[6dB"));
+    }
+
+    public void testEraseDownWithACountOfNought() {
+        assertEquals("A{" + ControlCode.ERASE_DOWN + "}B", parsed("A\033[0JB"));
+        assertEquals("A{" + ControlCode.ERASE_DOWN + "}B", parsed("A\033[JB"));
     }
 
     public void testTextAroundCodesIsKept() {
