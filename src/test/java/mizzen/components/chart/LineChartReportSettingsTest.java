@@ -88,4 +88,57 @@ public class LineChartReportSettingsTest extends TestCase {
         String text = String.join("\n", page(chart().xLabel((x) -> "W" + (int) x)));
         assertTrue(text, text.contains("W5"));
     }
+
+    // the console's Visitor stats: three series, the busiest one highest, its top on the last day
+    private static LineChart visits() {
+        LineChart chart = new LineChart(Colors.Cya).series("sessions").series("paywall hits").series("payments");
+        for (int day = 0; day < 12; day++) {
+            chart.add("sessions", day, 30 + day * 3).add("paywall hits", day, 4 + day % 8).add("payments", day, day % 2);
+        }
+        return chart.yRange(0.0, null);
+    }
+
+    // a line in the plot: braille right of the y axis (the first thing on the row, itself braille)
+    private static boolean drawnOn(String line) {
+        return line.replaceFirst("^ *[\u2800-\u28FF]", "").chars().anyMatch((c) -> c >= 0x2801 && c <= 0x28FF);
+    }
+
+    public void testLegendClearLeavesTheLegendsRows() {
+        String[] over = page(visits());
+        assertTrue("by default the line runs under the legend:\n" + String.join("\n", over), drawnOn(over[0]));
+        String[] clear = page(visits().legendClear(true));
+        for (int row = 0; row < 3; row++) {
+            assertFalse("row " + row + ":\n" + String.join("\n", clear), drawnOn(clear[row]));
+        }
+        assertTrue(clear[1], clear[1].contains("paywall hits"));
+        assertTrue("the data right under it:\n" + String.join("\n", clear), drawnOn(clear[3]));
+    }
+
+    public void testLegendClearFollowsTheShownSeries() {
+        String[] hidden = page(visits().legendClear(true).visible("sessions", false));
+        assertTrue("hidden, its legend line stays", hidden[0].contains("sessions"));
+        assertFalse(String.join("\n", hidden), drawnOn(hidden[2]));
+        assertTrue("the others fill the rest:\n" + String.join("\n", hidden), drawnOn(hidden[3]));
+    }
+
+    public void testLegendClearKeepsAGivenTop() {
+        assertEquals(String.join("\n", page(visits().yRange(0.0, 100.0))),
+                     String.join("\n", page(visits().yRange(0.0, 100.0).legendClear(true))));
+        assertEquals("no legend, nothing to clear", String.join("\n", page(visits().legend(false))),
+                     String.join("\n", page(visits().legend(false).legendClear(true))));
+    }
+
+    /** a label cut at the right edge is left out: "Nov" alone would read as a date */
+    public void testAnXLabelThatDoesNotFitIsLeftOut() {
+        String[] lines = page(visits().xLabelsBelow(true).axisOverhang(false).xLabel((x) -> "Nov " + (3 + (int) x)));
+        String labels = lines[lines.length - 1];
+        assertTrue(labels, labels.contains("Nov 3"));
+        assertTrue("nothing but labels: [" + labels + "]", labels.replaceAll("Nov \\d+", "").trim().replaceAll("[ │]", "").isEmpty());
+        int day = 0;
+        for (String label : labels.trim().split(" {2,}")) {                // cut, "Nov 14" would read "Nov 1": the days must rise
+            int next = Integer.parseInt(label.substring(4));
+            assertTrue("whole, in order: [" + labels + "]", next > day);
+            day = next;
+        }
+    }
 }

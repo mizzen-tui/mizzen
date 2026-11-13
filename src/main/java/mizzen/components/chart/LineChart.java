@@ -52,6 +52,8 @@ import mizzen.geom.position.Vec2;
  *          .yRange(0.0, null)              // from zero, the top fitted: size in proportion
  *          .xLabel((x) -&gt; dates[(int) x]);
  * </pre>
+ * The legend sits in the plot's top right, where the highest line may run under it; legendClear(true)
+ * keeps those rows free of lines.
  */
 public class LineChart extends AbstractComponentWrappper<PlotArea> implements HasValue<LineChart.Point>, KeyboardHandler {
 
@@ -114,6 +116,7 @@ public class LineChart extends AbstractComponentWrappper<PlotArea> implements Ha
     private boolean legend = true;
     private boolean legendCheckBoxes = true;
     private boolean xLabelsBelow = false;
+    private boolean legendClear = false;
     private Double yRangeMin = null;                               // null: fitted to the data
     private Double yRangeMax = null;
 
@@ -275,6 +278,19 @@ public class LineChart extends AbstractComponentWrappper<PlotArea> implements Ha
         return refit();
     }
 
+    /**
+     * true: a fitted top leaves the legend's rows (one per series, shown or hidden) free of lines, so the legend and the
+     * highest line don't hide each other. It costs those rows of height. A top given with yRange stays as given, and
+     * without a legend nothing changes. Default off.
+     * <pre>
+     *     chart.yRange(0.0, null).legendClear(true);    // from zero; the top fits the shown series, under the legend
+     * </pre>
+     */
+    public LineChart legendClear(boolean legendClear) {
+        this.legendClear = legendClear;
+        return refit();
+    }
+
     /** true: the x axis along the data's bottom and its labels in a row of their own under it, so a line along the bottom clears them; it costs that row. Default off */
     public LineChart xLabelsBelow(boolean xLabelsBelow) {
         this.xLabelsBelow = xLabelsBelow;
@@ -328,14 +344,25 @@ public class LineChart extends AbstractComponentWrappper<PlotArea> implements Ha
         if (bottom >= top) {
             top = bottom + 1;                                      // all the data is outside the range asked for
         }
-        double below = bottom;
         int rows = getHeight();
-        if (xLabelsBelow && rows > 2) {
-            below = bottom - (top - bottom) / (rows - 1);          // a character row's worth under the axis, for the labels
+        int labelRows = xLabelsBelow && rows > 2 ? 1 : 0;          // a character row under the axis, for the labels
+        int legendRows = legendRowsToClear(rows - labelRows);       // character rows over the data, for the legend
+        double rowHeight = (top - bottom) / Math.max(1, rows - labelRows - legendRows);
+        top += legendRows * rowHeight;
+        double below = bottom - labelRows * rowHeight;
+        if (labelRows > 0) {
             plot().xAxisAt(bottom);
             plot().xLabelAtCrossing(true);                         // that row is the labels' own: the first point's label fits there too
         }
         plot().showing(x0 - mx, x1 + mx, below, top);
+    }
+
+    // legendClear: the legend's rows, when the top is fitted and a row is left for the data; else none
+    private int legendRowsToClear(int rows) {
+        if (!legendClear || !legend || yRangeMax != null || series.size() >= rows) {
+            return 0;
+        }
+        return series.size();
     }
 
     private LineChart refit() {
@@ -353,7 +380,7 @@ public class LineChart extends AbstractComponentWrappper<PlotArea> implements Ha
         }
         if (all.isEmpty()) {
             plot().redraw();
-        } else if (xLabelsBelow || yRangeMin != null || yRangeMax != null) {
+        } else if (xLabelsBelow || legendClear || yRangeMin != null || yRangeMax != null) {
             showWithSettings(all);
         } else {
             plot().fitTo(all);

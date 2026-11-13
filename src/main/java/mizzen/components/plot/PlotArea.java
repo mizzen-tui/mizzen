@@ -664,7 +664,7 @@ public class PlotArea extends AbstractComponentWrappper<Component<?>> implements
         }
     }
 
-    /** the tick labels: x ones in the character row below the x axis (above, when it runs along the bottom), y ones right of the y axis */
+    /** the tick labels: x ones in the character row below the x axis (above, when it runs along the bottom), y ones right of the y axis; an x one that doesn't fit whole is left out */
     private void labelAxes() {
         double axisY = axisY(), axisX = axisX();
         double xStep = xStep(), yStep = yStep();
@@ -679,8 +679,9 @@ public class PlotArea extends AbstractComponentWrappper<Component<?>> implements
                 continue;
             }
             String text = xTickLabel != null ? xTickLabel.apply(x) : label(x, xStep);
-            if (text != null) {
-                textInCell(xLabelRow, cellCol(toGrid(x, axisY).getCol()), text, axesColor());
+            int col = cellCol(toGrid(x, axisY).getCol());
+            if (text != null && col + text.length() <= characters.getWidth()) {     // cut at the right edge, it would mislead: left out
+                textInCell(xLabelRow, col, text, axesColor());
             }
         }
         int yLabelCol = cellCol(toGrid(axisX, 0).getCol()) + 1;
