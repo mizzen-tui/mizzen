@@ -57,7 +57,7 @@ import mizzen.util.formatters.TextLineFormatter;
  * one out, with everything it put on the event bus; the status line shows how many handlers that is.
  * Learn shows the learning panel with it - tabs: the docs; its code, coloured; its components, a tree of
  * what it is made of (pick one and it is framed in the running example) - below it, to its right, or alone: the
- * control at the top right says where: Below, Right, Only - [═][║][█] when narrow (a FlipSplitter's). Drag
+ * control at the top right says where: [═] below, [║] right, [Learn] alone (a FlipSplitter's chips). Drag
  * the divider and the example lays itself out again; the divider is remembered. While it shows, picking
  * another example shows that one's. SourceFiles finds the code: in the jar, or under src/main/java.
  * <p/>
@@ -182,7 +182,7 @@ public class EmbeddedAppTest {
 
             // right: where the examples run - the embedded app gets the inside of its border - and, with Learn,
             // the learning panel (its code, its components): below it, to its right, or alone - the control
-            // floating at the top right says where (radio buttons, or chips when narrow)
+            // floating at the top right says where ([═] [║] [Learn])
             Composite slot = new Composite();
             slot.setBorder(true);
             greeting = new Greeting();                     // until the first example runs
@@ -568,6 +568,8 @@ public class EmbeddedAppTest {
                 area.setOnResizeRule(null);
                 area.remove(holder);
                 split = new FlipSplitter(holder, panel).share(55).offerSecondOnly(true);   // the example a little more than half
+                // concise: the two layouts as pictures, and Learn alone in a word - no picture says that
+                split.control(split.chips((p) -> p == FlipSplitter.Placement.SECOND_ONLY ? "Learn" : FlipSplitter.pictures(p)));
                 area.add(split);
                 area.onResizeExpandDownAndRight(split);
                 area.applyResizeRules();
