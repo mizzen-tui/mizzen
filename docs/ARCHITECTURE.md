@@ -194,7 +194,9 @@ There is no focus list to keep in step any more. A focus manager works out its c
 component whenever it needs them: the nearest visible focusable components below it, with popups
 (a dropdown's open list, a menu) counted under the component that owns them
 (`FocusManager.UTIL.derivedChildFocusables`, `parentOf`; see §4.3 C). Adding, removing or hiding a
-component later needs no call to anything.
+component later needs no call to anything. A panel's border is not one of its children, but the components
+on its top line (`setTitleRight`, `setTitleMiddle`: a control) are taken in first, as drawn above the children;
+one not drawn at the current width is left out (Nov 2026).
 
 How a component gets focus - three cases, nothing else to choose from:
 

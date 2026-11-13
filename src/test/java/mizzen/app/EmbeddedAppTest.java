@@ -120,6 +120,21 @@ public class EmbeddedAppTest extends TestCase {
         embedding.close();                          // again: nothing happens
     }
 
+    /** a bordered slot folded to its top line (FlipSplitter's SECOND_ONLY) has no inside: the app gets no rows - it threw, -1 high */
+    public void testASlotFoldedToItsTopLineGivesTheAppNoRows() {
+        Composite bordered = new Composite(new Dimension.Simple(10, 40));
+        bordered.setBorder(true);
+        Embedding embedding = TUIApp.runEmbedded(host, bordered, () -> new TUIApp().setDefaultMainApplicationPanel().start());
+        bordered.resize(new Dimension.Simple(1, 40));
+        embedding.resize();
+        Component<?> panel = (Component<?>) embedding.tuiApp().getMainApplicationPanel();
+        assertEquals(0, panel.getHeight());
+        bordered.resize(new Dimension.Simple(10, 40));
+        embedding.resize();
+        assertEquals("unfolded: the inside again", 8, panel.getHeight());
+        embedding.close();
+    }
+
     public void testHandlersItRemovesItselfAreForgotten() {
         Embedding embedding = TUIApp.runEmbedded(host, slot, () -> new TUIApp().setDefaultMainApplicationPanel().start());
         hostBus.idle();

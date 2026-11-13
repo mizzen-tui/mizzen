@@ -1,9 +1,7 @@
 package mizzen.examples;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
 import mizzen.app.Embedding;
@@ -16,10 +14,8 @@ import mizzen.components.TextComponent;
 import mizzen.components.composite.Composite;
 import mizzen.components.composite.HorizontalPanel;
 import mizzen.components.composite.VerticalPanel;
-import mizzen.components.frameset.HorizontalSplitter;
-import mizzen.components.frameset.VerticalSplitter;
+import mizzen.components.frameset.FlipSplitter;
 import mizzen.components.input.Button;
-import mizzen.components.input.RadioGroup;
 import mizzen.components.input.tree.DefaultTreeNode;
 import mizzen.components.plot.braille.BrailleGrid;
 import mizzen.components.plot.shape.DotMatrixText;
@@ -61,9 +57,9 @@ import mizzen.util.formatters.TextLineFormatter;
  * one out, with everything it put on the event bus; the status line shows how many handlers that is.
  * Learn shows the learning panel with it - tabs: the docs; its code, coloured; its components, a tree of
  * what it is made of (pick one and it is framed in the running example) - below it, to its right, or alone: the
- * bar on the top border says where. Drag the divider and the example lays itself out again; the divider
- * is remembered. While it shows, picking another example shows that one's. SourceFiles finds the code:
- * in the jar, or under src/main/java.
+ * control at the top right says where: ▀ below, ▌ right, █ alone (a FlipSplitter's). Drag
+ * the divider and the example lays itself out again; the divider is remembered. While it shows, picking
+ * another example shows that one's. SourceFiles finds the code: in the jar, or under src/main/java.
  * <p/>
  * A leaf can be a document instead (Read me): the Docs tab shows it, in a MarkdownView, and the desktop
  * hears its links as any app would (onLink): a link to the source of an example in the tree runs that
@@ -131,6 +127,7 @@ public class EmbeddedAppTest {
                         example("Tab panel", TabPanelTest2.class),
                         example("Window frames", WindowFrameTest.class),
                         example("Splitters", HorizontalSplitterTest.class),
+                        example("Flip splitter", FlipSplitterDemo.class),
                         example("Scrolling", ScrollableComponentTest.class)),
                 group("Feedback",
                         example("Progress meter", ProgressMeterTest.class),
@@ -184,15 +181,14 @@ public class EmbeddedAppTest {
             host.getEventBus().raiseEvent(new RequestFocusEvent(tree));
 
             // right: where the examples run - the embedded app gets the inside of its border - and, with Learn,
-            // the learning panel (its code, its components): below it, to its right, or alone - the bar on the
-            // top border says where
+            // the learning panel (its code, its components): below it, to its right, or alone - the control
+            // floating at the top right says where (▀ ▌ █)
             Composite slot = new Composite();
             slot.setBorder(true);
             greeting = new Greeting();                     // until the first example runs
             slot.add(greeting.panel);
             slot.onResizeExpandDownAndRight(greeting.panel);
-            RadioGroup<String> where = RadioGroup.horizontal("Below", "Right", "Learn only");
-            RightSide right = new RightSide(slot, where);
+            RightSide right = new RightSide(slot);
 
             TextComponent status = new TextComponent((Color) null, new Dimension.Simple(1, main.getWidth()))
                                        .setThemeColor(Theme::selectedColor);   // a bar: it stands out from the text
@@ -271,7 +267,6 @@ public class EmbeddedAppTest {
                     status.setText(" Docs, the example's code, and its components: pick one and it is framed in the example");
                 }
             });
-            where.onChange((te) -> right.place(where.getValue()));
         })
         .start();
     }
@@ -326,6 +321,7 @@ public class EmbeddedAppTest {
     /** run the example's main inside slot, in place of what is there */
     private static void run(Demo demo, TUIApp host, Composite slot, TextComponent status) {
         clearSlot(slot, status);
+        slot.setTitle(" " + demo.name + " ");
         Embedding embedding = TUIApp.runEmbedded(host, slot, demo.launch());
         running = embedding;
         // its setup code runs next on the bus; count after it
@@ -545,41 +541,41 @@ public class EmbeddedAppTest {
     }
 
     /**
-     * The right side: the running example, in its slot, and the learning panel if shown - below it, to
-     * its right, or alone (the example runs on, out of sight). The slot sits in a holder it never leaves,
-     * so the example runs on whatever happens around it; each change builds the arrangement afresh (a
-     * splitter can't give back a pane), taking the holder and the panel out of the old one first. The bar
-     * floats on the top border, at its right end - over whichever border is there - while the panel shows.
-     * A component picked in the panel is framed: four lines over the holder, kept on top.
+     * The right side: the running example, in its slot, and the learning panel if shown - below it, to its right, or
+     * alone (the example runs on, out of sight). A FlipSplitter holds the two; its control floats at the top right,
+     * over whichever border is there. The slot sits in a holder it never leaves, so the example runs on whatever
+     * happens around it. A component picked in the panel is framed: four lines over the holder, kept on top.
      */
     private static class RightSide {
 
-        final Composite area = new Composite();          // what the page holds: the arrangement, the bar over it
+        final Composite area = new Composite();          // what the page holds: the holder, or the splitter around it
         private final Composite holder = new Composite();  // the slot's one parent, for good
-        private final Component<?> bar;
-        private Component<?> arrangement;
-        private Component<?> code;                        // the learning panel; null: none shown
+        private FlipSplitter split;                       // made when the learning panel first shows
         private Component<?> framed;                      // the component picked in it, framed in the example
         private final List<TextComponent> frameLines = new ArrayList<TextComponent>();
-        private String where = "Below";
-        private final Map<String, Integer> shares = new HashMap<String, Integer>();   // the example's share, per placement - kept as dragged
 
-        RightSide(Composite slot, Component<?> bar) {
-            this.bar = bar;
+        RightSide(Composite slot) {
             holder.add(slot);
             holder.onResizeExpandDownAndRight(slot);
-            area.add(bar);                                // first: the arrangement, added after it, leaves it no room
-            area.keepOnTop(bar);                          // above the arrangement - whatever focus raises in it
-            area.appendOnResize((size) -> barToTheRightEnd());
+            area.add(holder);
+            area.onResizeExpandDownAndRight(holder);
             holder.appendOnResize((size) -> placeFrame());   // the example resized: the frame follows its component
-            rebuild();
         }
 
-        /** the learning panel shown where the bar says; null: none - the example alone */
+        /** the learning panel shown where the control says; null: none - the example alone, the control gone */
         void showLearning(Component<?> panel) {
-            this.code = panel;
+            if (panel != null && split == null) {
+                area.setOnResizeRule(null);
+                area.remove(holder);
+                split = new FlipSplitter(holder, panel).share(55).offerSecondOnly(true);   // the example a little more than half
+                area.add(split);
+                area.onResizeExpandDownAndRight(split);
+                area.applyResizeRules();
+            }
+            if (split != null) {
+                split.secondShown(panel != null);                // put away: the example alone, and no control
+            }
             frame(null);
-            rebuild();
         }
 
         /** a frame around component, over the running example; null: none */
@@ -614,79 +610,6 @@ public class EmbeddedAppTest {
             holder.add(new Position.Simple(Math.max(0, row), Math.max(0, col)), line);
             holder.keepOnTop(line);
             frameLines.add(line);
-        }
-
-        /** where the panel goes: Below, Right, Learn only */
-        void place(String where) {
-            this.where = where;
-            rebuild();
-        }
-
-        private void rebuild() {
-            if (arrangement != null) {
-                rememberShare();
-                area.remove(arrangement);
-            }
-            detach(holder);
-            if (code != null) {
-                detach(code);
-            }
-            arrangement = arrange();
-            area.add(arrangement);
-            area.onResizeExpandDownAndRight(arrangement);
-            area.applyResizeRules();
-            barToTheRightEnd();
-            if (code == null) {
-                bar.hide();                               // no code: nothing to place
-            } else {
-                bar.show();
-            }
-        }
-
-        // on the top row, ending 2 short of the right corner - wherever the area's edge is now
-        private void barToTheRightEnd() {
-            area.moveChildTo(new Position.Simple(0, Math.max(0, area.getWidth() - bar.getWidth() - 2)), bar);
-        }
-
-        // the divider where it was left: the example's part of the splitter going away, as a percent - rounded
-        // up: the rule rounds its size down, so it gives back the same rows (exactly, under 100 of them)
-        private void rememberShare() {
-            if (arrangement instanceof HorizontalSplitter && arrangement.getWidth() > 0) {
-                shares.put("Right", (int) Math.ceil(100.0 * holder.getWidth() / arrangement.getWidth()));
-            } else if (arrangement instanceof VerticalSplitter && arrangement.getHeight() > 0) {
-                shares.put("Below", (int) Math.ceil(100.0 * holder.getHeight() / arrangement.getHeight()));
-            }
-        }
-
-        private int share(String placement) {
-            Integer kept = shares.get(placement);
-            return kept != null ? kept : 55;                  // at first: the example a little more than half
-        }
-
-        private Component<?> arrange() {
-            if (code == null) {
-                return holder;
-            }
-            switch (where) {
-                case "Right": {
-                    HorizontalSplitter split = new HorizontalSplitter().addComponent(holder).addComponent(code);
-                    split.setBorder(false);
-                    split.onResizeExpandRight(holder, share("Right"));
-                    return split;
-                }
-                case "Learn only":
-                    return code;                          // the example runs on, out of sight
-                default: {
-                    VerticalSplitter split = new VerticalSplitter().addComponent(holder).addComponent(code);
-                    split.onResizeExpandDown(holder, share("Below"));
-                    return split;
-                }
-            }
-        }
-
-        // out of the arrangement thrown away: a splitter can't give a pane back, so its parent is cleared
-        private static void detach(Component<?> c) {
-            c.setParentContainer(null);
         }
     }
 

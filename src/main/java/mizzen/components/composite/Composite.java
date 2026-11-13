@@ -667,15 +667,16 @@ public class Composite extends AbstractComponent<Composite>
     // made again as the size changes: it keeps the colours given to it, never resolved ones (those would be fixed in the
     // new border, deaf to a later theme); given none, it follows this panel
     protected void rebuildBorder(Rectangle borderSize) {
-        Color tColor = border != null ? border.getOwnTitleColor() : null;
-        Color sbColor = border != null ? border.getOwnColor() : this.getOwnColor();
-        Color bColor = border != null ? border.getOwnBorderColor() : this.getOwnColor();
-        String title = border != null ? border.getTitle() : null;
+        SimpleBorder old = border;
+        Color sbColor = old != null ? old.getOwnColor() : this.getOwnColor();
+        Color bColor = old != null ? old.getOwnBorderColor() : this.getOwnColor();
         this.border = new SimpleBorder(sbColor, borderSize);
         this.border.setThemeColor((theme) -> getColor());
         this.border.setBorderColor(bColor);
         this.border.setParentContainer(this);
-        this.border.setTitle(tColor, title);
+        if (old != null) {
+            this.border.takeTitleLineFrom(old);                  // the title and the parts beside it, the same components
+        }
     }
 
     public Composite markBorderAsDirty() {
@@ -734,6 +735,34 @@ public class Composite extends AbstractComponent<Composite>
 
     public String getTitle() {
         return this.border != null ? this.border.getTitle() : null;
+    }
+
+    /** a component centred on the border's top line (see SimpleBorder); null removes it */
+    public Composite setTitleMiddle(Component<?> component) {
+        setBorder(true);
+        this.border.setTitleMiddle(component);
+        markAsDirty();
+        return this;
+    }
+
+    /**
+     * a component at the right of the border's top line, e.g. a control; null removes it. It keeps its width (the
+     * title is cut), takes clicks, and can take focus: a TAB stop before the panel's children (see SimpleBorder).
+     * <pre>
+     *     panel.setTitle(" Visitor stats ");
+     *     panel.setTitleRight(flipButtons);
+     * </pre>
+     */
+    public Composite setTitleRight(Component<?> component) {
+        setBorder(true);
+        this.border.setTitleRight(component);
+        markAsDirty();
+        return this;
+    }
+
+    /** the components on the border's top line drawn at this size (none without a border): the focus tree takes them in */
+    public List<Component<?>> getTitleLineParts() {
+        return border != null ? border.getTitleLineParts() : Collections.<Component<?>>emptyList();
     }
 
     private void addChild(ComponentWithOffset componentWithOffset) {
@@ -998,6 +1027,9 @@ public class Composite extends AbstractComponent<Composite>
     }
 
     public Composite bringToFront(Component<?> component) {
+        if (component != null && component == this.border) {
+            return this;          // its border isn't a child and has no place among them: focus on a part of its top line raises nothing here
+        }
         ComponentWithOffset child = findChildOrFail(component, "bringToFront");
         int index = childrenInZOrder.indexOf(child);
         if (index == childrenInZOrder.size() - 1) {
@@ -1335,6 +1367,10 @@ public class Composite extends AbstractComponent<Composite>
         }
 
         if (this.hasBorder()) {
+            Component<?> onTheTopLine = border.getTitleLinePartAt(offset);   // a part on the border: a control, the title
+            if (onTheTopLine != null) {
+                return onTheTopLine;
+            }
             offset = offset.offsetAdd(-1, -1);
         }
 
@@ -1449,6 +1485,11 @@ public class Composite extends AbstractComponent<Composite>
                 offsetForBorder = Position.ZERO;
             }
             Rectangle boundingRectangle = clippedArea;
+            if (boundingRectangle.getHeight() < 1 || boundingRectangle.getWidth() < 1) {
+                // nothing inside to draw on: a 0-high rectangle still has a bottom row (getBottomMostRow stops at its
+                // row), so intersectWith below would let the children's first row through - under a 1-row border
+                return;
+            }
 
             ElapsedTime el = ElapsedTime.start();
             List<ComponentWithOffset> reverseZOrderChildren = new ArrayList<ComponentWithOffset>(parent.childrenInZOrder).stream()

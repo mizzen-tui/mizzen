@@ -61,11 +61,11 @@ public class ProgressMeterTest {
                 buttonBar.add(directButton);
                 buttonBar.add(parserButton);
 
-                // switch the meter between its two layouts, even while a run is going
+                // switch the meter between its two layouts, even while a run is going - on the right of the
+                // panel's top line, a TAB stop like any other (LEFT / RIGHT choose)
                 RadioGroup<String> layout = RadioGroup.horizontal("two rows", "one row");
                 layout.onChange((te) -> meter.setLayout("one row".equals(layout.getValue()) ? Layout.ONE_ROW : Layout.TWO_ROWS));
-                buttonBar.add(new TextComponent("  Layout: "));
-                buttonBar.add(layout);
+                panel.setTitleRight(layout);
 
                 tApp.getMainApplicationPanel().add(0, 1, buttonBar);
                 tApp.getMainApplicationPanel().add(3, 2, panel);

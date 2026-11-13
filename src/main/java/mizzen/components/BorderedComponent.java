@@ -261,6 +261,18 @@ public class BorderedComponent extends BoundedComponent<BorderedComponent>
         return this;
     }
 
+    /** a component centred on the top line (see SimpleBorder); null removes it */
+    public BorderedComponent setTitleMiddle(Component<?> component) {
+        border.setTitleMiddle(component);
+        return this;
+    }
+
+    /** a component at the right of the top line, e.g. a control: it keeps its width, the title is cut (see SimpleBorder) */
+    public BorderedComponent setTitleRight(Component<?> component) {
+        border.setTitleRight(component);
+        return this;
+    }
+
     public BorderedComponent setTitle(String title) {
         border.setTitle(title);
         return this;

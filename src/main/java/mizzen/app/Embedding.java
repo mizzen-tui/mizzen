@@ -1,6 +1,8 @@
 package mizzen.app;
 
 import mizzen.components.composite.Composite;
+import mizzen.geom.Dimension;
+import mizzen.geom.Rectangle;
 
 /**
  * A TUIApp running inside another TUIApp (the host), started by TUIApp.runEmbedded. Its main panel
@@ -58,10 +60,14 @@ public final class Embedding {
         return tuiApp;
     }
 
-    /** the panel it runs in has a new size: fit to its inside (inside its border, if it has one) */
+    /**
+     * the panel it runs in has a new size: fit to its inside (inside its border, if it has one). A bordered panel folded
+     * to one row (a FlipSplitter's SECOND_ONLY) has an inside -1 high: the app gets no rows, and runs on out of sight.
+     */
     public void resize() {
         if (app != null && !closed) {
-            app.resize(slot.getInnerRectangle());
+            Rectangle inside = slot.getInnerRectangle();
+            app.resize(new Dimension.Simple(Math.max(0, inside.getHeight()), Math.max(0, inside.getWidth())));
         }
     }
 

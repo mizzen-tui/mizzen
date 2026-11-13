@@ -543,8 +543,16 @@ public interface FocusManager extends Focusable {
          * the nearest focusables below component, skipping children hidden with Composite.hide() and
          * popups. Meeting self (the focus manager being worked out) goes into it: a wrapper and the
          * component whose focus manager it borrows are one node (e.g. MenuBar and its ButtonBar).
+         * <p/>
+         * A panel's border is not one of its children, but the components on its top line (setTitleRight, a
+         * control) are TAB stops: they come first, as they are drawn above the children.
          */
         private static void addShownChildFocusables(List<Focusable> found, Object component, FocusManager self) {
+            if (component instanceof mizzen.components.composite.Composite) {
+                for (Object part : ((mizzen.components.composite.Composite) component).getTitleLineParts()) {
+                    addFocusableOrInside(found, part, self);
+                }
+            }
             if (!(component instanceof HasChildren)) {
                 return;
             }
@@ -557,12 +565,17 @@ public interface FocusManager extends Focusable {
                         && !((mizzen.components.composite.Composite) component).isShown((Component<?>) child)) {
                     continue;
                 }
-                Focusable focusable = ToFocusable.UTIL.isFocusable(child) ? ToFocusable.UTIL.toFocusable(child) : null;
-                if (focusable != null && !isSameNode(focusable, self)) {
-                    found.add(focusable);
-                } else {
-                    addShownChildFocusables(found, child, self);
-                }
+                addFocusableOrInside(found, child, self);
+            }
+        }
+
+        // child itself if it is a focusable (other than self), else the focusables inside it
+        private static void addFocusableOrInside(List<Focusable> found, Object child, FocusManager self) {
+            Focusable focusable = ToFocusable.UTIL.isFocusable(child) ? ToFocusable.UTIL.toFocusable(child) : null;
+            if (focusable != null && !isSameNode(focusable, self)) {
+                found.add(focusable);
+            } else {
+                addShownChildFocusables(found, child, self);
             }
         }
 
