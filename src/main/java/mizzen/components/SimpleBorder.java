@@ -26,7 +26,7 @@ import mizzen.textsegments.ScreenLineSegment.SegmentImpl;
  *     border.setTitle(" Visitor stats ");
  *     border.setTitleRight(flipButtons);
  *
- *     ╭ Visitor stats ───────────────────── ▀ ▌ ╮
+ *     ╭ Visitor stats ───────────── (•) Below  ( ) Right ╮
  * </pre>
  * Short of room: the right one keeps its width and the middle one goes first; the title is cut to leave at least one
  * ─ before the next one. A component that doesn't fit whole isn't drawn, takes no clicks and is no TAB stop; text
