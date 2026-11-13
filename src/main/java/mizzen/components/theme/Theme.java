@@ -149,6 +149,7 @@ public final class Theme implements HasName<Theme> {
     private Color dimColor; // quotes, rules, the lines of a table in a document
     private List<Color> drawingColors; // charts and plots: series i in drawingColor(i)
     private Color imageBackingColor;     // pictures (the Ascii and Braille image views) drawn on this; null: the background
+    private Color buttonGroupColor;      // the band a group of filled buttons sits on (ChipGroup's raised look); null: none
     private List<Color> derivedDrawingColors; // none given: made once from its other colours (drawingColors) - never
                                               // copied with the theme, so a copy with other colours makes its own
 
@@ -198,7 +199,8 @@ public final class Theme implements HasName<Theme> {
                 rgb(inputText, inputField), rgb(buttonText, button), rgb(focusedText, focused), rgb(border, background),
 
                 rgb(disabled, background), rgb(error, background), rgb(success, background),
-                rgb(selectedText, selected));
+                rgb(selectedText, selected))
+                .withButtonGroupColor(rgb(band(background), band(background)));
 
     }
 
@@ -872,6 +874,38 @@ public final class Theme implements HasName<Theme> {
         return with((t) -> t.dimColor = color);
     }
 
+    /**
+     * The band a group of filled buttons sits on - ChipGroup's raised look, where the theme marks a focused button by
+     * colour: a column of it at each end and between the buttons, so they read as one control raised on it. A little
+     * darker than the background, as a rule (a 24-bit colour theme gets one so: band(background)); null: none, the
+     * gaps in the background.
+     * <pre>
+     *     theme.withButtonGroupColor(Theme.rgb(0x18443F, 0x18443F))     // under chips #2D6A63 on teal #1D4F4A
+     * </pre>
+     */
+    public Theme withButtonGroupColor(Color color) {
+        return with((t) -> t.buttonGroupColor = color);
+    }
+
+    /** the band under a group of filled buttons (see withButtonGroupColor); null: none */
+    public Color buttonGroupColor() {
+        return buttonGroupColor;
+    }
+
+    // the band colour for a background: 15% darker - on a background already near black, 10% lighter
+    static int band(int background) {
+        int r = (background >> 16) & 0xFF, g = (background >> 8) & 0xFF, b = background & 0xFF;
+        double luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+        if (luminance < 0.08) {
+            return (lighter(r) << 16) | (lighter(g) << 8) | lighter(b);
+        }
+        return ((int) (r * 0.85) << 16) | ((int) (g * 0.85) << 8) | (int) (b * 0.85);
+    }
+
+    private static int lighter(int c) {
+        return (int) Math.round(c + (255 - c) * 0.10);
+    }
+
     private Theme with(Consumer<Theme> change) {
 
         Theme copy = new Theme(name, backgroundColor, textColor, headingColor, inputColor, buttonColor,
@@ -896,6 +930,7 @@ public final class Theme implements HasName<Theme> {
         copy.stripeColor = stripeColor;
         copy.drawingColors = drawingColors;
         copy.imageBackingColor = imageBackingColor;
+        copy.buttonGroupColor = buttonGroupColor;
         copy.blockChars = blockChars;
         copy.buttonFocus = buttonFocus;
         copy.focusedBlockChars = focusedBlockChars;

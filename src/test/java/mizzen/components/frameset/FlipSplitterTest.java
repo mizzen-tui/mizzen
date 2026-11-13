@@ -76,7 +76,7 @@ public class FlipSplitterTest extends TestCase {
     /** too narrow for the radio (more than half the width): the chips, a picture each; wider again, the radio */
     public void testNarrowGivesTheChips() {
         split.resize(new Dimension.Simple(12, 30));
-        assertTrue(top(), top().endsWith("[═][║]─┐"));
+        assertTrue(top(), top().endsWith(" [═] [║] ─┐"));
         split.resize(new Dimension.Simple(12, 60));
         assertTrue(top(), top().endsWith("( ) Right─┐"));
     }
@@ -91,7 +91,7 @@ public class FlipSplitterTest extends TestCase {
     /** text of your own, for either kind */
     public void testTextOfYourOwn() {
         split.control(split.chips((p) -> p == Placement.BELOW ? "Stacked" : "Side by side"));
-        assertTrue(top(), top().endsWith("[Stacked][Side by side]─┐"));
+        assertTrue(top(), top().endsWith(" [Stacked] [Side by side] ─┐"));
         split.control(split.radio((p) -> p == Placement.BELOW ? "Over" : "Beside"));
         assertTrue(top(), top().endsWith("(•) Over  ( ) Beside─┐"));
     }
@@ -101,7 +101,7 @@ public class FlipSplitterTest extends TestCase {
         ChipGroup<Placement> mine = ChipGroup.of(new SimpleDisplayValue<Placement>("top", Placement.BELOW),
                                                  new SimpleDisplayValue<Placement>("side", Placement.RIGHT));
         split.control(mine);
-        assertTrue(top(), top().endsWith("[top][side]─┐"));
+        assertTrue(top(), top().endsWith(" [top] [side] ─┐"));
         split.placement(Placement.RIGHT);
         assertSame(Placement.RIGHT, mine.getValue());
     }
@@ -111,7 +111,7 @@ public class FlipSplitterTest extends TestCase {
         split.control(split.radio((p) -> p.word() + " and a long way round"), split.radio(), split.chips());
         assertTrue(top(), top().endsWith("(•) Below  ( ) Right─┐"));
         split.resize(new Dimension.Simple(12, 12));
-        assertTrue(top(), top().endsWith("[═][║]─┐"));
+        assertTrue(top(), top().endsWith(" [═] [║] ─┐"));
     }
 
     /** one border, joined to the divider: stacked ├ ┤, beside ┬ ┴ - not a box around boxes */
@@ -133,7 +133,7 @@ public class FlipSplitterTest extends TestCase {
         String text = new TextSnapshot(8, 30).render(plain);
         String top = text.split("\n")[0];
         assertTrue(top, top.startsWith("top"));
-        assertTrue("[" + top + "]", top.endsWith("[═][║]  "));          // two in from the edge, as on a border
+        assertTrue("[" + top + "]", top.endsWith(" [═] [║]   "));          // two in from the edge, as on a border
         assertFalse(text, text.contains("┌"));
     }
 
@@ -274,7 +274,7 @@ public class FlipSplitterTest extends TestCase {
         press(Keys.LEFT_KEYSTROKE);
         assertSame(Placement.BELOW, split.getPlacement());
         assertEquals(Arrays.asList(Placement.RIGHT, Placement.BELOW), heard);
-        int start = 60 - 2 - "[═][║]".length();
+        int start = 60 - 2 - " [═] [║] ".length() + 1;            // the first chip, past the gap
         assertSame("clicks land on it", split.getControl(), split.getComponentAtOffset(new Position.Simple(0, start)));
     }
 }

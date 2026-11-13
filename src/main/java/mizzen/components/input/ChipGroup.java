@@ -4,11 +4,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 
 import mizzen.components.BoundedComponent;
 import mizzen.components.input.DisplayableValue.SimpleDisplayValue;
 import mizzen.components.theme.Theme;
 import mizzen.controlcodes.color.Color;
+import mizzen.controlcodes.color.ColorProvider;
 import mizzen.events.ConditionalEventHandler;
 import mizzen.events.EventBus;
 import mizzen.events.EventHandler;
@@ -36,11 +38,17 @@ import mizzen.textsegments.ScreenLineSegment;
  *     ChipGroup&lt;String&gt; days = ChipGroup.of("7", "30", "90").value("30");
  *     days.onChange((te) -> report(days.getValue()));
  *
- *     [7][30][90]
+ *      [7] [30] [90]         a theme that marks a focused button with brackets (Legacy, Dark)
+ *     ▕ 7 ▕ 30 ▕ 90 ▕        one that marks it by colour (Rounded): filled chips on a band (Theme.buttonGroupColor)
  * </pre>
+ * It looks like the theme's buttons: the look follows Theme.buttonFocus(), or look(..) sets one. Both looks are the
+ * same width, so a theme changed while it shows doesn't move anything.
+ * <p/>
+ * The chosen chip's text is in the theme's accent colour. While the group has focus: with brackets, its brackets too,
+ * bold - a light mark; raised, the chosen chip takes the focused-button fill, as a focused button does.
+ * <p/>
  * One TAB stop: LEFT / RIGHT choose the one before / after, wrapping round; SPACE the next; HOME / END the first / last.
- * A click chooses the chip under it. Given no colour it takes the theme's button colour. The chosen chip's text is in
- * the theme's accent colour; while the group has focus, its brackets too, bold - a light mark, no filled bar.
+ * A click chooses the chip under it. Given no colour it takes the theme's button colour.
  * <p/>
  * Options are given as RadioGroup's are: each a DisplayableValue (its value and the text in the chip), or plain strings.
  * The text can be a word or a few characters - a little picture. setValue doesn't tell the listeners: they hear the user.
@@ -51,7 +59,15 @@ public class ChipGroup<V> extends BoundedComponent<ChipGroup<V>> implements Form
         defaultThemeColor(Theme::buttonColor);               // given no colour: the theme's - buttons
     }
 
+    /** how the chips are drawn: BRACKETS " [7] [30] ", RAISED filled chips on a band (see the class comment) */
+    public enum Look { BRACKETS, RAISED }
+
     private final List<DisplayableValue<V>> options;
+    private Look look;                                       // null: the theme's (its buttonFocus)
+
+    // the parts' colours, asked each time it draws: a fixed Color is a ColorProvider too; null: the theme's (below)
+    private ColorProvider chosenColor;                       // the chosen chip's text - laid on the chip
+    private ColorProvider bandColor;                         // the band under the raised look
     private V value;
     private final OnChangeListeners<V> changeListeners = new OnChangeListeners<V>(this);   // onChange: any number
 
@@ -90,16 +106,54 @@ public class ChipGroup<V> extends BoundedComponent<ChipGroup<V>> implements Form
         resize(new Dimension.Simple(1, widthOfChips()));
     }
 
+    // a gap (or band) column at each end and between; each chip its text and two more: [7] or " 7 "
     private int widthOfChips() {
-        int width = 0;
+        int width = 1;
         for (DisplayableValue<V> option : options) {
-            width += chip(option).length();
+            width += chipWidth(option) + 1;
         }
         return width;
     }
 
-    private static String chip(DisplayableValue<?> option) {
-        return "[" + option.getDisplayValue() + "]";
+    private static int chipWidth(DisplayableValue<?> option) {
+        return option.getDisplayValue().length() + 2;
+    }
+
+    /** draws it so, whatever the theme's buttons do; null: as the theme's buttons (the default) */
+    public ChipGroup<V> look(Look look) {
+        this.look = look;
+        markAsDirty();
+        return this;
+    }
+
+    /**
+     * The chosen chip's text colour: a Color, or a provider asked each time it draws. Only its text is used - it is laid
+     * on the chip. null: the theme's accent (the default).
+     * <pre>
+     *     days.setChosenColor(Colors.IGre);
+     *     days.setChosenColor(days.themeColor(Theme::successColor));     // follows the theme, whichever it is now
+     * </pre>
+     */
+    public ChipGroup<V> setChosenColor(ColorProvider chosenColor) {
+        this.chosenColor = chosenColor;
+        markAsDirty();
+        return this;
+    }
+
+    /** The band under the raised look: a Color or a provider, as setChosenColor. null: the theme's buttonGroupColor. */
+    public ChipGroup<V> setBandColor(ColorProvider bandColor) {
+        this.bandColor = bandColor;
+        markAsDirty();
+        return this;
+    }
+
+    /** any colour of its theme, asked for each time it is used - for setChosenColor and setBandColor */
+    public ColorProvider themeColor(Function<Theme, Color> themeColor) {
+        return () -> themeColor.apply(getTheme());
+    }
+
+    private boolean raised() {
+        return look != null ? look == Look.RAISED : getTheme().buttonFocus() == Theme.ButtonFocus.ACCENT;
     }
 
     @Override
@@ -166,14 +220,14 @@ public class ChipGroup<V> extends BoundedComponent<ChipGroup<V>> implements Form
         EventBus bus = appMouseEvent.getEventBus();
         focus.requestFocus(bus);
         int col = appMouseEvent.getMousePosition().getCol();
-        int start = 0;
+        int start = 1;                                       // past the first gap
         for (int i = 0; i < options.size(); i++) {
-            int end = start + chip(options.get(i)).length();
+            int end = start + chipWidth(options.get(i));
             if (col >= start && col < end) {
                 userChooses(i, bus);
                 return;
             }
-            start = end;
+            start = end + 1;
         }
     }
 
@@ -202,19 +256,30 @@ public class ChipGroup<V> extends BoundedComponent<ChipGroup<V>> implements Form
 
     @Override
     protected void draw(Color color, IScreenLineSegmentsBuffer segments) {
-        // light: the chosen chip's text in the accent colour; focused, its brackets too, and bold. No filled bar - it
-        // floats on borders and charts, where a bar shouts
-        Color accent = Color.onBackgroundOf(getTheme().accentColor().getForeGroundColor(), color);
+        Theme theme = getTheme();
+        boolean raised = raised();
         boolean focused = focus.hasFocus();
-        int col = 0;
+        Color chosenText = chosenColor != null ? chosenColor.getColor() : theme.accentColor();
+        Color accent = Color.textOn(chosenText, color);         // its text on the chip, not on the page
+        Color band = !raised ? null : bandColor != null ? bandColor.getColor() : theme.buttonGroupColor();
+        Color gap = band != null ? band : theme.backgroundColor();
+        int col = put(segments, " ", gap, 0);
         for (DisplayableValue<V> option : options) {
             boolean chosen = Objects.equals(option.getValue(), value);
             String text = option.getDisplayValue();
-            Color brackets = chosen && focused ? accent.bold() : color;
-            Color inside = !chosen ? color : focused ? accent.bold() : accent;
-            col = put(segments, "[", brackets, col);
-            col = put(segments, text, inside, col);
-            col = put(segments, "]", brackets, col);
+            if (raised) {
+                // a filled chip, as the theme's buttons: chosen, the accent's text on it; focused, the focus fill
+                Color chip = !chosen ? color : focused ? theme.buttonFocusedColor() : accent.bold();
+                col = put(segments, " " + text + " ", chip, col);
+            } else {
+                // light: the chosen chip's text in the accent colour; focused, its brackets too, and bold
+                Color brackets = chosen && focused ? accent.bold() : color;
+                Color inside = !chosen ? color : focused ? accent.bold() : accent;
+                col = put(segments, "[", brackets, col);
+                col = put(segments, text, inside, col);
+                col = put(segments, "]", brackets, col);
+            }
+            col = put(segments, " ", gap, col);
         }
     }
 

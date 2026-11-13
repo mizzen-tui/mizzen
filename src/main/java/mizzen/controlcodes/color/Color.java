@@ -261,6 +261,22 @@ public abstract class Color extends ControlCode implements ColorProvider, HasBac
     }
 
     /**
+     * color's text - its foreground, and bold if it has it - on under's background, whatever kind each is. Unlike
+     * onBackgroundOf, color may set a background of its own: it is left out. For example a theme's accent, made on the
+     * page's background, on a button's chip:
+     * <pre>
+     *     textOn(theme.accentColor(), theme.buttonColor())     the accent's text on the chip, not on the page
+     * </pre>
+     * (getForeGroundColor() won't do for that: a colour made from codes, as the 24-bit theme colours are, gives itself.)
+     */
+    public static Color textOn(Color color, Color under) {
+        if (color == null || under == null) {
+            return color;
+        }
+        return mergeByParts(color, under);
+    }
+
+    /**
      * A foreground-only colour shown on another's background (onBackgroundOf). It still behaves as the colour it
      * was given: bold() and invert() are the given colour's - bold green, its inverse - shown on that background
      * again. Without that, a focused frame drawn in Colors.Gre would lose its bold, and a selected item its inverse.
