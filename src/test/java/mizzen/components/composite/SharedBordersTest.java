@@ -289,6 +289,89 @@ public class SharedBordersTest extends TestCase {
         return false;
     }
 
+    // ---- the console's round 16: a swap, a pane beside an unbordered one, nested splitters ---------------------------
+
+    private static Composite plain(String text) {
+        Composite c = new Composite();
+        c.add(new TextComponent(text));
+        return c;
+    }
+
+    /** a scroll pane swapped out of a screen's bottom half leaves nothing behind on the screen's lines (its thumb was) */
+    public void testASwappedOutPaneLeavesNoThumbBehind() {
+        String text = inTheme(mizzen.components.theme.Theme.ROUNDED, () -> {
+            VerticalPanel bottomHalf = new VerticalPanel();
+            mizzen.components.scroll.ScrollableComponent status = scroll(" Status ");
+            bottomHalf.add(status);
+            bottomHalf.onResizeExpandDownAndRight(status);
+            VerticalSplitter screen = new VerticalSplitter().addComponent(plain("menu")).addComponent(bottomHalf);
+            screen.setBorder(true);
+            screen.collapseBorders(true);
+            screen.resize(new Dimension.Simple(16, 50));
+            assertTrue(picture(screen), picture(screen).contains("▒"));      // Status's thumb, on the screen's right line
+            bottomHalf.remove(status);
+            FlipSplitter visitors = new FlipSplitter(plain("chart"), boxed(" Figures ", "fig")).collapseBorders(true);
+            bottomHalf.add(visitors);
+            bottomHalf.onResizeExpandDownAndRight(visitors);
+            bottomHalf.applyResizeRules();
+            String swapped = picture(screen);
+            visitors.placement(FlipSplitter.Placement.RIGHT);
+            return swapped + "\n" + picture(screen);
+        });
+        assertFalse(text, text.contains("▒"));
+    }
+
+    /** beside an unbordered pane, a pane shares the screen's divider above it and its bottom line below, as stacked */
+    public void testAPaneBesideAnUnborderedOneSharesTopAndBottom() {
+        String text = inTheme(mizzen.components.theme.Theme.ROUNDED, () -> {
+            VerticalPanel bottomHalf = new VerticalPanel();
+            FlipSplitter visitors = new FlipSplitter(plain("chart"), boxed(" Figures ", "fig")).collapseBorders(true);
+            visitors.placement(FlipSplitter.Placement.RIGHT);
+            bottomHalf.add(visitors);
+            bottomHalf.onResizeExpandDownAndRight(visitors);
+            VerticalSplitter screen = new VerticalSplitter().addComponent(plain("menu")).addComponent(bottomHalf);
+            screen.setBorder(true);
+            screen.collapseBorders(true);
+            screen.resize(new Dimension.Simple(16, 50));
+            return picture(screen);
+        });
+        String[] rows = text.split("\n");
+        int divider = 0;
+        while (!rows[divider].startsWith("├")) {
+            divider++;
+        }
+        assertFalse("its top on the screen's divider, not a row under it:\n" + text,
+                    rows[divider + 1].contains("╭") || rows[divider + 1].contains("─"));
+        assertTrue("its bottom on the screen's:\n" + text, rows[rows.length - 1].contains("┴"));
+    }
+
+    /** two bordered panes in an unbordered splitter, in a bordered screen: one line between them, both on the screen's lines */
+    public void testNestedSplittersShareEveryLine() {
+        String text = inTheme(mizzen.components.theme.Theme.ROUNDED, () -> {
+            mizzen.components.scroll.ScrollableComponent actions = scroll(" Actions ");
+            HorizontalSplitter bottom = new HorizontalSplitter().addComponent(actions).addComponent(scroll(" Output "));
+            bottom.onResizeExpandRight(actions, 40);
+            bottom.setBorder(false);
+            bottom.collapseBorders(true);
+            VerticalSplitter home = new VerticalSplitter().addComponent(plain("logo")).addComponent(bottom);
+            home.setBorder(true);
+            home.collapseBorders(true);
+            home.resize(new Dimension.Simple(18, 60));
+            return picture(home);
+        });
+        String[] rows = text.split("\n");
+        int divider = 0;
+        while (!rows[divider].startsWith("├")) {
+            divider++;
+        }
+        assertTrue(text, rows[divider].startsWith("├─ Actions ") && rows[divider].contains("┬─ Ou"));
+        int junction = rows[divider].indexOf('┬');
+        for (int row = divider + 1; row < rows.length - 1; row++) {
+            assertTrue("one line between them:\n" + text, rows[row].charAt(junction - 1) != '│' && rows[row].charAt(junction + 1) != '│');
+        }
+        assertEquals(text, '┴', rows[rows.length - 1].charAt(junction));
+    }
+
     /** a click on a shared line goes to the box whose edge it is - at that edge */
     public void testClicksOnASharedLineReachTheBox() {
         Composite panel = new Composite();

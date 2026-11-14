@@ -24,8 +24,8 @@ import mizzen.textsegments.ScreenLineSegment;
  * column or row of padding) - the corners' rows and columns carry the line on, so the box stays closed.
  * <p/>
  * Which children have a box is read from what they drew: a side is an edge when its two corner cells are that side's
- * corners (┌ and └ for the left). A child whose top corners aren't corners (a tab panel, its tab strip on top) has the
- * box lower down that reaches its sides and bottom: its frame. So a component that holds a bordered one filling it (a plain panel around a bordered
+ * corners (┌ and └ for the left). A child that isn't one box has the boxes inside it that reach its edges (boxesIn): a
+ * tab panel's frame under its tab strip, a pane beside an unbordered one. So a component that holds a bordered one filling it (a plain panel around a bordered
  * slot) counts, and a scroll pane whose scrollbar sits on its border column moves it with the column.
  * <p/>
  * An edge moves onto: the container's own border; the side of another child's box it sits right inside (a tab panel's
@@ -96,7 +96,7 @@ final class SharedBorders {
         List<Box> boxes = new ArrayList<Box>();
         for (Box b : children) {
             if (b.rect.getWidth() >= 2 && b.rect.getHeight() >= 2) {
-                boxes.add(boxOf(segments, b));
+                boxes.addAll(boxesIn(segments, b));
             }
         }
         // decide first, on the drawing as it is; then move - the sides across, then the top and bottom over the
@@ -104,7 +104,7 @@ final class SharedBorders {
         List<Move> moves = new ArrayList<Move>();
         for (Box b : boxes) {
             for (Side side : Side.values()) {
-                if (isEdge(segments, b, side) && (hasLineOutside(segments, b, side, boxes, own, ownTitled) || besideALine(b, side, lines))) {
+                if (isEdge(segments, b, side) && (hasLineOutside(segments, b, side, boxes, own, ownTitled) || besideALine(segments, b, side, lines))) {
                     moves.add(new Move(b.child, side, b.rect));
                 }
             }
@@ -129,21 +129,138 @@ final class SharedBorders {
     }
 
     /**
-     * The box a child drew: all of it, or - when its top corners aren't corners (a tab panel: its top rows are its tab
-     * strip) - the first box lower down that reaches its sides and bottom (the tab panel's frame). Above that, its
-     * drawing is left as it is.
+     * The boxes a child drew that reach its edges: the whole child when its corners are corners, else each box inside it
+     * that has a corner on its outer rows or columns - a tab panel's frame under its tab strip; the figures pane of a
+     * FlipSplitter beside an unbordered chart; the second pane of an unbordered splitter. Found from each corner-shaped
+     * cell on the child's edge (╭ on its top row or left column, ╮ on its top row or right column, ...), following the
+     * lines to the other three corners. A junction counts as a corner where it reaches the right ways: ┬ ends one box
+     * and starts the next, as two panes on one divider.
      */
-    private static Box boxOf(IScreenLineSegmentsBuffer s, Box b) {
-        if (isEdge(s, b, Side.TOP) || !isEdge(s, b, Side.BOTTOM)) {
-            return b;
+    private static List<Box> boxesIn(IScreenLineSegmentsBuffer s, Box b) {
+        List<Box> found = new ArrayList<Box>();
+        int top = b.top(), left = b.left(), bottom = b.bottom(), right = b.right();
+        int u = BlockChars.UTIL.UP, d = BlockChars.UTIL.DOWN, l = BlockChars.UTIL.LEFT, r = BlockChars.UTIL.RIGHT;
+        for (int col = left; col <= right; col++) {
+            addBox(found, s, b, fromTopLeft(s, b, top, col));
+            addBox(found, s, b, fromTopRight(s, b, top, col));
+            addBox(found, s, b, fromBottomLeft(s, b, bottom, col));
+            addBox(found, s, b, fromBottomRight(s, b, bottom, col));
         }
-        int up = BlockChars.UTIL.UP, down = BlockChars.UTIL.DOWN, left = BlockChars.UTIL.LEFT, right = BlockChars.UTIL.RIGHT;
-        for (int row = b.top() + 1; row < b.bottom(); row++) {
-            if (reaches(s, row, b.left(), right | down) && reaches(s, row, b.right(), left | down)) {
-                return new Box(b.child, new Rectangle.Simple(row, b.left(), b.bottom() - row + 1, b.rect.getWidth()));
+        for (int row = top; row <= bottom; row++) {
+            addBox(found, s, b, fromTopLeft(s, b, row, left));
+            addBox(found, s, b, fromBottomLeft(s, b, row, left));
+            addBox(found, s, b, fromTopRight(s, b, row, right));
+            addBox(found, s, b, fromBottomRight(s, b, row, right));
+        }
+        return found;
+    }
+
+    private static void addBox(List<Box> found, IScreenLineSegmentsBuffer s, Box b, Rectangle rect) {
+        if (rect == null || rect.getWidth() < 2 || rect.getHeight() < 2 || !sidesAreLines(s, rect)) {
+            return;
+        }
+        for (Box x : found) {
+            if (x.rect.getRow() == rect.getRow() && x.rect.getCol() == rect.getCol()
+                    && x.rect.getHeight() == rect.getHeight() && x.rect.getWidth() == rect.getWidth()) {
+                return;
             }
         }
-        return b;
+        found.add(new Box(b.child, rect));
+    }
+
+    // a box from one corner: the next corners along its two lines, then the fourth where they meet - null: no box there
+    private static Rectangle fromTopLeft(IScreenLineSegmentsBuffer s, Box b, int row, int col) {
+        int u = BlockChars.UTIL.UP, d = BlockChars.UTIL.DOWN, l = BlockChars.UTIL.LEFT, r = BlockChars.UTIL.RIGHT;
+        if (!corner(s, row, col, r | d)) {
+            return null;
+        }
+        int c1 = scanCols(s, row, col + 1, b.right(), +1, l | d);
+        int r1 = scanRows(s, col, row + 1, b.bottom(), +1, u | r);
+        return c1 >= 0 && r1 >= 0 && corner(s, r1, c1, u | l) ? box(row, col, r1, c1) : null;
+    }
+
+    private static Rectangle fromTopRight(IScreenLineSegmentsBuffer s, Box b, int row, int col) {
+        int u = BlockChars.UTIL.UP, d = BlockChars.UTIL.DOWN, l = BlockChars.UTIL.LEFT, r = BlockChars.UTIL.RIGHT;
+        if (!corner(s, row, col, l | d)) {
+            return null;
+        }
+        int c0 = scanCols(s, row, col - 1, b.left(), -1, r | d);
+        int r1 = scanRows(s, col, row + 1, b.bottom(), +1, u | l);
+        return c0 >= 0 && r1 >= 0 && corner(s, r1, c0, u | r) ? box(row, c0, r1, col) : null;
+    }
+
+    private static Rectangle fromBottomLeft(IScreenLineSegmentsBuffer s, Box b, int row, int col) {
+        int u = BlockChars.UTIL.UP, d = BlockChars.UTIL.DOWN, l = BlockChars.UTIL.LEFT, r = BlockChars.UTIL.RIGHT;
+        if (!corner(s, row, col, u | r)) {
+            return null;
+        }
+        int r0 = scanRows(s, col, row - 1, b.top(), -1, r | d);
+        int c1 = scanCols(s, row, col + 1, b.right(), +1, u | l);
+        return r0 >= 0 && c1 >= 0 && corner(s, r0, c1, l | d) ? box(r0, col, row, c1) : null;
+    }
+
+    private static Rectangle fromBottomRight(IScreenLineSegmentsBuffer s, Box b, int row, int col) {
+        int u = BlockChars.UTIL.UP, d = BlockChars.UTIL.DOWN, l = BlockChars.UTIL.LEFT, r = BlockChars.UTIL.RIGHT;
+        if (!corner(s, row, col, u | l)) {
+            return null;
+        }
+        int r0 = scanRows(s, col, row - 1, b.top(), -1, l | d);
+        int c0 = scanCols(s, row, col - 1, b.left(), -1, u | r);
+        return r0 >= 0 && c0 >= 0 && corner(s, r0, c0, r | d) ? box(r0, c0, row, col) : null;
+    }
+
+    private static boolean corner(IScreenLineSegmentsBuffer s, int row, int col, int arms) {
+        return reaches(s, row, col, arms);
+    }
+
+    /**
+     * A box's two sides are lines - mostly: at least half of each side's cells reach up and down, or are a symbol a line
+     * carries (a scrollbar's thumb ▒, a divider's grip ⣿). What a footer's ├ ┤ (on a scroll pane's bottom line, corner-shaped) would make a box of has its
+     * "sides" running up through text: not a box.
+     */
+    private static boolean sidesAreLines(IScreenLineSegmentsBuffer s, Rectangle box) {
+        int inner = box.getHeight() - 2;
+        if (inner <= 0) {
+            return true;
+        }
+        int along = BlockChars.UTIL.UP | BlockChars.UTIL.DOWN;
+        for (int col : new int[] { box.getCol(), box.getRightMostCol() }) {
+            int lines = 0;
+            for (int row = box.getRow() + 1; row < box.getBottomMostRow(); row++) {
+                char ch = charAt(s, row, col);
+                boolean symbol = ch != 0 && ch != ' ' && !Character.isLetterOrDigit(ch);    // a thumb ▒, a grip ⣿
+                if ((BlockChars.UTIL.armsOf(ch) & along) == along || (symbol && BlockChars.UTIL.armsOf(ch) == 0)) {
+                    lines++;
+                }
+            }
+            if (lines * 2 < inner) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // along a row from col towards end, the first corner reaching these ways; -1: none
+    private static int scanCols(IScreenLineSegmentsBuffer s, int row, int from, int end, int step, int arms) {
+        for (int col = from; step > 0 ? col <= end : col >= end; col += step) {
+            if (corner(s, row, col, arms)) {
+                return col;
+            }
+        }
+        return -1;
+    }
+
+    private static int scanRows(IScreenLineSegmentsBuffer s, int col, int from, int end, int step, int arms) {
+        for (int row = from; step > 0 ? row <= end : row >= end; row += step) {
+            if (corner(s, row, col, arms)) {
+                return row;
+            }
+        }
+        return -1;
+    }
+
+    private static Rectangle box(int top, int left, int bottom, int right) {
+        return new Rectangle.Simple(top, left, bottom - top + 1, right - left + 1);
     }
 
     // ---- which sides --------------------------------------------------------------------------------------------
@@ -175,7 +292,7 @@ final class SharedBorders {
             }
         }
         for (Box o : boxes) {
-            if (o != b && encloses(o, b, side) && isEdge(s, o, side)) {
+            if (o != b && o.child != b.child && encloses(o, b, side) && isEdge(s, o, side)) {
                 // inside another child's box, against its side: that side is its line, as a panel's own border is - a top
                 // only onto a plain line (a tab panel's frame top carries its tabs' joins: a title would land in them)
                 if (side == Side.TOP && !plainTop(s, o, b)) {
@@ -185,8 +302,8 @@ final class SharedBorders {
             }
         }
         for (Box o : boxes) {
-            if (o == b) {
-                continue;
+            if (o == b || o.child == b.child) {
+                continue;                                    // its own other boxes: laid out inside it already
             }
             boolean overlap = side == Side.LEFT || side == Side.RIGHT ? o.top() <= b.bottom() && o.bottom() >= b.top()
                                                                       : o.left() <= b.right() && o.right() >= b.left();
@@ -228,8 +345,13 @@ final class SharedBorders {
         return true;
     }
 
-    // a line drawn over the container later (a FrameSet's divider) right outside the side, along all of it
-    private static boolean besideALine(Box b, Side side, List<Rectangle> lines) {
+    // a line drawn over the container later (a FrameSet's divider) right outside the side, along all of it - not for a side
+    // carrying a footer's separators (┤ │ ├): the divider's line and grip would be drawn through its buttons; a title is
+    // fine (a line leaves text alone)
+    private static boolean besideALine(IScreenLineSegmentsBuffer s, Box b, Side side, List<Rectangle> lines) {
+        if (hasSeparators(s, b, side)) {
+            return false;
+        }
         for (Rectangle line : lines) {
             boolean beside = side == Side.LEFT ? line.getRightMostCol() == b.left() - 1 && line.getWidth() == 1
                            : side == Side.RIGHT ? line.getCol() == b.right() + 1 && line.getWidth() == 1
@@ -254,6 +376,22 @@ final class SharedBorders {
             boolean across = side == Side.LEFT || side == Side.RIGHT ? x.left() <= line && x.right() >= line && x.top() <= b.bottom() && x.bottom() >= b.top()
                                                                      : x.top() <= line && x.bottom() >= line && x.left() <= b.right() && x.right() >= b.left();
             if (across) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // line characters on that side other than its plain line: a footer's separators
+    private static boolean hasSeparators(IScreenLineSegmentsBuffer s, Box b, Side side) {
+        boolean across = side == Side.TOP || side == Side.BOTTOM;
+        int plain = across ? BlockChars.UTIL.LEFT | BlockChars.UTIL.RIGHT : BlockChars.UTIL.UP | BlockChars.UTIL.DOWN;
+        int fixed = side == Side.LEFT ? b.left() : side == Side.RIGHT ? b.right() : side == Side.TOP ? b.top() : b.bottom();
+        int from = across ? b.left() + 1 : b.top() + 1;
+        int to = across ? b.right() - 1 : b.bottom() - 1;
+        for (int i = from; i <= to; i++) {
+            int arms = BlockChars.UTIL.armsOf(across ? charAt(s, fixed, i) : charAt(s, i, fixed));
+            if (arms != 0 && arms != plain) {
                 return true;
             }
         }
@@ -296,8 +434,8 @@ final class SharedBorders {
         }
 
         static Outline of(IScreenLineSegmentsBuffer s, Box b, List<Move> moves) {
-            boolean left = moved(moves, b.child, Side.LEFT), right = moved(moves, b.child, Side.RIGHT);
-            boolean top = moved(moves, b.child, Side.TOP), bottom = moved(moves, b.child, Side.BOTTOM);
+            boolean left = moved(moves, b, Side.LEFT), right = moved(moves, b, Side.RIGHT);
+            boolean top = moved(moves, b, Side.TOP), bottom = moved(moves, b, Side.BOTTOM);
             if (!left && !right && !top && !bottom) {
                 return null;
             }
@@ -444,9 +582,11 @@ final class SharedBorders {
         }
     }
 
-    private static boolean moved(List<Move> moves, Object child, Side side) {
+    // this box's side moved - by box, not by child: a child can hold several (an unbordered splitter's two panes), and
+    // one's move isn't the other's
+    private static boolean moved(List<Move> moves, Box box, Side side) {
         for (Move m : moves) {
-            if (m.child == child && m.side == side) {
+            if (m.box == box.rect && m.side == side) {
                 return true;
             }
         }
@@ -481,10 +621,18 @@ final class SharedBorders {
         return segment == null ? null : segment.getColors();
     }
 
+    /**
+     * One cell, as a new segment of its own. Never setCharAt: with the same colour it changes the segment there in
+     * place, and a container's drawing shares segment objects with what it holds (its border's, added as they are, for
+     * speed) - a moved scrollbar written onto the border cell would change the border's own drawing, and stay after the
+     * child that drew it is gone.
+     */
     private static void put(IScreenLineSegmentsBuffer s, int row, int col, char ch, Color color) {
         if (row < 0 || col < 0 || color == null) {
             return;
         }
-        s.setCharAt(row, col, ch, color);
+        ScreenLineSegment there = s.getAtCol(row, col);
+        ScreenLineSegment.UTIL.addTo(s.getSegments(), new ScreenLineSegment.SegmentImpl(color, row, col, there != null ? there.getId() + 1 : 1,
+                                                                                        new mizzen.textsegments.CleanString.Simple(ch)));
     }
 }
