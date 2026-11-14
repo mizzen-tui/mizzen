@@ -372,6 +372,82 @@ public class SharedBordersTest extends TestCase {
         assertEquals(text, '┴', rows[rows.length - 1].charAt(junction));
     }
 
+    // ---- the console's round 17: keeping things whole -------------------------------------------------------------
+
+    // a teal page with white cards, as the console's
+    private static final mizzen.components.theme.Theme CARDS_ON_TEAL = mizzen.components.theme.Theme.ROUNDED
+            .withBackgroundColor(mizzen.components.theme.Theme.rgb(0xE6EEF2, 0x1D4F4A))
+            .withSurfaceColor(mizzen.components.theme.Theme.rgb(0x22313A, 0xF4F7F8));
+
+    // a screen: a bordered splitter, top the given pane, bottom a scroll pane (a report)
+    private static VerticalSplitter screen(Component<?> top) {
+        VerticalSplitter screen = new VerticalSplitter().addComponent(top).addComponent(scroll(" Report "));
+        screen.setBorder(true);
+        screen.resize(new Dimension.Simple(18, 50));
+        return screen;
+    }
+
+    private static String topRows(String picture, int rows) {
+        return String.join("\n", java.util.Arrays.copyOfRange(picture.split("\n"), 0, rows));
+    }
+
+    /** a card (its own surface: white on teal) keeps its frame whole; the report beside the same lines still shares */
+    public void testACardOnItsOwnSurfaceStaysWhole() {
+        String[] off = new String[1];
+        String on = inTheme(CARDS_ON_TEAL, () -> {
+            VerticalSplitter s = screen(new mizzen.components.card.Card("Site").add(new TextComponent("up 12 days")));
+            off[0] = picture(s);
+            s.collapseBorders(true);
+            return picture(s);
+        });
+        int divider = 0;
+        while (!on.split("\n")[divider].startsWith("├")) {
+            divider++;
+        }
+        assertEquals("the card as it was:\n" + on, topRows(off[0], divider), topRows(on, divider));
+        assertTrue("the report shares the divider:\n" + on, on.contains("─ Report ─"));
+    }
+
+    /** keepWhole: a pane and all in it as drawn (a row of frames, the Actions frame); the others share */
+    public void testAPaneKeptWholeIsAsDrawn() {
+        String[] off = new String[1];
+        String on = inTheme(mizzen.components.theme.Theme.ROUNDED, () -> {
+            HorizontalSplitter topHalf = new HorizontalSplitter().addComponent(boxed(" Actions ", "run")).addComponent(boxed(" Site ", "up"));
+            topHalf.setBorder(false);
+            VerticalSplitter s = screen(topHalf);
+            off[0] = picture(s);
+            s.collapseBorders(true).keepWhole(topHalf);
+            return picture(s);
+        });
+        String[] offRows = off[0].split("\n"), onRows = on.split("\n");
+        int divider = 0;
+        while (!onRows[divider].startsWith("├")) {
+            divider++;
+        }
+        assertEquals("the kept pane as it was:\n" + on, topRows(off[0], divider), topRows(on, divider));
+        assertTrue("the report shares the divider:\n" + on, onRows[divider].contains("─ Report ─"));
+        assertFalse(offRows[divider].contains("Report"));
+    }
+
+    /** a footer moved down leaves no line above its separators, even with a column line in the text above them */
+    public void testAMovedFooterLeavesNoStrayLine() {
+        StringBuilder columns = new StringBuilder();
+        for (int i = 0; i < 20; i++) {
+            columns.append("││││││││││││││││││││││││││││││││││││││││││\n");
+        }
+        Composite panel = new Composite();
+        panel.setBorder(true);
+        panel.resize(new Dimension.Simple(10, 44));
+        mizzen.components.scroll.ScrollableComponent sc = new mizzen.components.scroll.ScrollableComponent((mizzen.controlcodes.color.Color) null,
+                                                                                                            new TextComponent(columns.toString()));
+        panel.add(sc);
+        panel.onResizeExpandDownAndRight(sc);
+        panel.collapseBorders(true);
+        String[] rows = picture(panel).split("\n");
+        String vacated = rows[8];                                          // the footer's old row
+        assertTrue("[" + vacated + "]", vacated.substring(1, vacated.length() - 1).trim().isEmpty());
+    }
+
     /** a click on a shared line goes to the box whose edge it is - at that edge */
     public void testClicksOnASharedLineReachTheBox() {
         Composite panel = new Composite();

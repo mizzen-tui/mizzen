@@ -83,6 +83,12 @@ public class HorizontalSplitter extends AbstractComponentWrappper<FrameSet> impl
         return getWrappedComponent().hasBorder();
     }
 
+    /** with collapseBorders, a pane that takes no part: its boxes stay as drawn (see Composite.keepWhole) */
+    public HorizontalSplitter keepWhole(Component<?> pane) {
+        getWrappedComponent().keepWhole(pane);
+        return this;
+    }
+
     /** bordered panes share their edges with the divider (and the border): one line between them - see FrameSet */
     public HorizontalSplitter collapseBorders(boolean collapse) {
         getWrappedComponent().collapseBorders(collapse);

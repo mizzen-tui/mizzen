@@ -86,6 +86,13 @@ public class FrameSet extends BoundedComponent<FrameSet> implements HasTitleAndB
         return this;
     }
 
+    /** with collapseBorders, a pane that takes no part: its boxes stay as drawn (see Composite.keepWhole) */
+    public FrameSet keepWhole(Component<?> pane) {
+        container.keepWhole(pane);
+        markAsDirty();
+        return this;
+    }
+
     // the dividers: the gap each sits in between its two panes - in this one's cells, which are its container's (the
     // border is the container's own)
     private List<Rectangle> dividerLines() {

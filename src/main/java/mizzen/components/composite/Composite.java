@@ -58,6 +58,7 @@ public class Composite extends AbstractComponent<Composite>
     private boolean collapseBorders = false;                   // shared borders: see collapseBorders(..)
     private List<SharedBorders.Move> sharedBorderMoves = Collections.emptyList();   // the edges moved, at the last draw
     private java.util.function.Supplier<List<Rectangle>> sharedLines = Collections::emptyList;   // its owner's lines: sharedLinesAt
+    private final java.util.Set<Component<?>> keptWhole = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<Component<?>, Boolean>());
     protected boolean boundsFixed = false;
     private Rectangle bounds = Rectangle.ZERO;
     private List<ComponentWithOffset> children = new ArrayList<ComponentWithOffset>();
@@ -1294,7 +1295,7 @@ public class Composite extends AbstractComponent<Composite>
         }
         sharedBorderMoves = collapseBorders ? SharedBorders.share(segments, sharedBorderBoxes(), hasBorder() ? new Rectangle.Simple(0, 0, getHeight(), getWidth()) : null,
                                                                   border != null && border.getTitle() != null, getBlockChars(),
-                                                                  sharedLines.get())
+                                                                  sharedLines.get(), getColor())
                                             : Collections.<SharedBorders.Move>emptyList();
     }
 
@@ -1320,6 +1321,21 @@ public class Composite extends AbstractComponent<Composite>
     }
 
     /**
+     * With collapseBorders, child and everything in it take no part: its boxes are drawn as they are, nothing moved onto
+     * this panel's lines - a row of cards, a frame that should stay a frame. (A box on a surface of its own - a card's
+     * background - takes no part anyway.)
+     * <pre>
+     *     screen.collapseBorders(true);
+     *     screen.keepWhole(topHalf);           // the reports below share the screen's lines; the tiles above don't
+     * </pre>
+     */
+    public Composite keepWhole(Component<?> child) {
+        keptWhole.add(child);
+        markAsDirty();
+        return this;
+    }
+
+    /**
      * Lines its owner draws over it after it has drawn (a FrameSet's dividers, in this panel's cells), asked each time it
      * draws: with collapseBorders, a bordered child's edge right next to one moves onto it, as onto any line.
      */
@@ -1333,7 +1349,7 @@ public class Composite extends AbstractComponent<Composite>
     private List<SharedBorders.Box> sharedBorderBoxes() {
         List<SharedBorders.Box> boxes = new ArrayList<SharedBorders.Box>();
         for (ComponentWithOffset child : childrenInZOrder) {
-            if (!child.visible || child.keptOnTop || child.component.getPopupOwner() != null) {
+            if (!child.visible || child.keptOnTop || child.component.getPopupOwner() != null || keptWhole.contains(child.component)) {
                 continue;
             }
             Position at = getPositionRelativeToParent(child.component);

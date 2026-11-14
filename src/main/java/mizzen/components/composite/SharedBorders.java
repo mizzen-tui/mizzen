@@ -28,7 +28,8 @@ import mizzen.textsegments.ScreenLineSegment;
  * tab panel's frame under its tab strip, a pane beside an unbordered one. So a component that holds a bordered one filling it (a plain panel around a bordered
  * slot) counts, and a scroll pane whose scrollbar sits on its border column moves it with the column.
  * <p/>
- * An edge moves onto: the container's own border; the side of another child's box it sits right inside (a tab panel's
+ * A box on a surface of its own (a card: another background) takes no part; nor does a child the container keeps whole
+ * (Composite.keepWhole). An edge moves onto: the container's own border; the side of another child's box it sits right inside (a tab panel's
  * frame - a top only onto a plain line, not one carrying tabs' joins); a line its owner draws over it later (a FrameSet's divider - see
  * Composite.sharedLinesAt); a bordered neighbour's edge right next to it (only the one on the right, or below, moves);
  * a gap of one cell between two bordered neighbours (both move into it). It doesn't move when
@@ -92,11 +93,15 @@ final class SharedBorders {
      * style: the container's BlockChars - it picks the joining characters. Returns the moves, for clicks.
      */
     static List<Move> share(IScreenLineSegmentsBuffer segments, List<Box> children, Rectangle own, boolean ownTitled, BlockChars style,
-                            List<Rectangle> lines) {
+                            List<Rectangle> lines, Color surface) {
         List<Box> boxes = new ArrayList<Box>();
         for (Box b : children) {
             if (b.rect.getWidth() >= 2 && b.rect.getHeight() >= 2) {
-                boxes.addAll(boxesIn(segments, b));
+                for (Box found : boxesIn(segments, b)) {
+                    if (onSurface(colorAt(segments, found.top(), found.left()), surface)) {
+                        boxes.add(found);
+                    }
+                }
             }
         }
         // decide first, on the drawing as it is; then move - the sides across, then the top and bottom over the
@@ -153,6 +158,18 @@ final class SharedBorders {
             addBox(found, s, b, fromBottomRight(s, b, row, right));
         }
         return found;
+    }
+
+    /**
+     * A box drawn on the container's own background - or with no background of its own (it shows the one under it) -
+     * takes part. One on a surface of its own (a card: white, on a teal page) keeps its frame whole: merged into the
+     * page's line, half of it would be on the wrong background.
+     */
+    private static boolean onSurface(Color boxLine, Color surface) {
+        if (boxLine == null || surface == null || !Color.setsBackground(boxLine) || !Color.setsBackground(surface)) {
+            return true;
+        }
+        return Color.sameBackground(boxLine, surface);
     }
 
     private static void addBox(List<Box> found, IScreenLineSegmentsBuffer s, Box b, Rectangle rect) {
@@ -515,12 +532,16 @@ final class SharedBorders {
             }
         }
 
-        // the old edge's cell reaches inward (├ where a line inside met it) and the cell inside it reaches back: a line
-        // comes in there - not a footer's ┤, whose stub up meets text
+        // the old edge's cell is a junction of the edge's own line with one coming in (├ on a left edge, ┴ on a bottom one)
+        // and the cell inside reaches back: a line comes in there. Not a footer's ┤ or │ on a bottom edge - separators,
+        // not the edge's line, even with a table's column line above them
         private boolean lineRunsInward(IScreenLineSegmentsBuffer s, int row, int col, int inward, int insideRow, int insideCol) {
             int back = inward == BlockChars.UTIL.RIGHT ? BlockChars.UTIL.LEFT : inward == BlockChars.UTIL.LEFT ? BlockChars.UTIL.RIGHT
                      : inward == BlockChars.UTIL.DOWN ? BlockChars.UTIL.UP : BlockChars.UTIL.DOWN;
-            return (BlockChars.UTIL.armsOf(charAt(s, row, col)) & inward) != 0
+            int edgeLine = inward == BlockChars.UTIL.RIGHT || inward == BlockChars.UTIL.LEFT ? BlockChars.UTIL.UP | BlockChars.UTIL.DOWN
+                                                                                             : BlockChars.UTIL.LEFT | BlockChars.UTIL.RIGHT;
+            int arms = BlockChars.UTIL.armsOf(charAt(s, row, col));
+            return (arms & (edgeLine | inward)) == (edgeLine | inward)
                 && (BlockChars.UTIL.armsOf(charAt(s, insideRow, insideCol)) & back) != 0;
         }
 
