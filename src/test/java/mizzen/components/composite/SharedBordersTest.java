@@ -448,6 +448,43 @@ public class SharedBordersTest extends TestCase {
         assertTrue("[" + vacated + "]", vacated.substring(1, vacated.length() - 1).trim().isEmpty());
     }
 
+    /** a tab panel under a divider: its frame shares, its tabs stay as drawn (a tab is a box, but not a pane) */
+    public void testTabsUnderADividerStayAsDrawn() throws Exception {
+        String[] pictures = new String[2];
+        for (int k = 0; k < 2; k++) {
+            boolean collapse = k == 1;
+            pictures[k] = inTheme(mizzen.components.theme.Theme.ROUNDED, () -> {
+                mizzen.components.tab.TabPanel tabs = new mizzen.components.tab.TabPanel();
+                tabs.addTab("Docs", scroll(" README.md "));
+                tabs.addTab("Code", scroll(" Code "));
+                tabs.addTab("Components", scroll(" Parts "));
+                tabs.collapseBorders(collapse);
+                VerticalSplitter stacked = new VerticalSplitter().addComponent(boxed(" Example ", "running")).addComponent(tabs);
+                stacked.collapseBorders(collapse);
+                stacked.resize(new Dimension.Simple(20, 50));
+                mizzen.supportfortesting.SyncEventLoop bus = new mizzen.supportfortesting.SyncEventLoop();
+                mizzen.components.CompositeWithFocusManager root = new mizzen.components.CompositeWithFocusManager();
+                root.add(stacked);
+                try {
+                    mizzen.supportfortesting.CanvasForTesting.buildCanvasForTestingNoControlCodesInOutput().addComponentSegments(root);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                bus.setRoot(root);
+                tabs.showTab("Docs", bus);
+                bus.drain();
+                return picture(stacked);
+            });
+        }
+        String[] off = pictures[0].split("\n"), on = pictures[1].split("\n");
+        int strip = 0;
+        while (!off[strip].contains("Code")) {
+            strip++;
+        }
+        assertEquals("the tabs as drawn:\n" + pictures[1], off[strip - 1].trim(), on[strip - 1].trim());
+        assertEquals(off[strip].trim(), on[strip].trim());
+    }
+
     /** a click on a shared line goes to the box whose edge it is - at that edge */
     public void testClicksOnASharedLineReachTheBox() {
         Composite panel = new Composite();

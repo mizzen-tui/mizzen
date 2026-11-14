@@ -173,7 +173,7 @@ final class SharedBorders {
     }
 
     private static void addBox(List<Box> found, IScreenLineSegmentsBuffer s, Box b, Rectangle rect) {
-        if (rect == null || rect.getWidth() < 2 || rect.getHeight() < 2 || !sidesAreLines(s, rect)) {
+        if (rect == null || rect.getWidth() < 2 || rect.getHeight() < 2 || !sidesAreLines(s, rect) || !spans(b, rect)) {
             return;
         }
         for (Box x : found) {
@@ -183,6 +183,16 @@ final class SharedBorders {
             }
         }
         found.add(new Box(b.child, rect));
+    }
+
+    /**
+     * A pane spans the child it is in, one way at least: all its height (the figures beside a chart, a splitter's pane)
+     * or all its width (a tab panel's frame). A part drawn inside it - a tab on its strip, a framed button - spans
+     * neither: it stays as drawn, or a tab's top would join the line above the tab panel.
+     */
+    private static boolean spans(Box child, Rectangle rect) {
+        return (rect.getRow() == child.top() && rect.getBottomMostRow() == child.bottom())
+            || (rect.getCol() == child.left() && rect.getRightMostCol() == child.right());
     }
 
     // a box from one corner: the next corners along its two lines, then the fourth where they meet - null: no box there
