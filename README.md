@@ -83,8 +83,9 @@ others: pick one in the tree and it runs on the right.
 [![The demo desktop: a tree of examples on the left; picking one runs it on the right](docs/img/tour.gif)](src/main/java/mizzen/examples/EmbeddedAppTest.java)
 
 <sub>`java -cp target/classes mizzen.examples.EmbeddedAppTest` - each example is its own `main`,
-running unchanged inside the desktop. Learn shows the running example's code and its components; the theme
-picker restyles everything. [See the code →](src/main/java/mizzen/examples/EmbeddedAppTest.java)</sub>
+running unchanged inside the desktop. Learn shows the running example's code and its components, below it or beside
+it; the theme picker restyles everything (shown here: Dark Rounded, then Solarized Dark, Dracula, Light and Retro
+Phosphor). [See the code →](src/main/java/mizzen/examples/EmbeddedAppTest.java)</sub>
 
 | | Components | Try it |
 |---|---|---|
